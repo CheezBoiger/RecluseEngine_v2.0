@@ -1,0 +1,29 @@
+{
+    "version": "0.0.0",
+    "global": {
+        "include_paths": [],
+        "preprocess": [
+            {
+                "decl": "GLOBAL",
+                "value": 1
+            }
+        ]
+    },
+
+    "shaders": [
+        {
+            "name": "TestShader",
+            "type": "vertex",
+            "preprocess": [ 
+                {
+                    "decl": "TEST",
+                    "value": 1
+                }
+            ]
+        },
+        {
+            "name": "TestShader",
+            "type": "pixel"
+        }
+    ]
+}

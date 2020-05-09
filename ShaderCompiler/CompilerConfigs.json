@@ -1,0 +1,57 @@
+{
+    "compiler": "glslang",
+    "version": "latest",
+    "configs": {
+        "os": "win32",
+        "include_paths": [""],
+        "output": {
+                "ext": "spv",
+                "append_shader_ext": true
+        },
+        "shaders": {
+            "graphics": {
+                "pixel": {
+                    "ext": "ps"
+                },
+                "vertex": {
+                    "ext": "vs"
+                },
+                "hull": {
+                    "ext": "hs"
+                },
+                "domain": {
+                    "ext": "ds"
+                },
+                "geometry": {
+                    "ext": "gs"
+                },
+                "mesh": {
+                    "ext": "ms"
+                },
+                "amplificiation": {
+                    "ext": "as"
+                },
+                "raytrace": {
+                    "raygen": {
+                        "ext": "rg"
+                    },
+                    "anyhit": {
+                        "ext": "ah"
+                    },
+                    "closesthit": {
+                        "ext": "ch"
+                    },
+                    "miss": {
+                        "ext": "m"
+                    }
+                }
+            },
+
+            "general": {
+                "compute": {
+                    "ext": "cs"
+                }
+            }
+        }
+    }
+}
