@@ -4,5 +4,8 @@ project ( "RecluseProject 2.0v" )
 
 # Mostly configurations are set here.
 
-add_subdirectory ( Engine/CMake )
-add_subdirectory ( Game/CMake )
+# Framework subdirectory.
+add_subdirectory ( Framework )
+
+# Engine subdirectory.
+add_subdirectory ( Engine )
