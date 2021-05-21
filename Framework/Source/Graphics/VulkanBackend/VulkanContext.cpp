@@ -1,5 +1,6 @@
 // Recluse
 #include "VulkanContext.hpp"
+#include "VulkanDevice.hpp"
 #include "Core/Messaging.hpp"
 #include <vector>
 
@@ -84,31 +85,31 @@ static std::vector<const char*> loadLayers(EnableLayerFlags flags)
 }
 
 
-ErrType VulkanContext::initialize(const ApplicationInfo& appInfo, EnableLayerFlags flags)
+ErrType VulkanContext::onInitialize(const ApplicationInfo& appInfo, EnableLayerFlags flags)
 {
     std::vector<const char*> extensions = loadExtensions();
     std::vector<const char*> layers = loadLayers(flags);
 
-    VkApplicationInfo nativeAppInfo = { };    
-    VkInstanceCreateInfo createInfo = { };
+    VkApplicationInfo nativeAppInfo     = { };    
+    VkInstanceCreateInfo createInfo     = { };
 
-    m_appName = appInfo.appName;
-    m_engineName = appInfo.engineName;
+    m_appName                           = appInfo.appName;
+    m_engineName                        = appInfo.engineName;
 
-    nativeAppInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    nativeAppInfo.apiVersion = VK_API_VERSION_1_0;
-    nativeAppInfo.pApplicationName = appInfo.appName;
-    nativeAppInfo.pEngineName = appInfo.engineName;
-    nativeAppInfo.engineVersion = VK_MAKE_VERSION(appInfo.engineMajor, appInfo.engineMinor, appInfo.enginePatch);
-    nativeAppInfo.applicationVersion = VK_MAKE_VERSION(appInfo.appMajor, appInfo.appMinor, appInfo.appPatch);
+    nativeAppInfo.sType                 = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    nativeAppInfo.apiVersion =          VK_API_VERSION_1_0;
+    nativeAppInfo.pApplicationName      = appInfo.appName;
+    nativeAppInfo.pEngineName           = appInfo.engineName;
+    nativeAppInfo.engineVersion         = VK_MAKE_VERSION(appInfo.engineMajor, appInfo.engineMinor, appInfo.enginePatch);
+    nativeAppInfo.applicationVersion    = VK_MAKE_VERSION(appInfo.appMajor, appInfo.appMinor, appInfo.appPatch);
     nativeAppInfo.pNext = nullptr;
     
-    createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    createInfo.pApplicationInfo = &nativeAppInfo;
-    createInfo.enabledLayerCount = (U32)layers.size();
-    createInfo.ppEnabledLayerNames = layers.data();
-    createInfo.enabledExtensionCount = (U32)extensions.size();
-    createInfo.ppEnabledExtensionNames = extensions.data();
+    createInfo.sType                    = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    createInfo.pApplicationInfo         = &nativeAppInfo;
+    createInfo.enabledLayerCount        = (U32)layers.size();
+    createInfo.ppEnabledLayerNames      = layers.data();
+    createInfo.enabledExtensionCount    = (U32)extensions.size();
+    createInfo.ppEnabledExtensionNames  = extensions.data();
 
     VkResult result = vkCreateInstance(&createInfo, nullptr, &m_instance);
     if (result != VK_SUCCESS) {
@@ -116,6 +117,9 @@ ErrType VulkanContext::initialize(const ApplicationInfo& appInfo, EnableLayerFla
     }
 
     R_DEBUG("Vulkan", "Application: %s\nEngine: %s", m_appName.c_str(), m_engineName.c_str());
+
+    m_engineVersion = nativeAppInfo.engineVersion;
+    m_appVersion = nativeAppInfo.applicationVersion;
 
     return 0;
 }
@@ -127,7 +131,7 @@ void VulkanContext::nullify()
 }
 
 
-void VulkanContext::destroy()
+void VulkanContext::onDestroy()
 {
     if (m_instance) {
         vkDestroyInstance(m_instance, nullptr);
@@ -139,5 +143,26 @@ void VulkanContext::destroy()
 PFN_vkVoidFunction VulkanContext::getProcAddr(const char* funcName)
 {
     return vkGetInstanceProcAddr(m_instance, funcName);
+}
+
+
+void VulkanContext::queryGraphicsAdapters()
+{
+    std::vector<VulkanPhysicalDevice> devices = VulkanPhysicalDevice::getAvailablePhysicalDevices(*this);
+    std::vector<GraphicsAdapter*> adapters(devices.size());
+
+    for (U32 i = 0; i < adapters.size(); ++i) {
+        adapters[i] = new VulkanPhysicalDevice(devices[i]);
+    }
+
+    m_graphicsAdapters = adapters;
+}
+
+
+void VulkanContext::freeGraphicsAdapters()
+{
+    for (U32 i = 0; i < m_graphicsAdapters.size(); ++i) {
+        delete m_graphicsAdapters[i];
+    }
 }
 } // Recluse

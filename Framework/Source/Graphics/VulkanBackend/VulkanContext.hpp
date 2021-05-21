@@ -2,39 +2,28 @@
 #pragma once
 
 #include "Core/Types.hpp"
+#include "Graphics/GraphicsContext.hpp"
 #include <vulkan/vulkan.h>
 
 
 namespace Recluse {
 
-enum LayerFeatures {
-    LAYER_FEATURE_RAY_TRACING_BIT   = (1 << 0),
-    LAYER_FEATURE_MESH_SHADING_BIT  = (1 << 1),
-    LAYER_FEATURE_DEBUG_VALIDATION_BIT         = (1 << 2),
-    LAYER_FEATURE_API_DUMP_BIT      = (1 << 3)
-};
-
-typedef U32 EnableLayerFlags;
-
-struct ApplicationInfo {
-    const char* appName;
-    const char* engineName;
-    U32         appMajor : 10;
-    U32         appMinor : 10;
-    U32         appPatch : 12;
-    U32         engineMajor : 10;
-    U32         engineMinor : 10;
-    U32         enginePatch : 12;
-};
-
-class VulkanContext {
+class VulkanContext : public GraphicsContext {
 public:
 
-    ErrType initialize(const ApplicationInfo& appInfo, EnableLayerFlags layerFlags);
+    // Initialize the vulkan context.
+    ErrType onInitialize(const ApplicationInfo& appInfo, EnableLayerFlags layerFlags) override;
 
-    void destroy();
+    // Destroy the vulkan context. Be sure to clean up all resources and device, before
+    // destroying vulkan context.
+    void onDestroy() override;
 
+    // Getter functions.
     VkInstance get() {
+        return m_instance;
+    }
+
+    VkInstance get() const {
         return m_instance;
     }
 
@@ -42,8 +31,20 @@ public:
         return get();
     }
 
+    VkInstance operator()() const {
+        return get();
+    }
+
+    // Get process address.
     PFN_vkVoidFunction getProcAddr(const char* funcName);
 
+    std::string getAppName() { return m_appName; }
+    std::string getEngineName() { return m_engineName; }
+
+    void queryGraphicsAdapters() override;
+    void freeGraphicsAdapters() override;
+
+    
 private:
 
     void nullify();
