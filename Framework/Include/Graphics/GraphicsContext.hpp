@@ -8,7 +8,7 @@
 namespace Recluse {
 
 
-enum LayerFeatures {
+enum R_EXPORT LayerFeatures {
     LAYER_FEATURE_RAY_TRACING_BIT   = (1 << 0),
     LAYER_FEATURE_MESH_SHADING_BIT  = (1 << 1),
     LAYER_FEATURE_DEBUG_VALIDATION_BIT         = (1 << 2),
@@ -19,7 +19,7 @@ enum LayerFeatures {
 typedef U32 EnableLayerFlags;
 
 
-struct ApplicationInfo {
+struct R_EXPORT ApplicationInfo {
     const char* appName;
     const char* engineName;
     U32         appMajor : 10;
@@ -37,19 +37,19 @@ class GraphicsAdapter;
 class GraphicsContext {
 public:
 
-    ErrType initialize(const ApplicationInfo& appInfo, EnableLayerFlags flags) { 
+    R_EXPORT ErrType initialize(const ApplicationInfo& appInfo, EnableLayerFlags flags) { 
         ErrType err = onInitialize(appInfo, flags);
         queryGraphicsAdapters();
         return err;
     }
 
-    void destroy() { 
+    R_EXPORT void destroy() { 
         freeGraphicsAdapters();
         onDestroy();
     }
 
     // Get available adapters.
-    std::vector<GraphicsAdapter*>& getGraphicsAdapters() { return m_graphicsAdapters; }
+    R_EXPORT std::vector<GraphicsAdapter*>& getGraphicsAdapters() { return m_graphicsAdapters; }
 
 protected:
     // Called in initialize.

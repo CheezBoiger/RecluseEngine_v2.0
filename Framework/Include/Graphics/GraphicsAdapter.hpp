@@ -13,17 +13,34 @@ enum GraphicsVendor {
     VENDOR_AMD
 };
 
-struct AdapterInfo {
-    std::string     deviceName;
+struct R_EXPORT AdapterInfo {
+    char            deviceName[256];
     U32             vendorId;
     GraphicsVendor  vendor;
 };
 
-class GraphicsAdapter {
+
+struct R_EXPORT AdapterLimits {
+    
+};
+
+struct R_EXPORT DeviceCreateInfo {
+
+};
+
+class GraphicsDevice;
+
+class R_EXPORT GraphicsAdapter {
 public:
 
     virtual ErrType getAdapterInfo(AdapterInfo* out) const { return 0; }
     virtual ErrType getAdapterLimits() const { return 0; }
+
+    // Creates a device from this adapter.
+    virtual ErrType createDevice(DeviceCreateInfo* info, GraphicsDevice** ppDevice) { return 0; }
+
+    // Destroys the device associated with this adapter.
+    virtual ErrType destroyDevice(GraphicsDevice* pDevice) { return 0; }
 };
 
 

@@ -1,6 +1,7 @@
 // Recluse
 #include "VulkanContext.hpp"
 #include "VulkanDevice.hpp"
+#include "VulkanAdapter.hpp"
 #include "Core/Messaging.hpp"
 #include <vector>
 
@@ -148,11 +149,11 @@ PFN_vkVoidFunction VulkanContext::getProcAddr(const char* funcName)
 
 void VulkanContext::queryGraphicsAdapters()
 {
-    std::vector<VulkanPhysicalDevice> devices = VulkanPhysicalDevice::getAvailablePhysicalDevices(*this);
+    std::vector<VulkanAdapter> devices = VulkanAdapter::getAvailablePhysicalDevices(*this);
     std::vector<GraphicsAdapter*> adapters(devices.size());
 
     for (U32 i = 0; i < adapters.size(); ++i) {
-        adapters[i] = new VulkanPhysicalDevice(devices[i]);
+        adapters[i] = new VulkanAdapter(devices[i]);
     }
 
     m_graphicsAdapters = adapters;

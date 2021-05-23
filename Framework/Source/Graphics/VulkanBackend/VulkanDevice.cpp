@@ -1,110 +1,40 @@
 //
 #include "VulkanDevice.hpp"
-
+#include "VulkanAdapter.hpp"
 #include "Core/Messaging.hpp"
 
+#include "Graphics/GraphicsAdapter.hpp"
 
 namespace Recluse {
 
 
-std::vector<VulkanPhysicalDevice> VulkanPhysicalDevice::getAvailablePhysicalDevices(const VulkanContext& ctx)
+ErrType VulkanDevice::initialize(const VulkanAdapter& adapter, DeviceCreateInfo* info)
 {
-    std::vector<VulkanPhysicalDevice> physicalDevices;
-    U32 count = 0;
-    VkResult result = vkEnumeratePhysicalDevices(ctx(), &count, nullptr);
-    
-    if (count == 0) {
-
-        R_ERR("Vulkan", "No physical devices that support vulkan!");
-
-        return physicalDevices;
-    }
-
-    if (result == VK_SUCCESS) {
-        std::vector<VkPhysicalDevice> devices(count);
-
-        physicalDevices.resize(count);
-
-        vkEnumeratePhysicalDevices(ctx(), &count, devices.data());
-
-        R_DEBUG("Vulkan", "There are %d vulkan devices.", count);        
-
-        for (U32 i = 0; i < count; ++i) {
-            VulkanPhysicalDevice device;
-            device.m_phyDevice = devices[i];
-            physicalDevices[i] = device;
-        }
-    }
-
-    return physicalDevices;
-}
-
-
-VkPhysicalDeviceProperties VulkanPhysicalDevice::getProperties() const
-{
-    VkPhysicalDeviceProperties props = { };
-    vkGetPhysicalDeviceProperties(m_phyDevice, &props);
-    return props;
-}
-
-
-VkPhysicalDeviceMemoryProperties VulkanPhysicalDevice::getMemoryProperties() const
-{
-    VkPhysicalDeviceMemoryProperties props = { };
-    vkGetPhysicalDeviceMemoryProperties(m_phyDevice, &props);
-    return props;
-}
-
-
-VkPhysicalDeviceFeatures VulkanPhysicalDevice::getFeatures() const
-{
-    VkPhysicalDeviceFeatures features = { };
-    vkGetPhysicalDeviceFeatures(m_phyDevice, &features);
-    return features;
-}
-
-
-VkPhysicalDeviceMemoryProperties2 VulkanPhysicalDevice::getMemoryProperties2() const
-{
-    VkPhysicalDeviceMemoryProperties2 props = { };
-    vkGetPhysicalDeviceMemoryProperties2(m_phyDevice, &props);
-    return props;
-}
-
-
-VkPhysicalDeviceFeatures2 VulkanPhysicalDevice::getFeatures2() const
-{
-    VkPhysicalDeviceFeatures2 features = { };
-    vkGetPhysicalDeviceFeatures2(m_phyDevice, &features);
-    return features;
-}
-
-
-ErrType VulkanPhysicalDevice::getAdapterInfo(AdapterInfo* out) const
-{
-    VkPhysicalDeviceProperties properties = getProperties();
-    out->deviceName = properties.deviceName;
-    out->vendorId = properties.vendorID;
-
-    return 0;
-}
-
-
-ErrType VulkanDevice::initialize(const GraphicsAdapter& adapter)
-{
-    const VulkanPhysicalDevice& nativeAdapter = static_cast<const VulkanPhysicalDevice&>(adapter);
+    const VulkanAdapter& nativeAdapter = static_cast<const VulkanAdapter&>(adapter);
+    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos; 
     VkDeviceCreateInfo createInfo = { };
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+
+    std::vector<VkQueueFamilyProperties> queueFamilies = nativeAdapter.getQueueFamilyProperties();
+
+    for (U32 i = 0; i < queueFamilies.size(); ++i) {
+        //queueFamilies[i];
+        //VkDeviceQueueCreateInfo deviceInfo;
+        
+    }
     
+    createInfo.pQueueCreateInfos = queueCreateInfos.data();
+    createInfo.queueCreateInfoCount = (U32)queueCreateInfos.size();
+
     VkResult result = vkCreateDevice(nativeAdapter(), &createInfo, nullptr, &m_device);
-    
+
     if (result != VK_SUCCESS) {
 
         R_ERR("Vulkan", "Failed to create vulkan device!");
         
         return -1;
     }
-
+    
     return 0;
 }
 
