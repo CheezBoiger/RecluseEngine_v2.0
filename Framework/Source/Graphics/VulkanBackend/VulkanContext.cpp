@@ -28,13 +28,13 @@ static std::vector<const char*> loadExtensions()
             properties.resize(count);
             vkEnumerateInstanceExtensionProperties(extensions[i], &count, properties.data());    
 
-            R_DEBUG("Vulkan", "Found extension %s : version %d ", 
+            R_DEBUG(R_CHANNEL_VULKAN, "Found extension %s : version %d ", 
                 properties[0].extensionName, properties[0].specVersion);
 
         } else {
             // Not supported.
 
-            R_ERR("Vulkan", "Extension %s not supported.", extensions[i]);
+            R_ERR(R_CHANNEL_VULKAN, "Extension %s not supported.", extensions[i]);
 
             extensions.erase(extensions.begin() + i);
             --i;
@@ -68,7 +68,7 @@ static std::vector<const char*> loadLayers(EnableLayerFlags flags)
             if (strcmp(desiredLayers[i], properties.layerName) == 0) {
                 found = true;    
         
-                R_DEBUG("Vulkan", "Found layer %s : version %d", properties.layerName, properties.specVersion);
+                R_DEBUG(R_CHANNEL_VULKAN, "Found layer %s : version %d", properties.layerName, properties.specVersion);
 
                 break;
             }
@@ -76,7 +76,7 @@ static std::vector<const char*> loadLayers(EnableLayerFlags flags)
         if (!found) {
             // Remove and decrement search index by 1.
 
-            R_ERR("Vulkan", "%s was not found.", desiredLayers[i]);
+            R_ERR(R_CHANNEL_VULKAN, "%s was not found.", desiredLayers[i]);
 
             desiredLayers.erase(desiredLayers.begin() + i);
             --i;
@@ -117,7 +117,7 @@ ErrType VulkanContext::onInitialize(const ApplicationInfo& appInfo, EnableLayerF
         nullify();
     }
 
-    R_DEBUG("Vulkan", "Application: %s\nEngine: %s", m_appName.c_str(), m_engineName.c_str());
+    R_DEBUG(R_CHANNEL_VULKAN, "Application: %s\nEngine: %s", m_appName.c_str(), m_engineName.c_str());
 
     m_engineVersion = nativeAppInfo.engineVersion;
     m_appVersion = nativeAppInfo.applicationVersion;

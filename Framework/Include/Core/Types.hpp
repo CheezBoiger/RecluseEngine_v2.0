@@ -40,8 +40,7 @@ typedef U64 SizeT;
 typedef U32 PtrType;
 typedef U32 SizeT;
 #endif
-#else
-#error "Only Win32 operating systems supported!"
 #endif
+
 } // Recluse
 #endif // RECLUSE_TYPES_HPP

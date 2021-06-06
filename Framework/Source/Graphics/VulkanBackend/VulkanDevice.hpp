@@ -18,6 +18,9 @@ public:
 
     ErrType initialize(const VulkanAdapter& iadapter, DeviceCreateInfo* info);
 
+    ErrType createSwapchain(GraphicsSwapchain** ppSwapchain, U32 desiredFrames, 
+        U32 renderWidth, U32 renderHeight) override;
+
     void destroy();
 
     VkDevice operator()() {

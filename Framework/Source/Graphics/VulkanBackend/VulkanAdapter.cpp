@@ -14,7 +14,7 @@ std::vector<VulkanAdapter> VulkanAdapter::getAvailablePhysicalDevices(const Vulk
     
     if (count == 0) {
 
-        R_ERR("Vulkan", "No physical devices that support vulkan!");
+        R_ERR(R_CHANNEL_VULKAN, "No physical devices that support vulkan!");
 
         return physicalDevices;
     }
@@ -26,7 +26,7 @@ std::vector<VulkanAdapter> VulkanAdapter::getAvailablePhysicalDevices(const Vulk
 
         vkEnumeratePhysicalDevices(ctx(), &count, devices.data());
 
-        R_DEBUG("Vulkan", "There are %d vulkan devices.", count);        
+        R_DEBUG(R_CHANNEL_VULKAN, "There are %d vulkan devices.", count);        
 
         for (U32 i = 0; i < count; ++i) {
             VulkanAdapter device;
@@ -92,14 +92,14 @@ ErrType VulkanAdapter::getAdapterInfo(AdapterInfo* out) const
 ErrType VulkanAdapter::createDevice(DeviceCreateInfo* info, GraphicsDevice** ppDevice) 
 {
 
-    R_DEBUG("Vulkan", "Creating device!");
+    R_DEBUG(R_CHANNEL_VULKAN, "Creating device!");
 
     VulkanDevice* pDevice = new VulkanDevice();
     ErrType err = pDevice->initialize(*this, info);
     
     if (err != 0) {
         
-        R_ERR("Vulkan", "Failed to initialize device!");
+        R_ERR(R_CHANNEL_VULKAN, "Failed to initialize device!");
 
         delete pDevice;
         return -1;
@@ -117,7 +117,7 @@ ErrType VulkanAdapter::destroyDevice(GraphicsDevice* pDevice)
     for (auto& iter = m_devices.begin(); iter != m_devices.end(); ++iter) {
         if (*iter == pDevice) {    
 
-            R_DEBUG("Vulkan", "Destroying device!");
+            R_DEBUG(R_CHANNEL_VULKAN, "Destroying device!");
 
             (*iter)->destroy();
 
@@ -128,7 +128,7 @@ ErrType VulkanAdapter::destroyDevice(GraphicsDevice* pDevice)
         }
     }
 
-    R_ERR("Vulkan", "Device does not belong to this adapter!");   
+    R_ERR(R_CHANNEL_VULKAN, "Device does not belong to this adapter!");   
  
     return 0;
 }
@@ -142,7 +142,7 @@ std::vector<VkQueueFamilyProperties> VulkanAdapter::getQueueFamilyProperties() c
 
     if (count == 0) {
     
-        R_ERR("Vulkan", "No queue families reported by the driver!");
+        R_ERR(R_CHANNEL_VULKAN, "No queue families reported by the driver!");
         
         return properties;
     }

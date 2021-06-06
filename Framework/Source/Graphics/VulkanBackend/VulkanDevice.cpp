@@ -1,6 +1,7 @@
 //
 #include "VulkanDevice.hpp"
 #include "VulkanAdapter.hpp"
+#include "VulkanSwapchain.hpp"
 #include "Core/Messaging.hpp"
 
 #include "Graphics/GraphicsAdapter.hpp"
@@ -23,14 +24,14 @@ ErrType VulkanDevice::initialize(const VulkanAdapter& adapter, DeviceCreateInfo*
         
     }
     
-    createInfo.pQueueCreateInfos = queueCreateInfos.data();
+    createInfo.pQueueCreateInfos    = queueCreateInfos.data();
     createInfo.queueCreateInfoCount = (U32)queueCreateInfos.size();
 
     VkResult result = vkCreateDevice(nativeAdapter(), &createInfo, nullptr, &m_device);
 
     if (result != VK_SUCCESS) {
 
-        R_ERR("Vulkan", "Failed to create vulkan device!");
+        R_ERR(R_CHANNEL_VULKAN, "Failed to create vulkan device!");
         
         return -1;
     }
@@ -45,8 +46,27 @@ void VulkanDevice::destroy()
         vkDestroyDevice(m_device, nullptr);
         m_device = VK_NULL_HANDLE;
 
-        R_DEBUG("Vulkan", "Device Destroyed.");
+        R_DEBUG(R_CHANNEL_VULKAN, "Device Destroyed.");
 
     }
+}
+
+
+ErrType VulkanDevice::createSwapchain(GraphicsSwapchain** ppSwapchain, U32 desiredFrames, 
+    U32 renderWidth, U32 renderHeight)
+{
+
+    VulkanSwapchain* pSwapchain = new VulkanSwapchain();
+
+    ErrType result = pSwapchain->build(m_device, desiredFrames, renderWidth, renderHeight);
+
+    if (result != 0) {
+        
+        R_ERR(R_CHANNEL_VULKAN, "Swapchain failed to create");
+
+        return -1;
+    }
+
+    return result;
 }
 } // Recluse

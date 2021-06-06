@@ -3,7 +3,7 @@
 
 #include "Core/Types.hpp"
 #include "Graphics/GraphicsContext.hpp"
-#include <vulkan/vulkan.h>
+#include "VulkanCommons.hpp"
 
 
 namespace Recluse {

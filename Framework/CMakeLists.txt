@@ -22,7 +22,7 @@ include ( CMake/Graphics.cmake )
 include ( Cmake/Animation.cmake )
 
 add_library (               ${RECLUSE_FRAMEWORK_NAME} SHARED    ${RECLUSE_FRAMEWORK_COMPILE_FILES} ) 
-target_include_directories( ${RECLUSE_FRAMEWORK_NAME} PUBLIC    ${RECLUSE_FRAMEWORK_INCLUDE_FILES} )
+target_include_directories( ${RECLUSE_FRAMEWORK_NAME} PUBLIC    ${RECLUSE_FRAMEWORK_INCLUDE_FILES} ${RECLUSE_FRAMEWORK_SOURCE} )
 target_link_libraries (     ${RECLUSE_FRAMEWORK_NAME}           ${RECLUSE_FRAMEWORK_LINK_BINARIES} )
 
 # Doing some stuff for organization.
