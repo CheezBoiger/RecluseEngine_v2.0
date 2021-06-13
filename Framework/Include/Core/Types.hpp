@@ -42,5 +42,14 @@ typedef U32 SizeT;
 #endif
 #endif
 
+enum RecResult {
+    REC_RESULT_OK,
+    REC_RESULT_FAILED = -999,
+    REC_RESULT_INVALID_ARGS,
+    REC_RESULT_NULL_PTR_EXCEPTION,
+    REC_RESULT_CORRUPT_MEMORY,
+    REC_RESULT_NOT_IMPLEMENTED
+};
+
 } // Recluse
 #endif // RECLUSE_TYPES_HPP

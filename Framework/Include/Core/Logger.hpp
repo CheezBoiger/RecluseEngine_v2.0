@@ -30,6 +30,8 @@ struct Log {
         channel = chan;
     }
 
+    ~Log();
+
     template<typename Type>
     Log& operator<<(const Type& data) {
         message += std::to_string(data);

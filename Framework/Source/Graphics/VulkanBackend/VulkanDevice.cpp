@@ -1,5 +1,6 @@
 //
 #include "VulkanDevice.hpp"
+#include "VulkanContext.hpp"
 #include "VulkanAdapter.hpp"
 #include "VulkanSwapchain.hpp"
 #include "Core/Messaging.hpp"
@@ -52,13 +53,14 @@ void VulkanDevice::destroy()
 }
 
 
-ErrType VulkanDevice::createSwapchain(GraphicsSwapchain** ppSwapchain, U32 desiredFrames, 
-    U32 renderWidth, U32 renderHeight)
+ErrType VulkanDevice::createSwapchain(GraphicsSwapchain** ppSwapchain, GraphicsContext* pContext,
+    const SwapchainCreateDescription* pDesc)
 {
 
-    VulkanSwapchain* pSwapchain = new VulkanSwapchain();
-
-    ErrType result = pSwapchain->build(m_device, desiredFrames, renderWidth, renderHeight);
+    VulkanSwapchain* pSwapchain     = new VulkanSwapchain();
+    VulkanContext*   pNativeContext = static_cast<VulkanContext*>(pContext);
+ 
+    ErrType result = pSwapchain->build(m_device, pNativeContext, pDesc);
 
     if (result != 0) {
         

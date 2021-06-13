@@ -18,8 +18,8 @@ public:
 
     ErrType initialize(const VulkanAdapter& iadapter, DeviceCreateInfo* info);
 
-    ErrType createSwapchain(GraphicsSwapchain** ppSwapchain, U32 desiredFrames, 
-        U32 renderWidth, U32 renderHeight) override;
+    ErrType createSwapchain(GraphicsSwapchain** ppSwapchain, GraphicsContext* pContext, 
+        const SwapchainCreateDescription* pDesc) override;
 
     void destroy();
 
