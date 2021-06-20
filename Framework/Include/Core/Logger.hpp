@@ -30,7 +30,7 @@ struct Log {
         channel = chan;
     }
 
-    ~Log();
+    R_EXPORT ~Log();
 
     template<typename Type>
     Log& operator<<(const Type& data) {

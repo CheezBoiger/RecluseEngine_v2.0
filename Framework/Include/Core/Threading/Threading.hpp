@@ -29,4 +29,13 @@ R_EXPORT ErrType stopThread(Thread* thread);
 R_EXPORT ErrType detachThread(Thread* thread);
 R_EXPORT ErrType joinThread(Thread* thread);
 R_EXPORT ErrType killThread(Thread* thread);
+
+R_EXPORT void* createMutex();
+R_EXPORT ErrType lockMutex(void* mutex);
+R_EXPORT ErrType unlockMutex(void* mutex);
+R_EXPORT ErrType waitMutex(void* mutex, U64 waitTimeMs);
+R_EXPORT ErrType destroyMutex(void* mutex);
+
+R_EXPORT ErrType atomicAdd();
+R_EXPORT ErrType atomicSub();
 } // Recluse

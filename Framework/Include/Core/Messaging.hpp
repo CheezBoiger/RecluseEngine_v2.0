@@ -14,6 +14,8 @@
 
 #define R_ERR(chan, format, ...) R_LOG(chan, Recluse::LogError, format, __VA_ARGS__)
 #define R_INFO(chan, format, ...) R_LOG(chan, Recluse::LogInfo, format, __VA_ARGS__)
+#define R_WARN(chan, format, ...) R_LOG(chan, Recluse:::LogWarn, format, __VA_ARGS__)
+#define R_VERBOSE(chan, format, ...) R_LOG(chan, Recluse::LogVerbose, format, __VA_ARGS__)
 
 #if !defined(RECLUSE_DEBUG)
 #include <assert.h>
