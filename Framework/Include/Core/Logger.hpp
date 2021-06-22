@@ -15,7 +15,9 @@ enum LogType {
     LogDebug        = (1 << 1),
     LogWarn         = (1 << 2),
     LogVerbose      = (1 << 3),
-    LogDontStore    = (1 << 4)
+    LogInfo         = (1 << 4),
+    LogDontStore    = (1 << 5),
+    LogTrace        = (1 << 6)
 };
 
 typedef U32 LogTypeFlags;

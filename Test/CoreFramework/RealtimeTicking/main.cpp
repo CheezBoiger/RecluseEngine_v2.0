@@ -15,7 +15,7 @@ int main()
 
     // initialize our max time.
     F32 seconds     = 0.f;
-    F32 maxTimeS    = 5.0f;
+    F32 maxTimeS    = 60.0f;
 
     while(1) {
 

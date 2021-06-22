@@ -11,10 +11,35 @@ static LoggingQueue*    loggingQueue;
 static Thread           displayThread;
 static volatile B32     isLogging           = true;
 
+// TODO: Check if these colors work for most windows machines.
+
+#define R_COLOR_RED     "\x1b[31m"
+#define R_COLOR_GREEN   "\x1b[32m"
+#define R_COLOR_YELLOW  "\x1b[33m"
+#define R_COLOR_BLUE    "\x1b[34m"
+#define R_COLOR_MAGENTA "\x1b[35m"
+#define R_COLOR_CYAN    "\x1b[36m"
+
+#define R_COLOR_BRIGHT  "\x1b[1m"
+#define R_COLOR_RESET   "\x1b[0m"
 
 static void printLog(const Log* log)
 {
-    printf("%s: %s\n", log->channel.c_str(), log->message.c_str());
+    char* color = R_COLOR_RESET;
+
+    switch (log->type) {
+        case LogWarn: color = R_COLOR_YELLOW; break;
+        case LogDebug: color = R_COLOR_MAGENTA; break;
+
+        case LogVerbose: color = R_COLOR_CYAN; break;
+        case LogError: color = R_COLOR_RED; break;        
+        case LogTrace: color = R_COLOR_GREEN; break;
+        case LogInfo: 
+        case LogMsg:
+        default: break;
+    }
+
+    printf("%s %s: %s" R_COLOR_RESET "\n", color, log->channel.c_str(), log->message.c_str());
 }
 
 
