@@ -32,6 +32,8 @@ ErrType createThread(Thread* pThread, ThreadFunction startRoutine)
         return REC_RESULT_FAILED;
     }
 
+    pThread->handle = handle;
+
     return REC_RESULT_OK;
 }
 

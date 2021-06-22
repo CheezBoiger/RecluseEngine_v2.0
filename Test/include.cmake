@@ -1,5 +1,5 @@
 set ( RECLUSE_FRAMEWORK_INCLUDE ${CMAKE_SOURCE_DIR}/../Framework/Include)
-set ( RECLUSE_FRAMEWORK_LIB ${CMAKE_SOURCE_DIR}/../Recluse/Debug/Bin/RecluseFramework.lib)
+set ( RECLUSE_FRAMEWORK_LIB ${CMAKE_SOURCE_DIR}/../Recluse/Debug/Lib/RecluseFramework.lib)
 
 function(initialize_recluse_framework TARGET_NAME )
     message(STATUS "Recluse: Linking ${TARGET_NAME} with Recluse Framework")

@@ -14,7 +14,8 @@ enum LogType {
     LogError        = (1 << 0),
     LogDebug        = (1 << 1),
     LogWarn         = (1 << 2),
-    LogVerbose      = (1 << 3)
+    LogVerbose      = (1 << 3),
+    LogDontStore    = (1 << 4)
 };
 
 typedef U32 LogTypeFlags;
@@ -25,7 +26,10 @@ struct Log {
     std::chrono::high_resolution_clock::time_point  timestamp;
     LogType type;
 
-    Log(LogType type, const std::string& chan = u8"") {
+    static R_EXPORT void initializeLoggingSystem();
+    static R_EXPORT void destroyLoggingSystem();
+
+    Log(LogType type = LogMsg, const std::string& chan = u8"") {
         this->type = type;
         channel = chan;
     }
@@ -57,7 +61,9 @@ struct Log {
 };
 
 
-void setLogMask(LogTypeFlags enableFlags);
-void setLogChannel(const std::string& channel, B8 enable);
+void    setLogMask(LogTypeFlags enableFlags);
+void    setLogChannel(const std::string& channel, B8 enable);
 
+// Display logging info to standard output.
+void    enableStandardOutput(B32 enable);
 } // Recluse

@@ -11,26 +11,26 @@
 namespace Recluse {
 
 
-typedef unsigned char U8;
-typedef char I8;
+typedef unsigned char       U8;
+typedef char                I8;
 
-typedef unsigned short U16;
-typedef short I16;
+typedef unsigned short      U16;
+typedef short               I16;
 
-typedef unsigned U32;
-typedef signed I32;
+typedef unsigned            U32;
+typedef signed              I32;
 
-typedef unsigned long long U64;
-typedef signed long long I64;
+typedef unsigned long long  U64;
+typedef signed long long    I64;
 
-typedef float F32;
-typedef double F64;
+typedef float               F32;
+typedef double              F64;
 
-typedef I8 B8;
-typedef I32 B32;
-typedef I64 B64;
+typedef I8                  B8;
+typedef I32                 B32;
+typedef I64                 B64;
 
-typedef I64 ErrType;
+typedef I32                 ErrType;
 
 #if defined(RECLUSE_WINDOWS)
 #if defined(RECLUSE_64BIT)
@@ -40,6 +40,12 @@ typedef U64 SizeT;
 typedef U32 PtrType;
 typedef U32 SizeT;
 #endif
+#endif
+
+#if defined(RECLUSE_64BIT)
+#define ARCH_PTR_SZ_BYTES 8
+#else
+#define ARCH_PTR_SZ_BYTES 4
 #endif
 
 enum RecResult {

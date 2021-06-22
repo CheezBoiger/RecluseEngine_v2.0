@@ -11,6 +11,7 @@ MemoryPool::MemoryPool(U64 szBytes, U64 pageSz)
     : m_baseAddr(0ull)
     , m_pageSzBytes(pageSz)
     , m_totalSzBytes(0ull)
+    , m_pScanStart(nullptr)
 {
     U64 allocationSizeBytes = szBytes;
     if (pageSz <= 4096ull)
@@ -18,7 +19,7 @@ MemoryPool::MemoryPool(U64 szBytes, U64 pageSz)
         
     }
 
-    m_baseAddr = (U64)malloc(allocationSizeBytes);
+    m_baseAddr = (PtrType)malloc(allocationSizeBytes);
     m_pageSzBytes = pageSz;
     m_totalSzBytes = allocationSizeBytes;
 }

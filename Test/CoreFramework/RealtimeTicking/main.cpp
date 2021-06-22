@@ -2,11 +2,14 @@
 #include <iostream>
 #include "Core/Messaging.hpp"
 #include "Core/RealtimeTick.hpp"
+#include "Core/Messaging.hpp"
 
 using namespace Recluse;
 
 int main()
 {
+    Log::initializeLoggingSystem();
+
     // Initialize the realtime tick.
     RealtimeTick::initialize();
 
@@ -20,13 +23,15 @@ int main()
         RealtimeTick tick   = RealtimeTick::GetTick();
         seconds            += tick.getDeltaTimeS();
 
-        printf("Current Time: %f, Delta Time: %f Seconds: %f\n", tick.getCurrentTimeS(), tick.getDeltaTimeS(), seconds);
+        R_DEBUG("TIMING", "Current Time: %f, Delta Time: %f Seconds: %f", tick.getCurrentTimeS(), tick.getDeltaTimeS(), seconds);
 
         if (seconds >= maxTimeS) {
             break;
         }
 
     }
+
+    Log::destroyLoggingSystem();
 
     return 0;
 }
