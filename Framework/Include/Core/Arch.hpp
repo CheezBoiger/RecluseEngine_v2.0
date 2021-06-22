@@ -1,10 +1,8 @@
 // Recluse 
 #pragma once
 
-#include "Core/Types.hpp"
-
 #if defined(_WIN32)
-#define RECLUSE_WINDOWS
+#define RECLUSE_WINDOWS 1
 #define R_EXPORT __declspec(dllexport)
 #define R_IMPORT __declspec(dllimport)
 #if defined(_M_X64) || defined(_M_AMD64)

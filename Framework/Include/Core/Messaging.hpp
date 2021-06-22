@@ -4,6 +4,10 @@
 #include "Logger.hpp"
 #include <stdio.h>
 
+#if defined(_DEBUG)
+#define RECLUSE_DEBUG 1
+#endif
+
 // Logging functions.
 #define R_LOG(chan, logType, format, ...) { \
     Recluse::Log r__log__(logType, chan); \
@@ -18,13 +22,13 @@
 #define R_VERBOSE(chan, format, ...) R_LOG(chan, Recluse::LogVerbose, format, __VA_ARGS__)
 #define R_TRACE(chan, format, ...) R_LOG(chan, Recluse::LogTrace, format, __VA_ARGS__)
 
-#if !defined(RECLUSE_DEBUG)
+#if defined(RECLUSE_DEBUG)
 #include <assert.h>
 #define R_ASSERT_LOG()
 #define R_ASSERT(expression) assert(expression)
 #define R_DEBUG(chan, str, ...) R_LOG(chan, Recluse::LogDebug, str, __VA_ARGS__)
 #else
 #define R_ASSERT_LOG()
-#define R_ASSERT()
-#define R_DEBUG(str, ...)
+#define R_ASSERT(expression)
+#define R_DEBUG(chan, str, ...)
 #endif
