@@ -23,7 +23,7 @@ int main()
         RealtimeTick tick   = RealtimeTick::GetTick();
         seconds            += tick.getDeltaTimeS();
 
-        R_DEBUG("TIMING", "Current Time: %f, Delta Time: %f Seconds: %f", tick.getCurrentTimeS(), tick.getDeltaTimeS(), seconds);
+        R_VERBOSE("TIMING", "Current Time: %f, Delta Time: %f Seconds: %f", tick.getCurrentTimeS(), tick.getDeltaTimeS(), seconds);
 
         if (seconds >= maxTimeS) {
             break;

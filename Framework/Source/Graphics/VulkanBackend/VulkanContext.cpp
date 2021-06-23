@@ -11,47 +11,71 @@ namespace Recluse {
 static std::vector<const char*> loadExtensions()
 {
     std::vector<const char*> extensions = { 
+       VK_KHR_SURFACE_EXTENSION_NAME
 #if defined(RECLUSE_WINDOWS)
-    "VK_KHR_win32_surface",
+    , VK_KHR_WIN32_SURFACE_EXTENSION_NAME
 #endif
-    "VK_KHR_get_physical_device_properties2",
-    "VK_KHR_get_memory_requirements2"
+    , "VK_KHR_get_physical_device_properties2"
     };
 
-    for (U32 i = 0; i < extensions.size(); ++i) {
-        U32 count = 0;
-        std::vector<VkExtensionProperties> properties;
+    return extensions;
+}
 
-        VkResult result = vkEnumerateInstanceExtensionProperties(extensions[i], &count, nullptr);
 
-        if (result == VK_SUCCESS) {
-            properties.resize(count);
-            vkEnumerateInstanceExtensionProperties(extensions[i], &count, properties.data());    
+static void checkForValidExtensions(std::vector<const char*>& wantedExtensions)
+{
+    U32 count = 0;
+    std::vector<VkExtensionProperties> properties;
 
-            R_DEBUG(R_CHANNEL_VULKAN, "Found extension %s : version %d ", 
-                properties[0].extensionName, properties[0].specVersion);
+    VkResult result = vkEnumerateInstanceExtensionProperties(nullptr, &count, nullptr);
 
-        } else {
+    if (result != VK_SUCCESS) {
+
+        R_ERR(R_CHANNEL_VULKAN, "Failed to query for vulkan instance extensions!");
+
+        return;
+
+    }
+
+    properties.resize(count);
+    vkEnumerateInstanceExtensionProperties(nullptr, &count, properties.data());    
+
+
+    for (U32 i = 0; i < wantedExtensions.size(); ++i) {
+
+        B32 foundExtension = false;
+
+        for (U32 j = 0; j < properties.size(); ++j) {
+
+            if (strcmp(properties[j].extensionName, wantedExtensions[i]) == 0) {
+
+                R_DEBUG(R_CHANNEL_VULKAN, "Found extension %s : version %d ", 
+                    properties[j].extensionName, properties[j].specVersion);
+
+                foundExtension = true;
+                break;
+            } 
+
+        }
+
+        if (!foundExtension) {
             // Not supported.
 
-            R_ERR(R_CHANNEL_VULKAN, "Extension %s not supported.", extensions[i]);
+            R_ERR(R_CHANNEL_VULKAN, "Extension %s not supported.", wantedExtensions[i]);
 
-            extensions.erase(extensions.begin() + i);
+            wantedExtensions.erase(wantedExtensions.begin() + i);
+
             --i;
         }
+
     }
-    return extensions;
 }
 
 
 static std::vector<const char*> loadLayers(EnableLayerFlags flags)
 {
-    std::vector<VkLayerProperties> layerProperties;
-    U32 count = 0;
-    VkResult result = vkEnumerateInstanceLayerProperties(&count, nullptr);
-    layerProperties.resize(count);
-    result = vkEnumerateInstanceLayerProperties(&count, layerProperties.data());
     std::vector<const char*> desiredLayers = { };
+
     if (flags & LAYER_FEATURE_DEBUG_VALIDATION_BIT) {
         desiredLayers.push_back("VK_LAYER_KHRONOS_validation");
     }
@@ -59,30 +83,52 @@ static std::vector<const char*> loadLayers(EnableLayerFlags flags)
         desiredLayers.push_back("VK_LAYER_LUNARG_api_dump");
     }
 
+    return desiredLayers;
+}
+
+
+void checkForValidLayers(std::vector<const char*>& wantedLayers)
+{
+    std::vector<VkLayerProperties> layerProperties;
+    U32 count = 0;
+    VkResult result = vkEnumerateInstanceLayerProperties(&count, nullptr);
+
+    layerProperties.resize(count);
+    result = vkEnumerateInstanceLayerProperties(&count, layerProperties.data());
+
     // Seach and remove any layers that aren't available in the instance.
-    for (I32 i = 0; i < desiredLayers.size(); ++i) {
+    for (I32 i = 0; i < wantedLayers.size(); ++i) {
         B32 found = false;
         for (U32 j = 0; j < layerProperties.size(); ++j) {
+
             VkLayerProperties properties = layerProperties[j];
+
             // If 
-            if (strcmp(desiredLayers[i], properties.layerName) == 0) {
+            if (strcmp(wantedLayers[i], properties.layerName) == 0) {
+
                 found = true;    
         
                 R_DEBUG(R_CHANNEL_VULKAN, "Found layer %s : version %d", properties.layerName, properties.specVersion);
 
                 break;
             }
+
         }
+
         if (!found) {
+
             // Remove and decrement search index by 1.
 
-            R_ERR(R_CHANNEL_VULKAN, "%s was not found.", desiredLayers[i]);
+            R_ERR(R_CHANNEL_VULKAN, "%s was not found.", wantedLayers[i]);
 
-            desiredLayers.erase(desiredLayers.begin() + i);
+            wantedLayers.erase(wantedLayers.begin() + i);
+
             --i;
+
         }
+
     }
-    return desiredLayers;
+
 }
 
 
@@ -90,6 +136,9 @@ ErrType VulkanContext::onInitialize(const ApplicationInfo& appInfo, EnableLayerF
 {
     std::vector<const char*> extensions = loadExtensions();
     std::vector<const char*> layers = loadLayers(flags);
+
+    checkForValidExtensions(extensions);
+    checkForValidLayers(layers);
 
     VkApplicationInfo nativeAppInfo     = { };    
     VkInstanceCreateInfo createInfo     = { };
@@ -135,8 +184,14 @@ void VulkanContext::nullify()
 void VulkanContext::onDestroy()
 {
     if (m_instance) {
+
+        R_DEBUG(R_CHANNEL_VULKAN, "Destroying context...");
+
         vkDestroyInstance(m_instance, nullptr);
         nullify();
+
+        R_DEBUG(R_CHANNEL_VULKAN, "Successfully destroyed context!")
+
     }
 }
 

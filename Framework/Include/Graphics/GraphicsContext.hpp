@@ -33,9 +33,18 @@ struct R_EXPORT ApplicationInfo {
 
 class GraphicsAdapter;
 
+enum GraphicsAPI {
+    GRAPHICS_API_SOFTWARE,
+    GRAPHICS_API_VULKAN,
+    GRAPHICS_API_OPENGL,
+    GRAPHICS_API_D3D11,
+    GRAPHICS_API_D3D12
+};
 
 class GraphicsContext {
 public:
+
+    static R_EXPORT GraphicsContext* createContext(enum GraphicsAPI api = GRAPHICS_API_VULKAN);
 
     R_EXPORT ErrType initialize(const ApplicationInfo& appInfo, EnableLayerFlags flags) { 
         ErrType err = onInitialize(appInfo, flags);
