@@ -32,6 +32,7 @@ class GraphicsDevice;
 
 class R_EXPORT GraphicsAdapter {
 public:
+    virtual ~GraphicsAdapter() { }
 
     virtual ErrType getAdapterInfo(AdapterInfo* out) const { return 0; }
     virtual ErrType getAdapterLimits() const { return 0; }

@@ -4,6 +4,10 @@
 #include "Core/Types.hpp"
 #include <vector>
 
+// Vendor IDs
+#define NVIDIA_VENDOR_ID        0x10DE
+#define INTEL_VENDOR_ID         0x1F96
+#define AMD_VENDOR_ID           0x1022
 
 namespace Recluse {
 

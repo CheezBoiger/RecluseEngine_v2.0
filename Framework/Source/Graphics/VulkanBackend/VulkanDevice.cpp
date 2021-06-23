@@ -19,9 +19,37 @@ ErrType VulkanDevice::initialize(const VulkanAdapter& adapter, DeviceCreateInfo*
 
     std::vector<VkQueueFamilyProperties> queueFamilies = nativeAdapter.getQueueFamilyProperties();
 
+    // we just need one priority bit, since we are only allocating one queue for both graphics and compute. 
+    F32 priority = 1.0f;
+
     for (U32 i = 0; i < queueFamilies.size(); ++i) {
-        //queueFamilies[i];
-        //VkDeviceQueueCreateInfo deviceInfo;
+        VkDeviceQueueCreateInfo queueInfo       = { };
+        VkQueueFamilyProperties queueFamProps   = queueFamilies[i];
+        B32 shouldCreateQueues = false;
+
+        queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+
+        if (queueFamProps.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+
+            queueInfo.queueFamilyIndex = i;
+            queueInfo.queueCount = 1;
+            queueInfo.pQueuePriorities = &priority;
+            shouldCreateQueues = true;
+
+        } else if (queueFamProps.queueFlags & VK_QUEUE_COMPUTE_BIT) {
+
+            queueInfo.queueFamilyIndex = i;
+            queueInfo.queueCount = 1;
+            queueInfo.pQueuePriorities = &priority;
+            shouldCreateQueues = true;
+
+        }
+
+        if (shouldCreateQueues) {
+
+            queueCreateInfos.push_back(queueInfo);
+
+        }
         
     }
     

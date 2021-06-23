@@ -13,6 +13,9 @@ class VulkanDevice;
 
 class VulkanAdapter : public GraphicsAdapter {
 public:
+    ~VulkanAdapter();
+
+    VulkanAdapter() : m_phyDevice(VK_NULL_HANDLE) { }
 
     static std::vector<VulkanAdapter> getAvailablePhysicalDevices(const VulkanContext& ctx);
 

@@ -86,6 +86,14 @@ ErrType VulkanAdapter::getAdapterInfo(AdapterInfo* out) const
     memcpy(out->deviceName, properties.deviceName, 256);
     out->vendorId = properties.vendorID;
 
+    switch (properties.vendorID) {
+        case AMD_VENDOR_ID: out->vendor = VENDOR_AMD; break;
+        case INTEL_VENDOR_ID:  out->vendor = VENDOR_INTEL; break;
+        case NVIDIA_VENDOR_ID:  out->vendor = VENDOR_NVIDIA; break;
+        default:
+            out->vendor = VENDOR_UNKNOWN; break;
+    }    
+
     return 0;
 }
 
@@ -153,5 +161,15 @@ std::vector<VkQueueFamilyProperties> VulkanAdapter::getQueueFamilyProperties() c
     vkGetPhysicalDeviceQueueFamilyProperties(m_phyDevice, &count, properties.data());
 
     return properties;
+}
+
+
+VulkanAdapter::~VulkanAdapter()
+{
+    R_DEBUG(R_CHANNEL_VULKAN, "Destroying Adapter...");
+
+    if (!m_devices.empty()) {
+        R_ERR(R_CHANNEL_VULKAN, "One or more devices exist for this adapter!");
+    }
 }
 } // Recluse 

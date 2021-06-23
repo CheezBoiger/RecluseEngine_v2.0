@@ -10,6 +10,10 @@ int main(int c, char* argv[])
     Log::initializeLoggingSystem();
 
     GraphicsContext* pContext = GraphicsContext::createContext(GRAPHICS_API_VULKAN);
+
+    if (!pContext) {
+        goto Exit;
+    }
     
     ApplicationInfo appInfo = { };
 
@@ -22,7 +26,7 @@ int main(int c, char* argv[])
     appInfo.engineName  = "None";
     appInfo.enginePatch = 0;
 
-    EnableLayerFlags flags = LAYER_FEATURE_DEBUG_VALIDATION_BIT;
+    EnableLayerFlags flags = 0;
 
     ErrType result = pContext->initialize(appInfo, flags);
 
@@ -38,7 +42,19 @@ int main(int c, char* argv[])
         AdapterInfo adapterInfo = { }; 
         adapter->getAdapterInfo(&adapterInfo);
 
-        R_INFO("Graphics", "\tDevice Name: %s\n\t\tVendor ID: %d\n", adapterInfo.deviceName, adapterInfo.vendor);
+        R_INFO("Graphics", "\tDevice Name: %s\n\t\tVendor ID: %d\n", adapterInfo.deviceName, adapterInfo.vendorId);
+
+    }
+
+    DeviceCreateInfo deviceCreate   = { };
+    GraphicsDevice* pDevice         = nullptr;
+
+    result = adapters[0]->createDevice(&deviceCreate, &pDevice);
+
+    if (result != REC_RESULT_OK) {
+    
+        R_ERR("Graphics", "Failed to create device!");
+
     }
 
     pContext->destroy();

@@ -26,20 +26,20 @@ static volatile B32     isLogging           = true;
 static void printLog(const Log* log)
 {
     char* color = R_COLOR_RESET;
+    char* logStr = "";
 
     switch (log->type) {
-        case LogWarn: color = R_COLOR_YELLOW; break;
-        case LogDebug: color = R_COLOR_MAGENTA; break;
-
-        case LogVerbose: color = R_COLOR_CYAN; break;
-        case LogError: color = R_COLOR_RED; break;        
-        case LogTrace: color = R_COLOR_GREEN; break;
-        case LogInfo: 
+        case LogWarn:       color = R_COLOR_YELLOW;     logStr = "W"; break;
+        case LogDebug:      color = R_COLOR_MAGENTA;    logStr = "D"; break;
+        case LogVerbose:    color = R_COLOR_CYAN;       logStr = "V"; break;
+        case LogError:      color = R_COLOR_RED;        logStr = "E"; break;        
+        case LogTrace:      color = R_COLOR_GREEN;      logStr = "T"; break;
+        case LogInfo:                                   logStr = "I"; break;
         case LogMsg:
         default: break;
     }
 
-    printf("%s %s: %s" R_COLOR_RESET "\n", color, log->channel.c_str(), log->message.c_str());
+    printf("%s [%s] %s: %s" R_COLOR_RESET "\n", color, logStr, log->channel.c_str(), log->message.c_str());
 }
 
 
