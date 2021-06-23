@@ -208,7 +208,7 @@ void VulkanContext::queryGraphicsAdapters()
     std::vector<GraphicsAdapter*> adapters(devices.size());
 
     for (U32 i = 0; i < adapters.size(); ++i) {
-        adapters[i] = new VulkanAdapter(devices[i]);
+        adapters[i] = new VulkanAdapter(std::move(devices[i]));
     }
 
     m_graphicsAdapters = adapters;

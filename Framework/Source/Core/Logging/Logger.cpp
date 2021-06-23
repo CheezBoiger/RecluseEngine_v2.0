@@ -195,6 +195,8 @@ void Log::initializeLoggingSystem()
 
     isLogging = true;
 
+    enableOSColorInput();
+
     createThread(&displayThread, displayFunction);
 }
 

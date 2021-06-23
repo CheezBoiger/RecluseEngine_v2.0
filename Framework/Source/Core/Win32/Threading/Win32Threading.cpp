@@ -7,6 +7,7 @@ namespace Recluse {
 
 ErrType createThread(Thread* pThread, ThreadFunction startRoutine)
 {
+    SetConsoleMode(nullptr, ENABLE_VIRTUAL_TERMINAL_PROCESSING);
     DWORD resultCode = 0;
     HANDLE handle = NULL;
     BOOL exitCodeSuccess = FALSE;

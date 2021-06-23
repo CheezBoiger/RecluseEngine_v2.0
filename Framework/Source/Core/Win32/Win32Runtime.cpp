@@ -3,6 +3,9 @@
 #include "Core/Win32/Win32Runtime.hpp"
 #include "Core/RealtimeTick.hpp"
 
+#include "Core/Messaging.hpp"
+#include "Core/Logging/LogFramework.hpp"
+
 namespace Recluse {
 
 
@@ -10,6 +13,38 @@ struct {
     U64 gTicksPerSecond;
     U64 gTime;
 } gWin32Runtime;
+
+
+void enableOSColorInput()
+{
+    HANDLE stdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    if (stdOutHandle == INVALID_HANDLE_VALUE) {
+            
+        R_ERR(R_CHANNEL_WIN32, "Unable to obtain standard output handle.");
+
+        return;
+
+    }
+
+    DWORD dwMode = 0; 
+
+    if (!GetConsoleMode(stdOutHandle, &dwMode)) {
+
+        R_ERR(R_CHANNEL_WIN32, "Unable to get output handle mode!");
+
+        return;
+
+    }
+
+    dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;   
+    
+    if (!SetConsoleMode(stdOutHandle, dwMode)) {
+    
+        R_ERR(R_CHANNEL_WIN32, "Unable to set the output handle mode for virtual terminal processing!");
+    
+    }
+}
 
 
 static void initializePerformanceTimer()

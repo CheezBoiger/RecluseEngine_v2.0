@@ -57,6 +57,8 @@ int main(int c, char* argv[])
 
     }
 
+    adapters[0]->destroyDevice(pDevice);
+
     pContext->destroy();
 
 Exit:

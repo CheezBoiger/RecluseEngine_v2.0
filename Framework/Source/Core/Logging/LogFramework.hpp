@@ -61,4 +61,7 @@ public:
 private:
     Thread* m_displayThread;    
 };
+
+// Enable operating system color input.
+void enableOSColorInput();
 } // Recluse

@@ -32,7 +32,7 @@ std::vector<VulkanAdapter> VulkanAdapter::getAvailablePhysicalDevices(const Vulk
         for (U32 i = 0; i < count; ++i) {
             VulkanAdapter device;
             device.m_phyDevice = devices[i];
-            physicalDevices[i] = device;
+            physicalDevices[i] = std::move(device);
         }
     }
 
@@ -166,10 +166,10 @@ std::vector<VkQueueFamilyProperties> VulkanAdapter::getQueueFamilyProperties() c
 
 VulkanAdapter::~VulkanAdapter()
 {
-    R_DEBUG(R_CHANNEL_VULKAN, "Destroying Adapter...");
+    if (m_phyDevice && (!m_devices.empty())) {
 
-    if (!m_devices.empty()) {
-        R_ERR(R_CHANNEL_VULKAN, "One or more devices exist for this adapter!");
+        R_ERR(R_CHANNEL_VULKAN, "One or more devices exist for this adapter, prior to its handle destruction!");
+
     }
 }
 } // Recluse 
