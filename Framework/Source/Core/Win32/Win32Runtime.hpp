@@ -9,4 +9,8 @@ U64 getLastTimeS();
 U64 getCurrentTickS();
 
 void updateLastTimeS(U64 newLastTimeS);
+
+extern LRESULT CALLBACK win32RuntimeProc(HWND hwnd,
+  UINT uMsg, WPARAM wParam, LPARAM lParam);
+
 } // Recluse

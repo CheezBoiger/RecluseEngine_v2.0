@@ -25,7 +25,8 @@ struct R_EXPORT AdapterLimits {
 };
 
 struct R_EXPORT DeviceCreateInfo {
-
+    void*               winHandle;
+    GraphicsContext*    pContext;
 };
 
 class GraphicsDevice;
@@ -41,7 +42,7 @@ public:
     virtual ErrType createDevice(DeviceCreateInfo* info, GraphicsDevice** ppDevice) { return 0; }
 
     // Destroys the device associated with this adapter.
-    virtual ErrType destroyDevice(GraphicsDevice* pDevice) { return 0; }
+    virtual ErrType destroyDevice(GraphicsDevice* pDevice, GraphicsContext* pContext) { return 0; }
 };
 
 

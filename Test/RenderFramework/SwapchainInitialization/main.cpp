@@ -1,6 +1,9 @@
 #include "Core/Messaging.hpp"
 #include "Graphics/GraphicsAdapter.hpp"
 #include "Graphics/GraphicsContext.hpp"
+#include "Graphics/GraphicsDevice.hpp"
+
+#include "Core/System/Window.hpp"
 
 
 using namespace Recluse;
@@ -9,9 +12,13 @@ int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
 
-    GraphicsContext* pContext = GraphicsContext::createContext(GRAPHICS_API_VULKAN);
+    GraphicsSwapchain* pSwapchain   = nullptr;
+    GraphicsDevice* pDevice         = nullptr;
+    GraphicsContext* pContext       = GraphicsContext::createContext(GRAPHICS_API_VULKAN);
 
-    if (!pContext) {
+    Window* pWindow = Window::create(u8"SwapchainInitialization", 0, 0, 128, 128);
+
+    if (!pContext || !pWindow) {
         goto Exit;
     }
     
@@ -19,14 +26,14 @@ int main(int c, char* argv[])
 
     appInfo.appMajor    = 0;
     appInfo.appMinor    = 0;
-    appInfo.appName     = "ContextInitialization";
+    appInfo.appName     = "SwapchainInitialization";
     appInfo.appPatch    = 0;
     appInfo.engineMajor = 0;
     appInfo.engineMinor = 0;
     appInfo.engineName  = "None";
     appInfo.enginePatch = 0;
 
-    EnableLayerFlags flags = 0;
+    EnableLayerFlags flags = LAYER_FEATURE_DEBUG_VALIDATION_BIT;
 
     ErrType result = pContext->initialize(appInfo, flags);
 
@@ -47,7 +54,8 @@ int main(int c, char* argv[])
     }
 
     DeviceCreateInfo deviceCreate   = { };
-    GraphicsDevice* pDevice         = nullptr;
+    deviceCreate.winHandle = pWindow->getNativeHandle();
+    deviceCreate.pContext = pContext;
 
     result = adapters[0]->createDevice(&deviceCreate, &pDevice);
 
@@ -57,9 +65,31 @@ int main(int c, char* argv[])
 
     }
 
+    SwapchainCreateDescription scInfo   = { };
+    scInfo.desiredFrames                = 3;
+    scInfo.renderHeight                 = 128;
+    scInfo.renderWidth                  = 128;
+
+    result = pDevice->createSwapchain(&pSwapchain, pContext, &scInfo);
+    
+    if (result != REC_RESULT_OK) {
+    
+        R_ERR("Graphics", "Failed to create swapchain in test!");
+    
+    } else {
+    
+        R_TRACE("Graphics", "Succeeded swapchain creation!");
+
+        pDevice->destroySwapchain(pContext, pSwapchain);
+    
+    }
+
     adapters[0]->destroyDevice(pDevice, pContext);
 
     pContext->destroy();
+    
+    pWindow->close();
+    Window::destroy(pWindow);
 
 Exit:
     Log::destroyLoggingSystem();

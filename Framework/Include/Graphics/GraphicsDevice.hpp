@@ -17,7 +17,6 @@ struct SwapchainCreateDescription {
     U32 desiredFrames;
     U32 renderWidth;
     U32 renderHeight;
-    void* winHandle; // handle to the window display.
 };
 
 class GraphicsDevice {
@@ -30,7 +29,7 @@ public:
     R_EXPORT virtual ErrType createSwapchain(GraphicsSwapchain** swapchain, GraphicsContext* pContext,
         const SwapchainCreateDescription* pDescription) { return 0; }
 
-    R_EXPORT virtual ErrType destroySwapchain() { return 0; }
+    R_EXPORT virtual ErrType destroySwapchain(GraphicsContext* pContext, GraphicsSwapchain* pSwapchain) { return 0; }
 private:
 };
 
@@ -41,7 +40,7 @@ public:
 
     // Rebuild the swapchain if need be. Pass in NULL to rebuild the swapchain as is.
     // Be sure to update any new frame info and handles that are managed by the front engine!
-    R_EXPORT virtual ErrType rebuild(const GraphicsContext* pContext, 
+    R_EXPORT virtual ErrType rebuild(const GraphicsContext* pContext, const GraphicsDevice* pDevice,
         const SwapchainCreateDescription* pDesc) { return REC_RESULT_NOT_IMPLEMENTED; }
 
     virtual GraphicsResource* getFrame(U32 idx) = 0;

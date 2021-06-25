@@ -1,10 +1,13 @@
 //
 #include "Core/Win32/Win32Common.hpp"
 #include "Core/Win32/Win32Runtime.hpp"
+#include "Core/Win32/IO/Win32Window.hpp"
 #include "Core/RealtimeTick.hpp"
 
 #include "Core/Messaging.hpp"
 #include "Core/Logging/LogFramework.hpp"
+
+#include "Core/System/Window.hpp"
 
 namespace Recluse {
 
@@ -104,5 +107,24 @@ void RealtimeTick::initialize()
 RealtimeTick RealtimeTick::GetTick()
 {
     return RealtimeTick();
+}
+
+
+LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    Window* pWindow = reinterpret_cast<Window*>(GetPropW(hwnd, R_WIN32_PROP_NAME));
+
+    switch (uMsg) {
+
+        case WM_CLOSE:
+        case WM_QUIT:
+        {
+            pWindow->close();
+            break;
+        }
+        default: break;
+    }    
+
+    return DefWindowProcW(hwnd, uMsg, wParam, lParam);
 }
 } // Recluse

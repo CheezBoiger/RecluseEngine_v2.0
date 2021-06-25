@@ -7,16 +7,18 @@ namespace Recluse {
 
 
 class VulkanContext;
-
+class VulkanDevice;
 
 class VulkanSwapchain : public GraphicsSwapchain {
 public:
-    
+    VulkanSwapchain() 
+        : m_swapchain(VK_NULL_HANDLE) { }
+
     // Build the vulkan swapchain. This will return the total number of frames that 
     // were created.
-    ErrType build(VkDevice device, VulkanContext* pContext, const SwapchainCreateDescription* pDesc);
+    ErrType build(VulkanDevice* pDevice, const SwapchainCreateDescription* pDesc);
 
-    ErrType rebuild(const GraphicsContext* pContext, const SwapchainCreateDescription* pDesc) override;
+    ErrType rebuild(const GraphicsContext* pContext, const GraphicsDevice* pDevice, const SwapchainCreateDescription* pDesc) override;
     
     GraphicsResource* getFrame(U32 idx) override;
     GraphicsResourceView* getFrameView(U32 idx) override;
@@ -25,16 +27,14 @@ public:
         return m_swapchain;
     }
 
-    VkSurfaceKHR getSurface() const { return m_surface; }
+    // Destroy the vulkan swapchain, including surface.
+    ErrType destroy(VkInstance instance, VkDevice device);
 
 private:
 
     void buildFrameResources();
 
-    ErrType createSurface(VkInstance instance, void* handle);
 
     VkSwapchainKHR  m_swapchain;
-    VkSurfaceKHR    m_surface;
-    void*           m_windowHandle;
 };
 } // Recluse

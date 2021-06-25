@@ -121,14 +121,16 @@ ErrType VulkanAdapter::createDevice(DeviceCreateInfo* info, GraphicsDevice** ppD
 }
 
 
-ErrType VulkanAdapter::destroyDevice(GraphicsDevice* pDevice)
+ErrType VulkanAdapter::destroyDevice(GraphicsDevice* pDevice, GraphicsContext* pContext)
 {
+    VulkanContext* pVc = static_cast<VulkanContext*>(pContext);
+
     for (auto& iter = m_devices.begin(); iter != m_devices.end(); ++iter) {
         if (*iter == pDevice) {    
 
             R_DEBUG(R_CHANNEL_VULKAN, "Destroying device!");
 
-            (*iter)->destroy();
+            (*iter)->destroy(pVc->get());
 
             delete *iter;
             m_devices.erase(iter);
@@ -171,5 +173,24 @@ VulkanAdapter::~VulkanAdapter()
         R_ERR(R_CHANNEL_VULKAN, "One or more devices exist for this adapter, prior to its handle destruction!");
 
     }
+}
+
+
+std::vector<VkExtensionProperties> VulkanAdapter::getDeviceExtensionProperties() const
+{
+    std::vector<VkExtensionProperties> props;
+    U32 count = 0;
+    vkEnumerateDeviceExtensionProperties(m_phyDevice, nullptr, &count, nullptr);    
+    props.resize(count);
+    vkEnumerateDeviceExtensionProperties(m_phyDevice, nullptr, &count, props.data());
+    return props;
+}
+
+
+B32 VulkanAdapter::checkSurfaceSupport(U32 queueIndex, VkSurfaceKHR surface) const
+{
+    VkBool32 supported = VK_FALSE;
+    vkGetPhysicalDeviceSurfaceSupportKHR(m_phyDevice, queueIndex, surface, &supported);
+    return (B32)supported;
 }
 } // Recluse 

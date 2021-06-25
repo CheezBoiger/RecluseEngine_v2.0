@@ -61,7 +61,7 @@ static void checkForValidExtensions(std::vector<const char*>& wantedExtensions)
         if (!foundExtension) {
             // Not supported.
 
-            R_ERR(R_CHANNEL_VULKAN, "Extension %s not supported.", wantedExtensions[i]);
+            R_WARN(R_CHANNEL_VULKAN, "Extension %s not supported.", wantedExtensions[i]);
 
             wantedExtensions.erase(wantedExtensions.begin() + i);
 
@@ -119,7 +119,7 @@ void checkForValidLayers(std::vector<const char*>& wantedLayers)
 
             // Remove and decrement search index by 1.
 
-            R_ERR(R_CHANNEL_VULKAN, "%s was not found.", wantedLayers[i]);
+            R_WARN(R_CHANNEL_VULKAN, "%s was not found.", wantedLayers[i]);
 
             wantedLayers.erase(wantedLayers.begin() + i);
 

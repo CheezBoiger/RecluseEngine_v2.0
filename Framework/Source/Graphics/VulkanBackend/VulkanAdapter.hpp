@@ -34,7 +34,7 @@ public:
 
     ErrType createDevice(DeviceCreateInfo* info, GraphicsDevice** ppDevice) override;
 
-    ErrType destroyDevice(GraphicsDevice* pDevice) override;
+    ErrType destroyDevice(GraphicsDevice* pDevice, GraphicsContext* pContext) override;
 
     VkPhysicalDevice operator()() const {
         return m_phyDevice;
@@ -51,6 +51,10 @@ public:
     VkPhysicalDeviceFeatures2 getFeatures2() const;
 
     std::vector<VkQueueFamilyProperties> getQueueFamilyProperties() const;
+
+    std::vector<VkExtensionProperties> getDeviceExtensionProperties() const;
+
+    B32 checkSurfaceSupport(U32 queueIndex, VkSurfaceKHR surface) const;
 
 private:
 

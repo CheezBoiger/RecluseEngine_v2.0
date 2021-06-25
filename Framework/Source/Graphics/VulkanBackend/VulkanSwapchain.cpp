@@ -2,6 +2,7 @@
 #include "Core/Types.hpp"
 #include "VulkanSwapchain.hpp"
 #include "VulkanContext.hpp"
+#include "VulkanDevice.hpp"
 #include "Core/Messaging.hpp"
 
 
@@ -20,28 +21,30 @@ GraphicsResourceView* VulkanSwapchain::getFrameView(U32 idx)
 }
 
 
-ErrType VulkanSwapchain::build(VkDevice device, VulkanContext* pContext, const SwapchainCreateDescription* pDesc)
+ErrType VulkanSwapchain::build(VulkanDevice* pDevice, const SwapchainCreateDescription* pDesc)
 {
     VkSwapchainCreateInfoKHR createInfo = { };
     VkResult result                     = VK_SUCCESS;
-
-    ErrType builtSurface = createSurface(pContext->get(), pDesc->winHandle);
-
-    if (builtSurface != REC_RESULT_OK) {
-        R_ERR(R_CHANNEL_VULKAN, "Surface failed to create! Aborting build");
-        return builtSurface;
-    }
     
     // TODO: We need to pass a struct input for desired configurations.
     createInfo.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     createInfo.clipped          = VK_TRUE;
     createInfo.imageColorSpace  = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
     createInfo.imageFormat      = VK_FORMAT_B8G8R8A8_SRGB;
-    createInfo.surface          = m_surface;
+    createInfo.surface          = pDevice->getSurface();
     createInfo.imageExtent      = { pDesc->renderWidth, pDesc->renderHeight };
     createInfo.oldSwapchain     = (m_swapchain) ? m_swapchain : VK_NULL_HANDLE;
-
-    result = vkCreateSwapchainKHR(device, &createInfo, nullptr, &m_swapchain);
+    createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    createInfo.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    createInfo.compositeAlpha   = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    createInfo.presentMode      = VK_PRESENT_MODE_FIFO_KHR;
+    createInfo.minImageCount    = pDesc->desiredFrames;
+    createInfo.imageArrayLayers = 1;
+    createInfo.preTransform     = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR; 
+    createInfo.pQueueFamilyIndices = nullptr;
+    createInfo.queueFamilyIndexCount = 0;
+    
+    result = vkCreateSwapchainKHR(pDevice->get(), &createInfo, nullptr, &m_swapchain);
 
     if (result != VK_SUCCESS) {
         
@@ -50,36 +53,36 @@ ErrType VulkanSwapchain::build(VkDevice device, VulkanContext* pContext, const S
         return REC_RESULT_FAILED;
     }    
 
+    R_DEBUG(R_CHANNEL_VULKAN, "Successfully created vulkan swapchain!");
+
     return REC_RESULT_OK;
 }
 
 
-ErrType VulkanSwapchain::createSurface(VkInstance instance, void* handle)
+ErrType VulkanSwapchain::rebuild(const GraphicsContext* pContext, const GraphicsDevice* pDevice, const SwapchainCreateDescription* pDesc)
 {
-    VkResult result             = VK_SUCCESS;
-    if (!handle) {
+    R_ASSERT(((pContext != NULL) && (pDevice != NULL)));
 
-        return REC_RESULT_NULL_PTR_EXCEPTION;
-    }
+    const VulkanContext* pVc    = static_cast<const VulkanContext*>(pContext);
+    const VulkanDevice* pVd     = static_cast<const VulkanDevice*>(pDevice);
 
-#if defined(RECLUSE_WINDOWS)
-    VkWin32SurfaceCreateInfoKHR createInfo = { };
+    destroy(pVc->get(), pVd->get());
 
-    createInfo.sType            = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-    createInfo.hinstance        = GetModuleHandle(NULL);
-    createInfo.hwnd             = (HWND)handle;
-    createInfo.pNext            = nullptr;
-    createInfo.flags            = 0;            // future use, not needed.
-
-    result = vkCreateWin32SurfaceKHR(instance, &createInfo, nullptr, &m_surface);
-#endif
-
-    return REC_RESULT_OK;    
+    return REC_RESULT_NOT_IMPLEMENTED;
 }
 
 
-ErrType VulkanSwapchain::rebuild(const GraphicsContext* pContext, const SwapchainCreateDescription* pDesc)
+ErrType VulkanSwapchain::destroy(VkInstance instance, VkDevice device)
 {
-    return REC_RESULT_NOT_IMPLEMENTED;
+    if (m_swapchain) {
+
+        vkDestroySwapchainKHR(device, m_swapchain, nullptr);    
+        m_swapchain = VK_NULL_HANDLE;
+
+        R_DEBUG(R_CHANNEL_VULKAN, "Destroyed swapchain.");
+
+    }
+
+    return REC_RESULT_OK;
 }
 } // Recluse
