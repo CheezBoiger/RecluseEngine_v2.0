@@ -20,12 +20,12 @@ public:
         , m_surface(VK_NULL_HANDLE)
         , m_windowHandle(nullptr) { }
 
-    ErrType initialize(const VulkanAdapter& iadapter, DeviceCreateInfo* info);
+    ErrType initialize(VulkanAdapter* iadapter, DeviceCreateInfo* info);
 
-    ErrType createSwapchain(GraphicsSwapchain** ppSwapchain, GraphicsContext* pContext, 
+    ErrType createSwapchain(GraphicsSwapchain** ppSwapchain, 
         const SwapchainCreateDescription* pDesc) override;
 
-    ErrType destroySwapchain(GraphicsContext* pContext, GraphicsSwapchain* pSwapchain) override;
+    ErrType destroySwapchain(GraphicsSwapchain* pSwapchain) override;
 
     void destroy(VkInstance instance);
 
@@ -39,12 +39,26 @@ public:
 
     VkSurfaceKHR getSurface() const { return m_surface; }
 
+    ErrType reserveMemory(const MemoryReserveDesc& desc) override;
+
+    VulkanAdapter* getAdapter() const { return m_adapter; }
+
 private:
 
     ErrType createSurface(VkInstance instance, void* handle);
 
+    VulkanAdapter* m_adapter;
+
     VkDevice m_device;
     VkSurfaceKHR m_surface;
+    
+    VkDeviceMemory m_hostBufferMemory;
+    VkDeviceMemory m_hostTextureMemory;
+    VkDeviceMemory m_deviceBufferMemory;
+    VkDeviceMemory m_deviceTextureMemory;
+    VkDeviceMemory m_uploadMemory;
+    VkDeviceMemory m_readbackMemory;
+
     void* m_windowHandle;
 };
 } // Recluse

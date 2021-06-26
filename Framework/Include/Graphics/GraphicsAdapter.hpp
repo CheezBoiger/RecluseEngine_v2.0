@@ -26,7 +26,6 @@ struct R_EXPORT AdapterLimits {
 
 struct R_EXPORT DeviceCreateInfo {
     void*               winHandle;
-    GraphicsContext*    pContext;
 };
 
 class GraphicsDevice;

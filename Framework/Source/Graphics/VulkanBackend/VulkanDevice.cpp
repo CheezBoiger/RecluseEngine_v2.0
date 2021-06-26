@@ -7,6 +7,9 @@
 
 #include "Graphics/GraphicsAdapter.hpp"
 
+#include "Core/Memory/MemoryPool.hpp"
+#include "Core/Memory/Allocator.hpp"
+
 namespace Recluse {
 
 
@@ -16,9 +19,9 @@ std::vector<const char*> getDeviceExtensions()
 }
 
 
-void checkAvailableDeviceExtensions(const VulkanAdapter& adapter, std::vector<const char*>& extensions)
+void checkAvailableDeviceExtensions(const VulkanAdapter* adapter, std::vector<const char*>& extensions)
 {
-    std::vector<VkExtensionProperties> deviceExtensions = adapter.getDeviceExtensionProperties();
+    std::vector<VkExtensionProperties> deviceExtensions = adapter->getDeviceExtensionProperties();
     
     for (U32 i = 0; i < extensions.size(); ++i) {
         B32 found = false;
@@ -48,15 +51,14 @@ void checkAvailableDeviceExtensions(const VulkanAdapter& adapter, std::vector<co
 }
 
 
-ErrType VulkanDevice::initialize(const VulkanAdapter& adapter, DeviceCreateInfo* info)
+ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo* info)
 {
-    const VulkanAdapter& nativeAdapter = static_cast<const VulkanAdapter&>(adapter);
-    const VulkanContext* pVc = static_cast<const VulkanContext*>(info->pContext);
+    VulkanContext* pVc = static_cast<VulkanContext*>(adapter->getContext());
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos; 
     VkDeviceCreateInfo createInfo = { };
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
-    std::vector<VkQueueFamilyProperties> queueFamilies = nativeAdapter.getQueueFamilyProperties();
+    std::vector<VkQueueFamilyProperties> queueFamilies = adapter->getQueueFamilyProperties();
     std::vector<const char*> deviceExtensions = getDeviceExtensions();
 
     if (info->winHandle) {
@@ -95,7 +97,7 @@ ErrType VulkanDevice::initialize(const VulkanAdapter& adapter, DeviceCreateInfo*
 
         if (m_surface) {
         
-            if (nativeAdapter.checkSurfaceSupport(i, m_surface)) {
+            if (adapter->checkSurfaceSupport(i, m_surface)) {
             
                 R_DEBUG(R_CHANNEL_VULKAN, "Device supports present...");
 
@@ -144,7 +146,7 @@ ErrType VulkanDevice::initialize(const VulkanAdapter& adapter, DeviceCreateInfo*
     createInfo.enabledExtensionCount = (U32)deviceExtensions.size();
     createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
-    VkResult result = vkCreateDevice(nativeAdapter(), &createInfo, nullptr, &m_device);
+    VkResult result = vkCreateDevice(adapter->get(), &createInfo, nullptr, &m_device);
 
     if (result != VK_SUCCESS) {
 
@@ -153,6 +155,8 @@ ErrType VulkanDevice::initialize(const VulkanAdapter& adapter, DeviceCreateInfo*
         return -1;
     }
     
+    m_adapter = adapter;
+
     return 0;
 }
 
@@ -168,6 +172,24 @@ void VulkanDevice::destroy(VkInstance instance)
     
     }
 
+    if (m_deviceBufferMemory) {
+    
+        R_DEBUG(R_CHANNEL_VULKAN, "Free device memory...");
+        
+        vkFreeMemory(m_device, m_deviceBufferMemory, nullptr);
+        m_deviceBufferMemory = VK_NULL_HANDLE;
+    
+    }
+
+    if (m_hostBufferMemory) { 
+    
+        R_DEBUG(R_CHANNEL_VULKAN, "Free host memory...");
+
+        vkFreeMemory(m_device, m_hostBufferMemory, nullptr);
+        m_hostBufferMemory = VK_NULL_HANDLE;
+    
+    }
+
     if (m_device != VK_NULL_HANDLE) {
         vkDestroyDevice(m_device, nullptr);
         m_device = VK_NULL_HANDLE;
@@ -178,12 +200,12 @@ void VulkanDevice::destroy(VkInstance instance)
 }
 
 
-ErrType VulkanDevice::createSwapchain(GraphicsSwapchain** ppSwapchain, GraphicsContext* pContext,
+ErrType VulkanDevice::createSwapchain(GraphicsSwapchain** ppSwapchain,
     const SwapchainCreateDescription* pDesc)
 {
 
     VulkanSwapchain* pSwapchain     = new VulkanSwapchain();
-    VulkanContext*   pNativeContext = static_cast<VulkanContext*>(pContext);
+    VulkanContext*   pNativeContext = m_adapter->getContext();
 
     ErrType result = pSwapchain->build(this, pDesc);
 
@@ -200,11 +222,11 @@ ErrType VulkanDevice::createSwapchain(GraphicsSwapchain** ppSwapchain, GraphicsC
 }
 
 
-ErrType VulkanDevice::destroySwapchain(GraphicsContext* pContext, GraphicsSwapchain* pSwapchain)
+ErrType VulkanDevice::destroySwapchain(GraphicsSwapchain* pSwapchain)
 {
     ErrType result = REC_RESULT_OK;
 
-    if (!pSwapchain || !pContext) {
+    if (!pSwapchain) {
 
         R_ERR(R_CHANNEL_VULKAN, "Null pointer exception with either pContext or pSwapchain.");
         
@@ -213,9 +235,8 @@ ErrType VulkanDevice::destroySwapchain(GraphicsContext* pContext, GraphicsSwapch
     }
 
     VulkanSwapchain* pVs    = static_cast<VulkanSwapchain*>(pSwapchain);
-    VulkanContext* pVc      = static_cast<VulkanContext*>(pContext);
     
-    pVs->destroy(pVc->get(), m_device);
+    pVs->destroy(m_adapter->getContext()->get(), m_device);
 
     return REC_RESULT_OK;
 }
@@ -269,5 +290,85 @@ ErrType VulkanDevice::createSurface(VkInstance instance, void* handle)
 #endif
 
     return REC_RESULT_OK;    
+}
+
+
+ErrType VulkanDevice::reserveMemory(const MemoryReserveDesc& desc)
+{
+    VkMemoryRequirements memoryRequirements = { };
+
+    R_DEBUG(R_CHANNEL_VULKAN, "Reserving memory for:\n\tHost Buffer Memory (Bytes): \t%llu\n"
+        "\tHost Texture Memory (Bytes): \t%llu\n\tDevice Buffer Memory (Bytes): \t%llu\n"
+        "\tDevice Texture Memory (Bytes): \t%llu", desc.hostBufferMemoryBytes, desc.hostTextureMemoryBytes,
+        desc.deviceBufferMemoryBytes, desc.deviceTextureMemoryBytes);
+
+    R_DEBUG(R_CHANNEL_VULKAN, "Total available memory (GB):\n\tDevice: %f\n\tHost: %f", 
+        F32(desc.deviceBufferMemoryBytes + desc.deviceTextureMemoryBytes) / R_1GB,
+        F32(desc.hostBufferMemoryBytes + desc.hostTextureMemoryBytes) / R_1GB);
+
+    VkMemoryAllocateInfo allocInfo = { };
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+
+    // start with memory gpu.
+    VkBufferCreateInfo bufferInfo = { };
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.size = desc.deviceBufferMemoryBytes;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    bufferInfo.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | 
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | 
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+    VkBuffer buffer;
+    VkResult result = vkCreateBuffer(m_device, &bufferInfo, nullptr, &buffer);
+
+    if (result != VK_SUCCESS) {
+    
+        R_ERR(R_CHANNEL_VULKAN, "Failed to create temp buffer!");
+    
+    }
+
+    vkGetBufferMemoryRequirements(m_device, buffer, &memoryRequirements);
+
+    allocInfo.memoryTypeIndex = 
+        m_adapter->findMemoryType(memoryRequirements.memoryTypeBits, RESOURCE_MEMORY_USAGE_GPU_ONLY);
+
+    allocInfo.allocationSize = RECLUSE_ALLOC_MASK(memoryRequirements.size, memoryRequirements.alignment);
+
+    R_DEBUG(R_CHANNEL_VULKAN, "Allocating device memory...");
+
+    result = vkAllocateMemory(m_device, &allocInfo, nullptr, &m_deviceBufferMemory);
+    
+    if (result != VK_SUCCESS) {
+    
+        R_ERR(R_CHANNEL_VULKAN, "Failed to allocate device memory!")
+    
+    }
+
+    vkDestroyBuffer(m_device, buffer, nullptr);
+
+    // Allocate host memory.
+
+    bufferInfo.size = desc.hostBufferMemoryBytes;
+
+    result = vkCreateBuffer(m_device, &bufferInfo, nullptr, &buffer);
+    vkGetBufferMemoryRequirements(m_device, buffer, &memoryRequirements);
+
+    allocInfo.memoryTypeIndex = 
+        m_adapter->findMemoryType(memoryRequirements.memoryTypeBits, RESOURCE_MEMORY_USAGE_CPU_ONLY);
+    allocInfo.allocationSize = RECLUSE_ALLOC_MASK(memoryRequirements.size, memoryRequirements.alignment);
+    
+    R_DEBUG(R_CHANNEL_VULKAN, "Allocating host memory...");
+
+    result = vkAllocateMemory(m_device, &allocInfo, nullptr, &m_hostBufferMemory);
+    
+    if (result != VK_SUCCESS) {
+    
+        R_ERR(R_CHANNEL_VULKAN, "Failed to allocate host memory!");
+
+    }
+
+    vkDestroyBuffer(m_device, buffer, nullptr);
+
+    return REC_RESULT_OK;
 }
 } // Recluse

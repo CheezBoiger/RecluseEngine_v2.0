@@ -6,7 +6,7 @@
 namespace Recluse {
 
 
-std::vector<VulkanAdapter> VulkanAdapter::getAvailablePhysicalDevices(const VulkanContext& ctx)
+std::vector<VulkanAdapter> VulkanAdapter::getAvailablePhysicalDevices(VulkanContext& ctx)
 {
     std::vector<VulkanAdapter> physicalDevices;
     U32 count = 0;
@@ -32,6 +32,7 @@ std::vector<VulkanAdapter> VulkanAdapter::getAvailablePhysicalDevices(const Vulk
         for (U32 i = 0; i < count; ++i) {
             VulkanAdapter device;
             device.m_phyDevice = devices[i];
+            device.m_context = &ctx;
             physicalDevices[i] = std::move(device);
         }
     }
@@ -104,7 +105,7 @@ ErrType VulkanAdapter::createDevice(DeviceCreateInfo* info, GraphicsDevice** ppD
     R_DEBUG(R_CHANNEL_VULKAN, "Creating device!");
 
     VulkanDevice* pDevice = new VulkanDevice();
-    ErrType err = pDevice->initialize(*this, info);
+    ErrType err = pDevice->initialize(this, info);
     
     if (err != 0) {
         
@@ -192,5 +193,61 @@ B32 VulkanAdapter::checkSurfaceSupport(U32 queueIndex, VkSurfaceKHR surface) con
     VkBool32 supported = VK_FALSE;
     vkGetPhysicalDeviceSurfaceSupportKHR(m_phyDevice, queueIndex, surface, &supported);
     return (B32)supported;
+}
+
+
+U32 VulkanAdapter::findMemoryType(U32 filter, ResourceMemoryUsage usage) const
+{ 
+    VkMemoryPropertyFlags required = 0;
+    VkMemoryPropertyFlags preferred = 0;
+    U32 index = 0xffffffff;
+
+    switch (usage) {
+    case RESOURCE_MEMORY_USAGE_CPU_ONLY:
+    {
+        required |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+        preferred |= VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
+    } break;
+    case RESOURCE_MEMORY_USAGE_GPU_ONLY:
+    {
+        required |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    } break;
+    case RESOURCE_MEMORY_USAGE_CPU_TO_GPU:
+    {
+        required |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+        preferred |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    } break;
+    case RESOURCE_MEMORY_USAGE_GPU_TO_CPU:
+    {
+        required |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+        preferred |= VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
+    } break;
+    default:
+        break;
+    };
+
+    VkPhysicalDeviceMemoryProperties memoryProperties = getMemoryProperties();
+
+    for (U32 i = 0; i < memoryProperties.memoryTypeCount; ++i) {
+
+        const VkMemoryPropertyFlags propFlags = memoryProperties.memoryTypes[i].propertyFlags;
+
+        if ((filter & (1 << i))) {
+
+            if ((propFlags & required) == required && ((propFlags & preferred) == preferred)) {
+
+                index = i;
+                break;
+
+            } else if ((propFlags & required) == required) {
+
+                index = i;
+                break;
+
+            }
+        }
+    }
+
+    return index;
 }
 } // Recluse 

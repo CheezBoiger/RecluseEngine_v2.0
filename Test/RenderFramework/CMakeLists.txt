@@ -3,3 +3,4 @@ project( "RenderFramework" )
 
 add_subdirectory(ContextInitialization)
 add_subdirectory(SwapchainInitialization)
+add_subdirectory(MemoryInitialization)

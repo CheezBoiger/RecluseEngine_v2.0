@@ -6,6 +6,9 @@
 
 #include "Core/Types.hpp"
 
+#define R_1KB (1024ull)
+#define R_1MB (1024ull * 1024ull)
+#define R_1GB (1024ull * 1024ull * 1024ull)
 
 namespace Recluse {
 
@@ -45,6 +48,9 @@ class MemoryPool {
 public:
     MemoryPool(U64 szBytes, U64 pageSize = 4096ull);
 
+    // Memory must be malloc'ed or new'ed. Can not be stack local memory!
+    MemoryPool(void* ptr, U64 szBytes, U64 pagSz = 4096ull);
+
     ~MemoryPool();
         
     PtrType getBaseAddress() const { return m_baseAddr; }
@@ -59,6 +65,7 @@ private:
     PtrType m_baseAddr;
     U64     m_totalSzBytes;
     U64     m_pageSzBytes;
+    B32     m_isMalloc;
 
     struct MemScanNodes {
         MemoryScanner* pScanner;

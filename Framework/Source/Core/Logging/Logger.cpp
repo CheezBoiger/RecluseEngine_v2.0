@@ -12,6 +12,7 @@ static Thread           displayThread;
 static volatile B32     isLogging           = true;
 
 // TODO: Check if these colors work for most windows machines.
+// TODO: Maybe a binary semaphore would be better, to order the display process?
 
 #define R_COLOR_RED     "\x1b[31m"
 #define R_COLOR_GREEN   "\x1b[32m"

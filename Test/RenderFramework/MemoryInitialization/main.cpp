@@ -3,7 +3,7 @@
 #include "Graphics/GraphicsContext.hpp"
 #include "Graphics/GraphicsDevice.hpp"
 
-#include "Core/System/Window.hpp"
+#include "Core/Memory/MemoryPool.hpp"
 
 
 using namespace Recluse;
@@ -12,13 +12,9 @@ int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
 
-    GraphicsSwapchain* pSwapchain   = nullptr;
-    GraphicsDevice* pDevice         = nullptr;
-    GraphicsContext* pContext       = GraphicsContext::createContext(GRAPHICS_API_VULKAN);
+    GraphicsContext* pContext = GraphicsContext::createContext(GRAPHICS_API_VULKAN);
 
-    Window* pWindow = Window::create(u8"SwapchainInitialization", 0, 0, 128, 128);
-
-    if (!pContext || !pWindow) {
+    if (!pContext) {
         goto Exit;
     }
     
@@ -26,7 +22,7 @@ int main(int c, char* argv[])
 
     appInfo.appMajor    = 0;
     appInfo.appMinor    = 0;
-    appInfo.appName     = "SwapchainInitialization";
+    appInfo.appName     = "MemoryInitialization";
     appInfo.appPatch    = 0;
     appInfo.engineMajor = 0;
     appInfo.engineMinor = 0;
@@ -54,7 +50,7 @@ int main(int c, char* argv[])
     }
 
     DeviceCreateInfo deviceCreate   = { };
-    deviceCreate.winHandle = pWindow->getNativeHandle();
+    GraphicsDevice* pDevice         = nullptr;
 
     result = adapters[0]->createDevice(&deviceCreate, &pDevice);
 
@@ -63,32 +59,20 @@ int main(int c, char* argv[])
         R_ERR("Graphics", "Failed to create device!");
 
     }
-
-    SwapchainCreateDescription scInfo   = { };
-    scInfo.desiredFrames                = 3;
-    scInfo.renderHeight                 = 128;
-    scInfo.renderWidth                  = 128;
-
-    result = pDevice->createSwapchain(&pSwapchain, &scInfo);
     
-    if (result != REC_RESULT_OK) {
+    MemoryReserveDesc memReserves = { };
+    memReserves.uploadMemoryBytes = 32ull * R_1KB;
+    memReserves.readbackMemoryBytes = 32ull * R_1KB;
+    memReserves.hostBufferMemoryBytes = 256 * R_1MB;
+    memReserves.hostTextureMemoryBytes = 256 * R_1KB;
+    memReserves.deviceTextureMemoryBytes = 512 * R_1MB; // half a GB.
+    memReserves.deviceBufferMemoryBytes = 512 * R_1MB; // half a GB.
     
-        R_ERR("Graphics", "Failed to create swapchain in test!");
-    
-    } else {
-    
-        R_TRACE("Graphics", "Succeeded swapchain creation!");
-
-        pDevice->destroySwapchain(pSwapchain);
-    
-    }
+    pDevice->reserveMemory(memReserves);
 
     adapters[0]->destroyDevice(pDevice, pContext);
 
     pContext->destroy();
-    
-    pWindow->close();
-    Window::destroy(pWindow);
 
 Exit:
     Log::destroyLoggingSystem();

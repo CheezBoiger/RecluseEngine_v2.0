@@ -19,17 +19,65 @@ struct SwapchainCreateDescription {
     U32 renderHeight;
 };
 
-class GraphicsDevice {
-public:
-    R_EXPORT virtual ErrType createResource() { return 0; }
-    R_EXPORT virtual ErrType createCommandList() { return 0; }
-    R_EXPORT virtual ErrType createCommandQueue() { return 0; }
-    R_EXPORT virtual ErrType createPipeline() { return 0; }
 
-    R_EXPORT virtual ErrType createSwapchain(GraphicsSwapchain** swapchain, GraphicsContext* pContext,
+enum ResourceDimension {
+    RESOURCE_DIMENSION_BUFFER,
+    RESOURCE_DIMENSION_1D,
+    RESOURCE_DIMENSION_2D,
+    RESOURCE_DIMENSION_3D,
+    RESOURCE_DIMENSION_1D_ARRAY,
+    RESOURCE_DIMENSION_2D_ARRAY
+};
+
+
+enum ResourceMemoryUsage {
+  RESOURCE_MEMORY_USAGE_CPU_ONLY,
+  RESOURCE_MEMORY_USAGE_GPU_ONLY,
+  RESOURCE_MEMORY_USAGE_CPU_TO_GPU,
+  RESOURCE_MEMORY_USAGE_GPU_TO_CPU
+};
+
+
+struct GraphicsResourceDescription {
+    U32                 width;
+    U32                 height;
+    U32                 arrayLevels;
+    U32                 mipLevels;
+    ResourceDimension   dimension;
+    U32                 format;
+    U32                 layout;
+    ResourceMemoryUsage memoryUsage;
+};
+
+
+struct MemoryReserveDesc {
+    U64 hostBufferMemoryBytes;      // Host memory for buffers.
+    U64 hostTextureMemoryBytes;     // Host memory for textures.
+    U64 deviceBufferMemoryBytes;    // Device memory for buffers.
+    U64 deviceTextureMemoryBytes;   // Device memory for textures.
+    U64 uploadMemoryBytes;          // Memory used as upload to device memory.
+    U64 readbackMemoryBytes;        // Memory used as reading back from device memory.
+};
+
+
+class R_EXPORT GraphicsDevice {
+public:
+    // Reserve memory to be used for graphics resources.
+    virtual ErrType reserveMemory(const MemoryReserveDesc& desc) { return 0; }
+
+    virtual ErrType createResource(GraphicsResource** ppResource, GraphicsResourceDescription* pDesc) 
+        { return 0; }
+    
+    virtual ErrType createResourceView() { return 0; }
+
+    virtual ErrType createCommandList() { return 0; }
+    virtual ErrType createCommandQueue() { return 0; }
+    virtual ErrType createPipeline() { return 0; }
+
+    virtual ErrType createSwapchain(GraphicsSwapchain** swapchain,
         const SwapchainCreateDescription* pDescription) { return 0; }
 
-    R_EXPORT virtual ErrType destroySwapchain(GraphicsContext* pContext, GraphicsSwapchain* pSwapchain) { return 0; }
+    virtual ErrType destroySwapchain(GraphicsSwapchain* pSwapchain) { return 0; }
 private:
 };
 

@@ -2,6 +2,7 @@
 #pragma once
 #include "VulkanContext.hpp"
 #include "Graphics/GraphicsAdapter.hpp"
+#include "Graphics/GraphicsDevice.hpp"
 
 #include <list>
 
@@ -18,23 +19,27 @@ public:
     VulkanAdapter(VulkanAdapter&& a) { 
         m_devices = std::move(a.m_devices); 
         m_phyDevice = a.m_phyDevice; 
+        m_context = a.m_context;
     }
 
     VulkanAdapter& operator=(VulkanAdapter&& a) {
         m_devices = std::move(a.m_devices);
         m_phyDevice = a.m_phyDevice;
+        m_context = a.m_context;
         return (*this);
     }
 
     VulkanAdapter() : m_phyDevice(VK_NULL_HANDLE) { }
 
-    static std::vector<VulkanAdapter> getAvailablePhysicalDevices(const VulkanContext& ctx);
+    static std::vector<VulkanAdapter> getAvailablePhysicalDevices(VulkanContext& ctx);
 
     ErrType getAdapterInfo(AdapterInfo* out) const override;
 
     ErrType createDevice(DeviceCreateInfo* info, GraphicsDevice** ppDevice) override;
 
     ErrType destroyDevice(GraphicsDevice* pDevice, GraphicsContext* pContext) override;
+
+    U32 VulkanAdapter::findMemoryType(U32 filter, ResourceMemoryUsage usage) const;
 
     VkPhysicalDevice operator()() const {
         return m_phyDevice;
@@ -55,6 +60,8 @@ public:
     std::vector<VkExtensionProperties> getDeviceExtensionProperties() const;
 
     B32 checkSurfaceSupport(U32 queueIndex, VkSurfaceKHR surface) const;
+    
+    VulkanContext* getContext() const { return m_context; }
 
 private:
 
@@ -64,6 +71,8 @@ private:
 
     // Native adapter device.
     VkPhysicalDevice m_phyDevice;
+
+    VulkanContext* m_context;
 
     // All logical devices that were created by this adapter.
     std::list<VulkanDevice*> m_devices;

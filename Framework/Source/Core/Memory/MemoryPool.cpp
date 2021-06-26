@@ -12,6 +12,7 @@ MemoryPool::MemoryPool(U64 szBytes, U64 pageSz)
     , m_pageSzBytes(pageSz)
     , m_totalSzBytes(0ull)
     , m_pScanStart(nullptr)
+    , m_isMalloc(true)
 {
     U64 allocationSizeBytes = szBytes;
     if (pageSz <= 4096ull)
@@ -22,6 +23,19 @@ MemoryPool::MemoryPool(U64 szBytes, U64 pageSz)
     m_baseAddr = (PtrType)malloc(allocationSizeBytes);
     m_pageSzBytes = pageSz;
     m_totalSzBytes = allocationSizeBytes;
+}
+
+
+MemoryPool::MemoryPool(void* ptr, U64 szBytes, U64 pageSz)
+    : m_baseAddr(0ull)
+    , m_pageSzBytes(pageSz)
+    , m_totalSzBytes(0ull)
+    , m_pScanStart(nullptr)
+    , m_isMalloc(false)
+{
+    m_baseAddr = (PtrType)ptr;
+    m_pageSzBytes = pageSz;
+    m_totalSzBytes = szBytes;
 }
 
 
@@ -54,7 +68,7 @@ MemoryPool::~MemoryPool()
         trav = trav->next;
     }
 
-    if (m_baseAddr)
+    if (m_baseAddr && m_isMalloc)
     {
         free((void*)m_baseAddr);
     }
