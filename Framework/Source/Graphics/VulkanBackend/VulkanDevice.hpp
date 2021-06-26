@@ -18,7 +18,9 @@ public:
     VulkanDevice()
         : m_device(VK_NULL_HANDLE)
         , m_surface(VK_NULL_HANDLE)
-        , m_windowHandle(nullptr) { }
+        , m_windowHandle(nullptr)
+        , m_deviceBufferMemory(VK_NULL_HANDLE)
+        , m_hostBufferMemory(VK_NULL_HANDLE) { }
 
     ErrType initialize(VulkanAdapter* iadapter, DeviceCreateInfo* info);
 
