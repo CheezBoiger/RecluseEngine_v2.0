@@ -34,12 +34,27 @@ enum ResourceDimension {
 
 
 enum ResourceMemoryUsage {
-  RESOURCE_MEMORY_USAGE_CPU_ONLY,
-  RESOURCE_MEMORY_USAGE_GPU_ONLY,
-  RESOURCE_MEMORY_USAGE_CPU_TO_GPU,
-  RESOURCE_MEMORY_USAGE_GPU_TO_CPU
+    RESOURCE_MEMORY_USAGE_CPU_ONLY,
+    RESOURCE_MEMORY_USAGE_GPU_ONLY,
+    RESOURCE_MEMORY_USAGE_CPU_TO_GPU,
+    RESOURCE_MEMORY_USAGE_GPU_TO_CPU,
+    RESOURCE_MEMORY_USAGE_COUNT = (RESOURCE_MEMORY_USAGE_GPU_TO_CPU + 1)
 };
 
+
+enum ResourceUsage {
+    RESOURCE_USAGE_VERTEX_BUFFER            = (1 << 0),
+    RESOURCE_USAGE_INDEX_BUFFER             = (1 << 1),
+    RESOURCE_USAGE_STORAGE_BUFFER           = (1 << 2),
+    RESOURCE_USAGE_RENDER_TARGET            = (1 << 3),
+    RESOURCE_USAGE_SHADER_RESOURCE          = (1 << 4),
+    RESOURCE_USAGE_CONSTANT_BUFFER          = (1 << 5),
+    RESOURCE_USAGE_TRANSFER_DESTINATION     = (1 << 6),
+    RESOURCE_USAGE_TRANSFER_SOURCE          = (1 << 7),
+    RESOURCE_USAGE_INDIRECT                 = (1 << 8)
+};
+
+typedef U32 ResourceUsageFlags;
 
 struct GraphicsResourceDescription {
     U32                 width;
@@ -50,6 +65,7 @@ struct GraphicsResourceDescription {
     U32                 format;
     U32                 layout;
     ResourceMemoryUsage memoryUsage;
+    ResourceUsageFlags  usage;
 };
 
 

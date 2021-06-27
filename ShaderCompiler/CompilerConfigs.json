@@ -1,13 +1,27 @@
 {
-    "compiler": "glslang",
-    "version": "latest",
+    "compiler": [
+        {
+            "language": "glsl",
+            "version": "latest",
+            "name": "glslang",
+            "output": {
+                "ext": "spv",
+                "append_shader_ext": true
+            }
+        },
+        {
+            "version": "latest",
+            "name": "dxc",
+            "language": "hlsl",
+            "output": {
+                "ext": "cso",
+                "append_shader_ext": true
+            }
+        }
+    ],
     "configs": {
         "os": "win32",
         "include_paths": [""],
-        "output": {
-                "ext": "spv",
-                "append_shader_ext": true
-        },
         "shaders": {
             "graphics": {
                 "pixel": {

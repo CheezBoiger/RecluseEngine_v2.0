@@ -4,6 +4,7 @@
 #include "VulkanAdapter.hpp"
 #include "VulkanSwapchain.hpp"
 #include "VulkanQueue.hpp"
+#include "VulkanResource.hpp"
 #include "Core/Messaging.hpp"
 
 #include "Graphics/GraphicsAdapter.hpp"
@@ -208,25 +209,19 @@ void VulkanDevice::destroy(VkInstance instance)
     
     }
 
-    if (m_deviceBufferMemory) {
+    for (U32 i = 0; i < RESOURCE_MEMORY_USAGE_COUNT; ++i) {
     
-        R_DEBUG(R_CHANNEL_VULKAN, "Free device memory...");
-        
-        vkFreeMemory(m_device, m_deviceBufferMemory, nullptr);
-        m_deviceBufferMemory = VK_NULL_HANDLE;
+        if (m_deviceMemory[i]) {
     
-    }
-
-    if (m_hostBufferMemory) { 
+            vkFreeMemory(m_device, m_deviceMemory[i], nullptr);
+            m_deviceMemory[i] = nullptr;
     
-        R_DEBUG(R_CHANNEL_VULKAN, "Free host memory...");
-
-        vkFreeMemory(m_device, m_hostBufferMemory, nullptr);
-        m_hostBufferMemory = VK_NULL_HANDLE;
+        }
     
     }
 
     if (m_device != VK_NULL_HANDLE) {
+
         vkDestroyDevice(m_device, nullptr);
         m_device = VK_NULL_HANDLE;
 
@@ -397,7 +392,7 @@ ErrType VulkanDevice::reserveMemory(const MemoryReserveDesc& desc)
 
     R_DEBUG(R_CHANNEL_VULKAN, "Allocating device memory...");
 
-    result = vkAllocateMemory(m_device, &allocInfo, nullptr, &m_deviceBufferMemory);
+    result = vkAllocateMemory(m_device, &allocInfo, nullptr, &m_deviceMemory[RESOURCE_MEMORY_USAGE_GPU_ONLY]);
     
     if (result != VK_SUCCESS) {
     
@@ -420,7 +415,7 @@ ErrType VulkanDevice::reserveMemory(const MemoryReserveDesc& desc)
     
     R_DEBUG(R_CHANNEL_VULKAN, "Allocating host memory...");
 
-    result = vkAllocateMemory(m_device, &allocInfo, nullptr, &m_hostBufferMemory);
+    result = vkAllocateMemory(m_device, &allocInfo, nullptr, &m_deviceMemory[RESOURCE_MEMORY_USAGE_CPU_ONLY]);
     
     if (result != VK_SUCCESS) {
     
@@ -502,5 +497,30 @@ ErrType VulkanDevice::destroyCommandQueue(GraphicsQueue* pQueue)
     R_WARN(R_CHANNEL_VULKAN, "This queue does not exist from this device. Ignoring this destruction function...");
     
     return REC_RESULT_FAILED;
+}
+
+
+ErrType VulkanDevice::createResource(GraphicsResource** ppResource, GraphicsResourceDescription& desc)
+{
+    ErrType result = REC_RESULT_OK;
+
+    if (desc.dimension == RESOURCE_DIMENSION_BUFFER) {
+
+        VulkanBuffer* pBuffer = new VulkanBuffer(desc);
+
+        result = pBuffer->initialize(this, desc);
+
+        *ppResource = pBuffer;
+
+    } else {
+    
+        VulkanImage* pImage = new VulkanImage(desc);
+
+        result = pImage->initialize(this, desc);
+
+        *ppResource = pImage;
+    
+    }
+    return result;
 }
 } // Recluse

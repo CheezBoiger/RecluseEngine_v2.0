@@ -11,6 +11,9 @@ namespace Recluse {
 //
 class R_EXPORT GraphicsResource {
 public:
+    GraphicsResource(GraphicsResourceDescription& desc)
+        : m_desc(desc) { }
+
     virtual ~GraphicsResource() { }
 
     const GraphicsResourceDescription& getDesc() const { return m_desc; }

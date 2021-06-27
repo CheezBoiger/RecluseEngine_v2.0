@@ -13,6 +13,7 @@ namespace Recluse {
 class VulkanAdapter;
 class VulkanQueue;
 class VulkanSwapchain;
+class VulkanAllocator;
 struct DeviceCreateInfo;
 
 
@@ -29,9 +30,10 @@ public:
     VulkanDevice()
         : m_device(VK_NULL_HANDLE)
         , m_surface(VK_NULL_HANDLE)
-        , m_windowHandle(nullptr)
-        , m_deviceBufferMemory(VK_NULL_HANDLE)
-        , m_hostBufferMemory(VK_NULL_HANDLE) { }
+        , m_windowHandle(nullptr) { 
+        for (U32 i = 0; i < RESOURCE_MEMORY_USAGE_COUNT; ++i) 
+            m_deviceMemory[i] = VK_NULL_HANDLE;
+    }
 
     ErrType initialize(VulkanAdapter* iadapter, DeviceCreateInfo& info);
 
@@ -41,6 +43,8 @@ public:
     ErrType destroySwapchain(GraphicsSwapchain* pSwapchain) override;
 
     ErrType createCommandQueue(GraphicsQueue** ppQueue, GraphicsQueueTypeFlags type) override;
+
+    ErrType createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc) override;
 
     ErrType destroyCommandQueue(GraphicsQueue* pQueue) override;
 
@@ -60,6 +64,9 @@ public:
 
     VulkanAdapter* getAdapter() const { return m_adapter; }
 
+    VulkanAllocator* getAllocator(ResourceMemoryUsage usage) const
+        { return m_allocators[usage]; }
+
 private:
 
     ErrType createSurface(VkInstance instance, void* handle);
@@ -68,18 +75,14 @@ private:
 
     VkDevice m_device;
     VkSurfaceKHR m_surface;
-    
-    VkDeviceMemory m_hostBufferMemory;
-    VkDeviceMemory m_hostTextureMemory;
-    VkDeviceMemory m_deviceBufferMemory;
-    VkDeviceMemory m_deviceTextureMemory;
-    VkDeviceMemory m_uploadMemory;
-    VkDeviceMemory m_readbackMemory;
 
     std::vector<QueueFamily> m_queueFamilies;
     std::list<VulkanQueue*> m_queues;
     std::list<VulkanSwapchain*> m_swapchains;
 
+    VkDeviceMemory m_deviceMemory[RESOURCE_MEMORY_USAGE_COUNT];
+    VulkanAllocator* m_allocators[RESOURCE_MEMORY_USAGE_COUNT];
+    
     void* m_windowHandle;
 };
 } // Recluse
