@@ -54,13 +54,15 @@ void checkAvailableDeviceExtensions(const VulkanAdapter* adapter, std::vector<co
 
 ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo* info)
 {
-    VulkanContext* pVc = static_cast<VulkanContext*>(adapter->getContext());
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos; 
-    VkDeviceCreateInfo createInfo = { };
-    createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
-    std::vector<VkQueueFamilyProperties> queueFamilies = adapter->getQueueFamilyProperties();
-    std::vector<const char*> deviceExtensions = getDeviceExtensions();
+    VkDeviceCreateInfo createInfo                       = { };
+
+    VulkanContext* pVc                                  = adapter->getContext();
+    std::vector<VkQueueFamilyProperties> queueFamilies  = adapter->getQueueFamilyProperties();
+    std::vector<const char*> deviceExtensions           = getDeviceExtensions();
+
+    createInfo.sType                                    = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
     if (info->winHandle) {
         R_DEBUG(R_CHANNEL_VULKAN, "Creating surface handle.");
@@ -264,9 +266,17 @@ ErrType VulkanDevice::destroySwapchain(GraphicsSwapchain* pSwapchain)
 
     VulkanSwapchain* pVs    = static_cast<VulkanSwapchain*>(pSwapchain);
     
-    pVs->destroy(m_adapter->getContext()->get(), m_device);
+    result = pVs->destroy(m_adapter->getContext()->get(), m_device);
 
-    return REC_RESULT_OK;
+    if (result != REC_RESULT_OK) {
+    
+        R_ERR(R_CHANNEL_VULKAN, "Failed to destroy vulkan swapchain!");
+    
+    }
+
+    delete pVs;
+
+    return result;
 }
 
 
