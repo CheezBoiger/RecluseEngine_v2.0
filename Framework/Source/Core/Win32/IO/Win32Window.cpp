@@ -111,16 +111,22 @@ Window* Window::create(const std::string& title, U32 x, U32 y, U32 width, U32 he
 
 void Window::close()
 {
+    if (m_shouldClose) {
+
+        R_TRACE(R_CHANNEL_WIN32, "This window is already closed! Ignoring call...");
+        return;
+
+    }
 
     R_DEBUG(R_CHANNEL_WIN32, "Closing window...");    
 
     HWND hwnd = (HWND)getNativeHandle();
 
-    BOOL result = CloseWindow(hwnd);
+    BOOL result = DestroyWindow(hwnd);
 
     if (result == FALSE) {
 
-        R_ERR(R_CHANNEL_WIN32, "Failed to close window handle!");
+        R_ERR(R_CHANNEL_WIN32, "Failed to close window handle! Error: %d", GetLastError());
 
         return;
     }
@@ -145,15 +151,10 @@ ErrType Window::destroy(Window* pWindow)
         return REC_RESULT_NULL_PTR_EXCEPTION;
     }
 
-    HWND hwnd = (HWND)pWindow->getNativeHandle();
+    if (!pWindow->shouldClose()) {
 
-    result = DestroyWindow(hwnd);
+        pWindow->close();
 
-    if (result == FALSE) {
-
-        R_ERR(R_CHANNEL_WIN32, "Failed to destroy window!");
-        
-        return REC_RESULT_FAILED;
     }
 
     // delete the API window handle.
@@ -162,5 +163,13 @@ ErrType Window::destroy(Window* pWindow)
     R_DEBUG(R_CHANNEL_WIN32, "Successfully destroyed window!");
 
     return REC_RESULT_OK;
+}
+
+
+void Window::open()
+{
+    HWND hwnd = (HWND)getNativeHandle();
+    ShowWindow(hwnd, SW_SHOW);
+    m_isShowing = true;
 }
 } // Recluse

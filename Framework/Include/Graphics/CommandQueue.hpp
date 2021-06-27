@@ -12,9 +12,10 @@ class GraphicsFence;
 class GraphicsSemaphore;
 
 enum GraphicsQueueType {
-    QUEUE_TYPE_GRAPHICS     = (1 << 0),
-    QUEUE_TYPE_COMPUTE      = (1 << 1),
-    QUEUE_TYPE_COPY         = (1 << 2)
+    QUEUE_TYPE_PRESENT      = (1 << 0),
+    QUEUE_TYPE_GRAPHICS     = (1 << 1),
+    QUEUE_TYPE_COMPUTE      = (1 << 2),
+    QUEUE_TYPE_COPY         = (1 << 3)
 };
 
 typedef U32 GraphicsQueueTypeFlags;
@@ -30,7 +31,7 @@ struct QueueSubmit {
 
 class R_EXPORT GraphicsQueue {
 public:
-    GraphicsQueue(GraphicsQueueType type) : m_type(type) { }
+    GraphicsQueue(GraphicsQueueTypeFlags type) : m_type(type) { }
 
     virtual ~GraphicsQueue() { }
 

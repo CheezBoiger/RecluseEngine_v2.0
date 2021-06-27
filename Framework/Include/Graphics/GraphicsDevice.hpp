@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Core/Types.hpp"
+#include "CommandQueue.hpp"
 
 namespace Recluse {
 
@@ -12,11 +13,13 @@ class GraphicsResourceView;
 class GraphicsPipeline;
 class GraphicsSwapchain;
 class GraphicsContext;
+class GraphicsQueue;
 
 struct SwapchainCreateDescription {
     U32 desiredFrames;
     U32 renderWidth;
     U32 renderHeight;
+    GraphicsQueue* pBackbufferQueue;
 };
 
 
@@ -71,13 +74,14 @@ public:
     virtual ErrType createResourceView() { return 0; }
 
     virtual ErrType createCommandList() { return 0; }
-    virtual ErrType createCommandQueue() { return 0; }
+    virtual ErrType createCommandQueue(GraphicsQueue** ppQueue, GraphicsQueueTypeFlags type) { return 0; }
     virtual ErrType createPipeline() { return 0; }
 
     virtual ErrType createSwapchain(GraphicsSwapchain** swapchain,
         const SwapchainCreateDescription* pDescription) { return 0; }
 
     virtual ErrType destroySwapchain(GraphicsSwapchain* pSwapchain) { return 0; }
+    virtual ErrType destroyCommandQueue(GraphicsQueue* pQueue) { return 0; }
 private:
 };
 
@@ -88,8 +92,14 @@ public:
 
     // Rebuild the swapchain if need be. Pass in NULL to rebuild the swapchain as is.
     // Be sure to update any new frame info and handles that are managed by the front engine!
-    R_EXPORT virtual ErrType rebuild(const GraphicsContext* pContext, const GraphicsDevice* pDevice,
-        const SwapchainCreateDescription* pDesc) { return REC_RESULT_NOT_IMPLEMENTED; }
+    R_EXPORT virtual ErrType rebuild(const SwapchainCreateDescription* pDesc) 
+        { return REC_RESULT_NOT_IMPLEMENTED; }
+
+    // Present the current image.
+    R_EXPORT virtual ErrType present() { return REC_RESULT_NOT_IMPLEMENTED; }
+
+    // Get the current frame index, updates after every present call.
+    R_EXPORT virtual U32 getCurrentFrameIndex() { return 0; }
 
     virtual GraphicsResource* getFrame(U32 idx) = 0;
     virtual GraphicsResourceView* getFrameView(U32 idx) = 0;

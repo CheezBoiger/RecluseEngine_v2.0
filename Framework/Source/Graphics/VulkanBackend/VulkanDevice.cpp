@@ -3,6 +3,7 @@
 #include "VulkanContext.hpp"
 #include "VulkanAdapter.hpp"
 #include "VulkanSwapchain.hpp"
+#include "VulkanQueue.hpp"
 #include "Core/Messaging.hpp"
 
 #include "Graphics/GraphicsAdapter.hpp"
@@ -87,13 +88,16 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo* info)
 
     // we just need one priority bit, since we are only allocating one queue for both graphics and compute. 
     F32 priority = 1.0f;
+    std::vector<std::vector<F32>> priorities(queueFamilies.size());
 
     for (U32 i = 0; i < queueFamilies.size(); ++i) {
+        QueueFamily             queueFamily     = { };
         VkDeviceQueueCreateInfo queueInfo       = { };
         VkQueueFamilyProperties queueFamProps   = queueFamilies[i];
-        B32 shouldCreateQueues = false;
+        B32 shouldCreateQueues                  = false;
 
-        queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queueInfo.queueCount    = 0;
+        queueInfo.sType         = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 
         if (m_surface) {
         
@@ -101,9 +105,8 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo* info)
             
                 R_DEBUG(R_CHANNEL_VULKAN, "Device supports present...");
 
-                queueInfo.queueCount = 1;
-                queueInfo.queueFamilyIndex = i;
-                queueInfo.pQueuePriorities = &priority;
+                queueInfo.queueCount += 1;
+                queueFamily.flags |= QUEUE_TYPE_PRESENT;
                 shouldCreateQueues = true;
             
             }
@@ -112,39 +115,57 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo* info)
 
         if (queueFamProps.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
 
-            queueInfo.queueFamilyIndex = i;
-            queueInfo.queueCount = 1;
-            queueInfo.pQueuePriorities = &priority;
+            queueInfo.queueCount += 1;
+            queueFamily.flags |= QUEUE_TYPE_GRAPHICS;
             shouldCreateQueues = true;
 
-        } else if (queueFamProps.queueFlags & VK_QUEUE_COMPUTE_BIT) {
+        } 
+    
+        if (queueFamProps.queueFlags & VK_QUEUE_COMPUTE_BIT) {
 
-            queueInfo.queueFamilyIndex = i;
-            queueInfo.queueCount = 1;
-            queueInfo.pQueuePriorities = &priority;
+            queueInfo.queueCount += 1;
+            queueFamily.flags |= QUEUE_TYPE_COMPUTE;
             shouldCreateQueues = true;
 
-        } else if (queueFamProps.queueFlags & VK_QUEUE_TRANSFER_BIT) {
+        } 
+
+        if (queueFamProps.queueFlags & VK_QUEUE_TRANSFER_BIT) {
         
-            queueInfo.queueFamilyIndex = i;
-            queueInfo.queueCount = 1;
-            queueInfo.pQueuePriorities = &priority;
+            queueInfo.queueCount += 1;
+            queueFamily.flags |= QUEUE_TYPE_COPY;
             shouldCreateQueues = true;
         
         }
 
         if (shouldCreateQueues) {
 
+            // Check if the queue count is too big!
+            queueInfo.queueCount = 
+                ((queueInfo.queueCount > queueFamilies[i].queueCount) ? 
+                queueFamilies[i].queueCount : queueInfo.queueCount);
+            queueInfo.queueFamilyIndex = i;
+
+            priorities[i].resize(queueInfo.queueCount);
+
+            for (U32 j = 0; j < priorities[i].size(); ++j)
+                priorities[i][j] = priority;
+
+            queueInfo.pQueuePriorities = priorities[i].data();
+
             queueCreateInfos.push_back(queueInfo);
+
+            queueFamily.maxQueueCount       = queueInfo.queueCount;
+            queueFamily.queueFamilyIndex    = i;
+            m_queueFamilies.push_back(queueFamily);
 
         }
         
     }
     
-    createInfo.pQueueCreateInfos    = queueCreateInfos.data();
-    createInfo.queueCreateInfoCount = (U32)queueCreateInfos.size();
-    createInfo.enabledExtensionCount = (U32)deviceExtensions.size();
-    createInfo.ppEnabledExtensionNames = deviceExtensions.data();
+    createInfo.pQueueCreateInfos        = queueCreateInfos.data();
+    createInfo.queueCreateInfoCount     = (U32)queueCreateInfos.size();
+    createInfo.enabledExtensionCount    = (U32)deviceExtensions.size();
+    createInfo.ppEnabledExtensionNames  = deviceExtensions.data();
 
     VkResult result = vkCreateDevice(adapter->get(), &createInfo, nullptr, &m_device);
 
@@ -163,6 +184,13 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo* info)
 
 void VulkanDevice::destroy(VkInstance instance)
 {
+
+    if (!m_queues.empty()) {
+    
+        R_WARN(R_CHANNEL_VULKAN, "One or more queue handles still exist! This can cause memory leaks!");
+    
+    }
+
     if (m_surface) {
     
         vkDestroySurfaceKHR(instance, m_surface, nullptr);
@@ -370,5 +398,76 @@ ErrType VulkanDevice::reserveMemory(const MemoryReserveDesc& desc)
     vkDestroyBuffer(m_device, buffer, nullptr);
 
     return REC_RESULT_OK;
+}
+
+
+ErrType VulkanDevice::createCommandQueue(GraphicsQueue** ppQueue, GraphicsQueueTypeFlags type)
+{
+    U32 queueFamilyIndex    = 0xFFFFFFFF;
+    U32 queueIndex          = 0xFFFFFFFF;
+    VulkanQueue* pQueue     = nullptr;
+
+    for (U32 i = 0; i < m_queueFamilies.size(); ++i) {
+
+        QueueFamily& family = m_queueFamilies[i];
+
+        if (family.flags & type) {
+            
+            // Check if we can get a queue from this family.
+            if (family.currentAvailableQueueIndex < family.maxQueueCount) {
+                
+                queueFamilyIndex    = family.queueFamilyIndex;
+                queueIndex          = family.currentAvailableQueueIndex++;
+                break;
+                
+            }
+           
+    
+        }
+    
+    }
+
+    if (queueFamilyIndex == 0xFFFFFFFF || queueIndex == 0xFFFFFFFF) {
+    
+        R_ERR(R_CHANNEL_VULKAN, "Could not find proper queue family! Can not create queue.");
+
+        return REC_RESULT_FAILED;
+    
+    }
+
+    pQueue = new VulkanQueue(type);
+
+    ErrType err = pQueue->initialize(m_device, queueFamilyIndex, queueIndex);
+
+    if (err == REC_RESULT_OK) {
+
+        *ppQueue = pQueue;
+
+        m_queues.push_back(pQueue);
+
+    }
+
+    return err;
+}
+
+
+ErrType VulkanDevice::destroyCommandQueue(GraphicsQueue* pQueue)
+{
+    for (auto& iter = m_queues.begin(); iter != m_queues.end(); ++iter) {
+    
+        if (*iter == pQueue) {
+    
+            m_queues.erase(iter);
+            delete pQueue;
+
+            return REC_RESULT_OK;
+            
+        }
+    
+    }
+
+    R_WARN(R_CHANNEL_VULKAN, "This queue does not exist from this device. Ignoring this destruction function...");
+    
+    return REC_RESULT_FAILED;
 }
 } // Recluse

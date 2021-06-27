@@ -3,6 +3,8 @@
 #include "VulkanSwapchain.hpp"
 #include "VulkanContext.hpp"
 #include "VulkanDevice.hpp"
+#include "VulkanQueue.hpp"
+#include "VulkanAdapter.hpp"
 #include "Core/Messaging.hpp"
 
 
@@ -54,19 +56,22 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice, const SwapchainCreateDescr
     }    
 
     R_DEBUG(R_CHANNEL_VULKAN, "Successfully created vulkan swapchain!");
+    
+    m_pBackbufferQueue  = static_cast<VulkanQueue*>(pDesc->pBackbufferQueue);
+    m_pDevice           = pDevice;
+
+    buildFrameResources();
 
     return REC_RESULT_OK;
 }
 
 
-ErrType VulkanSwapchain::rebuild(const GraphicsContext* pContext, const GraphicsDevice* pDevice, const SwapchainCreateDescription* pDesc)
+ErrType VulkanSwapchain::rebuild(const SwapchainCreateDescription* pDesc)
 {
-    R_ASSERT(((pContext != NULL) && (pDevice != NULL)));
 
-    const VulkanContext* pVc    = static_cast<const VulkanContext*>(pContext);
-    const VulkanDevice* pVd     = static_cast<const VulkanDevice*>(pDevice);
+    const VulkanContext* pVc    = m_pDevice->getAdapter()->getContext();
 
-    destroy(pVc->get(), pVd->get());
+    destroy(pVc->get(), m_pDevice->get());
 
     return REC_RESULT_NOT_IMPLEMENTED;
 }
@@ -76,6 +81,8 @@ ErrType VulkanSwapchain::destroy(VkInstance instance, VkDevice device)
 {
     if (m_swapchain) {
 
+        m_frameResources.destroy(this);
+
         vkDestroySwapchainKHR(device, m_swapchain, nullptr);    
         m_swapchain = VK_NULL_HANDLE;
 
@@ -84,5 +91,50 @@ ErrType VulkanSwapchain::destroy(VkInstance instance, VkDevice device)
     }
 
     return REC_RESULT_OK;
+}
+
+
+ErrType VulkanSwapchain::present()
+{
+    R_ASSERT(m_pBackbufferQueue != NULL);
+    
+    ErrType err                 = REC_RESULT_OK;
+    VkSwapchainKHR swapchains[] = { m_swapchain };
+    VkPresentInfoKHR info       = { };
+    
+    info.swapchainCount         = 1;
+    info.pSwapchains            = swapchains;
+    info.sType                  = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    info.pWaitSemaphores        = nullptr;
+    info.waitSemaphoreCount     = 0;
+    info.pResults               = nullptr;
+    info.pImageIndices          = &m_currentFrameIndex;
+    
+    VkResult result = vkQueuePresentKHR(m_pBackbufferQueue->get(), &info);
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+    
+        err = REC_RESULT_NEEDS_UPDATE;
+    
+    }
+
+    result = vkAcquireNextImageKHR(m_pDevice->get(), m_swapchain, UINT64_MAX, 
+        VK_NULL_HANDLE, VK_NULL_HANDLE, &m_currentFrameIndex);
+
+    if (result != VK_SUCCESS) {
+
+        R_WARN(R_CHANNEL_VULKAN, "AcquireNextImage was not successful...");    
+
+        err = REC_RESULT_FAILED;
+    
+    }
+    
+    return err;
+}
+
+
+void VulkanSwapchain::buildFrameResources()
+{
+    m_frameResources.build(this);
 }
 } // Recluse

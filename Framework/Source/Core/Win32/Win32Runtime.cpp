@@ -3,6 +3,7 @@
 #include "Core/Win32/Win32Runtime.hpp"
 #include "Core/Win32/IO/Win32Window.hpp"
 #include "Core/RealtimeTick.hpp"
+#include "Core/System/Input.hpp"
 
 #include "Core/Messaging.hpp"
 #include "Core/Logging/LogFramework.hpp"
@@ -126,5 +127,17 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
     }    
 
     return DefWindowProcW(hwnd, uMsg, wParam, lParam);
+}
+
+
+void pollEvents()
+{
+    MSG msg;
+    while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    
+    }
 }
 } // Recluse

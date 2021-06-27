@@ -17,7 +17,16 @@ typedef void(*WindowKeyFunction)();
 
 class Window {
 public:
-    
+    Window()
+        : m_shouldClose(false)
+        , m_handle(NULL)
+        , m_height(0)
+        , m_width(0)
+        , m_xPos(0)
+        , m_yPos(0)
+        , m_isMinimized(false)
+        , m_isShowing(false) { }
+
     // Create the window.
     static R_EXPORT Window* create(const std::string& title, U32 x, U32 y, U32 width, U32 height);
     static R_EXPORT ErrType destroy(Window* pWindow);
@@ -68,11 +77,11 @@ private:
     U32 m_xPos;
     U32 m_yPos;
     ScreenMode m_screenMode;
-    B32 m_isMinimized : 16;
-    B32 m_shouldClose : 16;
+    B32 m_isMinimized : 1;
+    B32 m_shouldClose : 1;
+    B32 m_isShowing   : 1;
     
     std::string m_title;
     void* m_handle;
 };
-
 } // Recluse

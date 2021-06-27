@@ -5,12 +5,22 @@
 #include "Graphics/GraphicsDevice.hpp"
 
 #include <vector>
+#include <list>
 
 namespace Recluse {
 
 
 class VulkanAdapter;
+class VulkanQueue;
 struct DeviceCreateInfo;
+
+
+struct QueueFamily {
+    U32                     maxQueueCount;
+    U32                     queueFamilyIndex;
+    U32                     currentAvailableQueueIndex;
+    GraphicsQueueTypeFlags  flags;
+};
 
 
 class VulkanDevice : public GraphicsDevice {
@@ -28,6 +38,10 @@ public:
         const SwapchainCreateDescription* pDesc) override;
 
     ErrType destroySwapchain(GraphicsSwapchain* pSwapchain) override;
+
+    ErrType createCommandQueue(GraphicsQueue** ppQueue, GraphicsQueueTypeFlags type) override;
+
+    ErrType destroyCommandQueue(GraphicsQueue* pQueue) override;
 
     void destroy(VkInstance instance);
 
@@ -60,6 +74,9 @@ private:
     VkDeviceMemory m_deviceTextureMemory;
     VkDeviceMemory m_uploadMemory;
     VkDeviceMemory m_readbackMemory;
+
+    std::vector<QueueFamily> m_queueFamilies;
+    std::list<VulkanQueue*> m_queues;
 
     void* m_windowHandle;
 };

@@ -2,9 +2,10 @@
 #include "Graphics/GraphicsAdapter.hpp"
 #include "Graphics/GraphicsContext.hpp"
 #include "Graphics/GraphicsDevice.hpp"
+#include "Graphics/CommandQueue.hpp"
 
 #include "Core/System/Window.hpp"
-
+#include "Core/System/Input.hpp"
 
 using namespace Recluse;
 
@@ -15,6 +16,7 @@ int main(int c, char* argv[])
     GraphicsSwapchain* pSwapchain   = nullptr;
     GraphicsDevice* pDevice         = nullptr;
     GraphicsContext* pContext       = GraphicsContext::createContext(GRAPHICS_API_VULKAN);
+    GraphicsQueue* pQueue           = nullptr;
 
     Window* pWindow = Window::create(u8"SwapchainInitialization", 0, 0, 128, 128);
 
@@ -64,10 +66,19 @@ int main(int c, char* argv[])
 
     }
 
+    result = pDevice->createCommandQueue(&pQueue, QUEUE_TYPE_GRAPHICS | QUEUE_TYPE_GRAPHICS);
+
+    if (result != REC_RESULT_OK) {
+    
+        R_ERR("Graphics", "Failed to create the presentation queue!");
+    
+    }
+
     SwapchainCreateDescription scInfo   = { };
     scInfo.desiredFrames                = 3;
     scInfo.renderHeight                 = 128;
     scInfo.renderWidth                  = 128;
+    scInfo.pBackbufferQueue             = pQueue;
 
     result = pDevice->createSwapchain(&pSwapchain, &scInfo);
     
@@ -79,8 +90,18 @@ int main(int c, char* argv[])
     
         R_TRACE("Graphics", "Succeeded swapchain creation!");
 
+        pWindow->open();
+
+        while (!pWindow->shouldClose()) {
+
+            pSwapchain->present();
+
+            pollEvents();
+                    
+        }
+
         pDevice->destroySwapchain(pSwapchain);
-    
+        pDevice->destroyCommandQueue(pQueue);
     }
 
     adapters[0]->destroyDevice(pDevice, pContext);
