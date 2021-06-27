@@ -21,9 +21,9 @@ public:
 
     // Build the vulkan swapchain. This will return the total number of frames that 
     // were created.
-    ErrType build(VulkanDevice* pDevice, const SwapchainCreateDescription* pDesc);
+    ErrType build(VulkanDevice* pDevice, const SwapchainCreateDescription& pDesc);
 
-    ErrType rebuild(const SwapchainCreateDescription* pDesc) override;
+    ErrType rebuild(const SwapchainCreateDescription& pDesc) override;
     
     ErrType present() override; 
 

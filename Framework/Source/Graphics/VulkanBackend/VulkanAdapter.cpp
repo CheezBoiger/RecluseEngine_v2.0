@@ -6,11 +6,11 @@
 namespace Recluse {
 
 
-std::vector<VulkanAdapter> VulkanAdapter::getAvailablePhysicalDevices(VulkanContext& ctx)
+std::vector<VulkanAdapter> VulkanAdapter::getAvailablePhysicalDevices(VulkanContext* ctx)
 {
     std::vector<VulkanAdapter> physicalDevices;
     U32 count = 0;
-    VkResult result = vkEnumeratePhysicalDevices(ctx(), &count, nullptr);
+    VkResult result = vkEnumeratePhysicalDevices(ctx->get(), &count, nullptr);
     
     if (count == 0) {
 
@@ -24,7 +24,7 @@ std::vector<VulkanAdapter> VulkanAdapter::getAvailablePhysicalDevices(VulkanCont
 
         physicalDevices.resize(count);
 
-        vkEnumeratePhysicalDevices(ctx(), &count, devices.data());
+        vkEnumeratePhysicalDevices(ctx->get(), &count, devices.data());
 
         R_DEBUG(R_CHANNEL_VULKAN, 
             ((count > 1) ? "There are %d vulkan devices." : "There is %d vulkan device."), count);        
@@ -32,7 +32,7 @@ std::vector<VulkanAdapter> VulkanAdapter::getAvailablePhysicalDevices(VulkanCont
         for (U32 i = 0; i < count; ++i) {
             VulkanAdapter device;
             device.m_phyDevice = devices[i];
-            device.m_context = &ctx;
+            device.m_context = ctx;
             physicalDevices[i] = std::move(device);
         }
     }
@@ -99,7 +99,7 @@ ErrType VulkanAdapter::getAdapterInfo(AdapterInfo* out) const
 }
 
 
-ErrType VulkanAdapter::createDevice(DeviceCreateInfo* info, GraphicsDevice** ppDevice) 
+ErrType VulkanAdapter::createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice) 
 {
 
     R_DEBUG(R_CHANNEL_VULKAN, "Creating device!");
@@ -122,9 +122,9 @@ ErrType VulkanAdapter::createDevice(DeviceCreateInfo* info, GraphicsDevice** ppD
 }
 
 
-ErrType VulkanAdapter::destroyDevice(GraphicsDevice* pDevice, GraphicsContext* pContext)
+ErrType VulkanAdapter::destroyDevice(GraphicsDevice* pDevice)
 {
-    VulkanContext* pVc = static_cast<VulkanContext*>(pContext);
+    VulkanContext* pVc = m_context;
 
     for (auto& iter = m_devices.begin(); iter != m_devices.end(); ++iter) {
         if (*iter == pDevice) {    
@@ -171,7 +171,7 @@ VulkanAdapter::~VulkanAdapter()
 {
     if (m_phyDevice && (!m_devices.empty())) {
 
-        R_ERR(R_CHANNEL_VULKAN, "One or more devices exist for this adapter, prior to its handle destruction!");
+        R_WARN(R_CHANNEL_VULKAN, "One or more devices exist for this adapter, prior to its handle destruction!");
 
     }
 }

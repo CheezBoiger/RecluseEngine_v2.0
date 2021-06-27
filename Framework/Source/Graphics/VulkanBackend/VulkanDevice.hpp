@@ -12,6 +12,7 @@ namespace Recluse {
 
 class VulkanAdapter;
 class VulkanQueue;
+class VulkanSwapchain;
 struct DeviceCreateInfo;
 
 
@@ -32,10 +33,10 @@ public:
         , m_deviceBufferMemory(VK_NULL_HANDLE)
         , m_hostBufferMemory(VK_NULL_HANDLE) { }
 
-    ErrType initialize(VulkanAdapter* iadapter, DeviceCreateInfo* info);
+    ErrType initialize(VulkanAdapter* iadapter, DeviceCreateInfo& info);
 
     ErrType createSwapchain(GraphicsSwapchain** ppSwapchain, 
-        const SwapchainCreateDescription* pDesc) override;
+        const SwapchainCreateDescription& pDesc) override;
 
     ErrType destroySwapchain(GraphicsSwapchain* pSwapchain) override;
 
@@ -77,6 +78,7 @@ private:
 
     std::vector<QueueFamily> m_queueFamilies;
     std::list<VulkanQueue*> m_queues;
+    std::list<VulkanSwapchain*> m_swapchains;
 
     void* m_windowHandle;
 };

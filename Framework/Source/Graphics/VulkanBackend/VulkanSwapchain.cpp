@@ -23,7 +23,7 @@ GraphicsResourceView* VulkanSwapchain::getFrameView(U32 idx)
 }
 
 
-ErrType VulkanSwapchain::build(VulkanDevice* pDevice, const SwapchainCreateDescription* pDesc)
+ErrType VulkanSwapchain::build(VulkanDevice* pDevice, const SwapchainCreateDescription& pDesc)
 {
     VkSwapchainCreateInfoKHR createInfo = { };
     VkResult result                     = VK_SUCCESS;
@@ -34,13 +34,13 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice, const SwapchainCreateDescr
     createInfo.imageColorSpace  = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
     createInfo.imageFormat      = VK_FORMAT_B8G8R8A8_SRGB;
     createInfo.surface          = pDevice->getSurface();
-    createInfo.imageExtent      = { pDesc->renderWidth, pDesc->renderHeight };
+    createInfo.imageExtent      = { pDesc.renderWidth, pDesc.renderHeight };
     createInfo.oldSwapchain     = (m_swapchain) ? m_swapchain : VK_NULL_HANDLE;
     createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     createInfo.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     createInfo.compositeAlpha   = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     createInfo.presentMode      = VK_PRESENT_MODE_FIFO_KHR;
-    createInfo.minImageCount    = pDesc->desiredFrames;
+    createInfo.minImageCount    = pDesc.desiredFrames;
     createInfo.imageArrayLayers = 1;
     createInfo.preTransform     = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR; 
     createInfo.pQueueFamilyIndices = nullptr;
@@ -57,7 +57,7 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice, const SwapchainCreateDescr
 
     R_DEBUG(R_CHANNEL_VULKAN, "Successfully created vulkan swapchain!");
     
-    m_pBackbufferQueue  = static_cast<VulkanQueue*>(pDesc->pBackbufferQueue);
+    m_pBackbufferQueue  = static_cast<VulkanQueue*>(pDesc.pBackbufferQueue);
     m_pDevice           = pDevice;
 
     buildFrameResources();
@@ -66,7 +66,7 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice, const SwapchainCreateDescr
 }
 
 
-ErrType VulkanSwapchain::rebuild(const SwapchainCreateDescription* pDesc)
+ErrType VulkanSwapchain::rebuild(const SwapchainCreateDescription& pDesc)
 {
 
     const VulkanContext* pVc    = m_pDevice->getAdapter()->getContext();

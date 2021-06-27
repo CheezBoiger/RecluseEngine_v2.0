@@ -31,13 +31,13 @@ public:
 
     VulkanAdapter() : m_phyDevice(VK_NULL_HANDLE) { }
 
-    static std::vector<VulkanAdapter> getAvailablePhysicalDevices(VulkanContext& ctx);
+    static std::vector<VulkanAdapter> getAvailablePhysicalDevices(VulkanContext* ctx);
 
     ErrType getAdapterInfo(AdapterInfo* out) const override;
 
-    ErrType createDevice(DeviceCreateInfo* info, GraphicsDevice** ppDevice) override;
+    ErrType createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice) override;
 
-    ErrType destroyDevice(GraphicsDevice* pDevice, GraphicsContext* pContext) override;
+    ErrType destroyDevice(GraphicsDevice* pDevice) override;
 
     U32 VulkanAdapter::findMemoryType(U32 filter, ResourceMemoryUsage usage) const;
 

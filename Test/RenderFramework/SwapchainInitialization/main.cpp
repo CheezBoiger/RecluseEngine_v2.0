@@ -58,7 +58,7 @@ int main(int c, char* argv[])
     DeviceCreateInfo deviceCreate   = { };
     deviceCreate.winHandle = pWindow->getNativeHandle();
 
-    result = adapters[0]->createDevice(&deviceCreate, &pDevice);
+    result = adapters[0]->createDevice(deviceCreate, &pDevice);
 
     if (result != REC_RESULT_OK) {
     
@@ -80,7 +80,7 @@ int main(int c, char* argv[])
     scInfo.renderWidth                  = 128;
     scInfo.pBackbufferQueue             = pQueue;
 
-    result = pDevice->createSwapchain(&pSwapchain, &scInfo);
+    result = pDevice->createSwapchain(&pSwapchain, scInfo);
     
     if (result != REC_RESULT_OK) {
     
@@ -104,7 +104,7 @@ int main(int c, char* argv[])
         pDevice->destroyCommandQueue(pQueue);
     }
 
-    adapters[0]->destroyDevice(pDevice, pContext);
+    adapters[0]->destroyDevice(pDevice);
 
     pContext->destroy();
     

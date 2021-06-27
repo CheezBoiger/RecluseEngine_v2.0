@@ -52,7 +52,7 @@ int main(int c, char* argv[])
     DeviceCreateInfo deviceCreate   = { };
     GraphicsDevice* pDevice         = nullptr;
 
-    result = adapters[0]->createDevice(&deviceCreate, &pDevice);
+    result = adapters[0]->createDevice(deviceCreate, &pDevice);
 
     if (result != REC_RESULT_OK) {
     
@@ -70,7 +70,7 @@ int main(int c, char* argv[])
     
     pDevice->reserveMemory(memReserves);
 
-    adapters[0]->destroyDevice(pDevice, pContext);
+    adapters[0]->destroyDevice(pDevice);
 
     pContext->destroy();
 

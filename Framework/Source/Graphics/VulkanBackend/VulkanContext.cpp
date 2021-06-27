@@ -204,7 +204,7 @@ PFN_vkVoidFunction VulkanContext::getProcAddr(const char* funcName)
 
 void VulkanContext::queryGraphicsAdapters()
 {
-    std::vector<VulkanAdapter> devices = VulkanAdapter::getAvailablePhysicalDevices(*this);
+    std::vector<VulkanAdapter> devices = VulkanAdapter::getAvailablePhysicalDevices(this);
     std::vector<GraphicsAdapter*> adapters(devices.size());
 
     for (U32 i = 0; i < adapters.size(); ++i) {

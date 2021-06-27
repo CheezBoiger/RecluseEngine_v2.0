@@ -52,7 +52,7 @@ void checkAvailableDeviceExtensions(const VulkanAdapter* adapter, std::vector<co
 }
 
 
-ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo* info)
+ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
 {
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos; 
 
@@ -64,11 +64,11 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo* info)
 
     createInfo.sType                                    = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
-    if (info->winHandle) {
+    if (info.winHandle) {
         R_DEBUG(R_CHANNEL_VULKAN, "Creating surface handle.");
 
         // Create surface
-        ErrType builtSurface = createSurface(pVc->get(), info->winHandle);
+        ErrType builtSurface = createSurface(pVc->get(), info.winHandle);
 
         if (builtSurface != REC_RESULT_OK) {
 
@@ -78,7 +78,7 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo* info)
 
         }
  
-        m_windowHandle              = info->winHandle;
+        m_windowHandle              = info.winHandle;
 
         R_DEBUG(R_CHANNEL_VULKAN, "Successfully created vulkan handle.");
         
@@ -193,6 +193,12 @@ void VulkanDevice::destroy(VkInstance instance)
     
     }
 
+    if (!m_swapchains.empty()) {
+    
+        R_WARN(R_CHANNEL_VULKAN, "One or more swapchain handles still exist! This can cause memory leaks!");
+    
+    }
+
     if (m_surface) {
     
         vkDestroySurfaceKHR(instance, m_surface, nullptr);
@@ -231,7 +237,7 @@ void VulkanDevice::destroy(VkInstance instance)
 
 
 ErrType VulkanDevice::createSwapchain(GraphicsSwapchain** ppSwapchain,
-    const SwapchainCreateDescription* pDesc)
+    const SwapchainCreateDescription& pDesc)
 {
 
     VulkanSwapchain* pSwapchain     = new VulkanSwapchain();
@@ -247,6 +253,8 @@ ErrType VulkanDevice::createSwapchain(GraphicsSwapchain** ppSwapchain,
     }
 
     *ppSwapchain = pSwapchain;
+
+    m_swapchains.push_back(pSwapchain);
 
     return result;
 }
@@ -265,16 +273,31 @@ ErrType VulkanDevice::destroySwapchain(GraphicsSwapchain* pSwapchain)
     }
 
     VulkanSwapchain* pVs    = static_cast<VulkanSwapchain*>(pSwapchain);
-    
-    result = pVs->destroy(m_adapter->getContext()->get(), m_device);
 
-    if (result != REC_RESULT_OK) {
+    for (auto& iter = m_swapchains.begin(); iter != m_swapchains.end(); ++iter) {
     
-        R_ERR(R_CHANNEL_VULKAN, "Failed to destroy vulkan swapchain!");
+        if (*iter == pVs) {
+
+            result = pVs->destroy(m_adapter->getContext()->get(), m_device);
+
+            if (result != REC_RESULT_OK) {
     
+                R_ERR(R_CHANNEL_VULKAN, "Failed to destroy vulkan swapchain!");
+    
+            } else {
+
+                R_DEBUG(R_CHANNEL_VULKAN, "Destroyed vulkan swapchain...");
+        
+                m_swapchains.erase(iter);
+                delete pVs;
+    
+            }
+
+            break;
+
+        }
+
     }
-
-    delete pVs;
 
     return result;
 }

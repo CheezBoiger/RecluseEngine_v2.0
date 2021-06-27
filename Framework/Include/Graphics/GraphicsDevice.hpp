@@ -68,7 +68,7 @@ public:
     // Reserve memory to be used for graphics resources.
     virtual ErrType reserveMemory(const MemoryReserveDesc& desc) { return 0; }
 
-    virtual ErrType createResource(GraphicsResource** ppResource, GraphicsResourceDescription* pDesc) 
+    virtual ErrType createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc) 
         { return 0; }
     
     virtual ErrType createResourceView() { return 0; }
@@ -78,7 +78,7 @@ public:
     virtual ErrType createPipeline() { return 0; }
 
     virtual ErrType createSwapchain(GraphicsSwapchain** swapchain,
-        const SwapchainCreateDescription* pDescription) { return 0; }
+        const SwapchainCreateDescription& pDescription) { return 0; }
 
     virtual ErrType destroySwapchain(GraphicsSwapchain* pSwapchain) { return 0; }
     virtual ErrType destroyCommandQueue(GraphicsQueue* pQueue) { return 0; }
@@ -92,7 +92,7 @@ public:
 
     // Rebuild the swapchain if need be. Pass in NULL to rebuild the swapchain as is.
     // Be sure to update any new frame info and handles that are managed by the front engine!
-    R_EXPORT virtual ErrType rebuild(const SwapchainCreateDescription* pDesc) 
+    R_EXPORT virtual ErrType rebuild(const SwapchainCreateDescription& pDesc) 
         { return REC_RESULT_NOT_IMPLEMENTED; }
 
     // Present the current image.

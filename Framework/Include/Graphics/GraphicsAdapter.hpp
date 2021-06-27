@@ -38,10 +38,10 @@ public:
     virtual ErrType getAdapterLimits() const { return 0; }
 
     // Creates a device from this adapter.
-    virtual ErrType createDevice(DeviceCreateInfo* info, GraphicsDevice** ppDevice) { return 0; }
+    virtual ErrType createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice) { return 0; }
 
     // Destroys the device associated with this adapter.
-    virtual ErrType destroyDevice(GraphicsDevice* pDevice, GraphicsContext* pContext) { return 0; }
+    virtual ErrType destroyDevice(GraphicsDevice* pDevice) { return 0; }
 };
 
 
