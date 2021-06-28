@@ -250,4 +250,14 @@ U32 VulkanAdapter::findMemoryType(U32 filter, ResourceMemoryUsage usage) const
 
     return index;
 }
+
+
+VkFormatProperties VulkanAdapter::getFormatProperties(VkFormat format) const
+{
+    VkFormatProperties props = { };
+
+    vkGetPhysicalDeviceFormatProperties(m_phyDevice, format, &props);
+    
+    return props;
+}
 } // Recluse 

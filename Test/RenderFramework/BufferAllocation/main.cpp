@@ -2,6 +2,7 @@
 #include "Graphics/GraphicsAdapter.hpp"
 #include "Graphics/GraphicsContext.hpp"
 #include "Graphics/GraphicsDevice.hpp"
+#include "Graphics/Resource.hpp"
 
 #include "Core/Memory/MemoryPool.hpp"
 
@@ -22,7 +23,7 @@ int main(int c, char* argv[])
 
     appInfo.appMajor    = 0;
     appInfo.appMinor    = 0;
-    appInfo.appName     = "MemoryInitialization";
+    appInfo.appName     = "BufferAllocation";
     appInfo.appPatch    = 0;
     appInfo.engineMajor = 0;
     appInfo.engineMinor = 0;
@@ -69,6 +70,26 @@ int main(int c, char* argv[])
     memReserves.bufferPools[RESOURCE_MEMORY_USAGE_GPU_ONLY] = 512 * R_1MB; // half a GB.
     
     pDevice->reserveMemory(memReserves);
+
+    GraphicsResource* pBuffer = nullptr;
+    
+    GraphicsResourceDescription bufferDesc = { };
+    bufferDesc.usage = RESOURCE_USAGE_CONSTANT_BUFFER;
+    bufferDesc.dimension = RESOURCE_DIMENSION_BUFFER;
+    bufferDesc.memoryUsage = RESOURCE_MEMORY_USAGE_CPU_ONLY;
+    bufferDesc.width = R_1KB * 1024ull;
+
+    result = pDevice->createResource(&pBuffer, bufferDesc);
+
+    if (result != REC_RESULT_OK) {
+    
+        R_ERR("Graphics", "Failed to create buffer!");
+    
+    } else {
+        
+        R_TRACE("Graphics", "Successfully create buffer!");
+        pDevice->destroyResource(pBuffer);
+    }
 
     adapters[0]->destroyDevice(pDevice);
 

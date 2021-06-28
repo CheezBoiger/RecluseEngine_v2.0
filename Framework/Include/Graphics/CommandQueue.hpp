@@ -29,6 +29,7 @@ struct QueueSubmit {
     U32                     numSignalSemaphores;
 };
 
+// Graphics queue interface.
 class R_EXPORT GraphicsQueue {
 public:
     GraphicsQueue(GraphicsQueueTypeFlags type) : m_type(type) { }

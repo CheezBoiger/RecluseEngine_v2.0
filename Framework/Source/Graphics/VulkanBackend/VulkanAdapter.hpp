@@ -55,6 +55,8 @@ public:
     VkPhysicalDeviceFeatures getFeatures() const;
     VkPhysicalDeviceFeatures2 getFeatures2() const;
 
+    VkFormatProperties getFormatProperties(VkFormat format) const;
+
     std::vector<VkQueueFamilyProperties> getQueueFamilyProperties() const;
 
     std::vector<VkExtensionProperties> getDeviceExtensionProperties() const;

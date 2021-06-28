@@ -2,6 +2,7 @@
 #include "Graphics/GraphicsAdapter.hpp"
 #include "Graphics/GraphicsContext.hpp"
 #include "Graphics/GraphicsDevice.hpp"
+#include "Graphics/Resource.hpp"
 
 #include "Core/Memory/MemoryPool.hpp"
 
@@ -22,7 +23,7 @@ int main(int c, char* argv[])
 
     appInfo.appMajor    = 0;
     appInfo.appMinor    = 0;
-    appInfo.appName     = "MemoryInitialization";
+    appInfo.appName     = "TextureAllocation";
     appInfo.appPatch    = 0;
     appInfo.engineMajor = 0;
     appInfo.engineMinor = 0;
@@ -70,6 +71,33 @@ int main(int c, char* argv[])
     
     pDevice->reserveMemory(memReserves);
 
+    GraphicsResource* pTexture = nullptr;
+    GraphicsResourceDescription desc = { };
+    desc.usage = RESOURCE_USAGE_RENDER_TARGET | RESOURCE_USAGE_SHADER_RESOURCE;
+    desc.memoryUsage = RESOURCE_MEMORY_USAGE_GPU_ONLY;
+    desc.width = 128;
+    desc.height = 128;
+    desc.depth = 1;
+    desc.arrayLevels = 1;
+    desc.mipLevels = 8;
+    desc.dimension = RESOURCE_DIMENSION_2D;
+    desc.samples = 1;
+    desc.format = RESOURCE_FORMAT_R8G8B8A8_UNORM;
+
+    result = pDevice->createResource(&pTexture, desc);
+
+    if (result != REC_RESULT_OK) {
+    
+        R_ERR("Graphics", "Failed to create texture!");
+
+    } else {
+    
+        R_TRACE("Graphics", "Successfully created texture!");
+
+        pDevice->destroyResource(pTexture);
+    
+    }
+    
     adapters[0]->destroyDevice(pDevice);
 
     pContext->destroy();

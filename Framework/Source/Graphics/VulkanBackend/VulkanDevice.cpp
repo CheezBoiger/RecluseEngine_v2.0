@@ -211,10 +211,12 @@ void VulkanDevice::destroy(VkInstance instance)
 
     for (U32 i = 0; i < RESOURCE_MEMORY_USAGE_COUNT; ++i) {
     
-        if (m_deviceMemory[i]) {
+        if (m_bufferPool[i].memory) {
     
-            vkFreeMemory(m_device, m_deviceMemory[i], nullptr);
-            m_deviceMemory[i] = nullptr;
+            R_DEBUG(R_CHANNEL_VULKAN, "Freeing allocated pool...");
+
+            vkFreeMemory(m_device, m_bufferPool[i].memory, nullptr);
+            m_bufferPool[i].memory = nullptr;
     
         }
     
@@ -355,76 +357,121 @@ ErrType VulkanDevice::reserveMemory(const MemoryReserveDesc& desc)
 
     R_DEBUG(R_CHANNEL_VULKAN, "Reserving memory for:\n\tHost Buffer Memory (Bytes): \t%llu\n"
         "\tHost Texture Memory (Bytes): \t%llu\n\tDevice Buffer Memory (Bytes): \t%llu\n"
-        "\tDevice Texture Memory (Bytes): \t%llu", desc.hostBufferMemoryBytes, desc.hostTextureMemoryBytes,
-        desc.deviceBufferMemoryBytes, desc.deviceTextureMemoryBytes);
+        "\tDevice Texture Memory (Bytes): \t%llu", 
+        desc.bufferPools[RESOURCE_MEMORY_USAGE_CPU_ONLY], 
+        desc.texturePools[RESOURCE_MEMORY_USAGE_CPU_ONLY],
+        desc.bufferPools[RESOURCE_MEMORY_USAGE_GPU_ONLY], 
+        desc.texturePools[RESOURCE_MEMORY_USAGE_GPU_ONLY]);
 
     R_DEBUG(R_CHANNEL_VULKAN, "Total available memory (GB):\n\tDevice: %f\n\tHost: %f", 
-        F32(desc.deviceBufferMemoryBytes + desc.deviceTextureMemoryBytes) / R_1GB,
-        F32(desc.hostBufferMemoryBytes + desc.hostTextureMemoryBytes) / R_1GB);
+        F32(desc.bufferPools[RESOURCE_MEMORY_USAGE_GPU_ONLY] + desc.texturePools[RESOURCE_MEMORY_USAGE_GPU_ONLY]) / R_1GB,
+        F32(desc.bufferPools[RESOURCE_MEMORY_USAGE_CPU_ONLY] + desc.texturePools[RESOURCE_MEMORY_USAGE_CPU_ONLY]) / R_1GB);
 
     VkMemoryAllocateInfo allocInfo = { };
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 
-    // start with memory gpu.
-    VkBufferCreateInfo bufferInfo = { };
-    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.size = desc.deviceBufferMemoryBytes;
-    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    bufferInfo.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | 
-        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | 
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-
     VkBuffer buffer;
-    VkResult result = vkCreateBuffer(m_device, &bufferInfo, nullptr, &buffer);
+    VkImage image;
+    VkResult result = VK_SUCCESS;
 
-    if (result != VK_SUCCESS) {
+    for (U32 i = 0; i < RESOURCE_MEMORY_USAGE_COUNT; ++i) {
+
+        // start with memory gpu.
+        VkBufferCreateInfo bufferInfo = { };
+        bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bufferInfo.size = desc.bufferPools[i];
+        bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        bufferInfo.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | 
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | 
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+        result = vkCreateBuffer(m_device, &bufferInfo, nullptr, &buffer);
+
+        if (result != VK_SUCCESS) {
     
-        R_ERR(R_CHANNEL_VULKAN, "Failed to create temp buffer!");
+            R_ERR(R_CHANNEL_VULKAN, "Failed to create temp buffer!");
     
+        }
+
+        vkGetBufferMemoryRequirements(m_device, buffer, &memoryRequirements);
+
+        allocInfo.memoryTypeIndex = 
+            m_adapter->findMemoryType(memoryRequirements.memoryTypeBits, (ResourceMemoryUsage)i);
+
+        allocInfo.allocationSize = RECLUSE_ALLOC_MASK(memoryRequirements.size, memoryRequirements.alignment);
+
+        R_DEBUG(R_CHANNEL_VULKAN, "Allocating device memory...");
+
+        result = vkAllocateMemory(m_device, &allocInfo, nullptr, 
+            &m_bufferPool[i].memory);
+    
+        if (result != VK_SUCCESS) {
+    
+            R_ERR(R_CHANNEL_VULKAN, "Failed to allocate device memory!")
+    
+        }
+
+        m_bufferPool[i].sizeBytes = allocInfo.allocationSize;
+
+        if (i != RESOURCE_MEMORY_USAGE_GPU_ONLY) {
+
+            vkMapMemory(m_device, m_bufferPool[i].memory, 0, allocInfo.allocationSize, 0, 
+                &m_bufferPool[i].basePtr);
+
+        }
+        vkDestroyBuffer(m_device, buffer, nullptr);
     }
 
-    vkGetBufferMemoryRequirements(m_device, buffer, &memoryRequirements);
-
-    allocInfo.memoryTypeIndex = 
-        m_adapter->findMemoryType(memoryRequirements.memoryTypeBits, RESOURCE_MEMORY_USAGE_GPU_ONLY);
-
-    allocInfo.allocationSize = RECLUSE_ALLOC_MASK(memoryRequirements.size, memoryRequirements.alignment);
-
-    R_DEBUG(R_CHANNEL_VULKAN, "Allocating device memory...");
-
-    result = vkAllocateMemory(m_device, &allocInfo, nullptr, &m_deviceMemory[RESOURCE_MEMORY_USAGE_GPU_ONLY]);
+    // Create image pools.
+#if 0
+    for (U32 i = 0; i < RESOURCE_MEMORY_USAGE_COUNT; ++i) {
     
-    if (result != VK_SUCCESS) {
+        // start with memory gpu.
+        VkImageCreateInfo imageInfo = { };
+        imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+        imageInfo.arrayLayers = 1;
+        imageInfo.extent.width = desc.texturePools[i];
+        imageInfo.extent.height = 1;
+        imageInfo.extent.depth = 1;
+        imageInfo.format = VK_FORMAT_R32_SFLOAT;
+        imageInfo.imageType = VK_IMAGE_TYPE_1D;
+        imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        result = vkCreateImage(m_device, &imageInfo, nullptr, &image);
+
+        if (result != VK_SUCCESS) {
     
-        R_ERR(R_CHANNEL_VULKAN, "Failed to allocate device memory!")
+            R_ERR(R_CHANNEL_VULKAN, "Failed to create temp image!");
+    
+        }
+
+        vkGetImageMemoryRequirements(m_device, image, &memoryRequirements);
+
+        allocInfo.memoryTypeIndex = 
+            m_adapter->findMemoryType(memoryRequirements.memoryTypeBits, (ResourceMemoryUsage)i);
+
+        allocInfo.allocationSize = RECLUSE_ALLOC_MASK(memoryRequirements.size, memoryRequirements.alignment);
+
+        R_DEBUG(R_CHANNEL_VULKAN, "Allocating device memory...");
+
+        result = vkAllocateMemory(m_device, &allocInfo, nullptr, 
+            &m_imagePool[i].memory);
+    
+        if (result != VK_SUCCESS) {
+    
+            R_ERR(R_CHANNEL_VULKAN, "Failed to allocate device memory!")
+    
+        }
+
+        m_bufferPool[i].sizeBytes = allocInfo.allocationSize;
+
+        vkMapMemory(m_device, m_imagePool[i].memory, 0, allocInfo.allocationSize, 0, 
+            &m_imagePool[i].basePtr);
+
+        vkDestroyImage(m_device, image, nullptr);
     
     }
-
-    vkDestroyBuffer(m_device, buffer, nullptr);
-
-    // Allocate host memory.
-
-    bufferInfo.size = desc.hostBufferMemoryBytes;
-
-    result = vkCreateBuffer(m_device, &bufferInfo, nullptr, &buffer);
-    vkGetBufferMemoryRequirements(m_device, buffer, &memoryRequirements);
-
-    allocInfo.memoryTypeIndex = 
-        m_adapter->findMemoryType(memoryRequirements.memoryTypeBits, RESOURCE_MEMORY_USAGE_CPU_ONLY);
-    allocInfo.allocationSize = RECLUSE_ALLOC_MASK(memoryRequirements.size, memoryRequirements.alignment);
-    
-    R_DEBUG(R_CHANNEL_VULKAN, "Allocating host memory...");
-
-    result = vkAllocateMemory(m_device, &allocInfo, nullptr, &m_deviceMemory[RESOURCE_MEMORY_USAGE_CPU_ONLY]);
-    
-    if (result != VK_SUCCESS) {
-    
-        R_ERR(R_CHANNEL_VULKAN, "Failed to allocate host memory!");
-
-    }
-
-    vkDestroyBuffer(m_device, buffer, nullptr);
-
+#endif
     return REC_RESULT_OK;
 }
 
@@ -510,17 +557,47 @@ ErrType VulkanDevice::createResource(GraphicsResource** ppResource, GraphicsReso
 
         result = pBuffer->initialize(this, desc);
 
-        *ppResource = pBuffer;
+        if (result != REC_RESULT_OK) {
 
+            delete pBuffer;
+
+        } else {
+
+            *ppResource = pBuffer;
+
+        }
     } else {
     
         VulkanImage* pImage = new VulkanImage(desc);
 
         result = pImage->initialize(this, desc);
 
-        *ppResource = pImage;
-    
+        if (result != REC_RESULT_OK) {
+
+            delete pImage;
+
+        } else {
+
+            *ppResource = pImage;
+
+        }
     }
     return result;
+}
+
+
+ErrType VulkanDevice::destroyResource(GraphicsResource* pResource)
+{
+    if (pResource) {
+        VulkanResource* pVr = static_cast<VulkanResource*>(pResource);
+        
+        pVr->destroy();
+        
+        delete pResource;
+        return REC_RESULT_OK;
+
+    }
+
+    return REC_RESULT_FAILED;
 }
 } // Recluse

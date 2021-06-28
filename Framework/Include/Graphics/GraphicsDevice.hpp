@@ -3,6 +3,7 @@
 
 #include "Core/Types.hpp"
 #include "CommandQueue.hpp"
+#include "Format.hpp"
 
 namespace Recluse {
 
@@ -27,9 +28,19 @@ enum ResourceDimension {
     RESOURCE_DIMENSION_BUFFER,
     RESOURCE_DIMENSION_1D,
     RESOURCE_DIMENSION_2D,
-    RESOURCE_DIMENSION_3D,
-    RESOURCE_DIMENSION_1D_ARRAY,
-    RESOURCE_DIMENSION_2D_ARRAY
+    RESOURCE_DIMENSION_3D
+};
+
+enum ResourceViewDimension {
+    RESOURCE_VIEW_DIMENSION_BUFFER,
+    RESOURCE_VIEW_DIMENSION_1D,
+    RESOURCE_VIEW_DIMENSION_1D_ARRAY,
+    RESOURCE_VIEW_DIMENSION_2D,
+    RESOURCE_VIEW_DIMENSION_2D_MS,
+    RESOURCE_VIEW_DIMENSION_2D_ARRAY,
+    RESOURCE_VIEW_DIMENSION_3D,
+    RESOURCE_VIEW_DIMENSION_CUBE,
+    RESOURCE_VIEW_DIMENSION_CUBE_ARRAY
 };
 
 
@@ -51,7 +62,8 @@ enum ResourceUsage {
     RESOURCE_USAGE_CONSTANT_BUFFER          = (1 << 5),
     RESOURCE_USAGE_TRANSFER_DESTINATION     = (1 << 6),
     RESOURCE_USAGE_TRANSFER_SOURCE          = (1 << 7),
-    RESOURCE_USAGE_INDIRECT                 = (1 << 8)
+    RESOURCE_USAGE_INDIRECT                 = (1 << 8),
+    RESOURCE_USAGE_DEPTH_STENCIL            = (1 << 9)
 };
 
 typedef U32 ResourceUsageFlags;
@@ -59,23 +71,20 @@ typedef U32 ResourceUsageFlags;
 struct GraphicsResourceDescription {
     U32                 width;
     U32                 height;
+    U32                 depth;
     U32                 arrayLevels;
     U32                 mipLevels;
     ResourceDimension   dimension;
-    U32                 format;
-    U32                 layout;
+    ResourceFormat      format;
+    U32                 samples;
     ResourceMemoryUsage memoryUsage;
     ResourceUsageFlags  usage;
 };
 
 
 struct MemoryReserveDesc {
-    U64 hostBufferMemoryBytes;      // Host memory for buffers.
-    U64 hostTextureMemoryBytes;     // Host memory for textures.
-    U64 deviceBufferMemoryBytes;    // Device memory for buffers.
-    U64 deviceTextureMemoryBytes;   // Device memory for textures.
-    U64 uploadMemoryBytes;          // Memory used as upload to device memory.
-    U64 readbackMemoryBytes;        // Memory used as reading back from device memory.
+    U64 bufferPools[RESOURCE_MEMORY_USAGE_COUNT];
+    U64 texturePools[RESOURCE_MEMORY_USAGE_COUNT];
 };
 
 
@@ -98,6 +107,8 @@ public:
 
     virtual ErrType destroySwapchain(GraphicsSwapchain* pSwapchain) { return 0; }
     virtual ErrType destroyCommandQueue(GraphicsQueue* pQueue) { return 0; }
+    virtual ErrType destroyResource(GraphicsResource* pResource) 
+        { return 0; }
 private:
 };
 

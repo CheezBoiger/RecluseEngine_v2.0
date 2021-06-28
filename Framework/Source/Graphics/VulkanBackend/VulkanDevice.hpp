@@ -31,8 +31,10 @@ public:
         : m_device(VK_NULL_HANDLE)
         , m_surface(VK_NULL_HANDLE)
         , m_windowHandle(nullptr) { 
-        for (U32 i = 0; i < RESOURCE_MEMORY_USAGE_COUNT; ++i) 
-            m_deviceMemory[i] = VK_NULL_HANDLE;
+        for (U32 i = 0; i < RESOURCE_MEMORY_USAGE_COUNT; ++i) { 
+            m_bufferPool[i].memory = VK_NULL_HANDLE;
+            m_imagePool[i].memory = VK_NULL_HANDLE;
+        }
     }
 
     ErrType initialize(VulkanAdapter* iadapter, DeviceCreateInfo& info);
@@ -47,6 +49,8 @@ public:
     ErrType createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc) override;
 
     ErrType destroyCommandQueue(GraphicsQueue* pQueue) override;
+
+    ErrType destroyResource(GraphicsResource* pResource) override;
 
     void destroy(VkInstance instance);
 
@@ -80,7 +84,8 @@ private:
     std::list<VulkanQueue*> m_queues;
     std::list<VulkanSwapchain*> m_swapchains;
 
-    VkDeviceMemory m_deviceMemory[RESOURCE_MEMORY_USAGE_COUNT];
+    VulkanMemoryPool m_bufferPool[RESOURCE_MEMORY_USAGE_COUNT];
+    VulkanMemoryPool m_imagePool[RESOURCE_MEMORY_USAGE_COUNT];
     VulkanAllocator* m_allocators[RESOURCE_MEMORY_USAGE_COUNT];
     
     void* m_windowHandle;
