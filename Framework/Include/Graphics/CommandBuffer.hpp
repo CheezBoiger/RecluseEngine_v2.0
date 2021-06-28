@@ -9,7 +9,7 @@ namespace Recluse {
 class GraphicsResource;
 class GraphicsResourceView;
 
-class CommandBuffer {
+class GraphicsCommandList {
 public:
 
     R_EXPORT virtual void reset() { } 

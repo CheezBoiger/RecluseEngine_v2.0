@@ -57,6 +57,8 @@ if ( RCL_VULKAN )
             ${RECLUSE_VULKAN_DIR}/VulkanCommons.cpp
             ${RECLUSE_VULKAN_DIR}/VulkanViews.hpp
             ${RECLUSE_VULKAN_DIR}/VulkanViews.cpp
+            ${RECLUSE_VULKAN_DIR}/VulkanCommandList.hpp
+            ${RECLUSE_VULKAN_DIR}/VulkanCommandList.cpp
         )   
     else()
         message(FATAL_ERROR "Failed to find Vulkan library!")

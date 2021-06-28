@@ -3,6 +3,7 @@
 #include "VulkanResource.hpp"
 #include "VulkanAllocator.hpp"
 #include "VulkanDevice.hpp"
+#include "VulkanAdapter.hpp"
 
 #include "Core/Messaging.hpp"
 
@@ -136,11 +137,48 @@ ErrType VulkanBuffer::onDestroy(VulkanDevice* pDevice)
 }
 
 
+VkFormatFeatureFlags VulkanImage::loadFormatFeatures(VkImageCreateInfo& info, ResourceUsageFlags usage) const
+{
+    VkFormatFeatureFlags featureFlags = 0;
+
+    if (usage & RESOURCE_USAGE_RENDER_TARGET) {
+        info.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        featureFlags |= VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT;
+    }
+
+    if (usage & RESOURCE_USAGE_SHADER_RESOURCE) { 
+        info.usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
+        featureFlags |= VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
+    }
+
+    if (usage & RESOURCE_USAGE_DEPTH_STENCIL) { 
+        info.usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+        featureFlags |= VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    }
+
+    if (usage & RESOURCE_USAGE_TRANSFER_DESTINATION) { 
+        info.usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+        featureFlags |= VK_FORMAT_FEATURE_TRANSFER_DST_BIT;
+    }
+
+    if (usage & RESOURCE_USAGE_TRANSFER_SOURCE) { 
+        info.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+        featureFlags |= VK_FORMAT_FEATURE_TRANSFER_SRC_BIT;
+    }
+
+    return featureFlags;
+}
+
+
 ErrType VulkanImage::onCreate(VulkanDevice* pDevice, GraphicsResourceDescription& desc)
 {
-    ErrType result              = REC_RESULT_OK;
-    ResourceUsageFlags usage    = desc.usage;
-    VkResult vulkanResult       = VK_SUCCESS;
+    ErrType result                      = REC_RESULT_OK;
+    ResourceUsageFlags usage            = desc.usage;
+    VkResult vulkanResult               = VK_SUCCESS;
+    VkFormat format                     = Vulkan::getVulkanFormat(desc.format);
+    VkFormatProperties property         = pDevice->getAdapter()->getFormatProperties(format);
+    VkImageTiling tiling                = VK_IMAGE_TILING_OPTIMAL;
+    VkFormatFeatureFlags featureFlags   = 0;
     
     VkImageCreateInfo info = { };
     info.sType              = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -151,9 +189,9 @@ ErrType VulkanImage::onCreate(VulkanDevice* pDevice, GraphicsResourceDescription
     info.initialLayout      = VK_IMAGE_LAYOUT_PREINITIALIZED;
     info.mipLevels          = desc.mipLevels;
     info.imageType          = VK_IMAGE_TYPE_2D;         
-    info.tiling             = VK_IMAGE_TILING_OPTIMAL;
+    info.tiling             = tiling;
     info.samples            = Vulkan::getSamples(desc.samples);
-    info.format             = Vulkan::getVulkanFormat(desc.format);
+    info.format             = format;
 
     switch (desc.dimension) {
     
@@ -163,11 +201,21 @@ ErrType VulkanImage::onCreate(VulkanDevice* pDevice, GraphicsResourceDescription
         default: break;
     }
     
-    if (usage & RESOURCE_USAGE_RENDER_TARGET) info.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    if (usage & RESOURCE_USAGE_SHADER_RESOURCE) info.usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
-    if (usage & RESOURCE_USAGE_DEPTH_STENCIL) info.usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-    if (usage & RESOURCE_USAGE_TRANSFER_DESTINATION) info.usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-    if (usage & RESOURCE_USAGE_TRANSFER_SOURCE) info.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    featureFlags = loadFormatFeatures(info, desc.usage);
+
+    if (property.optimalTilingFeatures & featureFlags) {
+    
+        info.tiling = VK_IMAGE_TILING_OPTIMAL;
+    
+    } else if (property.linearTilingFeatures & featureFlags) {
+    
+        info.tiling = VK_IMAGE_TILING_LINEAR;
+    
+    } else {
+    
+        R_ERR(R_CHANNEL_VULKAN, "Could not find a proper tiling scheme for the given format!");
+    
+    }
 
     switch (info.samples) {
         case VK_SAMPLE_COUNT_1_BIT: break;

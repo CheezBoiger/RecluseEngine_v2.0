@@ -74,6 +74,7 @@ private:
     // Native adapter device.
     VkPhysicalDevice m_phyDevice;
 
+    // Context handle.
     VulkanContext* m_context;
 
     // All logical devices that were created by this adapter.

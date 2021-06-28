@@ -7,7 +7,7 @@
 
 namespace Recluse {
 
-
+class GraphicsCommandList;
 class GraphicsAdapter;
 class GraphicsResource;
 class GraphicsResourceView;
@@ -98,7 +98,7 @@ public:
     
     virtual ErrType createResourceView() { return 0; }
 
-    virtual ErrType createCommandList() { return 0; }
+    virtual ErrType createCommandList(GraphicsCommandList** pList) { return 0; }
     virtual ErrType createCommandQueue(GraphicsQueue** ppQueue, GraphicsQueueTypeFlags type) { return 0; }
     virtual ErrType createPipeline() { return 0; }
 
@@ -107,8 +107,8 @@ public:
 
     virtual ErrType destroySwapchain(GraphicsSwapchain* pSwapchain) { return 0; }
     virtual ErrType destroyCommandQueue(GraphicsQueue* pQueue) { return 0; }
-    virtual ErrType destroyResource(GraphicsResource* pResource) 
-        { return 0; }
+    virtual ErrType destroyResource(GraphicsResource* pResource) { return 0; }
+    virtual ErrType destroyCommandList(GraphicsCommandList* pList) { return 0; }
 private:
 };
 

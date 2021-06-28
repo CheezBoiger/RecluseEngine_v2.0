@@ -83,6 +83,8 @@ private:
     
     ErrType onDestroy(VulkanDevice* pDevice) override;   
 
+    VkFormatFeatureFlags loadFormatFeatures(VkImageCreateInfo& info, ResourceUsageFlags usage) const;
+
     VkImage         m_image;
     VkImageLayout   m_currentLayout;
 };
