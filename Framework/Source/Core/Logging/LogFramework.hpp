@@ -22,6 +22,8 @@ public:
         : m_pool(nullptr)
         , m_head(nullptr) 
         , m_tail(nullptr)
+        , m_mutex(nullptr)
+        , m_cursor(0ull)
     {    
     }
 
@@ -50,7 +52,8 @@ private:
 
 class LogDisplay {
 public:
-    LogDisplay(U64 delayNs = 0ull) { }
+    LogDisplay(U64 delayNs = 0ull)
+        : m_displayThread(nullptr) { }
     ~LogDisplay() { }
 
     void enable(LogTypeFlags flags);

@@ -29,7 +29,7 @@ public:
         return (*this);
     }
 
-    VulkanAdapter() : m_phyDevice(VK_NULL_HANDLE) { }
+    VulkanAdapter() : m_phyDevice(VK_NULL_HANDLE), m_context(nullptr) { }
 
     static std::vector<VulkanAdapter> getAvailablePhysicalDevices(VulkanContext* ctx);
 

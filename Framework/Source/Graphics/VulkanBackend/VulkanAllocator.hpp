@@ -2,6 +2,7 @@
 #pragma once
 
 #include "VulkanCommons.hpp"
+#include "Core/Memory/Allocator.hpp"
 #include "Core/Types.hpp"
 
 #include <vector>
@@ -20,10 +21,23 @@ struct VulkanMemory {
 
 class VulkanAllocator {
 public:
+    ErrType initialize(Allocator* pAllocator, VulkanMemoryPool* poolRef) {
+        m_allocator = pAllocator; 
+        m_pool = poolRef;
+        if (!m_allocator) return REC_RESULT_NULL_PTR_EXCEPTION;
 
-    ErrType allocate(VulkanMemory* pOut, VkMemoryRequirements& requirements) { return REC_RESULT_NOT_IMPLEMENTED; }
+        // Since we only need to work with offsets relative to the address,
+        // We don't need the real address.
+        m_allocator->initialize(0ull, poolRef->sizeBytes);
+
+        return REC_RESULT_NOT_IMPLEMENTED; 
+    }
+
+    ErrType allocate(VulkanMemory* pOut, VkMemoryRequirements& requirements);
 
     ErrType free(VulkanMemory* pOut) { return REC_RESULT_NOT_IMPLEMENTED; }
+
+    void destroy() { } 
 
     void emptyGarbage() { }
     
@@ -31,5 +45,9 @@ private:
 
     U32 m_garbageIndex;
     std::vector<VulkanMemory> m_frameGarbage;
+    VulkanMemoryPool*       m_pool;
+    Allocator* m_allocator;
+    // Get memory index from findMemoryType() function.
+    U32         m_memoryIndex;
 };
 } // Recluse

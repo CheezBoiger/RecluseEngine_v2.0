@@ -84,7 +84,26 @@ struct GraphicsResourceDescription {
 
 struct MemoryReserveDesc {
     U64 bufferPools[RESOURCE_MEMORY_USAGE_COUNT];
-    U64 texturePools[RESOURCE_MEMORY_USAGE_COUNT];
+    U64 texturePoolGPUOnly;
+};
+
+
+enum ResourceViewType {
+    RESOURCE_VIEW_TYPE_RENDER_TARGET,
+    RESOURCE_VIEW_TYPE_SHADER_RESOURCE,
+    RESOURCE_VIEW_TYPE_STORAGE_BUFFER,
+    RESOURCE_VIEW_TYPE_DEPTH_STENCIL
+};
+
+
+struct ResourceViewDesc {
+    ResourceViewType        type;
+    ResourceFormat          format;
+    ResourceViewDimension   dimension;
+    U32                     baseMipLevel;
+    U32                     mipLevelCount;
+    U32                     baseArrayLayer;
+    GraphicsResource*       pResource;
 };
 
 
@@ -101,6 +120,7 @@ public:
     virtual ErrType createCommandList(GraphicsCommandList** pList) { return 0; }
     virtual ErrType createCommandQueue(GraphicsQueue** ppQueue, GraphicsQueueTypeFlags type) { return 0; }
     virtual ErrType createPipeline() { return 0; }
+    virtual ErrType createResourceView(GraphicsResourceView** ppView) { return 0; }
 
     virtual ErrType createSwapchain(GraphicsSwapchain** swapchain,
         const SwapchainCreateDescription& pDescription) { return 0; }

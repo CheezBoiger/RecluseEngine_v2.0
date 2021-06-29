@@ -29,12 +29,12 @@ class Allocator {
 public:
     virtual ~Allocator() { }
 
-    Allocator() : m_totalAllocations(0), m_totalSizeBytes(0), m_usedSizeBytes(0), m_pMemoryPool(nullptr) { }
+    Allocator() : m_totalAllocations(0), m_totalSizeBytes(0), m_usedSizeBytes(0), m_pMemoryBaseAddr(0ull) { }
 
     //! Allocator mem size and page size (usually 4kb). 
-    void initialize(MemoryPool* pPool, U64 sizeBytes) {
+    void initialize(PtrType pBasePtr, U64 sizeBytes) {
         m_totalSizeBytes = sizeBytes;
-        m_pMemoryPool = pPool;
+        m_pMemoryBaseAddr = pBasePtr;
         m_usedSizeBytes = 0;
         onInitialize();
     }
@@ -69,12 +69,14 @@ public:
         m_totalAllocations = 0;
         m_totalSizeBytes = 0;
         m_usedSizeBytes = 0;
-        m_pMemoryPool = nullptr;
+        m_pMemoryBaseAddr = 0ull;
     }
 
-    U64 getTotalSizeBytes() const { return m_totalSizeBytes; }
-    U64 getUsedSizeBytes() const { return m_usedSizeBytes; }
-    U64 getTotalAllocations() const { return m_totalAllocations; }
+    inline U64 getTotalSizeBytes() const { return m_totalSizeBytes; }
+    inline U64 getUsedSizeBytes() const { return m_usedSizeBytes; }
+    inline U64 getTotalAllocations() const { return m_totalAllocations; }
+
+    inline PtrType getBaseAddr() { return m_pMemoryBaseAddr; }
 
 protected:
 
@@ -84,13 +86,11 @@ protected:
     virtual ErrType onReset() = 0;
     virtual ErrType onCleanUp() = 0;
 
-    MemoryPool* getMemoryPool() { return m_pMemoryPool; }
-
 private:
     U64 m_totalSizeBytes;
+    PtrType m_pMemoryBaseAddr;
     U64 m_usedSizeBytes;
     U64 m_totalAllocations;
-    MemoryPool* m_pMemoryPool;
 };
 } // Recluse
 #endif // RECLUSE_ALLOCATOR_HPP

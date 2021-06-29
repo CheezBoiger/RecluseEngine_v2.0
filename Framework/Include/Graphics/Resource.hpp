@@ -13,8 +13,6 @@ struct MapRange {
     U64 sizeBytes;
 };
 
-typedef 
-
 // Graphics Resource description.
 //
 class R_EXPORT GraphicsResource {

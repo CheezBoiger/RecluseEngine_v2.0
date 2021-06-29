@@ -30,7 +30,8 @@ public:
     VulkanDevice()
         : m_device(VK_NULL_HANDLE)
         , m_surface(VK_NULL_HANDLE)
-        , m_windowHandle(nullptr) { 
+        , m_windowHandle(nullptr)
+        , m_adapter(nullptr) { 
         for (U32 i = 0; i < RESOURCE_MEMORY_USAGE_COUNT; ++i) { 
             m_bufferPool[i].memory = VK_NULL_HANDLE;
             m_imagePool[i].memory = VK_NULL_HANDLE;
@@ -68,8 +69,11 @@ public:
 
     VulkanAdapter* getAdapter() const { return m_adapter; }
 
-    VulkanAllocator* getAllocator(ResourceMemoryUsage usage) const
-        { return m_allocators[usage]; }
+    VulkanAllocator* getBufferAllocator(ResourceMemoryUsage usage) const
+        { return m_bufferAllocators[usage]; }
+
+    VulkanAllocator* getImageAllocator(ResourceMemoryUsage usage) const 
+        { return m_imageAllocators[usage]; }
 
 private:
 
@@ -86,7 +90,8 @@ private:
 
     VulkanMemoryPool m_bufferPool[RESOURCE_MEMORY_USAGE_COUNT];
     VulkanMemoryPool m_imagePool[RESOURCE_MEMORY_USAGE_COUNT];
-    VulkanAllocator* m_allocators[RESOURCE_MEMORY_USAGE_COUNT];
+    VulkanAllocator* m_bufferAllocators[RESOURCE_MEMORY_USAGE_COUNT];
+    VulkanAllocator* m_imageAllocators[RESOURCE_MEMORY_USAGE_COUNT];
     
     void* m_windowHandle;
 };

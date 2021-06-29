@@ -49,8 +49,25 @@ ErrType VulkanResource::initialize(VulkanDevice* pDevice, GraphicsResourceDescri
     result = onGetMemoryRequirements(pDevice, memoryRequirements);
 
     // allocate our resource.
-    allocator = pDevice->getAllocator(desc.memoryUsage);
-   
+    if (desc.dimension == RESOURCE_DIMENSION_BUFFER) {
+
+        allocator = pDevice->getBufferAllocator(desc.memoryUsage);
+
+    } else {
+
+        allocator = pDevice->getImageAllocator(desc.memoryUsage);
+
+    }
+
+    if (!allocator) {
+
+        R_ERR(R_CHANNEL_VULKAN, "No allocator for the given resource to allocate from!");
+
+        destroy();
+
+        return REC_RESULT_NULL_PTR_EXCEPTION;
+    }
+
     result = allocator->allocate(&m_memory, memoryRequirements);
 
     if (result != REC_RESULT_OK) {
@@ -78,7 +95,22 @@ void VulkanResource::destroy()
 
     if (m_memory.deviceMemory) {
 
-        allocator = m_pDevice->getAllocator(desc.memoryUsage);
+        if (desc.dimension == RESOURCE_DIMENSION_BUFFER) { 
+
+            allocator = m_pDevice->getBufferAllocator(desc.memoryUsage);
+
+        } else {
+
+            allocator = m_pDevice->getImageAllocator(desc.memoryUsage);
+
+        }
+
+        if (!allocator) {
+    
+            R_ERR(R_CHANNEL_VULKAN, "No allocator provided for this memory! Can not destory...");
+        
+        }
+
         allocator->free(&m_memory);
 
     }
@@ -351,5 +383,41 @@ ErrType VulkanResource::unmap(MapRange* pWriteRange)
     
 
     return result;
+}
+
+
+VkImageMemoryBarrier VulkanImage::transition(VkImageLayout dstLayout, VkImageSubresourceRange& range)
+{
+    VkImageMemoryBarrier barrier = { };
+    barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.oldLayout                       = m_currentLayout;
+    barrier.newLayout                       = dstLayout;
+    barrier.image                           = m_image;
+    barrier.dstAccessMask                   = 0;
+    barrier.srcAccessMask                   = m_currentAccessMask;
+    barrier.subresourceRange                = range;
+
+    switch (dstLayout) {
+        case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+            barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT; 
+            break;
+        case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+        case VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL:
+        case VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL:
+            barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT; 
+            break;
+        case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+            barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT; 
+            break;
+        case VK_IMAGE_LAYOUT_GENERAL:
+            barrier.dstAccessMask = (VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT); 
+            break;
+        default: break;
+    }
+
+    m_currentLayout     = dstLayout;
+    m_currentAccessMask = barrier.dstAccessMask;
+
+    return barrier;
 }
 } // Recluse

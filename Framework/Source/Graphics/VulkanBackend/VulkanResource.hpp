@@ -9,12 +9,14 @@ namespace Recluse {
 
 
 class VulkanDevice;
+class VulkanCommandList;
 
 class VulkanResource : public GraphicsResource {
 public:
     VulkanResource(GraphicsResourceDescription& desc)
         : GraphicsResource(desc) 
-        , m_memory({}) { m_memory.deviceMemory = VK_NULL_HANDLE; }
+        , m_memory({})
+        , m_pDevice(nullptr) { m_memory.deviceMemory = VK_NULL_HANDLE; }
 
     virtual ~VulkanResource() { }
     
@@ -50,7 +52,8 @@ private:
 class VulkanBuffer : public VulkanResource {
 public:
     VulkanBuffer(GraphicsResourceDescription& desc) 
-        : VulkanResource(desc) { }
+        : VulkanResource(desc)
+        , m_buffer(VK_NULL_HANDLE) { }
 
     VkBuffer get() const { return m_buffer; }
 
@@ -70,9 +73,16 @@ private:
 class VulkanImage : public VulkanResource {
 public:
     VulkanImage(GraphicsResourceDescription& desc)
-        : VulkanResource(desc) { }
+        : VulkanResource(desc)
+        , m_currentAccessMask(VK_ACCESS_MEMORY_READ_BIT)
+        , m_currentLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+        , m_image(VK_NULL_HANDLE) { }
 
     VkImage get() const { return m_image; }
+
+    VkImageLayout getCurrentLayout() const { return m_currentLayout; }
+
+    VkImageMemoryBarrier transition(VkImageLayout dstLayout, VkImageSubresourceRange& range);
 
 private:    
     ErrType onCreate(VulkanDevice* pDevice, GraphicsResourceDescription& desc) override; 
@@ -87,5 +97,6 @@ private:
 
     VkImage         m_image;
     VkImageLayout   m_currentLayout;
+    VkAccessFlags   m_currentAccessMask;
 };
 } // Recluse
