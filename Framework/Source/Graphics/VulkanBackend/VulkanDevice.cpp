@@ -433,7 +433,9 @@ ErrType VulkanDevice::reserveMemory(const MemoryReserveDesc& desc)
         vkDestroyBuffer(m_device, buffer, nullptr);
 
         // TODO: Need to add allocator for buffers later.
-        m_bufferAllocators[i] = nullptr;
+        m_bufferAllocators[i] = new VulkanAllocator();
+        m_bufferAllocators[i]->initialize(new StackAllocator(), 
+            &m_bufferPool[i]);
     }
 
     // Create image pools.
