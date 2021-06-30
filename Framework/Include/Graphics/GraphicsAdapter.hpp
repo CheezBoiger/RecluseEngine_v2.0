@@ -13,6 +13,7 @@ enum GraphicsVendor {
     VENDOR_AMD
 };
 
+
 struct R_EXPORT AdapterInfo {
     char            deviceName[256];
     U32             vendorId;
@@ -26,6 +27,7 @@ struct R_EXPORT AdapterLimits {
 
 struct R_EXPORT DeviceCreateInfo {
     void*               winHandle;
+    U32                 buffering; // buffered resources count. 
 };
 
 class GraphicsDevice;

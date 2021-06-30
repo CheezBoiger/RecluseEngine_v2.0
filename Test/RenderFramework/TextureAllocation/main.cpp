@@ -51,6 +51,7 @@ int main(int c, char* argv[])
     }
 
     DeviceCreateInfo deviceCreate   = { };
+    deviceCreate.buffering          = 3;
     GraphicsDevice* pDevice         = nullptr;
 
     result = adapters[0]->createDevice(deviceCreate, &pDevice);
@@ -72,16 +73,17 @@ int main(int c, char* argv[])
 
     GraphicsResource* pTexture = nullptr;
     GraphicsResourceDescription desc = { };
-    desc.usage = RESOURCE_USAGE_RENDER_TARGET | RESOURCE_USAGE_SHADER_RESOURCE;
-    desc.memoryUsage = RESOURCE_MEMORY_USAGE_GPU_ONLY;
-    desc.width = 128;
-    desc.height = 128;
-    desc.depth = 1;
-    desc.arrayLevels = 1;
-    desc.mipLevels = 8;
-    desc.dimension = RESOURCE_DIMENSION_2D;
-    desc.samples = 1;
-    desc.format = RESOURCE_FORMAT_R8G8B8A8_UNORM;
+
+    desc.usage          = RESOURCE_USAGE_RENDER_TARGET | RESOURCE_USAGE_SHADER_RESOURCE;
+    desc.memoryUsage    = RESOURCE_MEMORY_USAGE_GPU_ONLY;
+    desc.width          = 128;
+    desc.height         = 128;
+    desc.depth          = 1;
+    desc.arrayLevels    = 1;
+    desc.mipLevels      = 8;
+    desc.dimension      = RESOURCE_DIMENSION_2D;
+    desc.samples        = 1;
+    desc.format         = RESOURCE_FORMAT_R8G8B8A8_UNORM;
 
     result = pDevice->createResource(&pTexture, desc);
 

@@ -14,7 +14,7 @@ ErrType VulkanAllocator::allocate(VulkanMemory* pOut, VkMemoryRequirements& requ
     ErrType result          = REC_RESULT_OK;
     PtrType baseAddr        = m_allocator->getBaseAddr();
 
-    result = m_allocator->allocate(&allocation, requirements.size, requirements.alignment);
+    result = m_allocator->allocate(&allocation, requirements.size, (U16)requirements.alignment);
     
     if (result != REC_RESULT_OK) {
     

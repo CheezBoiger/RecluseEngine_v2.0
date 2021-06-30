@@ -51,6 +51,7 @@ int main(int c, char* argv[])
     }
 
     DeviceCreateInfo deviceCreate   = { };
+    deviceCreate.buffering          = 3;
     GraphicsDevice* pDevice         = nullptr;
 
     result = adapters[0]->createDevice(deviceCreate, &pDevice);
@@ -73,10 +74,10 @@ int main(int c, char* argv[])
     GraphicsResource* pBuffer = nullptr;
     
     GraphicsResourceDescription bufferDesc = { };
-    bufferDesc.usage = RESOURCE_USAGE_CONSTANT_BUFFER;
-    bufferDesc.dimension = RESOURCE_DIMENSION_BUFFER;
-    bufferDesc.memoryUsage = RESOURCE_MEMORY_USAGE_CPU_ONLY;
-    bufferDesc.width = R_1KB * 1024ull;
+    bufferDesc.usage        = RESOURCE_USAGE_CONSTANT_BUFFER;
+    bufferDesc.dimension    = RESOURCE_DIMENSION_BUFFER;
+    bufferDesc.memoryUsage  = RESOURCE_MEMORY_USAGE_CPU_ONLY;
+    bufferDesc.width        = R_1KB * 1024ull;
 
     result = pDevice->createResource(&pBuffer, bufferDesc);
 

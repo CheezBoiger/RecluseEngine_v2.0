@@ -182,12 +182,16 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
     
     m_adapter = adapter;
 
+    // Create the command pool.
+    createCommandPools(info.buffering);    
+
     return 0;
 }
 
 
 void VulkanDevice::destroy(VkInstance instance)
 {
+    destroyCommandPools();
 
     if (!m_queues.empty()) {
     
@@ -437,7 +441,7 @@ ErrType VulkanDevice::reserveMemory(const MemoryReserveDesc& desc)
         m_bufferAllocators[i]->initialize(new StackAllocator(), 
             &m_bufferPool[i]);
     }
-
+    
     // Create image pools.
 #if 1
     // start with memory gpu.
@@ -620,5 +624,58 @@ ErrType VulkanDevice::destroyResource(GraphicsResource* pResource)
     }
 
     return REC_RESULT_FAILED;
+}
+
+
+ErrType VulkanDevice::createCommandPools(U32 buffers)
+{
+    R_DEBUG(R_CHANNEL_VULKAN, "Creating command pools...");
+
+    VkCommandPoolCreateInfo poolIf  = { };
+    poolIf.sType                    = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    poolIf.flags                    = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+
+    for (U32 i = 0; i < m_queueFamilies.size(); ++i) {
+
+        m_queueFamilies[i].commandPools.resize(buffers);
+
+        poolIf.queueFamilyIndex = m_queueFamilies[i].queueFamilyIndex;
+
+        for (U32 j = 0; j < m_queueFamilies[i].commandPools.size(); ++j) {
+    
+            VkResult result = vkCreateCommandPool(m_device, &poolIf, nullptr, 
+                &m_queueFamilies[i].commandPools[j]);
+
+            if (result != VK_SUCCESS) {
+
+                R_ERR(R_CHANNEL_VULKAN, "Failed to create command pool for queue family...");
+
+            }
+
+        }
+    
+    }
+
+    return REC_RESULT_OK;
+}
+
+
+void VulkanDevice::destroyCommandPools()
+{
+    R_DEBUG(R_CHANNEL_VULKAN, "Destroying command pools...");
+    
+    for (U32 i = 0; i < m_queueFamilies.size(); ++i) {
+ 
+        for (U32 j = 0; j < m_queueFamilies[i].commandPools.size(); ++j) {
+
+            if (m_queueFamilies[i].commandPools[j]) {
+
+                vkDestroyCommandPool(m_device, m_queueFamilies[i].commandPools[j], nullptr);
+                m_queueFamilies[i].commandPools[j] = VK_NULL_HANDLE;
+
+            }
+        }
+
+    }
 }
 } // Recluse

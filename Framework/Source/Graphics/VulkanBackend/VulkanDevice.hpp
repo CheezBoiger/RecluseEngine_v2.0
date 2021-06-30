@@ -18,10 +18,11 @@ struct DeviceCreateInfo;
 
 
 struct QueueFamily {
-    U32                     maxQueueCount;
-    U32                     queueFamilyIndex;
-    U32                     currentAvailableQueueIndex;
-    GraphicsQueueTypeFlags  flags;
+    U32                                     maxQueueCount;
+    U32                                     queueFamilyIndex;
+    U32                                     currentAvailableQueueIndex;
+    std::vector<VkCommandPool>              commandPools;
+    GraphicsQueueTypeFlags                  flags;
 };
 
 
@@ -78,6 +79,9 @@ public:
 private:
 
     ErrType createSurface(VkInstance instance, void* handle);
+    ErrType createCommandPools(U32 buffered);
+
+    void destroyCommandPools();
 
     VulkanAdapter* m_adapter;
 
