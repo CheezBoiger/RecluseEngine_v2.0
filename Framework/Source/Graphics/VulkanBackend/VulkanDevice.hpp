@@ -32,7 +32,9 @@ public:
         : m_device(VK_NULL_HANDLE)
         , m_surface(VK_NULL_HANDLE)
         , m_windowHandle(nullptr)
-        , m_adapter(nullptr) { 
+        , m_adapter(nullptr)
+        , m_bufferCount(0)
+        , m_currentBufferIndex(0) { 
         for (U32 i = 0; i < RESOURCE_MEMORY_USAGE_COUNT; ++i) { 
             m_bufferPool[i].memory = VK_NULL_HANDLE;
             m_imagePool[i].memory = VK_NULL_HANDLE;
@@ -53,6 +55,10 @@ public:
     ErrType destroyCommandQueue(GraphicsQueue* pQueue) override;
 
     ErrType destroyResource(GraphicsResource* pResource) override;
+
+    ErrType createCommandList(GraphicsCommandList** pList, GraphicsQueueTypeFlags flags) override;
+
+    ErrType destroyCommandList(GraphicsCommandList* pList) override;
 
     void destroy(VkInstance instance);
 
@@ -76,6 +82,16 @@ public:
     VulkanAllocator* getImageAllocator(ResourceMemoryUsage usage) const 
         { return m_imageAllocators[usage]; }
 
+    U32 getBufferCount() const { return m_bufferCount; }
+    U32 getCurrentBufferIndex() const { return m_currentBufferIndex; }
+    
+    // Increment the buffer index.
+    inline void incrementBufferIndex() {
+        m_currentBufferIndex = (m_currentBufferIndex + 1) % m_bufferCount;
+    }
+
+    void prepare();
+
 private:
 
     ErrType createSurface(VkInstance instance, void* handle);
@@ -96,6 +112,10 @@ private:
     VulkanMemoryPool m_imagePool[RESOURCE_MEMORY_USAGE_COUNT];
     VulkanAllocator* m_bufferAllocators[RESOURCE_MEMORY_USAGE_COUNT];
     VulkanAllocator* m_imageAllocators[RESOURCE_MEMORY_USAGE_COUNT];
+
+    // buffer count 
+    U32 m_bufferCount;
+    U32 m_currentBufferIndex;
     
     void* m_windowHandle;
 };

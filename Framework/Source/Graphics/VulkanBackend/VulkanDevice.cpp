@@ -5,6 +5,7 @@
 #include "VulkanSwapchain.hpp"
 #include "VulkanQueue.hpp"
 #include "VulkanResource.hpp"
+#include "VulkanCommandList.hpp"
 #include "Core/Messaging.hpp"
 
 #include "Graphics/GraphicsAdapter.hpp"
@@ -184,6 +185,7 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
 
     // Create the command pool.
     createCommandPools(info.buffering);    
+    m_bufferCount = info.buffering;
 
     return 0;
 }
@@ -676,6 +678,81 @@ void VulkanDevice::destroyCommandPools()
             }
         }
 
+    }
+}
+
+
+ErrType VulkanDevice::createCommandList(GraphicsCommandList** pList, GraphicsQueueTypeFlags flags)
+{
+    ErrType result = REC_RESULT_OK;
+
+    R_DEBUG(R_CHANNEL_VULKAN, "Creating command list...");
+
+    for (U32 i = 0; i < m_queueFamilies.size(); ++i) {
+    
+        GraphicsQueueTypeFlags famFlags = m_queueFamilies[i].flags;
+
+        if (flags & famFlags) {
+            U32 queueFamilyIndex        = m_queueFamilies[i].queueFamilyIndex;
+            VulkanCommandList* pVList   = new VulkanCommandList();
+
+            result = pVList->initialize(this, queueFamilyIndex, 
+                m_queueFamilies[i].commandPools.data(), (U32)m_queueFamilies[i].commandPools.size());
+
+            if (result != REC_RESULT_OK) {
+            
+                R_ERR(R_CHANNEL_VULKAN, "Could not create CommandList...");
+
+                pVList->destroy(this);
+                delete pVList;
+
+                return result;
+            
+            }
+
+            *pList = pVList;
+            break;
+        }    
+
+    }
+
+    return result;
+}
+
+
+ErrType VulkanDevice::destroyCommandList(GraphicsCommandList* pList)
+{
+    if (pList) {
+
+        R_DEBUG(R_CHANNEL_VULKAN, "Destroying command list...");
+
+        VulkanCommandList* pVc = static_cast<VulkanCommandList*>(pList);
+
+        pVc->destroy(this);
+        delete pVc;
+
+        return REC_RESULT_OK;
+    }
+
+    return REC_RESULT_FAILED;
+}
+
+
+void VulkanDevice::prepare()
+{
+    U32 currentBufferIndex = getCurrentBufferIndex();
+
+    for (U32 i = 0; i < m_queueFamilies.size(); ++i) {
+    
+        VkCommandPool pool = m_queueFamilies[i].commandPools[currentBufferIndex];
+        VkResult result = vkResetCommandPool(m_device, pool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
+
+        if (result != VK_SUCCESS) {
+        
+            R_ERR(R_CHANNEL_VULKAN, "Failed to reset command pool!");
+        
+        }
+    
     }
 }
 } // Recluse

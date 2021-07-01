@@ -117,7 +117,9 @@ public:
     
     virtual ErrType createResourceView() { return 0; }
 
-    virtual ErrType createCommandList(GraphicsCommandList** pList) { return 0; }
+    virtual ErrType createCommandList(GraphicsCommandList** pList, GraphicsQueueTypeFlags flags) {
+      return 0;
+    }
     virtual ErrType createCommandQueue(GraphicsQueue** ppQueue, GraphicsQueueTypeFlags type) { return 0; }
     virtual ErrType createPipeline() { return 0; }
     virtual ErrType createResourceView(GraphicsResourceView** ppView) { return 0; }

@@ -3,6 +3,7 @@
 #include "Graphics/GraphicsContext.hpp"
 #include "Graphics/GraphicsDevice.hpp"
 #include "Graphics/CommandQueue.hpp"
+#include "Graphics/CommandList.hpp"
 
 #include "Core/System/Window.hpp"
 #include "Core/System/Input.hpp"
@@ -57,6 +58,8 @@ int main(int c, char* argv[])
 
     DeviceCreateInfo deviceCreate   = { };
     deviceCreate.winHandle = pWindow->getNativeHandle();
+
+    deviceCreate.buffering = 1;
 
     result = adapters[0]->createDevice(deviceCreate, &pDevice);
 

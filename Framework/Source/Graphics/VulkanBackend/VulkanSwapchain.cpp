@@ -128,6 +128,12 @@ ErrType VulkanSwapchain::present()
         err = REC_RESULT_FAILED;
     
     }
+
+    R_ASSERT(m_pDevice->getBufferCount() > 0);
+
+    m_pDevice->incrementBufferIndex();
+
+    m_pDevice->prepare();
     
     return err;
 }
