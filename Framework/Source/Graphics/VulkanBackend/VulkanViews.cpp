@@ -18,11 +18,26 @@ ErrType VulkanResourceView::initialize(VulkanDevice* pDevice, const ResourceView
     info.subresourceRange.baseArrayLayer        = desc.baseArrayLayer;
     info.subresourceRange.baseMipLevel          = desc.baseMipLevel;
     info.subresourceRange.levelCount            = desc.mipLevelCount;
+    info.subresourceRange.layerCount            = desc.layerCount;
     info.flags                                  = 0;
     info.components.r                           = VK_COMPONENT_SWIZZLE_R;
     info.components.g                           = VK_COMPONENT_SWIZZLE_G;
     info.components.b                           = VK_COMPONENT_SWIZZLE_B;
     info.components.a                           = VK_COMPONENT_SWIZZLE_A;
+
+    switch (desc.dimension) {
+    
+        case RESOURCE_VIEW_DIMENSION_1D: info.viewType = VK_IMAGE_VIEW_TYPE_1D; break;
+        case RESOURCE_VIEW_DIMENSION_1D_ARRAY: info.viewType = VK_IMAGE_VIEW_TYPE_1D_ARRAY; break;
+        case RESOURCE_VIEW_DIMENSION_2D: info.viewType = VK_IMAGE_VIEW_TYPE_2D; break;
+        case RESOURCE_VIEW_DIMENSION_2D_ARRAY: info.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY; break;
+        case RESOURCE_VIEW_DIMENSION_2D_MS: info.viewType = VK_IMAGE_VIEW_TYPE_2D; break;
+        case RESOURCE_VIEW_DIMENSION_3D: info.viewType = VK_IMAGE_VIEW_TYPE_3D; break;
+        case RESOURCE_VIEW_DIMENSION_CUBE: info.viewType = VK_IMAGE_VIEW_TYPE_CUBE; break;
+        case RESOURCE_VIEW_DIMENSION_CUBE_ARRAY: info.viewType = VK_IMAGE_VIEW_TYPE_CUBE_ARRAY; break;
+        default: break;
+    
+    }
 
     if (desc.type == RESOURCE_VIEW_TYPE_DEPTH_STENCIL) {
 

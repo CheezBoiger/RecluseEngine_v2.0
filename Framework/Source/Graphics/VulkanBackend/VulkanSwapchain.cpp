@@ -5,6 +5,8 @@
 #include "VulkanDevice.hpp"
 #include "VulkanQueue.hpp"
 #include "VulkanAdapter.hpp"
+#include "VulkanResource.hpp"
+#include "VulkanViews.hpp"
 #include "Core/Messaging.hpp"
 
 
@@ -13,20 +15,21 @@ namespace Recluse {
 
 GraphicsResource* VulkanSwapchain::getFrame(U32 idx)
 {
-    return nullptr;
+    return m_frameResources[idx];
 }
 
 
 GraphicsResourceView* VulkanSwapchain::getFrameView(U32 idx)
 {
-    return nullptr;
+    return m_frameViews[idx];
 }
 
 
-ErrType VulkanSwapchain::build(VulkanDevice* pDevice, const SwapchainCreateDescription& pDesc)
+ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
 {
-    VkSwapchainCreateInfoKHR createInfo = { };
-    VkResult result                     = VK_SUCCESS;
+    VkSwapchainCreateInfoKHR createInfo         = { };
+    const SwapchainCreateDescription& pDesc     = getDesc();
+    VkResult result                             = VK_SUCCESS;
     
     // TODO: We need to pass a struct input for desired configurations.
     createInfo.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -66,22 +69,31 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice, const SwapchainCreateDescr
 }
 
 
-ErrType VulkanSwapchain::rebuild(const SwapchainCreateDescription& pDesc)
+ErrType VulkanSwapchain::onRebuild()
 {
-
-    const VulkanContext* pVc    = m_pDevice->getAdapter()->getContext();
-
-    destroy(pVc->get(), m_pDevice->get());
+    destroy();
 
     return REC_RESULT_NOT_IMPLEMENTED;
 }
 
 
-ErrType VulkanSwapchain::destroy(VkInstance instance, VkDevice device)
+ErrType VulkanSwapchain::destroy()
 {
+    VkDevice device     = m_pDevice->get();
+    VkInstance instance = m_pDevice->getAdapter()->getContext()->get();    
+
     if (m_swapchain) {
 
-        m_frameResources.destroy(this);
+        m_rawFrames.destroy(this);
+
+        for (U32 i = 0; i < m_frameResources.size(); ++i) {
+        
+            m_frameViews[i]->destroy(m_pDevice);
+            // Do not call m_frameResources[i]->destroy(), images are originally handled
+            // by the swapchain.
+            delete m_frameViews[i];
+            delete m_frameResources[i];
+        }
 
         vkDestroySwapchainKHR(device, m_swapchain, nullptr);    
         m_swapchain = VK_NULL_HANDLE;
@@ -141,6 +153,45 @@ ErrType VulkanSwapchain::present()
 
 void VulkanSwapchain::buildFrameResources()
 {
-    m_frameResources.build(this);
+    m_rawFrames.build(this);
+
+    U32 numMaxFrames                                = m_rawFrames.getNumMaxFrames();
+    const SwapchainCreateDescription& swapchainDesc = getDesc();
+
+    m_frameResources.resize(numMaxFrames);
+    m_frameViews.resize(numMaxFrames);
+
+    for (U32 i = 0; i < numMaxFrames; ++i) {
+    
+        VkImage frame = m_rawFrames.getImage(i);
+
+        GraphicsResourceDescription desc = { };
+        desc.width          = swapchainDesc.renderWidth;
+        desc.height         = swapchainDesc.renderHeight;
+        desc.dimension      = RESOURCE_DIMENSION_2D;
+        desc.depth          = 1;
+        desc.format         = RESOURCE_FORMAT_B8G8R8A8_SRGB;
+        desc.memoryUsage    = RESOURCE_MEMORY_USAGE_GPU_ONLY;
+        desc.mipLevels      = 1;
+        desc.usage          = RESOURCE_USAGE_RENDER_TARGET;
+        desc.samples        = 1;
+        desc.arrayLevels    = 1;
+
+        m_frameResources[i] = new VulkanImage(desc, frame, VK_IMAGE_LAYOUT_UNDEFINED);
+
+        ResourceViewDesc viewDesc = { };
+        viewDesc.format         = RESOURCE_FORMAT_B8G8R8A8_SRGB;
+        viewDesc.pResource      = m_frameResources[i];
+        viewDesc.mipLevelCount  = 1;
+        viewDesc.layerCount     = 1;
+        viewDesc.baseArrayLayer = 0;
+        viewDesc.baseMipLevel   = 0;
+        viewDesc.dimension      = RESOURCE_VIEW_DIMENSION_2D;
+        viewDesc.type           = RESOURCE_VIEW_TYPE_RENDER_TARGET;
+        
+        m_frameViews[i] = new VulkanResourceView();
+        m_frameViews[i]->initialize(m_pDevice, viewDesc);
+    
+    }
 }
 } // Recluse

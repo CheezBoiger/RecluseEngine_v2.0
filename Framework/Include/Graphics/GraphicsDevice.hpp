@@ -24,6 +24,13 @@ struct SwapchainCreateDescription {
 };
 
 
+enum BindType {
+    BIND_TYPE_GRAPHICS,
+    BIND_TYPE_COMPUTE,
+    BIND_TYPE_RAY_TRACE,
+};
+
+
 enum ResourceDimension {
     RESOURCE_DIMENSION_BUFFER,
     RESOURCE_DIMENSION_1D,
@@ -103,6 +110,7 @@ struct ResourceViewDesc {
     U32                     baseMipLevel;
     U32                     mipLevelCount;
     U32                     baseArrayLayer;
+    U32                     layerCount;
     GraphicsResource*       pResource;
 };
 
@@ -137,12 +145,17 @@ private:
 
 class GraphicsSwapchain {
 public:
+    GraphicsSwapchain(const SwapchainCreateDescription& desc)
+        : m_desc(desc) { }
+
     R_EXPORT virtual ~GraphicsSwapchain() { }
 
     // Rebuild the swapchain if need be. Pass in NULL to rebuild the swapchain as is.
     // Be sure to update any new frame info and handles that are managed by the front engine!
-    R_EXPORT virtual ErrType rebuild(const SwapchainCreateDescription& pDesc) 
-        { return REC_RESULT_NOT_IMPLEMENTED; }
+    R_EXPORT ErrType rebuild(const SwapchainCreateDescription& desc) { 
+        m_desc = desc;
+        return onRebuild(); 
+    }
 
     // Present the current image.
     R_EXPORT virtual ErrType present() { return REC_RESULT_NOT_IMPLEMENTED; }
@@ -152,5 +165,13 @@ public:
 
     virtual GraphicsResource* getFrame(U32 idx) = 0;
     virtual GraphicsResourceView* getFrameView(U32 idx) = 0;
+
+    const SwapchainCreateDescription& getDesc() const { return m_desc; }
+
+private:
+
+    virtual ErrType onRebuild() { return REC_RESULT_NOT_IMPLEMENTED; }
+
+    SwapchainCreateDescription m_desc;
 };
 } // Recluse

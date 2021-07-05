@@ -255,10 +255,10 @@ ErrType VulkanDevice::createSwapchain(GraphicsSwapchain** ppSwapchain,
     const SwapchainCreateDescription& pDesc)
 {
 
-    VulkanSwapchain* pSwapchain     = new VulkanSwapchain();
+    VulkanSwapchain* pSwapchain     = new VulkanSwapchain(pDesc);
     VulkanContext*   pNativeContext = m_adapter->getContext();
 
-    ErrType result = pSwapchain->build(this, pDesc);
+    ErrType result = pSwapchain->build(this);
 
     if (result != 0) {
         
@@ -293,7 +293,7 @@ ErrType VulkanDevice::destroySwapchain(GraphicsSwapchain* pSwapchain)
     
         if (*iter == pVs) {
 
-            result = pVs->destroy(m_adapter->getContext()->get(), m_device);
+            result = pVs->destroy();
 
             if (result != REC_RESULT_OK) {
     

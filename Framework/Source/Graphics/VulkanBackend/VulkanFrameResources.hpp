@@ -21,11 +21,15 @@ public:
     void destroy(VulkanSwapchain* pSwapchain);
 
     U32 getNumMaxFrames() const { return (U32)m_frames.size(); }
+
+    VkImage getImage(U32 idx) const { return m_frames[idx]; }
+    VkFramebuffer getFrameBuffer(U32 idx) const { return m_frameBuffers[idx]; }
+    VkSemaphore getWaitSemaphore(U32 idx) const { return m_frameWaitSemaphores[idx]; }
+    VkSemaphore getSignalSemaphore(U32 idx) const { return m_frameSignalSemaphores[idx]; }
     
 private:
 
     std::vector<VkImage> m_frames;
-    std::vector<VkImageView> m_frameViews;
     std::vector<VkFramebuffer> m_frameBuffers;
     std::vector<VkSemaphore> m_frameWaitSemaphores;
     std::vector<VkSemaphore> m_frameSignalSemaphores;

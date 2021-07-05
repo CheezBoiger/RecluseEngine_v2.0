@@ -72,11 +72,14 @@ private:
 
 class VulkanImage : public VulkanResource {
 public:
-    VulkanImage(GraphicsResourceDescription& desc)
+    VulkanImage(GraphicsResourceDescription& desc, 
+            VkImage image = VK_NULL_HANDLE, 
+            VkImageLayout currentLayout = VK_IMAGE_LAYOUT_UNDEFINED, 
+            VkAccessFlags currentAccessMask = VK_ACCESS_MEMORY_READ_BIT)
         : VulkanResource(desc)
-        , m_currentAccessMask(VK_ACCESS_MEMORY_READ_BIT)
-        , m_currentLayout(VK_IMAGE_LAYOUT_UNDEFINED)
-        , m_image(VK_NULL_HANDLE) { }
+        , m_currentAccessMask(currentAccessMask)
+        , m_currentLayout(currentLayout)
+        , m_image(image) { }
 
     VkImage get() const { return m_image; }
 
