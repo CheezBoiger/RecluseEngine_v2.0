@@ -26,6 +26,7 @@ public:
     VkFramebuffer getFrameBuffer(U32 idx) const { return m_frameBuffers[idx]; }
     VkSemaphore getWaitSemaphore(U32 idx) const { return m_frameWaitSemaphores[idx]; }
     VkSemaphore getSignalSemaphore(U32 idx) const { return m_frameSignalSemaphores[idx]; }
+    VkFence getFrence(U32 idx) const { return m_frameFences[idx]; }
     
 private:
 
@@ -33,6 +34,7 @@ private:
     std::vector<VkFramebuffer> m_frameBuffers;
     std::vector<VkSemaphore> m_frameWaitSemaphores;
     std::vector<VkSemaphore> m_frameSignalSemaphores;
+    std::vector<VkFence> m_frameFences;
     
 };
 } // Recluse

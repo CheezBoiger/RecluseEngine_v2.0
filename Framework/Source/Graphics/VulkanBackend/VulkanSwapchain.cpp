@@ -64,6 +64,19 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
     m_pDevice           = pDevice;
 
     buildFrameResources();
+    queryCommandPools();
+
+    VkSemaphore imageAvailableSema = getWaitSemaphore(m_currentFrameIndex);
+    result = vkAcquireNextImageKHR(m_pDevice->get(), m_swapchain, UINT64_MAX, 
+        imageAvailableSema, VK_NULL_HANDLE, &m_currentImageIndex);
+
+    if (result != VK_SUCCESS) {
+
+        R_WARN(R_CHANNEL_VULKAN, "AcquireNextImage was not successful...");    
+
+        return REC_RESULT_FAILED;
+    
+    }
 
     return REC_RESULT_OK;
 }
@@ -71,7 +84,9 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
 
 ErrType VulkanSwapchain::onRebuild()
 {
+    // Destroy and rebuild the swapchain.
     destroy();
+    build(m_pDevice);
 
     return REC_RESULT_NOT_IMPLEMENTED;
 }
@@ -102,6 +117,13 @@ ErrType VulkanSwapchain::destroy()
 
     }
 
+    for (U32 i = 0; i < m_commandbuffers.size(); ++i) {
+    
+        vkFreeCommandBuffers(device, m_queueFamily->commandPools[i],
+            1, &m_commandbuffers[i]);    
+        
+    }
+
     return REC_RESULT_OK;
 }
 
@@ -109,18 +131,24 @@ ErrType VulkanSwapchain::destroy()
 ErrType VulkanSwapchain::present()
 {
     R_ASSERT(m_pBackbufferQueue != NULL);
-    
-    ErrType err                 = REC_RESULT_OK;
-    VkSwapchainKHR swapchains[] = { m_swapchain };
-    VkPresentInfoKHR info       = { };
+
+    transitionCurrentFrameToPresentable();
+ 
+    ErrType err                     = REC_RESULT_OK;
+    VkSwapchainKHR swapchains[]     = { m_swapchain };
+    VkPresentInfoKHR info           = { };
+    VkSemaphore pWaitSemaphores[]   = { getSignalSemaphore(m_currentFrameIndex) };
+    VkDevice device                 = m_pDevice->get();
+    VkFence frameFence              = VK_NULL_HANDLE;
+    VkSemaphore imageAvailableSema  = VK_NULL_HANDLE;
     
     info.swapchainCount         = 1;
     info.pSwapchains            = swapchains;
     info.sType                  = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    info.pWaitSemaphores        = nullptr;
-    info.waitSemaphoreCount     = 0;
+    info.pWaitSemaphores        = pWaitSemaphores;
+    info.waitSemaphoreCount     = 1;
     info.pResults               = nullptr;
-    info.pImageIndices          = &m_currentFrameIndex;
+    info.pImageIndices          = &m_currentImageIndex;
     
     VkResult result = vkQueuePresentKHR(m_pBackbufferQueue->get(), &info);
 
@@ -130,8 +158,15 @@ ErrType VulkanSwapchain::present()
     
     }
 
+    m_pDevice->incrementBufferIndex();
+
+    frameFence = m_pDevice->getCurrentFence();
+
+    incrementFrameIndex();
+    imageAvailableSema = getWaitSemaphore(m_currentFrameIndex);
+
     result = vkAcquireNextImageKHR(m_pDevice->get(), m_swapchain, UINT64_MAX, 
-        VK_NULL_HANDLE, VK_NULL_HANDLE, &m_currentFrameIndex);
+        imageAvailableSema, VK_NULL_HANDLE, &m_currentImageIndex);
 
     if (result != VK_SUCCESS) {
 
@@ -141,12 +176,22 @@ ErrType VulkanSwapchain::present()
     
     }
 
+    result = vkWaitForFences(device, 1, &frameFence, VK_TRUE, UINT16_MAX);
+
+    if (result != REC_RESULT_OK) {
+    
+        R_WARN(R_CHANNEL_VULKAN, "Fence wait failed...");
+    
+    }
+
+    vkResetFences(device, 1, &frameFence);
+
     R_ASSERT(m_pDevice->getBufferCount() > 0);
 
-    m_pDevice->incrementBufferIndex();
+    m_frameResources[m_currentImageIndex]->overrideLayout(VK_IMAGE_LAYOUT_UNDEFINED);
 
     m_pDevice->prepare();
-    
+
     return err;
 }
 
@@ -161,6 +206,11 @@ void VulkanSwapchain::buildFrameResources()
     m_frameResources.resize(numMaxFrames);
     m_frameViews.resize(numMaxFrames);
 
+    // For swapchain resources, we don't necessarily need to allocate or create the native handles
+    // for our images, we just need to pass them over to the object wrapper. This will then be 
+    // used to pass as reference back to the high level API.
+    //
+    // We do need to create our view resources however.
     for (U32 i = 0; i < numMaxFrames; ++i) {
     
         VkImage frame = m_rawFrames.getImage(i);
@@ -192,6 +242,95 @@ void VulkanSwapchain::buildFrameResources()
         m_frameViews[i] = new VulkanResourceView();
         m_frameViews[i]->initialize(m_pDevice, viewDesc);
     
+    }
+}
+
+
+void VulkanSwapchain::transitionCurrentFrameToPresentable()
+{
+    // TODO: Likely want this to be recorded once...
+
+    VulkanImage* frame              = m_frameResources[m_currentFrameIndex];
+    VkDevice device                 = m_pDevice->get();
+    U32 bufferIdx                   = m_pDevice->getCurrentBufferIndex();
+    VkImageMemoryBarrier imgBarrier = { };
+    VkImageSubresourceRange range   = { };
+    VkCommandBuffer singleUseCmdBuf = m_commandbuffers[bufferIdx];
+    VkFence fence                   = m_pDevice->getCurrentFence();
+    VkSemaphore signalSemaphore     = m_rawFrames.getSignalSemaphore(m_currentFrameIndex);
+    VkSemaphore waitSemaphore       = m_rawFrames.getWaitSemaphore(m_currentFrameIndex);
+
+    if (frame->getCurrentLayout() == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
+    
+        return;
+    
+    }
+    
+    range.aspectMask        = VK_IMAGE_ASPECT_COLOR_BIT;
+    range.baseArrayLayer    = 0;
+    range.baseMipLevel      = 0;
+    range.layerCount        = 1;
+    range.levelCount        = 1;
+
+    imgBarrier = frame->transition(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, range);    
+
+    {
+        VkCommandBufferBeginInfo begin = { };
+        begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+        begin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        vkBeginCommandBuffer(singleUseCmdBuf, &begin);
+    }
+
+    vkCmdPipelineBarrier(singleUseCmdBuf, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, 0, nullptr, 1, 
+        &imgBarrier);
+
+    vkEndCommandBuffer(singleUseCmdBuf);
+
+    VkSubmitInfo submitInfo = { };
+    VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_ALL_COMMANDS_BIT };
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.signalSemaphoreCount = 1; 
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pSignalSemaphores = &signalSemaphore;
+    submitInfo.waitSemaphoreCount = 1;
+    submitInfo.pWaitSemaphores = &waitSemaphore;
+    submitInfo.pCommandBuffers = &singleUseCmdBuf;
+    submitInfo.pWaitDstStageMask = waitStages;
+
+    vkQueueSubmit(m_pBackbufferQueue->get(), 1, &submitInfo, fence);
+}
+
+
+void VulkanSwapchain::queryCommandPools()
+{
+    const std::vector<QueueFamily>& queueFamilies = m_pDevice->getQueueFamilies();
+    VkDevice device = m_pDevice->get();
+
+    for (U32 i = 0; i < queueFamilies.size(); ++i) {
+    
+        if (queueFamilies[i].flags & (QUEUE_TYPE_GRAPHICS | QUEUE_TYPE_COPY)) {
+
+            m_commandbuffers.resize(queueFamilies[i].commandPools.size());
+            m_queueFamily = &queueFamilies[i];
+
+            for (U32 j = 0; j < queueFamilies[i].commandPools.size(); ++j) {
+            
+            
+                VkCommandBufferAllocateInfo allocIf = { };
+                allocIf.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+                allocIf.commandBufferCount = 1;
+                allocIf.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+                allocIf.commandPool  = queueFamilies[i].commandPools[j];
+                vkAllocateCommandBuffers(device, &allocIf, &m_commandbuffers[j]);
+            
+            
+            }
+
+            break;
+        
+        }
+
     }
 }
 } // Recluse

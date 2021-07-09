@@ -26,9 +26,9 @@ typedef signed long long    I64;
 typedef float               F32;
 typedef double              F64;
 
-typedef I8                  B8;
-typedef I32                 B32;
-typedef I64                 B64;
+typedef U8                  B8;
+typedef U32                 B32;
+typedef U64                 B64;
 
 typedef I32                 ErrType;
 

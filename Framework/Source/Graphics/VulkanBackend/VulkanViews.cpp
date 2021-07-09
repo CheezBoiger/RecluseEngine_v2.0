@@ -3,6 +3,8 @@
 #include "VulkanResource.hpp"
 #include "VulkanDevice.hpp"
 
+#include "Core/Messaging.hpp"
+
 namespace Recluse {
 
 
@@ -68,6 +70,8 @@ ErrType VulkanResourceView::destroy(VulkanDevice* pDevice)
     ErrType result = REC_RESULT_OK;
 
     if (m_view) {
+
+        R_DEBUG(R_CHANNEL_VULKAN, "Destroying resource view...");
     
         vkDestroyImageView(pDevice->get(), m_view, nullptr);
         

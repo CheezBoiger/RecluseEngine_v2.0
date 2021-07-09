@@ -185,6 +185,7 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
 
     // Create the command pool.
     createCommandPools(info.buffering);    
+    createFences(info.buffering);
     m_bufferCount = info.buffering;
 
     return 0;
@@ -193,7 +194,9 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
 
 void VulkanDevice::destroy(VkInstance instance)
 {
+    vkDeviceWaitIdle(m_device);
     destroyCommandPools();
+    destroyFences();
 
     if (!m_queues.empty()) {
     
@@ -292,6 +295,9 @@ ErrType VulkanDevice::destroySwapchain(GraphicsSwapchain* pSwapchain)
     for (auto& iter = m_swapchains.begin(); iter != m_swapchains.end(); ++iter) {
     
         if (*iter == pVs) {
+            VulkanQueue* pPq = pVs->getPresentationQueue();
+
+            pPq->wait();
 
             result = pVs->destroy();
 
@@ -697,7 +703,8 @@ ErrType VulkanDevice::createCommandList(GraphicsCommandList** pList, GraphicsQue
             VulkanCommandList* pVList   = new VulkanCommandList();
 
             result = pVList->initialize(this, queueFamilyIndex, 
-                m_queueFamilies[i].commandPools.data(), (U32)m_queueFamilies[i].commandPools.size());
+                m_queueFamilies[i].commandPools.data(), 
+                (U32)m_queueFamilies[i].commandPools.size());
 
             if (result != REC_RESULT_OK) {
             
@@ -752,6 +759,30 @@ void VulkanDevice::prepare()
             R_ERR(R_CHANNEL_VULKAN, "Failed to reset command pool!");
         
         }
+    
+    }
+}
+
+
+void VulkanDevice::createFences(U32 buffering)
+{
+    m_fences.resize(buffering);
+    for (U32 i = 0; i < m_fences.size(); ++i) {
+    
+        VkFenceCreateInfo info = { };
+        info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        info.flags = 0;
+        vkCreateFence(m_device, &info, nullptr, &m_fences[i]);
+    
+    }
+}
+
+
+void VulkanDevice::destroyFences()
+{
+    for (U32 i = 0; i < m_fences.size(); ++i) {
+    
+        vkDestroyFence(m_device, m_fences[i], nullptr);
     
     }
 }

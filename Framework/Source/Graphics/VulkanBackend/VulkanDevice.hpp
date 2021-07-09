@@ -82,8 +82,11 @@ public:
     VulkanAllocator* getImageAllocator(ResourceMemoryUsage usage) const 
         { return m_imageAllocators[usage]; }
 
+    const std::vector<QueueFamily>& getQueueFamilies() const { return m_queueFamilies; }
+
     U32 getBufferCount() const { return m_bufferCount; }
     U32 getCurrentBufferIndex() const { return m_currentBufferIndex; }
+    VkFence getCurrentFence() const { return m_fences[m_currentBufferIndex]; }
     
     // Increment the buffer index.
     inline void incrementBufferIndex() {
@@ -96,7 +99,9 @@ private:
 
     ErrType createSurface(VkInstance instance, void* handle);
     ErrType createCommandPools(U32 buffered);
+    void createFences(U32 buffered);
 
+    void destroyFences();
     void destroyCommandPools();
 
     VulkanAdapter* m_adapter;
@@ -107,6 +112,7 @@ private:
     std::vector<QueueFamily> m_queueFamilies;
     std::list<VulkanQueue*> m_queues;
     std::list<VulkanSwapchain*> m_swapchains;
+    std::vector<VkFence>        m_fences;
 
     VulkanMemoryPool m_bufferPool[RESOURCE_MEMORY_USAGE_COUNT];
     VulkanMemoryPool m_imagePool[RESOURCE_MEMORY_USAGE_COUNT];

@@ -12,6 +12,7 @@ namespace Recluse {
 class VulkanDevice;
 
 
+// Vulkan queue implementation, inherits from GraphicsQueue API.
 class VulkanQueue : public GraphicsQueue {
 public:
     VulkanQueue(GraphicsQueueTypeFlags type) 

@@ -11,6 +11,8 @@ namespace Recluse {
 class VulkanDevice;
 class VulkanCommandList;
 
+// Vulkan resource inherits from GraphicsResource, which is what will
+// be used by the engine API.
 class VulkanResource : public GraphicsResource {
 public:
     VulkanResource(GraphicsResourceDescription& desc)
@@ -22,14 +24,21 @@ public:
     
     ErrType initialize(VulkanDevice* pDevice, GraphicsResourceDescription& desc);
 
+    // Destroy native handle that is managed by this resource object.
+    // Must be called before deleting this object.
+    //
     void destroy();
 
+    // Vulkan memory handle, normally assigned by the Vulkan Allocator.
+    //
     const VulkanMemory& getMemory() const { return m_memory; }
 
     ErrType map(void** ptr, MapRange* pReadRange) override;
 
     ErrType unmap(MapRange* pWrittenRange) override;
 
+    // Get the vulkan device that was used to allocate this resource.
+    //
     VulkanDevice* getDevice() const { return m_pDevice; }
 
 private:
@@ -81,13 +90,23 @@ public:
         , m_currentLayout(currentLayout)
         , m_image(image) { }
 
+    // Convenient get.
+    //
     VkImage get() const { return m_image; }
 
+    // Get the current layout of this image.
+    //
     VkImageLayout getCurrentLayout() const { return m_currentLayout; }
+    VkAccessFlags getCurrentAccessMask() const { return m_currentAccessMask; }
 
+    void overrideLayout(VkImageLayout layout) { m_currentLayout = layout; }
+
+    // Create memory barrier object to transition the layout of this image to the 
+    // specified destination layout.
+    // 
     VkImageMemoryBarrier transition(VkImageLayout dstLayout, VkImageSubresourceRange& range);
 
-private:    
+private:
     ErrType onCreate(VulkanDevice* pDevice, GraphicsResourceDescription& desc) override; 
 
     ErrType onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryRequirements& memRequirements) override;

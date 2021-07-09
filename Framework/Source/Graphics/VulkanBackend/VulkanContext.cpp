@@ -8,7 +8,48 @@
 namespace Recluse {
 
 
-static std::vector<const char*> loadExtensions()
+static VKAPI_ATTR VkBool32 VKAPI_CALL recluseDebugCallback(
+  VkDebugReportFlagsEXT flags,
+  VkDebugReportObjectTypeEXT objType,
+  U64 obj,
+  size_t location,
+  I32 code,
+  const char* layerPrefix,
+  const char* msg,
+  void* usrData)
+{
+  R_DEBUG(R_CHANNEL_VULKAN, "Validation layer: %s\n", msg);
+  //R_ASSERT(!(flags & VK_DEBUG_REPORT_ERROR_BIT_EXT), "");
+  return VK_FALSE;
+}
+
+
+void VulkanContext::setDebugCallback()
+{
+    VkDebugReportCallbackCreateInfoEXT ci = { };
+    ci.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+    ci.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_DEBUG_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT |
+        VK_DEBUG_REPORT_INFORMATION_BIT_EXT;
+    ci.pfnCallback = recluseDebugCallback;
+    auto vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)
+        vkGetInstanceProcAddr(m_instance, "vkCreateDebugReportCallbackEXT");
+    if (!vkCreateDebugReportCallbackEXT) {
+    
+        R_ERR(R_CHANNEL_VULKAN, "Failed to initialize our vulkan reporting.");
+        return;
+    }
+
+    VkResult result = vkCreateDebugReportCallbackEXT(m_instance, &ci, nullptr, &m_debugReportCallback);
+
+    if (result != VK_SUCCESS) {
+    
+        R_ERR(R_CHANNEL_VULKAN, "Failed to create debug report callback!");
+    
+    }
+}
+
+
+static std::vector<const char*> loadExtensions(EnableLayerFlags flags)
 {
     std::vector<const char*> extensions = { 
        VK_KHR_SURFACE_EXTENSION_NAME
@@ -17,6 +58,10 @@ static std::vector<const char*> loadExtensions()
 #endif
     , "VK_KHR_get_physical_device_properties2"
     };
+
+    if (flags & LAYER_FEATURE_DEBUG_VALIDATION_BIT) {
+        extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);    
+    }
 
     return extensions;
 }
@@ -134,15 +179,16 @@ void checkForValidLayers(std::vector<const char*>& wantedLayers)
 
 ErrType VulkanContext::onInitialize(const ApplicationInfo& appInfo, EnableLayerFlags flags)
 {
-    std::vector<const char*> extensions = loadExtensions();
-    std::vector<const char*> layers = loadLayers(flags);
+    std::vector<const char*> extensions = loadExtensions(flags);
+    std::vector<const char*> layers     = loadLayers(flags);
 
     checkForValidExtensions(extensions);
     checkForValidLayers(layers);
-
+    
     VkApplicationInfo nativeAppInfo     = { };    
     VkInstanceCreateInfo createInfo     = { };
 
+    m_debugReportCallback               = VK_NULL_HANDLE;
     m_appName                           = appInfo.appName;
     m_engineName                        = appInfo.engineName;
 
@@ -168,6 +214,12 @@ ErrType VulkanContext::onInitialize(const ApplicationInfo& appInfo, EnableLayerF
 
     R_DEBUG(R_CHANNEL_VULKAN, "Application: %s\nEngine: %s", m_appName.c_str(), m_engineName.c_str());
 
+    if (flags & LAYER_FEATURE_DEBUG_VALIDATION_BIT) {
+    
+        setDebugCallback();
+    
+    }
+
     m_engineVersion = nativeAppInfo.engineVersion;
     m_appVersion = nativeAppInfo.applicationVersion;
 
@@ -183,6 +235,9 @@ void VulkanContext::nullify()
 
 void VulkanContext::onDestroy()
 {
+
+    destroyDebugCallback();
+
     if (m_instance) {
 
         R_DEBUG(R_CHANNEL_VULKAN, "Destroying context...");
@@ -219,6 +274,25 @@ void VulkanContext::freeGraphicsAdapters()
 {
     for (U32 i = 0; i < m_graphicsAdapters.size(); ++i) {
         delete m_graphicsAdapters[i];
+    }
+}
+
+
+void VulkanContext::destroyDebugCallback()
+{
+    if (m_debugReportCallback) {
+    
+        auto vkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT)
+            vkGetInstanceProcAddr(m_instance, "vkDestroyDebugReportCallbackEXT");
+
+        if (vkDestroyDebugReportCallbackEXT) {
+
+            vkDestroyDebugReportCallbackEXT(m_instance, m_debugReportCallback, nullptr);
+
+            m_debugReportCallback = VK_NULL_HANDLE;
+
+        }
+    
     }
 }
 } // Recluse

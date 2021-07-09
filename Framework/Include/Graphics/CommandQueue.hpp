@@ -9,7 +9,6 @@ namespace Recluse {
 class GraphicsDevice;
 class GraphicsCommandList;
 class GraphicsFence;
-class GraphicsSemaphore;
 
 enum GraphicsQueueType {
     QUEUE_TYPE_PRESENT      = (1 << 0),
@@ -23,10 +22,6 @@ typedef U32 GraphicsQueueTypeFlags;
 struct QueueSubmit {
     GraphicsCommandList**   pCommandLists;
     U32                     numCommandLists;
-    GraphicsSemaphore**     pWaitSemaphores;
-    U32                     numWaitSemaphores;
-    GraphicsSemaphore**     pSignalSemaphores;
-    U32                     numSignalSemaphores;
 };
 
 // Graphics queue interface.

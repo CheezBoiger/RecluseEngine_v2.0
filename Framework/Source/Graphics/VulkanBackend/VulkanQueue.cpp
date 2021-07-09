@@ -22,6 +22,13 @@ ErrType VulkanQueue::initialize(VkDevice device, U32 queueFamilyIndex, U32 queue
 
 void VulkanQueue::wait()
 {
+    VkResult result = vkQueueWaitIdle(m_queue);
+    
+    if (result != VK_SUCCESS) {
+    
+        R_WARN(R_CHANNEL_VULKAN, "Failed to wait for queue idle!");
+    
+    }
 }
 
 

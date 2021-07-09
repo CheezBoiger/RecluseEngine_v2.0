@@ -49,10 +49,16 @@ private:
 
     void nullify();
 
+    void setDebugCallback();
+    void destroyDebugCallback();
+
     VkInstance m_instance;
     std::string m_engineName;
     std::string m_appName;
     U32         m_engineVersion;
     U32         m_appVersion;
+
+    // Callback if needed.
+    VkDebugReportCallbackEXT m_debugReportCallback;
 };
 } // Recluse

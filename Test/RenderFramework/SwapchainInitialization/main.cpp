@@ -6,6 +6,7 @@
 #include "Graphics/CommandList.hpp"
 
 #include "Core/System/Window.hpp"
+#include "Core/RealtimeTick.hpp"
 #include "Core/System/Input.hpp"
 
 using namespace Recluse;
@@ -13,6 +14,7 @@ using namespace Recluse;
 int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
+    RealtimeTick::initialize();
 
     GraphicsSwapchain* pSwapchain   = nullptr;
     GraphicsDevice* pDevice         = nullptr;
@@ -36,7 +38,7 @@ int main(int c, char* argv[])
     appInfo.engineName  = "None";
     appInfo.enginePatch = 0;
 
-    EnableLayerFlags flags = LAYER_FEATURE_DEBUG_VALIDATION_BIT;
+    EnableLayerFlags flags = 0;//LAYER_FEATURE_DEBUG_VALIDATION_BIT;
 
     ErrType result = pContext->initialize(appInfo, flags);
 
@@ -59,7 +61,7 @@ int main(int c, char* argv[])
     DeviceCreateInfo deviceCreate   = { };
     deviceCreate.winHandle = pWindow->getNativeHandle();
 
-    deviceCreate.buffering = 1;
+    deviceCreate.buffering = 2;
 
     result = adapters[0]->createDevice(deviceCreate, &pDevice);
 
@@ -69,7 +71,7 @@ int main(int c, char* argv[])
 
     }
 
-    result = pDevice->createCommandQueue(&pQueue, QUEUE_TYPE_GRAPHICS | QUEUE_TYPE_GRAPHICS);
+    result = pDevice->createCommandQueue(&pQueue, QUEUE_TYPE_GRAPHICS | QUEUE_TYPE_PRESENT);
 
     if (result != REC_RESULT_OK) {
     
@@ -96,7 +98,8 @@ int main(int c, char* argv[])
         pWindow->open();
 
         while (!pWindow->shouldClose()) {
-
+            RealtimeTick tick = RealtimeTick::GetTick();
+            R_TRACE("Graphics", "FPS: %f", 1.f / tick.getDeltaTimeS());
             pSwapchain->present();
 
             pollEvents();
