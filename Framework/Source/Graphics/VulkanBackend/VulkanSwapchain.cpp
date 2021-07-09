@@ -48,6 +48,13 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
     createInfo.preTransform     = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR; 
     createInfo.pQueueFamilyIndices = nullptr;
     createInfo.queueFamilyIndexCount = 0;
+
+    switch (pDesc.buffering) {
+        default:
+        case FRAME_BUFFERING_SINGLE: createInfo.presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR; break;
+        case FRAME_BUFFERING_DOUBLE: createInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR; break;
+        case FRAME_BUFFERING_TRIPLE: createInfo.presentMode = VK_PRESENT_MODE_MAILBOX_KHR; break;
+    }
     
     result = vkCreateSwapchainKHR(pDevice->get(), &createInfo, nullptr, &m_swapchain);
 
@@ -287,16 +294,16 @@ void VulkanSwapchain::transitionCurrentFrameToPresentable()
 
     vkEndCommandBuffer(singleUseCmdBuf);
 
-    VkSubmitInfo submitInfo = { };
-    VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_ALL_COMMANDS_BIT };
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.signalSemaphoreCount = 1; 
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pSignalSemaphores = &signalSemaphore;
-    submitInfo.waitSemaphoreCount = 1;
-    submitInfo.pWaitSemaphores = &waitSemaphore;
-    submitInfo.pCommandBuffers = &singleUseCmdBuf;
-    submitInfo.pWaitDstStageMask = waitStages;
+    VkSubmitInfo submitInfo             = { };
+    VkPipelineStageFlags waitStages[]   = { VK_PIPELINE_STAGE_ALL_COMMANDS_BIT };
+    submitInfo.sType                    = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.signalSemaphoreCount     = 1; 
+    submitInfo.commandBufferCount       = 1;
+    submitInfo.pSignalSemaphores        = &signalSemaphore;
+    submitInfo.waitSemaphoreCount       = 1;
+    submitInfo.pWaitSemaphores          = &waitSemaphore;
+    submitInfo.pCommandBuffers          = &singleUseCmdBuf;
+    submitInfo.pWaitDstStageMask        = waitStages;
 
     vkQueueSubmit(m_pBackbufferQueue->get(), 1, &submitInfo, fence);
 }

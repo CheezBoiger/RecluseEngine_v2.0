@@ -80,6 +80,7 @@ int main(int c, char* argv[])
     }
 
     SwapchainCreateDescription scInfo   = { };
+    scInfo.buffering                    = FRAME_BUFFERING_TRIPLE;
     scInfo.desiredFrames                = 3;
     scInfo.renderHeight                 = 128;
     scInfo.renderWidth                  = 128;

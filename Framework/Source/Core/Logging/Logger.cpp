@@ -93,8 +93,9 @@ void LoggingQueue::store(const Log& log)
     if (!m_head) {
         SizeT newCursor = m_cursor;
     
-        if (newCursor >= (m_pool->getBaseAddress() + poolSzBytes)) {
+        if ((newCursor + alignedSzBytes) >= (m_pool->getBaseAddress() + poolSzBytes)) {
             newCursor = m_pool->getBaseAddress();
+            m_cursor = newCursor;
         }
 
         m_head = (LogNode*)m_cursor;
@@ -112,7 +113,13 @@ void LoggingQueue::store(const Log& log)
         PtrType addrHead = (PtrType)m_head;
         PtrType temp = m_cursor + alignedSzBytes;
 
+        if (temp >= (m_pool->getBaseAddress() + poolSzBytes)) {
+            m_cursor = m_pool->getBaseAddress();
+            temp = m_cursor + alignedSzBytes;
+        }
+
         if (m_cursor != addrHead) {
+
             LogNode* newNode = (LogNode*)m_cursor;
             new (newNode) LogNode;
   
@@ -123,12 +130,6 @@ void LoggingQueue::store(const Log& log)
             m_tail = newNode;          
             
             m_cursor = temp;
-
-            if (m_cursor >= (m_pool->getBaseAddress() + poolSzBytes)) {
-            
-                m_cursor = m_pool->getBaseAddress();
-
-            }
         }
 
     }
@@ -163,9 +164,9 @@ void LoggingQueue::dequeue()
 void LoggingQueue::initialize(U64 maxLogs)
 {
     m_mutex = createMutex();
-
+    U64 szTotalBytes = RECLUSE_ALLOC_MASK((sizeof(LogNode) * maxLogs), ARCH_PTR_SZ_BYTES);
     // TODO: Not sure if we want to allocate our logging queue on heap...
-    m_pool = new MemoryPool(sizeof(LogNode) * maxLogs);
+    m_pool = new MemoryPool(szTotalBytes);
     m_cursor = m_pool->getBaseAddress();
 }
 

@@ -16,7 +16,14 @@ class GraphicsSwapchain;
 class GraphicsContext;
 class GraphicsQueue;
 
+enum FrameBuffering {
+    FRAME_BUFFERING_SINGLE, // Single immediate run.
+    FRAME_BUFFERING_DOUBLE, // VSync
+    FRAME_BUFFERING_TRIPLE // Triple buffering.
+};
+
 struct SwapchainCreateDescription {
+    FrameBuffering buffering;
     U32 desiredFrames;
     U32 renderWidth;
     U32 renderHeight;
