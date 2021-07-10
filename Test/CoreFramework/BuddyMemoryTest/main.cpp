@@ -27,7 +27,10 @@ int main()
     pAllocator->free(&alloc);
 
     pAllocator->cleanUp();
+    delete pAllocator;
+
     R_DEBUG("Core", "Finished!");
+
     Log::destroyLoggingSystem();
     return 0;
 }

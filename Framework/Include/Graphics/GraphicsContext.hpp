@@ -49,16 +49,12 @@ class GraphicsContext {
 public:
 
     static R_EXPORT GraphicsContext* createContext(enum GraphicsAPI api = GRAPHICS_API_VULKAN);
+    static R_EXPORT ErrType destroyContext(GraphicsContext* pContext);
 
     R_EXPORT ErrType initialize(const ApplicationInfo& appInfo, EnableLayerFlags flags) { 
         ErrType err = onInitialize(appInfo, flags);
         queryGraphicsAdapters();
         return err;
-    }
-
-    R_EXPORT void destroy() { 
-        freeGraphicsAdapters();
-        onDestroy();
     }
 
     // Get available adapters.
@@ -79,5 +75,12 @@ protected:
 
     // Available adapters.
     std::vector<GraphicsAdapter*> m_graphicsAdapters;
+
+private:
+    // Destroys the context, should be called by the destroyContext() function.
+    void destroy() { 
+        freeGraphicsAdapters();
+        onDestroy();
+    }
 };
 } // Recluse

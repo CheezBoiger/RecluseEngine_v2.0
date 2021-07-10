@@ -113,7 +113,7 @@ int main(int c, char* argv[])
 
     adapters[0]->destroyDevice(pDevice);
 
-    pContext->destroy();
+   GraphicsContext::destroyContext(pContext);
     
     pWindow->close();
     Window::destroy(pWindow);

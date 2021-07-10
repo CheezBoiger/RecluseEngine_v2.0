@@ -62,7 +62,7 @@ void VulkanCommandList::begin()
 {
     VkCommandBufferBeginInfo info = { };
     info.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    info.flags              = 0;
+    info.flags              = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
     info.pInheritanceInfo   = nullptr;
     U32 bufIndex            = m_pDevice->getCurrentBufferIndex();
     VkCommandBuffer buffer  = m_buffers[bufIndex];
