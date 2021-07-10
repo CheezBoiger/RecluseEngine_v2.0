@@ -19,14 +19,14 @@ ErrType BuddyAllocator::onInitialize()
     U32 bit     = totalSzBytes ^ (totalSzBytes & (totalSzBytes - 1));
     U32 nthBit  = (U32)log2(bit) + 1;
     
-    m_maxOrder = nthBit;
+    m_maxOrder  = nthBit;
 
     m_freeList.resize(m_maxOrder);
 
-    BuddyBlock block = { };
-    block.blockId = nthBit;
-    block.offsetBytes = baseAddr;
-    block.memSzBytes  = totalSzBytes;
+    BuddyBlock block    = { };
+    block.blockId       = nthBit;
+    block.offsetBytes   = baseAddr;
+    block.memSzBytes    = totalSzBytes;
 
     // Store big block as initialized to the whole memory region.
     m_freeList[nthBit - 1].push_back(block);
@@ -47,9 +47,8 @@ ErrType BuddyAllocator::onAllocate(Allocation* pOutput, U64 requestSz, U16 align
         BuddyBlock block = m_freeList[nthBit][0];
         m_freeList[nthBit].erase(m_freeList[nthBit].begin());
 
-        pOutput->ptr        = baseAddr + block.offsetBytes;
-        pOutput->sizeBytes  = alignedSzBytes; 
-
+        pOutput->ptr                    = baseAddr + block.offsetBytes;
+        pOutput->sizeBytes              = alignedSzBytes;
         m_allocatedBlocks[pOutput->ptr] = block.memSzBytes;
     
     } else {
@@ -69,22 +68,24 @@ ErrType BuddyAllocator::onAllocate(Allocation* pOutput, U64 requestSz, U16 align
             
         } else {
         
-            BuddyBlock block = { };
-            block = m_freeList[i][0];
+            BuddyBlock block    = { };
+            block               = m_freeList[i][0];
+
             // Split block into halves.
             m_freeList[i].erase(m_freeList[i].begin());
             i--;
+
             for (; i >= nthBit; --i) {
 
                 // split to two blocks and push back.
                 BuddyBlock blockLeft;
                 BuddyBlock blockRight;
                 
-                blockLeft.offsetBytes = block.offsetBytes;
-                blockLeft.memSzBytes = block.memSzBytes / 2;
+                blockLeft.offsetBytes   = block.offsetBytes;
+                blockLeft.memSzBytes    = block.memSzBytes / 2;
                 
-                blockRight.offsetBytes = blockLeft.offsetBytes + blockLeft.memSzBytes;
-                blockRight.memSzBytes = block.memSzBytes / 2;
+                blockRight.offsetBytes  = blockLeft.offsetBytes + blockLeft.memSzBytes;
+                blockRight.memSzBytes   = block.memSzBytes / 2;
 
                 m_freeList[i].push_back(blockLeft);
                 m_freeList[i].push_back(blockRight);
@@ -94,31 +95,31 @@ ErrType BuddyAllocator::onAllocate(Allocation* pOutput, U64 requestSz, U16 align
 
             }
         
-            pOutput->ptr = baseAddr + block.offsetBytes;
-            pOutput->sizeBytes = alignedSzBytes;
-
+            pOutput->ptr                    = baseAddr + block.offsetBytes;
+            pOutput->sizeBytes              = alignedSzBytes;
             m_allocatedBlocks[pOutput->ptr] = block.memSzBytes;
         }
     
     }
+
     return REC_RESULT_OK;
 }
 
 
 ErrType BuddyAllocator::onFree(Allocation* pOutput)
 {
-    return REC_RESULT_OK;
+    return REC_RESULT_NOT_IMPLEMENTED;
 }
 
 
 ErrType BuddyAllocator::onReset()
 {
-    return REC_RESULT_OK;
+    return REC_RESULT_NOT_IMPLEMENTED;
 }
 
 
 ErrType BuddyAllocator::onCleanUp()
 {
-    return REC_RESULT_OK;
+    return REC_RESULT_NOT_IMPLEMENTED;
 }
 } // Recluse
