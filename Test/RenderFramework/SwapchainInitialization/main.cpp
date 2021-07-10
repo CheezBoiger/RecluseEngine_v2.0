@@ -38,7 +38,7 @@ int main(int c, char* argv[])
     appInfo.engineName  = "None";
     appInfo.enginePatch = 0;
 
-    EnableLayerFlags flags = 0;//LAYER_FEATURE_DEBUG_VALIDATION_BIT;
+    EnableLayerFlags flags = LAYER_FEATURE_DEBUG_VALIDATION_BIT;
 
     ErrType result = pContext->initialize(appInfo, flags);
 

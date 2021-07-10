@@ -3,3 +3,4 @@ project( "CoreFramework" )
 
 add_subdirectory(RealtimeTicking)
 add_subdirectory(LoggingTest)
+add_subdirectory(BuddyMemoryTest)

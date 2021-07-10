@@ -323,14 +323,12 @@ void VulkanSwapchain::queryCommandPools()
 
             for (U32 j = 0; j < queueFamilies[i].commandPools.size(); ++j) {
             
-            
                 VkCommandBufferAllocateInfo allocIf = { };
                 allocIf.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
                 allocIf.commandBufferCount = 1;
                 allocIf.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
                 allocIf.commandPool  = queueFamilies[i].commandPools[j];
                 vkAllocateCommandBuffers(device, &allocIf, &m_commandbuffers[j]);
-            
             
             }
 
