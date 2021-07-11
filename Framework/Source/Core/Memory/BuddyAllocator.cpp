@@ -1,5 +1,6 @@
 //
 #include "Core/Memory/BuddyAllocator.hpp"
+#include "Core/Memory/MemoryCommon.hpp"
 #include "Core/Messaging.hpp"
 
 #include <math.h>
@@ -36,7 +37,7 @@ ErrType BuddyAllocator::onInitialize()
 ErrType BuddyAllocator::onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment)
 {
     PtrType baseAddr    = getBaseAddr();
-    U64 alignedSzBytes  = RECLUSE_ALLOC_MASK(requestSz, alignment);
+    U64 alignedSzBytes  = R_ALLOC_MASK(requestSz, alignment);
     
     U32 nthBit          = (U32)ceil(log2(alignedSzBytes));
     

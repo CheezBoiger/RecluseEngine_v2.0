@@ -3,6 +3,7 @@
 
 #include "Core/Messaging.hpp"
 #include "Core/Logging/LogFramework.hpp"
+#include "Core/Memory/MemoryCommon.hpp"
 
 namespace Recluse {
 
@@ -85,7 +86,7 @@ Log::~Log()
 void LoggingQueue::store(const Log& log)
 {
     SizeT alignedSzBytes = sizeof(LogNode);
-    alignedSzBytes = RECLUSE_ALLOC_MASK(alignedSzBytes, ARCH_PTR_SZ_BYTES);
+    alignedSzBytes = R_ALLOC_MASK(alignedSzBytes, ARCH_PTR_SZ_BYTES);
     SizeT poolSzBytes = m_pool->getTotalSizeBytes();
 
     lockMutex(m_mutex);
@@ -164,7 +165,7 @@ void LoggingQueue::dequeue()
 void LoggingQueue::initialize(U64 maxLogs)
 {
     m_mutex = createMutex();
-    U64 szTotalBytes = RECLUSE_ALLOC_MASK((sizeof(LogNode) * maxLogs), ARCH_PTR_SZ_BYTES);
+    U64 szTotalBytes = R_ALLOC_MASK((sizeof(LogNode) * maxLogs), ARCH_PTR_SZ_BYTES);
     // TODO: Not sure if we want to allocate our logging queue on heap...
     m_pool = new MemoryPool(szTotalBytes);
     m_cursor = m_pool->getBaseAddress();

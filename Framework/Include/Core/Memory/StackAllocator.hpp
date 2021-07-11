@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Core/Memory/Allocator.hpp"
+#include "Core/Memory/MemoryCommon.hpp"
 
 namespace Recluse {
 
@@ -17,7 +18,7 @@ public:
     }
 
     ErrType onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override {
-        PtrType neededSzBytes   = RECLUSE_ALLOC_MASK(requestSz, alignment);
+        PtrType neededSzBytes   = R_ALLOC_MASK(requestSz, alignment);
         U64 totalSzBytes        = getTotalSizeBytes();
         PtrType szAddr          = getBaseAddr() + totalSzBytes;
         PtrType endAddr         = m_top + neededSzBytes;

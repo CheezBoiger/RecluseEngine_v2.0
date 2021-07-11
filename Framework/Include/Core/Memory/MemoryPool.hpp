@@ -6,10 +6,6 @@
 
 #include "Core/Types.hpp"
 
-#define R_1KB (1024ull)
-#define R_1MB (1024ull * 1024ull)
-#define R_1GB (1024ull * 1024ull * 1024ull)
-
 namespace Recluse {
 
 

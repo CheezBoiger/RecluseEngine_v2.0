@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include "Core/Memory/BuddyAllocator.hpp"
+#include "Core/Memory/MemoryCommon.hpp"
 #include "Core/Messaging.hpp"
 #include "Core/RealtimeTick.hpp"
 #include "Core/Messaging.hpp"
@@ -22,7 +23,7 @@ int main()
 
     R_DEBUG("Core", "Initialize buddy memory allocator.");
     BuddyAllocator* pAllocator = new BuddyAllocator();
-    pAllocator->initialize(0, RECLUSE_ALLOC_MASK(RECLUSE_1MB, 4));
+    pAllocator->initialize(0, R_ALLOC_MASK(R_1MB, 4));
     Allocation alloc    = { };
     Allocation alloc2   = { };
 

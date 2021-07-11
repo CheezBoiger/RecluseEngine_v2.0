@@ -5,11 +5,6 @@
 
 #include "Core/Types.hpp"
 
-#define RECLUSE_ALLOC_MASK(m, a)    (((m) + ((a)-1)) & ~((a)-1))
-#define RECLUSE_1KB                 (1024ULL)
-#define RECLUSE_1MB                 (1024ULL * 1024ULL)
-#define RECLUSE_1GB                 (1024ULL * 1024ULL * 1024ULL)
-
 namespace Recluse {
 
 

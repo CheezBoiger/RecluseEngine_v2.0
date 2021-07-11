@@ -5,6 +5,7 @@
 #include "Graphics/Resource.hpp"
 
 #include "Core/Memory/MemoryPool.hpp"
+#include "Core/Memory/MemoryCommon.hpp"
 
 
 using namespace Recluse;

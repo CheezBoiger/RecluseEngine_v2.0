@@ -420,7 +420,7 @@ ErrType VulkanDevice::reserveMemory(const MemoryReserveDesc& desc)
         allocInfo.memoryTypeIndex = 
             m_adapter->findMemoryType(memoryRequirements.memoryTypeBits, (ResourceMemoryUsage)i);
 
-        allocInfo.allocationSize = RECLUSE_ALLOC_MASK(memoryRequirements.size, memoryRequirements.alignment);
+        allocInfo.allocationSize = R_ALLOC_MASK(memoryRequirements.size, memoryRequirements.alignment);
 
         R_DEBUG(R_CHANNEL_VULKAN, "Allocating device memory...");
 
@@ -483,7 +483,7 @@ ErrType VulkanDevice::reserveMemory(const MemoryReserveDesc& desc)
     allocInfo.memoryTypeIndex = 
         m_adapter->findMemoryType(memoryRequirements.memoryTypeBits, RESOURCE_MEMORY_USAGE_GPU_ONLY);
 
-    allocInfo.allocationSize = RECLUSE_ALLOC_MASK(desc.texturePoolGPUOnly, memoryRequirements.alignment);
+    allocInfo.allocationSize = R_ALLOC_MASK(desc.texturePoolGPUOnly, memoryRequirements.alignment);
 
     R_DEBUG(R_CHANNEL_VULKAN, "Allocating device memory...");
 
