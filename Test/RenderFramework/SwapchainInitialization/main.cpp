@@ -99,7 +99,7 @@ int main(int c, char* argv[])
         pWindow->open();
 
         while (!pWindow->shouldClose()) {
-            RealtimeTick tick = RealtimeTick::GetTick();
+            RealtimeTick tick = RealtimeTick::getTick();
             R_TRACE("Graphics", "FPS: %f", 1.f / tick.getDeltaTimeS());
             pSwapchain->present();
 

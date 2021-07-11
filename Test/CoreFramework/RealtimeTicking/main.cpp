@@ -20,7 +20,7 @@ int main()
     while(1) {
 
         // Get the current tick.
-        RealtimeTick tick   = RealtimeTick::GetTick();
+        RealtimeTick tick   = RealtimeTick::getTick();
         seconds            += tick.getDeltaTimeS();
 
         R_VERBOSE("TIMING", "Current Time: %f, Delta Time: %f Seconds: %f", tick.getCurrentTimeS(), tick.getDeltaTimeS(), seconds);

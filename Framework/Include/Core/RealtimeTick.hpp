@@ -9,7 +9,7 @@ namespace Recluse {
 class RealtimeTick {
 public:
 
-    static R_EXPORT RealtimeTick GetTick();
+    static R_EXPORT RealtimeTick getTick();
 
     F32 getCurrentTimeS() const { return m_currentTimeS; }
     F32 getDeltaTimeS() const { return m_deltaTimeS; }

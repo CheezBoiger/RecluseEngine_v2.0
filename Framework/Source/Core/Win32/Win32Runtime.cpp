@@ -105,7 +105,7 @@ void RealtimeTick::initialize()
 }
 
 
-RealtimeTick RealtimeTick::GetTick()
+RealtimeTick RealtimeTick::getTick()
 {
     return RealtimeTick();
 }

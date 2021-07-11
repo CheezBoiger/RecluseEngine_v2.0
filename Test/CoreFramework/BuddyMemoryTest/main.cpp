@@ -7,6 +7,12 @@
 
 using namespace Recluse;
 
+inline void logTick()
+{
+    RealtimeTick tick = RealtimeTick::getTick();
+    R_DEBUG("Core", "Finished: %f secs", tick.getDeltaTimeS());
+}
+
 int main()
 {
     Log::initializeLoggingSystem();
@@ -21,12 +27,20 @@ int main()
     Allocation alloc2   = { };
 
     R_DEBUG("Core", "Allocating buddy block.");
+
     pAllocator->allocate(&alloc, 150, 4);
-    pAllocator->allocate(&alloc, 150, 4);
+    logTick();
+    pAllocator->allocate(&alloc2, 512, 4);
+    logTick();
+
     R_TRACE("Core", "Allocation: \t\t%llu bytes\n\t\toffset:\t\t%llu", alloc.sizeBytes, alloc.ptr);
+    R_TRACE("Core", "Allocation2: \t%llu bytes\n\t\toffset:\t\t%llu", alloc2.sizeBytes, alloc2.ptr);
 
     pAllocator->free(&alloc);
+    logTick();
+
     pAllocator->free(&alloc2);
+    logTick();
 
     pAllocator->cleanUp();
     delete pAllocator;

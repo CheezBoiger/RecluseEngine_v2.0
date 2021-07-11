@@ -125,7 +125,7 @@ ErrType BuddyAllocator::onFree(Allocation* pOutput)
 
     m_freeList[nthBit].push_back(block);
 
-    if (buddyNumber % 2 != 0) {
+    if ((buddyNumber & 1)) {
     
         buddyAddr = allocOffset - (1ull << nthBit);
     
@@ -138,11 +138,30 @@ ErrType BuddyAllocator::onFree(Allocation* pOutput)
     //
     for (U32 i = 0; i < m_freeList[nthBit].size(); ++i) {
     
-        
+        // Merge blocks together, if applicable.
         if (m_freeList[nthBit][i].offsetBytes == buddyAddr) {
         
+            // Check if even, merge with alloc offset. Otherwise, use buddyaddr
+            if (!(buddyNumber & 1)) {
             
-        
+                BuddyBlock newBlock = { };
+                newBlock.offsetBytes = allocOffset;
+                newBlock.memSzBytes = 2 * (1 << nthBit);
+                m_freeList[nthBit + 1].push_back(newBlock);
+             
+            } else {
+            
+                BuddyBlock newBlock = { };
+                newBlock.offsetBytes = buddyAddr;
+                newBlock.memSzBytes = 2 * (1 << nthBit);
+                m_freeList[nthBit + 1].push_back(newBlock);
+            
+            }
+
+            m_freeList[nthBit].erase(m_freeList[nthBit].begin() + i);
+            m_freeList[nthBit].erase(m_freeList[nthBit].begin() + m_freeList[nthBit].size() - 1);
+
+            break;
         }
     
     }
@@ -150,7 +169,7 @@ ErrType BuddyAllocator::onFree(Allocation* pOutput)
     // Erase the block after.
     m_allocatedBlocks.erase(pOutput->ptr);
 
-    return REC_RESULT_NOT_IMPLEMENTED;
+    return REC_RESULT_OK;
 }
 
 
@@ -162,6 +181,11 @@ ErrType BuddyAllocator::onReset()
 
 ErrType BuddyAllocator::onCleanUp()
 {
-    return REC_RESULT_NOT_IMPLEMENTED;
+
+    // Wip out everything.
+    m_freeList.clear();
+    m_allocatedBlocks.clear();
+
+    return REC_RESULT_OK;
 }
 } // Recluse
