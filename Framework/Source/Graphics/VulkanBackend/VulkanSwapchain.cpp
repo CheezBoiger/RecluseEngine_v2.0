@@ -246,8 +246,8 @@ void VulkanSwapchain::buildFrameResources()
         viewDesc.dimension      = RESOURCE_VIEW_DIMENSION_2D;
         viewDesc.type           = RESOURCE_VIEW_TYPE_RENDER_TARGET;
         
-        m_frameViews[i] = new VulkanResourceView();
-        m_frameViews[i]->initialize(m_pDevice, viewDesc);
+        m_frameViews[i] = new VulkanResourceView(viewDesc);
+        m_frameViews[i]->initialize(m_pDevice);
     
     }
 }

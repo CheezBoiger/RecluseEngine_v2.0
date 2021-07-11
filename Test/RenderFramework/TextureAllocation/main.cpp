@@ -3,6 +3,7 @@
 #include "Recluse/Graphics/GraphicsContext.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 #include "Recluse/Graphics/Resource.hpp"
+#include "Recluse/Graphics/ResourceView.hpp"
 
 #include "Recluse//Memory/MemoryPool.hpp"
 #include "Recluse/Memory/MemoryCommon.hpp"
@@ -72,8 +73,9 @@ int main(int c, char* argv[])
     
     pDevice->reserveMemory(memReserves);
 
-    GraphicsResource* pTexture = nullptr;
-    GraphicsResourceDescription desc = { };
+    GraphicsResource* pTexture          = nullptr;
+    GraphicsResourceView* pView         = nullptr;
+    GraphicsResourceDescription desc    = { };
 
     desc.usage          = RESOURCE_USAGE_RENDER_TARGET | RESOURCE_USAGE_SHADER_RESOURCE;
     desc.memoryUsage    = RESOURCE_MEMORY_USAGE_GPU_ONLY;
@@ -95,6 +97,28 @@ int main(int c, char* argv[])
     } else {
     
         R_TRACE("Graphics", "Successfully created texture!");
+        ResourceViewDesc viewDesc   = { };
+        viewDesc.baseArrayLayer     = 0;
+        viewDesc.baseMipLevel       = 0;
+        viewDesc.dimension          = RESOURCE_VIEW_DIMENSION_2D;
+        viewDesc.format             = RESOURCE_FORMAT_R8G8B8A8_UNORM;
+        viewDesc.layerCount         = 1;
+        viewDesc.mipLevelCount      = 1;
+        viewDesc.pResource          = pTexture;
+        viewDesc.type               = RESOURCE_VIEW_TYPE_RENDER_TARGET;
+       
+        result = pDevice->createResourceView(&pView, viewDesc);
+        
+        if (result != REC_RESULT_OK) {
+        
+            R_ERR("Graphics", "Failed to create view...");
+        
+        } else {
+        
+            R_TRACE("Graphics", "Successfully created view...");    
+            pDevice->destroyResourceView(pView);
+
+        }
 
         pDevice->destroyResource(pTexture);
     

@@ -15,6 +15,7 @@ class GraphicsPipeline;
 class GraphicsSwapchain;
 class GraphicsContext;
 class GraphicsQueue;
+class RenderPass;
 
 enum FrameBuffering {
     FRAME_BUFFERING_SINGLE, // Single immediate run.
@@ -129,15 +130,14 @@ public:
 
     virtual ErrType createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc) 
         { return 0; }
-    
-    virtual ErrType createResourceView() { return 0; }
 
     virtual ErrType createCommandList(GraphicsCommandList** pList, GraphicsQueueTypeFlags flags) {
       return 0;
     }
     virtual ErrType createCommandQueue(GraphicsQueue** ppQueue, GraphicsQueueTypeFlags type) { return 0; }
     virtual ErrType createPipeline() { return 0; }
-    virtual ErrType createResourceView(GraphicsResourceView** ppView) { return 0; }
+    virtual ErrType createResourceView(GraphicsResourceView** ppView, const ResourceViewDesc& desc) { return 0; }
+    virtual ErrType createRenderPass(RenderPass** ppRenderPass) { return 0; }
 
     virtual ErrType createSwapchain(GraphicsSwapchain** swapchain,
         const SwapchainCreateDescription& pDescription) { return 0; }
@@ -145,6 +145,7 @@ public:
     virtual ErrType destroySwapchain(GraphicsSwapchain* pSwapchain) { return 0; }
     virtual ErrType destroyCommandQueue(GraphicsQueue* pQueue) { return 0; }
     virtual ErrType destroyResource(GraphicsResource* pResource) { return 0; }
+    virtual ErrType destroyResourceView(GraphicsResourceView* pResourceView) { return 0; }
     virtual ErrType destroyCommandList(GraphicsCommandList* pList) { return 0; }
 private:
 };

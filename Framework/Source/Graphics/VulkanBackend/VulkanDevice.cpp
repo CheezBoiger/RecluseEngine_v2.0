@@ -5,6 +5,7 @@
 #include "VulkanSwapchain.hpp"
 #include "VulkanQueue.hpp"
 #include "VulkanResource.hpp"
+#include "VulkanViews.hpp"
 #include "VulkanCommandList.hpp"
 #include "Recluse/Messaging.hpp"
 
@@ -785,5 +786,50 @@ void VulkanDevice::destroyFences()
         vkDestroyFence(m_device, m_fences[i], nullptr);
     
     }
+}
+
+
+ErrType VulkanDevice::createResourceView(GraphicsResourceView** ppView, const ResourceViewDesc& desc)
+{
+    VulkanResourceView* pView = new VulkanResourceView(desc);
+    ErrType err               = pView->initialize(this);
+
+    if (err != REC_RESULT_OK) {
+    
+        pView->destroy(this);
+        delete pView;
+    
+    }
+
+    *ppView = pView;
+
+    return err;
+}
+
+
+ErrType VulkanDevice::destroyResourceView(GraphicsResourceView* pView)
+{
+    ErrType result = REC_RESULT_OK;
+
+    if (!pView) {
+    
+        return REC_RESULT_NULL_PTR_EXCEPTION;
+
+    }
+
+    VulkanResourceView* pVv = static_cast<VulkanResourceView*>(pView);
+    result                  = pVv->destroy(this);
+
+    if (result != REC_RESULT_OK) {
+    
+        R_ERR(R_CHANNEL_VULKAN, "Failed to destroy vulkan image view!");
+
+        return result;
+
+    }
+
+    delete pVv;    
+
+    return result;
 }
 } // Recluse

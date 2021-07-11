@@ -8,9 +8,10 @@
 namespace Recluse {
 
 
-ErrType VulkanResourceView::initialize(VulkanDevice* pDevice, const ResourceViewDesc& desc)
+ErrType VulkanResourceView::initialize(VulkanDevice* pDevice)
 {
-    ErrType result = REC_RESULT_OK;
+    ErrType result          = REC_RESULT_OK;
+    ResourceViewDesc desc   = getDesc();
 
     VkImageViewCreateInfo info = { };
     info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;

@@ -11,8 +11,13 @@ class VulkanDevice;
 
 class VulkanResourceView : public GraphicsResourceView {
 public:
+    VulkanResourceView(const ResourceViewDesc& desc)
+        : GraphicsResourceView(desc)
+        , m_expectedLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+        , m_view(VK_NULL_HANDLE)
+        , m_subresourceRange({ }) { }
 
-    ErrType initialize(VulkanDevice* pDevice, const ResourceViewDesc& desc);
+    ErrType initialize(VulkanDevice* pDevice);
 
     ErrType destroy(VulkanDevice* pDevice);
 
@@ -21,6 +26,9 @@ public:
     VkImageLayout getExpectedLayout() const { return m_expectedLayout; }
 
     VkImageSubresourceRange getSubresourceRange() const { return m_subresourceRange; }
+
+    
+    
 private:
     VkImageView m_view;
     VkImageLayout m_expectedLayout;

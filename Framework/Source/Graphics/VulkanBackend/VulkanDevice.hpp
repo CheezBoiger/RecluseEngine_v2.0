@@ -60,7 +60,11 @@ public:
 
     ErrType destroyCommandList(GraphicsCommandList* pList) override;
 
+    ErrType createResourceView(GraphicsResourceView** ppView, const ResourceViewDesc& desc) override;
+
     void destroy(VkInstance instance);
+
+    ErrType destroyResourceView(GraphicsResourceView* pResourceView) override;
 
     VkDevice operator()() {
         return m_device;
