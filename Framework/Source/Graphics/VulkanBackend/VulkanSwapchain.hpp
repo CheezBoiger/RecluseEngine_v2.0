@@ -1,7 +1,7 @@
 //
 #pragma once
 #include "VulkanCommons.hpp"
-#include "Graphics/GraphicsDevice.hpp"
+#include "Recluse/Graphics/GraphicsDevice.hpp"
 #include "VulkanFrameResources.hpp"
 
 namespace Recluse {

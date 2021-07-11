@@ -2,7 +2,7 @@
 #pragma once
 
 #include "VulkanContext.hpp"
-#include "Graphics/GraphicsDevice.hpp"
+#include "Recluse/Graphics/GraphicsDevice.hpp"
 
 #include <vector>
 #include <list>

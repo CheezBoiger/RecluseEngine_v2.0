@@ -3,7 +3,7 @@
 #include "VulkanResource.hpp"
 #include "VulkanDevice.hpp"
 
-#include "Core/Messaging.hpp"
+#include "Recluse/Messaging.hpp"
 
 namespace Recluse {
 

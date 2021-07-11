@@ -5,7 +5,7 @@
 #include "VulkanDevice.hpp"
 #include "VulkanAdapter.hpp"
 
-#include "Core/Messaging.hpp"
+#include "Recluse/Messaging.hpp"
 
 namespace Vulkan {
 

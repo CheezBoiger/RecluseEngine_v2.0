@@ -1,8 +1,8 @@
 
 #include <iostream>
-#include "Core/Messaging.hpp"
-#include "Core/RealtimeTick.hpp"
-#include "Core/Messaging.hpp"
+
+#include "Recluse/Messaging.hpp"
+#include "Recluse/RealtimeTick.hpp"
 
 using namespace Recluse;
 

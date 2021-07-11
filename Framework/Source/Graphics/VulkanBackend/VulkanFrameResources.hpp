@@ -1,8 +1,8 @@
 //
 #pragma once
 
-#include "Core/Arch.hpp"
-#include "Core/Types.hpp"
+#include "Recluse/Arch.hpp"
+#include "Recluse/Types.hpp"
 #include "VulkanCommons.hpp"
 
 #include <vector>

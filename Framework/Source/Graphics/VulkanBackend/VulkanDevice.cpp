@@ -6,13 +6,13 @@
 #include "VulkanQueue.hpp"
 #include "VulkanResource.hpp"
 #include "VulkanCommandList.hpp"
-#include "Core/Messaging.hpp"
+#include "Recluse/Messaging.hpp"
 
-#include "Graphics/GraphicsAdapter.hpp"
+#include "Recluse/Graphics/GraphicsAdapter.hpp"
 
-#include "Core/Memory/MemoryPool.hpp"
-#include "Core/Memory/Allocator.hpp"
-#include "Core/Memory/StackAllocator.hpp"
+#include "Recluse/Memory/MemoryPool.hpp"
+#include "Recluse/Memory/Allocator.hpp"
+#include "Recluse/Memory/StackAllocator.hpp"
 
 namespace Recluse {
 

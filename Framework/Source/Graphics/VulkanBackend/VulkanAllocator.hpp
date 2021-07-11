@@ -2,8 +2,8 @@
 #pragma once
 
 #include "VulkanCommons.hpp"
-#include "Core/Memory/Allocator.hpp"
-#include "Core/Types.hpp"
+#include "Recluse/Memory/Allocator.hpp"
+#include "Recluse/Types.hpp"
 
 #include <vector>
 

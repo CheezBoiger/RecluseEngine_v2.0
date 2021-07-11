@@ -1,9 +1,9 @@
 //
 #pragma once
 
-#include "Core/Arch.hpp"
-#include "Core/Types.hpp"
-#include "Graphics/Format.hpp"
+#include "Recluse/Arch.hpp"
+#include "Recluse/Types.hpp"
+#include "Recluse/Graphics/Format.hpp"
 
 #if defined (RECLUSE_WINDOWS)
 #define VK_USE_PLATFORM_WIN32_KHR 1

@@ -1,9 +1,9 @@
 // 
 #pragma once
 
-#include "Core/Types.hpp"
+#include "Recluse/Types.hpp"
 
-#include "Graphics/CommandQueue.hpp"
+#include "Recluse/Graphics/CommandQueue.hpp"
 #include "VulkanContext.hpp"
 
 namespace Recluse {

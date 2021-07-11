@@ -1,8 +1,8 @@
 // 
 #pragma once
 #include "VulkanContext.hpp"
-#include "Graphics/GraphicsAdapter.hpp"
-#include "Graphics/GraphicsDevice.hpp"
+#include "Recluse/Graphics/GraphicsAdapter.hpp"
+#include "Recluse/Graphics/GraphicsDevice.hpp"
 
 #include <list>
 

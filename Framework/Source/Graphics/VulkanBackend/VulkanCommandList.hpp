@@ -1,10 +1,10 @@
 // 
 #pragma once
 
-#include "Graphics/CommandList.hpp"
-#include "Core/Types.hpp"
+#include "Recluse/Graphics/CommandList.hpp"
+#include "Recluse/Graphics/GraphicsDevice.hpp"
+#include "Recluse/Types.hpp"
 #include "VulkanCommons.hpp"
-#include "Graphics/GraphicsDevice.hpp"
 
 #include <vector>
 

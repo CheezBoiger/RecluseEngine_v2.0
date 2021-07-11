@@ -1,5 +1,5 @@
 // 
-#include "Core/Types.hpp"
+#include "Recluse/Types.hpp"
 #include "VulkanSwapchain.hpp"
 #include "VulkanContext.hpp"
 #include "VulkanDevice.hpp"
@@ -7,7 +7,7 @@
 #include "VulkanAdapter.hpp"
 #include "VulkanResource.hpp"
 #include "VulkanViews.hpp"
-#include "Core/Messaging.hpp"
+#include "Recluse/Messaging.hpp"
 
 
 namespace Recluse {

@@ -1,6 +1,6 @@
-#include "Core/Messaging.hpp"
-#include "Graphics/GraphicsAdapter.hpp"
-#include "Graphics/GraphicsContext.hpp"
+#include "Recluse/Messaging.hpp"
+#include "Recluse/Graphics/GraphicsAdapter.hpp"
+#include "Recluse/Graphics/GraphicsContext.hpp"
 
 
 using namespace Recluse;

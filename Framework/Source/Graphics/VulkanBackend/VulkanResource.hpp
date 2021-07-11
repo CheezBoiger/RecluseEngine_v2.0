@@ -1,7 +1,7 @@
 // 
 #pragma once
 
-#include "Graphics/Resource.hpp"
+#include "Recluse/Graphics/Resource.hpp"
 #include "VulkanCommons.hpp"
 #include "VulkanAllocator.hpp"
 

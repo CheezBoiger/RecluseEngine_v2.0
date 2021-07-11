@@ -1,10 +1,12 @@
-#include "Core/Messaging.hpp"
-#include "Graphics/GraphicsAdapter.hpp"
-#include "Graphics/GraphicsContext.hpp"
-#include "Graphics/GraphicsDevice.hpp"
+//
+#include "Recluse/Messaging.hpp"
 
-#include "Core/Memory/MemoryPool.hpp"
-#include "Core/Memory/MemoryCommon.hpp"
+#include "Recluse/Graphics/GraphicsAdapter.hpp"
+#include "Recluse/Graphics/GraphicsContext.hpp"
+#include "Recluse/Graphics/GraphicsDevice.hpp"
+
+#include "Recluse/Memory/MemoryPool.hpp"
+#include "Recluse/Memory/MemoryCommon.hpp"
 
 using namespace Recluse;
 

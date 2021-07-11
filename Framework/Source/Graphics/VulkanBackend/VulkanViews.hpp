@@ -2,8 +2,8 @@
 #pragma once
 
 #include "VulkanCommons.hpp"
-#include "Graphics/ResourceView.hpp"
-#include "Graphics/GraphicsDevice.hpp"
+#include "Recluse/Graphics/ResourceView.hpp"
+#include "Recluse/Graphics/GraphicsDevice.hpp"
 
 namespace Recluse {
 

@@ -1,8 +1,8 @@
-#include "Core/Messaging.hpp"
-#include "Graphics/GraphicsAdapter.hpp"
-#include "Graphics/GraphicsContext.hpp"
-#include "Graphics/CommandList.hpp"
-#include "Graphics/GraphicsDevice.hpp"
+#include "Recluse/Messaging.hpp"
+#include "Recluse/Graphics/GraphicsAdapter.hpp"
+#include "Recluse/Graphics/GraphicsContext.hpp"
+#include "Recluse/Graphics/CommandList.hpp"
+#include "Recluse/Graphics/GraphicsDevice.hpp"
 
 
 using namespace Recluse;

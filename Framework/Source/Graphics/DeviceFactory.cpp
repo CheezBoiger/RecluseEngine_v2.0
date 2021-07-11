@@ -1,7 +1,7 @@
 //
-#include "Graphics/GraphicsContext.hpp"
-#include "Core/Messaging.hpp"
-#include "Core/Memory/MemoryPool.hpp"
+#include "Recluse/Graphics/GraphicsContext.hpp"
+#include "Recluse/Messaging.hpp"
+#include "Recluse/Memory/MemoryPool.hpp"
 
 // Only one is supported.
 #include "VulkanBackend/VulkanContext.hpp"

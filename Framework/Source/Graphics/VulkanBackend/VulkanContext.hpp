@@ -1,8 +1,8 @@
 // Recluse 
 #pragma once
 
-#include "Core/Types.hpp"
-#include "Graphics/GraphicsContext.hpp"
+#include "Recluse/Types.hpp"
+#include "Recluse/Graphics/GraphicsContext.hpp"
 #include "VulkanCommons.hpp"
 
 

@@ -1,13 +1,13 @@
-#include "Core/Messaging.hpp"
-#include "Graphics/GraphicsAdapter.hpp"
-#include "Graphics/GraphicsContext.hpp"
-#include "Graphics/GraphicsDevice.hpp"
-#include "Graphics/CommandQueue.hpp"
-#include "Graphics/CommandList.hpp"
+#include "Recluse/Messaging.hpp"
+#include "Recluse/Graphics/GraphicsAdapter.hpp"
+#include "Recluse/Graphics/GraphicsContext.hpp"
+#include "Recluse/Graphics/GraphicsDevice.hpp"
+#include "Recluse/Graphics/CommandQueue.hpp"
+#include "Recluse/Graphics/CommandList.hpp"
 
-#include "Core/System/Window.hpp"
-#include "Core/RealtimeTick.hpp"
-#include "Core/System/Input.hpp"
+#include "Recluse/System/Window.hpp"
+#include "Recluse/RealtimeTick.hpp"
+#include "Recluse/System/Input.hpp"
 
 using namespace Recluse;
 

@@ -1,10 +1,10 @@
 
 #include <iostream>
 
-#include "Core/Logger.hpp"
-#include "Core/Messaging.hpp"
+#include "Recluse/Logger.hpp"
+#include "Recluse/Messaging.hpp"
 
-#include "Core/Threading/Threading.hpp"
+#include "Recluse/Threading/Threading.hpp"
 
 #include <vector>
 

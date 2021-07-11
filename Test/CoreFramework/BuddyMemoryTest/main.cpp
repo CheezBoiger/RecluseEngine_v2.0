@@ -1,10 +1,10 @@
 
 #include <iostream>
-#include "Core/Memory/BuddyAllocator.hpp"
-#include "Core/Memory/MemoryCommon.hpp"
-#include "Core/Messaging.hpp"
-#include "Core/RealtimeTick.hpp"
-#include "Core/Messaging.hpp"
+#include "Recluse/Memory/BuddyAllocator.hpp"
+#include "Recluse/Memory/MemoryCommon.hpp"
+#include "Recluse/Messaging.hpp"
+#include "Recluse/RealtimeTick.hpp"
+#include "Recluse/Messaging.hpp"
 
 using namespace Recluse;
 
