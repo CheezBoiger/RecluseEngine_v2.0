@@ -17,14 +17,16 @@ int main()
     R_DEBUG("Core", "Initialize buddy memory allocator.");
     BuddyAllocator* pAllocator = new BuddyAllocator();
     pAllocator->initialize(0, RECLUSE_ALLOC_MASK(RECLUSE_1MB, 4));
-    Allocation alloc = { };
+    Allocation alloc    = { };
+    Allocation alloc2   = { };
 
     R_DEBUG("Core", "Allocating buddy block.");
-    pAllocator->allocate(&alloc, 32, 4);
-
+    pAllocator->allocate(&alloc, 150, 4);
+    pAllocator->allocate(&alloc, 150, 4);
     R_TRACE("Core", "Allocation: \t\t%llu bytes\n\t\toffset:\t\t%llu", alloc.sizeBytes, alloc.ptr);
 
     pAllocator->free(&alloc);
+    pAllocator->free(&alloc2);
 
     pAllocator->cleanUp();
     delete pAllocator;
