@@ -12,7 +12,7 @@ namespace Recluse {
 
 struct LogNode {
     struct LogNode* pNext;
-    Log             logMessage;
+    LogMessage      logMessage;
 };
 
 
@@ -35,7 +35,7 @@ public:
 
     // Get the top/head of the queue log. If no logs to display,
     // return null.
-    Log* getHead() const;
+    LogMessage* getHead() const;
 
     // Handle dequeing the head.
     void dequeue();

@@ -12,8 +12,8 @@
 #define R_LOG(chan, logType, format, ...) { \
     Recluse::Log r__log__(logType, chan); \
     Recluse::SizeT r__sz__ = snprintf(nullptr, 0, format, __VA_ARGS__); \
-    r__log__.message.resize(r__sz__ + 1u); \
-    snprintf((char*)r__log__.message.data(), r__log__.message.size(), format, __VA_ARGS__); \
+    r__log__.data.msg.resize(r__sz__ + 1u); \
+    snprintf((char*)r__log__.data.msg.data(), r__log__.data.msg.size(), format, __VA_ARGS__); \
 }
 
 #define R_ERR(chan, format, ...) R_LOG(chan, Recluse::LogError, format, __VA_ARGS__)

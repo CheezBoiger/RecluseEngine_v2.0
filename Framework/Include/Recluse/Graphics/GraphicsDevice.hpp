@@ -123,6 +123,13 @@ struct ResourceViewDesc {
 };
 
 
+struct RenderPassDesc {
+    GraphicsResourceView* ppRenderTargetViews[8];
+    U32                   numRenderTargets;
+    GraphicsResourceView* pDepthStencil;
+};
+
+
 class R_EXPORT GraphicsDevice {
 public:
     // Reserve memory to be used for graphics resources.
@@ -137,7 +144,9 @@ public:
     virtual ErrType createCommandQueue(GraphicsQueue** ppQueue, GraphicsQueueTypeFlags type) { return 0; }
     virtual ErrType createPipeline() { return 0; }
     virtual ErrType createResourceView(GraphicsResourceView** ppView, const ResourceViewDesc& desc) { return 0; }
-    virtual ErrType createRenderPass(RenderPass** ppRenderPass) { return 0; }
+    virtual ErrType createRenderPass(RenderPass** ppRenderPass, const RenderPassDesc& desc) { return 0; }
+    virtual ErrType createGraphicsPipelineState() { return 0; }
+    virtual ErrType createDescriptorSet() { return 0; }
 
     virtual ErrType createSwapchain(GraphicsSwapchain** swapchain,
         const SwapchainCreateDescription& pDescription) { return 0; }
@@ -147,6 +156,9 @@ public:
     virtual ErrType destroyResource(GraphicsResource* pResource) { return 0; }
     virtual ErrType destroyResourceView(GraphicsResourceView* pResourceView) { return 0; }
     virtual ErrType destroyCommandList(GraphicsCommandList* pList) { return 0; }
+    virtual ErrType destroyRenderPass(RenderPass* pRenderPass) { return 0; }
+    virtual ErrType destroyGraphicsPipelineState() { return 0; }
+    virtual ErrType destroyDescriptorSet() { return 0; }
 private:
 };
 

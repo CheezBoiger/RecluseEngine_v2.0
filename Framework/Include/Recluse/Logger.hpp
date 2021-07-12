@@ -22,42 +22,45 @@ enum LogType {
 
 typedef U32 LogTypeFlags;
 
-struct Log {
-    std::string                                     channel;
-    std::string                                     message;
-    std::chrono::high_resolution_clock::time_point  timestamp;
+struct LogMessage {
+    std::string msg;
+    std::string channel;
     LogType type;
+};
+
+struct Log {
+    LogMessage data;
 
     static R_EXPORT void initializeLoggingSystem();
     static R_EXPORT void destroyLoggingSystem();
 
     Log(LogType type = LogMsg, const std::string& chan = u8"") {
-        this->type = type;
-        channel = chan;
+        this->data.type = type;
+        data.channel = chan;
     }
 
     R_EXPORT ~Log();
 
     template<typename Type>
     Log& operator<<(const Type& data) {
-        message += std::to_string(data);
+        msg += std::to_string(data);
         return (*this);
     }
 
     template<>
     Log& operator<<(const std::string& data) {
-        message += data;
+        this->data.msg += data;
         return (*this);
     }
 
     template<typename Type>
     void append(Type arg) {
-        message += arg;
+        this->data.msg += arg;
     }
 
     template<>
     void append(const char* data) {
-        message += data;
+        this->data.msg += data;
     }
 
 };
