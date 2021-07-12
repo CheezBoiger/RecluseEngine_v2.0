@@ -546,7 +546,7 @@ ErrType VulkanDevice::createCommandQueue(GraphicsQueue** ppQueue, GraphicsQueueT
 
     pQueue = new VulkanQueue(type);
 
-    ErrType err = pQueue->initialize(m_device, queueFamilyIndex, queueIndex);
+    ErrType err = pQueue->initialize(this, queueFamilyIndex, queueIndex);
 
     if (err == REC_RESULT_OK) {
 

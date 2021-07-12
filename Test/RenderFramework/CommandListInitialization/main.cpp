@@ -74,6 +74,8 @@ int main(int c, char* argv[])
         pList->begin();
         pList->end();
 
+        
+
         pDevice->destroyCommandList(pList);
     }
 

@@ -80,4 +80,11 @@ void VulkanCommandList::end()
     
     R_ASSERT(result == VK_SUCCESS);
 }
+
+
+VkCommandBuffer VulkanCommandList::get() const
+{
+    U32 bufIdx = m_pDevice->getCurrentBufferIndex();
+    return m_buffers[bufIdx];
+}
 } // Recluse

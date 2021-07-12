@@ -147,14 +147,14 @@ ErrType BuddyAllocator::onFree(Allocation* pOutput)
             
                 BuddyBlock newBlock = { };
                 newBlock.offsetBytes = allocOffset;
-                newBlock.memSzBytes = 2 * (1 << nthBit);
+                newBlock.memSzBytes = 2ull * (1ull << nthBit);
                 m_freeList[nthBit + 1].push_back(newBlock);
              
             } else {
             
                 BuddyBlock newBlock = { };
                 newBlock.offsetBytes = buddyAddr;
-                newBlock.memSzBytes = 2 * (1 << nthBit);
+                newBlock.memSzBytes = 2ull * (1ull << nthBit);
                 m_freeList[nthBit + 1].push_back(newBlock);
             
             }

@@ -21,7 +21,7 @@ public:
 
     ~VulkanQueue();
 
-    ErrType initialize(VkDevice device, U32 queueFamilyIndex, U32 queueIndex);
+    ErrType initialize(VulkanDevice* device, U32 queueFamilyIndex, U32 queueIndex);
     
     void destroy();
 
@@ -35,5 +35,6 @@ public:
 
 private:
     VkQueue m_queue;
+    VulkanDevice* m_pDevice;
 };
 } // Recluse

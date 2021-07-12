@@ -20,7 +20,7 @@ public:
 
     void destroy(VulkanDevice* pDevice);
 
-    VkCommandBuffer get(U32 i) { return m_buffers[i]; }
+    VkCommandBuffer get() const;
 
     void reset() { }
 
