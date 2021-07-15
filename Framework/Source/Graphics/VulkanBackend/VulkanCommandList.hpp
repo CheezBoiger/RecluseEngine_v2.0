@@ -11,6 +11,7 @@
 namespace Recluse {
 
 class VulkanDevice;
+class VulkanRenderPass;
 
 class VulkanCommandList : public GraphicsCommandList {
 public:
@@ -27,8 +28,11 @@ public:
     void begin() override;
     void end() override;
 
+    void setRenderPass(RenderPass* pRenderPass) override;
+
 private:
 
+    VulkanRenderPass*           m_boundRenderPass;
     std::vector<VkCommandBuffer> m_buffers; 
     std::vector<VkCommandPool>   m_pools;
     VulkanDevice*                m_pDevice;

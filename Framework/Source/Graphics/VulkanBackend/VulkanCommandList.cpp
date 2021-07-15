@@ -66,6 +66,7 @@ void VulkanCommandList::begin()
     info.pInheritanceInfo   = nullptr;
     U32 bufIndex            = m_pDevice->getCurrentBufferIndex();
     VkCommandBuffer buffer  = m_buffers[bufIndex];
+
     VkResult result = vkBeginCommandBuffer(buffer, &info);
 
     R_ASSERT(result == VK_SUCCESS);
@@ -74,8 +75,9 @@ void VulkanCommandList::begin()
 
 void VulkanCommandList::end()
 {
-    U32 bufIdx = m_pDevice->getCurrentBufferIndex();
-    VkCommandBuffer buffer = m_buffers[bufIdx];
+    U32 bufIdx              = m_pDevice->getCurrentBufferIndex();
+    VkCommandBuffer buffer  = m_buffers[bufIdx];
+
     VkResult result = vkEndCommandBuffer(buffer);
     
     R_ASSERT(result == VK_SUCCESS);
@@ -86,5 +88,10 @@ VkCommandBuffer VulkanCommandList::get() const
 {
     U32 bufIdx = m_pDevice->getCurrentBufferIndex();
     return m_buffers[bufIdx];
+}
+
+
+void VulkanCommandList::setRenderPass(RenderPass* pRenderPass)
+{
 }
 } // Recluse

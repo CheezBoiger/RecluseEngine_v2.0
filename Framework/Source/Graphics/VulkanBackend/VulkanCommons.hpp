@@ -3,6 +3,7 @@
 
 #include "Recluse/Arch.hpp"
 #include "Recluse/Types.hpp"
+#include "Recluse/Graphics/Shader.hpp"
 #include "Recluse/Graphics/Format.hpp"
 
 #if defined (RECLUSE_WINDOWS)
@@ -37,4 +38,7 @@ static VkSampleCountFlagBits getSamples(Recluse::U32 count)
         default: return VK_SAMPLE_COUNT_1_BIT;
     }
 }
+
+
+extern VkShaderStageFlags getShaderStages(Recluse::ShaderTypeFlags flags);
 } // Vulkan

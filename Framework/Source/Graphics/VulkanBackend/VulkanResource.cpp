@@ -197,7 +197,10 @@ VkFormatFeatureFlags VulkanImage::loadFormatFeatures(VkImageCreateInfo& info, Re
         info.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
         featureFlags |= VK_FORMAT_FEATURE_TRANSFER_SRC_BIT;
     }
-
+    if (usage & RESOURCE_USAGE_STORAGE_IMAGE) {
+        info.usage |= VK_IMAGE_USAGE_STORAGE_BIT;
+        featureFlags |= VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT;
+    }
     return featureFlags;
 }
 

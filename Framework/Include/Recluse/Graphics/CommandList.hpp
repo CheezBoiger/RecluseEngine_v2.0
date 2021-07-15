@@ -13,27 +13,37 @@ class RenderPass;
 class PipelineState;
 class DescriptorSet;
 
-class GraphicsCommandList {
+class R_EXPORT GraphicsCommandList {
 public:
     virtual ~GraphicsCommandList() { }
 
-    R_EXPORT virtual void reset() { } 
-    R_EXPORT virtual void begin() { }
-    R_EXPORT virtual void end() { }
+    virtual void reset() { } 
+    virtual void begin() { }
+    virtual void end() { }
 
-    R_EXPORT virtual void drawIndexedInstanced() { }
-    R_EXPORT virtual void drawInstanced() { }
-    R_EXPORT virtual void dispatch(U32 x, U32 y, U32 z) { }
-    R_EXPORT virtual void dispatchRays(U32 x, U32 y, U32 z) { }
+    virtual void drawIndexedInstanced() { }
+    virtual void drawInstanced() { }
+
+    virtual void drawInstancedIndirect() { }
+    virtual void drawIndexedInstancedIndirect() { }
+
+    virtual void setScissors() { }
+    virtual void setViewport() { }
+
+    virtual void dispatch(U32 x, U32 y, U32 z) { }
+    virtual void dispatchRays(U32 x, U32 y, U32 z) { }
     
-    R_EXPORT virtual void setPipelineState(PipelineState* pPipelineState, BindType bindType) { }
+    virtual void setPipelineState(PipelineState* pPipelineState, BindType bindType) { }
 
-    R_EXPORT virtual void setRenderPass(RenderPass* pRenderPass) { }
+    virtual void setRenderPass(RenderPass* pRenderPass) { }
 
-    R_EXPORT virtual void bindDescriptorSets(U32 count, DescriptorSet* pSets) { }
+    virtual void bindDescriptorSets(U32 count, DescriptorSet* pSets, BindType bindType) { }
+    
+    virtual void clearRenderTarget(U32 idx, F32* clearColor) { }
+    virtual void clearDepthStencil() { }
 
-    R_EXPORT virtual void copyResources(GraphicsResource* dst, GraphicsResource* src) { }
-    R_EXPORT virtual void copyResourceRegion(GraphicsResource* dst) { }
+    virtual void copyResources(GraphicsResource* dst, GraphicsResource* src) { }
+    virtual void copyResourceRegion(GraphicsResource* dst) { }
     
 private:
     

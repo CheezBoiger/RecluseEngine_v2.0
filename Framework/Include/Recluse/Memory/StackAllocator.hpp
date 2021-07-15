@@ -7,6 +7,8 @@
 namespace Recluse {
 
 
+// Stack allocator, or linear allocator, which handles 
+// temporary data to be used briefly.
 class StackAllocator : public Allocator {
 public:
     StackAllocator()

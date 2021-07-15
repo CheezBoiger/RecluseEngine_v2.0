@@ -4,6 +4,7 @@
 #include "Recluse/Types.hpp"
 #include "Recluse/Graphics/CommandQueue.hpp"
 #include "Recluse/Graphics/Format.hpp"
+#include "Recluse/Graphics/DescriptorSet.hpp"
 
 namespace Recluse {
 
@@ -78,7 +79,8 @@ enum ResourceUsage {
     RESOURCE_USAGE_TRANSFER_DESTINATION     = (1 << 6),
     RESOURCE_USAGE_TRANSFER_SOURCE          = (1 << 7),
     RESOURCE_USAGE_INDIRECT                 = (1 << 8),
-    RESOURCE_USAGE_DEPTH_STENCIL            = (1 << 9)
+    RESOURCE_USAGE_DEPTH_STENCIL            = (1 << 9),
+    RESOURCE_USAGE_STORAGE_IMAGE            = (1 << 10)
 };
 
 typedef U32 ResourceUsageFlags;
@@ -126,6 +128,8 @@ struct ResourceViewDesc {
 struct RenderPassDesc {
     GraphicsResourceView* ppRenderTargetViews[8];
     U32                   numRenderTargets;
+    U32                   width;
+    U32                   height;
     GraphicsResourceView* pDepthStencil;
 };
 
@@ -138,15 +142,22 @@ public:
     virtual ErrType createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc) 
         { return 0; }
 
-    virtual ErrType createCommandList(GraphicsCommandList** pList, GraphicsQueueTypeFlags flags) {
-      return 0;
-    }
+    virtual ErrType createCommandList(GraphicsCommandList** pList, GraphicsQueueTypeFlags flags) 
+        { return 0; }
+
     virtual ErrType createCommandQueue(GraphicsQueue** ppQueue, GraphicsQueueTypeFlags type) { return 0; }
-    virtual ErrType createPipeline() { return 0; }
+
+    virtual ErrType createDescriptorSetLayout(DescriptorSetLayout** ppLayout, const DescriptorSetLayoutDesc& desc)
+        { return 0; }
+
+    virtual ErrType createGraphicsPipeline() { return 0; }
+    virtual ErrType createComputePipeline() { return 0; }
+    virtual ErrType createRaytracingPipeline() { return 0; }
+
     virtual ErrType createResourceView(GraphicsResourceView** ppView, const ResourceViewDesc& desc) { return 0; }
     virtual ErrType createRenderPass(RenderPass** ppRenderPass, const RenderPassDesc& desc) { return 0; }
     virtual ErrType createGraphicsPipelineState() { return 0; }
-    virtual ErrType createDescriptorSet() { return 0; }
+    virtual ErrType createDescriptorSet(DescriptorSet** ppLayout, DescriptorSetLayout* pSetLayout) { return 0; }
 
     virtual ErrType createSwapchain(GraphicsSwapchain** swapchain,
         const SwapchainCreateDescription& pDescription) { return 0; }
@@ -158,7 +169,8 @@ public:
     virtual ErrType destroyCommandList(GraphicsCommandList* pList) { return 0; }
     virtual ErrType destroyRenderPass(RenderPass* pRenderPass) { return 0; }
     virtual ErrType destroyGraphicsPipelineState() { return 0; }
-    virtual ErrType destroyDescriptorSet() { return 0; }
+    virtual ErrType destroyDescriptorSet(DescriptorSet* pSet) { return 0; }
+    virtual ErrType destroyDescriptorSetLayout(DescriptorSetLayout* pSetLayout) { return 0; }
 private:
 };
 

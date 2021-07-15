@@ -183,7 +183,7 @@ ErrType BuddyAllocator::onReset()
 ErrType BuddyAllocator::onCleanUp()
 {
 
-    // Wip out everything.
+    // Wipe out everything.
     m_freeList.clear();
     m_allocatedBlocks.clear();
 
