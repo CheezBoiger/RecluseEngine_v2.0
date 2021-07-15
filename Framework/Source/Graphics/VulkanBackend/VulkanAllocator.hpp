@@ -30,14 +30,14 @@ public:
         // We don't need the real address.
         m_allocator->initialize(0ull, poolRef->sizeBytes);
 
-        return REC_RESULT_NOT_IMPLEMENTED; 
+        return REC_RESULT_OK; 
     }
 
     ErrType allocate(VulkanMemory* pOut, VkMemoryRequirements& requirements);
 
-    ErrType free(VulkanMemory* pOut) { return REC_RESULT_NOT_IMPLEMENTED; }
+    ErrType free(VulkanMemory* pOut);
 
-    void destroy() { } 
+    void destroy();
 
     void emptyGarbage() { }
     

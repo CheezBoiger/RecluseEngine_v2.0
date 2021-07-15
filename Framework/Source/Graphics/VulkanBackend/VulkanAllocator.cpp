@@ -30,4 +30,31 @@ ErrType VulkanAllocator::allocate(VulkanMemory* pOut, VkMemoryRequirements& requ
     
     return result;
 }
+
+
+ErrType VulkanAllocator::free(VulkanMemory* pOut)
+{
+    R_ASSERT(m_allocator != NULL);
+    
+    ErrType result = REC_RESULT_OK;    
+
+    if (!pOut) {
+    
+        return REC_RESULT_NULL_PTR_EXCEPTION;
+    
+    }
+
+    Allocation allocation   = { };
+    allocation.ptr          = pOut->offsetBytes;
+    allocation.sizeBytes    = pOut->sizeBytes;
+
+    result = m_allocator->free(&allocation);
+    
+    return result;
+}
+
+
+void VulkanAllocator::destroy()
+{
+}
 } // Recluse

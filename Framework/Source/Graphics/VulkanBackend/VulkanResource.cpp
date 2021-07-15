@@ -90,6 +90,7 @@ void VulkanResource::destroy()
 {
     VulkanAllocator* allocator              = nullptr;
     const GraphicsResourceDescription& desc = getDesc();
+    ErrType result                          = REC_RESULT_OK;
 
     onDestroy(m_pDevice);
 
@@ -97,9 +98,13 @@ void VulkanResource::destroy()
 
         if (desc.dimension == RESOURCE_DIMENSION_BUFFER) { 
 
+            R_DEBUG(R_CHANNEL_VULKAN, "Freeing allocated buffer...");
+            
             allocator = m_pDevice->getBufferAllocator(desc.memoryUsage);
 
         } else {
+
+            R_DEBUG(R_CHANNEL_VULKAN, "Freeing allocated image...");
 
             allocator = m_pDevice->getImageAllocator(desc.memoryUsage);
 
@@ -107,11 +112,21 @@ void VulkanResource::destroy()
 
         if (!allocator) {
     
-            R_ERR(R_CHANNEL_VULKAN, "No allocator provided for this memory! Can not destory...");
+            R_ERR(R_CHANNEL_VULKAN, "No allocator provided for this memory! Can not destroy...");
+
+            result = REC_RESULT_FAILED;
         
+        } else {
+
+            result = allocator->free(&m_memory);
+
         }
 
-        allocator->free(&m_memory);
+        if (result != REC_RESULT_OK) {
+    
+            R_ERR(R_CHANNEL_VULKAN, "Vulkan resource memory failed to free!");
+    
+        }
 
     }
 }

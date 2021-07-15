@@ -37,7 +37,7 @@ public:
     //! Allocation requirements.
     ErrType allocate(Allocation* pOutput, U64 requestSz, U16 alignment) {
         ErrType err = onAllocate(pOutput, requestSz, alignment);
-        if (err == 0) {
+        if (err == REC_RESULT_OK) {
             m_totalAllocations += 1;
             m_usedSizeBytes += pOutput->sizeBytes;
         }
@@ -45,12 +45,14 @@ public:
         return err;
     }
 
-    void free(Allocation* pOutput) {
+    ErrType free(Allocation* pOutput) {
         ErrType err = onFree(pOutput);
-        if (err == 0) {
+        if (err == REC_RESULT_OK) {
             m_usedSizeBytes -= pOutput->sizeBytes;
             m_totalAllocations -= 1;
         }
+    
+        return err;
     }
 
     void reset() {

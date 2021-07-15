@@ -14,6 +14,7 @@
 #include "Recluse/Memory/MemoryPool.hpp"
 #include "Recluse/Memory/Allocator.hpp"
 #include "Recluse/Memory/StackAllocator.hpp"
+#include "Recluse/Memory/BuddyAllocator.hpp"
 
 namespace Recluse {
 
@@ -447,7 +448,7 @@ ErrType VulkanDevice::reserveMemory(const MemoryReserveDesc& desc)
 
         // TODO: Need to add allocator for buffers later.
         m_bufferAllocators[i] = new VulkanAllocator();
-        m_bufferAllocators[i]->initialize(new StackAllocator(), 
+        m_bufferAllocators[i]->initialize(new BuddyAllocator(), 
             &m_bufferPool[i]);
     }
     

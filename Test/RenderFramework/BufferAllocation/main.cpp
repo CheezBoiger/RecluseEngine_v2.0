@@ -72,11 +72,12 @@ int main(int c, char* argv[])
     pDevice->reserveMemory(memReserves);
 
     GraphicsResource* pBuffer = nullptr;
+    GraphicsResource* pBuffer2 = nullptr;
     
     GraphicsResourceDescription bufferDesc = { };
     bufferDesc.usage        = RESOURCE_USAGE_CONSTANT_BUFFER;
     bufferDesc.dimension    = RESOURCE_DIMENSION_BUFFER;
-    bufferDesc.memoryUsage  = RESOURCE_MEMORY_USAGE_CPU_ONLY;
+    bufferDesc.memoryUsage  = RESOURCE_MEMORY_USAGE_GPU_ONLY;
     bufferDesc.width        = R_1KB * 1024ull;
 
     result = pDevice->createResource(&pBuffer, bufferDesc);
@@ -88,6 +89,20 @@ int main(int c, char* argv[])
     } else {
         
         R_TRACE("Graphics", "Successfully create buffer!");
+        
+        result = pDevice->createResource(&pBuffer2, bufferDesc);
+
+        if (result != REC_RESULT_OK) {
+        
+            R_ERR("Graphics", "Failed to create second buffer!!");
+        
+        } else {
+    
+            R_TRACE("Graphics", "Successfully created second buffer!!");
+            pDevice->destroyResource(pBuffer2);    
+
+        }
+
         pDevice->destroyResource(pBuffer);
     }
 
