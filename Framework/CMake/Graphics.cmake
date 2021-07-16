@@ -46,7 +46,8 @@ if ( RCL_VULKAN )
             ${RECLUSE_VULKAN_DIR}/VulkanDevice.hpp
             ${RECLUSE_VULKAN_DIR}/VulkanFrameResources.cpp
             ${RECLUSE_VULKAN_DIR}/VulkanFrameResources.hpp
-            ${RECLUSE_VULKAN_DIR}/VulkanLogicalDevice.cpp
+            ${RECLUSE_VULKAN_DIR}/VulkanDescriptorManager.cpp
+            ${RECLUSE_VULKAN_DIR}/VulkanDescriptorManager.hpp
             ${RECLUSE_VULKAN_DIR}/VulkanObjects.hpp
             ${RECLUSE_VULKAN_DIR}/VulkanResource.cpp
             ${RECLUSE_VULKAN_DIR}/VulkanResource.hpp

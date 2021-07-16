@@ -14,6 +14,7 @@ class VulkanAdapter;
 class VulkanQueue;
 class VulkanSwapchain;
 class VulkanAllocator;
+class VulkanDescriptorManager;
 struct DeviceCreateInfo;
 
 
@@ -21,8 +22,8 @@ struct QueueFamily {
     U32                                     maxQueueCount;
     U32                                     queueFamilyIndex;
     U32                                     currentAvailableQueueIndex;
-    std::vector<VkCommandPool>              commandPools;
     GraphicsQueueTypeFlags                  flags;
+    std::vector<VkCommandPool>              commandPools;
 };
 
 
@@ -34,7 +35,8 @@ public:
         , m_windowHandle(nullptr)
         , m_adapter(nullptr)
         , m_bufferCount(0)
-        , m_currentBufferIndex(0) { 
+        , m_currentBufferIndex(0)
+        , m_pDescriptorManager(nullptr) { 
         for (U32 i = 0; i < RESOURCE_MEMORY_USAGE_COUNT; ++i) { 
             m_bufferPool[i].memory = VK_NULL_HANDLE;
             m_imagePool[i].memory = VK_NULL_HANDLE;
@@ -52,6 +54,8 @@ public:
 
     ErrType createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc) override;
 
+    ErrType createDescriptorSet(DescriptorSet** ppDescriptorSet, DescriptorSetLayout* pLayout) override;
+
     ErrType destroyCommandQueue(GraphicsQueue* pQueue) override;
 
     ErrType destroyResource(GraphicsResource* pResource) override;
@@ -65,6 +69,8 @@ public:
     void destroy(VkInstance instance);
 
     ErrType destroyResourceView(GraphicsResourceView* pResourceView) override;
+
+    ErrType destroyDescriptorSet(DescriptorSet* pSet) override;
 
     VkDevice operator()() {
         return m_device;
@@ -88,9 +94,9 @@ public:
 
     const std::vector<QueueFamily>& getQueueFamilies() const { return m_queueFamilies; }
 
-    U32 getBufferCount() const { return m_bufferCount; }
-    U32 getCurrentBufferIndex() const { return m_currentBufferIndex; }
-    VkFence getCurrentFence() const { return m_fences[m_currentBufferIndex]; }
+    inline U32 getBufferCount() const { return m_bufferCount; }
+    inline U32 getCurrentBufferIndex() const { return m_currentBufferIndex; }
+    inline VkFence getCurrentFence() const { return m_fences[m_currentBufferIndex]; }
     
     // Increment the buffer index.
     inline void incrementBufferIndex() {
@@ -99,14 +105,18 @@ public:
 
     void prepare();
 
+    VulkanDescriptorManager* getDescriptorHeap() { return m_pDescriptorManager; }
+
 private:
 
     ErrType createSurface(VkInstance instance, void* handle);
     ErrType createCommandPools(U32 buffered);
     void createFences(U32 buffered);
+    void createDescriptorHeap();
 
     void destroyFences();
     void destroyCommandPools();
+    void destroyDescriptorHeap();
 
     VulkanAdapter* m_adapter;
 
@@ -122,6 +132,7 @@ private:
     VulkanMemoryPool m_imagePool[RESOURCE_MEMORY_USAGE_COUNT];
     VulkanAllocator* m_bufferAllocators[RESOURCE_MEMORY_USAGE_COUNT];
     VulkanAllocator* m_imageAllocators[RESOURCE_MEMORY_USAGE_COUNT];
+    VulkanDescriptorManager* m_pDescriptorManager;
 
     // buffer count 
     U32 m_bufferCount;

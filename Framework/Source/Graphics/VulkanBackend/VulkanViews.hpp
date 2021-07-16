@@ -27,8 +27,6 @@ public:
 
     VkImageSubresourceRange getSubresourceRange() const { return m_subresourceRange; }
 
-    
-    
 private:
     VkImageView m_view;
     VkImageLayout m_expectedLayout;

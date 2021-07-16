@@ -28,9 +28,12 @@ public:
     GraphicsResourceView* getRenderTarget(U32 idx) override;
     GraphicsResourceView* getDepthStencil() override;
 
+    VkRect2D getRenderArea() const { return m_renderArea; }
+
 private:
     VkRenderPass    m_renderPass;
     VkFramebuffer   m_fbo;
+    VkRect2D        m_renderArea;
 
     RenderPassDesc m_desc;
 };
@@ -48,5 +51,24 @@ public:
 
 private:
     VkDescriptorSetLayout m_layout;
+};
+
+
+class VulkanDescriptorSet : public DescriptorSet {
+public:
+    VulkanDescriptorSet()
+        : m_set(VK_NULL_HANDLE) { }
+
+    ErrType initialize(VulkanDevice* pDevice, VulkanDescriptorSetLayout* pLayout);
+
+    ErrType destroy();
+
+    ErrType update(DescriptorSetBind* pBinds, U32 bindCount) override;
+
+    VkDescriptorSet get() const { return m_set; }
+
+private:
+    VkDescriptorSet m_set;
+    VulkanDevice* m_pDevice;
 };
 } // Recluse

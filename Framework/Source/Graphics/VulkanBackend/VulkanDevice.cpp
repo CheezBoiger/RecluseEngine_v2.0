@@ -7,6 +7,8 @@
 #include "VulkanResource.hpp"
 #include "VulkanViews.hpp"
 #include "VulkanCommandList.hpp"
+#include "VulkanObjects.hpp"
+#include "VulkanDescriptorManager.hpp"
 #include "Recluse/Messaging.hpp"
 
 #include "Recluse/Graphics/GraphicsAdapter.hpp"
@@ -188,6 +190,7 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
     // Create the command pool.
     createCommandPools(info.buffering);    
     createFences(info.buffering);
+    createDescriptorHeap();
     m_bufferCount = info.buffering;
 
     return 0;
@@ -199,6 +202,7 @@ void VulkanDevice::destroy(VkInstance instance)
     vkDeviceWaitIdle(m_device);
     destroyCommandPools();
     destroyFences();
+    destroyDescriptorHeap();
 
     if (!m_queues.empty()) {
     
@@ -299,7 +303,11 @@ ErrType VulkanDevice::destroySwapchain(GraphicsSwapchain* pSwapchain)
         if (*iter == pVs) {
             VulkanQueue* pPq = pVs->getPresentationQueue();
 
-            pPq->wait();
+            if (pPq) {
+
+                pPq->wait();
+
+            }
 
             result = pVs->destroy();
 
@@ -832,5 +840,57 @@ ErrType VulkanDevice::destroyResourceView(GraphicsResourceView* pView)
     delete pVv;    
 
     return result;
+}
+
+
+void VulkanDevice::createDescriptorHeap()
+{
+    if (!m_pDescriptorManager) {
+    
+        m_pDescriptorManager = new VulkanDescriptorManager();
+        m_pDescriptorManager->initialize(this);
+
+    }
+}
+
+
+void VulkanDevice::destroyDescriptorHeap()
+{
+    if (m_pDescriptorManager) {
+    
+        m_pDescriptorManager->destroy(this);
+        delete m_pDescriptorManager;
+        m_pDescriptorManager = nullptr;
+    
+    }
+}
+
+
+ErrType VulkanDevice::createDescriptorSet(DescriptorSet** ppDescriptorSet, DescriptorSetLayout* pLayout)
+{
+    VulkanDescriptorSetLayout* pVl      = static_cast<VulkanDescriptorSetLayout*>(pLayout);
+    VulkanDescriptorSet* pDescriptorSet = new VulkanDescriptorSet();
+    ErrType result                      = pDescriptorSet->initialize(this, pVl);
+
+    if (result != REC_RESULT_OK) {
+    
+        R_ERR(R_CHANNEL_VULKAN, "Device failed to create vulkan descriptor!");
+        delete pVl;
+        return result;
+    
+    }
+
+    *ppDescriptorSet = pDescriptorSet;
+
+    return result;
+}
+
+
+ErrType VulkanDevice::destroyDescriptorSet(DescriptorSet* pDescriptorSet)
+{
+    VulkanDescriptorSet* pSet = static_cast<VulkanDescriptorSet*>(pDescriptorSet);
+    pSet->destroy();
+    delete pSet;
+    return REC_RESULT_OK;
 }
 } // Recluse

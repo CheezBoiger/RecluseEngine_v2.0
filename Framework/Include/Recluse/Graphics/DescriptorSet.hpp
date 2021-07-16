@@ -7,6 +7,11 @@
 namespace Recluse {
 
 
+class GraphicsResource;
+class GraphicsResourceView;
+class GraphicsSampler;
+
+
 enum DescriptorBindType {
     DESCRIPTOR_SHADER_RESOURCE_VIEW,
     DESCRIPTOR_STORAGE_BUFFER,
@@ -16,7 +21,7 @@ enum DescriptorBindType {
 };
 
 
-struct DescriptorBind {
+struct DescriptorBindDesc {
     DescriptorBindType bindType;        // The Descriptor Bind type.
     ShaderTypeFlags    shaderStages;    // Shader stages accessible to the descriptor set layout.
     U32                binding;         // Binding slot to put our resource.
@@ -24,8 +29,27 @@ struct DescriptorBind {
 };
 
 struct DescriptorSetLayoutDesc {
-    DescriptorBind* pDescriptorBinds;
+    DescriptorBindDesc* pDescriptorBinds;
     U32             numDescriptorBinds;
+};
+
+struct DescriptorSetBind {
+    DescriptorBindType  bindType;
+    U32                 binding;
+    U32                 descriptorCount;
+    union {
+        struct {
+            GraphicsResource*   buffer;
+            U64                 offset;
+            U64                 sizeBytes;
+        } cb;
+        struct {
+            GraphicsResourceView* pView;
+        } srv;
+        struct { 
+            GraphicsSampler* pSampler;
+        } sampler;
+    };
 };
 
 class DescriptorSetLayout {
@@ -36,6 +60,8 @@ public:
 
 
 class DescriptorSet {
+public:
 
+    virtual ErrType update(DescriptorSetBind* pBinds, U32 bindCount) { return REC_RESULT_NOT_IMPLEMENTED; }
 };
 } // Recluse

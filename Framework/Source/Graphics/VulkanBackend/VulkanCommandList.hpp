@@ -32,7 +32,10 @@ public:
 
 private:
 
-    VulkanRenderPass*           m_boundRenderPass;
+    void endRenderPass(VkCommandBuffer buffer);
+    void resetBinds();
+
+    VulkanRenderPass*            m_boundRenderPass;
     std::vector<VkCommandBuffer> m_buffers; 
     std::vector<VkCommandPool>   m_pools;
     VulkanDevice*                m_pDevice;

@@ -1,5 +1,6 @@
 //
 #include "VulkanCommandList.hpp"
+#include "VulkanObjects.hpp"
 #include "VulkanDevice.hpp"
 
 #include "Recluse/Messaging.hpp"
@@ -67,6 +68,8 @@ void VulkanCommandList::begin()
     U32 bufIndex            = m_pDevice->getCurrentBufferIndex();
     VkCommandBuffer buffer  = m_buffers[bufIndex];
 
+    resetBinds();
+
     VkResult result = vkBeginCommandBuffer(buffer, &info);
 
     R_ASSERT(result == VK_SUCCESS);
@@ -77,6 +80,10 @@ void VulkanCommandList::end()
 {
     U32 bufIdx              = m_pDevice->getCurrentBufferIndex();
     VkCommandBuffer buffer  = m_buffers[bufIdx];
+
+    if (m_boundRenderPass) {
+        endRenderPass(buffer);
+    }
 
     VkResult result = vkEndCommandBuffer(buffer);
     
@@ -93,5 +100,41 @@ VkCommandBuffer VulkanCommandList::get() const
 
 void VulkanCommandList::setRenderPass(RenderPass* pRenderPass)
 {
+    R_ASSERT(pRenderPass != NULL);
+
+    VulkanRenderPass* pVrp  = static_cast<VulkanRenderPass*>(pRenderPass);
+    U32 bufIdx              = m_pDevice->getCurrentBufferIndex();
+    VkCommandBuffer buffer  = m_buffers[bufIdx];
+
+    VkRenderPassBeginInfo beginInfo = { };
+    beginInfo.sType                 = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    beginInfo.framebuffer           = pVrp->getFbo();
+    beginInfo.renderPass            = pVrp->get();
+    beginInfo.clearValueCount       = 0;
+    beginInfo.pClearValues          = nullptr;
+    beginInfo.renderArea            = pVrp->getRenderArea();
+
+    // End current render pass if it doesn't match this one...
+    if (m_boundRenderPass != pVrp) {
+    
+        endRenderPass(buffer);
+        
+    }
+
+    vkCmdBeginRenderPass(buffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    
+    m_boundRenderPass = pVrp;
+}
+
+
+void VulkanCommandList::endRenderPass(VkCommandBuffer buffer)
+{
+    vkCmdEndRenderPass(buffer);   
+}
+
+
+void VulkanCommandList::resetBinds()
+{
+    m_boundRenderPass = VK_NULL_HANDLE;
 }
 } // Recluse

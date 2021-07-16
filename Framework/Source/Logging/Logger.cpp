@@ -76,7 +76,7 @@ ErrType displayFunction(void* data)
 
 Log::~Log()
 {
-    if (loggingQueue) {
+    if (loggingQueue && isLogging) {
 
         loggingQueue->store(*this);
 
