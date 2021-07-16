@@ -893,4 +893,37 @@ ErrType VulkanDevice::destroyDescriptorSet(DescriptorSet* pDescriptorSet)
     delete pSet;
     return REC_RESULT_OK;
 }
+
+
+ErrType VulkanDevice::createDescriptorSetLayout(DescriptorSetLayout** ppLayout, const DescriptorSetLayoutDesc& desc)
+{
+    VulkanDescriptorSetLayout* pVl  = new VulkanDescriptorSetLayout();
+    ErrType result                  = pVl->initialize(this, desc);
+
+    if (result != REC_RESULT_OK) {
+    
+        R_ERR(R_CHANNEL_VULKAN, "Failed to create vulkan descriptor set layout!");
+        pVl->destroy(this);
+        delete pVl;
+        return result;
+    
+    }
+
+    *ppLayout = pVl;
+
+    return REC_RESULT_OK;
+}
+
+
+ErrType VulkanDevice::destroyDescriptorSetLayout(DescriptorSetLayout* pLayout)
+{
+    if (!pLayout) {
+        return REC_RESULT_NULL_PTR_EXCEPTION;
+    }
+
+    VulkanDescriptorSetLayout* pVl = static_cast<VulkanDescriptorSetLayout*>(pLayout);
+    ErrType result = pVl->destroy(this);
+
+    return result;
+}
 } // Recluse

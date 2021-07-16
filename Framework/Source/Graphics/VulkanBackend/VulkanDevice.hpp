@@ -54,6 +54,8 @@ public:
 
     ErrType createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc) override;
 
+    ErrType createDescriptorSetLayout(DescriptorSetLayout** ppLayout, const DescriptorSetLayoutDesc& desc) override;
+
     ErrType createDescriptorSet(DescriptorSet** ppDescriptorSet, DescriptorSetLayout* pLayout) override;
 
     ErrType destroyCommandQueue(GraphicsQueue* pQueue) override;
@@ -63,6 +65,8 @@ public:
     ErrType createCommandList(GraphicsCommandList** pList, GraphicsQueueTypeFlags flags) override;
 
     ErrType destroyCommandList(GraphicsCommandList* pList) override;
+
+    ErrType destroyDescriptorSetLayout(DescriptorSetLayout* pLayout) override;
 
     ErrType createResourceView(GraphicsResourceView** ppView, const ResourceViewDesc& desc) override;
 

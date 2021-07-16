@@ -2,6 +2,7 @@
 #include "Recluse/Messaging.hpp"
 #include "Recluse/RealtimeTick.hpp"
 
+#include "Recluse/Memory/MemoryCommon.hpp"
 #include "Recluse/Graphics/GraphicsContext.hpp"
 #include "Recluse/Graphics/GraphicsAdapter.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
@@ -18,7 +19,7 @@
 
 using namespace Recluse;
 
-struct Vec4 {
+struct VertexData {
     F32 position[4];
     F32 normal[3];
     F32 pad0;
@@ -26,9 +27,37 @@ struct Vec4 {
     F32 texcoord1[2];
 };
 
-struct VertexData {
+void updateResource(GraphicsResource* pResource)
+{
+    VertexData dat      = { };
+    dat.position[0]     = 0.1f;
+    dat.position[1]     = 0.2f;
+    dat.position[2]     = 0.3f;
+    dat.position[3]     = 0.4f;
+
+    dat.normal[0]       = 1.0f;
+    dat.normal[1]       = -1.0f;
+    dat.normal[2]       = 0.5f;
     
-};
+    dat.texcoord0[0]    = 45.0f;
+    dat.texcoord0[1]    = 0.3f;
+    
+    dat.texcoord1[0]    = 6.0f;
+    dat.texcoord1[1]    = 10.0f;
+
+    MapRange mapRange   = { };
+    void* ptr           = nullptr;
+    ErrType result      = pResource->map(&ptr, &mapRange);
+    
+    if (result != REC_RESULT_OK) {
+    
+        R_ERR("TEST", "Failed to map to resource!");
+    
+    }
+
+    memcpy(ptr, &dat, sizeof(dat));
+}
+
 
 int main(int c, char* argv[])
 {
@@ -95,6 +124,22 @@ int main(int c, char* argv[])
     
     }
 
+    {
+        MemoryReserveDesc mem = { };
+        mem.bufferPools[RESOURCE_MEMORY_USAGE_CPU_ONLY] = 1 * R_1MB;
+        mem.bufferPools[RESOURCE_MEMORY_USAGE_GPU_ONLY] = 1 * R_1MB;
+        mem.bufferPools[RESOURCE_MEMORY_USAGE_CPU_TO_GPU] = 1 * R_1KB;
+        mem.bufferPools[RESOURCE_MEMORY_USAGE_GPU_TO_CPU] = 1 * R_1KB;
+        mem.texturePoolGPUOnly = 1 * R_1MB;
+        result = pDevice->reserveMemory(mem);
+    }
+
+    if (result != REC_RESULT_OK) {
+    
+        R_ERR("TEST", "Failed to reserve memory!");
+    
+    }
+
     result = pDevice->createCommandQueue(&pQueue, QUEUE_TYPE_GRAPHICS | QUEUE_TYPE_PRESENT);
 
     if (result != REC_RESULT_OK) {
@@ -126,6 +171,72 @@ int main(int c, char* argv[])
         R_ERR("TEST", "Failed to create command list!");
     
     }
+
+    {
+        GraphicsResourceDescription desc = { };
+        desc.usage = RESOURCE_USAGE_CONSTANT_BUFFER;
+        desc.dimension = RESOURCE_DIMENSION_BUFFER;
+        desc.width = sizeof(VertexData);
+        desc.depth = 1;
+        desc.height = 1;
+        desc.memoryUsage = RESOURCE_MEMORY_USAGE_CPU_ONLY;
+        desc.samples = 1;
+        result = pDevice->createResource(&pData, desc);
+    }
+
+    if (result != REC_RESULT_OK) {
+    
+        R_ERR("TEST", "Failed to create resource!");
+    
+    }
+
+    updateResource(pData);
+
+    {
+        DescriptorBindDesc bindLayout = { };
+        DescriptorSetLayoutDesc desc = { };
+        desc.pDescriptorBinds = &bindLayout;
+        desc.numDescriptorBinds = 1;
+
+        bindLayout.binding = 0;
+        bindLayout.bindType = DESCRIPTOR_CONSTANT_BUFFER;
+        bindLayout.numDescriptors = 1;
+        bindLayout.shaderStages = SHADER_TYPE_FRAGEMENT | SHADER_TYPE_VERTEX;
+
+        result = pDevice->createDescriptorSetLayout(&pLayout, desc);
+        
+    }
+    
+    if (result != REC_RESULT_OK) {
+
+        R_ERR("TEST", "Failed to create descriptor set layout!");
+    
+    }
+
+    result = pDevice->createDescriptorSet(&pSet, pLayout);
+
+    if (result != REC_RESULT_OK) {
+    
+        R_ERR("TEST", "Failed to create descriptor set!");
+    
+    }
+
+    {
+        DescriptorSetBind bind = { };
+        bind.binding = 0;
+        bind.bindType = DESCRIPTOR_CONSTANT_BUFFER;
+        bind.descriptorCount = 1;
+        bind.cb.buffer = pData;
+        bind.cb.offset = 0;
+        bind.cb.sizeBytes = sizeof(VertexData);
+        result = pSet->update(&bind, 1);
+    }
+    
+    if (result != REC_RESULT_OK) {
+    
+        R_ERR("TEST", "Failed to update descriptor set!");
+    
+    }
     
     pWindow->open();
 
@@ -146,6 +257,9 @@ int main(int c, char* argv[])
     R_TRACE("TEST", "Exited game loop...");
     pQueue->wait();    
 
+    pDevice->destroyDescriptorSetLayout(pLayout);
+    pDevice->destroyDescriptorSet(pSet);
+    pDevice->destroyResource(pData);
     pDevice->destroyCommandList(pList);
     pDevice->destroySwapchain(pSwapchain);
     pDevice->destroyCommandQueue(pQueue);    

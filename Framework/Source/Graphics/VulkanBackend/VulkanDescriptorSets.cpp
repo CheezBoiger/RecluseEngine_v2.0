@@ -83,12 +83,13 @@ ErrType VulkanDescriptorSet::initialize(VulkanDevice* pDevice, VulkanDescriptorS
     VkDescriptorSetLayout layout    = pLayout->get();
     VkResult result                 = VK_SUCCESS;
     VkDevice device                 = pDevice->get();
+    VkDescriptorPool pool           = pDevice->getDescriptorHeap()->get();
 
     VkDescriptorSetAllocateInfo allocIf = { };
     allocIf.sType                       = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocIf.descriptorSetCount          = 1;
     allocIf.pSetLayouts                 = &layout;
-    allocIf.descriptorPool              = VK_NULL_HANDLE; // Need descriptor pool!.
+    allocIf.descriptorPool              = pool;
 
     result = vkAllocateDescriptorSets(device, &allocIf, &m_set);
 

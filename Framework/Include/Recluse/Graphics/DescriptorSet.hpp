@@ -52,14 +52,14 @@ struct DescriptorSetBind {
     };
 };
 
-class DescriptorSetLayout {
+class R_EXPORT DescriptorSetLayout {
 public:
-    DescriptorSetLayout();
-    virtual ~DescriptorSetLayout();
+    DescriptorSetLayout() { }
+    virtual ~DescriptorSetLayout() { }
 };
 
 
-class DescriptorSet {
+class R_EXPORT DescriptorSet {
 public:
 
     virtual ErrType update(DescriptorSetBind* pBinds, U32 bindCount) { return REC_RESULT_NOT_IMPLEMENTED; }
