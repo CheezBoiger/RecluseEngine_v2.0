@@ -13,6 +13,7 @@ class RenderPass {
 public:
     virtual ~RenderPass() { }
 
+    virtual U32 getNumRenderTargets() const = 0;
     virtual GraphicsResourceView* getRenderTarget(U32 idx) = 0;
     virtual GraphicsResourceView* getDepthStencil() = 0;
 };

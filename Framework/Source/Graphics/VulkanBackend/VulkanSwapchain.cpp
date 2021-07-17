@@ -195,8 +195,6 @@ ErrType VulkanSwapchain::present()
 
     R_ASSERT(m_pDevice->getBufferCount() > 0);
 
-    m_frameResources[m_currentImageIndex]->overrideLayout(VK_IMAGE_LAYOUT_UNDEFINED);
-
     m_pDevice->prepare();
 
     return err;

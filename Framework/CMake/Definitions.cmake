@@ -2,7 +2,7 @@
 
 # Graphics settings.
 
-set ( RCL_OPENGL OFF    )
-set ( RCL_VULKAN ON     )
-set ( RCL_DX12   OFF    )
-set ( RCL_DX11   OFF    )
+set ( RCL_OPENGL CACHE BOOL OFF    )
+set ( RCL_VULKAN CACHE BOOL ON     )
+set ( RCL_DX12  CACHE BOOL  OFF    )
+set ( RCL_DX11   CACHE BOOL OFF    )

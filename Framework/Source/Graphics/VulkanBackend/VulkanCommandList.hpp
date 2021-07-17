@@ -15,6 +15,9 @@ class VulkanRenderPass;
 
 class VulkanCommandList : public GraphicsCommandList {
 public:
+    VulkanCommandList()
+        : m_boundRenderPass(VK_NULL_HANDLE)
+        , m_pDevice(nullptr) { }
 
     ErrType initialize(VulkanDevice* pDevice, U32 queueFamilyIndex, 
         VkCommandPool* pools, U32 poolCount);
@@ -29,10 +32,11 @@ public:
     void end() override;
 
     void setRenderPass(RenderPass* pRenderPass) override;
+    void clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) override;
 
 private:
 
-    void endRenderPass(VkCommandBuffer buffer);
+    inline void endRenderPass(VkCommandBuffer buffer);
     void resetBinds();
 
     VulkanRenderPass*            m_boundRenderPass;

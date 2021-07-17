@@ -28,7 +28,7 @@ public:
     }
 
     // Initialize/cleanup functions.
-    void initialize(U64 maxLogs = 200ull);
+    void initialize(U64 maxLogs = 1024ull);
     void cleanup();
 
     void store(const Log& log);

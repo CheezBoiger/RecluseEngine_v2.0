@@ -926,4 +926,48 @@ ErrType VulkanDevice::destroyDescriptorSetLayout(DescriptorSetLayout* pLayout)
 
     return result;
 }
+
+
+ErrType VulkanDevice::createRenderPass(RenderPass** ppRenderPass, const RenderPassDesc& desc)
+{
+    VulkanRenderPass* pVrp = new VulkanRenderPass();
+    ErrType result = pVrp->initialize(this, desc);
+
+    if (result != REC_RESULT_OK) {
+    
+        R_ERR(R_CHANNEL_VULKAN, "Failed to create vulkan render pass...");
+    
+        pVrp->destroy(this);
+        delete pVrp;
+
+        return result;
+    
+    }
+
+    *ppRenderPass = pVrp;
+
+    return result;
+}
+
+
+ErrType VulkanDevice::destroyRenderPass(RenderPass* pRenderPass)
+{
+    if (!pRenderPass) {
+    
+        return REC_RESULT_NULL_PTR_EXCEPTION;
+    
+    }
+
+    VulkanRenderPass* pVrp = static_cast<VulkanRenderPass*>(pRenderPass);
+    ErrType result = pVrp->destroy(this);
+    delete pVrp;
+
+    if (result != REC_RESULT_OK) {
+    
+        R_ERR(R_CHANNEL_VULKAN, "Failed to destroy render pass!");
+    
+    }
+
+    return result;
+}
 } // Recluse

@@ -27,6 +27,7 @@ public:
 
     GraphicsResourceView* getRenderTarget(U32 idx) override;
     GraphicsResourceView* getDepthStencil() override;
+    U32 getNumRenderTargets() const override { return m_desc.numRenderTargets; }
 
     VkRect2D getRenderArea() const { return m_renderArea; }
 

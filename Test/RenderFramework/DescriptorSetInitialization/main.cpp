@@ -74,7 +74,7 @@ int main(int c, char* argv[])
     GraphicsQueue* pQueue           = nullptr;
     DescriptorSet*  pSet            = nullptr;
     GraphicsSwapchain* pSwapchain   = nullptr;
-    RenderPass* pRenderPass         = nullptr;
+    std::vector<RenderPass*> renderPasses;
     ErrType result                  = REC_RESULT_OK;
 
     pWindow = Window::create(u8"DescriptorSetInitialization", 0, 0, 1024, 1024);
@@ -150,7 +150,7 @@ int main(int c, char* argv[])
 
     {
         SwapchainCreateDescription info = { };
-        info.buffering = FRAME_BUFFERING_DOUBLE;
+        info.buffering = FRAME_BUFFERING_TRIPLE;
         info.desiredFrames = 2;
         info.pBackbufferQueue = pQueue;
         info.renderWidth = 1024;
@@ -237,6 +237,24 @@ int main(int c, char* argv[])
         R_ERR("TEST", "Failed to update descriptor set!");
     
     }
+
+    {
+        renderPasses.resize(pSwapchain->getDesc().desiredFrames);
+        RenderPassDesc desc = { };
+        desc.numRenderTargets = 1;
+        desc.width = pSwapchain->getDesc().renderWidth;
+        desc.height = pSwapchain->getDesc().renderHeight;
+        for (U32 i = 0; i < pSwapchain->getDesc().desiredFrames; ++i) {        
+            desc.ppRenderTargetViews[0] = pSwapchain->getFrameView(i);
+            result = pDevice->createRenderPass(&renderPasses[i], desc);
+
+            if (result != REC_RESULT_OK) {
+        
+                R_ERR("TEST", "Failed to create render pass for frame view: %d", i);
+                
+            }
+        }
+    }
     
     pWindow->open();
 
@@ -245,10 +263,29 @@ int main(int c, char* argv[])
     // Enter game loop.
     R_TRACE("TEST", "Entering game loop...");
 
+    U32 index = 200;
     while (!pWindow->shouldClose()) {
+        RealtimeTick tick = RealtimeTick::getTick();
+        R_TRACE("TEST", "FPS: %f", 1.0f / tick.getDeltaTimeS());
+        F32 color[] = { 0.0f, 1.0f, 0.0f, 1.0f };
+        F32 color2[] = { 1.0f, 0.0f, 0.0f, 1.0f };
+        if (index != 0) index--;
+        Rect rect = { 200.f + index, 200.f, 1024.f/2.f, 1024.f/2.f };
+        Rect rect2 = { 0.f, 0.f, 1024.f, 1024.f };
         pList->begin();
-            //pList->setRenderPass(pRenderPass);
+            pList->setRenderPass(renderPasses[pSwapchain->getCurrentFrameIndex()]);
+            pList->clearRenderTarget(0, color2, rect2);
+            pList->clearRenderTarget(0, color, rect);
+            pList->setRenderPass(renderPasses[pSwapchain->getCurrentFrameIndex()]);
+            pList->clearRenderTarget(0, color2, rect2);
+            pList->clearRenderTarget(0, color, rect);
         pList->end();
+
+        QueueSubmit submit = { };
+        submit.numCommandLists = 1;
+        submit.pCommandLists = &pList;
+
+        pQueue->submit(&submit);
 
         pSwapchain->present();
         pollEvents();
@@ -256,6 +293,10 @@ int main(int c, char* argv[])
 
     R_TRACE("TEST", "Exited game loop...");
     pQueue->wait();    
+
+    for (U32 i = 0; i < pSwapchain->getDesc().desiredFrames; ++i) {
+        pDevice->destroyRenderPass(renderPasses[i]);
+    }
 
     pDevice->destroyDescriptorSetLayout(pLayout);
     pDevice->destroyDescriptorSet(pSet);

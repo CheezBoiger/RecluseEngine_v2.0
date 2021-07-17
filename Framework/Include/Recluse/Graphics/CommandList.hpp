@@ -13,6 +13,11 @@ class RenderPass;
 class PipelineState;
 class DescriptorSet;
 
+
+struct Rect {
+    F32 x, y, width, height;
+};
+
 class R_EXPORT GraphicsCommandList {
 public:
     virtual ~GraphicsCommandList() { }
@@ -39,7 +44,7 @@ public:
 
     virtual void bindDescriptorSets(U32 count, DescriptorSet* pSets, BindType bindType) { }
     
-    virtual void clearRenderTarget(U32 idx, F32* clearColor) { }
+    virtual void clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) { }
     virtual void clearDepthStencil() { }
 
     virtual void copyResources(GraphicsResource* dst, GraphicsResource* src) { }

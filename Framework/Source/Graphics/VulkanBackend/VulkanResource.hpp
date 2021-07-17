@@ -99,7 +99,7 @@ public:
     VkImageLayout getCurrentLayout() const { return m_currentLayout; }
     VkAccessFlags getCurrentAccessMask() const { return m_currentAccessMask; }
 
-    void overrideLayout(VkImageLayout layout) { m_currentLayout = layout; }
+    void overrideCurrentLayout(VkImageLayout layout) { m_currentLayout = layout; }
 
     // Create memory barrier object to transition the layout of this image to the 
     // specified destination layout.

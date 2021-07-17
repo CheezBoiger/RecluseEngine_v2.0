@@ -169,18 +169,18 @@ ErrType VulkanDescriptorSet::update(DescriptorSetBind* pBinds, U32 bindCount)
             case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
             case VK_DESCRIPTOR_TYPE_SAMPLER: 
             {
-                imgInfos[imgCount].sampler = VK_NULL_HANDLE;
-                writeSet[i].pImageInfo = &imgInfos[imgCount++];
+                imgInfos[imgCount].sampler  = VK_NULL_HANDLE;
+                writeSet[i].pImageInfo      = &imgInfos[imgCount++];
             } break;
 
             case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
             case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
             {
-                VulkanBuffer* pBufferResource = static_cast<VulkanBuffer*>(bind.cb.buffer);
-                bufInfos[bufCount].buffer = pBufferResource->get();
-                bufInfos[bufCount].offset = bind.cb.offset;
-                bufInfos[bufCount].range  = bind.cb.sizeBytes;
-                writeSet[i].pBufferInfo = &bufInfos[bufCount++];
+                VulkanBuffer* pBufferResource   = static_cast<VulkanBuffer*>(bind.cb.buffer);
+                bufInfos[bufCount].buffer       = pBufferResource->get();
+                bufInfos[bufCount].offset       = bind.cb.offset;
+                bufInfos[bufCount].range        = bind.cb.sizeBytes;
+                writeSet[i].pBufferInfo         = &bufInfos[bufCount++];
             } break;
             default: 
                 break;

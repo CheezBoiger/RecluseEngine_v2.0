@@ -58,6 +58,8 @@ public:
 
     ErrType createDescriptorSet(DescriptorSet** ppDescriptorSet, DescriptorSetLayout* pLayout) override;
 
+    ErrType createRenderPass(RenderPass** ppRenderPass, const RenderPassDesc& desc) override;
+
     ErrType destroyCommandQueue(GraphicsQueue* pQueue) override;
 
     ErrType destroyResource(GraphicsResource* pResource) override;
@@ -75,6 +77,8 @@ public:
     ErrType destroyResourceView(GraphicsResourceView* pResourceView) override;
 
     ErrType destroyDescriptorSet(DescriptorSet* pSet) override;
+
+    ErrType destroyRenderPass(RenderPass* pRenderPass) override;
 
     VkDevice operator()() {
         return m_device;

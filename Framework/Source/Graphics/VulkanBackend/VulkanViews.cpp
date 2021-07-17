@@ -61,6 +61,8 @@ ErrType VulkanResourceView::initialize(VulkanDevice* pDevice)
         case RESOURCE_VIEW_TYPE_STORAGE_BUFFER: m_expectedLayout = VK_IMAGE_LAYOUT_GENERAL; break;
         default: break;
     }
+
+    m_subresourceRange = info.subresourceRange;
     
     return result;
 }
