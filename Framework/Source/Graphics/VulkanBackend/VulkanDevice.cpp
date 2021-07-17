@@ -779,9 +779,11 @@ void VulkanDevice::createFences(U32 buffering)
     m_fences.resize(buffering);
     for (U32 i = 0; i < m_fences.size(); ++i) {
     
+        // Create fences with signalled bit, in order for the swapchain to properly 
+        // wait on our fences, this should handle initial startup of application rendering, and not cause a block.
         VkFenceCreateInfo info = { };
         info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-        info.flags = 0;
+        info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
         vkCreateFence(m_device, &info, nullptr, &m_fences[i]);
     
     }

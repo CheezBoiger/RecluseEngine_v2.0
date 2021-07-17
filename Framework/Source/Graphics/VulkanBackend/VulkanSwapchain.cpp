@@ -183,7 +183,7 @@ ErrType VulkanSwapchain::present()
     
     }
 
-    result = vkWaitForFences(device, 1, &frameFence, VK_TRUE, UINT16_MAX);
+    result = vkWaitForFences(device, 1, &frameFence, VK_TRUE, UINT64_MAX);
 
     if (result != REC_RESULT_OK) {
     
@@ -266,7 +266,21 @@ void VulkanSwapchain::transitionCurrentFrameToPresentable()
     VkSemaphore waitSemaphore       = m_rawFrames.getWaitSemaphore(m_currentFrameIndex);
 
     if (frame->getCurrentLayout() == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
-    
+
+        // Push an empty submittal, in order to signal the semaphores.
+        VkSubmitInfo submitInfo             = { };
+        VkPipelineStageFlags waitStages[]   = { VK_PIPELINE_STAGE_ALL_COMMANDS_BIT };
+        submitInfo.sType                    = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.signalSemaphoreCount     = 1;
+        submitInfo.commandBufferCount       = 0;
+        submitInfo.pSignalSemaphores        = &signalSemaphore;
+        submitInfo.waitSemaphoreCount       = 1;
+        submitInfo.pWaitSemaphores          = &waitSemaphore;
+        submitInfo.pCommandBuffers          = nullptr;
+        submitInfo.pWaitDstStageMask        = waitStages;
+
+        vkQueueSubmit(m_pBackbufferQueue->get(), 1, &submitInfo, fence);
+
         return;
     
     }
