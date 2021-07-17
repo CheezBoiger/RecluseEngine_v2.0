@@ -17,7 +17,8 @@ class VulkanCommandList : public GraphicsCommandList {
 public:
     VulkanCommandList()
         : m_boundRenderPass(VK_NULL_HANDLE)
-        , m_pDevice(nullptr) { }
+        , m_pDevice(nullptr)
+        , m_currentCmdBuffer(VK_NULL_HANDLE) { }
 
     ErrType initialize(VulkanDevice* pDevice, U32 queueFamilyIndex, 
         VkCommandPool* pools, U32 poolCount);
@@ -43,5 +44,6 @@ private:
     std::vector<VkCommandBuffer> m_buffers; 
     std::vector<VkCommandPool>   m_pools;
     VulkanDevice*                m_pDevice;
+    VkCommandBuffer              m_currentCmdBuffer;
 };
 } // Recluse

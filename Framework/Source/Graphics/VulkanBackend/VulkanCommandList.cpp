@@ -75,19 +75,18 @@ void VulkanCommandList::begin()
     VkResult result = vkBeginCommandBuffer(buffer, &info);
 
     R_ASSERT(result == VK_SUCCESS);
+
+    m_currentCmdBuffer = buffer;
 }
 
 
 void VulkanCommandList::end()
 {
-    U32 bufIdx              = m_pDevice->getCurrentBufferIndex();
-    VkCommandBuffer buffer  = m_buffers[bufIdx];
-
     if (m_boundRenderPass) {
-        endRenderPass(buffer);
+        endRenderPass(m_currentCmdBuffer);
     }
 
-    VkResult result = vkEndCommandBuffer(buffer);
+    VkResult result = vkEndCommandBuffer(m_currentCmdBuffer);
     
     R_ASSERT(result == VK_SUCCESS);
 }
@@ -109,11 +108,16 @@ void VulkanCommandList::setRenderPass(RenderPass* pRenderPass)
     }
 
     VulkanRenderPass* pVrp  = static_cast<VulkanRenderPass*>(pRenderPass);
-    U32 bufIdx              = m_pDevice->getCurrentBufferIndex();
-    VkCommandBuffer buffer  = m_buffers[bufIdx];
     
     VkImageMemoryBarrier barriers[9];
     U32 barrierCount        = 0;
+
+    // End current render pass if it doesn't match this one...
+    if (m_boundRenderPass != pVrp) {
+
+        endRenderPass(m_currentCmdBuffer);
+        
+    }
 
     for (U32 i = 0; i < pVrp->getNumRenderTargets(); ++i) {
         VulkanResourceView* pRenderTarget   = static_cast<VulkanResourceView*>(pVrp->getRenderTarget(i));        
@@ -128,9 +132,9 @@ void VulkanCommandList::setRenderPass(RenderPass* pRenderPass)
 
     if (barrierCount > 0) {
 
-        vkCmdPipelineBarrier(buffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, 0, nullptr, barrierCount, 
-            barriers); 
+        vkCmdPipelineBarrier(m_currentCmdBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_DEPENDENCY_BY_REGION_BIT, 0, 
+            nullptr, 0, nullptr, barrierCount, barriers); 
 
     }
 
@@ -142,14 +146,7 @@ void VulkanCommandList::setRenderPass(RenderPass* pRenderPass)
     beginInfo.pClearValues          = nullptr;
     beginInfo.renderArea            = pVrp->getRenderArea();
 
-    // End current render pass if it doesn't match this one...
-    if (m_boundRenderPass != pVrp) {
-
-        endRenderPass(buffer);
-        
-    }
-
-    vkCmdBeginRenderPass(buffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(m_currentCmdBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
     
     m_boundRenderPass = pVrp;
 }
@@ -174,8 +171,6 @@ void VulkanCommandList::clearRenderTarget(U32 idx, F32* clearColor, const Rect& 
 {
     R_ASSERT(m_boundRenderPass != NULL);
 
-    U32 bufIndex            = m_pDevice->getCurrentBufferIndex();
-    VkCommandBuffer buffer  = m_buffers[bufIndex];
     VkClearAttachment attachment    = { };
     VkClearValue color              = { };
     VkClearRect clearRect           = { };
@@ -193,6 +188,6 @@ void VulkanCommandList::clearRenderTarget(U32 idx, F32* clearColor, const Rect& 
     attachment.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     attachment.clearValue = color;
     attachment.colorAttachment = idx;
-    vkCmdClearAttachments(buffer, 1, &attachment, 1, &clearRect);
+    vkCmdClearAttachments(m_currentCmdBuffer, 1, &attachment, 1, &clearRect);
 }
 } // Recluse
