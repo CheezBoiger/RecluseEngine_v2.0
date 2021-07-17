@@ -5,19 +5,8 @@
 
 namespace Recluse {
 
-
-struct Hash128 {
-    U64 hash0;
-    U64 hash1;
-};
-
-
+typedef U64 Hash64;
 // Use a hash implementation to serialize structures.
-Hash128 recluseHash128(void* dat, U64 szBytes);
+Hash64 recluseHash(void* dat, U64 szBytes);
 
-
-class Hash {
-public:
-    
-};
 } // Recluse

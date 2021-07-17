@@ -3,6 +3,8 @@
 
 #include "Recluse/Types.hpp"
 
+#include "Recluse/Serialization/Hasher.hpp"
+
 namespace Recluse {
 
 
@@ -40,22 +42,42 @@ class Shader {
 public:
     virtual ~Shader() { }
 
+    static Shader* create(ShaderIntermediateCode code, ShaderType type);
+    static void destroy(Shader* pShader);
+
+private:
+
     Shader(ShaderIntermediateCode intermediateCode, ShaderType type)
         : m_intermediateCode(intermediateCode)
-        , m_shaderType(type) { }
+        , m_shaderType(type)
+        , m_pByteCode(nullptr)
+        , m_szBytes(0) { }
+
+public:
 
     ShaderIntermediateCode getIntermediateCodeType() const { return m_intermediateCode; }
 
-    ErrType compile(char* sourceCode, U32 sourceCodeBytes);
+    ErrType compile(char* sourceCode, U64 sourceCodeBytes);
+    ErrType load(char* byteCode, U64 szBytes);
 
     U32 disassemble(char* disassembledCode);
     
-    Shader convertTo(ShaderIntermediateCode intermediateCode);
+    Shader* convertTo(ShaderIntermediateCode intermediateCode);
 
     ShaderType getType() const { return m_shaderType; }
+
+    char* getByteCode() const { return m_pByteCode; }
+    
+    U64 getSzBytes() const { return m_szBytes; }
+
+    Hash64 getCrc() const { return m_crc; }
 
 private:
     ShaderIntermediateCode m_intermediateCode;
     ShaderType m_shaderType;
+    char* m_pByteCode;
+    U64 m_szBytes;
+    Hash64 m_crc;
+    
 };
 } // Recluse

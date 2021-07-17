@@ -34,6 +34,7 @@ public:
 
     void setRenderPass(RenderPass* pRenderPass) override;
     void clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) override;
+    void setPipelineState(PipelineState* pPipelineState, BindType bindType) override;
 
 private:
 

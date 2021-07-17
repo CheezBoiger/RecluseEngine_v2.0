@@ -4,6 +4,7 @@
 #include "VulkanDevice.hpp"
 #include "VulkanResource.hpp"
 #include "VulkanViews.hpp"
+#include "VulkanPipelineState.hpp"
 
 #include "Recluse/Messaging.hpp"
 
@@ -189,5 +190,22 @@ void VulkanCommandList::clearRenderTarget(U32 idx, F32* clearColor, const Rect& 
     attachment.clearValue = color;
     attachment.colorAttachment = idx;
     vkCmdClearAttachments(m_currentCmdBuffer, 1, &attachment, 1, &clearRect);
+}
+
+
+void VulkanCommandList::setPipelineState(PipelineState* pPipelineState, BindType bindType)
+{
+    VkPipelineBindPoint bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+
+    switch (bindType) {
+        case BIND_TYPE_GRAPHICS: break;
+        case BIND_TYPE_COMPUTE: bindPoint = VK_PIPELINE_BIND_POINT_COMPUTE; break;
+        case BIND_TYPE_RAY_TRACE: bindPoint = VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR; break;
+    }
+
+    VulkanPipelineState* pVps   = static_cast<VulkanPipelineState*>(pPipelineState);
+    VkPipeline pipeline         = pVps->get();
+    
+    vkCmdBindPipeline(m_currentCmdBuffer, bindPoint, pipeline);
 }
 } // Recluse

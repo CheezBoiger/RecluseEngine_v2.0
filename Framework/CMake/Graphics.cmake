@@ -17,7 +17,9 @@ set ( RECLUSE_GRAPHICS_BUILD
     ${RECLUSE_GRAPHICS_INCLUDE}/Resource.hpp
     ${RECLUSE_GRAPHICS_INCLUDE}/ResourceView.hpp
     ${RECLUSE_GRAPHICS_INCLUDE}/Shader.hpp
-    ${RECLUSE_GRAPHICS_INCLUDE}/ShaderMap.hpp
+    ${RECLUSE_GRAPHICS_SOURCE}/Shader.cpp
+    ${RECLUSE_GRAPHICS_SOURCE}/ShaderMap.hpp
+    ${RECLUSE_GRAPHICS_SOURCE}/ShaderMap.cpp
     ${RECLUSE_GRAPHICS_INCLUDE}/VideoMemoryPool.hpp
     ${RECLUSE_GRAPHICS_SOURCE}/DeviceFactory.cpp
     ${RECLUSE_GRAPHICS_SOURCE}/RenderPass.cpp
@@ -64,6 +66,8 @@ if ( RCL_VULKAN )
             ${RECLUSE_VULKAN_DIR}/VulkanPipelineState.hpp
             ${RECLUSE_VULKAN_DIR}/VulkanPipelineState.cpp
             ${RECLUSE_VULKAN_DIR}/VulkanDescriptorSets.cpp
+            ${RECLUSE_VULKAN_DIR}/VulkanShaderCache.hpp
+            ${RECLUSE_VULKAN_DIR}/VulkanShaderCache.cpp
         )   
     else()
         message(FATAL_ERROR "Failed to find Vulkan library!")
