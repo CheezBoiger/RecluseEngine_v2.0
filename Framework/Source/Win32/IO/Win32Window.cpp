@@ -76,7 +76,7 @@ Window* Window::create(const std::string& title, U32 x, U32 y, U32 width, U32 he
 
     if (!hwnd) {
     
-        R_ERR(R_CHANNEL_WIN32, "Failed to creat widnow handle!");
+        R_ERR(R_CHANNEL_WIN32, "Failed to creat window handle!");
         
         return nullptr;
 

@@ -4,7 +4,13 @@
 #include "Recluse/Memory/MemoryPool.hpp"
 
 // Only one is supported.
+#if defined RCL_VULKAN
 #include "VulkanBackend/VulkanContext.hpp"
+#endif
+
+#if defined RCL_DX12
+#include "D3D12Backend/D3D12Context.hpp"
+#endif
 
 namespace Recluse {
 
@@ -12,18 +18,27 @@ namespace Recluse {
 GraphicsContext* GraphicsContext::createContext(enum GraphicsAPI api)
 {
     switch (api) {
+#if defined RCL_DX12
+        case GRAPHICS_API_D3D12:
+        {
+            R_DEBUG("Graphics", "Creating D3D12 context...");
+            D3D12Context* ctx = rlsMalloc<D3D12Context>();
+            return ctx;
+        } 
+#endif
+#if defined RCL_VULKAN
+        case GRAPHICS_API_VULKAN:
 
-        case GRAPHICS_API_VULKAN: 
         { 
             R_DEBUG("Graphics", "Creating Vulkan context...");
             VulkanContext* ctx = rlsMalloc<VulkanContext>();
             return ctx;
         }
+#endif
         default:
             R_ERR("Graphics", "Unsupported graphics api. Can not create context!");
 
     }
-
     return nullptr;
 }
 

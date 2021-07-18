@@ -30,6 +30,7 @@ set ( RECLUSE_GRAPHICS_BUILD
 
 
 if ( RCL_VULKAN )
+    add_definitions( -DRCL_VULKAN=1 )
     find_package( Vulkan )
     if (Vulkan_FOUND)
         set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} ${Vulkan_LIBRARIES} )
@@ -75,6 +76,7 @@ if ( RCL_VULKAN )
 endif()
 
 if ( RCL_DX12 )
+    add_definitions( -DRCL_DX12=1 )
     set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} d3d12.lib )
     set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} dxgi.lib )
     set ( RECLUSE_D3D12_DIR ${RECLUSE_GRAPHICS_SOURCE}/D3D12Backend )
@@ -82,7 +84,11 @@ if ( RCL_DX12 )
         ${RECLUSE_GRAPHICS_BUILD}
         ${RECLUSE_D3D12_DIR}/D3D12Device.hpp
         ${RECLUSE_D3D12_DIR}/D3D12Context.hpp
+        ${RECLUSE_D3D12_DIR}/D3D12Context.cpp
         ${RECLUSE_D3D12_DIR}/D3D12Adapter.hpp
+        ${RECLUSE_D3D12_DIR}/D3D12Device.cpp
+        ${RECLUSE_D3D12_DIR}/D3D12Adapter.cpp
+        ${RECLUSE_D3D12_DIR}/D3D12Commons.hpp
     )
 endif()
 

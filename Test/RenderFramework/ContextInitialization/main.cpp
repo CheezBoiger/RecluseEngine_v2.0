@@ -9,7 +9,7 @@ int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
 
-    GraphicsContext* pContext = GraphicsContext::createContext(GRAPHICS_API_VULKAN);
+    GraphicsContext* pContext = GraphicsContext::createContext(GRAPHICS_API_D3D12);
 
     if (!pContext) {
         goto Exit;
