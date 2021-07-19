@@ -56,5 +56,13 @@ ErrType VulkanAllocator::free(VulkanMemory* pOut)
 
 void VulkanAllocator::destroy()
 {
+    if (m_allocator) {
+
+        m_allocator->cleanUp();
+
+        delete m_allocator;
+        m_allocator = nullptr;
+
+    }
 }
 } // Recluse

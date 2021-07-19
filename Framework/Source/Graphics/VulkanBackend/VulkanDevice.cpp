@@ -227,11 +227,31 @@ void VulkanDevice::destroy(VkInstance instance)
     }
 
     for (U32 i = 0; i < RESOURCE_MEMORY_USAGE_COUNT; ++i) {
+
+        if (m_bufferAllocators[i]) {
+
+            R_DEBUG(R_CHANNEL_VULKAN, "Freeing buffer allocator...");
+
+            m_bufferAllocators[i]->destroy();
+            delete m_bufferAllocators[i];
+            m_bufferAllocators[i] = nullptr;
+
+        }
+
+        if (m_imageAllocators[i]) {
+
+            R_DEBUG(R_CHANNEL_VULKAN, "Freeing image allocator...");
+
+            m_imageAllocators[i]->destroy();
+            delete m_imageAllocators[i];
+            m_imageAllocators[i] = nullptr;            
+
+        }
     
         if (m_bufferPool[i].memory) {
     
             R_DEBUG(R_CHANNEL_VULKAN, "Freeing allocated pool...");
-
+            
             vkFreeMemory(m_device, m_bufferPool[i].memory, nullptr);
             m_bufferPool[i].memory = nullptr;
     

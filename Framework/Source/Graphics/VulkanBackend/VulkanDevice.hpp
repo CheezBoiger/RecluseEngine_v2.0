@@ -40,6 +40,8 @@ public:
         for (U32 i = 0; i < RESOURCE_MEMORY_USAGE_COUNT; ++i) { 
             m_bufferPool[i].memory = VK_NULL_HANDLE;
             m_imagePool[i].memory = VK_NULL_HANDLE;
+            m_bufferAllocators[i] = nullptr;
+            m_imageAllocators[i] = nullptr;
         }
     }
 
