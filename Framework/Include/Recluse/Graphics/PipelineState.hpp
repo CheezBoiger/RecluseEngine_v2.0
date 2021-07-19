@@ -101,6 +101,79 @@ struct VertexBinding {
 };
 
 
+enum LogicOp {
+    LOGIC_OP_CLEAR,
+    LOGIC_OP_AND,
+    LOGIC_OP_AND_REVERSE,
+    LOGIC_OP_COPY,
+    LOGIC_OP_AND_INVERTED,
+    LOGIC_OP_NO_OP,
+    LOGIC_OP_XOR,
+    LOGIC_OP_OR,
+    LOGIC_OP_NOR,
+    LOGIC_OP_EQUIVALENT,
+    LOGIC_OP_INVERT,
+    LOGIC_OP_OR_REVERSE,
+    LOGIC_OP_COPY_INVERTED,
+    LOGIC_OP_OR_INVERTED,
+    LOGIC_OP_NAND,
+    LOGIC_OP_SET
+};
+
+enum BlendFactor {
+    BLEND_FACTOR_ZERO,
+    BLEND_FACTOR_ONE,
+    BLEND_FACTOR_SRC_COLOR,
+    BLEND_FACTOR_ONE_MINUS_SRC_COLOR,
+    BLEND_FACTOR_DST_COLOR,
+    BLEND_FACTOR_ONE_MINUS_DST_COLOR,
+    BLEND_FACTOR_SRC_ALHPA,
+    BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+    BLEND_FACTOR_DST_ALHPA,
+    BLEND_FACTOR_ONE_MINUS_DST_ALPHA,
+    BLEND_FACTOR_CONSTANT_COLOR,
+    BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR,
+    BLEND_FACTOR_CONSTANT_ALPHA,
+    BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA,
+    BLEND_FACTOR_SRC_ALPHA_SATURATE,
+    BLEND_FACTOR_SRC1_COLOR,
+    BLEND_FACTOR_ONE_MINUS_SRC1_COLOR,
+    BLEND_FACTOR_SRC1_ALPHA,
+    BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA
+};
+
+
+enum BlendOp {
+    BLEND_OP_ADD,
+    BLEND_OP_SUBTRACT,
+    BLEND_OP_REVERSE_SUBTRACT,
+    BLEND_OP_MIN,
+    BLEND_OP_MAX    
+};
+
+
+enum ColorComponent {
+    COLOR_R = 0x1,
+    COLOR_G = 0x2, 
+    COLOR_B = 0x4,
+    COLOR_A = 0x8
+};
+
+typedef U32 ColorComponentMaskFlags;
+
+
+struct RenderTargetBlendState {
+    B32                     blendEnable;
+    BlendFactor             srcColorBlendFactor;
+    BlendFactor             dstColorBlendFactor;
+    BlendOp                 colorBlendOp;
+    BlendFactor             srcAlphaBlendFactor;
+    BlendFactor             dstAlphaBlendFactor;
+    BlendOp                 alphaBlendOp;
+   ColorComponentMaskFlags  colorWriteMask;
+};
+
+
 struct GraphicsPipelineStateDesc : public PipelineStateDesc {
     Shader* pVS;
     Shader* pHS;
@@ -135,8 +208,16 @@ struct GraphicsPipelineStateDesc : public PipelineStateDesc {
     } raster;
 
     struct BlendState {
-        
+        B32     logicOpEnable;
+        LogicOp logicOp;
+        F32     blendConstants[4];
+        U32     numAttachments;
+        RenderTargetBlendState* attachments;
     } blend;
+
+    struct TessellationState {
+        U32 numControlPoints;
+    } tess;
 
     PrimitiveTopology primitiveTopology;
 

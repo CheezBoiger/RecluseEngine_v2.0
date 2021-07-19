@@ -8,6 +8,7 @@
 #include "VulkanViews.hpp"
 #include "VulkanCommandList.hpp"
 #include "VulkanObjects.hpp"
+#include "VulkanPipelineState.hpp"
 #include "VulkanDescriptorManager.hpp"
 #include "Recluse/Messaging.hpp"
 
@@ -969,6 +970,42 @@ ErrType VulkanDevice::destroyRenderPass(RenderPass* pRenderPass)
         R_ERR(R_CHANNEL_VULKAN, "Failed to destroy render pass!");
     
     }
+
+    return result;
+}
+
+
+ErrType VulkanDevice::createGraphicsPipeline(PipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc)
+{
+    VulkanGraphicsPipelineState* pPipeline  = new VulkanGraphicsPipelineState();
+    ErrType result                          = REC_RESULT_OK;
+
+    result = pPipeline->initialize(this, desc);
+    
+    if (result != REC_RESULT_OK) {
+
+        pPipeline->destroy(this);
+        delete pPipeline;
+
+        return result;
+    }
+
+    *ppPipelineState = pPipeline;
+
+    return result;
+}
+
+
+ErrType VulkanDevice::destroyPipelineState(PipelineState* pPipelineState)
+{
+    R_ASSERT(pPipelineState != NULL);
+
+    ErrType result                  = REC_RESULT_OK;
+    VulkanPipelineState* pPipeline  = static_cast<VulkanPipelineState*>(pPipelineState);
+    
+    pPipeline->destroy(this);
+
+    delete pPipeline;
 
     return result;
 }

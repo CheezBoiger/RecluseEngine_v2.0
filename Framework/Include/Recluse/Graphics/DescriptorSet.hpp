@@ -3,6 +3,7 @@
 
 #include "Recluse/Types.hpp"
 #include "Recluse/Graphics/Shader.hpp"
+#include "Recluse/Graphics/GraphicsCommon.hpp"
 
 namespace Recluse {
 
@@ -10,15 +11,6 @@ namespace Recluse {
 class GraphicsResource;
 class GraphicsResourceView;
 class GraphicsSampler;
-
-
-enum DescriptorBindType {
-    DESCRIPTOR_SHADER_RESOURCE_VIEW,
-    DESCRIPTOR_STORAGE_BUFFER,
-    DESCRIPTOR_STORAGE_IMAGE,
-    DESCRIPTOR_CONSTANT_BUFFER,
-    DESCRIPTOR_SAMPLER
-};
 
 
 struct DescriptorBindDesc {

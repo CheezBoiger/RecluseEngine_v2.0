@@ -197,15 +197,38 @@ void VulkanCommandList::setPipelineState(PipelineState* pPipelineState, BindType
 {
     VkPipelineBindPoint bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
-    switch (bindType) {
-        case BIND_TYPE_GRAPHICS: break;
-        case BIND_TYPE_COMPUTE: bindPoint = VK_PIPELINE_BIND_POINT_COMPUTE; break;
-        case BIND_TYPE_RAY_TRACE: bindPoint = VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR; break;
-    }
+    SETBIND(bindType, bindPoint)
 
     VulkanPipelineState* pVps   = static_cast<VulkanPipelineState*>(pPipelineState);
     VkPipeline pipeline         = pVps->get();
     
     vkCmdBindPipeline(m_currentCmdBuffer, bindPoint, pipeline);
+}
+
+
+void VulkanCommandList::bindDescriptorSets(U32 count, DescriptorSet** pSets, BindType bindType)
+{
+    R_ASSERT(m_boundPipelineState != NULL);
+    R_ASSERT(count < 8);
+
+    // Let's say we can only bound 8 descriptor sets at a time...
+    VkDescriptorSet descriptorSets[8];
+
+    U32 numDescriptorSetsBound      = 0;
+    VkPipelineBindPoint bindPoint   = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    VkPipelineLayout layout         = m_boundPipelineState->getLayout();
+
+    SETBIND(bindType, bindPoint)
+
+
+    while (numDescriptorSetsBound < count) {
+
+        VulkanDescriptorSet* pSet                   = static_cast<VulkanDescriptorSet*>(pSets[numDescriptorSetsBound]);
+        descriptorSets[numDescriptorSetsBound++]    = pSet->get();
+
+    }
+
+    vkCmdBindDescriptorSets(m_currentCmdBuffer, bindPoint, layout, 0, numDescriptorSetsBound,
+        descriptorSets, 0, nullptr);
 }
 } // Recluse

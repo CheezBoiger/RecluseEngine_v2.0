@@ -58,6 +58,8 @@ public:
 
     ErrType createDescriptorSet(DescriptorSet** ppDescriptorSet, DescriptorSetLayout* pLayout) override;
 
+    ErrType createGraphicsPipeline(PipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) override;
+
     ErrType createRenderPass(RenderPass** ppRenderPass, const RenderPassDesc& desc) override;
 
     ErrType destroyCommandQueue(GraphicsQueue* pQueue) override;
@@ -73,6 +75,8 @@ public:
     ErrType createResourceView(GraphicsResourceView** ppView, const ResourceViewDesc& desc) override;
 
     void destroy(VkInstance instance);
+
+    ErrType destroyPipelineState(PipelineState* pPipelineState) override;
 
     ErrType destroyResourceView(GraphicsResourceView* pResourceView) override;
 

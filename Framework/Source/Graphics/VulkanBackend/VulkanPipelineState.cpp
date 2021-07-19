@@ -96,6 +96,81 @@ static VkFrontFace getNativeFrontFace(FrontFace face)
     }
 }
 
+
+static VkLogicOp getLogicOp(LogicOp op)
+{
+    switch (op) {
+        case LOGIC_OP_CLEAR: return VK_LOGIC_OP_CLEAR;
+        case LOGIC_OP_AND: return VK_LOGIC_OP_AND;
+        case LOGIC_OP_AND_REVERSE: return VK_LOGIC_OP_AND_REVERSE;
+        case LOGIC_OP_COPY: return VK_LOGIC_OP_COPY;
+        case LOGIC_OP_AND_INVERTED: return VK_LOGIC_OP_AND_INVERTED;
+        case LOGIC_OP_NO_OP: return VK_LOGIC_OP_NO_OP;
+        case LOGIC_OP_XOR: return VK_LOGIC_OP_XOR;
+        case LOGIC_OP_OR: return VK_LOGIC_OP_OR;
+        case LOGIC_OP_NOR: return VK_LOGIC_OP_NOR;
+        case LOGIC_OP_EQUIVALENT: return VK_LOGIC_OP_EQUIVALENT;
+        case LOGIC_OP_INVERT: return VK_LOGIC_OP_INVERT;
+        case LOGIC_OP_OR_REVERSE: return VK_LOGIC_OP_OR_REVERSE;
+        case LOGIC_OP_COPY_INVERTED: return VK_LOGIC_OP_COPY_INVERTED;
+        case LOGIC_OP_OR_INVERTED: return VK_LOGIC_OP_OR_INVERTED;
+        case LOGIC_OP_NAND: return VK_LOGIC_OP_NAND;
+        case LOGIC_OP_SET: return VK_LOGIC_OP_SET;
+        default: return VK_LOGIC_OP_NO_OP;
+    }
+}
+
+
+static VkBlendFactor getBlendFactor(BlendFactor op)
+{
+    switch (op) {
+        case BLEND_FACTOR_ZERO: return VK_BLEND_FACTOR_ZERO;
+        case BLEND_FACTOR_ONE: return VK_BLEND_FACTOR_ONE;
+        case BLEND_FACTOR_SRC_COLOR: return VK_BLEND_FACTOR_SRC_COLOR;
+        case BLEND_FACTOR_ONE_MINUS_SRC_COLOR: return VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+        case BLEND_FACTOR_DST_COLOR: return VK_BLEND_FACTOR_DST_COLOR;
+        case BLEND_FACTOR_ONE_MINUS_DST_COLOR: return VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR;
+        case BLEND_FACTOR_SRC_ALHPA: return VK_BLEND_FACTOR_SRC_ALPHA;
+        case BLEND_FACTOR_ONE_MINUS_SRC_ALPHA: return VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        case BLEND_FACTOR_DST_ALHPA: return VK_BLEND_FACTOR_DST_ALPHA;
+        case BLEND_FACTOR_ONE_MINUS_DST_ALPHA: return VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
+        case BLEND_FACTOR_CONSTANT_COLOR: return VK_BLEND_FACTOR_CONSTANT_COLOR;
+        case BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR: return VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR;
+        case BLEND_FACTOR_CONSTANT_ALPHA: return VK_BLEND_FACTOR_CONSTANT_ALPHA;
+        case BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA: return VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA;
+        case BLEND_FACTOR_SRC_ALPHA_SATURATE: return VK_BLEND_FACTOR_SRC_ALPHA_SATURATE;
+        case BLEND_FACTOR_SRC1_COLOR: return VK_BLEND_FACTOR_SRC1_COLOR;
+        case BLEND_FACTOR_ONE_MINUS_SRC1_COLOR: return VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR;
+        case BLEND_FACTOR_SRC1_ALPHA: return VK_BLEND_FACTOR_SRC1_ALPHA;
+        case BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA: return VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA;
+        default: return VK_BLEND_FACTOR_ZERO;
+    }
+}
+
+static VkBlendOp getBlendOp(BlendOp op)
+{
+    switch (op) {
+        case BLEND_OP_ADD: return VK_BLEND_OP_ADD;
+        case BLEND_OP_SUBTRACT: return VK_BLEND_OP_SUBTRACT;
+        case BLEND_OP_REVERSE_SUBTRACT: return VK_BLEND_OP_REVERSE_SUBTRACT;
+        case BLEND_OP_MIN: return VK_BLEND_OP_MIN;
+        case BLEND_OP_MAX: return VK_BLEND_OP_MAX;
+        default: return VK_BLEND_OP_ADD;
+    }
+}
+
+
+static VkColorComponentFlags getColorComponents(ColorComponentMaskFlags flags)
+{
+    VkColorComponentFlags components = 0;
+    if (flags & COLOR_R) components |= VK_COLOR_COMPONENT_R_BIT;
+    if (flags & COLOR_G) components |= VK_COLOR_COMPONENT_G_BIT;
+    if (flags & COLOR_B) components |= VK_COLOR_COMPONENT_B_BIT;
+    if (flags & COLOR_A) components |= VK_COLOR_COMPONENT_A_BIT;
+    return components;
+}
+
+
 static VkPipelineRasterizationStateCreateInfo getRasterInfo(const GraphicsPipelineStateDesc::RasterState& rs)
 {
     VkPipelineRasterizationStateCreateInfo info = { };
@@ -199,24 +274,63 @@ static VkPipelineColorBlendStateCreateInfo getBlendInfo(const GraphicsPipelineSt
 {
     VkPipelineColorBlendStateCreateInfo info = { };
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    info.logicOp;
-    info.logicOpEnable;
-    info.blendConstants;
-    info.attachmentCount;
-    info.pAttachments;
+    info.logicOp            = getLogicOp(state.logicOp);
+    info.logicOpEnable      = state.logicOpEnable;
+    info.blendConstants[0]  = state.blendConstants[0];
+    info.blendConstants[1]  = state.blendConstants[1];
+    info.blendConstants[2]  = state.blendConstants[2];
+    info.blendConstants[3]  = state.blendConstants[3];
+    info.attachmentCount    = state.numAttachments;
+
+    blendAttachments.resize(state.numAttachments);
+
+    for (U32 i = 0; i < state.numAttachments; ++i) {
+
+        RenderTargetBlendState& blendState      = state.attachments[i];
+
+        blendAttachments[i].blendEnable         = blendState.blendEnable;
+        blendAttachments[i].alphaBlendOp        = getBlendOp(blendState.alphaBlendOp);
+        blendAttachments[i].dstAlphaBlendFactor = getBlendFactor(blendState.dstAlphaBlendFactor);
+        blendAttachments[i].srcAlphaBlendFactor = getBlendFactor(blendState.srcAlphaBlendFactor);
+        blendAttachments[i].dstColorBlendFactor = getBlendFactor(blendState.dstColorBlendFactor);
+        blendAttachments[i].srcColorBlendFactor = getBlendFactor(blendState.srcColorBlendFactor);
+        blendAttachments[i].colorWriteMask      = getColorComponents(blendState.colorWriteMask);
+        blendAttachments[i].colorBlendOp        = getBlendOp(blendState.colorBlendOp);
+
+    }
+
+    info.pAttachments = blendAttachments.data();
+
+    return info;
+}
+
+
+static VkPipelineTessellationStateCreateInfo getTessellationStateInfo(const GraphicsPipelineStateDesc::TessellationState& tess)
+{
+    VkPipelineTessellationStateCreateInfo info = { };
+    info.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
+    info.patchControlPoints = tess.numControlPoints;
     return info;
 }
 
 
 static VkPipelineViewportStateCreateInfo getViewportInfo() {
-    VkPipelineViewportStateCreateInfo info = { };
-    info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    // We are making our pipelines dynamic for viewport and scissors,
+    // so we don't need to bother statically setting this state.
+    VkPipelineViewportStateCreateInfo info  = { };
+    info.sType                              = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    info.scissorCount                       = 1;
+    info.viewportCount                      = 1;
+    info.pViewports                         = nullptr;
+    info.pScissors                          = nullptr;
     return info;
 }
 
 
 void VulkanPipelineState::destroy(VulkanDevice* pDevice)
 {   
+    R_DEBUG(R_CHANNEL_VULKAN, "Destroying vulkan pipeline state...");
+
     if (m_pipelineLayout) {
     
         vkDestroyPipelineLayout(pDevice->get(), m_pipelineLayout, nullptr);
@@ -253,6 +367,7 @@ ErrType VulkanGraphicsPipelineState::initialize(VulkanDevice* pDevice, const Gra
     VkPipelineVertexInputStateCreateInfo vertInputState         = getVertexInputInfo(desc.vi, attributes, bindings);
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyState   = getAssemblyInfo(desc.primitiveTopology);
     VkPipelineDynamicStateCreateInfo dynamicState               = getDynamicStates();
+    VkPipelineTessellationStateCreateInfo tessState             = getTessellationStateInfo(desc.tess);
     
     std::vector<VkDescriptorSetLayout> descriptorSetLayouts(desc.numDescriptorSetLayouts);
 

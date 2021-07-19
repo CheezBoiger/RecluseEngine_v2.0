@@ -12,6 +12,7 @@ namespace Recluse {
 
 class VulkanDevice;
 class VulkanRenderPass;
+class VulkanPipelineState;
 
 class VulkanCommandList : public GraphicsCommandList {
 public:
@@ -35,6 +36,7 @@ public:
     void setRenderPass(RenderPass* pRenderPass) override;
     void clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) override;
     void setPipelineState(PipelineState* pPipelineState, BindType bindType) override;
+    void bindDescriptorSets(U32 count, DescriptorSet** pSets, BindType bindType) override;
 
 private:
 
@@ -42,9 +44,11 @@ private:
     void resetBinds();
 
     VulkanRenderPass*            m_boundRenderPass;
+    VulkanPipelineState*         m_boundPipelineState;
     std::vector<VkCommandBuffer> m_buffers; 
     std::vector<VkCommandPool>   m_pools;
     VulkanDevice*                m_pDevice;
     VkCommandBuffer              m_currentCmdBuffer;
+    
 };
 } // Recluse

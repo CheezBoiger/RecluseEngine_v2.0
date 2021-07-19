@@ -36,14 +36,15 @@ class R_EXPORT GraphicsAdapter {
 public:
     virtual ~GraphicsAdapter() { }
 
-    virtual ErrType getAdapterInfo(AdapterInfo* out) const { return 0; }
-    virtual ErrType getAdapterLimits() const { return 0; }
+    virtual ErrType getAdapterInfo(AdapterInfo* out) const { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual ErrType getAdapterLimits() const { return REC_RESULT_NOT_IMPLEMENTED; }
 
     // Creates a device from this adapter.
-    virtual ErrType createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice) { return 0; }
+    virtual ErrType createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice) 
+        { return REC_RESULT_NOT_IMPLEMENTED; }
 
     // Destroys the device associated with this adapter.
-    virtual ErrType destroyDevice(GraphicsDevice* pDevice) { return 0; }
+    virtual ErrType destroyDevice(GraphicsDevice* pDevice) { return REC_RESULT_NOT_IMPLEMENTED; }
 };
 
 

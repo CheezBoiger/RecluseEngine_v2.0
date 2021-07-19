@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Recluse/Types.hpp"
+#include "Recluse/Graphics/GraphicsCommon.hpp"
 #include <vector>
 
 // Vendor IDs
@@ -10,17 +11,6 @@
 #define AMD_VENDOR_ID           0x1022
 
 namespace Recluse {
-
-
-enum R_EXPORT LayerFeatures {
-    LAYER_FEATURE_RAY_TRACING_BIT   = (1 << 0),
-    LAYER_FEATURE_MESH_SHADING_BIT  = (1 << 1),
-    LAYER_FEATURE_DEBUG_VALIDATION_BIT         = (1 << 2),
-    LAYER_FEATURE_API_DUMP_BIT      = (1 << 3)
-};
-
-
-typedef U32 EnableLayerFlags;
 
 
 struct R_EXPORT ApplicationInfo {
@@ -37,13 +27,6 @@ struct R_EXPORT ApplicationInfo {
 
 class GraphicsAdapter;
 
-enum GraphicsAPI {
-    GRAPHICS_API_SOFTWARE,
-    GRAPHICS_API_VULKAN,
-    GRAPHICS_API_OPENGL,
-    GRAPHICS_API_D3D11,
-    GRAPHICS_API_D3D12
-};
 
 class GraphicsContext {
 public:

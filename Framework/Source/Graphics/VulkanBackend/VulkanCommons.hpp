@@ -5,6 +5,7 @@
 #include "Recluse/Types.hpp"
 #include "Recluse/Graphics/Shader.hpp"
 #include "Recluse/Graphics/Format.hpp"
+#include "Recluse/Graphics/GraphicsCommon.hpp"
 
 #if defined (RECLUSE_WINDOWS)
 #define VK_USE_PLATFORM_WIN32_KHR 1
@@ -13,6 +14,13 @@
 #include <vulkan/vulkan.h>
 
 #define R_CHANNEL_VULKAN "Vulkan"
+
+#define SETBIND(bindType, var) switch (bindType) { \
+    case BIND_TYPE_COMPUTE: var = VK_PIPELINE_BIND_POINT_COMPUTE; break; \
+    case BIND_TYPE_RAY_TRACE: var = VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR; break; \
+    case BIND_TYPE_GRAPHICS: \
+    default: var = VK_PIPELINE_BIND_POINT_GRAPHICS; break; \
+}
 
 struct VulkanMemoryPool {
     VkDeviceMemory  memory;

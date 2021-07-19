@@ -25,6 +25,7 @@ set ( RECLUSE_GRAPHICS_BUILD
     ${RECLUSE_GRAPHICS_SOURCE}/RenderPass.cpp
     ${RECLUSE_GRAPHICS_SOURCE}/RenderPassMap.cpp
     ${RECLUSE_GRAPHICS_SOURCE}/ShaderBuilder.hpp
+    ${RECLUSE_GRAPHICS_INCLUDE}/GraphicsCommon.hpp
 )
 
 

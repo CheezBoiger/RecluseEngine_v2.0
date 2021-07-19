@@ -33,7 +33,7 @@ public:
 
     GraphicsQueueTypeFlags getType() { return m_type; }
 
-    virtual ErrType submit(const QueueSubmit* payload) { return 0; }
+    virtual ErrType submit(const QueueSubmit* payload) { return REC_RESULT_NOT_IMPLEMENTED; }
 
     virtual void wait() { }
 

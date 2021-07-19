@@ -3,6 +3,7 @@
 
 #include "Recluse/Types.hpp"
 #include "Recluse/Arch.hpp"
+#include "Recluse/Graphics/GraphicsCommon.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 
 namespace Recluse {
@@ -13,10 +14,6 @@ class RenderPass;
 class PipelineState;
 class DescriptorSet;
 
-
-struct Rect {
-    F32 x, y, width, height;
-};
 
 class R_EXPORT GraphicsCommandList {
 public:
@@ -32,8 +29,8 @@ public:
     virtual void drawInstancedIndirect() { }
     virtual void drawIndexedInstancedIndirect() { }
 
-    virtual void setScissors() { }
-    virtual void setViewport() { }
+    virtual void setScissors(U32 numScissors, Rect* pRects) { }
+    virtual void setViewports(U32 numViewports, Viewport* pViewports) { }
 
     virtual void dispatch(U32 x, U32 y, U32 z) { }
     virtual void dispatchRays(U32 x, U32 y, U32 z) { }
@@ -42,7 +39,7 @@ public:
 
     virtual void setRenderPass(RenderPass* pRenderPass) { }
 
-    virtual void bindDescriptorSets(U32 count, DescriptorSet* pSets, BindType bindType) { }
+    virtual void bindDescriptorSets(U32 count, DescriptorSet** pSets, BindType bindType) { }
     
     virtual void clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) { }
     virtual void clearDepthStencil() { }

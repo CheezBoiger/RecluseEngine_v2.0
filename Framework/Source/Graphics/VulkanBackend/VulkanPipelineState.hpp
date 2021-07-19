@@ -31,6 +31,7 @@ protected:
 
 class VulkanGraphicsPipelineState : public VulkanPipelineState {
 public:
+    virtual ~VulkanGraphicsPipelineState() { }
 
     ErrType initialize(VulkanDevice* pDevice, const GraphicsPipelineStateDesc& desc);
 
@@ -39,6 +40,7 @@ public:
 
 class VulkanComputePipelineState : public VulkanPipelineState {
 public:
+    virtual ~VulkanComputePipelineState() { }
     
     ErrType initialize(VulkanDevice* pDevice, const ComputePipelineStateDesc& desc);
 
