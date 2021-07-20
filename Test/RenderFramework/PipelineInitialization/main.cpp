@@ -340,7 +340,7 @@ int main(int c, char* argv[])
         desc.raster.polygonMode = POLYGON_MODE_FILL;
         desc.raster.depthClampEnable = false;
         desc.raster.lineWidth  = 1.0f;
-        desc.primitiveTopology = PRIMITIVE_TOPOLOGY_LINE_LIST;
+        desc.primitiveTopology = PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         desc.vi.numVertexBindings = 1;
         desc.vi.pVertexBindings = &binding;
         desc.numDescriptorSetLayouts = 1;
