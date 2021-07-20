@@ -5,6 +5,8 @@
 
 #include "Recluse/Serialization/Hasher.hpp"
 
+#include <vector>
+
 namespace Recluse {
 
 
@@ -32,6 +34,7 @@ enum ShaderType {
     SHADER_TYPE_RAY_MISS = (1<<9),
     SHADER_TYPE_AMPLIFICATION = (1<<10),
     SHADER_TYPE_MESH = (1<<11),
+    SHADER_TYPE_COMPUTE = (1<<12),
     SHADER_TYPE_ALL = (0xFFFFFFFF)
 };
 
@@ -42,41 +45,41 @@ class Shader {
 public:
     virtual ~Shader() { }
 
-    static Shader* create(ShaderIntermediateCode code, ShaderType type);
-    static void destroy(Shader* pShader);
+    static R_EXPORT Shader* create(ShaderIntermediateCode code, ShaderType type);
+    static R_EXPORT void destroy(Shader* pShader);
 
 private:
 
     Shader(ShaderIntermediateCode intermediateCode, ShaderType type)
         : m_intermediateCode(intermediateCode)
-        , m_shaderType(type)
-        , m_pByteCode(nullptr)
-        , m_szBytes(0) { }
+        , m_shaderType(type) { }
 
 public:
 
     ShaderIntermediateCode getIntermediateCodeType() const { return m_intermediateCode; }
 
-    ErrType compile(char* sourceCode, U64 sourceCodeBytes);
-    ErrType load(char* byteCode, U64 szBytes);
+    // Compile source code, ideally we do not want to call this function in 
+    // release mode. Instead, we should precompile those shaders before, and 
+    // call load() instead...
+    R_EXPORT ErrType compile(char* sourceCode, U64 sourceCodeBytes);
+    R_EXPORT ErrType load(char* byteCode, U64 szBytes);
 
-    U32 disassemble(char* disassembledCode);
+    R_EXPORT U32 disassemble(char* disassembledCode);
     
-    Shader* convertTo(ShaderIntermediateCode intermediateCode);
+    R_EXPORT Shader* convertTo(ShaderIntermediateCode intermediateCode);
 
     ShaderType getType() const { return m_shaderType; }
 
-    char* getByteCode() const { return m_pByteCode; }
+    const char* getByteCode() const { return m_byteCode.data(); }
     
-    U64 getSzBytes() const { return m_szBytes; }
+    U64 getSzBytes() const { return m_byteCode.size(); }
 
     Hash64 getCrc() const { return m_crc; }
 
 private:
     ShaderIntermediateCode m_intermediateCode;
     ShaderType m_shaderType;
-    char* m_pByteCode;
-    U64 m_szBytes;
+    std::vector<char> m_byteCode;
     Hash64 m_crc;
     
 };

@@ -40,8 +40,9 @@ static VkCullModeFlags getNativeCullMode(CullMode mode)
     switch (mode) {
         case CULL_MODE_BACK: return VK_CULL_MODE_BACK_BIT;
         case CULL_MODE_FRONT: return VK_CULL_MODE_FRONT_BIT;
-        case CULL_MODE_FRONT_AND_BACK: 
-        default: return VK_CULL_MODE_FRONT_AND_BACK;
+        case CULL_MODE_FRONT_AND_BACK: return VK_CULL_MODE_FRONT_AND_BACK;
+        case CULL_MODE_NONE:
+        default: return VK_CULL_MODE_NONE;
     }
 }
 

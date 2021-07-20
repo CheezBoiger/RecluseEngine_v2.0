@@ -30,6 +30,14 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
     VkSwapchainCreateInfoKHR createInfo         = { };
     const SwapchainCreateDescription& pDesc     = getDesc();
     VkResult result                             = VK_SUCCESS;
+
+    if (pDesc.renderWidth <= 0 || pDesc.renderHeight <= 0) {
+
+        R_ERR(R_CHANNEL_VULKAN, "Can not define a RenderWidth or Height less than 1!");
+
+        return REC_RESULT_INVALID_ARGS;    
+
+    }
     
     // TODO: We need to pass a struct input for desired configurations.
     createInfo.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
