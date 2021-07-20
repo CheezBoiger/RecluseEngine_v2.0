@@ -1,6 +1,7 @@
 //
 #include "VulkanQueue.hpp"
 #include "VulkanDevice.hpp"
+#include "VulkanResource.hpp"
 
 #include "VulkanCommandList.hpp"
 
@@ -15,11 +16,17 @@ VulkanQueue::~VulkanQueue()
 }
 
 
-ErrType VulkanQueue::initialize(VulkanDevice* device, U32 queueFamilyIndex, U32 queueIndex)
+ErrType VulkanQueue::initialize(VulkanDevice* device, QueueFamily* pFamily, U32 queueFamilyIndex, U32 queueIndex)
 {
     vkGetDeviceQueue(device->get(), queueFamilyIndex, queueIndex, &m_queue);
 
     m_pDevice                   = device;
+    m_pFamilyRef                = pFamily;
+
+    VkFenceCreateInfo info = { };
+    info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        
+    vkCreateFence(m_pDevice->get(), &info, nullptr, &m_fence);
     
     return REC_RESULT_OK;
 }
@@ -48,6 +55,13 @@ void VulkanQueue::destroy()
         m_queue = VK_NULL_HANDLE;
 
     }
+
+    if (m_fence) {
+    
+        vkDestroyFence(m_pDevice->get(), m_fence, nullptr);
+        m_fence = VK_NULL_HANDLE;
+    
+    }
 }
 
 
@@ -70,6 +84,79 @@ ErrType VulkanQueue::submit(const QueueSubmit* payload)
     submitIf.pWaitDstStageMask      = nullptr;
 
     vkQueueSubmit(m_queue, 1, &submitIf, VK_NULL_HANDLE);
+    
+    return REC_RESULT_OK;
+}
+
+
+ErrType VulkanQueue::copyResource(GraphicsResource* dst, GraphicsResource* src)
+{
+    const GraphicsResourceDescription& dstDesc = dst->getDesc();
+    const GraphicsResourceDescription& srcDesc = src->getDesc();
+
+    ResourceDimension dstDim = dstDesc.dimension;
+    ResourceDimension srcDim = srcDesc.dimension;
+
+    // Create a one time only command list.
+    VkDevice device             = m_pDevice->get();
+    VkCommandBuffer cmdBuffer   = VK_NULL_HANDLE;
+    VkResult result             = VK_SUCCESS;
+
+    VkCommandBufferAllocateInfo allocInfo   = { };
+    allocInfo.commandBufferCount            = 1;
+    allocInfo.commandPool                   = m_pFamilyRef->commandPools[m_pDevice->getCurrentBufferIndex()];
+    allocInfo.sType                         = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.level                         = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    result = vkAllocateCommandBuffers(device, &allocInfo, &cmdBuffer);
+
+    if (result != VK_SUCCESS) {
+    
+        return REC_RESULT_FAILED;
+    
+    }
+
+    {
+        VkCommandBufferBeginInfo begin  = { };
+        begin.sType                     = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        begin.flags                     = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+        vkBeginCommandBuffer(cmdBuffer, &begin);
+    }
+
+    if (dstDim == RESOURCE_DIMENSION_BUFFER) { 
+        VulkanBuffer* dstBuffer = static_cast<VulkanBuffer*>(dst);
+
+        if (srcDim == RESOURCE_DIMENSION_BUFFER) {
+
+            VulkanBuffer* srcBuffer = static_cast<VulkanBuffer*>(src);
+            VkBufferCopy region     = { };
+            region.size             = dstDesc.width;
+            region.dstOffset        = 0;
+            region.srcOffset        = 0;
+            vkCmdCopyBuffer(cmdBuffer, srcBuffer->get(), dstBuffer->get(), 1, &region);
+
+        } else {
+
+            VulkanImage* pSrcImage      = static_cast<VulkanImage*>(src);
+            VkBufferImageCopy region    = { };
+            // TODO:
+            vkCmdCopyImageToBuffer(cmdBuffer, pSrcImage->get(), pSrcImage->getCurrentLayout(),
+                dstBuffer->get(), 1, &region);
+
+        }
+
+    } 
+
+    vkEndCommandBuffer(cmdBuffer);
+
+    VkSubmitInfo submit = { };
+    submit.commandBufferCount = 1;
+    submit.pCommandBuffers = &cmdBuffer;
+    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+    vkQueueSubmit(m_queue, 1, &submit, m_fence);
+    
+    vkWaitForFences(device, 1, &m_fence, true, UINT64_MAX);
+    vkResetFences(device, 1, &m_fence);
     
     return REC_RESULT_OK;
 }

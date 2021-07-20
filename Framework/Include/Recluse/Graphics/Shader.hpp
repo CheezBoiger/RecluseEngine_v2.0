@@ -77,6 +77,10 @@ public:
     Hash64 getCrc() const { return m_crc; }
 
 private:
+
+    // Generate CrC from bytecode value.
+    void genCrc();
+
     ShaderIntermediateCode m_intermediateCode;
     ShaderType m_shaderType;
     std::vector<char> m_byteCode;

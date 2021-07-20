@@ -9,17 +9,13 @@
 #include <unordered_map>
 
 namespace Recluse {
-namespace ShaderCache {
-
-
-std::unordered_map<Hash64, VkShaderModule> cache;
 
 
 struct ShaderHash {
     
 };
 
-VkShaderModule getCachedShaderModule(VulkanDevice* pDevice, Shader* pShader)
+VkShaderModule ShaderCache::getCachedShaderModule(VulkanDevice* pDevice, Shader* pShader)
 {
     Hash64 hash = pShader->getCrc();
 
@@ -32,7 +28,7 @@ VkShaderModule getCachedShaderModule(VulkanDevice* pDevice, Shader* pShader)
 }
 
 
-ErrType cacheShader(VulkanDevice* pDevice, Shader* pShader)
+ErrType ShaderCache::cacheShader(VulkanDevice* pDevice, Shader* pShader)
 {
     VkResult result             = VK_SUCCESS;
     VkShaderModule shaderModule = VK_NULL_HANDLE;
@@ -54,13 +50,13 @@ ErrType cacheShader(VulkanDevice* pDevice, Shader* pShader)
 }
 
 
-B32 isShaderCached(Shader* pShader)
+B32 ShaderCache::isShaderCached(Shader* pShader)
 {
     return (cache.find(pShader->getCrc()) != cache.end());
 }
 
 
-void clearCache(VulkanDevice* pDevice)
+void ShaderCache::clearCache(VulkanDevice* pDevice)
 {
     for (auto keyval : cache) {
         if (keyval.second) {
@@ -70,5 +66,4 @@ void clearCache(VulkanDevice* pDevice)
 
     cache.clear();
 }
-} // ShaderCache
 } // Recluse

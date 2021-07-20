@@ -135,12 +135,19 @@ void Shader::destroy(Shader* pShader)
 }
 
 
+void Shader::genCrc()
+{
+    Hash64 hash = recluseHash(m_byteCode.data(), m_byteCode.size());
+    m_crc = hash;
+}
+
+
 ErrType Shader::load(char* pByteCode, U64 szBytes)
 {
-    Hash64 hash = recluseHash(pByteCode, szBytes);
-    m_crc = hash;
     m_byteCode.resize(szBytes);
     memcpy(m_byteCode.data(), pByteCode, szBytes);
+
+    genCrc();
 
     return REC_RESULT_OK;
 }
@@ -203,6 +210,9 @@ ErrType Shader::compile(char* sourceCode, U64 sourceCodeBytes)
     memcpy(m_byteCode.data(), spirv.data(), m_byteCode.size());
     
     glslang::FinalizeProcess();
+
+    genCrc();
+
     return REC_RESULT_OK;
 #else
     return REC_RESULT_NOT_IMPLEMENTED;

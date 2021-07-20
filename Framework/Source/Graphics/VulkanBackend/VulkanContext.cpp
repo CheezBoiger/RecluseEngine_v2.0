@@ -2,6 +2,7 @@
 #include "VulkanContext.hpp"
 #include "VulkanDevice.hpp"
 #include "VulkanAdapter.hpp"
+#include "VulkanShaderCache.hpp"
 #include "Recluse/Messaging.hpp"
 #include <vector>
 
@@ -193,7 +194,7 @@ ErrType VulkanContext::onInitialize(const ApplicationInfo& appInfo, EnableLayerF
     m_engineName                        = appInfo.engineName;
 
     nativeAppInfo.sType                 = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    nativeAppInfo.apiVersion =          VK_API_VERSION_1_0;
+    nativeAppInfo.apiVersion            = VK_MAKE_VERSION(1, 3, 0); // We will target v1.3.0
     nativeAppInfo.pApplicationName      = appInfo.appName;
     nativeAppInfo.pEngineName           = appInfo.engineName;
     nativeAppInfo.engineVersion         = VK_MAKE_VERSION(appInfo.engineMajor, appInfo.engineMinor, appInfo.enginePatch);

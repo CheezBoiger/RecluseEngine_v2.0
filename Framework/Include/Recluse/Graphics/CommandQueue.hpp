@@ -9,6 +9,7 @@ namespace Recluse {
 class GraphicsDevice;
 class GraphicsCommandList;
 class GraphicsFence;
+class GraphicsResource;
 
 enum GraphicsQueueType {
     QUEUE_TYPE_PRESENT      = (1 << 0),
@@ -32,6 +33,11 @@ public:
     virtual ~GraphicsQueue() { }
 
     GraphicsQueueTypeFlags getType() { return m_type; }
+
+    // Not recommended, but submits a copy to this queue, and waits until the command has 
+    // completed.
+    virtual ErrType copyResource(GraphicsResource* dst, GraphicsResource* src) 
+        { return REC_RESULT_NOT_IMPLEMENTED; }
 
     virtual ErrType submit(const QueueSubmit* payload) { return REC_RESULT_NOT_IMPLEMENTED; }
 

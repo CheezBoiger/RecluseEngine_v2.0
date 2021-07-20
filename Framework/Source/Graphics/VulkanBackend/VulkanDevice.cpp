@@ -205,6 +205,8 @@ void VulkanDevice::destroy(VkInstance instance)
     destroyFences();
     destroyDescriptorHeap();
 
+    m_cache.clearCache(this);
+
     if (!m_queues.empty()) {
     
         R_WARN(R_CHANNEL_VULKAN, "One or more queue handles still exist! This can cause memory leaks!");
@@ -545,6 +547,7 @@ ErrType VulkanDevice::createCommandQueue(GraphicsQueue** ppQueue, GraphicsQueueT
     U32 queueFamilyIndex    = 0xFFFFFFFF;
     U32 queueIndex          = 0xFFFFFFFF;
     VulkanQueue* pQueue     = nullptr;
+    QueueFamily* pFamily    = nullptr;
 
     for (U32 i = 0; i < m_queueFamilies.size(); ++i) {
 
@@ -557,6 +560,7 @@ ErrType VulkanDevice::createCommandQueue(GraphicsQueue** ppQueue, GraphicsQueueT
                 
                 queueFamilyIndex    = family.queueFamilyIndex;
                 queueIndex          = family.currentAvailableQueueIndex++;
+                pFamily             = &family;
                 break;
                 
             }
@@ -576,7 +580,7 @@ ErrType VulkanDevice::createCommandQueue(GraphicsQueue** ppQueue, GraphicsQueueT
 
     pQueue = new VulkanQueue(type);
 
-    ErrType err = pQueue->initialize(this, queueFamilyIndex, queueIndex);
+    ErrType err = pQueue->initialize(this, pFamily, queueFamilyIndex, queueIndex);
 
     if (err == REC_RESULT_OK) {
 
@@ -995,7 +999,7 @@ ErrType VulkanDevice::destroyRenderPass(RenderPass* pRenderPass)
 }
 
 
-ErrType VulkanDevice::createGraphicsPipeline(PipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc)
+ErrType VulkanDevice::createGraphicsPipelineState(PipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc)
 {
     VulkanGraphicsPipelineState* pPipeline  = new VulkanGraphicsPipelineState();
     ErrType result                          = REC_RESULT_OK;

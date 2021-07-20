@@ -203,6 +203,8 @@ void VulkanCommandList::setPipelineState(PipelineState* pPipelineState, BindType
     VkPipeline pipeline         = pVps->get();
     
     vkCmdBindPipeline(m_currentCmdBuffer, bindPoint, pipeline);
+
+    m_boundPipelineState        = pVps;
 }
 
 
@@ -230,5 +232,94 @@ void VulkanCommandList::bindDescriptorSets(U32 count, DescriptorSet** pSets, Bin
 
     vkCmdBindDescriptorSets(m_currentCmdBuffer, bindPoint, layout, 0, numDescriptorSetsBound,
         descriptorSets, 0, nullptr);
+}
+
+
+void VulkanCommandList::bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* pOffsets)
+{
+    VkBuffer vertexBuffers[8];
+    
+    for (U32 i = 0; i < numBuffers; ++i) {
+    
+        VulkanBuffer* pVb   = static_cast<VulkanBuffer*>(ppVertexBuffers[i]);
+        vertexBuffers[i]    = pVb->get();
+    
+    }
+
+    vkCmdBindVertexBuffers(m_currentCmdBuffer, 0, numBuffers, vertexBuffers, pOffsets);
+}
+
+
+void VulkanCommandList::drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstVertex, U32 firstInstance)
+{
+    vkCmdDraw(m_currentCmdBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
+}
+
+
+void VulkanCommandList::copyResource(GraphicsResource* dst, GraphicsResource* src)
+{
+    const GraphicsResourceDescription& dstDesc = dst->getDesc();
+    const GraphicsResourceDescription& srcDesc = src->getDesc();
+
+    ResourceDimension dstDim = dstDesc.dimension;
+    ResourceDimension srcDim = srcDesc.dimension;
+
+    if (dstDim == RESOURCE_DIMENSION_BUFFER) { 
+        VulkanBuffer* dstBuffer = static_cast<VulkanBuffer*>(dst);
+
+        if (srcDim == RESOURCE_DIMENSION_BUFFER) {
+
+            VulkanBuffer* srcBuffer = static_cast<VulkanBuffer*>(src);
+            VkBufferCopy region     = { };
+            region.size             = dstDesc.width;
+            region.dstOffset        = 0;
+            region.srcOffset        = 0;
+            vkCmdCopyBuffer(m_currentCmdBuffer, srcBuffer->get(), dstBuffer->get(), 1, &region);
+
+        } else {
+
+            VulkanImage* pSrcImage      = static_cast<VulkanImage*>(src);
+            VkBufferImageCopy region    = { };
+            // TODO:
+            vkCmdCopyImageToBuffer(m_currentCmdBuffer, pSrcImage->get(), pSrcImage->getCurrentLayout(),
+                dstBuffer->get(), 1, &region);
+
+        }
+
+    } 
+}
+
+
+void VulkanCommandList::setViewports(U32 numViewports, Viewport* pViewports)
+{
+    VkViewport viewports[8];
+    for (U32 i = 0; i < numViewports; ++i) {
+    
+        viewports[i].x = pViewports[i].x;
+        viewports[i].y = pViewports[i].y;
+        viewports[i].width = pViewports[i].width;
+        viewports[i].height = pViewports[i].height;
+        viewports[i].minDepth = pViewports[i].minDepth;
+        viewports[i].maxDepth = pViewports[i].maxDepth;
+    
+    }
+
+    vkCmdSetViewport(m_currentCmdBuffer, 0, numViewports, viewports);
+}
+
+
+void VulkanCommandList::setScissors(U32 numScissors, Rect* pRects) 
+{
+    VkRect2D scissors[8];
+    for (U32 i = 0; i < numScissors; ++i) {
+
+        scissors[i].extent.width = pRects[i].width;
+        scissors[i].extent.height = pRects[i].height;
+        scissors[i].offset.x = pRects[i].x;
+        scissors[i].offset.y = pRects[i].y;    
+    
+    }
+
+    vkCmdSetScissor(m_currentCmdBuffer, 0, numScissors, scissors);
 }
 } // Recluse

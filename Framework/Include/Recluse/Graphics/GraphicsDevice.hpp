@@ -88,11 +88,11 @@ public:
     virtual ErrType createDescriptorSetLayout(DescriptorSetLayout** ppLayout, const DescriptorSetLayoutDesc& desc)
         { return REC_RESULT_NOT_IMPLEMENTED; }
 
-    virtual ErrType createGraphicsPipeline(PipelineState** pPipelineState, const GraphicsPipelineStateDesc& desc) 
+    virtual ErrType createGraphicsPipelineState(PipelineState** pPipelineState, const GraphicsPipelineStateDesc& desc) 
         { return REC_RESULT_NOT_IMPLEMENTED; }
 
-    virtual ErrType createComputePipeline() { return REC_RESULT_NOT_IMPLEMENTED; }
-    virtual ErrType createRaytracingPipeline() { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual ErrType createComputePipelineState() { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual ErrType createRaytracingPipelineState() { return REC_RESULT_NOT_IMPLEMENTED; }
 
     virtual ErrType createResourceView(GraphicsResourceView** ppView, const ResourceViewDesc& desc) 
         { return REC_RESULT_NOT_IMPLEMENTED; }
@@ -100,7 +100,6 @@ public:
     virtual ErrType createRenderPass(RenderPass** ppRenderPass, const RenderPassDesc& desc) 
         { return REC_RESULT_NOT_IMPLEMENTED; }
 
-    virtual ErrType createGraphicsPipelineState() { return REC_RESULT_NOT_IMPLEMENTED; }
     virtual ErrType createDescriptorSet(DescriptorSet** ppLayout, DescriptorSetLayout* pSetLayout) 
         { return REC_RESULT_NOT_IMPLEMENTED; }
 
@@ -116,6 +115,8 @@ public:
     virtual ErrType destroyPipelineState(PipelineState* pPipelineState) { return REC_RESULT_NOT_IMPLEMENTED; }
     virtual ErrType destroyDescriptorSet(DescriptorSet* pSet) { return REC_RESULT_NOT_IMPLEMENTED; }
     virtual ErrType destroyDescriptorSetLayout(DescriptorSetLayout* pSetLayout) { return REC_RESULT_NOT_IMPLEMENTED; }
+
+    
 private:
 };
 

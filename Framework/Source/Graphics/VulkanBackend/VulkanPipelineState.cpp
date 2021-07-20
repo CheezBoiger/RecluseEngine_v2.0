@@ -328,6 +328,22 @@ static VkPipelineViewportStateCreateInfo getViewportInfo() {
 }
 
 
+static VkPipelineMultisampleStateCreateInfo getMultisampleStateInfo()
+{
+    VkPipelineMultisampleStateCreateInfo info   = { };
+
+    info.sType                                  = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    info.pSampleMask                            = nullptr;
+    info.rasterizationSamples                   = VK_SAMPLE_COUNT_1_BIT;
+    info.sampleShadingEnable                    = VK_FALSE;
+    info.alphaToCoverageEnable                  = VK_FALSE;
+    info.alphaToOneEnable                       = VK_FALSE;
+    info.minSampleShading                       = 0.f;
+
+    return info;
+}
+
+
 void VulkanPipelineState::destroy(VulkanDevice* pDevice)
 {   
     R_DEBUG(R_CHANNEL_VULKAN, "Destroying vulkan pipeline state...");
@@ -355,6 +371,7 @@ ErrType VulkanGraphicsPipelineState::initialize(VulkanDevice* pDevice, const Gra
     VkPipelineLayoutCreateInfo pli  = { };
     VulkanRenderPass* pVr           = static_cast<VulkanRenderPass*>(desc.pRenderPass);
     VkResult result                 = VK_SUCCESS;
+    ShaderCache* pShaderCache=      pDevice->getShaderCache();
     VkPipelineShaderStageCreateInfo shaderStages[16];
 
     std::vector<VkVertexInputAttributeDescription> attributes;
@@ -369,6 +386,7 @@ ErrType VulkanGraphicsPipelineState::initialize(VulkanDevice* pDevice, const Gra
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyState   = getAssemblyInfo(desc.primitiveTopology);
     VkPipelineDynamicStateCreateInfo dynamicState               = getDynamicStates();
     VkPipelineTessellationStateCreateInfo tessState             = getTessellationStateInfo(desc.tess);
+    VkPipelineMultisampleStateCreateInfo multisampleState       = getMultisampleStateInfo();
     
     std::vector<VkDescriptorSetLayout> descriptorSetLayouts(desc.numDescriptorSetLayouts);
 
@@ -405,10 +423,12 @@ ErrType VulkanGraphicsPipelineState::initialize(VulkanDevice* pDevice, const Gra
     ci.pVertexInputState    = &vertInputState;
     ci.pViewportState       = &viewportState;
     ci.pDynamicState        = &dynamicState;
+    ci.pMultisampleState    = &multisampleState;
     ci.stageCount           = 0;
     
     if (desc.pVS) {
-        shaderStages[ci.stageCount].module  = ShaderCache::getCachedShaderModule(pDevice, desc.pVS);
+        shaderStages[ci.stageCount]         = { };
+        shaderStages[ci.stageCount].module  = pShaderCache->getCachedShaderModule(pDevice, desc.pVS);
         shaderStages[ci.stageCount].stage   = VK_SHADER_STAGE_VERTEX_BIT;
         shaderStages[ci.stageCount].pName   = "main";
         shaderStages[ci.stageCount].sType   = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -416,7 +436,8 @@ ErrType VulkanGraphicsPipelineState::initialize(VulkanDevice* pDevice, const Gra
     }
 
     if (desc.pPS) {
-        shaderStages[ci.stageCount].module  = ShaderCache::getCachedShaderModule(pDevice, desc.pPS);
+        shaderStages[ci.stageCount]         = { };
+        shaderStages[ci.stageCount].module  = pShaderCache->getCachedShaderModule(pDevice, desc.pPS);
         shaderStages[ci.stageCount].stage   = VK_SHADER_STAGE_FRAGMENT_BIT;
         shaderStages[ci.stageCount].pName   = "main";
         shaderStages[ci.stageCount].sType   = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;

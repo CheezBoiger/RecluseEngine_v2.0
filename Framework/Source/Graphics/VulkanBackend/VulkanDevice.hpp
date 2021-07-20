@@ -2,6 +2,7 @@
 #pragma once
 
 #include "VulkanContext.hpp"
+#include "VulkanShaderCache.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 
 #include <vector>
@@ -60,7 +61,7 @@ public:
 
     ErrType createDescriptorSet(DescriptorSet** ppDescriptorSet, DescriptorSetLayout* pLayout) override;
 
-    ErrType createGraphicsPipeline(PipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) override;
+    ErrType createGraphicsPipelineState(PipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) override;
 
     ErrType createRenderPass(RenderPass** ppRenderPass, const RenderPassDesc& desc) override;
 
@@ -120,6 +121,8 @@ public:
     void prepare();
 
     VulkanDescriptorManager* getDescriptorHeap() { return m_pDescriptorManager; }
+    
+    ShaderCache* getShaderCache() { return &m_cache; }
 
 private:
 
@@ -147,6 +150,7 @@ private:
     VulkanAllocator* m_bufferAllocators[RESOURCE_MEMORY_USAGE_COUNT];
     VulkanAllocator* m_imageAllocators[RESOURCE_MEMORY_USAGE_COUNT];
     VulkanDescriptorManager* m_pDescriptorManager;
+    ShaderCache m_cache;
 
     // buffer count 
     U32 m_bufferCount;

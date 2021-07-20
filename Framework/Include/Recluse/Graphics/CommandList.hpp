@@ -23,8 +23,11 @@ public:
     virtual void begin() { }
     virtual void end() { }
 
+    virtual void bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* pOffsets) { }
+    virtual void bindIndexBuffer() { }
+
     virtual void drawIndexedInstanced() { }
-    virtual void drawInstanced() { }
+    virtual void drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstVertex, U32 firstInstance) { }
 
     virtual void drawInstancedIndirect() { }
     virtual void drawIndexedInstancedIndirect() { }
@@ -44,7 +47,7 @@ public:
     virtual void clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) { }
     virtual void clearDepthStencil() { }
 
-    virtual void copyResources(GraphicsResource* dst, GraphicsResource* src) { }
+    virtual void copyResource(GraphicsResource* dst, GraphicsResource* src) { }
     virtual void copyResourceRegion(GraphicsResource* dst) { }
     
 private:
