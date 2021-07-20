@@ -67,6 +67,10 @@ void VulkanQueue::destroy()
 
 ErrType VulkanQueue::submit(const QueueSubmit* payload)
 {
+    // Check if we need to clear our some flushes.
+    m_pDevice->flushAllMappedRanges();
+    m_pDevice->invalidateAllMappedRanges();
+
     VkSubmitInfo submitIf = { };
     VkCommandBuffer pBuffers[8];
     

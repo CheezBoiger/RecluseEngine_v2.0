@@ -371,8 +371,8 @@ ErrType VulkanResource::map(void** ptr, MapRange* pReadRange)
     
     if (pReadRange) {
 
-        offsetBytes = pReadRange->offsetBytes;
-        sizeBytes   = pReadRange->sizeBytes;
+        offsetBytes += pReadRange->offsetBytes;
+        sizeBytes    = pReadRange->sizeBytes;
 
     } 
 
@@ -390,20 +390,37 @@ ErrType VulkanResource::map(void** ptr, MapRange* pReadRange)
 
 ErrType VulkanResource::unmap(MapRange* pWriteRange)
 {
-    ErrType result  = REC_RESULT_OK;
-    VkResult vr     = VK_SUCCESS;
+    const GraphicsResourceDescription& desc = getDesc();
+    VkMappedMemoryRange mappedRange         = { };
+    ErrType result                          = REC_RESULT_OK;
+    VkResult vr                             = VK_SUCCESS;
 
-    VkDeviceSize offsetBytes    = m_memory.offsetBytes;
-    VkDeviceSize sizeBytes      = m_memory.sizeBytes;
+    VkDeviceMemory deviceMemory             = m_memory.deviceMemory;
+    VkDeviceSize offsetBytes                = m_memory.offsetBytes;
+    VkDeviceSize sizeBytes                  = VK_WHOLE_SIZE;
 
     if (pWriteRange) {
     
-        offsetBytes = pWriteRange->offsetBytes;
-        sizeBytes   = pWriteRange->sizeBytes;
+        offsetBytes += pWriteRange->offsetBytes;
+        sizeBytes    = pWriteRange->sizeBytes;
     
     }
 
-    
+    mappedRange.sType   = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+    mappedRange.memory  = deviceMemory;
+    mappedRange.offset  = offsetBytes;
+    mappedRange.size    = sizeBytes;
+
+    if (desc.memoryUsage == RESOURCE_MEMORY_USAGE_CPU_ONLY || 
+        desc.memoryUsage == RESOURCE_MEMORY_USAGE_CPU_TO_GPU) {
+
+        m_pDevice->pushFlushMemoryRange(mappedRange);
+
+    } else {
+
+        m_pDevice->pushInvalidateMemoryRange(mappedRange);
+
+    }
 
     return result;
 }

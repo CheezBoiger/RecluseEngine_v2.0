@@ -16,6 +16,8 @@ class VulkanQueue;
 class VulkanSwapchain;
 class VulkanAllocator;
 class VulkanDescriptorManager;
+class Allocator;
+class MemoryPool;
 struct DeviceCreateInfo;
 
 
@@ -124,16 +126,29 @@ public:
     
     ShaderCache* getShaderCache() { return &m_cache; }
 
+    // Invalidate resources when reading back from GPU.
+    void pushInvalidateMemoryRange(const VkMappedMemoryRange& mappedRange);
+
+    // Flush the resource memory range when writing from CPU to GPU.
+    void pushFlushMemoryRange(const VkMappedMemoryRange& mappedRange);
+
+    void flushAllMappedRanges();
+    void invalidateAllMappedRanges();
+
+    VkDeviceSize getNonCoherentSize() const { return m_properties.limits.nonCoherentAtomSize; }
+
 private:
 
     ErrType createSurface(VkInstance instance, void* handle);
     ErrType createCommandPools(U32 buffered);
     void createFences(U32 buffered);
+    void allocateMemCache();
     void createDescriptorHeap();
 
     void destroyFences();
     void destroyCommandPools();
     void destroyDescriptorHeap();
+    void freeMemCache();
 
     VulkanAdapter* m_adapter;
 
@@ -144,6 +159,17 @@ private:
     std::list<VulkanQueue*> m_queues;
     std::list<VulkanSwapchain*> m_swapchains;
     std::vector<VkFence>        m_fences;
+
+    struct {
+        struct {
+            MemoryPool* pool;
+            Allocator* allocator;
+        } invalid;
+        struct {
+            MemoryPool* pool;
+            Allocator* allocator;
+        } flush;
+    } m_memCache;
 
     VulkanMemoryPool m_bufferPool[RESOURCE_MEMORY_USAGE_COUNT];
     VulkanMemoryPool m_imagePool[RESOURCE_MEMORY_USAGE_COUNT];
@@ -157,5 +183,8 @@ private:
     U32 m_currentBufferIndex;
     
     void* m_windowHandle;
+    
+    // Adapter properties.
+    VkPhysicalDeviceProperties m_properties;
 };
 } // Recluse

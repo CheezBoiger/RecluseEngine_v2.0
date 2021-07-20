@@ -45,7 +45,10 @@ void updateResource(GraphicsResource* pResource)
     dat.texcoord1[0]    = 6.0f;
     dat.texcoord1[1]    = 10.0f;
 
-    MapRange mapRange   = { };
+    MapRange mapRange       = { };
+    mapRange.offsetBytes    = 0;
+    mapRange.sizeBytes      = sizeof(VertexData);
+
     void* ptr           = nullptr;
     ErrType result      = pResource->map(&ptr, &mapRange);
     
@@ -56,6 +59,7 @@ void updateResource(GraphicsResource* pResource)
     }
 
     memcpy(ptr, &dat, sizeof(dat));
+    pResource->unmap(&mapRange);
 }
 
 

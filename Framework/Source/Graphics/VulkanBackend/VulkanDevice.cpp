@@ -192,7 +192,10 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
     createCommandPools(info.buffering);    
     createFences(info.buffering);
     createDescriptorHeap();
+    allocateMemCache();
     m_bufferCount = info.buffering;
+
+    m_properties = adapter->getProperties();
 
     return 0;
 }
@@ -204,6 +207,7 @@ void VulkanDevice::destroy(VkInstance instance)
     destroyCommandPools();
     destroyFences();
     destroyDescriptorHeap();
+    freeMemCache();
 
     m_cache.clearCache(this);
 
@@ -1032,5 +1036,164 @@ ErrType VulkanDevice::destroyPipelineState(PipelineState* pPipelineState)
     delete pPipeline;
 
     return result;
+}
+
+
+void VulkanDevice::allocateMemCache()
+{
+    // TODO: In the future, we might need to consider multithreading cases, although
+    //       I don't think we will have more than one main rendering thread.
+    U64 cacheSizeBytes              = R_ALLOC_MASK(sizeof(VkMappedMemoryRange) * 128ull, ARCH_PTR_SZ_BYTES);
+    m_memCache.flush.pool           = new MemoryPool(cacheSizeBytes);
+    m_memCache.invalid.pool         = new MemoryPool(cacheSizeBytes);
+    m_memCache.flush.allocator      = new StackAllocator();
+    m_memCache.invalid.allocator    = new StackAllocator();
+
+    m_memCache.flush.allocator->initialize(m_memCache.flush.pool->getBaseAddress(), cacheSizeBytes);
+    m_memCache.invalid.allocator->initialize(m_memCache.invalid.pool->getBaseAddress(), cacheSizeBytes);
+}
+
+
+void VulkanDevice::freeMemCache()
+{
+    if (m_memCache.flush.allocator) {
+
+        m_memCache.flush.allocator->cleanUp();
+        delete m_memCache.flush.allocator;
+        m_memCache.flush.allocator = nullptr;        
+
+    }
+    
+    if (m_memCache.flush.pool) {
+
+        delete m_memCache.flush.pool; 
+        m_memCache.flush.pool = nullptr;   
+
+    }
+
+    if (m_memCache.invalid.allocator) {
+    
+        m_memCache.invalid.allocator->cleanUp();
+        delete m_memCache.invalid.allocator;
+        m_memCache.invalid.allocator = nullptr;
+        
+    }
+
+    if (m_memCache.invalid.pool) {
+    
+        delete m_memCache.invalid.pool;
+        m_memCache.invalid.pool = nullptr;
+    
+    }
+}
+
+
+void VulkanDevice::flushAllMappedRanges()
+{
+    if (m_memCache.flush.allocator->getTotalAllocations() == 0) {
+        
+        return;
+    
+    }
+
+    VkResult result                 = VK_SUCCESS;
+    U32 totalCount                  = (U32)m_memCache.flush.allocator->getTotalAllocations();
+    VkMappedMemoryRange* pRanges    = (VkMappedMemoryRange*)m_memCache.flush.allocator->getBaseAddr();
+
+    result = vkFlushMappedMemoryRanges(m_device, totalCount, pRanges);
+
+    if (result != VK_SUCCESS) {
+
+        R_ERR(R_CHANNEL_VULKAN, "Failed to flush memory ranges...");    
+
+    }
+
+    m_memCache.flush.allocator->reset();
+}
+
+
+void VulkanDevice::invalidateAllMappedRanges()
+{
+    if (m_memCache.invalid.allocator->getTotalAllocations() == 0) {
+        
+        return;
+    
+    }
+
+    VkResult result                 = VK_SUCCESS;
+    U32 totalCount                  = (U32)m_memCache.invalid.allocator->getTotalAllocations();
+    VkMappedMemoryRange* pRanges    = (VkMappedMemoryRange*)m_memCache.invalid.allocator->getBaseAddr();
+
+    result = vkInvalidateMappedMemoryRanges(m_device, totalCount, pRanges);
+
+    if (result != VK_SUCCESS) {
+
+        R_ERR(R_CHANNEL_VULKAN, "Failed to invalidate memory ranges...");    
+
+    }
+
+    m_memCache.invalid.allocator->reset();
+}
+
+
+void VulkanDevice::pushFlushMemoryRange(const VkMappedMemoryRange& mappedRange)
+{
+    Allocation allocation   = { };
+    VkDeviceSize atomSz     = getNonCoherentSize();
+    ErrType result          = m_memCache.flush.allocator->allocate(&allocation, sizeof(VkMappedMemoryRange), 
+        ARCH_PTR_SZ_BYTES);
+ 
+   if (result != REC_RESULT_OK) {
+    
+        if (result == REC_RESULT_OUT_OF_MEMORY) {
+
+            R_ERR(R_CHANNEL_VULKAN, "Memory flush cache out of memory!");        
+
+        } else {
+
+            R_ERR(R_CHANNEL_VULKAN, "Failed to push flush memory range!");        
+
+        }
+    
+        // Possible null ptr returned, breaking off.
+        return;
+    }
+
+    VkMappedMemoryRange* pRange = (VkMappedMemoryRange*)allocation.ptr;
+    *pRange                     = mappedRange;
+
+    // We need to align on nonCoherentAtomSize, as spec states it must be a multiple of this.
+    pRange->size                = R_ALLOC_MASK(mappedRange.size, atomSz);
+}
+
+
+void VulkanDevice::pushInvalidateMemoryRange(const VkMappedMemoryRange& mappedRange)
+{
+    Allocation allocation   = { };
+    VkDeviceSize atomSz     = getNonCoherentSize();
+    ErrType result          = m_memCache.invalid.allocator->allocate(&allocation, sizeof(VkMappedMemoryRange), 
+        ARCH_PTR_SZ_BYTES);
+ 
+   if (result != REC_RESULT_OK) {
+    
+        if (result == REC_RESULT_OUT_OF_MEMORY) {
+
+            R_ERR(R_CHANNEL_VULKAN, "Memory flush cache out of memory!");        
+
+        } else {
+
+            R_ERR(R_CHANNEL_VULKAN, "Failed to push flush memory range!");        
+
+        }
+
+        // Possible nullptr, break off.
+        return;
+    
+    }
+
+    VkMappedMemoryRange* pRange = (VkMappedMemoryRange*)allocation.ptr;
+    *pRange                     = mappedRange;
+
+    pRange->size                = R_ALLOC_MASK(mappedRange.size, atomSz);
 }
 } // Recluse
