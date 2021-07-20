@@ -34,6 +34,8 @@ Vertex vertices[] = {
 
 struct ConstData {
     float color[4];
+    float pad[2];
+    float offset[2];
 };
 
 int main(int c, char* argv[])
@@ -218,6 +220,9 @@ int main(int c, char* argv[])
         dat.color[1] = 0.0f;
         dat.color[2] = 0.0f;
         dat.color[3] = 0.0f;
+    
+        dat.offset[0] = -1.0f;
+        dat.offset[1] = -1.0f;
         
         void* ptr = nullptr;
         MapRange range = { };
