@@ -9,6 +9,22 @@ class GraphicsDevice;
 class GraphicsAdapter;
 class GraphicsContext;
 
+class Texture2D;
+class Mesh;
+class Primitive;
+class VertexBuffer;
+class IndexBuffer;
+
+struct MeshDescription {
+};
+
+
+struct MaterialDescription {
+
+};
+
+
+
 namespace Engine {
 
 
@@ -19,6 +35,8 @@ public:
 
     void render();
     void present();
+
+    
 
 private:
     GraphicsContext* m_pContext;
