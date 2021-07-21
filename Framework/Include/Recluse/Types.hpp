@@ -26,10 +26,12 @@ typedef signed long long    I64;
 typedef float               F32;
 typedef double              F64;
 
+// Separate boolean datatypes.
 typedef U8                  B8;
 typedef U32                 B32;
 typedef U64                 B64;
 
+// Error type to use for error checking.
 typedef I32                 ErrType;
 
 #if defined(RECLUSE_WINDOWS)
@@ -57,7 +59,8 @@ enum RecResult {
     REC_RESULT_NOT_IMPLEMENTED,
     REC_RESULT_TIMEOUT,
     REC_RESULT_NEEDS_UPDATE,
-    REC_RESULT_OUT_OF_MEMORY
+    REC_RESULT_OUT_OF_MEMORY,
+    REC_RESULT_NOT_FOUND
 };
 
 } // Recluse

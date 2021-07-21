@@ -27,6 +27,9 @@ enum GameObjectStatus {
     GAME_OBJECT_STATUS_DESTROYED
 };
 
+// Game object, which holds all our object logic and script behavior.
+// Kept as native C++, this class holds scripting behavior, which 
+// will be used by objects in the game world.
 class GameObject {
 public:
     virtual ~GameObject() { }
@@ -110,22 +113,22 @@ public:
 protected:
 
     // Override on initialize for your game object script.
-    virtual void onInitialize() { }
+    virtual R_EXPORT void onInitialize() { }
 
     // Override on wake, to determine what to wake up in the game object.
-    virtual void onWake() { }
+    virtual R_EXPORT void onWake() { }
 
     // Override update for each update on the game object.
-    virtual void onUpdate(const RealtimeTick& tick) { }
+    virtual R_EXPORT void onUpdate(const RealtimeTick& tick) { }
 
     // Override on update fixed, for any fixed updates.
-    virtual void onUpdateFixed(const RealtimeTick& tick) { }
+    virtual R_EXPORT void onUpdateFixed(const RealtimeTick& tick) { }
 
     // Override when game object sleeps.
-    virtual void onSleep() { }
+    virtual R_EXPORT void onSleep() { }
 
     // Override when game object must clean up any manual objects.
-    virtual void onDestroy() { }
+    virtual R_EXPORT void onDestroy() { }
 
     // Game Object tag.
     std::string m_tag;
@@ -144,7 +147,7 @@ private:
     // game object parent.
     std::set<GameObject*> m_childrenNodes;
 
-    // 
+    // Game Object uuid.
     GameUUID m_guuid;
 };
 } // Engine

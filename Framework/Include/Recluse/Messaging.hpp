@@ -22,6 +22,7 @@
 #define R_VERBOSE(chan, format, ...) R_LOG(chan, Recluse::LogVerbose, format, __VA_ARGS__)
 #define R_TRACE(chan, format, ...) R_LOG(chan, Recluse::LogTrace, format, __VA_ARGS__)
 
+// Debugging macros and definitions. To be ignored on building release.
 #if defined(RECLUSE_DEBUG)
 #include <assert.h>
 #define R_ASSERT_LOG()

@@ -28,10 +28,16 @@ struct LogMessage {
     LogType type;
 };
 
+// Logging message struct. Contains message strings to be stored.
+// Recommended to keep this off unless there is a need to debug.
 struct Log {
+    // Data message.
     LogMessage data;
 
+    // One time initialize of the data structure for our logging system.
     static R_EXPORT void initializeLoggingSystem();
+    
+    // Final call once the process is completely finished. 
     static R_EXPORT void destroyLoggingSystem();
 
     Log(LogType type = LogMsg, const std::string& chan = u8"") {
