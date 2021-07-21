@@ -112,6 +112,10 @@ if ( RCL_DX12 )
         ${RECLUSE_D3D12_DIR}/D3D12Device.cpp
         ${RECLUSE_D3D12_DIR}/D3D12Adapter.cpp
         ${RECLUSE_D3D12_DIR}/D3D12Commons.hpp
+        ${RECLUSE_D3D12_DIR}/D3D12Swapchain.hpp
+        ${RECLUSE_D3D12_DIR}/D3D12Swapchain.cpp
+        ${RECLUSE_D3D12_DIR}/D3D12Queue.hpp
+        ${RECLUSE_D3D12_DIR}/D3D12Queue.cpp
     )
 endif()
 

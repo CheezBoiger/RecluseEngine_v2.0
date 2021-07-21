@@ -50,8 +50,8 @@ ErrType D3D12Context::onInitialize(const ApplicationInfo& appInfo, EnableLayerFl
 {
     R_DEBUG(R_CHANNEL_D3D12, "Initializing D3D12 context...");
     HRESULT result = S_OK;
-
-    result = CreateDXGIFactory1(__uuidof(IDXGIFactory1), (void**)&m_pFactory);
+    
+    result = CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**)&m_pFactory);
 
     if (result != S_OK) {
         return REC_RESULT_FAILED;

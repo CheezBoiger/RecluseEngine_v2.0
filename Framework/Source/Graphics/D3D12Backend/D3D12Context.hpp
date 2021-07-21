@@ -14,7 +14,7 @@ class D3D12Adapter;
 class D3D12Context : public GraphicsContext {
 public:
 
-    IDXGIFactory1* get() const { return m_pFactory; }
+    IDXGIFactory2* get() const { return m_pFactory; }
 
 private:
     void queryGraphicsAdapters() override;
@@ -22,6 +22,6 @@ private:
     ErrType onInitialize(const ApplicationInfo& appInfo, EnableLayerFlags flags) override;
     void onDestroy() override;
 
-    IDXGIFactory1* m_pFactory;
+    IDXGIFactory2* m_pFactory;
 };
 } // Recluse
