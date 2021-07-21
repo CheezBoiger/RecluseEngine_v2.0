@@ -6,12 +6,13 @@
 #include "Recluse/Graphics/GraphicsAdapter.hpp"
 
 #include <vector>
+#include <list>
 
 namespace Recluse {
 
 
 class D3D12Context;
-
+class D3D12Device;
 
 class D3D12Adapter : public GraphicsAdapter {
 public:
@@ -23,6 +24,9 @@ public:
 
     D3D12Context* getContext() const { return m_pContext; }
 
+    ErrType createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice) override;
+    ErrType destroyDevice(GraphicsDevice* pDevice) override;
+
     void destroy() { }
 
 private:
@@ -31,6 +35,8 @@ private:
 
     IDXGIAdapter* m_pAdapter;
     D3D12Context* m_pContext;
+    
+    std::list<D3D12Device*> m_devices;
 
     friend class D3D12Context;
 };

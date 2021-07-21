@@ -23,7 +23,8 @@ public:
         , m_currentFrameIndex(0)
         , m_currentImageIndex(0)
         , m_pBackbufferQueue(nullptr)
-        , m_pDevice(nullptr) { }
+        , m_pDevice(nullptr)
+        , m_queueFamily(nullptr) { }
 
     // Build the vulkan swapchain. This will return the total number of frames that 
     // were created.

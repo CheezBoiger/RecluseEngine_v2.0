@@ -16,7 +16,9 @@ class VulkanRenderPass : public RenderPass {
 public:
     VulkanRenderPass()
         : m_fbo(VK_NULL_HANDLE)
-        , m_renderPass(VK_NULL_HANDLE) { }
+        , m_renderPass(VK_NULL_HANDLE)
+        , m_renderArea({ })
+        , m_desc({ }) { }
 
     ErrType initialize(VulkanDevice* pDevice, const RenderPassDesc& desc);
 
@@ -58,7 +60,8 @@ private:
 class VulkanDescriptorSet : public DescriptorSet {
 public:
     VulkanDescriptorSet()
-        : m_set(VK_NULL_HANDLE) { }
+        : m_set(VK_NULL_HANDLE)
+        , m_pDevice(nullptr) { }
 
     ErrType initialize(VulkanDevice* pDevice, VulkanDescriptorSetLayout* pLayout);
 

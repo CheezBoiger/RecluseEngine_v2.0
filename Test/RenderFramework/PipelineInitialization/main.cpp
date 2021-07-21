@@ -15,8 +15,11 @@
 #include "Recluse/System/Window.hpp"
 #include "Recluse/System/Input.hpp"
 
+#include "Recluse/RealtimeTick.hpp"
 #include "Recluse/Filesystem/Filesystem.hpp"
 #include "Recluse/Messaging.hpp"
+
+#include <cmath>
 
 using namespace Recluse;
 
@@ -26,9 +29,9 @@ struct Vertex {
 
 
 Vertex vertices[] = {
-    { 0.0f, 0.0f },
-    { 1.0f, 0.0f },
-    { 1.0f, 1.0f }
+    { -1.0f,  0.0f },
+    {  0.0f, -1.0f },
+    {  1.0f,  0.0f }
 };
 
 
@@ -38,9 +41,26 @@ struct ConstData {
     float offset[2];
 };
 
+void updateConstData(GraphicsResource* pData, RealtimeTick& tick)
+{
+    ConstData dat = { };
+    dat.color[0] = abs(sinf(tick.getCurrentTimeS() * 0.0000001f));
+    dat.color[1] = 0.0f;
+    dat.color[2] = 1.0f;
+    dat.color[3] = 0.0f;
+    
+    dat.offset[0] = 0.0f;
+    dat.offset[1] = 0.0f;
+    void* ptr = nullptr;
+    pData->map(&ptr, nullptr);
+    memcpy(ptr, &dat, sizeof(ConstData));
+    pData->unmap(nullptr);
+}
+
 int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
+    RealtimeTick::initialize();
 
     GraphicsContext* pContext       = GraphicsContext::createContext(GRAPHICS_API_VULKAN);
     GraphicsAdapter* pAdapter       = nullptr;
@@ -221,8 +241,8 @@ int main(int c, char* argv[])
         dat.color[2] = 0.0f;
         dat.color[3] = 0.0f;
     
-        dat.offset[0] = -1.0f;
-        dat.offset[1] = -1.0f;
+        dat.offset[0] = 0.0f;
+        dat.offset[1] = 0.0f;
         
         void* ptr = nullptr;
         MapRange range = { };
@@ -377,6 +397,9 @@ int main(int c, char* argv[])
     U64 offset = 0;
 
     while (!pWindow->shouldClose()) {
+        RealtimeTick tick = RealtimeTick::getTick();
+        updateConstData(pData, tick);
+
         pList->begin();
             pList->setRenderPass(passes[pSwapchain->getCurrentFrameIndex()]);
             pList->setPipelineState(pPipeline, BIND_TYPE_GRAPHICS);

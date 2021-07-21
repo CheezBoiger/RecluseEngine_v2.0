@@ -17,7 +17,10 @@ class VulkanQueue : public GraphicsQueue {
 public:
     VulkanQueue(GraphicsQueueTypeFlags type) 
         : GraphicsQueue(type)
-        , m_queue(nullptr) { }
+        , m_queue(nullptr)
+        , m_pDevice(nullptr)
+        , m_fence(VK_NULL_HANDLE)
+        , m_pFamilyRef(nullptr) { }
 
     ~VulkanQueue();
 

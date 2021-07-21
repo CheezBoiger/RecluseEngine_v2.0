@@ -52,7 +52,8 @@ private:
 
     Shader(ShaderIntermediateCode intermediateCode, ShaderType type)
         : m_intermediateCode(intermediateCode)
-        , m_shaderType(type) { }
+        , m_shaderType(type)
+        , m_crc(0ull) { }
 
 public:
 

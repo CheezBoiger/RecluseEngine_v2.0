@@ -42,7 +42,8 @@ int main(int c, char* argv[])
         AdapterInfo adapterInfo = { }; 
         adapter->getAdapterInfo(&adapterInfo);
 
-        R_INFO("Graphics", "\tDevice Name: %s\n\t\tVendor ID: %d\n", adapterInfo.deviceName, adapterInfo.vendorId);
+        R_INFO("Graphics", "\tDevice Name: %s\n\t\tVendor ID: %d\n\t\tVendor Name: %s\n", adapterInfo.deviceName, 
+            adapterInfo.vendorId, adapterInfo.vendorName);
 
     }
 

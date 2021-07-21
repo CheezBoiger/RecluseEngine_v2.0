@@ -88,14 +88,15 @@ ErrType VulkanAdapter::getAdapterInfo(AdapterInfo* out) const
     out->vendorId = properties.vendorID;
 
     switch (properties.vendorID) {
-        case AMD_VENDOR_ID: out->vendor = VENDOR_AMD; break;
-        case INTEL_VENDOR_ID:  out->vendor = VENDOR_INTEL; break;
-        case NVIDIA_VENDOR_ID:  out->vendor = VENDOR_NVIDIA; break;
+        case AMD_VENDOR_ID: out->vendorName = "Advanced Micro Devices"; break;
+        case INTEL_VENDOR_ID:  out->vendorName = "Intel Corporation"; break;
+        case NVIDIA_VENDOR_ID:  out->vendorName = "Nvidia Corporation"; break;
+        case MSFT_VENDOR_ID: out->vendorName = "Microsoft"; break;
         default:
-            out->vendor = VENDOR_UNKNOWN; break;
+            out->vendorName = "Unknown"; break;
     }    
 
-    return 0;
+    return REC_RESULT_OK;
 }
 
 
@@ -107,18 +108,18 @@ ErrType VulkanAdapter::createDevice(DeviceCreateInfo& info, GraphicsDevice** ppD
     VulkanDevice* pDevice = new VulkanDevice();
     ErrType err = pDevice->initialize(this, info);
     
-    if (err != 0) {
+    if (err != REC_RESULT_OK) {
         
         R_ERR(R_CHANNEL_VULKAN, "Failed to initialize device!");
 
         delete pDevice;
-        return -1;
+        return REC_RESULT_FAILED;
     }
 
     m_devices.push_back(pDevice);
     *ppDevice = pDevice;
 
-    return 0;
+    return REC_RESULT_OK;
 }
 
 
@@ -136,13 +137,13 @@ ErrType VulkanAdapter::destroyDevice(GraphicsDevice* pDevice)
             delete *iter;
             m_devices.erase(iter);
 
-            return 0;
+            return REC_RESULT_OK;
         }
     }
 
     R_ERR(R_CHANNEL_VULKAN, "Device does not belong to this adapter!");   
  
-    return 0;
+    return REC_RESULT_OK;
 }
 
 

@@ -2,6 +2,10 @@
 #include "D3D12Adapter.hpp"
 #include "D3D12Context.hpp"
 
+#include "D3D12Device.hpp"
+
+#include "Recluse/Messaging.hpp"
+
 namespace Recluse {
 
 
@@ -38,14 +42,61 @@ ErrType D3D12Adapter::getAdapterInfo(AdapterInfo* out) const
     out->vendorId = vendorId;   
     
     switch (desc.VendorId) {
-        case INTEL_VENDOR_ID: out->vendor = VENDOR_INTEL; break;
-        case NVIDIA_VENDOR_ID: out->vendor = VENDOR_NVIDIA; break;
-        case AMD_VENDOR_ID: out->vendor = VENDOR_AMD; break;
-        default: out->vendor = VENDOR_UNKNOWN; break;
+        case INTEL_VENDOR_ID: out->vendorName = "Intel Corporation"; break;
+        case NVIDIA_VENDOR_ID: out->vendorName = "Nvidia Corporation"; break;
+        case AMD_VENDOR_ID: out->vendorName = "Advanced Micro Devices"; break;
+        case MSFT_VENDOR_ID: out->vendorName = "Microsoft"; break;
+        default: out->vendorName = "Unknown"; break;
     } 
 
     WideCharToMultiByte(CP_UTF8, 0, desc.Description, 128, out->deviceName, 256, 0, 0);
 
     return REC_RESULT_OK;
+}
+
+
+ErrType D3D12Adapter::createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice)
+{
+    D3D12Device* pDevice    = new D3D12Device();
+    ErrType result          = REC_RESULT_OK;
+    
+    result = pDevice->initialize(this, info);
+    
+    if (result != REC_RESULT_OK) {
+    
+        R_ERR(R_CHANNEL_D3D12, "Failed to create a d3d12 device!");
+
+        pDevice->destroy();
+        delete pDevice;
+        
+        return result;
+    }
+
+    m_devices.push_back(pDevice);
+
+    *ppDevice = pDevice;
+
+    return result;
+}
+
+
+ErrType D3D12Adapter::destroyDevice(GraphicsDevice* pDevice)
+{
+    if (!pDevice) return REC_RESULT_NULL_PTR_EXCEPTION;
+
+    for (auto& iter = m_devices.begin(); iter != m_devices.end(); ++iter) {
+    
+        if ((*iter) == pDevice) {
+        
+            (*iter)->destroy();
+            delete *iter;
+            m_devices.erase(iter);
+            
+            return REC_RESULT_OK;
+        }
+    
+    }
+
+    return REC_RESULT_FAILED;
 }
 } // Recluse

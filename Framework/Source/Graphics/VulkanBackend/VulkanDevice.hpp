@@ -39,7 +39,9 @@ public:
         , m_adapter(nullptr)
         , m_bufferCount(0)
         , m_currentBufferIndex(0)
-        , m_pDescriptorManager(nullptr) { 
+        , m_pDescriptorManager(nullptr)
+        , m_properties({ })
+        , m_memCache({ }) { 
         for (U32 i = 0; i < RESOURCE_MEMORY_USAGE_COUNT; ++i) { 
             m_bufferPool[i].memory = VK_NULL_HANDLE;
             m_imagePool[i].memory = VK_NULL_HANDLE;

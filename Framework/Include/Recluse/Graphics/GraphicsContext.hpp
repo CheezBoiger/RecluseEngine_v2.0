@@ -7,8 +7,9 @@
 
 // Vendor IDs
 #define NVIDIA_VENDOR_ID        0x10DE
-#define INTEL_VENDOR_ID         0x1F96
+#define INTEL_VENDOR_ID         0x8086
 #define AMD_VENDOR_ID           0x1022
+#define MSFT_VENDOR_ID          0x1414
 
 namespace Recluse {
 

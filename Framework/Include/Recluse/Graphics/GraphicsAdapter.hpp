@@ -6,18 +6,11 @@
 
 namespace Recluse {
 
-enum GraphicsVendor {
-    VENDOR_UNKNOWN,
-    VENDOR_INTEL,
-    VENDOR_NVIDIA,
-    VENDOR_AMD
-};
-
 
 struct R_EXPORT AdapterInfo {
     char            deviceName[256];
     U32             vendorId;
-    GraphicsVendor  vendor;
+    char*           vendorName;
 };
 
 
