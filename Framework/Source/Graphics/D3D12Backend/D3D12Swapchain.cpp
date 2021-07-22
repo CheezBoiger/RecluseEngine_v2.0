@@ -11,29 +11,37 @@ namespace Recluse {
 
 ErrType D3D12Swapchain::initialize(D3D12Device* pDevice)
 {
-    R_DEBUG(R_CHANNEL_D3D12, "Createing dxgi swapchain...");
+    R_DEBUG(R_CHANNEL_D3D12, "Creating dxgi swapchain...");
+    HWND windowHandle = pDevice->getWindowHandle();
+
+    if (!windowHandle) {
+
+        R_ERR(R_CHANNEL_D3D12, "Can not create swapchain without a window handle!");
+
+        return REC_RESULT_FAILED;
+    }
 
     const SwapchainCreateDescription& desc  = getDesc();
     D3D12Context* pContext                  = pDevice->getAdapter()->getContext();
     IDXGIFactory2* pFactory                 = pContext->get();
     ID3D12CommandQueue* pQueue              = static_cast<D3D12Queue*>(desc.pBackbufferQueue)->get();    
-    HWND windowHandle                       = pDevice->getWindowHandle();
     HRESULT result                          = S_OK;
     DXGI_SWAP_CHAIN_DESC1 swapchainDesc     = { };
+    IDXGISwapChain1* swapchain1             = nullptr;
 
     swapchainDesc.Width                     = desc.renderWidth;
     swapchainDesc.Height                    = desc.renderHeight;
     swapchainDesc.BufferCount               = desc.desiredFrames;
     swapchainDesc.BufferUsage               = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapchainDesc.Format                    = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
-    swapchainDesc.AlphaMode                 = DXGI_ALPHA_MODE_IGNORE;
+    swapchainDesc.Format                    = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapchainDesc.AlphaMode                 = DXGI_ALPHA_MODE_UNSPECIFIED;
     swapchainDesc.Scaling                   = DXGI_SCALING_STRETCH;
     swapchainDesc.Stereo                    = FALSE;
     swapchainDesc.SwapEffect                = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapchainDesc.SampleDesc.Count          = 1;
     swapchainDesc.SampleDesc.Quality        = 0;
 
-    pFactory->CreateSwapChainForHwnd(pQueue, windowHandle, &swapchainDesc, nullptr, nullptr, &m_pSwapchain);
+    result = pFactory->CreateSwapChainForHwnd(pQueue, windowHandle, &swapchainDesc, nullptr, nullptr, &swapchain1);
 
     if (result != S_OK) {
     
@@ -41,6 +49,20 @@ ErrType D3D12Swapchain::initialize(D3D12Device* pDevice)
         
         return REC_RESULT_FAILED;
     }
+
+    result = swapchain1->QueryInterface<IDXGISwapChain3>(&m_pSwapchain);
+    swapchain1->Release();
+
+    if (FAILED(result)) {
+        
+        R_ERR(R_CHANNEL_D3D12, "Could not query for swapchain3 interface!");
+
+        destroy();
+
+        return REC_RESULT_FAILED;
+    }
+
+    m_maxFrames = desc.desiredFrames;
 
     return REC_RESULT_OK;
 }
@@ -68,5 +90,23 @@ GraphicsResource* D3D12Swapchain::getFrame(U32 idx)
 GraphicsResourceView* D3D12Swapchain::getFrameView(U32 idx)
 {
     return nullptr;
+}
+
+
+ErrType D3D12Swapchain::present()
+{
+    HRESULT result = S_OK;
+    result = m_pSwapchain->Present(0, 0);
+    if (FAILED(result)) {
+
+        R_ERR(R_CHANNEL_D3D12, "Failed to present current frame: %d");        
+
+    }
+
+    incrementFrameIndex();
+
+    m_currentBackbufferIndex = m_pSwapchain->GetCurrentBackBufferIndex();
+
+    return REC_RESULT_OK;
 }
 } // Recluse

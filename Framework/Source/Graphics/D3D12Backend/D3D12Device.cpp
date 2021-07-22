@@ -81,4 +81,46 @@ ErrType D3D12Device::destroySwapchain(GraphicsSwapchain* pSwapchain)
    
     return result;
 }
+
+
+ErrType D3D12Device::createCommandQueue(GraphicsQueue** ppQueue, GraphicsQueueTypeFlags type)
+{
+    D3D12Queue* pD3D12Queue = new D3D12Queue(type);
+    ErrType result          = REC_RESULT_OK;
+
+    result = pD3D12Queue->initialize(this);
+
+    if (result != REC_RESULT_OK) {
+    
+        R_ERR(R_CHANNEL_D3D12, "Failed to create d3d12 queue!");
+
+        pD3D12Queue->destroy();
+        delete pD3D12Queue;
+
+        return result;    
+
+    }
+
+    *ppQueue = pD3D12Queue;
+
+    return result;
+}
+
+
+ErrType D3D12Device::destroyCommandQueue(GraphicsQueue* pQueue)
+{
+    if (!pQueue) {
+
+        return REC_RESULT_NULL_PTR_EXCEPTION;
+
+    }
+
+    D3D12Queue* pD3D12Queue = static_cast<D3D12Queue*>(pQueue);
+
+    pD3D12Queue->destroy();
+
+    delete pD3D12Queue;
+
+    return REC_RESULT_OK;
+}
 } // Recluse

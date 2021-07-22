@@ -29,6 +29,9 @@ public:
     ErrType createSwapchain(GraphicsSwapchain** ppSwapchain, const SwapchainCreateDescription& desc) override;
     ErrType destroySwapchain(GraphicsSwapchain* pSwapchain) override;
 
+    ErrType createCommandQueue(GraphicsQueue** ppQueue, GraphicsQueueTypeFlags type) override;
+    ErrType destroyCommandQueue(GraphicsQueue* pQueue) override;
+
     HWND getWindowHandle() const { return m_windowHandle; }
 
 private:

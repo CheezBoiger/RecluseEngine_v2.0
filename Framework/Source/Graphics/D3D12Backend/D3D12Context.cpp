@@ -4,6 +4,7 @@
 
 #include "Recluse/Messaging.hpp"
 
+
 namespace Recluse {
 
 
@@ -50,7 +51,11 @@ ErrType D3D12Context::onInitialize(const ApplicationInfo& appInfo, EnableLayerFl
 {
     R_DEBUG(R_CHANNEL_D3D12, "Initializing D3D12 context...");
     HRESULT result = S_OK;
-    
+
+    if (flags & LAYER_FEATURE_DEBUG_VALIDATION_BIT) {
+        enableDebugValidation();
+    }    
+
     result = CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**)&m_pFactory);
 
     if (result != S_OK) {
@@ -73,5 +78,34 @@ void D3D12Context::onDestroy()
     }
 
     R_DEBUG(R_CHANNEL_D3D12, "Successfully destroyed context!");
+}
+
+
+void D3D12Context::enableDebugValidation()
+{
+    R_DEBUG(R_CHANNEL_D3D12, "Enabling Debug and GPU validation...");
+#if !defined(D3D12_IGNORE_SDK_LAYERS)
+    ID3D12Debug* spDebugController0 = nullptr;
+    ID3D12Debug1* spDebugController1 = nullptr;
+    HRESULT result                  = S_OK;
+
+    result = D3D12GetDebugInterface(__uuidof(ID3D12Debug), (void**)&spDebugController0);
+    if (FAILED(result)) {
+
+        R_ERR(R_CHANNEL_D3D12, "Failed to enable gpu validation!");    
+
+    }
+
+    spDebugController0->EnableDebugLayer();
+    spDebugController0->QueryInterface<ID3D12Debug1>(&spDebugController1);
+
+    spDebugController1->SetEnableGPUBasedValidation(true);
+
+    spDebugController1->Release();
+    spDebugController0->Release();
+
+#else
+    R_WARN(R_CHANNEL_D3D12, "Can not enable GPU based validation for d3d12 device.");
+#endif
 }
 } // Recluse

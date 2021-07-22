@@ -31,6 +31,17 @@ D3D12Adapter::D3D12Adapter(IDXGIAdapter* adapter)
 }
 
 
+void D3D12Adapter::destroy()
+{
+    if (m_pAdapter) {
+        
+        m_pAdapter->Release();
+        m_pAdapter = nullptr;
+    
+    }
+}
+
+
 ErrType D3D12Adapter::getAdapterInfo(AdapterInfo* out) const 
 {
     DXGI_ADAPTER_DESC desc = { };

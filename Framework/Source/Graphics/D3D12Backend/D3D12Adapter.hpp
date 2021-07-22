@@ -27,7 +27,7 @@ public:
     ErrType createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice) override;
     ErrType destroyDevice(GraphicsDevice* pDevice) override;
 
-    void destroy() { }
+    void destroy();
 
 private:
 

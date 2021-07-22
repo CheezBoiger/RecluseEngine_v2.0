@@ -18,7 +18,7 @@ int main(int c, char* argv[])
 
     GraphicsSwapchain* pSwapchain   = nullptr;
     GraphicsDevice* pDevice         = nullptr;
-    GraphicsContext* pContext       = GraphicsContext::createContext(GRAPHICS_API_VULKAN);
+    GraphicsContext* pContext       = GraphicsContext::createContext(GRAPHICS_API_D3D12);
     GraphicsQueue* pQueue           = nullptr;
 
     Window* pWindow = Window::create(u8"SwapchainInitialization", 0, 0, 128, 128);

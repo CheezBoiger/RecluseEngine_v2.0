@@ -22,6 +22,8 @@ private:
     ErrType onInitialize(const ApplicationInfo& appInfo, EnableLayerFlags flags) override;
     void onDestroy() override;
 
+    void enableDebugValidation();
+
     IDXGIFactory2* m_pFactory;
 };
 } // Recluse

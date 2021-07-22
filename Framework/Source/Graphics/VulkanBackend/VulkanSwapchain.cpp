@@ -43,7 +43,7 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
     createInfo.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     createInfo.clipped          = VK_TRUE;
     createInfo.imageColorSpace  = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-    createInfo.imageFormat      = VK_FORMAT_B8G8R8A8_SRGB;
+    createInfo.imageFormat      = VK_FORMAT_R8G8B8A8_UNORM;
     createInfo.surface          = pDevice->getSurface();
     createInfo.imageExtent      = { pDesc.renderWidth, pDesc.renderHeight };
     createInfo.oldSwapchain     = (m_swapchain) ? m_swapchain : VK_NULL_HANDLE;
