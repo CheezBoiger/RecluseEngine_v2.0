@@ -53,6 +53,12 @@ int main(int c, char* argv[])
     
     }
 
+    for (U32 i = 0; i < threads.size(); ++i) {
+    
+        joinThread(&threads[i]);
+    
+    }
+    
     Log::destroyLoggingSystem();
 
     return 0;

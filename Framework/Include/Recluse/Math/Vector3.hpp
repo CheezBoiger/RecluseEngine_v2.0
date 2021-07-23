@@ -8,12 +8,37 @@
 namespace Recluse {
 
 
-struct Float3 {
+struct R_EXPORT Float3 {
     union {
         struct { F32 x, y, z; };
         struct { F32 r, g, b; };
         struct { F32 u, v, w; };
     };
+
+    Float3(F32 x = 0.f, F32 y = 0.f, F32 z = 0.f)
+        : x(x), y(y), z(z) { }
+    Float3(const Float2& xy, F32 z = 0.f)
+        : x(xy.x), y(xy.y), z(z) { }
+
+    inline F32& operator[](U32 idx) { return (&x)[idx]; }
+    inline F32 operator[](U32 idx) const { return (&x)[idx]; }
+
+    inline Float3 operator+(const Float3& rh) const;
+    inline Float3 operator-(const Float3& rh) const;
+    inline Float3 operator-() const;
+    inline Float3 operator*(const Float3& rh) const;
+    inline Float3 operator/(const Float3& rh) const;
+    inline Float3 operator*(F32 scalar) const;
+    inline Float3 operator/(F32 scalar) const;
+    inline Float3 operator+(F32 scalar) const;
+    inline Float3 operator-(F32 scalar) const;
+    inline Float3 operator==(const Float3& rh) const;
+    inline Float3 operator&&(const Float3& rh) const;
+    inline Float3 operator||(const Float3& rh) const;
+    inline Float3 operator<(const Float3& rh) const;
+    inline Float3 operator>(const Float3& rh) const;
+    inline Float3 operator>=(const Float3& rh) const;
+    inline Float3 operator<=(const Float3& rh) const;
 };
 
 
@@ -23,10 +48,25 @@ struct Int3 {
         struct { I32 r, g, b; };
         struct { I32 u, v, w; };
     };
+
+    Int3(I32 x = 0, I32 y = 0, I32 z = 0)
+        : x(x), y(y), z(z) { }
+    Int3(const Int2& a, I32 z = 0)
+        : x(a.x), y(a.y), z(z) { }
+
+    inline Int3 operator+(const Int3& rh) const;
+    inline Int3 operator-(const Int3& rh) const;
+    inline Int3 operator-() const;
+    inline Int3 operator+(I32 scalar) const;
+    inline Int3 operator-(I32 scalar) const;
+    inline Int3 operator/(I32 scalar) const;
+    inline Int3 operator*(const Int3& rh) const;
+    inline Int3 operator&(const Int3& rh) const;
+    inline Int3 operator|(const Int3& rh) const;
 };
 
 
-struct UInt3 {
+struct R_EXPORT UInt3 {
     union {
         struct { U32 x, y, z; };
         struct { U32 r, g, b; };
@@ -35,7 +75,7 @@ struct UInt3 {
 };
 
 
-struct Short3 {
+struct R_EXPORT Short3 {
     union {
         struct { I16 x, y, z; };
         struct { I16 r, g, b; };
@@ -44,11 +84,17 @@ struct Short3 {
 };
 
 
-struct UShort3 {
+struct R_EXPORT UShort3 {
     union {
         struct { U16 x, y, z; };
         struct { U16 r, g, b; };
         struct { U16 u, v, w; };
     };
 };
+
+Float3  R_EXPORT cross(const Float3& lh, const Float3& rh);
+F32     R_EXPORT dot(const Float3& lh, const Float3& rh);
+F32     R_EXPORT length(const Float3& v);
+F32     R_EXPORT length2(const Float3& v);
+Float3  R_EXPORT normalize(const Float3& v);
 } // Reclue

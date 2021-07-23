@@ -6,126 +6,96 @@
 
 namespace Recluse {
 
-struct Float2 { 
+struct R_EXPORT Float2 { 
     union {
         struct { F32 x, y; };
         struct { F32 r, g; };
         struct { F32 u, v; };
     };
 
-    Float2(F32 x = 0.f, F32 y = 0.f)
+    inline Float2(F32 x = 0.f, F32 y = 0.f)
         : x(x), y(y) { }
 
-    F32& operator[](I32 i) { return (&x)[i]; }
-    const F32& operator[](I32 i) const { return (&x)[i]; }
-  
-    Float2 operator+(const Float2& right) const {
-        return Float2(x + right.x, y + right.y);
-    }  
-
-    Float2 operator-(const Float2& right) const {
-        return Float2(x - right.x, y - right.y);
-    }
-
-    Float2 operator-() const {
-        return Float2(-x, -y);
-    }
-
-    Float2 operator*(const Float2& right) const {
-        return Float2(x * right.x, y * right.y);
-    }
-
-    Float2 operator/(const Float2& right) const {
-        return Float2(x / right.x, y / right.y);
-    }
-
-    Float2 operator*(F32 scalar) const {
-        return Float2(x * scalar, y * scalar);
-    }
-
-    Float2 operator/(F32 scalar) const {
-        return Float2(x / scalar, y / scalar);
-    }
-
-    Float2 operator+(F32 scalar) const {
-        return Float2(x + scalar, y + scalar);
-    }
-
-    Float2 operator-(F32 scalar) const {
-        return Float2(x - scalar, y - scalar);
-    }
-
-    Float2 operator==(const Float2& right) const {
-        return Float2(F32(x == right.x), F32(y == right.y));
-    }
+    inline F32& operator[](I32 i) { return (&x)[i]; }
+    inline const F32& operator[](I32 i) const { return (&x)[i]; }
+    inline Float2 operator+(const Float2& right) const;
+    inline Float2 operator-(const Float2& right) const;
+    inline Float2 operator-() const;
+    inline Float2 operator*(const Float2& right) const;
+    inline Float2 operator/(const Float2& right) const;
+    inline Float2 operator*(F32 scalar) const;
+    inline Float2 operator/(F32 scalar) const;
+    inline Float2 operator+(F32 scalar) const;
+    inline Float2 operator-(F32 scalar) const;
+    inline Float2 operator==(const Float2& right) const;
+    inline Float2 operator&&(const Float2& rh) const;
+    inline Float2 operator||(const Float2& rh) const;
+    inline Float2 operator<(const Float2& rh) const;
+    inline Float2 operator>(const Float2& rh) const;
+    inline Float2 operator>=(const Float2& rh) const;
+    inline Float2 operator<=(const Float2& rh) const;
 };
 
 
-struct Int2 {
+struct R_EXPORT Int2 {
     union {
         struct { I32 x, y; };
         struct { I32 r, g; };
         struct { I32 u, v; };
     };
 
-    Int2(I32 x = 0.f, I32 y = 0.f)
+    inline Int2(I32 x = 0.f, I32 y = 0.f)
         : x(x), y(y) { }
 
-    Int2 operator+(const Int2& right) const {
-        return Int2(x + right.x, y + right.y);
-    }
+    I32& operator[](U32 idx) { return (&x)[idx]; }
+    const I32& operator[](U32 idx) const { return (&x)[idx]; }
 
-    Int2 operator-(const Int2& right) const {
-        return Int2(x - right.x, y - right.y);
-    }
-
-    Int2 operator-() const {
-        return Int2(-x, -y);
-    }
-
-    Int2 operator*(const Int2& right) const {
-        return Int2(x * right.x, y * right.y);
-    }
-
-    Int2 operator/(const Int2& right) const {
-        return Int2(x / right.x, y / right.y);
-    }
-
-    Int2 operator*(I32 scalar) const {
-        return Int2(x * scalar, y * scalar);
-    }
-
-    Int2 operator/(I32 scalar) const {
-        return Int2(x / scalar, y / scalar);
-    }
-
-    Int2 operator+(I32 scalar) const {
-        return Int2(x + scalar, y + scalar);
-    }
-
-    Int2 operator-(I32 scalar) const {
-        return Int2(x - scalar, y - scalar);
-    }
-
-    Int2 operator&(const Int2& right) const {
-        return Int2(x & right.x, y & right.y);
-    }
-
-    Int2 operator|(const Int2& right) const {
-        return Int2(x | right.x, y | right.y);
-    }
+    inline Int2 operator+(const Int2& rh) const;
+    inline Int2 operator-(const Int2& rh) const;
+    inline Int2 operator-() const;
+    inline Int2 operator*(const Int2& rh) const;
+    inline Int2 operator/(const Int2& rh) const;
+    inline Int2 operator*(I32 scalar) const;
+    inline Int2 operator/(I32 scalar) const;
+    inline Int2 operator+(I32 scalar) const;
+    inline Int2 operator-(I32 scalar) const;
+    inline Int2 operator&(const Int2& rh) const;
+    inline Int2 operator|(const Int2& rh) const;
+    inline Int2 operator^(const Int2& rh) const;
+    inline Int2 operator==(const Int2& rh) const;
+    inline Int2 operator&&(const Int2& rh) const;
+    inline Int2 operator||(const Int2& rh) const;
+    inline Int2 operator<(const Int2& rh) const;
+    inline Int2 operator>(const Int2& rh) const;
+    inline Int2 operator>=(const Int2& rh) const;
+    inline Int2 operator<=(const Int2& rh) const;
+    inline Int2 operator<<(U32 shft) const;
+    inline Int2 operator>>(U32 shft) const;
 };
 
-class UInt2 {
+class R_EXPORT UInt2 {
     union {
         struct { U32 x, y; };
         struct { U32 r, g; };
         struct { U32 u, v; };
     };
+
+    inline UInt2(U32 x = 0.f, U32 y = 0.f)
+        : x(x), y(y) { }
+
+    inline UInt2 operator+(const UInt2& rh) const;
+    inline UInt2 operator-(const UInt2& rh) const;
+    inline UInt2 operator*(const UInt2& rh) const;
+    inline UInt2 operator/(const UInt2& rh) const;
+    
+    inline UInt2 operator+(U32 scalar) const;
+    inline UInt2 operator-(U32 scalar) const;
+    inline UInt2 operator*(U32 scalar) const;
+    inline UInt2 operator/(U32 scalar) const;
 };
 
 
-struct Short2 {
+struct R_EXPORT Short2 {
     union {
         struct { I16 x, y; };
         struct { I16 r, g; };
@@ -134,7 +104,7 @@ struct Short2 {
 };
 
 
-struct UShort2 {
+struct R_EXPORT UShort2 {
     union {
         struct { U16 x, y; };
         struct { U16 r, g; };
@@ -142,16 +112,15 @@ struct UShort2 {
     };
 };
 
+F32 R_EXPORT dot(const Float2& a, const Float2& b);
+F32 R_EXPORT dot(const Int2& a, const Int2& b);
+F32 R_EXPORT dot(const UInt2& a, const UInt2& b);
 
-F32 dot(const Float2& a, const Float2& b);
-F32 dot(const Int2& a, const Int2& b);
-F32 dot(const UInt2& a, const UInt2& b);
+F32 R_EXPORT sqrt(const Float2& a);
+F32 R_EXPORT length(const Float2& a);
+F32 R_EXPORT length2(const Float2& a);
 
-F32 sqrt(const Float2& a);
-F32 length(const Float2& a);
-F32 length2(const Float2& a);
-
-Float2 normalize(const Float2& a);
-Int2 normalize(const Int2& a);
-UInt2 normalize(const UInt2& a);
+Float2 R_EXPORT normalize(const Float2& a);
+Int2 R_EXPORT normalize(const Int2& a);
+UInt2 R_EXPORT normalize(const UInt2& a);
 } // Recluse
