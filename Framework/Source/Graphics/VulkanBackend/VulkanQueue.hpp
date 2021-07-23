@@ -10,7 +10,8 @@ namespace Recluse {
 
 
 class VulkanDevice;
-class QueueFamily;
+
+struct QueueFamily;
 
 // Vulkan queue implementation, inherits from GraphicsQueue API.
 class VulkanQueue : public GraphicsQueue {

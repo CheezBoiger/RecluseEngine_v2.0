@@ -4,6 +4,7 @@
 #include "Recluse/RealtimeTick.hpp"
 #include "Recluse/Types.hpp"
 
+#include "Recluse/Serialization/Serializable.hpp"
 #include "Recluse/Game/Component.hpp"
 
 #include <set>
@@ -30,56 +31,65 @@ enum GameObjectStatus {
 // Game object, which holds all our object logic and script behavior.
 // Kept as native C++, this class holds scripting behavior, which 
 // will be used by objects in the game world.
-class GameObject {
+class GameObject : public Serializable {
 public:
     virtual ~GameObject() { }
 
-    void initialize() {
+    // Initialize the game object.
+    R_EXPORT void initialize() {
         m_status = GAME_OBJECT_STATUS_INITIALIZING;
         onInitialize();
         m_status = GAME_OBJECT_STATUS_INITIALIZED;
     }
     
-    void wake() { 
+    // Wake the game object, this should be called when
+    // game object is asleep, or first time initialized.
+    R_EXPORT void wake() { 
         m_status = GAME_OBJECT_STATUS_WAKING;
         onWake();
         m_status = GAME_OBJECT_STATUS_AWAKE;
     }
 
-    void update(const RealtimeTick& tick) {
+    // Update the game object, per tick.
+    R_EXPORT void update(const RealtimeTick& tick) {
         m_status = GAME_OBJECT_STATUS_ACTIVE;
         onUpdate(tick);
     }
 
-    void sleep() {
+    // Put game object to sleep.
+    R_EXPORT void sleep() {
         m_status = GAME_OBJECT_STATUS_SLEEPING;
         onSleep();
         m_status = GAME_OBJECT_STATUS_ASLEEP;
     }
 
-    void destroy() {
+    R_EXPORT void destroy() {
         onDestroy();
         m_status = GAME_OBJECT_STATUS_DESTROYED;
     }
 
+    virtual R_EXPORT ErrType serialize(Archive* pArchive) override { return REC_RESULT_NOT_IMPLEMENTED; }
+
+    virtual R_EXPORT ErrType deserialize(Archive* pArchive) override { return REC_RESULT_NOT_IMPLEMENTED; }
+
     // Get the game object name.
-    const std::string& getName() const { return m_name; }
+    R_EXPORT const std::string& getName() const { return m_name; }
 
     // Get the game object tag.
-    const std::string& getTag() const { return m_tag; }
+    R_EXPORT const std::string& getTag() const { return m_tag; }
 
     // Grab the game object status.
-    GameObjectStatus getStatus() const { return m_status; }
+    R_EXPORT GameObjectStatus getStatus() const { return m_status; }
 
     // Get the game object parent.
-    GameObject* getParent() const { return m_pParentNode; }
+    R_EXPORT GameObject* getParent() const { return m_pParentNode; }
 
-    GameUUID getUUID() const { return m_guuid; }
+    R_EXPORT GameUUID getUUID() const { return m_guuid; }
 
     // Add a node to this game object. This game object becomes the 
     // parent of pNode. Any game objects that are similar to this one,
     // will not be added as a child.
-    void addChild(GameObject* pNode) { 
+    R_EXPORT void addChild(GameObject* pNode) { 
 
         // No need to do anything if this node already exists in this game object.
         if (pNode->getParent() == this) return;
@@ -96,7 +106,7 @@ public:
 }
 
     // Removes a child from this game object.
-    void removeChild(GameObject* pNode) {
+    R_EXPORT void removeChild(GameObject* pNode) {
         if (pNode->m_pParentNode != this) {
             // Can not remove this node if it doesn't belong to 
             // this game object.
@@ -134,7 +144,7 @@ protected:
     std::string m_tag;
 
     // Game object name.
-    std::string m_name;
+   std::string m_name;
 
 private:
     GameObjectStatus m_status;

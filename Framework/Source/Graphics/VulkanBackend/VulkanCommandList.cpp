@@ -295,12 +295,12 @@ void VulkanCommandList::setViewports(U32 numViewports, Viewport* pViewports)
     VkViewport viewports[8];
     for (U32 i = 0; i < numViewports; ++i) {
     
-        viewports[i].x = pViewports[i].x;
-        viewports[i].y = pViewports[i].y;
-        viewports[i].width = pViewports[i].width;
-        viewports[i].height = pViewports[i].height;
-        viewports[i].minDepth = pViewports[i].minDepth;
-        viewports[i].maxDepth = pViewports[i].maxDepth;
+        viewports[i].x          = pViewports[i].x;
+        viewports[i].y          = pViewports[i].y;
+        viewports[i].width      = pViewports[i].width;
+        viewports[i].height     = pViewports[i].height;
+        viewports[i].minDepth   = pViewports[i].minDepth;
+        viewports[i].maxDepth   = pViewports[i].maxDepth;
     
     }
 
@@ -313,10 +313,10 @@ void VulkanCommandList::setScissors(U32 numScissors, Rect* pRects)
     VkRect2D scissors[8];
     for (U32 i = 0; i < numScissors; ++i) {
 
-        scissors[i].extent.width = pRects[i].width;
-        scissors[i].extent.height = pRects[i].height;
-        scissors[i].offset.x = pRects[i].x;
-        scissors[i].offset.y = pRects[i].y;    
+        scissors[i].extent.width    = (U32)pRects[i].width;
+        scissors[i].extent.height   = (U32)pRects[i].height;
+        scissors[i].offset.x        = (I32)pRects[i].x;
+        scissors[i].offset.y        = (I32)pRects[i].y;    
     
     }
 

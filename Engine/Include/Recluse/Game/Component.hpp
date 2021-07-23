@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Recluse/Types.hpp"
+#include "Recluse/Serialization/Serializable.hpp"
 
 namespace Recluse {
 
@@ -10,7 +11,7 @@ class GameObject;
 typedef U64 ComponentUUID;
 
 // Component abstraction class.
-class Component {
+class Component : public Serializable {
 public:
     // Default component construction.
     Component()
@@ -19,6 +20,10 @@ public:
         , m_cuuid(0ull) { }
 
     virtual ~Component() { }
+
+    ErrType serialize(Archive* pArchive) override { return REC_RESULT_NOT_IMPLEMENTED; }
+
+    ErrType deserialize(Archive* pArchive) override { return REC_RESULT_NOT_IMPLEMENTED; }
 
     // Get the component owner.
     GameObject* getOwner() const { return m_pGameObject; }
