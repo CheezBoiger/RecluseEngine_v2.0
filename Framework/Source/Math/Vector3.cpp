@@ -30,7 +30,10 @@ Float3 Float3::operator*(const Float3& rh) const
 
 Float3 Float3::operator/(const Float3& rh) const
 {
-    return Float3(x / rh.x, y / rh.y);
+    F32 denomX = 1.0f / rh.x;
+    F32 denomY = 1.0f / rh.y;
+    F32 denomZ = 1.0f / rh.z;
+    return Float3(x * denomX, y * denomY, z * denomZ);
 }
 
 
@@ -42,7 +45,8 @@ Float3 Float3::operator*(F32 scalar) const
 
 Float3 Float3::operator/(F32 scalar) const
 {
-    return Float3(x / scalar, y / scalar, z / scalar);
+    F32 denom = 1.0f / scalar;
+    return Float3(x * denom, y * denom, z * denom);
 }
 
 

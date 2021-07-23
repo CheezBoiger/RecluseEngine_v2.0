@@ -25,7 +25,12 @@ Float4 Float4::operator*(const Float4& rh) const
 
 Float4 Float4::operator/(const Float4& rh) const
 {
-    return Float4(x / rh.x, y / rh.y, z / rh.z, w / rh.w);
+    F32 denomX = 1.0f / rh.x;
+    F32 denomY = 1.0f / rh.y;
+    F32 denomZ = 1.0f / rh.z;
+    F32 denomW = 1.0f / rh.w;
+
+    return Float4(x * denomX, y * denomY, z * denomZ, w * denomW);
 }
 
 
@@ -49,7 +54,9 @@ Float4 Float4::operator*(F32 scalar) const
 
 Float4 Float4::operator/(F32 scalar) const
 {
-    return Float4(x / scalar, y / scalar, z / scalar, w / scalar);
+    F32 denom = 1.0f / scalar;
+
+    return Float4(x * denom, y * denom, z * denom, w * denom);
 }
 
 

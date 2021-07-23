@@ -291,4 +291,30 @@ Matrix44 Matrix44::operator*(F32 scalar) const
 
     return ans;
 }
+
+
+Matrix44 Matrix44::operator/(F32 scalar) const
+{
+    Matrix44 ans = *this;
+    F32 denom = 1.f / scalar;
+
+    ans[0]  *= denom;
+    ans[1]  *= denom;
+    ans[2]  *= denom;
+    ans[3]  *= denom;
+    ans[4]  *= denom;
+    ans[5]  *= denom;
+    ans[6]  *= denom;
+    ans[7]  *= denom;
+    ans[8]  *= denom;
+    ans[9]  *= denom;
+    ans[10] *= denom;
+    ans[11] *= denom;
+    ans[12] *= denom;
+    ans[13] *= denom;
+    ans[14] *= denom;
+    ans[15] *= denom;
+ 
+   return ans;
+}
 } // Recluse
