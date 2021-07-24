@@ -5,3 +5,4 @@ set( TEST_FRAMEWORK_NAME "TestingFramework" )
 
 add_subdirectory( CoreFramework )
 add_subdirectory( RenderFramework )
+add_subdirectory( EngineFramework )

@@ -8,11 +8,14 @@
 #include "Recluse/Game/Component.hpp"
 
 #include <set>
+#include <vector>
+#include <algorithm>
 
 namespace Recluse {
 namespace Engine {
 
 class Component;
+class Scene;
 
 typedef U64 GameUUID;
 
@@ -102,8 +105,12 @@ public:
  
         pNode->m_pParentNode = this;
     
-        m_childrenNodes.insert(pNode);
-}
+        auto iter = std::find(m_childrenNodes.begin(), m_childrenNodes.end(), pNode);
+
+        if (iter == m_childrenNodes.end()) {
+            m_childrenNodes.push_back(pNode);
+        }
+    }
 
     // Removes a child from this game object.
     R_EXPORT void removeChild(GameObject* pNode) {
@@ -113,11 +120,22 @@ public:
             return;
         }
 
-        auto iter = m_childrenNodes.find(pNode); 
+        auto iter = std::find(m_childrenNodes.begin(), m_childrenNodes.end(), pNode);
         if (iter != m_childrenNodes.end()) {
             m_childrenNodes.erase(iter);
             pNode->m_pParentNode = nullptr;
         }
+    }
+
+    // Get the reference to the scene.
+    //
+    R_EXPORT Scene* getScene() const { return m_pSceneRef; }
+
+    R_EXPORT std::vector<GameObject*>& getChildren() { return m_childrenNodes; }
+
+    R_EXPORT B32 isParent(GameObject* pChild) const {
+        auto iter = std::find(m_childrenNodes.begin(), m_childrenNodes.end(), pChild);
+        return (iter != m_childrenNodes.end());
     }
 
 protected:
@@ -155,10 +173,13 @@ private:
     // All children game object nodes associated with this game object.
     // Keep in mind that any object children must also inherit the world transform from the 
     // game object parent.
-    std::set<GameObject*> m_childrenNodes;
+    std::vector<GameObject*> m_childrenNodes;
 
     // Game Object uuid.
     GameUUID m_guuid;
+
+    // Reference to the scene.
+    Scene* m_pSceneRef;
 };
 } // Engine
 } // Recluse

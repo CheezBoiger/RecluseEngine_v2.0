@@ -9,7 +9,7 @@ namespace Recluse {
 
 // Stack allocator, or linear allocator, which handles 
 // temporary data to be used briefly.
-class StackAllocator : public Allocator {
+class R_EXPORT StackAllocator : public Allocator {
 public:
     StackAllocator()
         : m_top(0ull) { }
@@ -36,6 +36,10 @@ public:
         m_top               = endAddr;
 
         return REC_RESULT_OK;
+    }
+
+    PtrType getTop() const {
+        return m_top;
     }
 
     ErrType onReset() override { 

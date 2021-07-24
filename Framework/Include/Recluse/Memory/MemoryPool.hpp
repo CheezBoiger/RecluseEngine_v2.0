@@ -40,7 +40,7 @@ static void rlsFreeArray(Type* ptr)
 class MemoryScanner;
 
 
-class MemoryPool {
+class R_EXPORT MemoryPool {
 public:
     MemoryPool(U64 szBytes, U64 pageSize = 4096ull);
 
