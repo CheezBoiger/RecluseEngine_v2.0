@@ -26,16 +26,51 @@ public:
     }
 };
 
+
+struct TestObject1 : public Engine::GameObject {
+public:
+    void onInitialize() override {
+        m_name = "Normal Boring Object";
+    }
+
+    void onUpdate(const RealtimeTick& tick) override {
+        R_VERBOSE(m_name.c_str(), "I am just a boring object... :(");
+    }
+};
+
+
+struct ChildObject : public Engine::GameObject {
+public:
+    void onInitialize() override {
+        m_name = "Child Object";
+    }
+
+    void onUpdate(const RealtimeTick& tick) override {
+        GameObject* parent = getParent();
+        if (parent) {
+            R_WARN(m_name.c_str(), "I am a child object! My father is %s!", parent->getName().c_str());
+        } else {
+            R_ERR(m_name.c_str(), "I am a child object, but I don't have a parent!!");
+        }
+    }
+};
+
 int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
     RealtimeTick::initialize();
 
     Engine::GameObject* obj = new TestObject();
+    Engine::GameObject* obj1 = new TestObject1();
+    Engine::GameObject* child = new ChildObject();
+    obj1->initialize();
     obj->initialize();  
+    child->initialize();
+    obj->addChild(child);
     Scene* pScene = new Scene();    
     pScene->initialize();
     pScene->addGameObject(obj);
+    pScene->addGameObject(obj1);
 
     U64 counter = 0;
     while ((counter++) < 500) {

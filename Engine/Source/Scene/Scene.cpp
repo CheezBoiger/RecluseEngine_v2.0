@@ -57,6 +57,9 @@ void Scene::update(const RealtimeTick& tick)
         
         currObjectPtr += R_ALLOC_MASK(8ull, ARCH_PTR_SZ_BYTES);
     }
+
+    // Reset the allocator when done...
+    m_gameMemAllocator->reset();
 }
 
 
