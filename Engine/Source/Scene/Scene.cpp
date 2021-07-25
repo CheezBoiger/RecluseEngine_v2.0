@@ -35,7 +35,7 @@ void Scene::update(const RealtimeTick& tick)
 
     PtrType currObjectPtr   = m_gameMemAllocator->getBaseAddr();
     PtrType top             = m_gameMemAllocator->getTop();
-    memcpy((void*)output.ptr, m_gameObjects.data(), m_gameObjects.size() * 8llu);
+    memcpy((void*)output.ptr, m_gameObjects.data(), m_gameObjects.size() * 8ull);
     
     while (currObjectPtr < top) {
     
@@ -46,7 +46,7 @@ void Scene::update(const RealtimeTick& tick)
 
             // We need to allocate some more.
             err = m_gameMemAllocator->allocate(&output, 8llu * children.size(), ARCH_PTR_SZ_BYTES);
-            memcpy((void*)output.ptr, children.data(), children.size() * 8llu);
+            memcpy((void*)output.ptr, children.data(), children.size() * 8ull);
             // Update the top.
             top = m_gameMemAllocator->getTop();
 
@@ -80,6 +80,12 @@ void Scene::destroy()
 
     delete m_gameMemPool;
     m_gameMemPool = nullptr;
+}
+
+
+GameObject* Scene::getGameObject(U32 idx)
+{
+    return m_gameObjects[idx];
 }
 } // Engine
 } // Recluse

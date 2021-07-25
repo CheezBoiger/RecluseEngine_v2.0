@@ -16,6 +16,7 @@ void Renderer::initialize(void* windowHandle, const RendererConfigs& configs)
     EnableLayerFlags flags  = 0;
     ApplicationInfo info    = { };
     ErrType result          = REC_RESULT_OK;
+    m_windowHandle          = windowHandle;
 
     m_pContext = GraphicsContext::createContext(configs.api);
     
@@ -26,8 +27,11 @@ void Renderer::initialize(void* windowHandle, const RendererConfigs& configs)
         return;
     }
 
-    info.engineName = "Recluse Engine";
-    info.appName    = "NoName";
+    info.engineName     = RECLUSE_ENGINE_NAME_STRING;
+    info.engineMajor    = RECLUSE_ENGINE_VERSION_MAJOR;
+    info.engineMinor    = RECLUSE_ENGINE_VERSION_MINOR;
+    info.enginePatch    = RECLUSE_ENGINE_VERSION_PATCH;
+    info.appName        = "NoName";
 
     result = m_pContext->initialize(info, flags);
 
@@ -40,6 +44,8 @@ void Renderer::initialize(void* windowHandle, const RendererConfigs& configs)
     std::vector<GraphicsAdapter*> adapters = m_pContext->getGraphicsAdapters();
     
     determineAdapter(adapters);
+
+    createDevice();
 }
 
 
@@ -75,6 +81,27 @@ void Renderer::determineAdapter(std::vector<GraphicsAdapter*>& adapters)
         }
 
         R_DEBUG("Adapter Name: %s\n\t\tVendor: %s", info.deviceName, info.vendorName);
+
+        // Just really quickly, pick up the first adapter.
+        m_pAdapter = pAdapter;
+        break;
+    }
+}
+
+
+void Renderer::createDevice()
+{
+    DeviceCreateInfo info   = { };
+    info.buffering          = 2;
+    info.winHandle          = m_windowHandle;
+    ErrType result          = REC_RESULT_OK;
+    
+    result = m_pAdapter->createDevice(info, &m_pDevice);
+
+    if (result != REC_RESULT_OK) {
+    
+        R_ERR("Renderer", "Failed to create device!");
+        
     }
 }
 } // Engine

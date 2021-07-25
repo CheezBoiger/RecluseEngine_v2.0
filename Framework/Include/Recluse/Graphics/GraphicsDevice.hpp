@@ -76,12 +76,18 @@ public:
     // Reserve memory to be used for graphics resources.
     virtual ErrType reserveMemory(const MemoryReserveDesc& desc) { return REC_RESULT_NOT_IMPLEMENTED; }
 
+    //< Create graphics resource.
+    //<
     virtual ErrType createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc) 
         { return REC_RESULT_NOT_IMPLEMENTED; }
 
+    //< Create a command list.
+    //< 
     virtual ErrType createCommandList(GraphicsCommandList** pList, GraphicsQueueTypeFlags flags) 
         { return REC_RESULT_NOT_IMPLEMENTED; }
 
+    //< Create a command queue.
+    //<
     virtual ErrType createCommandQueue(GraphicsQueue** ppQueue, GraphicsQueueTypeFlags type) 
         { return REC_RESULT_NOT_IMPLEMENTED; }
 
