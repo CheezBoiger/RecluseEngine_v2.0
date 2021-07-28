@@ -97,7 +97,9 @@ public:
     virtual ErrType createGraphicsPipelineState(PipelineState** pPipelineState, const GraphicsPipelineStateDesc& desc) 
         { return REC_RESULT_NOT_IMPLEMENTED; }
 
-    virtual ErrType createComputePipelineState() { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual ErrType createComputePipelineState(PipelineState** ppPipelineState, const ComputePipelineStateDesc& desc) 
+        { return REC_RESULT_NOT_IMPLEMENTED; }
+
     virtual ErrType createRaytracingPipelineState() { return REC_RESULT_NOT_IMPLEMENTED; }
 
     virtual ErrType createResourceView(GraphicsResourceView** ppView, const ResourceViewDesc& desc) 

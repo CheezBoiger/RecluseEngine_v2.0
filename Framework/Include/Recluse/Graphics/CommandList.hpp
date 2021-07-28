@@ -49,6 +49,8 @@ public:
 
     virtual void copyResource(GraphicsResource* dst, GraphicsResource* src) { }
     virtual void copyResourceRegion(GraphicsResource* dst) { }
+
+    virtual void transition(GraphicsResourceView** ppTargets, U32 targetCounts) { }
     
 private:
     

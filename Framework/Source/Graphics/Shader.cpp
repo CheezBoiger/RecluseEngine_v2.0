@@ -54,7 +54,12 @@ ErrType Shader::compile(char* sourceCode, U64 sourceCodeBytes, ShaderLang lang)
     srcCodeString[sourceCodeBytes] = '\0';
 
     // Using glslang compiler to handle both hlsl and glsl compilation to spirv.
-    pBuilder = createGlslangShaderBuilder(m_shaderType, getIntermediateCodeType());
+    // Use DXC compiler to handle both hlsl and hlsl to DXIL or DXBC.
+    if (getIntermediateCodeType() == INTERMEDIATE_SPIRV) {
+        pBuilder = createGlslangShaderBuilder(m_shaderType, getIntermediateCodeType());
+    } else {
+        pBuilder = createDxcShaderBuilder(m_shaderType, getIntermediateCodeType());
+    }
 
     if (!pBuilder) {
 

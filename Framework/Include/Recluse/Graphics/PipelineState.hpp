@@ -228,7 +228,7 @@ struct GraphicsPipelineStateDesc : public PipelineStateDesc {
 
 
 struct ComputePipelineStateDesc : public PipelineStateDesc {
-
+    Shader* pCS;
 };
 
 

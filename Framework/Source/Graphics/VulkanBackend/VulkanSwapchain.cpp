@@ -233,7 +233,7 @@ void VulkanSwapchain::buildFrameResources()
         desc.height         = swapchainDesc.renderHeight;
         desc.dimension      = RESOURCE_DIMENSION_2D;
         desc.depth          = 1;
-        desc.format         = RESOURCE_FORMAT_B8G8R8A8_SRGB;
+        desc.format         = RESOURCE_FORMAT_R8G8B8A8_UNORM;
         desc.memoryUsage    = RESOURCE_MEMORY_USAGE_GPU_ONLY;
         desc.mipLevels      = 1;
         desc.usage          = RESOURCE_USAGE_RENDER_TARGET;
@@ -243,7 +243,7 @@ void VulkanSwapchain::buildFrameResources()
         m_frameResources[i] = new VulkanImage(desc, frame, VK_IMAGE_LAYOUT_UNDEFINED);
 
         ResourceViewDesc viewDesc = { };
-        viewDesc.format         = RESOURCE_FORMAT_B8G8R8A8_SRGB;
+        viewDesc.format         = RESOURCE_FORMAT_R8G8B8A8_UNORM;
         viewDesc.pResource      = m_frameResources[i];
         viewDesc.mipLevelCount  = 1;
         viewDesc.layerCount     = 1;

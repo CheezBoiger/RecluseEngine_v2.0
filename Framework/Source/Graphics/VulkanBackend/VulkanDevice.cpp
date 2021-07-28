@@ -1196,4 +1196,25 @@ void VulkanDevice::pushInvalidateMemoryRange(const VkMappedMemoryRange& mappedRa
 
     pRange->size                = R_ALLOC_MASK(mappedRange.size, atomSz);
 }
+
+
+ErrType VulkanDevice::createComputePipelineState(PipelineState** ppPipelineState, const ComputePipelineStateDesc& desc)
+{
+    VulkanComputePipelineState* pPipeline = new VulkanComputePipelineState();
+    ErrType result = REC_RESULT_OK;
+    
+    result = pPipeline->initialize(this, desc);
+
+    if (result != REC_RESULT_OK) {
+    
+        pPipeline->destroy(this);
+        delete pPipeline;
+
+        return result;
+    }
+
+    *ppPipelineState = pPipeline;
+
+    return result;
+}
 } // Recluse

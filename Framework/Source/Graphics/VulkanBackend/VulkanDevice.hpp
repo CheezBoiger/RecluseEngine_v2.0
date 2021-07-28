@@ -81,6 +81,8 @@ public:
 
     ErrType createResourceView(GraphicsResourceView** ppView, const ResourceViewDesc& desc) override;
 
+    ErrType createComputePipelineState(PipelineState** ppPipelineState, const ComputePipelineStateDesc& desc) override;
+
     void destroy(VkInstance instance);
 
     ErrType destroyPipelineState(PipelineState* pPipelineState) override;

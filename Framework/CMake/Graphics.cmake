@@ -45,7 +45,7 @@ if ( RCL_VULKAN )
                                      optimized $ENV{VULKAN_SDK}/Lib/SPIRV-Tools.lib
                                      optimized $ENV{VULKAN_SDK}/Lib/SPIRV-Tools-link.lib
                                      optimized $ENV{VULKAN_SDK}/Lib/SPIRV-Tools-opt.lib)
-        message("WARNING: Windows: you will need to also Download Vulkan SDK DebugShaderLibs in order to use glslang debug libs")
+        message(WARNING "Windows: you will need to also Download Vulkan SDK DebugShaderLibs in order to use glslang debug libs")
         set ( VULKAN_GLSLANG_LIBRARY_DEBUG debug $ENV{VULKAN_SDK}/Lib/glslangd.lib 
                                      debug $ENV{VULKAN_SDK}/Lib/SPIRVd.lib
                                      debug $ENV{VULKAN_SDK}/Lib/HLSLd.lib
@@ -122,6 +122,7 @@ if ( RCL_DX12 )
     if ( RCL_DXC )
         set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} dxcompiler.lib )
         add_definitions( -DRCL_DXC=1 )
+        message(WARNING "dxcompiler.dll and dxil.dll needed with executable, since we are now including dxc...")
         
     endif()
 endif()

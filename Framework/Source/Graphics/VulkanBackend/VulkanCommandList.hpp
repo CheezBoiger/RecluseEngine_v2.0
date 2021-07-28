@@ -45,7 +45,9 @@ public:
     void copyResource(GraphicsResource* dst, GraphicsResource* src) override;
     void setViewports(U32 numViewports, Viewport* pViewports) override;
     void setScissors(U32 numScissors, Rect* pRects) override;
+    void dispatch(U32 x, U32 y, U32 z) override;
     
+    void transition(GraphicsResourceView** ppTargets, U32 targetCounts) override;
 
 private:
 

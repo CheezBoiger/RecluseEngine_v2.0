@@ -305,7 +305,7 @@ int main(int c, char* argv[])
         std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
 
         File file;
-        std::string shaderSource = currDir + "/" + "test.vs.hlsl";
+        std::string shaderSource = currDir + "/" + "test.vs.glsl";
         result = File::readFrom(&file, shaderSource);
 
         if (result != REC_RESULT_OK) {
@@ -314,7 +314,7 @@ int main(int c, char* argv[])
     
         }
 
-        result = pVertShader->compile(file.data.data(), file.data.size(), SHADER_LANG_HLSL);
+        result = pVertShader->compile(file.data.data(), file.data.size(), SHADER_LANG_GLSL);
 
         if (result != REC_RESULT_OK) {
     
@@ -322,7 +322,7 @@ int main(int c, char* argv[])
     
         }
 
-        shaderSource = currDir + "/" + "test.fs.hlsl";
+        shaderSource = currDir + "/" + "test.fs.glsl";
         result = File::readFrom(&file, shaderSource);
             
         if (result != REC_RESULT_OK) {
@@ -331,7 +331,7 @@ int main(int c, char* argv[])
     
         }
 
-        result = pFragShader->compile(file.data.data(), file.data.size(), SHADER_LANG_HLSL);
+        result = pFragShader->compile(file.data.data(), file.data.size(), SHADER_LANG_GLSL);
         
         if (result != REC_RESULT_OK) {
     
@@ -401,6 +401,10 @@ int main(int c, char* argv[])
         updateConstData(pData, tick);
 
         pList->begin();
+            
+            GraphicsResourceView* pView = pSwapchain->getFrameView(pSwapchain->getCurrentFrameIndex());
+            pList->transition(&pView, 1);
+
             pList->setRenderPass(passes[pSwapchain->getCurrentFrameIndex()]);
             pList->setPipelineState(pPipeline, BIND_TYPE_GRAPHICS);
             pList->setViewports(1, &viewport);

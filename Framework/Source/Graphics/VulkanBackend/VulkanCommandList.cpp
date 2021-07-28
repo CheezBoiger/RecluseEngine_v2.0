@@ -109,34 +109,12 @@ void VulkanCommandList::setRenderPass(RenderPass* pRenderPass)
     }
 
     VulkanRenderPass* pVrp  = static_cast<VulkanRenderPass*>(pRenderPass);
-    
-    VkImageMemoryBarrier barriers[9];
-    U32 barrierCount        = 0;
 
     // End current render pass if it doesn't match this one...
     if (m_boundRenderPass != pVrp) {
 
         endRenderPass(m_currentCmdBuffer);
         
-    }
-
-    for (U32 i = 0; i < pVrp->getNumRenderTargets(); ++i) {
-        VulkanResourceView* pRenderTarget   = static_cast<VulkanResourceView*>(pVrp->getRenderTarget(i));        
-        VulkanImage* pImage                 = static_cast<VulkanImage*>(pRenderTarget->getResource());
-        VkImageSubresourceRange range       = pRenderTarget->getSubresourceRange();
-
-        if (pImage->getCurrentLayout() != pRenderTarget->getExpectedLayout()) {
-            barriers[barrierCount++] = pImage->transition(pRenderTarget->getExpectedLayout(), range);
-        }
-
-    }
-
-    if (barrierCount > 0) {
-
-        vkCmdPipelineBarrier(m_currentCmdBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_DEPENDENCY_BY_REGION_BIT, 0, 
-            nullptr, 0, nullptr, barrierCount, barriers); 
-
     }
 
     VkRenderPassBeginInfo beginInfo = { };
@@ -221,7 +199,6 @@ void VulkanCommandList::bindDescriptorSets(U32 count, DescriptorSet** pSets, Bin
     VkPipelineLayout layout         = m_boundPipelineState->getLayout();
 
     SETBIND(bindType, bindPoint)
-
 
     while (numDescriptorSetsBound < count) {
 
@@ -321,5 +298,34 @@ void VulkanCommandList::setScissors(U32 numScissors, Rect* pRects)
     }
 
     vkCmdSetScissor(m_currentCmdBuffer, 0, numScissors, scissors);
+}
+
+
+void VulkanCommandList::dispatch(U32 x, U32 y, U32 z)
+{
+    vkCmdDispatch(m_currentCmdBuffer, x, y, z);
+}
+
+
+void VulkanCommandList::transition(GraphicsResourceView** ppTargets, U32 targetCounts)
+{
+    std::vector<VkImageMemoryBarrier> imgBarriers(targetCounts);
+    U32 numBarriers = 0;
+
+    for (U32 i = 0; i < targetCounts; ++i) {
+        VulkanResourceView* pVv         = static_cast<VulkanResourceView*>(ppTargets[i]);
+        VulkanImage* pVr                = static_cast<VulkanImage*>(pVv->getResource());
+        VkImageSubresourceRange range   = pVv->getSubresourceRange();
+
+        if (pVr->getCurrentLayout() != pVv->getExpectedLayout()) {
+            imgBarriers[numBarriers++] = pVr->transition(pVv->getExpectedLayout(), range);
+        }
+    }
+
+    if (numBarriers > 0) {
+        vkCmdPipelineBarrier(m_currentCmdBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_DEPENDENCY_BY_REGION_BIT, 0, 
+            nullptr, 0, nullptr, numBarriers, imgBarriers.data()); 
+    }
 }
 } // Recluse

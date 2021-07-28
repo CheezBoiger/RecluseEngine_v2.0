@@ -344,6 +344,28 @@ static VkPipelineMultisampleStateCreateInfo getMultisampleStateInfo()
 }
 
 
+VkResult VulkanPipelineState::createLayout(VulkanDevice* pDevice, const PipelineStateDesc& desc)
+{
+    VkDevice device                 = pDevice->get();
+    VkPipelineLayoutCreateInfo pli  = { };
+    std::vector<VkDescriptorSetLayout> descriptorSetLayouts(desc.numDescriptorSetLayouts);
+
+    for (U32 i = 0; i < desc.numDescriptorSetLayouts; ++i) {
+
+        VulkanDescriptorSetLayout* pSetLayout = static_cast<VulkanDescriptorSetLayout*>(desc.ppDescriptorLayouts[i]);
+        descriptorSetLayouts[i] = pSetLayout->get();
+    
+    }
+
+    // TODO: Maybe we can cache the pipeline layout?
+    pli.sType           = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pli.setLayoutCount  = desc.numDescriptorSetLayouts;
+    pli.pSetLayouts     = descriptorSetLayouts.data();
+
+    return vkCreatePipelineLayout(device, &pli, nullptr, &m_pipelineLayout);
+}
+
+
 void VulkanPipelineState::destroy(VulkanDevice* pDevice)
 {   
     R_DEBUG(R_CHANNEL_VULKAN, "Destroying vulkan pipeline state...");
@@ -368,10 +390,9 @@ ErrType VulkanGraphicsPipelineState::initialize(VulkanDevice* pDevice, const Gra
 {
     VkDevice device                 = pDevice->get();
     VkGraphicsPipelineCreateInfo ci = { };
-    VkPipelineLayoutCreateInfo pli  = { };
     VulkanRenderPass* pVr           = static_cast<VulkanRenderPass*>(desc.pRenderPass);
     VkResult result                 = VK_SUCCESS;
-    ShaderCache* pShaderCache=      pDevice->getShaderCache();
+    ShaderCache* pShaderCache       = pDevice->getShaderCache();
     VkPipelineShaderStageCreateInfo shaderStages[16];
 
     std::vector<VkVertexInputAttributeDescription> attributes;
@@ -387,22 +408,8 @@ ErrType VulkanGraphicsPipelineState::initialize(VulkanDevice* pDevice, const Gra
     VkPipelineDynamicStateCreateInfo dynamicState               = getDynamicStates();
     VkPipelineTessellationStateCreateInfo tessState             = getTessellationStateInfo(desc.tess);
     VkPipelineMultisampleStateCreateInfo multisampleState       = getMultisampleStateInfo();
-    
-    std::vector<VkDescriptorSetLayout> descriptorSetLayouts(desc.numDescriptorSetLayouts);
 
-    for (U32 i = 0; i < desc.numDescriptorSetLayouts; ++i) {
-
-        VulkanDescriptorSetLayout* pSetLayout = static_cast<VulkanDescriptorSetLayout*>(desc.ppDescriptorLayouts[i]);
-        descriptorSetLayouts[i] = pSetLayout->get();
-    
-    }
-
-    // TODO: Maybe we can cache the pipeline layout?
-    pli.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pli.setLayoutCount = desc.numDescriptorSetLayouts;
-    pli.pSetLayouts = descriptorSetLayouts.data();
-
-    result = vkCreatePipelineLayout(device, &pli, nullptr, &m_pipelineLayout);
+    result = createLayout(pDevice, desc);
     
     if (result != VK_SUCCESS) {
     
@@ -465,6 +472,43 @@ ErrType VulkanGraphicsPipelineState::initialize(VulkanDevice* pDevice, const Gra
 
 ErrType VulkanComputePipelineState::initialize(VulkanDevice* pDevice, const ComputePipelineStateDesc& desc)
 {
-    return REC_RESULT_NOT_IMPLEMENTED;
+    VkComputePipelineCreateInfo createInfo  = { };
+    VkDevice device                         = pDevice->get();
+    VkResult result                         = VK_SUCCESS;
+    ShaderCache* pShaderCache               = pDevice->getShaderCache();
+    
+    result = createLayout(pDevice, desc);
+
+    if (result != VK_SUCCESS) {
+    
+        R_ERR(R_CHANNEL_VULKAN, "Failed to create pipeline layout for Compute pipelinestate...");
+        
+        destroy(pDevice);
+        
+        return REC_RESULT_FAILED;
+    
+    }
+
+    createInfo.sType        = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+    createInfo.layout       = m_pipelineLayout;
+    
+    createInfo.stage.sType  = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    createInfo.stage.module = pShaderCache->getCachedShaderModule(pDevice, desc.pCS);
+    createInfo.stage.pName  = "main";
+    createInfo.stage.stage  = VK_SHADER_STAGE_COMPUTE_BIT;
+
+    result = vkCreateComputePipelines(device, nullptr, 1, &createInfo, nullptr, &m_pipeline);
+
+    if (result != VK_SUCCESS) {
+
+        R_ERR(R_CHANNEL_VULKAN, "Failed to create compute pipeline state!");
+
+        destroy(pDevice);
+
+        return REC_RESULT_FAILED;
+
+    }
+
+    return REC_RESULT_OK;
 }
 } // Recluse

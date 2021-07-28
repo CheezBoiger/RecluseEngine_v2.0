@@ -87,5 +87,27 @@ GameObject* Scene::getGameObject(U32 idx)
 {
     return m_gameObjects[idx];
 }
+
+
+GameObject* Scene::findGameObject(const std::string& name)
+{
+    for (auto* gameObject : m_gameObjects) {
+
+        if (gameObject->getName() == name) {
+
+            return gameObject;
+
+        }
+
+    }
+
+    return nullptr;
+}
+
+
+void Scene::removeGameObject(U32 idx)
+{
+    m_gameObjects.erase(m_gameObjects.begin() + idx);
+}
 } // Engine
 } // Recluse

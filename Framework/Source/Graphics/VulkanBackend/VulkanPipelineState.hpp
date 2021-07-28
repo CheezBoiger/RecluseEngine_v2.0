@@ -24,6 +24,9 @@ public:
     VkPipelineLayout getLayout() const { return m_pipelineLayout; }
 
 protected:
+
+    VkResult createLayout(VulkanDevice* pDevice, const PipelineStateDesc& desc);
+
     VkPipeline          m_pipeline;
     VkPipelineLayout    m_pipelineLayout;
 };

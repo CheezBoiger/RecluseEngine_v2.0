@@ -4,6 +4,7 @@
 #include "VulkanCommons.hpp"
 #include "VulkanResource.hpp"
 #include "VulkanDescriptorManager.hpp"
+#include "VulkanViews.hpp"
 
 #include "Recluse/Messaging.hpp"
 
@@ -167,6 +168,13 @@ ErrType VulkanDescriptorSet::update(DescriptorSetBind* pBinds, U32 bindCount)
             case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
             case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
             case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+            {
+                VulkanResourceView* pView       = static_cast<VulkanResourceView*>(bind.srv.pView);
+                imgInfos[imgCount].sampler      = VK_NULL_HANDLE;
+                imgInfos[imgCount].imageView    = pView->get();
+                imgInfos[imgCount].imageLayout  = pView->getExpectedLayout();
+                writeSet[i].pImageInfo          = &imgInfos[imgCount++];
+            } break;
             case VK_DESCRIPTOR_TYPE_SAMPLER: 
             {
                 imgInfos[imgCount].sampler  = VK_NULL_HANDLE;
