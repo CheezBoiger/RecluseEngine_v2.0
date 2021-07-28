@@ -1,6 +1,7 @@
 //
 #include "Recluse/Graphics/Shader.hpp"
 #include "Recluse/Serialization/Hasher.hpp"
+#include "Recluse/Filesystem/Filesystem.hpp"
 
 #include "Recluse/Messaging.hpp"
 
@@ -89,5 +90,16 @@ Shader* Shader::convertTo(ShaderIntermediateCode intermediateCode)
 U32 Shader::disassemble(char* disassembledCode)
 {
     return 0;
+}
+
+
+ErrType Shader::saveToFile(const char* filePath)
+{
+    ErrType result = REC_RESULT_OK;
+    File file = { };
+    file.data.resize(m_byteCode.size());
+    std::copy(m_byteCode.begin(), m_byteCode.end(), file.data.begin());
+
+    return File::writeTo(&file, std::string(filePath));
 }
 } // Recluse

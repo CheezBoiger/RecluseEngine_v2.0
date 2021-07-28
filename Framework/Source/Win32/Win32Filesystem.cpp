@@ -39,7 +39,36 @@ ErrType File::readFrom(File* pFile, const std::string& filePath)
 
 ErrType File::writeTo(File* pFile, const std::string& filePath)
 {
-    return REC_RESULT_NOT_IMPLEMENTED;
+    HANDLE file = CreateFile(filePath.c_str(),
+        GENERIC_WRITE, 
+        0, 
+        NULL, 
+        OPEN_ALWAYS, 
+        FILE_ATTRIBUTE_NORMAL, 
+        NULL);
+
+    if (file == INVALID_HANDLE_VALUE) {
+
+        R_ERR(R_CHANNEL_WIN32, "Failed to create a file to write to...");
+    
+        return REC_RESULT_FAILED;
+    }
+
+    ErrType result          = REC_RESULT_OK;
+    DWORD numBytesWritten   = 0;
+    BOOL isWritten          = WriteFile(file, pFile->data.data(), pFile->data.size(), &numBytesWritten, 0);
+
+    if (!isWritten) {
+    
+        R_ERR(R_CHANNEL_WIN32, "Failed to write to file...");
+
+        result = REC_RESULT_FAILED;
+
+    }
+    
+    CloseHandle(file);
+
+    return result;
 }
 
 

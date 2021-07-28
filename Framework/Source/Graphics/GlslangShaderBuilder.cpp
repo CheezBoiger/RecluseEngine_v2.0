@@ -5,6 +5,7 @@
 
 #if defined RCL_GLSLANG
 
+#define ENABLE_HLSL 1
 #include "glslang/Public/ShaderLang.h"
 #include "glslang/Include/Types.h"
 #include "glslang/SPIRV/GlslangToSpv.h" 
@@ -147,17 +148,19 @@ public:
         std::vector<U32> spirv;
         spv::SpvBuildLogger logger;
         std::string compileLog;
-        glslang::EShClient client = glslang::EShClientVulkan;
-        I32 clientVersion = 100;
 
-        const char* str = srcCode.data();
+        glslang::EShClient client           = glslang::EShClientVulkan;
+        I32 clientVersion                   = 100;
+        const char* str                     = srcCode.data();
+        EShMessages messages                = (EShMessages)((int)EShMsgSpvRules | (int)EShMsgVulkanRules);
 
         if (lang == SHADER_LANG_HLSL) {
 
             R_DEBUG("GLSLANG", "HLSL used, compiling to SPIRV...");
 
             shader.setEnvInput(glslang::EShSourceHlsl, stage, client, clientVersion);            
-            
+            shader.setHlslIoMapping(true);
+            messages = (EShMessages)((I32)messages | (I32)EShMsgReadHlsl);
         }
 
         shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_3);
@@ -165,8 +168,6 @@ public:
         shader.setEntryPoint("main");
         shader.setAutoMapLocations(true);   // --aml, which will allow for implicit location mapping 
                                             // for builtin blocks.
-
-        EShMessages messages = (EShMessages)((int)EShMsgSpvRules | (int)EShMsgVulkanRules);
     
         if (!shader.parse(&DefaultTBuiltInResource, 450, false, messages)) {
 

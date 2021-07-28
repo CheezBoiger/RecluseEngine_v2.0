@@ -72,7 +72,7 @@ public:
     R_EXPORT ErrType load(char* byteCode, U64 szBytes);
 
     // Save the compilation to a file.
-    R_EXPORT ErrType saveToFile(char* filePath);
+    R_EXPORT ErrType saveToFile(const char* filePath);
 
     R_EXPORT U32 disassemble(char* disassembledCode);
     
