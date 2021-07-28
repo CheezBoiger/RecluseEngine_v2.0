@@ -58,6 +58,7 @@ ErrType VulkanResourceView::initialize(VulkanDevice* pDevice)
         case RESOURCE_VIEW_TYPE_DEPTH_STENCIL: m_expectedLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL; break;
         case RESOURCE_VIEW_TYPE_RENDER_TARGET: m_expectedLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; break;
         case RESOURCE_VIEW_TYPE_SHADER_RESOURCE: m_expectedLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL; break;
+        case RESOURCE_VIEW_TYPE_STORAGE_IMAGE:
         case RESOURCE_VIEW_TYPE_STORAGE_BUFFER: m_expectedLayout = VK_IMAGE_LAYOUT_GENERAL; break;
         default: break;
     }

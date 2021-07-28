@@ -492,7 +492,7 @@ ErrType VulkanComputePipelineState::initialize(VulkanDevice* pDevice, const Comp
     createInfo.sType        = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
     createInfo.layout       = m_pipelineLayout;
     
-    createInfo.stage.sType  = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    createInfo.stage.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     createInfo.stage.module = pShaderCache->getCachedShaderModule(pDevice, desc.pCS);
     createInfo.stage.pName  = "main";
     createInfo.stage.stage  = VK_SHADER_STAGE_COMPUTE_BIT;

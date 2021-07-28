@@ -23,6 +23,9 @@ VkShaderStageFlags getShaderStages(Recluse::ShaderTypeFlags flags)
         if (flags & Recluse::SHADER_TYPE_DOMAIN) {
             vkFlags |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
         }
+        if (flags & Recluse::SHADER_TYPE_COMPUTE) {
+            vkFlags |= VK_SHADER_STAGE_COMPUTE_BIT;
+        }
     }
 
     return vkFlags;
