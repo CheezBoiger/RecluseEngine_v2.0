@@ -38,19 +38,21 @@ Vertex vertices[] = {
 struct ConstData {
     float color[4];
     float pad[2];
-    float offset[2];
+    float iter[2];
 };
 
 void updateConstData(GraphicsResource* pData, RealtimeTick& tick)
 {
+    static float iter = 0.005f;
+    iter += 0.001f * tick.getDeltaTimeS();
     ConstData dat = { };
     dat.color[0] = abs(sinf(tick.getCurrentTimeS() * 0.0000001f));
     dat.color[1] = 0.0f;
     dat.color[2] = 1.0f;
     dat.color[3] = 0.0f;
     
-    dat.offset[0] = 0.0f;
-    dat.offset[1] = 0.0f;
+    dat.iter[0] = 0.0f;
+    dat.iter[1] = iter;
     void* ptr = nullptr;
     pData->map(&ptr, nullptr);
     memcpy(ptr, &dat, sizeof(ConstData));
@@ -245,8 +247,8 @@ int main(int c, char* argv[])
         dat.color[2] = 0.0f;
         dat.color[3] = 0.0f;
     
-        dat.offset[0] = 0.0f;
-        dat.offset[1] = 0.0f;
+        dat.iter[0] = 0.0f;
+        dat.iter[1] = 0.0f;
         
         void* ptr = nullptr;
         MapRange range = { };
