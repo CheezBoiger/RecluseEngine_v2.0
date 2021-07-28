@@ -132,15 +132,15 @@ public:
         R_DEBUG("GLSLANG", "Compiling shader...");
         glslang::InitializeProcess();
 
-        EShLanguage stage = EShLangVertex;
-        ShaderType shaderType = getShaderType();
+        EShLanguage stage       = EShLangVertex;
+        ShaderType shaderType   = getShaderType();
 
         switch (shaderType) {
-            case SHADER_TYPE_VERTEX: stage = EShLangVertex; break;
-            case SHADER_TYPE_FRAGEMENT: stage = EShLangFragment; break;
-            case SHADER_TYPE_COMPUTE: stage = EShLangCompute; break;
-            case SHADER_TYPE_TESS_CONTROL: stage = EShLangTessControl; break;
-            case SHADER_TYPE_TESS_EVAL: stage = EShLangTessEvaluation; break;
+            case SHADER_TYPE_VERTEX:        stage = EShLangVertex; break;
+            case SHADER_TYPE_FRAGEMENT:     stage = EShLangFragment; break;
+            case SHADER_TYPE_COMPUTE:       stage = EShLangCompute; break;
+            case SHADER_TYPE_TESS_CONTROL:  stage = EShLangTessControl; break;
+            case SHADER_TYPE_TESS_EVAL:     stage = EShLangTessEvaluation; break;
         
             // TODO: Support more shaders!
         }

@@ -23,17 +23,6 @@
 
 using namespace Recluse;
 
-struct Vertex {
-    F32 position[2];
-};
-
-
-Vertex vertices[] = {
-    { -1.0f,  0.0f },
-    {  0.0f, -1.0f },
-    {  1.0f,  0.0f }
-};
-
 
 struct ConstData {
     float color[4];
@@ -73,7 +62,7 @@ int main(int c, char* argv[])
     PipelineState* pPipeline        = nullptr;
     GraphicsSwapchain* pSwapchain   = nullptr;
     GraphicsCommandList* pList      = nullptr;
-    Window* pWindow                 = Window::create("Compute", 0, 0, 512, 512);
+    Window* pWindow                 = Window::create("Compute", 0, 0, 1024, 1024);
     ErrType result                  = REC_RESULT_OK;
 
     std::vector<GraphicsResourceView*> views;
@@ -280,7 +269,7 @@ int main(int c, char* argv[])
         Shader* pCompShader = Shader::create(INTERMEDIATE_SPIRV, SHADER_TYPE_COMPUTE);
         std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
         File file;
-        std::string shaderSource = currDir + "/" + "test.cs.glsl";
+        std::string shaderSource = currDir + "/" + "test.cs.hlsl";
         result = File::readFrom(&file, shaderSource);
 
         if (result != REC_RESULT_OK) {
@@ -289,7 +278,7 @@ int main(int c, char* argv[])
 
         }
 
-        result = pCompShader->compile(file.data.data(), file.data.size(), SHADER_LANG_GLSL);
+        result = pCompShader->compile(file.data.data(), file.data.size(), SHADER_LANG_HLSL);
 
         if (result != REC_RESULT_OK) {
     
