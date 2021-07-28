@@ -10,6 +10,6 @@ namespace ShaderMap {
 
 
 
-B32 storeShader(Hash128 hash, Shader* pShader);
+B32 storeShader(Hash64 hash, Shader* pShader);
 } // ShaderMap
 } // Recluse

@@ -25,6 +25,8 @@ set ( RECLUSE_GRAPHICS_BUILD
     ${RECLUSE_GRAPHICS_SOURCE}/RenderPass.cpp
     ${RECLUSE_GRAPHICS_SOURCE}/RenderPassMap.cpp
     ${RECLUSE_GRAPHICS_SOURCE}/ShaderBuilder.hpp
+    ${RECLUSE_GRAPHICS_SOURCE}/DXCShaderBuilder.cpp
+    ${RECLUSE_GRAPHICS_SOURCE}/GlslangShaderBuilder.cpp
     ${RECLUSE_GRAPHICS_INCLUDE}/GraphicsCommon.hpp
 )
 
@@ -117,6 +119,11 @@ if ( RCL_DX12 )
         ${RECLUSE_D3D12_DIR}/D3D12Queue.hpp
         ${RECLUSE_D3D12_DIR}/D3D12Queue.cpp
     )
+    if ( RCL_DXC )
+        set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} dxcompiler.lib )
+        add_definitions( -DRCL_DXC=1 )
+        
+    endif()
 endif()
 
 set ( RECLUSE_FRAMEWORK_COMPILE_FILES

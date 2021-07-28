@@ -305,7 +305,7 @@ int main(int c, char* argv[])
         std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
 
         File file;
-        std::string shaderSource = currDir + "/" + "test.vs.glsl";
+        std::string shaderSource = currDir + "/" + "test.vs.hlsl";
         result = File::readFrom(&file, shaderSource);
 
         if (result != REC_RESULT_OK) {
@@ -314,7 +314,7 @@ int main(int c, char* argv[])
     
         }
 
-        result = pVertShader->compile(file.data.data(), file.data.size());
+        result = pVertShader->compile(file.data.data(), file.data.size(), SHADER_LANG_HLSL);
 
         if (result != REC_RESULT_OK) {
     
@@ -322,7 +322,7 @@ int main(int c, char* argv[])
     
         }
 
-        shaderSource = currDir + "/" + "test.fs.glsl";
+        shaderSource = currDir + "/" + "test.fs.hlsl";
         result = File::readFrom(&file, shaderSource);
             
         if (result != REC_RESULT_OK) {
@@ -331,7 +331,7 @@ int main(int c, char* argv[])
     
         }
 
-        result = pFragShader->compile(file.data.data(), file.data.size());
+        result = pFragShader->compile(file.data.data(), file.data.size(), SHADER_LANG_HLSL);
         
         if (result != REC_RESULT_OK) {
     

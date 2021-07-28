@@ -44,8 +44,12 @@ struct RendererConfigs {
     GraphicsAPI api;
 };
 
+// Top level rendering engine. Implements Render Harware Interface, and 
+// manages all resources and states created in game graphics. This will usually
+// implement any render passes and stages of the graphics pipeline.
 class R_EXPORT Renderer {
 public:
+
     void initialize(void* pWindowHandle, const RendererConfigs& configs);
     void cleanUp();
 

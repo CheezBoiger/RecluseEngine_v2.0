@@ -18,6 +18,12 @@ enum ShaderIntermediateCode {
 };
 
 
+enum ShaderLang {
+    SHADER_LANG_GLSL,
+    SHADER_LANG_HLSL
+};
+
+
 enum ShaderType {
     SHADER_TYPE_VERTEX = (1<<0),
     SHADER_TYPE_HULL = (1<<1),
@@ -62,8 +68,11 @@ public:
     // Compile source code, ideally we do not want to call this function in 
     // release mode. Instead, we should precompile those shaders before, and 
     // call load() instead...
-    R_EXPORT ErrType compile(char* sourceCode, U64 sourceCodeBytes);
+    R_EXPORT ErrType compile(char* sourceCode, U64 sourceCodeBytes, ShaderLang lang);
     R_EXPORT ErrType load(char* byteCode, U64 szBytes);
+
+    // Save the compilation to a file.
+    R_EXPORT ErrType saveToFile(char* filePath);
 
     R_EXPORT U32 disassemble(char* disassembledCode);
     
