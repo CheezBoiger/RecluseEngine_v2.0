@@ -277,8 +277,6 @@ int main(int c, char* argv[])
         Rect rect = { 200.f + index, 200.f, 1024.f/2.f, 1024.f/2.f };
         Rect rect2 = { 0.f, 0.f, 1024.f, 1024.f };
         pList->begin();
-            GraphicsResourceView* pView = pSwapchain->getFrameView(pSwapchain->getCurrentFrameIndex());
-            pList->transition(&pView, 1);
             pList->setRenderPass(renderPasses[pSwapchain->getCurrentFrameIndex()]);
             pList->clearRenderTarget(0, color2, rect2);
             pList->clearRenderTarget(0, color, rect);
@@ -286,6 +284,8 @@ int main(int c, char* argv[])
             pList->clearRenderTarget(0, color2, rect2);
             pList->clearRenderTarget(0, color, rect);
 
+            GraphicsResourceView* pView = pSwapchain->getFrameView(pSwapchain->getCurrentFrameIndex());
+            pList->transition(&pView, 1);
             // Testing to see if we ignore a view that already is transitioned...
             pList->transition(&pView, 1);
         pList->end();

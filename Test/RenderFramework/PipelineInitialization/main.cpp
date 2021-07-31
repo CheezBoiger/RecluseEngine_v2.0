@@ -400,10 +400,6 @@ int main(int c, char* argv[])
         updateConstData(pData, tick);
 
         pList->begin();
-            
-            GraphicsResourceView* pView = pSwapchain->getFrameView(pSwapchain->getCurrentFrameIndex());
-            pList->transition(&pView, 1);
-
             pList->setRenderPass(passes[pSwapchain->getCurrentFrameIndex()]);
             pList->setPipelineState(pPipeline, BIND_TYPE_GRAPHICS);
             pList->setViewports(1, &viewport);

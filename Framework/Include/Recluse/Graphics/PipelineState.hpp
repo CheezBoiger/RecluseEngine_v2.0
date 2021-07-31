@@ -195,6 +195,7 @@ struct GraphicsPipelineStateDesc : public PipelineStateDesc {
         B8  depthWriteEnable;
         F32 minDepthBounds;
         F32 maxDepthBounds;
+        CompareOp depthCompareOp;
     } ds;
 
     struct RasterState {

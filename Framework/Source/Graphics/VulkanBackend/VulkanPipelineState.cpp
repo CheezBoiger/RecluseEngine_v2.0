@@ -246,7 +246,7 @@ static VkPipelineDepthStencilStateCreateInfo getDepthStencilInfo(const GraphicsP
     VkPipelineDepthStencilStateCreateInfo info  = { };
     info.sType                                  = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     info.depthBoundsTestEnable                  = (VkBool32)ds.depthBoundsTestEnable;
-    info.depthCompareOp;
+    info.depthCompareOp                         = getNativeCompareOp(ds.depthCompareOp);
     info.depthTestEnable                        = (VkBool32)ds.depthTestEnable;
     info.depthWriteEnable                       = (VkBool32)ds.depthWriteEnable;
     info.front;

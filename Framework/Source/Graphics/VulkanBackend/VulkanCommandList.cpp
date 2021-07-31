@@ -117,6 +117,28 @@ void VulkanCommandList::setRenderPass(RenderPass* pRenderPass)
         
     }
 
+    // We are checking transitions needed for our render pass.
+    // We will handle our own transitions, instead of inlining them 
+    // to the renderpass.
+    U32 numRenderTargets                = pVrp->getNumRenderTargets();
+    GraphicsResourceView* ds            = pVrp->getDepthStencil();
+    GraphicsResourceView* targets[9]    = { };
+    U32 i                               = 0;
+
+    if (ds) {
+    
+        targets[i++] = ds;
+    
+    }
+
+    for (; i < numRenderTargets; ++i) {
+        
+        targets[i] = pVrp->getRenderTarget(i);
+    
+    }
+
+    transition(targets, numRenderTargets);
+
     VkRenderPassBeginInfo beginInfo = { };
     beginInfo.sType                 = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     beginInfo.framebuffer           = pVrp->getFbo();
@@ -136,6 +158,8 @@ void VulkanCommandList::endRenderPass(VkCommandBuffer buffer)
     if (m_boundRenderPass) {
 
         vkCmdEndRenderPass(buffer);
+        m_boundRenderPass = nullptr;
+
     }   
 }
 
@@ -303,6 +327,8 @@ void VulkanCommandList::setScissors(U32 numScissors, Rect* pRects)
 
 void VulkanCommandList::dispatch(U32 x, U32 y, U32 z)
 {
+    endRenderPass(m_currentCmdBuffer);
+
     vkCmdDispatch(m_currentCmdBuffer, x, y, z);
 }
 
