@@ -32,15 +32,18 @@ public:
     R_EXPORT GameObject* findGameObject(const std::string& name);
     R_EXPORT GameObject* getGameObject(U32 idx);
 
+    R_EXPORT void setName(const std::string& name);
+    const std::string& getName() const { return m_name; }
+
     // Get game objects inside this scene.
     //
     R_EXPORT std::vector<GameObject*>& getGameObjects() { return m_gameObjects; }
 
     // Serialize the scene.
-    R_EXPORT ErrType serialize(Archive* pArchive) override { return REC_RESULT_NOT_IMPLEMENTED; }
+    R_EXPORT ErrType save(Archive* pArchive);
     
     // Deserialize the serialize.    
-    R_EXPORT ErrType deserialize(Archive* pArchive) override { return REC_RESULT_NOT_IMPLEMENTED; }
+    R_EXPORT ErrType load(Archive* pArchive);
 
     // Update the scene using the tick.
     R_EXPORT void update(const RealtimeTick& tick);
@@ -50,6 +53,10 @@ public:
 
     Camera* getCurrentCamera() const { return m_currentCamera; }
 private:
+
+    ErrType serialize(Archive* pArchive) override { return REC_RESULT_NOT_IMPLEMENTED; }
+    ErrType deserialize(Archive* pArchive) override { return REC_RESULT_NOT_IMPLEMENTED; }
+
     // Game objects in the scene.
     std::vector<GameObject*> m_gameObjects;
     std::string                 m_name;

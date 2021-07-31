@@ -82,6 +82,7 @@ set ( RECLUSE_CORE_BUILD
     ${RECLUSE_CORE_INCLUDE}/Logger.hpp
     ${RECLUSE_CORE_INCLUDE}/Arch.hpp
     ${RECLUSE_CORE_SOURCE}/String.cpp
+    ${RECLUSE_CORE_SOURCE}/Archive.cpp
     ${RECLUSE_CORE_INCLUDE_MATH}/Bounds2D.hpp
     ${RECLUSE_CORE_INCLUDE_MATH}/Bounds3D.hpp
     ${RECLUSE_CORE_INCLUDE_MATH}/DualQuaternion.hpp

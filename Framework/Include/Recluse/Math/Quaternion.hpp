@@ -10,10 +10,14 @@
 namespace Recluse {
 
 
-struct Quaternion {
-    F32 x, y, z, w;
+struct Quaternion : public Float4 {
 
     Quaternion(F32 x, F32 y, F32 z, F32 w)
-        : x(x), y(y), z(z), w(w) { }
+        : Float4(x, y, z, w) { }
 };
+
+
+Quaternion normalize(const Quaternion& quat);
+Quaternion norm(const Quaternion& quat);
+
 } // Recluse

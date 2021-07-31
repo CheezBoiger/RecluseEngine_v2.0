@@ -68,8 +68,12 @@ int main(int c, char* argv[])
     obj->initialize();  
     child->initialize();
     obj->addChild(child);
+
     Scene* pScene = new Scene();
+    pScene->setName("Scene Test...$#%@#^&*^*&^%$#qwiefowdnfOIEFONWLEKAFMPOWRHGJOIQNBER29-34U831634%#@%#$3\\[[");
+
     pScene->initialize();
+
     pScene->addGameObject(obj);
     pScene->addGameObject(obj1);
 
@@ -78,6 +82,20 @@ int main(int c, char* argv[])
         RealtimeTick tick = RealtimeTick::getTick();
         pScene->update(tick);
     }
+
+    Archive testArchive("Test.archive");
+
+    testArchive.open("w");
+    pScene->save(&testArchive);
+    testArchive.close();
+
+    pScene->destroy();
+
+    testArchive.open("r");
+    pScene->load(&testArchive);
+    testArchive.close();    
+    
+    R_TRACE("TEST", "Scene Name: %s", pScene->getName().c_str());
 
     pScene->destroy();
 
