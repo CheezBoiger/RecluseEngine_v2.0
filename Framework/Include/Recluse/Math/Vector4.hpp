@@ -41,6 +41,46 @@ struct R_EXPORT Float4 {
     
 };
 
+
+struct UInt4 {
+    union {
+        struct { U32 x, y, z, w; };
+        struct { U32 s, t, r, q; };
+        struct { U32 r, g, b, a; };
+    };
+
+    UInt4(U32 x = 0.f, U32 y = 0.f, U32 z = 0.f, U32 w = 0.f)
+        : x(x), y(y), z(z), w(w) { }
+
+    inline U32& operator[](U32 i) { return (&x)[i]; }
+    inline U32 operator[](U32 i) const { return (&x)[i]; }
+
+    inline UInt4 operator+(const UInt4& rh) const;
+    inline UInt4 operator-(const UInt4& rh) const;
+    inline UInt4 operator*(const UInt4& rh) const;
+    inline UInt4 operator/(const UInt4& rh) const;
+    
+    inline UInt4 operator-() const;
+
+    inline UInt4 operator+(U32 scalar) const;
+    inline UInt4 operator-(U32 scalar) const;
+    inline UInt4 operator*(U32 scalar) const;
+    inline UInt4 operator/(U32 scalar) const;
+
+    inline UInt4 operator&(const UInt4& rh) const;
+    inline UInt4 operator|(const UInt4& rh) const;
+    inline UInt4 operator^(const UInt4& rh) const;
+    inline UInt4 operator~() const;
+
+    inline UInt4 operator&&(const UInt4& rh) const;
+    inline UInt4 operator||(const UInt4& rh) const;
+    inline UInt4 operator==(const UInt4& rh) const;
+    inline UInt4 operator<=(const UInt4& rh) const;
+    inline UInt4 operator>=(const UInt4& rh) const;
+    inline UInt4 operator>(const UInt4& rh) const;
+    inline UInt4 operator<(const UInt4& rh) const;
+};
+
 F32 R_EXPORT dot(const Float4& a, const Float4& b);
 F32 R_EXPORT length(const Float4& a);
 F32 R_EXPORT length2(const Float4& a);

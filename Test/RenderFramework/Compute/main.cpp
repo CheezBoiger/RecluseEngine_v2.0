@@ -268,7 +268,7 @@ int main(int c, char* argv[])
     {
         Shader* pCompShader = Shader::create(INTERMEDIATE_SPIRV, SHADER_TYPE_COMPUTE);
         std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
-        File file;
+        FileBufferData file;
         std::string shaderSource = currDir + "/" + "test.cs.hlsl";
         result = File::readFrom(&file, shaderSource);
 
@@ -278,7 +278,7 @@ int main(int c, char* argv[])
 
         }
 
-        result = pCompShader->compile(file.data.data(), file.data.size(), SHADER_LANG_HLSL);
+        result = pCompShader->compile(file.buffer.data(), file.buffer.size(), SHADER_LANG_HLSL);
 
         if (result != REC_RESULT_OK) {
     

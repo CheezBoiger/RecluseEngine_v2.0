@@ -101,10 +101,10 @@ U32 Shader::disassemble(char* disassembledCode)
 ErrType Shader::saveToFile(const char* filePath)
 {
     ErrType result = REC_RESULT_OK;
-    File file = { };
-    file.data.resize(m_byteCode.size());
-    std::copy(m_byteCode.begin(), m_byteCode.end(), file.data.begin());
+    FileBufferData data = { };
+    data.buffer.resize(m_byteCode.size());
+    std::copy(m_byteCode.begin(), m_byteCode.end(), data.buffer.begin());
 
-    return File::writeTo(&file, std::string(filePath));
+    return File::writeTo(&data, std::string(filePath));
 }
 } // Recluse

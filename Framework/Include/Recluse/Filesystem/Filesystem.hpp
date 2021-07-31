@@ -7,11 +7,31 @@
 namespace Recluse {
 
 
-struct File {
-    std::vector<char> data;
+struct FileBufferData {
+    std::vector<char> buffer;    
+};
 
-    static R_EXPORT ErrType readFrom(File* pFile, const std::string& filePath);
-    static R_EXPORT ErrType writeTo(File* pFile, const std::string& filePath);
+
+struct File {
+    File()
+        : m_isOpen(false)
+        , m_fileHandle(nullptr) { }
+
+
+    static R_EXPORT ErrType readFrom(FileBufferData* pData, const std::string& filePath);
+    static R_EXPORT ErrType writeTo(FileBufferData* pData, const std::string& filePath);
+
+    ErrType open(const std::string& filePath, char* access);
+    void    close();
+    ErrType write(void* ptr, U64 szBytes);
+    ErrType read(void* ptr, U64 szBytes);
+    U64     getFileSz() const;
+
+    B32 isOpen() { return m_isOpen; }
+
+private:
+    B32     m_isOpen;
+    void*   m_fileHandle;
 };
 
 

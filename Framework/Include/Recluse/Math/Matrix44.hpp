@@ -8,7 +8,7 @@ namespace Recluse {
 
 
 struct R_EXPORT Matrix44 {
-    F32 d[16];
+    F32 m[16];
 
     Matrix44(F32 a00 = 1.0f, F32 a01 = 0.0f, F32 a02 = 0.0f, F32 a03 = 0.0f,
              F32 a10 = 0.0f, F32 a11 = 1.0f, F32 a12 = 0.0f, F32 a13 = 0.0f,
@@ -21,8 +21,8 @@ struct R_EXPORT Matrix44 {
 
     F32 get(U32 row, U32 col) const;
     F32& get(U32 row, U32 col);
-    F32& operator[](U32 ix) { return d[ix]; }
-    F32 operator[](U32 ix) const { return d[ix]; }
+    F32& operator[](U32 ix) { return m[ix]; }
+    F32 operator[](U32 ix) const { return m[ix]; }
 
     inline Matrix44 operator+(const Matrix44& rh) const;
     inline Matrix44 operator-(const Matrix44& rh) const;

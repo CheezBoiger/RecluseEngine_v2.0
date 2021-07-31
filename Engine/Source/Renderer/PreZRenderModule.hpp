@@ -1,0 +1,17 @@
+//
+#pragma once
+
+#include "Recluse/Graphics/CommandList.hpp"
+
+#include "Recluse/Renderer/Mesh.hpp"
+#include "Recluse/Renderer/RenderCommand.hpp"
+#include "Recluse/Renderer/RendererResources.hpp"
+
+namespace Recluse {
+namespace PreZ {
+
+void initialize(GraphicsDevice* pDevice, Engine::SceneBuffers* pBuffers);
+void destroy(GraphicsDevice* pDevice);
+void generate(GraphicsCommandList* pCommandList);
+} // PreZ
+} // Recluse

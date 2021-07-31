@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Recluse/Types.hpp"
+#include "Recluse/Renderer/RendererResources.hpp"
 #include "Recluse/Graphics/GraphicsCommon.hpp"
 
 #include <vector>
@@ -41,6 +42,7 @@ struct MaterialDescription {
 struct RendererConfigs {
     U32 renderWidth;
     U32 renderHeight;
+    U32 buffering;
     GraphicsAPI api;
 };
 
@@ -63,17 +65,14 @@ public:
     const RendererConfigs& getConfigs() const { return m_rendererConfigs; }
 
     GraphicsDevice* getDevice() const { return m_pDevice; }
-
-
-    Texture2D* createTexture2D();
-    VertexBuffer* createVertexBuffer();
-    IndexBuffer* createIndexBuffer();
+    GraphicsQueue* getGraphicsQueue() const { return m_graphicsQueue; }
 
 private:
 
     void determineAdapter(std::vector<GraphicsAdapter*>& adapters);
-
-    void createDevice();
+    void setUpModules();
+    void cleanUpModules();
+    void createDevice(const RendererConfigs& configs);
     
     void destroyDevice();
 
@@ -87,6 +86,8 @@ private:
     // Renderer configs.
     RendererConfigs m_rendererConfigs;
     void*           m_windowHandle;
+
+    SceneBuffers m_sceneBuffers;
 };
 } // Engine
 } // Recluse

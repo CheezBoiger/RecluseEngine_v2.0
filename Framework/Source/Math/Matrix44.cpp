@@ -1,5 +1,6 @@
 //
 #include "Recluse/Math/Matrix44.hpp"
+#include "Recluse/Messaging.hpp"
 
 namespace Recluse {
 
@@ -9,22 +10,22 @@ Matrix44::Matrix44(F32 a00, F32 a01, F32 a02, F32 a03,
                    F32 a20, F32 a21, F32 a22, F32 a23,
                    F32 a30, F32 a31, F32 a32, F32 a33)
 {
-    d[0]  = a00;
-    d[1]  = a01;
-    d[2]  = a02;
-    d[3]  = a03;
-    d[4]  = a10;
-    d[5]  = a11;
-    d[6]  = a12;
-    d[7]  = a13;
-    d[8]  = a20;
-    d[9]  = a21;
-    d[10] = a22;
-    d[11] = a23;
-    d[12] = a30;
-    d[13] = a31;
-    d[14] = a32;
-    d[15] = a33;
+    m[0]  = a00;
+    m[1]  = a01;
+    m[2]  = a02;
+    m[3]  = a03;
+    m[4]  = a10;
+    m[5]  = a11;
+    m[6]  = a12;
+    m[7]  = a13;
+    m[8]  = a20;
+    m[9]  = a21;
+    m[10] = a22;
+    m[11] = a23;
+    m[12] = a30;
+    m[13] = a31;
+    m[14] = a32;
+    m[15] = a33;
 }
 
 
@@ -227,10 +228,15 @@ F32 determinant(const Matrix44& lh)
 
 Matrix44 inverse(const Matrix44& lh)
 {
-    F32 det = determinant(lh);
+    F32 det         = determinant(lh);
+    F32 denom       = 0.f;
+    Matrix44 adj    = identity();
+
     if (det == 0.f)
-        return identity();
-    return adjugate(lh) * (1.f / det);
+        return adj;
+    
+    denom = 1.f / det;
+    return adj * denom;
 }
 
 
@@ -244,25 +250,25 @@ Matrix44 Matrix44::operator*(const Matrix44& rh) const
 {
     Matrix44 ans;
 
-    ans[0]  = d[0]  * rh[0] + d[1]  * rh[4] + d[2]  * rh[8]  + d[3]  * rh[12];
-    ans[1]  = d[0]  * rh[1] + d[1]  * rh[5] + d[2]  * rh[9]  + d[3]  * rh[13];
-    ans[2]  = d[0]  * rh[2] + d[1]  * rh[6] + d[2]  * rh[10] + d[3]  * rh[14];
-    ans[3]  = d[0]  * rh[3] + d[1]  * rh[7] + d[2]  * rh[11] + d[3]  * rh[15];
+    ans[0]  = m[0]  * rh[0] + m[1]  * rh[4] + m[2]  * rh[8]  + m[3]  * rh[12];
+    ans[1]  = m[0]  * rh[1] + m[1]  * rh[5] + m[2]  * rh[9]  + m[3]  * rh[13];
+    ans[2]  = m[0]  * rh[2] + m[1]  * rh[6] + m[2]  * rh[10] + m[3]  * rh[14];
+    ans[3]  = m[0]  * rh[3] + m[1]  * rh[7] + m[2]  * rh[11] + m[3]  * rh[15];
     
-    ans[4]  = d[4]  * rh[0] + d[5]  * rh[4] + d[6]  * rh[8]  + d[7]  * rh[12];
-    ans[5]  = d[4]  * rh[1] + d[5]  * rh[5] + d[6]  * rh[9]  + d[7]  * rh[13];
-    ans[6]  = d[4]  * rh[2] + d[5]  * rh[6] + d[6]  * rh[10] + d[7]  * rh[14];
-    ans[7]  = d[4]  * rh[3] + d[5]  * rh[7] + d[6]  * rh[11] + d[7]  * rh[15];
+    ans[4]  = m[4]  * rh[0] + m[5]  * rh[4] + m[6]  * rh[8]  + m[7]  * rh[12];
+    ans[5]  = m[4]  * rh[1] + m[5]  * rh[5] + m[6]  * rh[9]  + m[7]  * rh[13];
+    ans[6]  = m[4]  * rh[2] + m[5]  * rh[6] + m[6]  * rh[10] + m[7]  * rh[14];
+    ans[7]  = m[4]  * rh[3] + m[5]  * rh[7] + m[6]  * rh[11] + m[7]  * rh[15];
 
-    ans[8]  = d[8]  * rh[0] + d[9]  * rh[4] + d[10] * rh[8]  + d[11] * rh[12];
-    ans[9]  = d[8]  * rh[1] + d[9]  * rh[5] + d[10] * rh[9]  + d[11] * rh[13];
-    ans[10] = d[8]  * rh[2] + d[9]  * rh[6] + d[10] * rh[10] + d[11] * rh[14];
-    ans[11] = d[8]  * rh[3] + d[9]  * rh[7] + d[10] * rh[11] + d[11] * rh[15];
+    ans[8]  = m[8]  * rh[0] + m[9]  * rh[4] + m[10] * rh[8]  + m[11] * rh[12];
+    ans[9]  = m[8]  * rh[1] + m[9]  * rh[5] + m[10] * rh[9]  + m[11] * rh[13];
+    ans[10] = m[8]  * rh[2] + m[9]  * rh[6] + m[10] * rh[10] + m[11] * rh[14];
+    ans[11] = m[8]  * rh[3] + m[9]  * rh[7] + m[10] * rh[11] + m[11] * rh[15];
 
-    ans[12] = d[12] * rh[0] + d[13] * rh[4] + d[14] * rh[8]  + d[15] * rh[12];
-    ans[13] = d[12] * rh[1] + d[13] * rh[5] + d[14] * rh[9]  + d[15] * rh[13];
-    ans[14] = d[12] * rh[2] + d[13] * rh[6] + d[14] * rh[10] + d[15] * rh[14];
-    ans[15] = d[12] * rh[3] + d[13] * rh[7] + d[14] * rh[11] + d[15] * rh[15];
+    ans[12] = m[12] * rh[0] + m[13] * rh[4] + m[14] * rh[8]  + m[15] * rh[12];
+    ans[13] = m[12] * rh[1] + m[13] * rh[5] + m[14] * rh[9]  + m[15] * rh[13];
+    ans[14] = m[12] * rh[2] + m[13] * rh[6] + m[14] * rh[10] + m[15] * rh[14];
+    ans[15] = m[12] * rh[3] + m[13] * rh[7] + m[14] * rh[11] + m[15] * rh[15];
 
     return ans;
 }
@@ -272,22 +278,22 @@ Matrix44 Matrix44::operator*(F32 scalar) const
 {
     Matrix44 ans;
  
-    ans[0]  = d[0]  * scalar;
-    ans[1]  = d[1]  * scalar;
-    ans[2]  = d[2]  * scalar;
-    ans[3]  = d[3]  * scalar;
-    ans[4]  = d[4]  * scalar;
-    ans[5]  = d[5]  * scalar;
-    ans[6]  = d[6]  * scalar;
-    ans[7]  = d[7]  * scalar;
-    ans[8]  = d[8]  * scalar;
-    ans[9]  = d[9]  * scalar;
-    ans[10] = d[10] * scalar;
-    ans[11] = d[11] * scalar;
-    ans[12] = d[12] * scalar;
-    ans[13] = d[13] * scalar;
-    ans[14] = d[14] * scalar;
-    ans[15] = d[15] * scalar;
+    ans[0]  = m[0]  * scalar;
+    ans[1]  = m[1]  * scalar;
+    ans[2]  = m[2]  * scalar;
+    ans[3]  = m[3]  * scalar;
+    ans[4]  = m[4]  * scalar;
+    ans[5]  = m[5]  * scalar;
+    ans[6]  = m[6]  * scalar;
+    ans[7]  = m[7]  * scalar;
+    ans[8]  = m[8]  * scalar;
+    ans[9]  = m[9]  * scalar;
+    ans[10] = m[10] * scalar;
+    ans[11] = m[11] * scalar;
+    ans[12] = m[12] * scalar;
+    ans[13] = m[13] * scalar;
+    ans[14] = m[14] * scalar;
+    ans[15] = m[15] * scalar;
 
     return ans;
 }
@@ -295,26 +301,141 @@ Matrix44 Matrix44::operator*(F32 scalar) const
 
 Matrix44 Matrix44::operator/(F32 scalar) const
 {
-    Matrix44 ans = *this;
+    Matrix44 ans;;
     F32 denom = 1.f / scalar;
 
-    ans[0]  *= denom;
-    ans[1]  *= denom;
-    ans[2]  *= denom;
-    ans[3]  *= denom;
-    ans[4]  *= denom;
-    ans[5]  *= denom;
-    ans[6]  *= denom;
-    ans[7]  *= denom;
-    ans[8]  *= denom;
-    ans[9]  *= denom;
-    ans[10] *= denom;
-    ans[11] *= denom;
-    ans[12] *= denom;
-    ans[13] *= denom;
-    ans[14] *= denom;
-    ans[15] *= denom;
+    ans[0]  = m[0]  * denom;
+    ans[1]  = m[1]  * denom;
+    ans[2]  = m[2]  * denom;
+    ans[3]  = m[3]  * denom;
+    ans[4]  = m[4]  * denom;
+    ans[5]  = m[5]  * denom;
+    ans[6]  = m[6]  * denom;
+    ans[7]  = m[7]  * denom;
+    ans[8]  = m[8]  * denom;
+    ans[9]  = m[9]  * denom;
+    ans[10] = m[10] * denom;
+    ans[11] = m[11] * denom;
+    ans[12] = m[12] * denom;
+    ans[13] = m[13] * denom;
+    ans[14] = m[14] * denom;
+    ans[15] = m[15] * denom;
  
    return ans;
+}
+
+
+Matrix44 Matrix44::operator+(F32 scalar) const
+{
+    Matrix44 ans;
+
+    ans[0] =  m[0]  + scalar;
+    ans[1] =  m[1]  + scalar;
+    ans[2] =  m[2]  + scalar;
+    ans[3] =  m[3]  + scalar;
+    ans[4] =  m[4]  + scalar;
+    ans[5] =  m[5]  + scalar;
+    ans[6] =  m[6]  + scalar;
+    ans[7] =  m[7]  + scalar;
+    ans[8] =  m[8]  + scalar;
+    ans[9] =  m[9]  + scalar;
+    ans[10] = m[10] + scalar;
+    ans[11] = m[11] + scalar;
+    ans[12] = m[12] + scalar;
+    ans[13] = m[13] + scalar;
+    ans[14] = m[14] + scalar;
+    ans[15] = m[15] + scalar;
+    
+    return ans;
+}
+
+
+Matrix44 Matrix44::operator+(const Matrix44& rh) const
+{
+    Matrix44 ans;
+    
+    ans[0] =  m[0]  + rh[0];
+    ans[1] =  m[1]  + rh[1];
+    ans[2] =  m[2]  + rh[2];
+    ans[3] =  m[3]  + rh[3];
+    ans[4] =  m[4]  + rh[4];
+    ans[5] =  m[5]  + rh[5];
+    ans[6] =  m[6]  + rh[6];
+    ans[7] =  m[7]  + rh[7];
+    ans[8] =  m[8]  + rh[8];
+    ans[9] =  m[9]  + rh[9];
+    ans[10] = m[10] + rh[10];
+    ans[11] = m[11] + rh[11];
+    ans[12] = m[12] + rh[12];
+    ans[13] = m[13] + rh[13];
+    ans[14] = m[14] + rh[14];
+    ans[15] = m[15] + rh[15];
+
+    return ans;
+}
+
+
+Matrix44 Matrix44::operator-(const Matrix44& rh) const 
+{
+    Matrix44 ans;
+    
+    ans[0] =  m[0]  - rh[0];
+    ans[1] =  m[1]  - rh[1];
+    ans[2] =  m[2]  - rh[2];
+    ans[3] =  m[3]  - rh[3];
+    ans[4] =  m[4]  - rh[4];
+    ans[5] =  m[5]  - rh[5];
+    ans[6] =  m[6]  - rh[6];
+    ans[7] =  m[7]  - rh[7];
+    ans[8] =  m[8]  - rh[8];
+    ans[9] =  m[9]  - rh[9];
+    ans[10] = m[10] - rh[10];
+    ans[11] = m[11] - rh[11];
+    ans[12] = m[12] - rh[12];
+    ans[13] = m[13] - rh[13];
+    ans[14] = m[14] - rh[14];
+    ans[15] = m[15] - rh[15];
+
+    return ans;
+}
+
+
+Matrix44 Matrix44::operator-(F32 scalar) const
+{
+    Matrix44 ans;
+    
+    ans[0] =  m[0]  - scalar;
+    ans[1] =  m[1]  - scalar;
+    ans[2] =  m[2]  - scalar;
+    ans[3] =  m[3]  - scalar;
+    ans[4] =  m[4]  - scalar;
+    ans[5] =  m[5]  - scalar;
+    ans[6] =  m[6]  - scalar;
+    ans[7] =  m[7]  - scalar;
+    ans[8] =  m[8]  - scalar;
+    ans[9] =  m[9]  - scalar;
+    ans[10] = m[10] - scalar;
+    ans[11] = m[11] - scalar;
+    ans[12] = m[12] - scalar;
+    ans[13] = m[13] - scalar;
+    ans[14] = m[14] - scalar;
+    ans[15] = m[15] - scalar;
+
+    return ans;
+}
+
+F32 Matrix44::get(U32 row, U32 col) const
+{
+    R_ASSERT(row < 4 && col < 4);
+
+    return m[4u * row + col];
+}
+
+
+F32& Matrix44::get(U32 row, U32 col)
+{
+    R_ASSERT(row < 4 & col < 4);
+    
+    return m[4u * row + col];
 }
 } // Recluse

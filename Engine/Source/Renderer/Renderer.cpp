@@ -4,8 +4,11 @@
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 #include "Recluse/Graphics/GraphicsContext.hpp"
 #include "Recluse/Graphics/GraphicsAdapter.hpp"
+#include "Recluse/Memory/MemoryCommon.hpp"
 
 #include "Recluse/Messaging.hpp"
+
+#include "PreZRenderModule.hpp"
 
 namespace Recluse {
 namespace Engine {
@@ -45,22 +48,63 @@ void Renderer::initialize(void* windowHandle, const RendererConfigs& configs)
     
     determineAdapter(adapters);
 
-    createDevice();
+    createDevice(configs);
+
+    {
+        MemoryReserveDesc reserveDesc = { };
+        reserveDesc.bufferPools[RESOURCE_MEMORY_USAGE_CPU_ONLY]     = R_1MB * 32ull;
+        reserveDesc.bufferPools[RESOURCE_MEMORY_USAGE_CPU_TO_GPU]   = R_1MB * 16ull;
+        reserveDesc.bufferPools[RESOURCE_MEMORY_USAGE_GPU_TO_CPU]   = R_1MB * 16ull;
+        reserveDesc.bufferPools[RESOURCE_MEMORY_USAGE_GPU_ONLY]     = R_1MB * 512ull;
+        reserveDesc.texturePoolGPUOnly                              = R_1GB * 1ull;
+
+        // Memory reserves for engine.
+        result = m_pDevice->reserveMemory(reserveDesc);
+    }
+
+    if (result != REC_RESULT_OK) {
+    
+        R_ERR("Renderer", "ReserveMemory call completed with result: %d", result);
+
+    }
+
+    setUpModules();
 }
 
 
 void Renderer::cleanUp()
 {
+    if (m_graphicsQueue) {
+        // Wait for the queue to finish all work, before destroying things...    
+        m_graphicsQueue->wait();
+
+    }
+
+    // Clean up all modules, as well as resources handled by them...
+    cleanUpModules();
+
+    if (m_pDevice) {
+        m_pAdapter->destroyDevice(m_pDevice);
+    }
 }
 
 
 void Renderer::present()
 {
+    ErrType result = m_pSwapchain->present();
+
+    if (result != REC_RESULT_OK) {
+
+        R_WARN("Renderer", "Swapchain present returns with err code: %d", result);
+
+    }
 }
 
 
 void Renderer::render()
 {
+
+    PreZ::generate(m_commandList);
 }
 
 
@@ -89,10 +133,10 @@ void Renderer::determineAdapter(std::vector<GraphicsAdapter*>& adapters)
 }
 
 
-void Renderer::createDevice()
+void Renderer::createDevice(const RendererConfigs& configs)
 {
     DeviceCreateInfo info   = { };
-    info.buffering          = 2;
+    info.buffering          = configs.buffering;
     info.winHandle          = m_windowHandle;
     ErrType result          = REC_RESULT_OK;
     
@@ -103,6 +147,22 @@ void Renderer::createDevice()
         R_ERR("Renderer", "Failed to create device!");
         
     }
+}
+
+
+void Renderer::setUpModules()
+{
+    m_sceneBuffers.pSceneDepth = new Texture2D();
+    m_sceneBuffers.pSceneDepth->initialize(this, RESOURCE_FORMAT_D32_FLOAT_S8_UINT, 
+        m_rendererConfigs.renderWidth, m_rendererConfigs.renderHeight, 1, 1);
+
+    PreZ::initialize(m_pDevice, &m_sceneBuffers);
+}
+
+
+void Renderer::cleanUpModules()
+{
+    PreZ::destroy(m_pDevice);
 }
 } // Engine
 } // Recluse

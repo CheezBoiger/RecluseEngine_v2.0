@@ -106,4 +106,11 @@ Float4 Float4::operator<=(const Float4& rh) const
 {
     return Float4(x <= rh.x, y <= rh.y, z <= rh.z, w < rh.w);
 }
+
+
+UInt4 UInt4::operator+(const UInt4& rh) const
+{
+    return UInt4(x + rh.x, y + rh.y, z + rh.z, w + rh.w);
+}
+
 } // Recluse

@@ -24,6 +24,7 @@ VkFormat getVulkanFormat(Recluse::ResourceFormat format)
         case Recluse::RESOURCE_FORMAT_R32G32B32A32_UINT: return VK_FORMAT_R32G32B32A32_UINT;
         case Recluse::RESOURCE_FORMAT_R32G32_FLOAT: return VK_FORMAT_R32G32_SFLOAT;
         case Recluse::RESOURCE_FORMAT_R32G32_UINT: return VK_FORMAT_R32G32_UINT;
+        case Recluse::RESOURCE_FORMAT_D32_FLOAT_S8_UINT: return VK_FORMAT_D32_SFLOAT_S8_UINT;
         case Recluse::RESOURCE_FORMAT_R8_UINT: return VK_FORMAT_R8_UINT;
         default: return VK_FORMAT_UNDEFINED;
     }
@@ -444,7 +445,7 @@ VkImageMemoryBarrier VulkanImage::transition(VkImageLayout dstLayout, VkImageSub
         case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
         case VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL:
         case VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL:
-            barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT; 
+            barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT; 
             break;
         case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
             barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT; 
