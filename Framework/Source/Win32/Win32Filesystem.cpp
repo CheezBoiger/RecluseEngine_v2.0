@@ -24,7 +24,7 @@ ErrType File::readFrom(FileBufferData* pFile, const std::string& filePath)
     result = file.open(filePath, "r");
 
     if (file.isOpen()) {
-        DWORD sz        = file.getFileSz();
+        DWORD sz        = (DWORD)file.getFileSz();
 
         pFile->buffer.resize(sz);
         result = file.read(pFile->buffer.data(), pFile->buffer.size());
@@ -122,7 +122,7 @@ void File::close()
 ErrType File::write(void* ptr, U64 szBytes)
 {
     DWORD numBytesWritten   = 0;
-    BOOL isWritten          = WriteFile(m_fileHandle, ptr, szBytes, &numBytesWritten, 0);
+    BOOL isWritten          = WriteFile(m_fileHandle, ptr, (DWORD)szBytes, &numBytesWritten, 0);
 
     if (!isWritten) {
     

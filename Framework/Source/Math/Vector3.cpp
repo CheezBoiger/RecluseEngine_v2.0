@@ -104,6 +104,33 @@ Float3 Float3::operator<=(const Float3& rh) const
 }
 
 
+Float3 operator*(F32 scalar, const Float3& rh)
+{
+    return rh + scalar;
+}
+
+Float3 operator+(F32 scalar, const Float3& rh)
+{
+    return rh + scalar;
+}
+
+
+Float3 operator-(F32 scalar, const Float3& rh)
+{
+    return Float3(scalar - rh.x, scalar - rh.y, scalar - rh.z);
+}
+
+
+Float3 operator/(F32 scalar, const Float3& rh)
+{
+    F32 denomX = 1.0f / rh[0];
+    F32 denomY = 1.0f / rh[1];
+    F32 denomZ = 1.0f / rh[2];
+
+    return Float3(scalar * denomX, scalar * denomY, scalar * denomZ);
+}
+
+
 F32 dot(const Float3& lh, const Float3& rh)
 {
     return ((lh[0] * rh[0]) + (lh[1] * rh[1]) + (lh[2] * rh[2]));

@@ -39,6 +39,11 @@ struct R_EXPORT Float3 {
     inline Float3 operator>(const Float3& rh) const;
     inline Float3 operator>=(const Float3& rh) const;
     inline Float3 operator<=(const Float3& rh) const;
+
+    inline friend Float3 operator*(F32 scalar, const Float3& rh);
+    inline friend Float3 operator+(F32 scalar, const Float3& rh);
+    inline friend Float3 operator-(F32 scalar, const Float3& rh);
+    inline friend Float3 operator/(F32 scalar, const Float3& rh);
 };
 
 
@@ -56,13 +61,22 @@ struct Int3 {
 
     inline Int3 operator+(const Int3& rh) const;
     inline Int3 operator-(const Int3& rh) const;
+
     inline Int3 operator-() const;
+
     inline Int3 operator+(I32 scalar) const;
     inline Int3 operator-(I32 scalar) const;
     inline Int3 operator/(I32 scalar) const;
+    inline Int3 operator*(I32 scalar) const;
+
     inline Int3 operator*(const Int3& rh) const;
     inline Int3 operator&(const Int3& rh) const;
     inline Int3 operator|(const Int3& rh) const;
+
+    inline friend Int3 operator+(I32 scalar, const Int3& rh);
+    inline friend Int3 operator-(I32 scalar, const Int3& rh);
+    inline friend Int3 operator*(I32 scalar, const Int3& rh);
+    inline friend Int3 operator/(I32 scalar, const Int3& rh);
 };
 
 

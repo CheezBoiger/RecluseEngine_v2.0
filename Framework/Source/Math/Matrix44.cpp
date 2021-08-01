@@ -434,7 +434,7 @@ F32 Matrix44::get(U32 row, U32 col) const
 
 F32& Matrix44::get(U32 row, U32 col)
 {
-    R_ASSERT(row < 4 & col < 4);
+    R_ASSERT(row < 4 && col < 4);
     
     return m[4u * row + col];
 }

@@ -76,18 +76,20 @@ private:
     
     void destroyDevice();
 
-    GraphicsContext* m_pContext;
-    GraphicsAdapter* m_pAdapter;
-    GraphicsDevice* m_pDevice;
-    GraphicsQueue* m_graphicsQueue;
-    GraphicsCommandList* m_commandList;
-    GraphicsSwapchain* m_pSwapchain;
+    // Graphics context and information.
+    GraphicsContext*        m_pContext;
+    GraphicsAdapter*        m_pAdapter;
+    GraphicsDevice*         m_pDevice;
+    GraphicsQueue*          m_graphicsQueue;
+    GraphicsCommandList*    m_commandList;
+    GraphicsSwapchain*      m_pSwapchain;
 
     // Renderer configs.
-    RendererConfigs m_rendererConfigs;
-    void*           m_windowHandle;
+    RendererConfigs         m_rendererConfigs;
+    void*                   m_windowHandle;
 
-    SceneBuffers m_sceneBuffers;
+    // Scene buffer objects.
+    SceneBuffers            m_sceneBuffers;
 };
 } // Engine
 } // Recluse

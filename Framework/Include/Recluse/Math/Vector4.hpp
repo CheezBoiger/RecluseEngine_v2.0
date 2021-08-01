@@ -22,6 +22,9 @@ struct R_EXPORT Float4 {
     inline Float4(const Float2& xy, const Float2& zw)
         : x(xy.x), y(xy.y), z(zw.x), w(zw.y) { }
 
+    F32& operator[](U32 i) { return (&x)[i]; }
+    F32 operator[](U32 i) const { return (&x)[i]; }
+
     inline Float4 operator+(const Float4& rh) const;
     inline Float4 operator-(const Float4& rh) const;
     inline Float4 operator*(const Float4& rh) const;
@@ -38,6 +41,11 @@ struct R_EXPORT Float4 {
     inline Float4 operator>(const Float4& rh) const;
     inline Float4 operator>=(const Float4& rh) const;
     inline Float4 operator<=(const Float4& rh) const;
+
+    inline friend Float4 operator+(F32 scalar, const Float4& rh);
+    inline friend Float4 operator-(F32 scalar, const Float4& rh);
+    inline friend Float4 operator*(F32 scalar, const Float4& rh);
+    inline friend Float4 operator/(F32 scalar, const Float4& rh);
     
 };
 

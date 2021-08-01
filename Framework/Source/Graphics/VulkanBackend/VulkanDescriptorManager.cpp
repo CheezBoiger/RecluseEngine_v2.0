@@ -33,7 +33,7 @@ void VulkanDescriptorManager::initialize(VulkanDevice* pDevice)
 
     ci.sType                        = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     ci.pPoolSizes                   = poolSizes.data();
-    ci.poolSizeCount                = poolSizes.size();
+    ci.poolSizeCount                = (U32)poolSizes.size();
     ci.maxSets                      = UINT16_MAX;
     ci.flags                        = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 

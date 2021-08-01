@@ -32,8 +32,16 @@ struct R_EXPORT Matrix44 {
     inline Matrix44 operator-(F32 scalar) const;
     inline Matrix44 operator*(F32 scalar) const;
     inline Matrix44 operator/(F32 scalar) const;  
-};
 
+    inline Matrix44 operator*=(const Matrix44& rh) const;
+    inline Matrix44 operator+=(const Matrix44& rh) const;
+    inline Matrix44 operator-=(const Matrix44& rh) const;
+
+    inline Matrix44 operator*=(F32 scalar) const;
+    inline Matrix44 operator+=(F32 scalar) const;
+    inline Matrix44 operator-=(F32 scalar) const;
+    inline Matrix44 operator/=(F32 scalar) const;
+};
 
 Matrix44 R_EXPORT rotate(const Matrix44& init, const Float3& axis, F32 radius);
 Matrix44 R_EXPORT transpose(const Matrix44& init);

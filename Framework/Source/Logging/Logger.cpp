@@ -180,7 +180,7 @@ void LoggingQueue::initialize(U64 maxLogs)
     m_pool              = new MemoryPool(szTotalBytes);
 
     // Preinitialize the ring buffer full of logs.
-    for (U32 i = 0; i < m_pool->getTotalSizeBytes(); i += szLogNode) {
+    for (U64 i = 0; i < m_pool->getTotalSizeBytes(); i += szLogNode) {
     
         U64 addr        = m_pool->getBaseAddress() + i;
         LogNode* node   = (LogNode*)addr;

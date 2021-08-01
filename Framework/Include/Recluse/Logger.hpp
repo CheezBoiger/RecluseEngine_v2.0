@@ -77,4 +77,5 @@ void    setLogChannel(const std::string& channel, B8 enable);
 
 // Display logging info to standard output.
 void    enableStandardOutput(B32 enable);
+void    enableLog(const std::string& log, B32 enable);
 } // Recluse

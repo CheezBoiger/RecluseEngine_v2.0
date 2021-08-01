@@ -114,9 +114,9 @@ ErrType BuddyAllocator::onFree(Allocation* pOutput)
     }
 
     PtrType baseAddr    = getBaseAddr();
-    U32 szBytes         = pOutput->sizeBytes;
+    U64 szBytes         = pOutput->sizeBytes;
     U32 nthBit          = (U32)ceil(log2(szBytes));
-    U32 buddyNumber     = pOutput->ptr / m_allocatedBlocks[pOutput->ptr];
+    U32 buddyNumber     = (U32)(pOutput->ptr / m_allocatedBlocks[pOutput->ptr]);
     SizeT buddyAddr     = 0;
     U64 allocOffset     = pOutput->ptr - baseAddr;
 
