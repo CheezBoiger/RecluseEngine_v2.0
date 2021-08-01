@@ -11,6 +11,7 @@
 #include "Recluse/Game/GameObject.hpp"
 
 #include <vector>
+#include <queue>
 
 using namespace Recluse;
 using namespace Recluse::Engine;
@@ -18,6 +19,8 @@ using namespace Recluse::Engine;
 // Testing the game object behavior!
 class TestObject : public Engine::GameObject {
 public:
+    R_PUBLIC_DECLARE_GAME_OBJECT(TestObject, "7C56ED72-A8C3-4428-952C-9BC7D4DB42C6")
+
     void onInitialize() override {
         m_name = "Super Test Object";
     }
@@ -30,6 +33,8 @@ public:
 
 struct TestObject1 : public Engine::GameObject {
 public:
+    R_PUBLIC_DECLARE_GAME_OBJECT(TestObject1, "B8353C91-B1EC-4517-B7DC-0CBADB10A398")
+
     void onInitialize() override {
         m_name = "Normal Boring Object";
     }
@@ -42,6 +47,8 @@ public:
 
 struct ChildObject : public Engine::GameObject {
 public:
+    R_PUBLIC_DECLARE_GAME_OBJECT(ChildObject, "E8C5D1C7-9758-4BF8-A17D-D1DC14D59769")
+
     void onInitialize() override {
         m_name = "Child Object";
     }
@@ -53,6 +60,58 @@ public:
         } else {
             R_ERR(m_name.c_str(), "I am a child object, but I don't have a parent!!");
         }
+    }
+};
+
+
+class GameWorldScene : public Engine::Scene {
+public:
+    ErrType serialize(Archive* pArchive) override {
+        std::queue<Engine::GameObject*> objects;
+        const std::vector<Engine::GameObject*>& gameObjects = getGameObjects();
+        for (auto gameObject : gameObjects) {
+            objects.push(gameObject);
+        } 
+
+        while (!objects.empty()) {
+            Engine::GameObject* pObject = objects.front();
+            objects.pop();
+            
+            Engine::RGUID rguid                                 = pObject->getClassGUID();
+            const std::vector<Engine::GameObject*>& children    = pObject->getChildren();
+            U32 numChildren                                     = (U32)children.size();
+            const char* name                                    = pObject->getClassName();
+            U32 nameSz                                          = strlen(name);
+            pArchive->write(&rguid, sizeof(Engine::RGUID));
+            pArchive->write(&numChildren, 4);
+            pArchive->write(&nameSz, sizeof(U32));
+            pArchive->write((void*)name, nameSz);
+            
+            pObject->serialize(pArchive);
+        }
+
+        return REC_RESULT_OK;
+    }
+
+    ErrType deserialize(Archive* pArchive) override {
+
+        ErrType result = REC_RESULT_OK;
+        while (result == REC_RESULT_OK) {
+            Engine::RGUID rguid;
+            U32 numChilren = 0;
+            U32 nameSz = 0;
+            char name[128];
+            result = pArchive->read(&rguid, sizeof(Engine::RGUID));
+            result = pArchive->read(&numChilren, sizeof(U32));
+            result = pArchive->read(&nameSz, sizeof(U32));
+            result = pArchive->read(name, nameSz);
+            name[nameSz] = '\0';
+
+            if (result == REC_RESULT_OK)
+                R_TRACE(getName().c_str(), "Game Object: %s", name);
+        }
+
+        return REC_RESULT_OK;
     }
 };
 
@@ -69,7 +128,7 @@ int main(int c, char* argv[])
     child->initialize();
     obj->addChild(child);
 
-    Scene* pScene = new Scene();
+    Scene* pScene = new GameWorldScene();
     pScene->setName("Scene Test...$#%@#^&*^*&^%$#qwiefowdnfOIEFONWLEKAFMPOWRHGJOIQNBER29-34U831634%#@%#$3\\[[");
 
     pScene->initialize();

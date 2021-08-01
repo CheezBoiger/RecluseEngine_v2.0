@@ -11,7 +11,7 @@ class GameObject;
 typedef U64 ComponentUUID;
 
 // Component abstraction class.
-class Component : public Serializable {
+class R_EXPORT Component : public Serializable {
 public:
     // Default component construction.
     Component()

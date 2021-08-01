@@ -106,7 +106,7 @@ Float3 Float3::operator<=(const Float3& rh) const
 
 Float3 operator*(F32 scalar, const Float3& rh)
 {
-    return rh + scalar;
+    return rh * scalar;
 }
 
 Float3 operator+(F32 scalar, const Float3& rh)

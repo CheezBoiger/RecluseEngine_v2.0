@@ -7,7 +7,7 @@
 namespace Recluse {
 
 
-struct Matrix33 { 
+struct R_EXPORT Matrix33 { 
     F32 m[9];
 
     Matrix33(F32 a00 = 1.0f, F32 a01 = 0.0f, F32 a02 = 0.0f,

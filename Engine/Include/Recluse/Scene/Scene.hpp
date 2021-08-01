@@ -11,7 +11,7 @@
 namespace Recluse {
 
 class MemoryPool;
-class StackAllocator;
+class Allocator;
 
 namespace Engine {
 
@@ -23,6 +23,8 @@ public:
         : m_currentCamera(nullptr)
         , m_gameMemAllocator(nullptr)
         , m_gameMemPool(nullptr) { }
+
+    virtual ~Scene() { }
 
     R_EXPORT void initialize();
     R_EXPORT void destroy();
@@ -45,17 +47,32 @@ public:
     // Deserialize the serialize.    
     R_EXPORT ErrType load(Archive* pArchive);
 
-    // Update the scene using the tick.
-    R_EXPORT void update(const RealtimeTick& tick);
+    // Update the scene using the tick. Can be overwritten 
+    virtual R_EXPORT void update(const RealtimeTick& tick);
 
     // 
     void setCamera(Camera* camera) { m_currentCamera = camera; }
 
     Camera* getCurrentCamera() const { return m_currentCamera; }
-private:
+protected:
 
-    ErrType serialize(Archive* pArchive) override { return REC_RESULT_NOT_IMPLEMENTED; }
-    ErrType deserialize(Archive* pArchive) override { return REC_RESULT_NOT_IMPLEMENTED; }
+    // Serialize the given scene. This should be used for 
+    // custom scenes.
+    virtual R_EXPORT ErrType serialize(Archive* pArchive) override;
+
+    // Deserialize the scene from the given archive.
+    //
+    virtual R_EXPORT ErrType deserialize(Archive* pArchive) override;
+
+    // Set up the scene. Usually should be called if the scene is new, and 
+    // needs setting up.
+    virtual R_EXPORT ErrType setUp() { return REC_RESULT_NOT_IMPLEMENTED; }
+
+    // Teardown the scene, for when any objects initialized, should be cleaned up 
+    // by the scene.
+    virtual R_EXPORT ErrType tearDown() { return REC_RESULT_NOT_IMPLEMENTED; }
+
+private:
 
     // Game objects in the scene.
     std::vector<GameObject*> m_gameObjects;
@@ -65,7 +82,7 @@ private:
     Camera*                     m_currentCamera;
 
     MemoryPool*                 m_gameMemPool;
-    StackAllocator*             m_gameMemAllocator;
+    Allocator*                  m_gameMemAllocator;
 };
 } // Engine
 } // Recluse

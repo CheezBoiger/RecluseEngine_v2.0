@@ -6,11 +6,11 @@
 namespace Recluse {
 
 
-struct Ray {
+struct R_EXPORT Ray {
     Float3 o;
     Float3 dir;
 };
 
 
-Float3 rayP(const Ray& ray, F32 t);
+R_EXPORT Float3 rayP(const Ray& ray, F32 t);
 } // Recluse

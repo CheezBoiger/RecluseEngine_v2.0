@@ -40,10 +40,10 @@ struct R_EXPORT Float3 {
     inline Float3 operator>=(const Float3& rh) const;
     inline Float3 operator<=(const Float3& rh) const;
 
-    inline friend Float3 operator*(F32 scalar, const Float3& rh);
-    inline friend Float3 operator+(F32 scalar, const Float3& rh);
-    inline friend Float3 operator-(F32 scalar, const Float3& rh);
-    inline friend Float3 operator/(F32 scalar, const Float3& rh);
+    inline R_EXPORT friend Float3 operator*(F32 scalar, const Float3& rh);
+    inline R_EXPORT friend Float3 operator+(F32 scalar, const Float3& rh);
+    inline R_EXPORT friend Float3 operator-(F32 scalar, const Float3& rh);
+    inline R_EXPORT friend Float3 operator/(F32 scalar, const Float3& rh);
 };
 
 
@@ -106,9 +106,9 @@ struct R_EXPORT UShort3 {
     };
 };
 
-Float3  R_EXPORT cross(const Float3& lh, const Float3& rh);
-F32     R_EXPORT dot(const Float3& lh, const Float3& rh);
-F32     R_EXPORT length(const Float3& v);
-F32     R_EXPORT length2(const Float3& v);
-Float3  R_EXPORT normalize(const Float3& v);
+R_EXPORT Float3  cross(const Float3& lh, const Float3& rh);
+R_EXPORT F32     dot(const Float3& lh, const Float3& rh);
+R_EXPORT F32     length(const Float3& v);
+R_EXPORT F32     length2(const Float3& v);
+R_EXPORT Float3  normalize(const Float3& v);
 } // Reclue

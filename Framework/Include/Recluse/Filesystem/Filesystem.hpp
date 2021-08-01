@@ -12,14 +12,14 @@ struct FileBufferData {
 };
 
 
-struct File {
+struct R_EXPORT File {
     File()
         : m_isOpen(false)
         , m_fileHandle(nullptr) { }
 
 
-    static R_EXPORT ErrType readFrom(FileBufferData* pData, const std::string& filePath);
-    static R_EXPORT ErrType writeTo(FileBufferData* pData, const std::string& filePath);
+    static ErrType readFrom(FileBufferData* pData, const std::string& filePath);
+    static ErrType writeTo(FileBufferData* pData, const std::string& filePath);
 
     ErrType open(const std::string& filePath, char* access);
     void    close();

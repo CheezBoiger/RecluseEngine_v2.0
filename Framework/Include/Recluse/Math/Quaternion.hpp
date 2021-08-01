@@ -10,7 +10,7 @@
 namespace Recluse {
 
 
-struct Quaternion {
+struct R_EXPORT Quaternion {
 
     F32 x, y, z, w;
     
@@ -35,16 +35,16 @@ struct Quaternion {
 };
 
 
-Quaternion  normalize(const Quaternion& quat);
-F32         norm(const Quaternion& quat);
-F32         norm2(const Quaternion& quat);
-F32         dot(const Quaternion& a, const Quaternion& b);
-Quaternion  lookRotation(const Float3& dir, const Float3& up);
-Quaternion  conjugate(const Quaternion& quat);
-Quaternion  inverse(const Quaternion& quat);
-Quaternion  angleAxis(const Float3& axis, F32 radians);
-Quaternion  eulerToQuat(const Float3& euler);
-Float3      quatToEuler(const Quaternion& quat);
-Matrix44    quatToMat44(const Quaternion& quat);
-Quaternion  slerp(const Quaternion& a, const Quaternion& b, F32 t);
+R_EXPORT Quaternion normalize(const Quaternion& quat);
+R_EXPORT F32        norm(const Quaternion& quat);
+R_EXPORT F32        norm2(const Quaternion& quat);
+R_EXPORT F32        dot(const Quaternion& a, const Quaternion& b);
+R_EXPORT Quaternion lookRotation(const Float3& dir, const Float3& up);
+R_EXPORT Quaternion conjugate(const Quaternion& quat);
+R_EXPORT Quaternion inverse(const Quaternion& quat);
+R_EXPORT Quaternion angleAxis(const Float3& axis, F32 radians);
+R_EXPORT Quaternion eulerToQuat(const Float3& euler);
+R_EXPORT Float3     quatToEuler(const Quaternion& quat);
+R_EXPORT Matrix44   quatToMat44(const Quaternion& quat);
+R_EXPORT Quaternion slerp(const Quaternion& a, const Quaternion& b, F32 t);
 } // Recluse

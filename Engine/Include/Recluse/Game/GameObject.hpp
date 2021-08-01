@@ -6,6 +6,7 @@
 
 #include "Recluse/Serialization/Serializable.hpp"
 #include "Recluse/Game/Component.hpp"
+#include "Recluse/Serialization/Hasher.hpp"
 
 #include <set>
 #include <vector>
@@ -18,6 +19,7 @@ class Component;
 class Scene;
 
 typedef U64 GameUUID;
+typedef Hash64 RGUID;
 
 enum GameObjectStatus {
     GAME_OBJECT_STATUS_UNUSED,
@@ -30,6 +32,15 @@ enum GameObjectStatus {
     GAME_OBJECT_STATUS_WAKING,
     GAME_OBJECT_STATUS_DESTROYED
 };
+
+#define R_PUBLIC_DECLARE_GAME_OBJECT(_class, guuid) \
+    public: \
+    static RGUID classGUID() { return recluseHash(guuid, sizeof(guuid)); } \
+    static const char* className() { return #_class; } \
+    virtual RGUID getClassGUID() const override { return classGUID(); } \
+    virtual const char* getClassName() const override { return className(); }
+    
+    
 
 // Game object, which holds all our object logic and script behavior.
 // Kept as native C++, this class holds scripting behavior, which 
@@ -138,6 +149,10 @@ public:
         return (iter != m_childrenNodes.end());
     }
 
+    virtual RGUID getClassGUID() const = 0;
+
+    virtual const char* getClassName() const = 0;
+
 protected:
 
     // Override on initialize for your game object script.
@@ -165,6 +180,7 @@ protected:
    std::string m_name;
 
 private:
+
     GameObjectStatus m_status;
 
     // The Parent node that this game object may be associated to.

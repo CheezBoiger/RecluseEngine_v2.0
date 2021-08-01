@@ -7,14 +7,14 @@ namespace Recluse {
 
 struct Ray;
 
-struct Bounds3D {
+struct R_EXPORT Bounds3D {
     Float3 mmin;
     Float3 mmax;
 };
 
 
-B32     intersects(const Ray& ray, const Bounds3D& bounds);
-B32     intersects(const Bounds3D& a, const Bounds3D& b);
-F32     area(const Bounds3D& a);
-Float3  center(const Bounds3D& a);
+R_EXPORT B32     intersects(const Ray& ray, const Bounds3D& bounds);
+R_EXPORT B32     intersects(const Bounds3D& a, const Bounds3D& b);
+R_EXPORT F32     area(const Bounds3D& a);
+R_EXPORT Float3  center(const Bounds3D& a);
 } // Recluse

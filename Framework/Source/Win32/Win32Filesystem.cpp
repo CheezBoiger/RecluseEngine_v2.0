@@ -138,6 +138,11 @@ ErrType File::write(void* ptr, U64 szBytes)
 
 ErrType File::read(void* ptr, U64 szBytes)
 {
+    // Return invalid if we are requesting to read nothing...
+    if (szBytes == 0) {
+        return REC_RESULT_INVALID_ARGS;
+    }
+
     DWORD bytesRead = 0;
     BOOL isRead     = ReadFile((HANDLE)m_fileHandle, ptr, szBytes, &bytesRead, NULL);
 
@@ -147,6 +152,11 @@ ErrType File::read(void* ptr, U64 szBytes)
 
         return REC_RESULT_FAILED;
 
+    }
+
+    // zero bytes read means we probably reached end of file...
+    if (bytesRead == 0) {
+        return REC_RESULT_FAILED;
     }
 
     return REC_RESULT_OK;

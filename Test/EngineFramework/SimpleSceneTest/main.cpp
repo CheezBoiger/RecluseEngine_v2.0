@@ -18,6 +18,8 @@ using namespace Recluse::Engine;
 // Testing the game object behavior!
 class TestObject : public Engine::GameObject {
 public:
+    R_PUBLIC_DECLARE_GAME_OBJECT(TestObject, "7C56ED72-A8C3-4428-952C-9BC7D4DB42C6")
+
     void onInitialize() override {
         m_name = "Super Test Object";
     }
@@ -30,6 +32,8 @@ public:
 
 struct TestObject1 : public Engine::GameObject {
 public:
+    R_PUBLIC_DECLARE_GAME_OBJECT(TestObject1, "B8353C91-B1EC-4517-B7DC-0CBADB10A398")
+
     void onInitialize() override {
         m_name = "Normal Boring Object";
     }
@@ -42,6 +46,8 @@ public:
 
 struct ChildObject : public Engine::GameObject {
 public:
+    R_PUBLIC_DECLARE_GAME_OBJECT(ChildObject, "E8C5D1C7-9758-4BF8-A17D-D1DC14D59769")
+
     void onInitialize() override {
         m_name = "Child Object";
     }

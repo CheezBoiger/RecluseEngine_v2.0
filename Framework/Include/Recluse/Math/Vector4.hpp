@@ -50,7 +50,7 @@ struct R_EXPORT Float4 {
 };
 
 
-struct UInt4 {
+struct R_EXPORT UInt4 {
     union {
         struct { U32 x, y, z, w; };
         struct { U32 s, t, r, q; };
@@ -89,9 +89,9 @@ struct UInt4 {
     inline UInt4 operator<(const UInt4& rh) const;
 };
 
-F32 R_EXPORT dot(const Float4& a, const Float4& b);
-F32 R_EXPORT length(const Float4& a);
-F32 R_EXPORT length2(const Float4& a);
+R_EXPORT F32 dot(const Float4& a, const Float4& b);
+R_EXPORT F32 length(const Float4& a);
+R_EXPORT F32 length2(const Float4& a);
 // [1 x 4] * [4 x 4} = [1 x 4]
-Float4 R_EXPORT operator*(const Float4& lh, const Matrix44& rh);
+R_EXPORT Float4 operator*(const Float4& lh, const Matrix44& rh);
 } // Recluse

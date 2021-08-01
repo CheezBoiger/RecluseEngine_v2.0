@@ -34,13 +34,14 @@ void Scene::addGameObject(GameObject* obj)
 
 void Scene::update(const RealtimeTick& tick)
 {
-    Allocation output   = { };
-    ErrType err         = REC_RESULT_OK;
+    Allocation output           = { };
+    ErrType err                 = REC_RESULT_OK;
+    StackAllocator* allocator   = static_cast<StackAllocator*>(m_gameMemAllocator);
 
-    err = m_gameMemAllocator->allocate(&output, 8ull * m_gameObjects.size(), ARCH_PTR_SZ_BYTES);
+    err = allocator->allocate(&output, 8ull * m_gameObjects.size(), ARCH_PTR_SZ_BYTES);
 
-    PtrType currObjectPtr   = m_gameMemAllocator->getBaseAddr();
-    PtrType top             = m_gameMemAllocator->getTop();
+    PtrType currObjectPtr   = allocator->getBaseAddr();
+    PtrType top             = allocator->getTop();
     memcpy((void*)output.ptr, m_gameObjects.data(), m_gameObjects.size() * 8ull);
     
     while (currObjectPtr < top) {
@@ -51,10 +52,10 @@ void Scene::update(const RealtimeTick& tick)
         if (!children.empty()) {
 
             // We need to allocate some more.
-            err = m_gameMemAllocator->allocate(&output, 8llu * children.size(), ARCH_PTR_SZ_BYTES);
+            err = allocator->allocate(&output, 8llu * children.size(), ARCH_PTR_SZ_BYTES);
             memcpy((void*)output.ptr, children.data(), children.size() * 8ull);
             // Update the top.
-            top = m_gameMemAllocator->getTop();
+            top = allocator->getTop();
 
         }
 
@@ -65,7 +66,7 @@ void Scene::update(const RealtimeTick& tick)
     }
 
     // Reset the allocator when done...
-    m_gameMemAllocator->reset();
+    allocator->reset();
 }
 
 
@@ -137,7 +138,6 @@ ErrType Scene::save(Archive* pArchive)
 
     if (result != REC_RESULT_OK) {
         R_ERR(m_name.c_str(), "Failed to write scene header to archive!");
-        pArchive->close();
         return result;
     }
 
@@ -157,6 +157,8 @@ ErrType Scene::load(Archive* pArchive)
         return result;
     }
 
+    result = deserialize(pArchive);
+
     m_name = header.sceneName;
     
     return result;
@@ -166,6 +168,18 @@ ErrType Scene::load(Archive* pArchive)
 void Scene::setName(const std::string& name)
 {
     m_name = name;
+}
+
+
+ErrType Scene::serialize(Archive* pArchive) 
+{
+    return REC_RESULT_NOT_IMPLEMENTED;
+}
+
+
+ErrType Scene::deserialize(Archive* pArchive)
+{
+    return REC_RESULT_NOT_IMPLEMENTED;
 }
 } // Engine
 } // Recluse

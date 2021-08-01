@@ -43,19 +43,19 @@ struct R_EXPORT Matrix44 {
     inline Matrix44 operator/=(F32 scalar) const;
 };
 
-Matrix44 R_EXPORT rotate(const Matrix44& init, const Float3& axis, F32 radius);
-Matrix44 R_EXPORT transpose(const Matrix44& init);
-Matrix44 R_EXPORT identity();
-Matrix44 R_EXPORT translate(const Matrix44& init, const Float3& trans);
-Matrix44 R_EXPORT scale(const Matrix44& init, const Float4& scalar);
-Matrix44 R_EXPORT adjugate(const Matrix44& init);
-Matrix44 R_EXPORT inverse(const Matrix44& init);
-F32      R_EXPORT determinant(const Matrix44& init);
-Matrix44 R_EXPORT perspectiveLH(F32 fov, F32 aspect, F32 ne, F32 fa);
-Matrix44 R_EXPORT perspectiveRH(F32 fov, F32 aspect, F32 ne, F32 fa);
-Matrix44 R_EXPORT orthographicLH(F32 top, F32 bottom, F32 left, F32 right, F32 ne, F32 fa);
-Matrix44 R_EXPORT orthographicRH(F32 top, F32 bottom, F32 left, F32 right, F32 ne, F32 fa);
-Matrix44 R_EXPORT lookAt(const Float3& position, const Float3& target, const Float3& up);
-Matrix44 R_EXPORT lookAtRH(const Float3& position, const Float3& target, const Float3& up);
-Matrix44 R_EXPORT operator*(const Matrix44& lh, const Float4& rh);
+R_EXPORT Matrix44 rotate(const Matrix44& init, const Float3& axis, F32 radius);
+R_EXPORT Matrix44 transpose(const Matrix44& init);
+R_EXPORT Matrix44 identity();
+R_EXPORT Matrix44 translate(const Matrix44& init, const Float3& trans);
+R_EXPORT Matrix44 scale(const Matrix44& init, const Float4& scalar);
+R_EXPORT Matrix44 adjugate(const Matrix44& init);
+R_EXPORT Matrix44 inverse(const Matrix44& init);
+R_EXPORT F32      determinant(const Matrix44& init);
+R_EXPORT Matrix44 perspectiveLH(F32 fov, F32 aspect, F32 ne, F32 fa);
+R_EXPORT Matrix44 perspectiveRH(F32 fov, F32 aspect, F32 ne, F32 fa);
+R_EXPORT Matrix44 orthographicLH(F32 top, F32 bottom, F32 left, F32 right, F32 ne, F32 fa);
+R_EXPORT Matrix44 orthographicRH(F32 top, F32 bottom, F32 left, F32 right, F32 ne, F32 fa);
+R_EXPORT Matrix44 lookAt(const Float3& position, const Float3& target, const Float3& up);
+R_EXPORT Matrix44 lookAtRH(const Float3& position, const Float3& target, const Float3& up);
+R_EXPORT Matrix44 operator*(const Matrix44& lh, const Float4& rh);
 } // Recluse
