@@ -19,5 +19,40 @@ struct SceneBuffers {
     Texture2D* pSceneHDRTexture;
     Texture2D* pSceneDepth;
 };
+
+
+class GPUBuffer {
+public:
+    GPUBuffer()
+        : m_pResource(nullptr)
+        , m_pDevice(nullptr)
+        , m_totalSzBytes(0) { }
+    
+    ErrType initialize(GraphicsDevice* pDevice, U64 totalSzBytes, ResourceUsageFlags usage);
+    ErrType destroy();
+
+    ErrType stream(GraphicsQueue* pQueue, void* ptr, U64 offsetBytes, U64 szBytes);
+
+    GraphicsResource* get() const { return m_pResource; }
+private:
+
+    GraphicsResource*   m_pResource;
+    GraphicsDevice*     m_pDevice;
+    U64                 m_totalSzBytes;
+};
+
+
+class IndexBuffer {
+public:
+    IndexBuffer()
+        : m_pBuffer(nullptr) { }
+
+    ErrType initialize(GraphicsDevice* pDevice, U64 indices, IndexType type);
+
+private:
+    GPUBuffer* m_pBuffer;
+};
+
+typedef GPUBuffer VertexBuffer;
 } // Engine
 } // Recluse

@@ -41,6 +41,8 @@ public:
 
     void drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstVertex, U32 firstInstance) override;
     void bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* pOffsets) override;
+    void bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBytes, IndexType type) override;
+    void drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 firstIndex, U32 vertexOffset, U32 firstInstance) override;
 
     void copyResource(GraphicsResource* dst, GraphicsResource* src) override;
     void setViewports(U32 numViewports, Viewport* pViewports) override;

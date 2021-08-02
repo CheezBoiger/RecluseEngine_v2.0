@@ -33,6 +33,9 @@ public:
 
     ErrType copyResource(GraphicsResource* dst, GraphicsResource* src) override;
 
+    ErrType copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, 
+        CopyBufferRegion* pRegions, U32 numRegions) override;
+
     void wait() override;
 
     VkQueue operator()() const { return m_queue; }
@@ -40,6 +43,11 @@ public:
     VkQueue get() const { return m_queue; }
 
 private:
+    // Generate an internal one-time only command buffer for copy operations.
+    // Mainly a quick way to copy buffers and textures.
+    VkCommandBuffer beginOneTimeCommandBuffer();
+
+
     VkQueue m_queue;
     VulkanDevice* m_pDevice;
     QueueFamily* m_pFamilyRef;

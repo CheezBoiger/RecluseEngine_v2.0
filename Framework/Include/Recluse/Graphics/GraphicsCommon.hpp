@@ -5,6 +5,7 @@
 
 namespace Recluse {
 
+class GraphicsResource;
 
 enum BindType {
     BIND_TYPE_GRAPHICS,
@@ -105,6 +106,12 @@ enum DescriptorBindType {
 };
 
 
+enum IndexType {
+    INDEX_TYPE_UINT16,
+    INDEX_TYPE_UINT32
+};
+
+
 struct Viewport {
     F32 x;
     F32 y;
@@ -120,5 +127,12 @@ struct Rect {
         y, 
         width, 
         height;
+};
+
+
+struct CopyBufferRegion {
+    U64               srcOffsetBytes;
+    U16               dstOffsetBytes;
+    U64               szBytes;
 };
 } // Recluse

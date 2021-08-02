@@ -286,7 +286,12 @@ int main(int c, char* argv[])
         memcpy(ptr, vertices, sizeof(vertices));
         pTemp->unmap(&range);
 
-        result = pQueue->copyResource(pVertexBuffer, pTemp);
+        // result = pQueue->copyResource(pVertexBuffer, pTemp);
+        CopyBufferRegion region = { };
+        region.srcOffsetBytes = 0;
+        region.dstOffsetBytes = 0;
+        region.szBytes = sizeof(vertices);
+        result = pQueue->copyBufferRegions(pVertexBuffer, pTemp, &region, 1);
 
         if (result != REC_RESULT_OK) {
     

@@ -47,9 +47,8 @@ void Texture2D::destroy(Renderer* pRenderer)
 
 void Texture2D::load(Renderer* pRenderer, void* pData, U64 szBytes)
 {
-    
     ErrType result = REC_RESULT_OK;
-
+    
     result = pRenderer->getGraphicsQueue()->copyResource(m_resource, nullptr);
 }
 } // Engine

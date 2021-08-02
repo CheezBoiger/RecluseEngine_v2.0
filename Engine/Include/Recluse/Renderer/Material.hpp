@@ -13,7 +13,7 @@ namespace Engine {
 
 class Renderer;
 
-class Texture2D {
+class R_EXPORT Texture2D {
 public:
 
     void initialize(Renderer* pRenderer, ResourceFormat format, U32 width, U32 height, U32 arrayLevel, U32 mips);
@@ -68,26 +68,26 @@ class Material {
 public:
     virtual ~Material() { }
 
-    Material(MaterialType type) 
+    R_EXPORT Material(MaterialType type) 
         : m_matType(type)
         , m_flags(0) { }
 
-    MaterialType getMatType() const { return m_matType; }
+    R_EXPORT MaterialType getMatType() const { return m_matType; }
 
-    void initalize(TextureBind* pBinds, U32 bindCount) {
+    R_EXPORT void initalize(TextureBind* pBinds, U32 bindCount) {
         for (U32 i = 0; i < bindCount; ++i) {
             TextureBind& bind = pBinds[i];
             m_matMap[bind.attrib] = bind.pTexture;
         }
     }
 
-    Texture2D* getTex(const std::string& attrib) {
+    R_EXPORT Texture2D* getTex(const std::string& attrib) {
         return m_matMap[attrib];
     }
 
-    void setSurfaceType(SurfaceTypeFlags flags) { m_flags = flags; }
+    R_EXPORT void setSurfaceType(SurfaceTypeFlags flags) { m_flags = flags; }
 
-    SurfaceTypeFlags getSurfaceTypeFlags() { return m_flags; }
+    R_EXPORT SurfaceTypeFlags getSurfaceTypeFlags() { return m_flags; }
 
 protected:
     SurfaceTypeFlags m_flags;

@@ -103,28 +103,7 @@ ErrType VulkanQueue::copyResource(GraphicsResource* dst, GraphicsResource* src)
 
     // Create a one time only command list.
     VkDevice device             = m_pDevice->get();
-    VkCommandBuffer cmdBuffer   = VK_NULL_HANDLE;
-    VkResult result             = VK_SUCCESS;
-
-    VkCommandBufferAllocateInfo allocInfo   = { };
-    allocInfo.commandBufferCount            = 1;
-    allocInfo.commandPool                   = m_pFamilyRef->commandPools[m_pDevice->getCurrentBufferIndex()];
-    allocInfo.sType                         = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.level                         = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    result = vkAllocateCommandBuffers(device, &allocInfo, &cmdBuffer);
-
-    if (result != VK_SUCCESS) {
-    
-        return REC_RESULT_FAILED;
-    
-    }
-
-    {
-        VkCommandBufferBeginInfo begin  = { };
-        begin.sType                     = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        begin.flags                     = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-        vkBeginCommandBuffer(cmdBuffer, &begin);
-    }
+    VkCommandBuffer cmdBuffer   = beginOneTimeCommandBuffer();
 
     if (dstDim == RESOURCE_DIMENSION_BUFFER) { 
         VulkanBuffer* dstBuffer = static_cast<VulkanBuffer*>(dst);
@@ -149,6 +128,69 @@ ErrType VulkanQueue::copyResource(GraphicsResource* dst, GraphicsResource* src)
         }
 
     } 
+
+    vkEndCommandBuffer(cmdBuffer);
+
+    VkSubmitInfo submit = { };
+    submit.commandBufferCount = 1;
+    submit.pCommandBuffers = &cmdBuffer;
+    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+    vkQueueSubmit(m_queue, 1, &submit, m_fence);
+    
+    vkWaitForFences(device, 1, &m_fence, true, UINT64_MAX);
+    vkResetFences(device, 1, &m_fence);
+    
+    return REC_RESULT_OK;
+}
+
+
+VkCommandBuffer VulkanQueue::beginOneTimeCommandBuffer()
+{
+    // Create a one time only command list.
+    VkDevice device             = m_pDevice->get();
+    VkCommandBuffer cmdBuffer   = VK_NULL_HANDLE;
+    VkResult result             = VK_SUCCESS;
+
+    VkCommandBufferAllocateInfo allocInfo   = { };
+    allocInfo.commandBufferCount            = 1;
+    allocInfo.commandPool                   = m_pFamilyRef->commandPools[m_pDevice->getCurrentBufferIndex()];
+    allocInfo.sType                         = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.level                         = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    result = vkAllocateCommandBuffers(device, &allocInfo, &cmdBuffer);
+
+    if (result != VK_SUCCESS) {
+    
+        return VK_NULL_HANDLE;
+    
+    }
+
+    VkCommandBufferBeginInfo begin  = { };
+    begin.sType                     = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    begin.flags                     = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    vkBeginCommandBuffer(cmdBuffer, &begin);
+
+    return cmdBuffer;
+}
+
+
+ErrType VulkanQueue::copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, 
+    CopyBufferRegion* pRegions, U32 numRegions)
+{
+    VkBuffer dstBuf             = static_cast<VulkanBuffer*>(dst)->get();
+    VkBuffer srcBuf             = static_cast<VulkanBuffer*>(src)->get();
+    VkDevice device             = m_pDevice->get();
+    VkCommandBuffer cmdBuffer   = beginOneTimeCommandBuffer();
+
+    std::vector<VkBufferCopy> bufferCopies(numRegions);
+    
+    for (U32 i = 0; i < numRegions; ++i) {
+        bufferCopies[i].srcOffset = (VkDeviceSize)pRegions[i].srcOffsetBytes;
+        bufferCopies[i].dstOffset = (VkDeviceSize)pRegions[i].dstOffsetBytes;
+        bufferCopies[i].size      = (VkDeviceSize)pRegions[i].szBytes;
+    }
+
+    vkCmdCopyBuffer(cmdBuffer, srcBuf, dstBuf, numRegions, bufferCopies.data());
 
     vkEndCommandBuffer(cmdBuffer);
 

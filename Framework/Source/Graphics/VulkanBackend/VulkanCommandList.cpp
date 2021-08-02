@@ -354,4 +354,23 @@ void VulkanCommandList::transition(GraphicsResourceView** ppTargets, U32 targetC
             nullptr, 0, nullptr, numBarriers, imgBarriers.data()); 
     }
 }
+
+void VulkanCommandList::bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBytes, IndexType type)
+{
+    VkBuffer buffer         = static_cast<VulkanBuffer*>(pIndexBuffer)->get();
+    VkDeviceSize offset     = (VkDeviceSize)offsetBytes;
+    VkIndexType indexType   = VK_INDEX_TYPE_UINT32;
+
+    switch (indexType) {
+        case INDEX_TYPE_UINT16: indexType = VK_INDEX_TYPE_UINT16; break;
+        default: indexType = VK_INDEX_TYPE_UINT32; break;
+    }
+
+    vkCmdBindIndexBuffer(m_currentCmdBuffer, buffer, offset, indexType);
+}
+
+void VulkanCommandList::drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 firstIndex, U32 vertexOffset, U32 firstInstance)
+{
+    vkCmdDrawIndexed(m_currentCmdBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+}
 } // Recluse

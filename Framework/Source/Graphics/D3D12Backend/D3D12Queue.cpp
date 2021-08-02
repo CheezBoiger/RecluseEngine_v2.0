@@ -24,7 +24,7 @@ ErrType D3D12Queue::initialize(D3D12Device* pDevice)
     if (queueType & QUEUE_TYPE_COPY) type = D3D12_COMMAND_LIST_TYPE_COPY;
     if (queueType & QUEUE_TYPE_PRESENT) type = D3D12_COMMAND_LIST_TYPE_DIRECT;
     if (queueType & QUEUE_TYPE_GRAPHICS) type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-
+    
     desc.Type                           = type;
     
     result = device->CreateCommandQueue(&desc, __uuidof(ID3D12CommandQueue), (void**)&m_queue);

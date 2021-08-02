@@ -20,6 +20,8 @@ class GraphicsContext;
 class GraphicsQueue;
 class GraphicsCommandList;
 class GraphicsSwapchain;
+class Allocator;
+class MemoryPool;
 
 // Engine namespace.
 namespace Engine {
@@ -27,9 +29,8 @@ namespace Engine {
 class Texture2D;
 class Mesh;
 class Primitive;
-class VertexBuffer;
-class IndexBuffer;
 class RenderCommand;
+class RenderCommandList;
 
 struct MeshDescription {
 };
@@ -45,6 +46,7 @@ struct RendererConfigs {
     U32 buffering;
     GraphicsAPI api;
 };
+
 
 // Top level rendering engine. Implements Render Harware Interface, and 
 // manages all resources and states created in game graphics. This will usually
@@ -66,6 +68,11 @@ public:
 
     GraphicsDevice* getDevice() const { return m_pDevice; }
     GraphicsQueue* getGraphicsQueue() const { return m_graphicsQueue; }
+
+    VertexBuffer* createVertexBuffer(U64 perVertexSzBytes, U64 totalVertices);
+    IndexBuffer* createIndexBuffer(IndexType indexType, U64 totalIndices);
+
+    ErrType destroyGPUBuffer(GPUBuffer* pBuffer);
 
 private:
 

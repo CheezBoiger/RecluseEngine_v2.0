@@ -7,6 +7,7 @@
 #define VERTEX 1
 #define DEPTH_ONLY
 #define CUT_OUT
+#define INSTANCED
 
 #include "Vertex.glsl"
 #include "ApplicationSettings.glsl"

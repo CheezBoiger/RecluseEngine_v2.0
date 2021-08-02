@@ -164,5 +164,41 @@ void Renderer::cleanUpModules()
 {
     PreZ::destroy(m_pDevice);
 }
+
+
+VertexBuffer* Renderer::createVertexBuffer(U64 perVertexSzBytes, U64 totalVertices)
+{
+    ErrType result          = REC_RESULT_OK;
+    VertexBuffer* pBuffer   = new VertexBuffer();
+    U64 totalSzBytes        = perVertexSzBytes * totalVertices;
+
+    result = pBuffer->initialize(m_pDevice, totalSzBytes, RESOURCE_USAGE_VERTEX_BUFFER);
+
+    if (result != REC_RESULT_OK) {
+    
+        delete pBuffer;
+        pBuffer = nullptr;
+
+    }
+
+    return pBuffer;
+}
+
+
+ErrType Renderer::destroyGPUBuffer(GPUBuffer* pBuffer)
+{
+    ErrType result = REC_RESULT_OK;
+
+    if (!pBuffer) {
+
+        return REC_RESULT_FAILED;
+
+    }
+
+    result = pBuffer->destroy();
+    delete pBuffer;
+
+    return result;
+}
 } // Engine
 } // Recluse

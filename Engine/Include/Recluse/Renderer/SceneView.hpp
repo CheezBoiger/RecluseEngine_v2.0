@@ -40,14 +40,6 @@ RECLUSE_DECLARE_SCENE_BUFFER(RecluseSceneView)
 RECLUSE_END_SCENE_BUFFER();
 
 
-// Per mesh information.
-struct TransformPerMesh {
-    Matrix44 world;
-    Matrix44 worldToViewClip;
-    Matrix44 n;
-};
-
-
 struct StaticVertex {
     Float3 vPosition;
     Float3 vNormal;

@@ -24,9 +24,9 @@ public:
     virtual void end() { }
 
     virtual void bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* pOffsets) { }
-    virtual void bindIndexBuffer() { }
+    virtual void bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBytes, IndexType type) { }
 
-    virtual void drawIndexedInstanced() { }
+    virtual void drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 firstIndex, U32 vertexOffset, U32 firstInstance) { }
     virtual void drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstVertex, U32 firstInstance) { }
 
     virtual void drawInstancedIndirect() { }
@@ -48,10 +48,10 @@ public:
     virtual void clearDepthStencil() { }
 
     virtual void copyResource(GraphicsResource* dst, GraphicsResource* src) { }
-    virtual void copyResourceRegion(GraphicsResource* dst) { }
+    virtual void copyBufferRegions(CopyBufferRegion* pRegions, U32 numRegions) { }
 
     virtual void transition(GraphicsResourceView** ppTargets, U32 targetCounts) { }
-    
+
 private:
     
 };
