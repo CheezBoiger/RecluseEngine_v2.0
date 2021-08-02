@@ -42,6 +42,30 @@ public:
     void onUpdate(const RealtimeTick& tick) override {
         R_VERBOSE(m_name.c_str(), "I am just a boring object... :(");
     }
+
+    virtual ErrType serialize(Archive* pArchive) override {
+        U64 szName = m_name.size();
+        pArchive->write(&szName, sizeof(U64));
+        pArchive->write(const_cast<char*>(m_name.c_str()), m_name.size());
+        pArchive->write(&m_position, sizeof(Float2));
+        return REC_RESULT_OK;
+    }
+
+    virtual ErrType deserialize(Archive* pArchive) override {
+        U64 szName = 0;
+        pArchive->read(&szName, sizeof(U64));
+
+        m_name.resize(szName);
+
+        pArchive->read(const_cast<char*>(m_name.data()), szName);
+        pArchive->read(&m_position, sizeof(Float2));
+        return REC_RESULT_OK;
+    }
+
+    void setPosition(const Float2& pos) { m_position = pos; }
+
+private:
+    Float2 m_position;
 };
 
 
@@ -82,6 +106,7 @@ public:
             U32 numChildren                                     = (U32)children.size();
             const char* name                                    = pObject->getClassName();
             U32 nameSz                                          = strlen(name);
+
             pArchive->write(&rguid, sizeof(Engine::RGUID));
             pArchive->write(&numChildren, 4);
             pArchive->write(&nameSz, sizeof(U32));
@@ -98,17 +123,32 @@ public:
         ErrType result = REC_RESULT_OK;
         while (result == REC_RESULT_OK) {
             Engine::RGUID rguid;
-            U32 numChilren = 0;
-            U32 nameSz = 0;
+            U32 numChilren  = 0;
+            U32 nameSz      = 0;
             char name[128];
-            result = pArchive->read(&rguid, sizeof(Engine::RGUID));
-            result = pArchive->read(&numChilren, sizeof(U32));
-            result = pArchive->read(&nameSz, sizeof(U32));
-            result = pArchive->read(name, nameSz);
-            name[nameSz] = '\0';
+            result          = pArchive->read(&rguid, sizeof(Engine::RGUID));
+            result          = pArchive->read(&numChilren, sizeof(U32));
+            result          = pArchive->read(&nameSz, sizeof(U32));
+            result          = pArchive->read(name, nameSz);
+            name[nameSz]    = '\0';
 
-            if (result == REC_RESULT_OK)
+            if (result == REC_RESULT_OK) {
                 R_TRACE(getName().c_str(), "Game Object: %s", name);
+                
+                if (rguid == TestObject::classGUID()) {
+                    R_TRACE(__FUNCTION__, "This is a test object !")
+                    TestObject* pTestObject = new TestObject();
+                    pTestObject->deserialize(pArchive);
+                    addGameObject(pTestObject);
+                } else if (rguid == TestObject1::classGUID()) {
+                    R_TRACE(__FUNCTION__, "This is a test object1 !");
+                    TestObject1* pTestObject1 = new TestObject1();
+                    pTestObject1->deserialize(pArchive);
+                    addGameObject(pTestObject1);
+                } else if (rguid == ChildObject::classGUID()) {
+                    R_TRACE(__FUNCTION__, "This is a child object !");
+                }
+            }
         }
 
         return REC_RESULT_OK;
@@ -121,12 +161,14 @@ int main(int c, char* argv[])
     RealtimeTick::initialize();
 
     Engine::GameObject* obj = new TestObject();
-    Engine::GameObject* obj1 = new TestObject1();
+    TestObject1* obj1 = new TestObject1();
     Engine::GameObject* child = new ChildObject();
     obj1->initialize();
     obj->initialize();  
     child->initialize();
     obj->addChild(child);
+    
+    obj1->setPosition(Float2(-5.0f, 32.0f));
 
     Scene* pScene = new GameWorldScene();
     pScene->setName("Scene Test...$#%@#^&*^*&^%$#qwiefowdnfOIEFONWLEKAFMPOWRHGJOIQNBER29-34U831634%#@%#$3\\[[");
@@ -148,6 +190,12 @@ int main(int c, char* argv[])
     pScene->save(&testArchive);
     testArchive.close();
 
+    obj->destroy();
+    obj1->destroy();
+    child->destroy();
+    delete obj;
+    delete obj1;
+    delete child;
     pScene->destroy();
 
     testArchive.open("r");
@@ -157,8 +205,7 @@ int main(int c, char* argv[])
     R_TRACE("TEST", "Scene Name: %s", pScene->getName().c_str());
 
     pScene->destroy();
-
-    delete obj;  
+  
     delete pScene;
     Log::destroyLoggingSystem();
     return 0;
