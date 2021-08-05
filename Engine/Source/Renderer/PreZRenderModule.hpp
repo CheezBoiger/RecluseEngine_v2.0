@@ -12,6 +12,6 @@ namespace PreZ {
 
 void initialize(GraphicsDevice* pDevice, Engine::SceneBuffers* pBuffers);
 void destroy(GraphicsDevice* pDevice);
-void generate(GraphicsCommandList* pCommandList);
+void generate(GraphicsCommandList* pCommandList, Engine::RenderCommandList* pMeshCommandList, U64* keys, U64 sz);
 } // PreZ
 } // Recluse

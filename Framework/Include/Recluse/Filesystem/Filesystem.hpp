@@ -39,5 +39,9 @@ class Filesystem {
 public:
     static R_EXPORT std::string getCurrentDir();
     static R_EXPORT std::string getDirectoryFromPath(const std::string& path);
+
+    static R_EXPORT std::string isFile(const std::string& path);
+
+    static R_EXPORT std::string join(const std::string& path0, const std::string& path1);
 };
 } // Recluse 

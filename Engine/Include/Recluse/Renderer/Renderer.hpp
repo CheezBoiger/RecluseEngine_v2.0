@@ -4,8 +4,11 @@
 #include "Recluse/Types.hpp"
 #include "Recluse/Renderer/RendererResources.hpp"
 #include "Recluse/Graphics/GraphicsCommon.hpp"
+#include "Recluse/Memory/MemoryPool.hpp"
+#include "Recluse/Memory/Allocator.hpp"
 
 #include <vector>
+#include <unordered_map>
 
 #define RECLUSE_ENGINE_NAME_STRING "Recluse Engine"
 #define RECLUSE_ENGINE_VERSION_MAJOR 1
@@ -20,8 +23,6 @@ class GraphicsContext;
 class GraphicsQueue;
 class GraphicsCommandList;
 class GraphicsSwapchain;
-class Allocator;
-class MemoryPool;
 
 // Engine namespace.
 namespace Engine {
@@ -83,6 +84,9 @@ private:
     
     void destroyDevice();
 
+    void resetCommandKeys();
+    void sortCommandKeys();
+
     // Graphics context and information.
     GraphicsContext*        m_pContext;
     GraphicsAdapter*        m_pAdapter;
@@ -97,6 +101,25 @@ private:
 
     // Scene buffer objects.
     SceneBuffers            m_sceneBuffers;
+    RenderCommandList*       m_renderCommands;
+
+    struct CommandKey {
+        union {
+            U64 value;
+        };
+    };
+
+    struct KeySorter {
+        U64 start;
+        U64 end;
+
+        void pushKey(U64 value);
+
+        void sortKeys();
+    };
+
+    // command keys identify the index within the render command, to begin rendering for.
+    std::unordered_map<U32, std::vector<U64>> m_commandKeys;
 };
 } // Engine
 } // Recluse

@@ -35,12 +35,14 @@ private:
 
 
 enum SurfaceType {
-    SURFACE_TYPE_OPAQUE = (1 << 0),
-    SURFACE_TYPE_TRANSPARENT = (1 << 1),
-    SURFACE_TYPE_TRANSPARENT_CUTOUT = (1 << 2),
-    SURFACE_TYPE_SUBSURFACE = (1 << 3),
-    SURFACE_TYPE_FLAT = (1 << 4),
-    SURFACE_TYPE_PARTICLE = (1 << 5)
+    SURFACE_OPAQUE = (1 << 0),
+    SURFACE_TRANSPARENT = (1 << 1),
+    SURFACE_TRANSPARENT_CUTOUT = (1 << 2),
+    SURFACE_SUBSURFACE = (1 << 3),
+    SURFACE_FLAT = (1 << 4),
+    SURFACE_PARTICLE = (1 << 5),
+    SURFACE_SHADOWS = (1 << 6),
+    SURFACE_SELF_SHADOW = (1 << 7)
 };
 
 typedef U32 SurfaceTypeFlags;

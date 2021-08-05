@@ -9,6 +9,10 @@
 #include "Recluse/Messaging.hpp"
 
 #include "PreZRenderModule.hpp"
+#include "AOVRenderModule.hpp"
+#include "Recluse/Renderer/RenderCommand.hpp"
+
+#include <algorithm>
 
 namespace Recluse {
 namespace Engine {
@@ -103,8 +107,27 @@ void Renderer::present()
 
 void Renderer::render()
 {
+    sortCommandKeys();
 
-    PreZ::generate(m_commandList);
+    m_commandList->begin();
+
+        // TODO: Would make more sense to manually transition the resource itself, 
+        //       and not the resource view...
+        GraphicsResourceView* pSceneDepth = m_sceneBuffers.pSceneDepth->getView();
+        // Transition the resource.
+        m_commandList->transition(&pSceneDepth, 1);
+        
+        PreZ::generate(m_commandList, m_renderCommands, 
+            m_commandKeys[SURFACE_OPAQUE].data(), m_commandKeys[SURFACE_OPAQUE].size());
+
+        AOV::generate(m_commandList, m_renderCommands,
+            m_commandKeys[SURFACE_OPAQUE].data(), m_commandKeys[SURFACE_OPAQUE].size());
+        
+
+    m_commandList->end();
+
+    
+    resetCommandKeys();
 }
 
 
@@ -170,15 +193,32 @@ VertexBuffer* Renderer::createVertexBuffer(U64 perVertexSzBytes, U64 totalVertic
 {
     ErrType result          = REC_RESULT_OK;
     VertexBuffer* pBuffer   = new VertexBuffer();
-    U64 totalSzBytes        = perVertexSzBytes * totalVertices;
 
-    result = pBuffer->initialize(m_pDevice, totalSzBytes, RESOURCE_USAGE_VERTEX_BUFFER);
+    result = pBuffer->initializeVertices(m_pDevice, perVertexSzBytes, totalVertices);
 
     if (result != REC_RESULT_OK) {
     
         delete pBuffer;
         pBuffer = nullptr;
 
+    }
+
+    return pBuffer;
+}
+
+
+IndexBuffer* Renderer::createIndexBuffer(IndexType indexType, U64 totalIndices)
+{
+    ErrType result = REC_RESULT_OK;
+    IndexBuffer* pBuffer = new IndexBuffer();
+    
+    result = pBuffer->initializeIndices(m_pDevice, indexType, totalIndices);
+
+    if (result != REC_RESULT_OK) {
+    
+        delete pBuffer;
+        pBuffer = nullptr;
+    
     }
 
     return pBuffer;
@@ -199,6 +239,68 @@ ErrType Renderer::destroyGPUBuffer(GPUBuffer* pBuffer)
     delete pBuffer;
 
     return result;
+}
+
+
+void Renderer::resetCommandKeys()
+{
+    for (auto& cmdLists : m_commandKeys) {
+    
+        cmdLists.second.clear();
+    
+    }
+}
+
+
+void Renderer::sortCommandKeys()
+{
+    struct Cmp { 
+        bool operator()(const U64 a, const U64 b) const { 
+            return a < b;
+        }
+    } pred;
+
+    for (auto& cmdLists : m_commandKeys) {
+    
+        std::vector<U64>& list = cmdLists.second;
+        std::sort(list.begin(), list.end(), pred);
+    
+    }
+}
+
+
+void Renderer::pushRenderCommand(const RenderCommand& renderCommand)
+{
+    R_ASSERT(m_renderCommands != NULL);
+
+    // Store mesh commands to be referenced for each draw pass.
+    CommandKey key                          = { m_renderCommands->getNumberCommands() };
+    SubmeshRenderCommand* pSubMeshCommands  = renderCommand.pSubmeshes;
+
+    for (U32 i = 0; i < renderCommand.numSubMeshCommands; ++i) {
+    
+        Material* pMaterial             = pSubMeshCommands[i].pMaterial;
+        SubMeshRenderFlags submeshFlags = pSubMeshCommands[i].flags;
+
+        // Not material means we don't know how to render this mesh?
+        if (!pMaterial) {
+            continue;
+        }
+
+        SurfaceTypeFlags surface = pMaterial->getSurfaceTypeFlags();
+
+        if (surface & SURFACE_OPAQUE) {
+            m_commandKeys[SURFACE_OPAQUE].push_back(key.value);
+        }
+
+        if (surface & SURFACE_SHADOWS) {
+            m_commandKeys[SURFACE_SHADOWS].push_back(key.value);
+        }
+    }
+
+    // Push the render command to the last, this will serve as our reference to render in
+    // certain render passes.
+    m_renderCommands->push(renderCommand);
 }
 } // Engine
 } // Recluse
