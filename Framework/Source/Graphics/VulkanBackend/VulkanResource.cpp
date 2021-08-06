@@ -9,6 +9,23 @@
 
 namespace Vulkan {
 
+
+VkImageLayout getVulkanImageLayout(Recluse::ResourceState state)
+{
+    switch (state) {
+        case Recluse::RESOURCE_STATE_GENERAL: return VK_IMAGE_LAYOUT_GENERAL;
+        case Recluse::RESOURCE_STATE_STORAGE: return VK_IMAGE_LAYOUT_GENERAL;
+        case Recluse::RESOURCE_STATE_SHADER_RESOURCE: return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        case Recluse::RESOURCE_STATE_COPY_DST: return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case Recluse::RESOURCE_STATE_COPY_SRC: return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        case Recluse::RESOURCE_STATE_RENDER_TARGET: return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        case Recluse::RESOURCE_STATE_DEPTH_STENCIL_READONLY: return VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL;
+        case Recluse::RESOURCE_STATE_DEPTH_STENCIL_WRITE:  return VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+        case Recluse::RESOURCE_STATE_PRESENT: return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        default: return VK_IMAGE_LAYOUT_UNDEFINED;
+    }
+}
+
 VkFormat getVulkanFormat(Recluse::ResourceFormat format)
 {
     switch (format) {
@@ -33,14 +50,15 @@ VkFormat getVulkanFormat(Recluse::ResourceFormat format)
 
 namespace Recluse {
 
-ErrType VulkanResource::initialize(VulkanDevice* pDevice, GraphicsResourceDescription& desc)
+ErrType VulkanResource::initialize(VulkanDevice* pDevice, GraphicsResourceDescription& desc, ResourceState initState)
 {
     VkMemoryRequirements memoryRequirements = { };
     VulkanAllocator* allocator              = nullptr;
     ErrType result                          = REC_RESULT_OK;
     m_pDevice                               = pDevice;
+    m_currentState                          = initState;
 
-    result = onCreate(pDevice, desc);
+    result = onCreate(pDevice, desc, initState);
 
     if (result != REC_RESULT_OK) {
     
@@ -138,7 +156,7 @@ void VulkanResource::destroy()
 }
 
 
-ErrType VulkanBuffer::onCreate(VulkanDevice* pDevice, GraphicsResourceDescription& desc) 
+ErrType VulkanBuffer::onCreate(VulkanDevice* pDevice, GraphicsResourceDescription& desc, ResourceState initState) 
 {
     ErrType result                  = REC_RESULT_OK;
     ResourceUsageFlags usageFlags   = desc.usage;
@@ -226,7 +244,7 @@ VkFormatFeatureFlags VulkanImage::loadFormatFeatures(VkImageCreateInfo& info, Re
 }
 
 
-ErrType VulkanImage::onCreate(VulkanDevice* pDevice, GraphicsResourceDescription& desc)
+ErrType VulkanImage::onCreate(VulkanDevice* pDevice, GraphicsResourceDescription& desc, ResourceState initState)
 {
     ErrType result                      = REC_RESULT_OK;
     ResourceUsageFlags usage            = desc.usage;
@@ -236,13 +254,13 @@ ErrType VulkanImage::onCreate(VulkanDevice* pDevice, GraphicsResourceDescription
     VkImageTiling tiling                = VK_IMAGE_TILING_OPTIMAL;
     VkFormatFeatureFlags featureFlags   = 0;
     
-    VkImageCreateInfo info = { };
+    VkImageCreateInfo info  = { };
     info.sType              = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     info.arrayLayers        = desc.arrayLevels;
     info.extent.width       = desc.width;   
     info.extent.height      = desc.height;
     info.extent.depth       = desc.depth;
-    info.initialLayout      = VK_IMAGE_LAYOUT_PREINITIALIZED;
+    info.initialLayout      = Vulkan::getVulkanImageLayout(initState);
     info.mipLevels          = desc.mipLevels;
     info.imageType          = VK_IMAGE_TYPE_2D;         
     info.tiling             = tiling;
@@ -427,18 +445,19 @@ ErrType VulkanResource::unmap(MapRange* pWriteRange)
 }
 
 
-VkImageMemoryBarrier VulkanImage::transition(VkImageLayout dstLayout, VkImageSubresourceRange& range)
+VkImageMemoryBarrier VulkanImage::transition(ResourceState dstState, VkImageSubresourceRange& range)
 {
     VkImageMemoryBarrier barrier = { };
+    VkImageLayout dstImageLayout            = Vulkan::getVulkanImageLayout(dstState);
     barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
     barrier.oldLayout                       = m_currentLayout;
-    barrier.newLayout                       = dstLayout;
+    barrier.newLayout                       = dstImageLayout;
     barrier.image                           = m_image;
     barrier.dstAccessMask                   = 0;
     barrier.srcAccessMask                   = m_currentAccessMask;
     barrier.subresourceRange                = range;
 
-    switch (dstLayout) {
+    switch (dstImageLayout) {
         case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
             barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT; 
             break;
@@ -456,8 +475,9 @@ VkImageMemoryBarrier VulkanImage::transition(VkImageLayout dstLayout, VkImageSub
         default: break;
     }
 
-    m_currentLayout     = dstLayout;
+    m_currentLayout     = dstImageLayout;
     m_currentAccessMask = barrier.dstAccessMask;
+    m_currentState      = dstState;
 
     return barrier;
 }

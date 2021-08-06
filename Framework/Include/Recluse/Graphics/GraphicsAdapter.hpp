@@ -2,7 +2,7 @@
 #pragma once
 
 #include "Recluse/Types.hpp"
-#include "Recluse/Graphics/GraphicsContext.hpp"
+#include "Recluse/Graphics/GraphicsInstance.hpp"
 
 namespace Recluse {
 

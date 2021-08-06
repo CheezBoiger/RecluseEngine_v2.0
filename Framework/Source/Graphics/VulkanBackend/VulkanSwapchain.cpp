@@ -1,7 +1,7 @@
 // 
 #include "Recluse/Types.hpp"
 #include "VulkanSwapchain.hpp"
-#include "VulkanContext.hpp"
+#include "VulkanInstance.hpp"
 #include "VulkanDevice.hpp"
 #include "VulkanQueue.hpp"
 #include "VulkanAdapter.hpp"
@@ -110,7 +110,7 @@ ErrType VulkanSwapchain::onRebuild()
 ErrType VulkanSwapchain::destroy()
 {
     VkDevice device     = m_pDevice->get();
-    VkInstance instance = m_pDevice->getAdapter()->getContext()->get();    
+    VkInstance instance = m_pDevice->getAdapter()->getInstance()->get();    
 
     if (m_swapchain) {
 
@@ -299,7 +299,7 @@ void VulkanSwapchain::transitionCurrentFrameToPresentable()
     range.layerCount        = 1;
     range.levelCount        = 1;
 
-    imgBarrier = frame->transition(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, range);    
+    imgBarrier = frame->transition(RESOURCE_STATE_PRESENT, range);    
 
     {
         VkCommandBufferBeginInfo begin = { };

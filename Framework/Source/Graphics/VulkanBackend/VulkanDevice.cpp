@@ -1,6 +1,6 @@
 //
 #include "VulkanDevice.hpp"
-#include "VulkanContext.hpp"
+#include "VulkanInstance.hpp"
 #include "VulkanAdapter.hpp"
 #include "VulkanSwapchain.hpp"
 #include "VulkanQueue.hpp"
@@ -66,7 +66,7 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
 
     VkDeviceCreateInfo createInfo                       = { };
 
-    VulkanContext* pVc                                  = adapter->getContext();
+    VulkanInstance* pVc                                  = adapter->getInstance();
     std::vector<VkQueueFamilyProperties> queueFamilies  = adapter->getQueueFamilyProperties();
     std::vector<const char*> deviceExtensions           = getDeviceExtensions();
 
@@ -292,7 +292,7 @@ ErrType VulkanDevice::createSwapchain(GraphicsSwapchain** ppSwapchain,
 {
 
     VulkanSwapchain* pSwapchain     = new VulkanSwapchain(pDesc);
-    VulkanContext*   pNativeContext = m_adapter->getContext();
+    VulkanInstance*   pNativeContext = m_adapter->getInstance();
 
     ErrType result = pSwapchain->build(this);
 
@@ -619,7 +619,7 @@ ErrType VulkanDevice::destroyCommandQueue(GraphicsQueue* pQueue)
 }
 
 
-ErrType VulkanDevice::createResource(GraphicsResource** ppResource, GraphicsResourceDescription& desc)
+ErrType VulkanDevice::createResource(GraphicsResource** ppResource, GraphicsResourceDescription& desc, ResourceState initState)
 {
     ErrType result = REC_RESULT_OK;
 
@@ -627,7 +627,7 @@ ErrType VulkanDevice::createResource(GraphicsResource** ppResource, GraphicsReso
 
         VulkanBuffer* pBuffer = new VulkanBuffer(desc);
 
-        result = pBuffer->initialize(this, desc);
+        result = pBuffer->initialize(this, desc, initState);
 
         if (result != REC_RESULT_OK) {
 
@@ -642,7 +642,7 @@ ErrType VulkanDevice::createResource(GraphicsResource** ppResource, GraphicsReso
     
         VulkanImage* pImage = new VulkanImage(desc);
 
-        result = pImage->initialize(this, desc);
+        result = pImage->initialize(this, desc, initState);
 
         if (result != REC_RESULT_OK) {
 

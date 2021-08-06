@@ -1,7 +1,7 @@
 //
 #pragma once 
 
-#include "Recluse/Graphics/GraphicsContext.hpp"
+#include "Recluse/Graphics/GraphicsInstance.hpp"
 
 #include "D3D12Commons.hpp"
 
@@ -11,7 +11,7 @@ namespace Recluse {
 class D3D12Adapter;
 
 
-class D3D12Context : public GraphicsContext {
+class D3D12Instance : public GraphicsInstance {
 public:
 
     IDXGIFactory2* get() const { return m_pFactory; }

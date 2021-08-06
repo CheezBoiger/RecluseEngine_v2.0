@@ -3,7 +3,7 @@ set ( RECLUSE_GRAPHICS_INCLUDE ${RECLUSE_FRAMEWORK_INCLUDE}/Recluse/Graphics )
 set ( RECLUSE_GRAPHICS_SOURCE ${RECLUSE_FRAMEWORK_SOURCE}/Graphics )
 
 set ( RECLUSE_GRAPHICS_BUILD
-    ${RECLUSE_GRAPHICS_INCLUDE}/GraphicsContext.hpp
+    ${RECLUSE_GRAPHICS_INCLUDE}/GraphicsInstance.hpp
     ${RECLUSE_GRAPHICS_INCLUDE}/CommandList.hpp
     ${RECLUSE_GRAPHICS_INCLUDE}/CommandHandler.hpp
     ${RECLUSE_GRAPHICS_INCLUDE}/CommandQueue.hpp
@@ -68,8 +68,8 @@ if ( RCL_VULKAN )
             ${RECLUSE_VULKAN_DIR}/VulkanAllocator.cpp
             ${RECLUSE_VULKAN_DIR}/VulkanAllocator.hpp
             ${RECLUSE_VULKAN_DIR}/VulkanCommons.hpp
-            ${RECLUSE_VULKAN_DIR}/VulkanContext.cpp
-            ${RECLUSE_VULKAN_DIR}/VulkanContext.hpp
+            ${RECLUSE_VULKAN_DIR}/VulkanInstance.cpp
+            ${RECLUSE_VULKAN_DIR}/VulkanInstance.hpp
             ${RECLUSE_VULKAN_DIR}/VulkanDevice.cpp
             ${RECLUSE_VULKAN_DIR}/VulkanDevice.hpp
             ${RECLUSE_VULKAN_DIR}/VulkanFrameResources.cpp
@@ -108,8 +108,8 @@ if ( RCL_DX12 )
     set ( RECLUSE_GRAPHICS_BUILD 
         ${RECLUSE_GRAPHICS_BUILD}
         ${RECLUSE_D3D12_DIR}/D3D12Device.hpp
-        ${RECLUSE_D3D12_DIR}/D3D12Context.hpp
-        ${RECLUSE_D3D12_DIR}/D3D12Context.cpp
+        ${RECLUSE_D3D12_DIR}/D3D12Instance.hpp
+        ${RECLUSE_D3D12_DIR}/D3D12Instance.cpp
         ${RECLUSE_D3D12_DIR}/D3D12Adapter.hpp
         ${RECLUSE_D3D12_DIR}/D3D12Device.cpp
         ${RECLUSE_D3D12_DIR}/D3D12Adapter.cpp

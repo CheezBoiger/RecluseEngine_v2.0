@@ -24,7 +24,7 @@ ErrType VulkanCommandList::initialize(VulkanDevice* pDevice, U32 queueFamilyInde
 
         VkCommandPool pool                    = pools[j];
         VkCommandBufferAllocateInfo allocInfo = { };
-
+        
         allocInfo.sType               = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         allocInfo.commandPool         = pool;
         allocInfo.commandBufferCount  = 1;
@@ -116,28 +116,6 @@ void VulkanCommandList::setRenderPass(RenderPass* pRenderPass)
         endRenderPass(m_currentCmdBuffer);
         
     }
-
-    // We are checking transitions needed for our render pass.
-    // We will handle our own transitions, instead of inlining them 
-    // to the renderpass.
-    U32 numRenderTargets                = pVrp->getNumRenderTargets();
-    GraphicsResourceView* ds            = pVrp->getDepthStencil();
-    GraphicsResourceView* targets[9]    = { };
-    U32 i                               = 0;
-
-    if (ds) {
-    
-        targets[i++] = ds;
-    
-    }
-
-    for (; i < numRenderTargets; ++i) {
-        
-        targets[i] = pVrp->getRenderTarget(i);
-    
-    }
-
-    transition(targets, numRenderTargets);
 
     VkRenderPassBeginInfo beginInfo = { };
     beginInfo.sType                 = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -333,19 +311,29 @@ void VulkanCommandList::dispatch(U32 x, U32 y, U32 z)
 }
 
 
-void VulkanCommandList::transition(GraphicsResourceView** ppTargets, U32 targetCounts)
+void VulkanCommandList::transition(ResourceTransition* pTargets, U32 targetCounts)
 {
     std::vector<VkImageMemoryBarrier> imgBarriers(targetCounts);
     U32 numBarriers = 0;
 
     for (U32 i = 0; i < targetCounts; ++i) {
-        VulkanResourceView* pVv         = static_cast<VulkanResourceView*>(ppTargets[i]);
-        VulkanImage* pVr                = static_cast<VulkanImage*>(pVv->getResource());
-        VkImageSubresourceRange range   = pVv->getSubresourceRange();
-
-        if (pVr->getCurrentLayout() != pVv->getExpectedLayout()) {
-            imgBarriers[numBarriers++] = pVr->transition(pVv->getExpectedLayout(), range);
+        ResourceTransition& resTransition   = pTargets[i];
+        VulkanImage* pVr                    = static_cast<VulkanImage*>(resTransition.pResource);
+        VkImageSubresourceRange range       = { };
+        
+        range.baseArrayLayer                = resTransition.baseLayer;
+        range.baseMipLevel                  = resTransition.baseMip;
+        range.layerCount                    = resTransition.layers;
+        range.levelCount                    = resTransition.mips;
+        range.aspectMask                    = VK_IMAGE_ASPECT_COLOR_BIT;
+        
+        if (resTransition.dstState == RESOURCE_STATE_DEPTH_STENCIL_READONLY || 
+            resTransition.dstState == RESOURCE_STATE_DEPTH_STENCIL_WRITE)
+        {
+            range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
         }
+
+        imgBarriers[numBarriers++] = pVr->transition(resTransition.dstState, range);
     }
 
     if (numBarriers > 0) {
@@ -372,5 +360,28 @@ void VulkanCommandList::bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offs
 void VulkanCommandList::drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 firstIndex, U32 vertexOffset, U32 firstInstance)
 {
     vkCmdDrawIndexed(m_currentCmdBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+}
+
+
+void VulkanCommandList::clearDepthStencil(F32 clearDepth, U8 clearStencil, const Rect& rect)
+{
+    R_ASSERT(m_boundRenderPass != NULL);
+
+    VkClearRect clearRect                       = { };
+    VkClearAttachment attachment                = { };
+    
+    attachment.aspectMask                       = VK_IMAGE_ASPECT_DEPTH_BIT;
+    attachment.clearValue.depthStencil.depth    = clearDepth;
+    attachment.clearValue.depthStencil.stencil  = clearStencil;
+    attachment.colorAttachment                  = m_boundRenderPass->getNumRenderTargets(); // usually the last one.
+
+    clearRect.baseArrayLayer    = 0;
+    clearRect.layerCount        = 1;
+
+    clearRect.rect.extent       = { (U32)rect.width, (U32)rect.height };
+    clearRect.rect.offset       = { (I32)rect.x, (I32)rect.y };
+
+    vkCmdClearAttachments(m_currentCmdBuffer, 1, &attachment, 1, &clearRect);
+        
 }
 } // Recluse

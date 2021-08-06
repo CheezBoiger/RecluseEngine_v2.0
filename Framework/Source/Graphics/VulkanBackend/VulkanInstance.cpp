@@ -1,5 +1,5 @@
 // Recluse
-#include "VulkanContext.hpp"
+#include "VulkanInstance.hpp"
 #include "VulkanDevice.hpp"
 #include "VulkanAdapter.hpp"
 #include "VulkanShaderCache.hpp"
@@ -25,7 +25,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL recluseDebugCallback(
 }
 
 
-void VulkanContext::setDebugCallback()
+void VulkanInstance::setDebugCallback()
 {
     VkDebugReportCallbackCreateInfoEXT ci = { };
     ci.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
@@ -178,7 +178,7 @@ void checkForValidLayers(std::vector<const char*>& wantedLayers)
 }
 
 
-ErrType VulkanContext::onInitialize(const ApplicationInfo& appInfo, EnableLayerFlags flags)
+ErrType VulkanInstance::onInitialize(const ApplicationInfo& appInfo, EnableLayerFlags flags)
 {
     std::vector<const char*> extensions = loadExtensions(flags);
     std::vector<const char*> layers     = loadLayers(flags);
@@ -228,13 +228,13 @@ ErrType VulkanContext::onInitialize(const ApplicationInfo& appInfo, EnableLayerF
 }
 
 
-void VulkanContext::nullify()
+void VulkanInstance::nullify()
 {
     m_instance = VK_NULL_HANDLE;
 }
 
 
-void VulkanContext::onDestroy()
+void VulkanInstance::onDestroy()
 {
 
     destroyDebugCallback();
@@ -252,13 +252,13 @@ void VulkanContext::onDestroy()
 }
 
 
-PFN_vkVoidFunction VulkanContext::getProcAddr(const char* funcName)
+PFN_vkVoidFunction VulkanInstance::getProcAddr(const char* funcName)
 {
     return vkGetInstanceProcAddr(m_instance, funcName);
 }
 
 
-void VulkanContext::queryGraphicsAdapters()
+void VulkanInstance::queryGraphicsAdapters()
 {
     std::vector<VulkanAdapter> devices = VulkanAdapter::getAvailablePhysicalDevices(this);
     std::vector<GraphicsAdapter*> adapters(devices.size());
@@ -271,7 +271,7 @@ void VulkanContext::queryGraphicsAdapters()
 }
 
 
-void VulkanContext::freeGraphicsAdapters()
+void VulkanInstance::freeGraphicsAdapters()
 {
     for (U32 i = 0; i < m_graphicsAdapters.size(); ++i) {
         delete m_graphicsAdapters[i];
@@ -279,7 +279,7 @@ void VulkanContext::freeGraphicsAdapters()
 }
 
 
-void VulkanContext::destroyDebugCallback()
+void VulkanInstance::destroyDebugCallback()
 {
     if (m_debugReportCallback) {
     

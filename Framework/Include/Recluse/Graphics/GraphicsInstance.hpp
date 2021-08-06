@@ -29,11 +29,11 @@ struct R_EXPORT ApplicationInfo {
 class GraphicsAdapter;
 
 
-class GraphicsContext {
+class GraphicsInstance {
 public:
 
-    static R_EXPORT GraphicsContext* createContext(enum GraphicsAPI api = GRAPHICS_API_VULKAN);
-    static R_EXPORT ErrType destroyContext(GraphicsContext* pContext);
+    static R_EXPORT GraphicsInstance* createInstance(enum GraphicsAPI api = GRAPHICS_API_VULKAN);
+    static R_EXPORT ErrType destroyInstance(GraphicsInstance* pInstance);
 
     R_EXPORT ErrType initialize(const ApplicationInfo& appInfo, EnableLayerFlags flags) { 
         ErrType err = onInitialize(appInfo, flags);

@@ -6,7 +6,7 @@
 namespace Recluse {
 
 
-std::vector<VulkanAdapter> VulkanAdapter::getAvailablePhysicalDevices(VulkanContext* ctx)
+std::vector<VulkanAdapter> VulkanAdapter::getAvailablePhysicalDevices(VulkanInstance* ctx)
 {
     std::vector<VulkanAdapter> physicalDevices;
     U32 count = 0;
@@ -32,7 +32,7 @@ std::vector<VulkanAdapter> VulkanAdapter::getAvailablePhysicalDevices(VulkanCont
         for (U32 i = 0; i < count; ++i) {
             VulkanAdapter device;
             device.m_phyDevice = devices[i];
-            device.m_context = ctx;
+            device.m_instance = ctx;
             physicalDevices[i] = std::move(device);
         }
     }
@@ -125,7 +125,7 @@ ErrType VulkanAdapter::createDevice(DeviceCreateInfo& info, GraphicsDevice** ppD
 
 ErrType VulkanAdapter::destroyDevice(GraphicsDevice* pDevice)
 {
-    VulkanContext* pVc = m_context;
+    VulkanInstance* pVc = m_instance;
 
     for (auto& iter = m_devices.begin(); iter != m_devices.end(); ++iter) {
         if (*iter == pDevice) {    

@@ -83,11 +83,17 @@ void destroy(GraphicsDevice* pDevice)
 
 void generate(GraphicsCommandList* pCommandList, Engine::RenderCommandList* pMeshCommandList, U64* keys, U64 sz)
 {
-    Engine::RenderCommand* pRenderCommands = pMeshCommandList->getRenderCommands();
+    Engine::RenderCommand* pRenderCommands      = pMeshCommandList->getRenderCommands();
+    const GraphicsResourceDescription& depth    = pSceneDepthView->getResource()->getDesc();
+    Rect depthRect      = { };
+    depthRect.x = depthRect.y = 0.f;
+
+    depthRect.width     = depth.width;
+    depthRect.height    = depth.height;
 
     // Set the PreZ pass.
     pCommandList->setRenderPass(pPreZPass);
-    pCommandList->clearDepthStencil();
+    pCommandList->clearDepthStencil(1.0f, 0, depthRect);
 
     for (U64 i = 0; i < sz; ++i) {
     

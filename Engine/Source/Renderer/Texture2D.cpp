@@ -24,7 +24,7 @@ void Texture2D::initialize(Renderer* pRenderer, ResourceFormat format, U32 width
     desc.samples        = 1;
     desc.format         = format;
 
-    result = pDevice->createResource(&m_resource, desc);
+    result = pDevice->createResource(&m_resource, desc, RESOURCE_STATE_SHADER_RESOURCE);
 
     if (result != REC_RESULT_OK) {
     

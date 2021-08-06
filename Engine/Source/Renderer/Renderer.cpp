@@ -2,7 +2,7 @@
 
 #include "Recluse/Renderer/Renderer.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
-#include "Recluse/Graphics/GraphicsContext.hpp"
+#include "Recluse/Graphics/GraphicsInstance.hpp"
 #include "Recluse/Graphics/GraphicsAdapter.hpp"
 #include "Recluse/Memory/MemoryCommon.hpp"
 
@@ -25,9 +25,9 @@ void Renderer::initialize(void* windowHandle, const RendererConfigs& configs)
     ErrType result          = REC_RESULT_OK;
     m_windowHandle          = windowHandle;
 
-    m_pContext = GraphicsContext::createContext(configs.api);
+    m_pInstance = GraphicsInstance::createInstance(configs.api);
     
-    if (!m_pContext) {
+    if (!m_pInstance) {
 
         R_ERR("Renderer", "Failed to create graphics context, aborting...");
 
@@ -40,15 +40,15 @@ void Renderer::initialize(void* windowHandle, const RendererConfigs& configs)
     info.enginePatch    = RECLUSE_ENGINE_VERSION_PATCH;
     info.appName        = "NoName";
 
-    result = m_pContext->initialize(info, flags);
+    result = m_pInstance->initialize(info, flags);
 
     if (result != REC_RESULT_OK) {
 
-        R_ERR("Renderer", "Failed to initialize context!");        
+        R_ERR("Renderer", "Failed to initialize instance!");        
 
     }
 
-    std::vector<GraphicsAdapter*> adapters = m_pContext->getGraphicsAdapters();
+    std::vector<GraphicsAdapter*> adapters = m_pInstance->getGraphicsAdapters();
     
     determineAdapter(adapters);
 
@@ -113,9 +113,14 @@ void Renderer::render()
 
         // TODO: Would make more sense to manually transition the resource itself, 
         //       and not the resource view...
-        GraphicsResourceView* pSceneDepth = m_sceneBuffers.pSceneDepth->getView();
-        // Transition the resource.
-        m_commandList->transition(&pSceneDepth, 1);
+        GraphicsResource* pSceneDepth = m_sceneBuffers.pSceneDepth->getResource();
+        
+        if (pSceneDepth->getCurrentResourceState() != RESOURCE_STATE_DEPTH_STENCIL_WRITE) {
+            // Transition the resource.
+            ResourceTransition trans = MAKE_RESOURCE_TRANSITION(pSceneDepth, RESOURCE_STATE_DEPTH_STENCIL_WRITE, 0, 1, 0, 1);
+            m_commandList->transition(&trans, 1);            
+        }
+
         
         PreZ::generate(m_commandList, m_renderCommands, 
             m_commandKeys[SURFACE_OPAQUE].data(), m_commandKeys[SURFACE_OPAQUE].size());
@@ -126,6 +131,13 @@ void Renderer::render()
 
     m_commandList->end();
 
+
+    QueueSubmit submit      = { };
+    submit.numCommandLists  = 1;
+    submit.pCommandLists    = &m_commandList;
+
+    m_graphicsQueue->submit(&submit);
+    m_pSwapchain->present();
     
     resetCommandKeys();
 }

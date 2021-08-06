@@ -22,7 +22,7 @@ public:
 
     virtual ~VulkanResource() { }
     
-    ErrType initialize(VulkanDevice* pDevice, GraphicsResourceDescription& desc);
+    ErrType initialize(VulkanDevice* pDevice, GraphicsResourceDescription& desc, ResourceState initState);
 
     // Destroy native handle that is managed by this resource object.
     // Must be called before deleting this object.
@@ -42,7 +42,7 @@ public:
     VulkanDevice* getDevice() const { return m_pDevice; }
 
 private:
-    virtual ErrType onCreate(VulkanDevice* pDevice, GraphicsResourceDescription& desc)
+    virtual ErrType onCreate(VulkanDevice* pDevice, GraphicsResourceDescription& desc, ResourceState initState)
         { return REC_RESULT_NOT_IMPLEMENTED; }
 
     virtual ErrType onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryRequirements& memRequirements) 
@@ -67,7 +67,7 @@ public:
     VkBuffer get() const { return m_buffer; }
 
 private:
-    ErrType onCreate(VulkanDevice* pDevice, GraphicsResourceDescription& desc) override; 
+    ErrType onCreate(VulkanDevice* pDevice, GraphicsResourceDescription& desc, ResourceState initState) override; 
 
     ErrType onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryRequirements& memRequirements) override;
 
@@ -104,10 +104,10 @@ public:
     // Create memory barrier object to transition the layout of this image to the 
     // specified destination layout.
     // 
-    VkImageMemoryBarrier transition(VkImageLayout dstLayout, VkImageSubresourceRange& range);
+    VkImageMemoryBarrier transition(ResourceState dstState, VkImageSubresourceRange& range);
 
 private:
-    ErrType onCreate(VulkanDevice* pDevice, GraphicsResourceDescription& desc) override; 
+    ErrType onCreate(VulkanDevice* pDevice, GraphicsResourceDescription& desc, ResourceState initState) override; 
 
     ErrType onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryRequirements& memRequirements) override;
 
@@ -117,8 +117,8 @@ private:
 
     VkFormatFeatureFlags loadFormatFeatures(VkImageCreateInfo& info, ResourceUsageFlags usage) const;
 
-    VkImage         m_image;
-    VkImageLayout   m_currentLayout;
-    VkAccessFlags   m_currentAccessMask;
+    VkImage             m_image;
+    VkImageLayout       m_currentLayout;
+    VkAccessFlags       m_currentAccessMask;
 };
 } // Recluse

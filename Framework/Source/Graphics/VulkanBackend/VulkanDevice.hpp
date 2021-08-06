@@ -1,7 +1,7 @@
 // 
 #pragma once
 
-#include "VulkanContext.hpp"
+#include "VulkanInstance.hpp"
 #include "VulkanShaderCache.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 
@@ -59,7 +59,7 @@ public:
 
     ErrType createCommandQueue(GraphicsQueue** ppQueue, GraphicsQueueTypeFlags type) override;
 
-    ErrType createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc) override;
+    ErrType createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc, ResourceState initState) override;
 
     ErrType createDescriptorSetLayout(DescriptorSetLayout** ppLayout, const DescriptorSetLayoutDesc& desc) override;
 

@@ -15,6 +15,18 @@ class PipelineState;
 class DescriptorSet;
 
 
+struct ResourceTransition {
+    GraphicsResource*   pResource;
+    ResourceState       dstState;
+    U32                 layers;
+    U32                 baseLayer;
+    U32                 mips;
+    U32                 baseMip;
+};
+
+#define MAKE_RESOURCE_TRANSITION(pResource, dstState, baseMip, mips, baseLayer, layers) { pResource, dstState, layers, baseLayer, mips, baseMip }
+
+
 class R_EXPORT GraphicsCommandList {
 public:
     virtual ~GraphicsCommandList() { }
@@ -45,12 +57,12 @@ public:
     virtual void bindDescriptorSets(U32 count, DescriptorSet** pSets, BindType bindType) { }
     
     virtual void clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) { }
-    virtual void clearDepthStencil() { }
+    virtual void clearDepthStencil(F32 clearDepth, U8 clearStencil, const Rect& rect) { }
 
     virtual void copyResource(GraphicsResource* dst, GraphicsResource* src) { }
     virtual void copyBufferRegions(CopyBufferRegion* pRegions, U32 numRegions) { }
 
-    virtual void transition(GraphicsResourceView** ppTargets, U32 targetCounts) { }
+    virtual void transition(ResourceTransition* pTargets, U32 targetCounts) { }
 
 private:
     

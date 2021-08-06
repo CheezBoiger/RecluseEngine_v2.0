@@ -2,7 +2,7 @@
 #include "D3D12Device.hpp"
 #include "D3D12Swapchain.hpp"
 #include "D3D12Adapter.hpp"
-#include "D3D12Context.hpp"
+#include "D3D12Instance.hpp"
 #include "D3D12Queue.hpp"
 #include "Recluse/Messaging.hpp"
 
@@ -22,8 +22,8 @@ ErrType D3D12Swapchain::initialize(D3D12Device* pDevice)
     }
 
     const SwapchainCreateDescription& desc  = getDesc();
-    D3D12Context* pContext                  = pDevice->getAdapter()->getContext();
-    IDXGIFactory2* pFactory                 = pContext->get();
+    D3D12Instance* pInstance                = pDevice->getAdapter()->getInstance();
+    IDXGIFactory2* pFactory                 = pInstance->get();
     ID3D12CommandQueue* pQueue              = static_cast<D3D12Queue*>(desc.pBackbufferQueue)->get();    
     HRESULT result                          = S_OK;
     DXGI_SWAP_CHAIN_DESC1 swapchainDesc     = { };

@@ -36,6 +36,7 @@ public:
 
     void setRenderPass(RenderPass* pRenderPass) override;
     void clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) override;
+    void clearDepthStencil(F32 clearDepth, U8 clearStencil, const Rect& rect) override;
     void setPipelineState(PipelineState* pPipelineState, BindType bindType) override;
     void bindDescriptorSets(U32 count, DescriptorSet** pSets, BindType bindType) override;
 
@@ -49,7 +50,7 @@ public:
     void setScissors(U32 numScissors, Rect* pRects) override;
     void dispatch(U32 x, U32 y, U32 z) override;
     
-    void transition(GraphicsResourceView** ppTargets, U32 targetCounts) override;
+    void transition(ResourceTransition* pTargets, U32 targetCounts) override;
 
 private:
 

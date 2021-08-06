@@ -78,7 +78,7 @@ public:
 
     //< Create graphics resource.
     //<
-    virtual ErrType createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc) 
+    virtual ErrType createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc, ResourceState initState) 
         { return REC_RESULT_NOT_IMPLEMENTED; }
 
     //< Create a command list.

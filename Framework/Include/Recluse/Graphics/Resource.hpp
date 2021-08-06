@@ -30,7 +30,13 @@ public:
     // Unmap and invalidate the resource cache, which will flush if needed.
     virtual ErrType unmap(MapRange* pWriteRange) { return REC_RESULT_NOT_IMPLEMENTED; }
 
+
+    ResourceState getCurrentResourceState() const { return m_currentState; }
+
 private:
     GraphicsResourceDescription m_desc;
+
+protected:
+    ResourceState m_currentState;
 };
 } // Recluse

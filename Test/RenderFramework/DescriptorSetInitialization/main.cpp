@@ -3,7 +3,7 @@
 #include "Recluse/RealtimeTick.hpp"
 
 #include "Recluse/Memory/MemoryCommon.hpp"
-#include "Recluse/Graphics/GraphicsContext.hpp"
+#include "Recluse/Graphics/GraphicsInstance.hpp"
 #include "Recluse/Graphics/GraphicsAdapter.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 
@@ -68,7 +68,7 @@ int main(int c, char* argv[])
     Log::initializeLoggingSystem();
     RealtimeTick::initialize();
 
-    GraphicsContext* pContext       = nullptr;
+    GraphicsInstance* pInstance       = nullptr;
     GraphicsAdapter* pAdapter       = nullptr;
     GraphicsDevice* pDevice         = nullptr;
     Window* pWindow                 = nullptr;
@@ -83,9 +83,9 @@ int main(int c, char* argv[])
 
     pWindow = Window::create(u8"DescriptorSetInitialization", 0, 0, 1024, 1024);
 
-    pContext = GraphicsContext::createContext(GRAPHICS_API_VULKAN);
+    pInstance = GraphicsInstance::createInstance(GRAPHICS_API_VULKAN);
 
-    if (!pContext) {
+    if (!pInstance) {
 
         R_ERR("TEST", "Failed to create graphics context!");
 
@@ -103,7 +103,7 @@ int main(int c, char* argv[])
 
         EnableLayerFlags flags = LAYER_FEATURE_DEBUG_VALIDATION_BIT;
 
-        result = pContext->initialize(appInfo, flags);
+        result = pInstance->initialize(appInfo, flags);
     }
 
     if (result != REC_RESULT_OK) {
@@ -112,7 +112,7 @@ int main(int c, char* argv[])
 
     }
 
-    std::vector<GraphicsAdapter*> adapters = pContext->getGraphicsAdapters();
+    std::vector<GraphicsAdapter*> adapters = pInstance->getGraphicsAdapters();
     pAdapter = adapters[0];
 
     {
@@ -185,7 +185,7 @@ int main(int c, char* argv[])
         desc.height = 1;
         desc.memoryUsage = RESOURCE_MEMORY_USAGE_CPU_ONLY;
         desc.samples = 1;
-        result = pDevice->createResource(&pData, desc);
+        result = pDevice->createResource(&pData, desc, RESOURCE_STATE_VERTEX_AND_CONST_BUFFER);
     }
 
     if (result != REC_RESULT_OK) {
@@ -277,6 +277,8 @@ int main(int c, char* argv[])
         Rect rect = { 200.f + index, 200.f, 1024.f/2.f, 1024.f/2.f };
         Rect rect2 = { 0.f, 0.f, 1024.f, 1024.f };
         pList->begin();
+            ResourceTransition trans = MAKE_RESOURCE_TRANSITION(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), RESOURCE_STATE_RENDER_TARGET, 0, 1, 0, 1);
+            pList->transition(&trans, 1);
             pList->setRenderPass(renderPasses[pSwapchain->getCurrentFrameIndex()]);
             pList->clearRenderTarget(0, color2, rect2);
             pList->clearRenderTarget(0, color, rect);
@@ -285,9 +287,8 @@ int main(int c, char* argv[])
             pList->clearRenderTarget(0, color, rect);
 
             GraphicsResourceView* pView = pSwapchain->getFrameView(pSwapchain->getCurrentFrameIndex());
-            pList->transition(&pView, 1);
-            // Testing to see if we ignore a view that already is transitioned...
-            pList->transition(&pView, 1);
+            pList->transition(&trans, 1);
+            pList->transition(&trans, 1);
         pList->end();
 
         QueueSubmit submit = { };
@@ -315,7 +316,7 @@ int main(int c, char* argv[])
     pDevice->destroyCommandQueue(pQueue);    
     pAdapter->destroyDevice(pDevice);
     Window::destroy(pWindow);
-    GraphicsContext::destroyContext(pContext);
+    GraphicsInstance::destroyInstance(pInstance);
     Log::destroyLoggingSystem();
     return 0;
 }

@@ -1,5 +1,5 @@
 //
-#include "D3D12Context.hpp"
+#include "D3D12Instance.hpp"
 #include "D3D12Adapter.hpp"
 
 #include "Recluse/Messaging.hpp"
@@ -8,7 +8,7 @@
 namespace Recluse {
 
 
-void D3D12Context::queryGraphicsAdapters()
+void D3D12Instance::queryGraphicsAdapters()
 {
     std::vector<IDXGIAdapter*> adapters = D3D12Adapter::getAdapters(this);
     m_graphicsAdapters.resize(adapters.size());
@@ -25,15 +25,15 @@ void D3D12Context::queryGraphicsAdapters()
 
     for (U32 i = 0; i < m_graphicsAdapters.size(); ++i) {
     
-        D3D12Adapter* pAdapter = new D3D12Adapter(adapters[i]);
-        pAdapter->m_pContext = this;
-        m_graphicsAdapters[i] = pAdapter;
+        D3D12Adapter* pAdapter  = new D3D12Adapter(adapters[i]);
+        pAdapter->m_pInstance   = this;
+        m_graphicsAdapters[i]   = pAdapter;
     
     }
 }
 
 
-void D3D12Context::freeGraphicsAdapters()
+void D3D12Instance::freeGraphicsAdapters()
 {
     for (U32 i = 0; i < m_graphicsAdapters.size(); ++i) {
     
@@ -47,7 +47,7 @@ void D3D12Context::freeGraphicsAdapters()
 }
 
 
-ErrType D3D12Context::onInitialize(const ApplicationInfo& appInfo, EnableLayerFlags flags)
+ErrType D3D12Instance::onInitialize(const ApplicationInfo& appInfo, EnableLayerFlags flags)
 {
     R_DEBUG(R_CHANNEL_D3D12, "Initializing D3D12 context...");
     HRESULT result = S_OK;
@@ -66,7 +66,7 @@ ErrType D3D12Context::onInitialize(const ApplicationInfo& appInfo, EnableLayerFl
 }
 
 
-void D3D12Context::onDestroy()
+void D3D12Instance::onDestroy()
 {
     R_DEBUG(R_CHANNEL_D3D12, "Destroying D3D12 context...");
 
@@ -81,7 +81,7 @@ void D3D12Context::onDestroy()
 }
 
 
-void D3D12Context::enableDebugValidation()
+void D3D12Instance::enableDebugValidation()
 {
     R_DEBUG(R_CHANNEL_D3D12, "Enabling Debug and GPU validation...");
 #if !defined(D3D12_IGNORE_SDK_LAYERS)

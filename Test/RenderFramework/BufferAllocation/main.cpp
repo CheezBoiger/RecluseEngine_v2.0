@@ -1,6 +1,6 @@
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Graphics/GraphicsAdapter.hpp"
-#include "Recluse/Graphics/GraphicsContext.hpp"
+#include "Recluse/Graphics/GraphicsInstance.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 #include "Recluse/Graphics/Resource.hpp"
 
@@ -13,9 +13,9 @@ int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
 
-    GraphicsContext* pContext = GraphicsContext::createContext(GRAPHICS_API_VULKAN);
+    GraphicsInstance* pInstance = GraphicsInstance::createInstance(GRAPHICS_API_VULKAN);
 
-    if (!pContext) {
+    if (!pInstance) {
         goto Exit;
     }
     
@@ -32,14 +32,14 @@ int main(int c, char* argv[])
 
     EnableLayerFlags flags = LAYER_FEATURE_DEBUG_VALIDATION_BIT;
 
-    ErrType result = pContext->initialize(appInfo, flags);
+    ErrType result = pInstance->initialize(appInfo, flags);
 
     if (result != REC_RESULT_OK) {
-        R_ERR("Test", "Failed to create context!");
+        R_ERR("Test", "Failed to create instance!");
         goto Exit;
     }
 
-    std::vector<GraphicsAdapter*>& adapters = pContext->getGraphicsAdapters();
+    std::vector<GraphicsAdapter*>& adapters = pInstance->getGraphicsAdapters();
 
     for (GraphicsAdapter* adapter : adapters) {
 
@@ -80,7 +80,7 @@ int main(int c, char* argv[])
     bufferDesc.memoryUsage  = RESOURCE_MEMORY_USAGE_GPU_ONLY;
     bufferDesc.width        = R_1KB * 1024ull;
 
-    result = pDevice->createResource(&pBuffer, bufferDesc);
+    result = pDevice->createResource(&pBuffer, bufferDesc, RESOURCE_STATE_VERTEX_AND_CONST_BUFFER);
 
     if (result != REC_RESULT_OK) {
     
@@ -90,7 +90,7 @@ int main(int c, char* argv[])
         
         R_TRACE("Graphics", "Successfully create buffer!");
         
-        result = pDevice->createResource(&pBuffer2, bufferDesc);
+        result = pDevice->createResource(&pBuffer2, bufferDesc, RESOURCE_STATE_VERTEX_AND_CONST_BUFFER);
 
         if (result != REC_RESULT_OK) {
         
@@ -108,7 +108,7 @@ int main(int c, char* argv[])
 
     adapters[0]->destroyDevice(pDevice);
 
-   GraphicsContext::destroyContext(pContext);
+   GraphicsInstance::destroyInstance(pInstance);
 
 Exit:
     Log::destroyLoggingSystem();

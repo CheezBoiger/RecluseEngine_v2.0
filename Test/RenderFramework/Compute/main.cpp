@@ -4,7 +4,7 @@
 #include "Recluse/Graphics/CommandQueue.hpp"
 #include "Recluse/Graphics/DescriptorSet.hpp"
 #include "Recluse/Graphics/GraphicsAdapter.hpp"
-#include "Recluse/Graphics/GraphicsContext.hpp"
+#include "Recluse/Graphics/GraphicsInstance.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 #include "Recluse/Graphics/PipelineState.hpp"
 #include "Recluse/Graphics/Resource.hpp"
@@ -53,7 +53,7 @@ int main(int c, char* argv[])
     Log::initializeLoggingSystem();
     RealtimeTick::initialize();
 
-    GraphicsContext* pContext       = GraphicsContext::createContext(GRAPHICS_API_VULKAN);
+    GraphicsInstance* pInstance       = GraphicsInstance::createInstance(GRAPHICS_API_VULKAN);
     GraphicsAdapter* pAdapter       = nullptr;
     GraphicsDevice* pDevice         = nullptr;
     GraphicsResource* pData         = nullptr;
@@ -68,7 +68,7 @@ int main(int c, char* argv[])
     std::vector<GraphicsResourceView*> views;
     std::vector<DescriptorSet*> sets;
 
-    if (!pContext) { 
+    if (!pInstance) { 
     
         R_ERR("TEST", "Failed to create context!");
     
@@ -83,7 +83,7 @@ int main(int c, char* argv[])
 
         EnableLayerFlags flags = LAYER_FEATURE_DEBUG_VALIDATION_BIT;
 
-        result = pContext->initialize(app, flags);
+        result = pInstance->initialize(app, flags);
     }
     
     if (result != REC_RESULT_OK) {
@@ -92,7 +92,7 @@ int main(int c, char* argv[])
         
     }
 
-    pAdapter = pContext->getGraphicsAdapters()[0];
+    pAdapter = pInstance->getGraphicsAdapters()[0];
 
     {
         DeviceCreateInfo info = { };
@@ -202,7 +202,7 @@ int main(int c, char* argv[])
         desc.memoryUsage = RESOURCE_MEMORY_USAGE_CPU_TO_GPU;
         desc.usage = RESOURCE_USAGE_CONSTANT_BUFFER;
         
-        result = pDevice->createResource(&pData, desc);
+        result = pDevice->createResource(&pData, desc, RESOURCE_STATE_VERTEX_AND_CONST_BUFFER);
     }
 
     if (result != REC_RESULT_OK) {
@@ -310,8 +310,9 @@ int main(int c, char* argv[])
         updateConstData(pData, tick);
 
         pList->begin();
-            GraphicsResourceView* pView = views[pSwapchain->getCurrentFrameIndex()];
-            pList->transition(&pView, 1);
+            GraphicsResource* pResource = views[pSwapchain->getCurrentFrameIndex()]->getResource();
+            ResourceTransition tran = MAKE_RESOURCE_TRANSITION(pResource, RESOURCE_STATE_STORAGE, 0, 1, 0, 1);
+            pList->transition(&tran, 1);
             pList->setPipelineState(pPipeline, BIND_TYPE_COMPUTE);
             pList->bindDescriptorSets(1, &sets[pSwapchain->getCurrentFrameIndex()], BIND_TYPE_COMPUTE);
             pList->dispatch(pWindow->getWidth() / 8 + 1, pWindow->getHeight() / 8 + 1, 1);
@@ -343,7 +344,7 @@ int main(int c, char* argv[])
     pDevice->destroySwapchain(pSwapchain);
     pDevice->destroyCommandQueue(pQueue);
     pAdapter->destroyDevice(pDevice);
-    GraphicsContext::destroyContext(pContext);
+    GraphicsInstance::destroyInstance(pInstance);
     Log::destroyLoggingSystem();
     return 0;
 }

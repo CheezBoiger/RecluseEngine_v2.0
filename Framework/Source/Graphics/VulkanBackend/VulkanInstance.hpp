@@ -2,13 +2,13 @@
 #pragma once
 
 #include "Recluse/Types.hpp"
-#include "Recluse/Graphics/GraphicsContext.hpp"
+#include "Recluse/Graphics/GraphicsInstance.hpp"
 #include "VulkanCommons.hpp"
 
 
 namespace Recluse {
 
-class VulkanContext : public GraphicsContext {
+class VulkanInstance : public GraphicsInstance {
 public:
 
     // Initialize the vulkan context.

@@ -1,6 +1,6 @@
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Graphics/GraphicsAdapter.hpp"
-#include "Recluse/Graphics/GraphicsContext.hpp"
+#include "Recluse/Graphics/GraphicsInstance.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 #include "Recluse/Graphics/Resource.hpp"
 #include "Recluse/Graphics/ResourceView.hpp"
@@ -15,9 +15,9 @@ int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
 
-    GraphicsContext* pContext = GraphicsContext::createContext(GRAPHICS_API_VULKAN);
+    GraphicsInstance* pInstance = GraphicsInstance::createInstance(GRAPHICS_API_VULKAN);
 
-    if (!pContext) {
+    if (!pInstance) {
         goto Exit;
     }
     
@@ -34,14 +34,14 @@ int main(int c, char* argv[])
 
     EnableLayerFlags flags = LAYER_FEATURE_DEBUG_VALIDATION_BIT;
 
-    ErrType result = pContext->initialize(appInfo, flags);
+    ErrType result = pInstance->initialize(appInfo, flags);
 
     if (result != REC_RESULT_OK) {
         R_ERR("Test", "Failed to create context!");
         goto Exit;
     }
 
-    std::vector<GraphicsAdapter*>& adapters = pContext->getGraphicsAdapters();
+    std::vector<GraphicsAdapter*>& adapters = pInstance->getGraphicsAdapters();
 
     for (GraphicsAdapter* adapter : adapters) {
 
@@ -88,7 +88,7 @@ int main(int c, char* argv[])
     desc.samples        = 1;
     desc.format         = RESOURCE_FORMAT_R8G8B8A8_UNORM;
 
-    result = pDevice->createResource(&pTexture, desc);
+    result = pDevice->createResource(&pTexture, desc, RESOURCE_STATE_SHADER_RESOURCE);
 
     if (result != REC_RESULT_OK) {
     
@@ -126,7 +126,7 @@ int main(int c, char* argv[])
     
     adapters[0]->destroyDevice(pDevice);
 
-   GraphicsContext::destroyContext(pContext);
+   GraphicsInstance::destroyInstance(pInstance);
 
 Exit:
     Log::destroyLoggingSystem();

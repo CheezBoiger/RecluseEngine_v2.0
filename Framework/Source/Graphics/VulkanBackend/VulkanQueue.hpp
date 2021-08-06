@@ -4,7 +4,7 @@
 #include "Recluse/Types.hpp"
 
 #include "Recluse/Graphics/CommandQueue.hpp"
-#include "VulkanContext.hpp"
+#include "VulkanInstance.hpp"
 
 namespace Recluse {
 

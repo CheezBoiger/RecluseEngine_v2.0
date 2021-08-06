@@ -19,7 +19,7 @@ namespace Recluse {
 
 class GraphicsDevice;
 class GraphicsAdapter;
-class GraphicsContext;
+class GraphicsInstance;
 class GraphicsQueue;
 class GraphicsCommandList;
 class GraphicsSwapchain;
@@ -88,7 +88,7 @@ private:
     void sortCommandKeys();
 
     // Graphics context and information.
-    GraphicsContext*        m_pContext;
+    GraphicsInstance*        m_pInstance;
     GraphicsAdapter*        m_pAdapter;
     GraphicsDevice*         m_pDevice;
     GraphicsQueue*          m_graphicsQueue;

@@ -21,7 +21,7 @@ ErrType GPUBuffer::initialize(GraphicsDevice* pDevice, U64 totalSzBytes, Resourc
     desc.depth                          = 1;
     desc.width                          = totalSzBytes;
     
-    result = pDevice->createResource(&m_pResource, desc);
+    result = pDevice->createResource(&m_pResource, desc, RESOURCE_STATE_COPY_SRC);
 
     m_pDevice       = pDevice;
     m_totalSzBytes  = totalSzBytes;
@@ -44,7 +44,7 @@ ErrType GPUBuffer::stream(GraphicsQueue* pQueue, void* ptr, U64 offsetBytes, U64
     stageDesc.mipLevels     = 1;
     stageDesc.height        = 1;
 
-    result = m_pDevice->createResource(&pStaging, stageDesc);
+    result = m_pDevice->createResource(&pStaging, stageDesc, RESOURCE_STATE_COPY_DST);
 
     if (result != REC_RESULT_OK) {
     

@@ -1,6 +1,6 @@
 //
 #include "D3D12Adapter.hpp"
-#include "D3D12Context.hpp"
+#include "D3D12Instance.hpp"
 
 #include "D3D12Device.hpp"
 
@@ -9,7 +9,7 @@
 namespace Recluse {
 
 
-std::vector<IDXGIAdapter*> D3D12Adapter::getAdapters(D3D12Context* pContext)
+std::vector<IDXGIAdapter*> D3D12Adapter::getAdapters(D3D12Instance* pContext)
 {
     std::vector<IDXGIAdapter*> adapters;
 
@@ -26,7 +26,7 @@ std::vector<IDXGIAdapter*> D3D12Adapter::getAdapters(D3D12Context* pContext)
 
 D3D12Adapter::D3D12Adapter(IDXGIAdapter* adapter)
     : m_pAdapter(adapter)
-    , m_pContext(NULL)
+    , m_pInstance(NULL)
 {
 }
 
