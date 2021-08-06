@@ -81,8 +81,10 @@ private:
     void setUpModules();
     void cleanUpModules();
     void createDevice(const RendererConfigs& configs);
+    void createSwapchain(const RendererConfigs& configs);
     
     void destroyDevice();
+    void destroySwapchain();
 
     void resetCommandKeys();
     void sortCommandKeys();

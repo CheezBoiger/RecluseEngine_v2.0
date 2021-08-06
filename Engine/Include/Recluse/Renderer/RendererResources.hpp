@@ -5,21 +5,12 @@
 #include "Recluse/Graphics/GraphicsCommon.hpp"
 #include "Recluse/Graphics/Shader.hpp"
 #include "Recluse/Filesystem/Filesystem.hpp"
+#include "Recluse/Filesystem/Filesystem.hpp"
 
 namespace Recluse {
 namespace Engine {
 
 class Texture2D;
-
-struct SceneBuffers {
-    Texture2D* pSceneAlbedo;
-    Texture2D* pSceneAo;
-    Texture2D* pSceneMat;
-    Texture2D* pSceneNormal;
-    Texture2D* pSceneBrightness;
-    Texture2D* pSceneHDRTexture;
-    Texture2D* pSceneDepth;
-};
 
 
 const std::string shaderDir                    = Filesystem::getCurrentDir() + "/" + "Shaders";
@@ -103,6 +94,18 @@ public:
 private:
     U64 m_perVertexSzBytes;
     U64 m_totalVertices;
+};
+
+
+struct SceneBuffers {
+    std::vector<GPUBuffer*> pSceneViews;
+    Texture2D* pSceneAlbedo;
+    Texture2D* pSceneAo;
+    Texture2D* pSceneMat;
+    Texture2D* pSceneNormal;
+    Texture2D* pSceneBrightness;
+    Texture2D* pSceneHDRTexture;
+    Texture2D* pSceneDepth;
 };
 } // Engine
 } // Recluse

@@ -124,7 +124,6 @@ public:
     virtual ErrType destroyDescriptorSet(DescriptorSet* pSet) { return REC_RESULT_NOT_IMPLEMENTED; }
     virtual ErrType destroyDescriptorSetLayout(DescriptorSetLayout* pSetLayout) { return REC_RESULT_NOT_IMPLEMENTED; }
 
-    
 private:
 };
 

@@ -60,12 +60,6 @@ enum MaterialType {
 #define R_MAT_GLOSSSPEC "GlossSpec"
 #define R_MAT_HEIGHT "HeightMap"
 
-struct TextureBind {
-    Texture2D* pTexture;
-    std::string attrib;
-};
-
-
 class Material {
 public:
     virtual ~Material() { }
@@ -76,15 +70,24 @@ public:
 
     R_EXPORT MaterialType getMatType() const { return m_matType; }
 
-    R_EXPORT void initalize(TextureBind* pBinds, U32 bindCount) {
-        for (U32 i = 0; i < bindCount; ++i) {
-            TextureBind& bind = pBinds[i];
-            m_matMap[bind.attrib] = bind.pTexture;
-        }
+    R_EXPORT B32 addTex(Texture2D* pTexture, const std::string& attrib) {
+        m_matMap[attrib] = pTexture;
+        return true;
+    }
+
+    R_EXPORT B32 hasTex(const std::string& attrib) {
+        return m_matMap.find(attrib) != m_matMap.end();
     }
 
     R_EXPORT Texture2D* getTex(const std::string& attrib) {
         return m_matMap[attrib];
+    }
+
+    R_EXPORT B32 removeTex(const std::string& attrib) {
+        if (hasTex(attrib)) {
+            m_matMap.erase(attrib);
+        }
+        return false;    
     }
 
     R_EXPORT void setSurfaceType(SurfaceTypeFlags flags) { m_flags = flags; }
