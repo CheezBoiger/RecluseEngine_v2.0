@@ -15,22 +15,39 @@ class Renderer;
 
 class R_EXPORT Texture2D {
 public:
+    Texture2D() 
+        : m_resource(nullptr) { }
 
-    void initialize(Renderer* pRenderer, ResourceFormat format, U32 width, U32 height, U32 arrayLevel, U32 mips);
+    ErrType initialize(Renderer* pRenderer, ResourceFormat format, U32 width, U32 height, U32 arrayLevel, U32 mips);
     void destroy(Renderer* pRenderer);
 
     // Load texture data to this resource handle.
     void load(Renderer* pRenderer, void* pData, U64 szBytes);
 
     GraphicsResource* getResource() { return m_resource; }
-    GraphicsResourceView* getView() { return m_pView; }
 
     Hash64 getCrC() const { return m_crc; }
 
 private:
     Hash64 m_crc;
     GraphicsResource* m_resource;
-    GraphicsResourceView* m_pView;
+};
+
+
+class R_EXPORT TextureView {
+public:
+    TextureView()
+        : m_texture(nullptr)
+        , m_view(nullptr) { }
+
+    ErrType initialize(Renderer* pRenderer, Texture2D* pTexture, ResourceViewDesc& desc);
+    ErrType destroy(Renderer* pRenderer);
+
+    Texture2D* getTexture() const { return m_texture; }
+    GraphicsResourceView* getView() const { return m_view; }
+private:
+    GraphicsResourceView* m_view;
+    Texture2D* m_texture;
 };
 
 

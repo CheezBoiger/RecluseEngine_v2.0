@@ -94,6 +94,8 @@ void Renderer::initialize(void* windowHandle, const RendererConfigs& configs)
 
     createSwapchain(configs);
 
+    allocateSceneBuffers(configs);
+
     setUpModules();
 }
 
@@ -106,6 +108,8 @@ void Renderer::cleanUp()
         m_pDevice->destroyCommandQueue(m_graphicsQueue);
         m_graphicsQueue = nullptr;
     }
+
+    freeSceneBuffers();
 
     destroySwapchain();
 
@@ -144,24 +148,23 @@ void Renderer::render()
         // TODO: Would make more sense to manually transition the resource itself, 
         //       and not the resource view...
         GraphicsResource* pSceneDepth = m_sceneBuffers.pSceneDepth->getResource();
-        GraphicsResource* pSceneAlbedo = m_sceneBuffers.pSceneAlbedo->getResource();
+        //GraphicsResource* pSceneAlbedo = m_sceneBuffers.pSceneAlbedo->getResource();
         
         if (pSceneDepth->getCurrentResourceState() != RESOURCE_STATE_DEPTH_STENCIL_WRITE) {
             // Transition the resource.
             ResourceTransition trans        = MAKE_RESOURCE_TRANSITION(pSceneDepth, RESOURCE_STATE_DEPTH_STENCIL_WRITE, 0, 1, 0, 1);
-            ResourceTransition albedoTrans  = MAKE_RESOURCE_TRANSITION(pSceneAlbedo, RESOURCE_STATE_RENDER_TARGET, 0, 1, 0, 1);
+            //ResourceTransition albedoTrans  = MAKE_RESOURCE_TRANSITION(pSceneAlbedo, RESOURCE_STATE_RENDER_TARGET, 0, 1, 0, 1);
             m_commandList->transition(&trans, 1);            
         }
 
-        
         PreZ::generate(m_commandList, m_renderCommands, 
-            m_commandKeys[SURFACE_OPAQUE].data(), m_commandKeys[SURFACE_OPAQUE].size());
+            m_commandKeys[RENDER_PREZ].data(), m_commandKeys[RENDER_PREZ].size());
 
         // Asyncronous Queue -> Do Light culling here.
         LightCluster::cull(m_commandList);
 
         AOV::generate(m_commandList, m_renderCommands,
-            m_commandKeys[SURFACE_OPAQUE].data(), m_commandKeys[SURFACE_OPAQUE].size());
+            m_commandKeys[RENDER_GBUFFER].data(), m_commandKeys[RENDER_GBUFFER].size());
         
 
     m_commandList->end();
@@ -322,27 +325,23 @@ void Renderer::pushRenderCommand(const RenderCommand& renderCommand)
 
     // Store mesh commands to be referenced for each draw pass.
     CommandKey key                  = { m_renderCommands->getNumberCommands() };
-    Material* pMaterial             = renderCommand.pMaterial;
-    SubMeshRenderFlags submeshFlags = renderCommand.flags;
+    PassTypeFlags renderFlags       = renderCommand.flags;
 
-    // Not material means we don't know how to render this mesh?
-    if (!pMaterial) {
-        return;
+    if (renderFlags & RENDER_PREZ) {
+        m_commandKeys[RENDER_PREZ].push_back(key.value);
     }
 
-    SurfaceTypeFlags surface = pMaterial->getSurfaceTypeFlags();
-
-    if (surface & SURFACE_OPAQUE) {
-        m_commandKeys[SURFACE_OPAQUE].push_back(key.value);
+    if (renderFlags & RENDER_GBUFFER) {
+        m_commandKeys[RENDER_GBUFFER].push_back(key.value);
     }
 
-    if (surface & SURFACE_SHADOWS) {
-        m_commandKeys[SURFACE_SHADOWS].push_back(key.value);
+    if (renderFlags & RENDER_SHADOW) {
+        m_commandKeys[RENDER_SHADOW].push_back(key.value);
     }
 
     // Mesh is treated as particles.
-    if (surface & SURFACE_PARTICLE) {
-        m_commandKeys[SURFACE_PARTICLE].push_back(key.value);
+    if (renderFlags & RENDER_PARTICLE) {
+        m_commandKeys[RENDER_PARTICLE].push_back(key.value);
     }
 
     // Push the render command to the last, this will serve as our reference to render in
@@ -379,6 +378,84 @@ void Renderer::destroySwapchain()
         m_pSwapchain = nullptr;
     
     }
+}
+
+
+void Renderer::allocateSceneBuffers(const RendererConfigs& configs)
+{
+    U32 width = configs.renderWidth;
+    U32 height = configs.renderHeight;
+    m_sceneBuffers.pSceneDepth = createTexture2D(width, height, 1, 1, RESOURCE_FORMAT_D24_UNORM_S8_UINT);
+
+    ResourceViewDesc viewDesc = { };
+    viewDesc.dimension = RESOURCE_VIEW_DIMENSION_2D;
+    viewDesc.format = RESOURCE_FORMAT_D24_UNORM_S8_UINT;
+    viewDesc.layerCount = 1;
+    viewDesc.mipLevelCount = 1;
+    viewDesc.baseArrayLayer = 0;
+    viewDesc.baseMipLevel = 0;
+    viewDesc.type = RESOURCE_VIEW_TYPE_DEPTH_STENCIL;
+
+    m_sceneBuffers.pDepthStencilView = new TextureView();
+    m_sceneBuffers.pDepthStencilView->initialize(this, m_sceneBuffers.pSceneDepth, viewDesc);
+
+    m_renderCommands = new RenderCommandList();
+    m_renderCommands->initialize();
+}
+
+
+void Renderer::freeSceneBuffers()
+{
+
+    if (m_sceneBuffers.pDepthStencilView) {
+        m_sceneBuffers.pDepthStencilView->destroy(this);
+        delete m_sceneBuffers.pDepthStencilView;
+        m_sceneBuffers.pDepthStencilView = nullptr;
+    }
+
+    if (m_sceneBuffers.pSceneDepth) {
+    
+        destroyTexture2D(m_sceneBuffers.pSceneDepth);
+        m_sceneBuffers.pSceneDepth = nullptr;
+
+    }
+
+    if (m_renderCommands) {
+    
+        m_renderCommands->destroy();
+        delete m_renderCommands;
+        m_renderCommands = nullptr;
+    
+    }
+}
+
+
+Texture2D* Renderer::createTexture2D(U32 width, U32 height, U32 mips, U32 layers, ResourceFormat format)
+{
+    Texture2D* pTexture = new Texture2D();
+    ErrType result = REC_RESULT_OK;
+
+    result = pTexture->initialize(this, format, width, height, layers, mips);
+
+    if (result != REC_RESULT_OK) {
+    
+        pTexture->destroy(this);
+        delete pTexture;
+    
+    }
+  
+    return pTexture;
+}
+
+
+ErrType Renderer::destroyTexture2D(Texture2D* pTexture)
+{
+    R_ASSERT(pTexture != NULL);
+
+    pTexture->destroy(this);
+    delete pTexture;
+
+    return REC_RESULT_OK;
 }
 } // Engine
 } // Recluse

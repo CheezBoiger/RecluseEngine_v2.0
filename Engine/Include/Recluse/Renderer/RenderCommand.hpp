@@ -15,22 +15,29 @@ namespace Recluse {
 namespace Engine {
 
 
-enum SubMeshRender : U32 {
-    RENDER_HAS_POSITION    = 0x01,
-    RENDER_HAS_NORMAL      = 0x02,
-    RENDER_HAS_TEXCOORDS   = 0x04,
-    RENDER_HAS_TANGENT     = 0x08,
-    RENDER_HAS_BITANGENT   = 0x10,
-    RENDER_HAS_BONES       = 0x20
+enum PassType : U32 {
+    RENDER_HAS_POSITION    = 0x001,
+    RENDER_HAS_NORMAL      = 0x002,
+    RENDER_HAS_TEXCOORDS   = 0x004,
+    RENDER_HAS_TANGENT     = 0x008,
+    RENDER_HAS_BITANGENT   = 0x010,
+    RENDER_HAS_BONES       = 0x020,
+    RENDER_PREZ            = 0x040,
+    RENDER_SHADOW          = 0x080,
+    RENDER_PARTICLE        = 0x100,
+    RENDER_GBUFFER         = 0x200,
+    RENDER_HAS_MATERIAL    = 0x400
 };
 
 
-typedef U32 SubMeshRenderFlags;
+typedef U32 PassTypeFlags;
 
 enum CommandOp {
     COMMAND_OP_DRAW_INSTANCED,
     COMMAND_OP_DRAW_INDEXED_INSTANCED
 };
+
+typedef U32 PassTypeFlags;
 
 struct RenderCommand {
     GraphicsResource**      ppVertexBuffers;    // 8  B
@@ -40,7 +47,7 @@ struct RenderCommand {
     CommandOp               op;                 // 32 B
     TransformPerMesh*       pTransformPerMesh;  // 40 B 
     U32                     numInstances;       // 44 B
-    SubMeshRenderFlags      flags;              // 48 B
+    PassTypeFlags           flags;              // 48 B
 };
 
 

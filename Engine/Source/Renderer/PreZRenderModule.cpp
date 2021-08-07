@@ -18,14 +18,18 @@ namespace PreZ {
 
 GraphicsResourceView* pSceneDepthView = nullptr;
 
-std::unordered_map<Engine::SubMeshRenderFlags, PipelineState*> pipelines;
+std::unordered_map<Engine::PassTypeFlags, PipelineState*> pipelines;
 RenderPass* pPreZPass = nullptr;
+
+static void createPipelines(GraphicsPipelineStateDesc& pipelineCi)
+{
+}
 
 void initialize(GraphicsDevice* pDevice, Engine::SceneBuffers* pBuffers)
 {
     R_ASSERT(pBuffers->pSceneDepth                  != NULL);
     R_ASSERT(pBuffers->pSceneDepth->getResource()   != NULL);
-    R_ASSERT(pBuffers->pSceneDepth->getView()       != NULL);
+    R_ASSERT(pBuffers->pDepthStencilView->getView() != NULL);
 
     R_DEBUG("PreZ", "Initializing preZ render pass...");
 
@@ -45,7 +49,8 @@ void initialize(GraphicsDevice* pDevice, Engine::SceneBuffers* pBuffers)
     rpCi.width                  = resDesc.width;
     rpCi.height                 = resDesc.height;
     rpCi.numRenderTargets       = 0;
-    rpCi.pDepthStencil          = pBuffers->pSceneDepth->getView();
+    rpCi.pDepthStencil          = pBuffers->pDepthStencilView->getView();
+    pSceneDepthView = pBuffers->pDepthStencilView->getView();
 
     result = pDevice->createRenderPass(&pPreZPass, rpCi);
 
@@ -73,6 +78,8 @@ void initialize(GraphicsDevice* pDevice, Engine::SceneBuffers* pBuffers)
     pipelineCi.ds.depthCompareOp    = COMPARE_OP_GREATER;
 
     pipelineCi.primitiveTopology = PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    
+    createPipelines(pipelineCi);
 }
 
 
@@ -98,14 +105,14 @@ void generate(GraphicsCommandList* pCommandList, Engine::RenderCommandList* pMes
     for (U64 i = 0; i < sz; ++i) {
     
         U64 key = keys[i];
-        Engine::RenderCommand* meshCmd              = pRenderCommands[key];
-        Engine::SubMeshRenderFlags flags            = meshCmd->flags;
-        U32 instanceCount                           = meshCmd->numInstances; 
-        PipelineState* pipeline                 = pipelines[flags];
+        Engine::RenderCommand* meshCmd      = pRenderCommands[key];
+        Engine::PassTypeFlags flags    = meshCmd->flags;
+        U32 instanceCount                   = meshCmd->numInstances; 
+        PipelineState* pipeline             = pipelines[flags];
 
-        pCommandList->bindVertexBuffers(meshCmd->numVertexBuffers, meshCmd->ppVertexBuffers, meshCmd->pOffsets);
         R_ASSERT(pipeline != NULL);
 
+        pCommandList->bindVertexBuffers(meshCmd->numVertexBuffers, meshCmd->ppVertexBuffers, meshCmd->pOffsets);
         pCommandList->setPipelineState(pipeline, BIND_TYPE_GRAPHICS);
         // TODO: Need to bind our descriptorSets when possible.
         pCommandList->bindDescriptorSets(0, nullptr, BIND_TYPE_GRAPHICS);

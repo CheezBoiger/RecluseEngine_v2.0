@@ -72,6 +72,9 @@ public:
 
     VertexBuffer* createVertexBuffer(U64 perVertexSzBytes, U64 totalVertices);
     IndexBuffer* createIndexBuffer(IndexType indexType, U64 totalIndices);
+    Texture2D*  createTexture2D(U32 width, U32 height, U32 mips, U32 layers, ResourceFormat format);
+
+    ErrType destroyTexture2D(Texture2D* pTexture);
 
     ErrType destroyGPUBuffer(GPUBuffer* pBuffer);
 
@@ -82,9 +85,11 @@ private:
     void cleanUpModules();
     void createDevice(const RendererConfigs& configs);
     void createSwapchain(const RendererConfigs& configs);
-    
+    void allocateSceneBuffers(const RendererConfigs& configs);    
+
     void destroyDevice();
     void destroySwapchain();
+    void freeSceneBuffers();
 
     void resetCommandKeys();
     void sortCommandKeys();

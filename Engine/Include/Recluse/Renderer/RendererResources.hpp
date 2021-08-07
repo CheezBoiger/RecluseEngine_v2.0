@@ -11,6 +11,7 @@ namespace Recluse {
 namespace Engine {
 
 class Texture2D;
+class TextureView;
 
 
 const std::string shaderDir                    = Filesystem::getCurrentDir() + "/" + "Shaders";
@@ -29,7 +30,7 @@ static const char* getBinaryShaderExtension()
 
 static std::string getBinaryShaderPath(const std::string& relativePath)
 {
-    return shaderDir + "/" + relativePath + getBinaryShaderExtension();
+    return shaderDir + "/" + relativePath + "." + getBinaryShaderExtension();
 }
 
 
@@ -98,7 +99,7 @@ private:
 
 
 struct SceneBuffers {
-    std::vector<GPUBuffer*> pSceneViews;
+    std::vector<GPUBuffer*> pSceneViewBuffers;
     Texture2D* pSceneAlbedo;
     Texture2D* pSceneAo;
     Texture2D* pSceneMat;
@@ -106,6 +107,7 @@ struct SceneBuffers {
     Texture2D* pSceneBrightness;
     Texture2D* pSceneHDRTexture;
     Texture2D* pSceneDepth;
+    TextureView* pDepthStencilView;
 };
 } // Engine
 } // Recluse
