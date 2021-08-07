@@ -321,33 +321,28 @@ void Renderer::pushRenderCommand(const RenderCommand& renderCommand)
     R_ASSERT(m_renderCommands != NULL);
 
     // Store mesh commands to be referenced for each draw pass.
-    CommandKey key                          = { m_renderCommands->getNumberCommands() };
-    SubmeshRenderCommand* pSubMeshCommands  = renderCommand.pSubmeshes;
+    CommandKey key                  = { m_renderCommands->getNumberCommands() };
+    Material* pMaterial             = renderCommand.pMaterial;
+    SubMeshRenderFlags submeshFlags = renderCommand.flags;
 
-    for (U32 i = 0; i < renderCommand.numSubMeshCommands; ++i) {
-    
-        Material* pMaterial             = pSubMeshCommands[i].pMaterial;
-        SubMeshRenderFlags submeshFlags = pSubMeshCommands[i].flags;
+    // Not material means we don't know how to render this mesh?
+    if (!pMaterial) {
+        return;
+    }
 
-        // Not material means we don't know how to render this mesh?
-        if (!pMaterial) {
-            continue;
-        }
+    SurfaceTypeFlags surface = pMaterial->getSurfaceTypeFlags();
 
-        SurfaceTypeFlags surface = pMaterial->getSurfaceTypeFlags();
+    if (surface & SURFACE_OPAQUE) {
+        m_commandKeys[SURFACE_OPAQUE].push_back(key.value);
+    }
 
-        if (surface & SURFACE_OPAQUE) {
-            m_commandKeys[SURFACE_OPAQUE].push_back(key.value);
-        }
+    if (surface & SURFACE_SHADOWS) {
+        m_commandKeys[SURFACE_SHADOWS].push_back(key.value);
+    }
 
-        if (surface & SURFACE_SHADOWS) {
-            m_commandKeys[SURFACE_SHADOWS].push_back(key.value);
-        }
-
-        // Mesh is treated as particles.
-        if (surface & SURFACE_PARTICLE) {
-            m_commandKeys[SURFACE_PARTICLE].push_back(key.value);
-        }
+    // Mesh is treated as particles.
+    if (surface & SURFACE_PARTICLE) {
+        m_commandKeys[SURFACE_PARTICLE].push_back(key.value);
     }
 
     // Push the render command to the last, this will serve as our reference to render in

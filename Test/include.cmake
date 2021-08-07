@@ -4,7 +4,7 @@ set ( RECLUSE_FRAMEWORK_RELEASE_LIB ${CMAKE_SOURCE_DIR}/../Recluse/Release/Lib/R
 
 set ( RECLUSE_ENGINE_INCLUDE ${CMAKE_SOURCE_DIR}/../Engine/Include )
 set( RECLUSE_ENGINE_DEBUG_LIB ${CMAKE_SOURCE_DIR}/../Recluse/Debug/Lib/RecluseEngine.lib )
-set( RECLUSE_ENGINE_RELEASE_LIB ${CMAKE_SOURCE}/../Recluse/Release/Lib/RecluseEngine.lib )
+set( RECLUSE_ENGINE_RELEASE_LIB ${CMAKE_SOURCE_DIR}/../Recluse/Release/Lib/RecluseEngine.lib )
 
 function(initialize_recluse_framework TARGET_NAME )
     message(STATUS "Recluse: Linking ${TARGET_NAME} with Recluse Framework")

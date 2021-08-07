@@ -83,7 +83,7 @@ void destroy(GraphicsDevice* pDevice)
 
 void generate(GraphicsCommandList* pCommandList, Engine::RenderCommandList* pMeshCommandList, U64* keys, U64 sz)
 {
-    Engine::RenderCommand* pRenderCommands      = pMeshCommandList->getRenderCommands();
+    Engine::RenderCommand** pRenderCommands      = pMeshCommandList->getRenderCommands();
     const GraphicsResourceDescription& depth    = pSceneDepthView->getResource()->getDesc();
     Rect depthRect      = { };
     depthRect.x = depthRect.y = 0.f;
@@ -98,42 +98,39 @@ void generate(GraphicsCommandList* pCommandList, Engine::RenderCommandList* pMes
     for (U64 i = 0; i < sz; ++i) {
     
         U64 key = keys[i];
-        Engine::RenderCommand& meshCmd = pRenderCommands[key];
+        Engine::RenderCommand* meshCmd              = pRenderCommands[key];
+        Engine::SubMeshRenderFlags flags            = meshCmd->flags;
+        U32 instanceCount                           = meshCmd->numInstances; 
+        PipelineState* pipeline                 = pipelines[flags];
 
-        GraphicsResource* vertexBuffers[8];
-        U64 offsets[8];
+        pCommandList->bindVertexBuffers(meshCmd->numVertexBuffers, meshCmd->ppVertexBuffers, meshCmd->pOffsets);
+        R_ASSERT(pipeline != NULL);
 
-        // Bind vertex buffers.
-        for (U32 v = 0; v < meshCmd.numVertexBuffers; ++v) {
-            vertexBuffers[i]    = meshCmd.pVertexBuffers[i]->get();
-            offsets[i]          = 0;
-        }
+        pCommandList->setPipelineState(pipeline, BIND_TYPE_GRAPHICS);
+        // TODO: Need to bind our descriptorSets when possible.
+        pCommandList->bindDescriptorSets(0, nullptr, BIND_TYPE_GRAPHICS);
 
+        switch (meshCmd->op) {
 
-        pCommandList->bindVertexBuffers(meshCmd.numVertexBuffers, vertexBuffers, offsets);
-
-        if (meshCmd.pIndexBuffer) {
-            pCommandList->bindIndexBuffer(meshCmd.pIndexBuffer->get(), 0, meshCmd.pIndexBuffer->getIndexType());
-        }
-
-        for (U32 subMeshIdx = 0; subMeshIdx < meshCmd.numSubMeshCommands; ++subMeshIdx) {
-
-            Engine::SubmeshRenderCommand& submesh   = meshCmd.pSubmeshes[subMeshIdx];       
-            Engine::SubMeshRenderFlags flags        = submesh.flags; 
-            PipelineState* pipeline                 = pipelines[flags];
-
-            R_ASSERT(pipeline != NULL);
-
-            pCommandList->setPipelineState(pipeline, BIND_TYPE_GRAPHICS);
-            // TODO: Need to bind our descriptorSets when possible.
-            pCommandList->bindDescriptorSets(0, nullptr, BIND_TYPE_GRAPHICS);
-
-    #if 0
-            if (meshCmd.pIndexBuffer)
-                pCommandList->drawIndexedInstanced;
-            else
-                pCommandList->drawInstanced;
-    #endif
+            case Engine::COMMAND_OP_DRAW_INSTANCED:
+            {
+                Engine::DrawRenderCommand* drawCmd = 
+                    static_cast<Engine::DrawRenderCommand*>(meshCmd);
+                pCommandList->drawInstanced(drawCmd->vertexCount,
+                                            drawCmd->instanceCount,
+                                            drawCmd->firstVertex,
+                                            drawCmd->firstInstance);
+            } break;
+            case Engine::COMMAND_OP_DRAW_INDEXED_INSTANCED:        
+            {
+                Engine::DrawIndexedRenderCommand* indexedCmd = 
+                    static_cast<Engine::DrawIndexedRenderCommand*>(meshCmd);
+                pCommandList->drawIndexedInstanced(indexedCmd->indexCount, 
+                                                   meshCmd->numInstances, 
+                                                   indexedCmd->firstIndex, 
+                                                   indexedCmd->vertexOffset, 
+                                                   indexedCmd->firstInstance);
+            } break;
         }
     
     }

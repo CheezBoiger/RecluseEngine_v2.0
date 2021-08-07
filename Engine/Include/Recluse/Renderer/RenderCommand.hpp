@@ -27,25 +27,39 @@ enum SubMeshRender : U32 {
 
 typedef U32 SubMeshRenderFlags;
 
-
-struct SubmeshRenderCommand {
-    Material* pMaterial;        // The material that is assigned to these submeshes.
-    SubMesh** ppSubmeshes;      // All submeshes to be rendered.
-    U32       numSubmeshes;     // Number of submeshes.
-    U32       vbIndex;          // Vertex Buffer index in RenderCommand
-    Bounds3D  aabb;
-    SubMeshRenderFlags flags;      // 
+enum CommandOp {
+    COMMAND_OP_DRAW_INSTANCED,
+    COMMAND_OP_DRAW_INDEXED_INSTANCED
 };
 
 struct RenderCommand {
-    VertexBuffer**          pVertexBuffers;
-    IndexBuffer*            pIndexBuffer;
-    U32                     numVertexBuffers;
-    U32                     numSubMeshCommands;
-    TransformPerMesh*       pTransformPerMesh;
-    SubmeshRenderCommand*   pSubmeshes;
-    U32                     numInstances;
-    Bounds3D                aabb;
+    GraphicsResource**      ppVertexBuffers;    // 8  B
+    U64*                    pOffsets;           // 16 B
+    Material*               pMaterial;          // 24 B
+    U32                     numVertexBuffers;   // 28 B 
+    CommandOp               op;                 // 32 B
+    TransformPerMesh*       pTransformPerMesh;  // 40 B 
+    U32                     numInstances;       // 44 B
+    SubMeshRenderFlags      flags;              // 48 B
+};
+
+
+struct DrawIndexedRenderCommand : public RenderCommand {
+    GraphicsResource* pIndexBuffer;             // 56 B
+    U32 indexCount;                             // 60 B
+    U32 firstInstance;                          // 64 B
+    U32 firstIndex;                             // 68 B
+    U32 vertexOffset;                           // 72 B 
+    U32 instanceCount;                          // 76 B
+                                                // 80 B
+};
+
+
+struct DrawRenderCommand : public RenderCommand {
+    U32 vertexCount;                            // 56 B
+    U32 instanceCount;                          // 60 B
+    U32 firstVertex;                            // 64 B
+    U32 firstInstance;                          // 68 B
 };
 
 
@@ -53,14 +67,20 @@ struct RenderCommand {
 // is kicked off. Should reset every frame render.
 class R_EXPORT RenderCommandList {
 public:
+    RenderCommandList()
+        : m_pAllocator(nullptr)
+        , m_pointerAllocator(nullptr)
+        , m_pool(nullptr)
+        , m_pointerPool(nullptr) { }
 
-    void initialize(U32 numRenderCommands);
+    void initialize();
     void destroy();
 
-    inline void push(const RenderCommand& renderCommand);
+    inline ErrType push(const RenderCommand& renderCommand);
     inline void reset();
 
-    RenderCommand* getRenderCommands() const { return (RenderCommand*)m_pool->getBaseAddress(); }
+    RenderCommand** getRenderCommands() const { return (RenderCommand**)m_pointerPool->getBaseAddress(); }    
+
     U64 getNumberCommands() const { return m_pAllocator->getTotalAllocations(); }
 
 private:
@@ -68,7 +88,9 @@ private:
     void resize();
 
     Allocator* m_pAllocator;
+    Allocator* m_pointerAllocator;
     MemoryPool* m_pool;
+    MemoryPool* m_pointerPool;
 };
 } // Engine
 } // Recluse
