@@ -7,5 +7,8 @@ project ( "RecluseProject v2.0" )
 # Framework subdirectory.
 add_subdirectory ( Framework )
 
+# Add shader compiler subdirectory.
+add_subdirectory( ShaderCompiler )
+
 # Engine subdirectory.
 add_subdirectory ( Engine )

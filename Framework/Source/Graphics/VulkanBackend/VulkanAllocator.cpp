@@ -6,6 +6,21 @@
 namespace Recluse {
 
 
+B32 isMemoryResourcesOnSeparatePages(VkDeviceSize offsetA, 
+    VkDeviceSize sizeA,     
+    VkDeviceSize offsetB, 
+    VkDeviceSize sizeB, 
+    VkDeviceSize bufferImageGranularity)
+{
+    VkDeviceSize endA       = offsetA + sizeA - 1;
+    VkDeviceSize endPageA   = endA & ~(bufferImageGranularity - 1);
+    VkDeviceSize startB     = offsetB;
+    VkDeviceSize startPageB = startB & ~(bufferImageGranularity - 1);
+
+    return endPageA < startPageB;
+}
+
+
 ErrType VulkanAllocator::allocate(VulkanMemory* pOut, VkMemoryRequirements& requirements)
 {
     R_ASSERT(m_allocator != NULL);

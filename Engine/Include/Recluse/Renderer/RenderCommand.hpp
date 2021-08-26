@@ -33,40 +33,60 @@ enum PassType : U32 {
 typedef U32 PassTypeFlags;
 
 enum CommandOp {
-    COMMAND_OP_DRAW_INSTANCED,
-    COMMAND_OP_DRAW_INDEXED_INSTANCED
+    COMMAND_OP_DRAWABLE_INSTANCED,
+    COMMAND_OP_DRAWABLE_INDEXED_INSTANCED,
+    COMMAND_OP_DISPATCH
 };
+
 
 typedef U32 PassTypeFlags;
 
 struct RenderCommand {
-    GraphicsResource**      ppVertexBuffers;    // 8  B
-    U64*                    pOffsets;           // 16 B
-    Material*               pMaterial;          // 24 B
-    U32                     numVertexBuffers;   // 28 B 
-    CommandOp               op;                 // 32 B
-    TransformPerMesh*       pTransformPerMesh;  // 40 B 
-    U32                     numInstances;       // 44 B
-    PassTypeFlags           flags;              // 48 B
+    CommandOp               op;                 // 8 B
+    PassTypeFlags           flags;              // 16 B
 };
 
 
-struct DrawIndexedRenderCommand : public RenderCommand {
-    GraphicsResource* pIndexBuffer;             // 56 B
-    U32 indexCount;                             // 60 B
-    U32 firstInstance;                          // 64 B
-    U32 firstIndex;                             // 68 B
-    U32 vertexOffset;                           // 72 B 
-    U32 instanceCount;                          // 76 B
-                                                // 80 B
+struct DrawableRenderCommand : public RenderCommand {
+    GraphicsResource**  ppVertexBuffers;        // 24 B
+    U64*                pOffsets;               // 32 B
+    PerMeshTransform*   pPerMeshTransform;      // 40 B
+    U32                 numVertexBuffers;       // 44 B
 };
 
 
-struct DrawRenderCommand : public RenderCommand {
-    U32 vertexCount;                            // 56 B
-    U32 instanceCount;                          // 60 B
-    U32 firstVertex;                            // 64 B
-    U32 firstInstance;                          // 68 B
+struct IndexedInstancedSubMesh {
+    Material* pMaterial;                        // 
+    U32 indexCount;                             // 
+    U32 firstInstance;                          // 
+    U32 firstIndex;                             // 
+    U32 vertexOffset;                           // 
+    U32 instanceCount;                          // 
+};
+
+
+struct DrawIndexedRenderCommand : public DrawableRenderCommand {
+    GraphicsResource*           pIndexBuffer;   // 56 B
+    IndexedInstancedSubMesh*    pSubMeshes;     // 64 B
+    U64                         offset;         // 72 B
+    U32                         numSubMeshes;   // 76 B
+    IndexType                   indexType;      // 80 B
+};
+
+
+struct InstancedSubMesh {
+    Material* pMaterial;                        //
+    U32 vertexCount;                            // 
+    U32 instanceCount;                          // 
+    U32 firstVertex;                            // 
+    U32 firstInstance;                          // 
+};
+
+
+struct DrawRenderCommand : public DrawableRenderCommand {
+    InstancedSubMesh*   pSubMeshes;             // 56 B
+    U32                 numSubMeshes;           // 60 B
+                                                // 64 B
 };
 
 

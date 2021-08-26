@@ -47,9 +47,9 @@ enum ShaderType {
 typedef U32 ShaderTypeFlags;
 
 
-class Shader {
+class Shader final {
 public:
-    virtual ~Shader() { }
+    ~Shader() { }
 
     static R_EXPORT Shader* create(ShaderIntermediateCode code, ShaderType type);
     static R_EXPORT void destroy(Shader* pShader);

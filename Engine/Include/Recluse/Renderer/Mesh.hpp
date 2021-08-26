@@ -22,7 +22,7 @@ namespace Engine {
 
 
 // Per mesh information.
-struct R_EXPORT TransformPerMesh {
+struct R_EXPORT PerMeshTransform {
     Matrix44 world;
     Matrix44 worldToViewClip;
     Matrix44 n;

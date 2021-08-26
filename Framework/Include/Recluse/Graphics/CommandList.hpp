@@ -31,7 +31,6 @@ class R_EXPORT GraphicsCommandList {
 public:
     virtual ~GraphicsCommandList() { }
 
-    virtual void reset() { } 
     virtual void begin() { }
     virtual void end() { }
 

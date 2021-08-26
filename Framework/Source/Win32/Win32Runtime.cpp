@@ -113,6 +113,7 @@ RealtimeTick RealtimeTick::getTick()
 
 LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    // Reinterpret hwnd to window pointer.
     Window* pWindow = reinterpret_cast<Window*>(GetPropW(hwnd, R_WIN32_PROP_NAME));
 
     switch (uMsg) {
@@ -123,6 +124,11 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
             pWindow->close();
             break;
         }
+        case WM_INPUT:
+        case WM_KEYDOWN:
+        case WM_KEYUP:
+        case WM_MOVE:
+        case WM_SIZE:
         default: break;
     }    
 

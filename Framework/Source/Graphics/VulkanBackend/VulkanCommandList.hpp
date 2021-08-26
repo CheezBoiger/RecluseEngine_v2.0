@@ -29,8 +29,6 @@ public:
 
     VkCommandBuffer get() const;
 
-    void reset() { }
-
     void begin() override;
     void end() override;
 

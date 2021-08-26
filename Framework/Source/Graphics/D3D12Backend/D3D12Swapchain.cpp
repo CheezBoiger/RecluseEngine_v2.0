@@ -22,9 +22,10 @@ ErrType D3D12Swapchain::initialize(D3D12Device* pDevice)
     }
 
     const SwapchainCreateDescription& desc  = getDesc();
+    D3D12Queue* pQueue                      = static_cast<D3D12Queue*>(desc.pBackbufferQueue);
     D3D12Instance* pInstance                = pDevice->getAdapter()->getInstance();
     IDXGIFactory2* pFactory                 = pInstance->get();
-    ID3D12CommandQueue* pQueue              = static_cast<D3D12Queue*>(desc.pBackbufferQueue)->get();    
+    ID3D12CommandQueue* pNativeQueue        = pQueue->get();    
     HRESULT result                          = S_OK;
     DXGI_SWAP_CHAIN_DESC1 swapchainDesc     = { };
     IDXGISwapChain1* swapchain1             = nullptr;
@@ -41,7 +42,8 @@ ErrType D3D12Swapchain::initialize(D3D12Device* pDevice)
     swapchainDesc.SampleDesc.Count          = 1;
     swapchainDesc.SampleDesc.Quality        = 0;
 
-    result = pFactory->CreateSwapChainForHwnd(pQueue, windowHandle, &swapchainDesc, nullptr, nullptr, &swapchain1);
+    result = pFactory->CreateSwapChainForHwnd(pNativeQueue, windowHandle, &swapchainDesc, 
+        nullptr, nullptr, &swapchain1);
 
     if (result != S_OK) {
     
@@ -62,7 +64,12 @@ ErrType D3D12Swapchain::initialize(D3D12Device* pDevice)
         return REC_RESULT_FAILED;
     }
 
-    m_maxFrames = desc.desiredFrames;
+    m_maxFrames         = desc.desiredFrames;
+    m_pDevice           = pDevice;
+    m_pBackbufferQueue  = pQueue;
+
+    // Initialize our frame resources, make sure to assign device and other values before calling this.
+    initializeFrameResources();
 
     return REC_RESULT_OK;
 }
@@ -70,6 +77,8 @@ ErrType D3D12Swapchain::initialize(D3D12Device* pDevice)
 
 void D3D12Swapchain::destroy()
 {
+    destroyFrameResources();
+
     if (m_pSwapchain) {
     
         R_DEBUG(R_CHANNEL_D3D12, "Destroying swapchain...");
@@ -95,18 +104,89 @@ GraphicsResourceView* D3D12Swapchain::getFrameView(U32 idx)
 
 ErrType D3D12Swapchain::present()
 {
-    HRESULT result = S_OK;
+    ID3D12CommandQueue* pQueue  = m_pBackbufferQueue->get();
+    ID3D12Fence* pFence         = nullptr;
+    HRESULT result              = S_OK;
+    U64 currentFenceValue       = 0;
+    HANDLE eventHandle          = NULL;
+
     result = m_pSwapchain->Present(0, 0);
+    
     if (FAILED(result)) {
 
         R_ERR(R_CHANNEL_D3D12, "Failed to present current frame: %d");        
 
     }
 
-    incrementFrameIndex();
+    eventHandle         = m_frameResources[m_currentFrameIndex].pEvent;
+    pFence              = m_frameResources[m_currentFrameIndex].pFence;
+    currentFenceValue   = m_frameResources[m_currentFrameIndex].fenceValue;        
 
-    m_currentBackbufferIndex = m_pSwapchain->GetCurrentBackBufferIndex();
+
+    // Set the value for the fence on GPU side, letting us know when our commands have finished.
+    pQueue->Signal(pFence, currentFenceValue);
+
+    m_currentFrameIndex = m_pSwapchain->GetCurrentBackBufferIndex();
+
+    if (pFence->GetCompletedValue() < currentFenceValue) {
+    
+        pFence->SetEventOnCompletion(currentFenceValue, eventHandle);
+        WaitForSingleObjectEx(eventHandle, INFINITE, false);
+    
+    }
+
+    m_frameResources[m_currentFrameIndex].fenceValue = currentFenceValue + 1;
+
+    m_pDevice->incrementBufferIndex();
+    m_pDevice->resetCurrentResources();
 
     return REC_RESULT_OK;
+}
+
+
+ErrType D3D12Swapchain::initializeFrameResources()
+{
+    HRESULT result          = S_OK;
+    ID3D12Device* pDevice   = m_pDevice->get();
+
+    m_frameResources.resize(m_maxFrames);
+    
+    for (U32 i = 0; i < m_frameResources.size(); ++i) {
+    
+        FrameResource& frameRes = m_frameResources[i];
+
+        frameRes.fenceValue = 0;
+        frameRes.pEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+        result = pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, __uuidof(ID3D12Fence), (void**)&frameRes.pFence);
+
+        if (FAILED(result)) {
+            R_ERR(R_CHANNEL_D3D12, "Failed to initialize a fence for frame resource: %d", i);
+        }
+
+    }
+    
+    return REC_RESULT_OK;
+}
+
+
+ErrType D3D12Swapchain::destroyFrameResources()
+{
+    if (!m_frameResources.empty()) {
+    
+        for (U32 i = 0; i < m_frameResources.size(); ++i) {
+
+            CloseHandle(m_frameResources[i].pEvent);
+            m_frameResources[i].pEvent = nullptr;
+
+            m_frameResources[i].pFence->Release();
+            m_frameResources[i].pFence = nullptr;
+            
+        }
+    
+        m_frameResources.clear();
+    }
+
+    return REC_RESULT_NOT_IMPLEMENTED;
 }
 } // Recluse

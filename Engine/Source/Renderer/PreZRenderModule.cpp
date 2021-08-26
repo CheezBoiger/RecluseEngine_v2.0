@@ -105,41 +105,67 @@ void generate(GraphicsCommandList* pCommandList, Engine::RenderCommandList* pMes
     for (U64 i = 0; i < sz; ++i) {
     
         U64 key = keys[i];
-        Engine::RenderCommand* meshCmd      = pRenderCommands[key];
-        Engine::PassTypeFlags flags    = meshCmd->flags;
-        U32 instanceCount                   = meshCmd->numInstances; 
-        PipelineState* pipeline             = pipelines[flags];
+        Engine::RenderCommand* pRCmd            = pRenderCommands[key];
+        Engine::PassTypeFlags flags             = pRCmd->flags;
+        PipelineState* pipeline                 = pipelines[flags];
+        Engine::DrawableRenderCommand* meshCmd  = nullptr;
 
         R_ASSERT(pipeline != NULL);
 
+        if (meshCmd->op != Engine::COMMAND_OP_DRAWABLE_INDEXED_INSTANCED || 
+            meshCmd->op != Engine::COMMAND_OP_DRAWABLE_INSTANCED) {
+            continue;
+        }
+
+        meshCmd = static_cast<Engine::DrawableRenderCommand*>(pRCmd);
+ 
         pCommandList->bindVertexBuffers(meshCmd->numVertexBuffers, meshCmd->ppVertexBuffers, meshCmd->pOffsets);
         pCommandList->setPipelineState(pipeline, BIND_TYPE_GRAPHICS);
-        // TODO: Need to bind our descriptorSets when possible.
-        pCommandList->bindDescriptorSets(0, nullptr, BIND_TYPE_GRAPHICS);
 
         switch (meshCmd->op) {
 
-            case Engine::COMMAND_OP_DRAW_INSTANCED:
+            case Engine::COMMAND_OP_DRAWABLE_INDEXED_INSTANCED:
             {
-                Engine::DrawRenderCommand* drawCmd = 
-                    static_cast<Engine::DrawRenderCommand*>(meshCmd);
-                pCommandList->drawInstanced(drawCmd->vertexCount,
-                                            drawCmd->instanceCount,
-                                            drawCmd->firstVertex,
-                                            drawCmd->firstInstance);
-            } break;
-            case Engine::COMMAND_OP_DRAW_INDEXED_INSTANCED:        
-            {
-                Engine::DrawIndexedRenderCommand* indexedCmd = 
+                Engine::DrawIndexedRenderCommand* pIndexedCmd = 
                     static_cast<Engine::DrawIndexedRenderCommand*>(meshCmd);
-                pCommandList->drawIndexedInstanced(indexedCmd->indexCount, 
-                                                   meshCmd->numInstances, 
-                                                   indexedCmd->firstIndex, 
-                                                   indexedCmd->vertexOffset, 
-                                                   indexedCmd->firstInstance);
-            } break;
+
+                pCommandList->bindIndexBuffer(pIndexedCmd->pIndexBuffer, 
+                    pIndexedCmd->indexType, pIndexedCmd->indexType);
+
+                for (U32 submeshIdx = 0; submeshIdx < pIndexedCmd->numSubMeshes; ++submeshIdx) {
+                
+                    Engine::IndexedInstancedSubMesh& submesh = pIndexedCmd->pSubMeshes[submeshIdx];
+                    
+                    pCommandList->drawIndexedInstanced(
+                        submesh.indexCount,
+                        submesh.instanceCount,
+                        submesh.firstIndex,
+                        submesh.vertexOffset,
+                        submesh.firstInstance);
+                }
+
+                break;
+            }
+
+            case Engine::COMMAND_OP_DRAWABLE_INSTANCED:
+            {
+                Engine::DrawRenderCommand* pDrawCmd = static_cast<Engine::DrawRenderCommand*>(meshCmd);
+
+                for (U32 submeshIdx = 0; submeshIdx < pDrawCmd->numSubMeshes; ++submeshIdx) {
+                
+                    Engine::InstancedSubMesh& submesh = pDrawCmd->pSubMeshes[submeshIdx];
+
+                    pCommandList->drawInstanced(
+                        submesh.vertexCount,
+                        submesh.instanceCount,
+                        submesh.firstVertex,
+                        submesh.firstInstance);
+                
+                }                
+
+                break;
+            }
         }
-    
     }
 }
 } // PreZ

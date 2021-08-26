@@ -118,6 +118,10 @@ if ( RCL_DX12 )
         ${RECLUSE_D3D12_DIR}/D3D12Swapchain.cpp
         ${RECLUSE_D3D12_DIR}/D3D12Queue.hpp
         ${RECLUSE_D3D12_DIR}/D3D12Queue.cpp
+        ${RECLUSE_D3D12_DIR}/D3D12CommandList.hpp
+        ${RECLUSE_D3D12_DIR}/D3D12CommandList.cpp
+        ${RECLUSE_D3D12_DIR}/D3D12Allocator.hpp
+        ${RECLUSE_D3D12_DIR}/D3D12Allocator.cpp
     )
     if ( RCL_DXC )
         set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} dxcompiler.lib )

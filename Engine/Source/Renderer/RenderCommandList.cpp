@@ -78,12 +78,12 @@ ErrType RenderCommandList::push(const RenderCommand& renderCommand)
 
     switch (renderCommand.op) {
 
-        case COMMAND_OP_DRAW_INSTANCED:
+        case COMMAND_OP_DRAWABLE_INSTANCED:
         {
             COPY_COMMAND_TO_POOL(DrawRenderCommand, renderCommand);  
             break;     
         }
-        case COMMAND_OP_DRAW_INDEXED_INSTANCED:
+        case COMMAND_OP_DRAWABLE_INDEXED_INSTANCED:
         {
             COPY_COMMAND_TO_POOL(DrawIndexedRenderCommand, renderCommand); 
             break;

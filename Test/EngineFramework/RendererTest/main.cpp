@@ -36,8 +36,9 @@ int main(int c, char* argv[])
 
     while (!pWindow->shouldClose()) {
         DrawRenderCommand rcmd = { };
-        rcmd.op = COMMAND_OP_DRAW_INSTANCED;
+        rcmd.op = COMMAND_OP_DRAWABLE_INSTANCED;
         rcmd.flags = RENDER_HAS_POSITION | RENDER_HAS_NORMAL | RENDER_PREZ;
+        rcmd.numSubMeshes = 0;
 
         pRenderer->pushRenderCommand(rcmd);
 
