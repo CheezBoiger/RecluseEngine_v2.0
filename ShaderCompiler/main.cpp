@@ -51,7 +51,7 @@ int main(int c, char* argv[])
     }
 
 
-    result = Recluse::compileShaders();
+    result = Recluse::compileShaders(Recluse::SHADER_LANG_HLSL);
 
     if (result != Recluse::REC_RESULT_OK) {
 

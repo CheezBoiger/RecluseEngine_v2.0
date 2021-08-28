@@ -20,7 +20,8 @@ enum ShaderIntermediateCode {
 
 enum ShaderLang {
     SHADER_LANG_GLSL,
-    SHADER_LANG_HLSL
+    SHADER_LANG_HLSL,
+    SHADER_LANG_COUNT
 };
 
 

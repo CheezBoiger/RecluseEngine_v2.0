@@ -30,7 +30,7 @@ namespace Engine {
 class Texture2D;
 class Mesh;
 class Primitive;
-class RenderCommand;
+struct RenderCommand;
 class RenderCommandList;
 
 struct MeshDescription {
