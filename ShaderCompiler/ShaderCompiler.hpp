@@ -8,7 +8,9 @@
 namespace Recluse {
 
 
-ErrType addShaderToCompile();
+ErrType addShaderToCompile(const std::string& filePath, const std::string& config, ShaderType shaderType);
 
-ErrType compileShaders(ShaderLang lang);
+ErrType compileShaders(const std::string& sourcePath, ShaderLang lang);
+
+ErrType setConfigs(const std::string& configPath);
 } // Recluse

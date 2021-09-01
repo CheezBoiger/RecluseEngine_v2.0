@@ -1,57 +1,50 @@
 // 
 #include "ShaderCompiler.hpp"
 #include "Recluse/Messaging.hpp"
+#include "Recluse/Filesystem/Filesystem.hpp"
+
+#include "cxxopts.hpp"
 
 #include <string>
+#include <istream>
 #include <iostream>
 #include <vector>
 #include <unordered_map>
 
 using namespace std;
 
-enum ArgumentType {
-    ARG_TYPE_INT
-};
-
-struct ArgValue {
-    ArgumentType argType;
-    union {
-        char*               cstr;
-        int                 i32[2];
-        short               i16[4];
-        long long           i64;
-        float               f32;
-        double              f64;
-        unsigned int        u32[2];
-        unsigned short      u16[4];
-        unsigned long long  u64;
-        unsigned char       u8[8];
-        char                i8[8];
-        bool                b8[8];
-    };
-};
-
-unordered_map<string, ArgValue> arguments = {
-    { "-s", { ARG_TYPE_INT, 0 }}
-};
 
 int main(int c, char* argv[])
 {
     Recluse::Log::initializeLoggingSystem();
 
-    Recluse::ErrType result = Recluse::REC_RESULT_OK;
+    cxxopts::Options options("Recluse ShaderCompiler", u8"Shader Compiler for Recluse Shaders.");
+    
+    options.add_options()
+        ("c,config", "Metadata configuration file for compiler.", cxxopts::value<string>())
+        ("f,file", "File containing all shaders and their options, to compile.", cxxopts::value<string>());
+    options.allow_unrecognised_options();
 
-    // Collect our arguments.
-    for (int i = 0; i < c; ++i) {
+    auto parsed = options.parse(c, argv);
 
-        char* arg = argv[i];
-        
-        string str = arg;
-        
+    string configPath;
+    string compilePath;
+
+    try {
+        configPath       = parsed["config"].as<string>();
+        compilePath      = parsed["file"].as<string>();
+    } catch (const exception& e) {
+        R_ERR("ShaderCompiler", "%s", e.what());
     }
 
+    Recluse::setConfigs(configPath);
 
-    result = Recluse::compileShaders(Recluse::SHADER_LANG_HLSL);
+    Recluse::ErrType result = Recluse::REC_RESULT_OK;
+    string sourcePath       = ".";
+
+    // Collect our arguments.
+
+    result = Recluse::compileShaders(sourcePath, Recluse::SHADER_LANG_HLSL);
 
     if (result != Recluse::REC_RESULT_OK) {
 
