@@ -43,7 +43,7 @@ int main(int c, char* argv[])
     string sourcePath       = ".";
 
     // Collect our arguments.
-
+    Recluse::setShaderFiles(compilePath);
     result = Recluse::compileShaders(sourcePath, Recluse::SHADER_LANG_HLSL);
 
     if (result != Recluse::REC_RESULT_OK) {

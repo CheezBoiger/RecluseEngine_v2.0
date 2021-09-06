@@ -31,7 +31,7 @@ void Shader::genCrc()
 }
 
 
-ErrType Shader::load(char* pByteCode, U64 szBytes)
+ErrType Shader::load(const char* pByteCode, U64 szBytes)
 {
     m_byteCode.resize(szBytes);
     memcpy(m_byteCode.data(), pByteCode, szBytes);
@@ -42,7 +42,7 @@ ErrType Shader::load(char* pByteCode, U64 szBytes)
 }
 
 
-ErrType Shader::compile(char* sourceCode, U64 sourceCodeBytes, ShaderLang lang)
+ErrType Shader::compile(const char* sourceCode, U64 sourceCodeBytes, ShaderLang lang)
 {
     ErrType result              = REC_RESULT_OK;
     ShaderBuilder* pBuilder     = nullptr;

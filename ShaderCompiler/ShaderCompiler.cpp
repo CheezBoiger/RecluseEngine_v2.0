@@ -16,6 +16,27 @@ using json = nlohmann::json;
 
 namespace Recluse {
 
+// Serialize our enum types with the following for json configs.
+NLOHMANN_JSON_SERIALIZE_ENUM(Recluse::ShaderType,
+    {
+        { Recluse::SHADER_TYPE_VERTEX, "vertex" },
+        { Recluse::SHADER_TYPE_PIXEL, "pixel" },
+        { Recluse::SHADER_TYPE_HULL, "hull" },
+        { Recluse::SHADER_TYPE_DOMAIN, "domain" },
+        { Recluse::SHADER_TYPE_COMPUTE, "compute" },
+        { Recluse::SHADER_TYPE_TESS_CONTROL, "tessc"},
+        { Recluse::SHADER_TYPE_TESS_EVAL, "tesse" },
+        { Recluse::SHADER_TYPE_GEOMETRY, "geometry"},
+        { Recluse::SHADER_TYPE_RAY_ANYHIT, "anyhit" },
+        { Recluse::SHADER_TYPE_RAY_CLOSESTHIT, "closesthit" },
+        { Recluse::SHADER_TYPE_RAY_GEN, "raygen" },
+        { Recluse::SHADER_TYPE_RAY_INTERSECT, "intersect" },
+        { Recluse::SHADER_TYPE_RAY_MISS, "raymiss" },
+        { Recluse::SHADER_TYPE_AMPLIFICATION, "amp" },
+        { Recluse::SHADER_TYPE_MESH, "mesh" }
+    }
+)
+
 
 #define SCENE_BUFFER_DECLARE_STR "RECLUSE_DECLARE_SCENE_BUFFER"
 #define SCENE_BUFFER_PARAM_STR "RECLUSE_SCENE_PARAMETER"
@@ -47,9 +68,6 @@ struct ShaderMetaData {
 };
 
 
-static std::vector<ShaderMetaData> shadersToCompile;
-
-
 struct CompilerState {
     std::string name;
     ShaderLang  language;
@@ -58,8 +76,10 @@ struct CompilerState {
     B32         appendExt;
 };
 
-struct {
+
+static struct {
     std::vector<CompilerState> compilers;
+    std::vector<ShaderMetaData> shadersToCompile;
 } gConfigs;
 
 
@@ -161,8 +181,8 @@ ErrType compileShaders(const std::string& sourcePath, ShaderLang lang)
 
     R_DEBUG("ShaderCompiler", "Result:\n%s", sceneViewBufferStructStr.c_str());
 
-    for (auto& shaderMetadata = shadersToCompile.begin(); 
-         shaderMetadata != shadersToCompile.end(); 
+    for (auto& shaderMetadata = gConfigs.shadersToCompile.begin(); 
+         shaderMetadata != gConfigs.shadersToCompile.end(); 
          ++shaderMetadata) {
         std::string sourceFilePath = sourcePath + "/" + shaderMetadata->relativefilePath;
         Shader* pShader = Shader::create(INTERMEDIATE_SPIRV, shaderMetadata->shaderType);
@@ -177,15 +197,21 @@ ErrType compileShaders(const std::string& sourcePath, ShaderLang lang)
         } else {
 
                 // Read the file buffer, and check for the scene buffer header include.
+                std::string shaderSource = "";
                 std::istringstream iss(buffer.buffer.data());
                 std::string line;
                 while (std::getline(iss, line)) {
-                    if (line.find(SCENE_BUFFER_INCLUDE) != std::string::npos) {
+                    size_t pos = line.find(SCENE_BUFFER_INCLUDE); 
+                    if (pos != std::string::npos) {
                         // We found the include, now replace with the struct header.
-                        continue;
+                        shaderSource += sceneViewBufferStructStr;
+                    } else {
+                        shaderSource += line;
                     }
                 }    
-
+                
+                R_VERBOSE("ShaderCompiler", "%s", shaderSource.c_str());
+                result = pShader->compile(shaderSource.c_str(), shaderSource.size(), lang);
         }
     }
 
@@ -195,12 +221,12 @@ ErrType compileShaders(const std::string& sourcePath, ShaderLang lang)
 
 ErrType addShaderToCompile(const std::string& filePath, const std::string& config, ShaderType shaderType)
 {
-    ShaderMetaData metadata = { };
-    metadata.configs = config;
-    metadata.relativefilePath = filePath;
-    metadata.shaderType = shaderType;
+    ShaderMetaData metadata     = { };
+    metadata.configs            = config;
+    metadata.relativefilePath   = filePath;
+    metadata.shaderType         = shaderType;
 
-    shadersToCompile.push_back(metadata);
+    gConfigs.shadersToCompile.push_back(metadata);
 
     return REC_RESULT_OK;
 }
@@ -233,11 +259,12 @@ ErrType setConfigs(const std::string& configPath)
 
         for (int i = 0; i < compilers.size(); ++i) {
             CompilerState compilerState = { };
-            auto compiler = compilers[i];
-            std::string lang = compiler["language"].get<std::string>();
-            std::string name = compiler["name"].get<std::string>();
+            auto compiler               = compilers[i];
+            std::string lang            = compiler["language"].get<std::string>();
+            std::string name            = compiler["name"].get<std::string>();
+            compilerState.name          = name;
+
             R_INFO("ShaderCompiler", "Name: %s, Language: %s", name.c_str(), lang.c_str());
-            compilerState.name = name;
 
             if (lang.compare("glsl") == 0) {
                 compilerState.language = SHADER_LANG_GLSL;
@@ -249,6 +276,47 @@ ErrType setConfigs(const std::string& configPath)
         }
     }
 
+    return REC_RESULT_OK;
+}
+
+
+ErrType setShaderFiles(const std::string& shadersPath)
+{
+    json jfile;
+    ErrType result = REC_RESULT_OK;
+    {
+        FileBufferData bufferData = { };
+        result = File::readFrom(&bufferData, shadersPath);
+
+        if (result != REC_RESULT_OK) {
+            R_ERR("ShaderCompiler", "Failed to open shaders path!");
+            return result;        
+        }
+
+        std::istringstream iss(bufferData.buffer.data());
+        try {
+            iss >> jfile;
+        } catch (const std::exception& e) {
+            R_ERR("ShaderCompiler", "%s", e.what());
+            return REC_RESULT_FAILED;
+        }
+    }
+
+    if (jfile.find("global") != jfile.end()) {
+        auto global = jfile["global"];
+    }
+
+    if (jfile.find("shaders") != jfile.end()) {
+        auto shaders = jfile["shaders"];
+        if (shaders.is_array()) {
+            size_t sz = shaders.size();
+            for (U32 i = 0; i < sz; ++i) {
+                std::string name = shaders[i]["name"].get<std::string>();
+                ShaderType shaderType = shaders[i]["type"].get<ShaderType>();
+                
+            }
+        }
+    }
     return REC_RESULT_OK;
 }
 } //

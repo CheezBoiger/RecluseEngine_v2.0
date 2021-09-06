@@ -1,6 +1,7 @@
 {
     "version": "0.0.0",
     "global": {
+        "source_path": "",
         "include_paths": [],
         "preprocess": [
             {
