@@ -5,14 +5,14 @@
 
 #include "Recluse/Messaging.hpp"
 
-#include "ShaderBuilder.hpp"
+#include "Recluse/Graphics/ShaderBuilder.hpp"
 
 namespace Recluse {
 
 
-Shader* Shader::create(ShaderIntermediateCode code, ShaderType type)
+Shader* Shader::create()
 {
-    return new Shader(code, type);
+    return new Shader();
 }
 
 
@@ -31,10 +31,13 @@ void Shader::genCrc()
 }
 
 
-ErrType Shader::load(const char* pByteCode, U64 szBytes)
+ErrType Shader::load(const char* pByteCode, U64 szBytes, ShaderIntermediateCode imm, ShaderType shaderType)
 {
     m_byteCode.resize(szBytes);
     memcpy(m_byteCode.data(), pByteCode, szBytes);
+
+    m_intermediateCode  = imm;
+    m_shaderType        = shaderType;
 
     genCrc();
 
@@ -42,45 +45,29 @@ ErrType Shader::load(const char* pByteCode, U64 szBytes)
 }
 
 
-ErrType Shader::compile(const char* sourceCode, U64 sourceCodeBytes, ShaderLang lang)
+ErrType ShaderBuilder::compile(Shader* pShader, const char* sourceCode, U64 sourceCodeBytes, 
+    ShaderLang lang, ShaderType shaderType)
 {
     ErrType result              = REC_RESULT_OK;
-    ShaderBuilder* pBuilder     = nullptr;
 
     std::vector<char> srcCodeString;
+    std::vector<char> byteCodeString;
     srcCodeString.resize(sourceCodeBytes + 1);
     
     memcpy(srcCodeString.data(), sourceCode, sourceCodeBytes);
-    srcCodeString[sourceCodeBytes] = '\0';
+    srcCodeString[sourceCodeBytes] = '\0';    
 
-    // Using glslang compiler to handle both hlsl and glsl compilation to spirv.
-    // Use DXC compiler to handle both hlsl and hlsl to DXIL or DXBC.
-    if (getIntermediateCodeType() == INTERMEDIATE_SPIRV) {
-        pBuilder = createGlslangShaderBuilder(m_shaderType, getIntermediateCodeType());
-    } else {
-        pBuilder = createDxcShaderBuilder(m_shaderType, getIntermediateCodeType());
-    }
-
-    if (!pBuilder) {
-
-        R_ERR("Shader", "Could not instantiate a proper shader builder.");
-
-        return REC_RESULT_FAILED;
-    }
-
-    result = pBuilder->compile(srcCodeString, m_byteCode, lang);        
+    result = onCompile(srcCodeString, byteCodeString, lang, shaderType);
 
     if (result == REC_RESULT_OK) {
 
-        genCrc();
+        pShader->load(byteCodeString.data(), byteCodeString.size(), getIntermediateCode(), shaderType);
     
     } else {
 
         R_ERR("Shader", "Failed to compile shader!");
 
     }
-
-    freeShaderBuilder(pBuilder);
 
     return result;
 }
@@ -89,12 +76,6 @@ ErrType Shader::compile(const char* sourceCode, U64 sourceCodeBytes, ShaderLang 
 Shader* Shader::convertTo(ShaderIntermediateCode intermediateCode)
 {
     return nullptr;
-}
-
-
-U32 Shader::disassemble(char* disassembledCode)
-{
-    return 0;
 }
 
 

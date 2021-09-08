@@ -26,6 +26,7 @@ enum ShaderLang {
 
 
 enum ShaderType {
+    SHADER_TYPE_NONE            = (0),
     SHADER_TYPE_VERTEX          = (1<<0),
     SHADER_TYPE_HULL            = (1<<1),
     SHADER_TYPE_TESS_CONTROL    = SHADER_TYPE_HULL,
@@ -52,31 +53,25 @@ class Shader final {
 public:
     ~Shader() { }
 
-    static R_EXPORT Shader* create(ShaderIntermediateCode code, ShaderType type);
+    static R_EXPORT Shader* create();
     static R_EXPORT void destroy(Shader* pShader);
 
 private:
 
-    Shader(ShaderIntermediateCode intermediateCode, ShaderType type)
-        : m_intermediateCode(intermediateCode)
-        , m_shaderType(type)
+    Shader()
+        : m_intermediateCode(INTERMEDIATE_UNKNOWN)
+        , m_shaderType(SHADER_TYPE_NONE)
         , m_crc(0ull) { }
 
 public:
 
     ShaderIntermediateCode getIntermediateCodeType() const { return m_intermediateCode; }
 
-    // Compile source code, ideally we do not want to call this function in 
-    // release mode. Instead, we should precompile those shaders before, and 
-    // call load() instead...
-    R_EXPORT ErrType compile(const char* sourceCode, U64 sourceCodeBytes, ShaderLang lang);
-    R_EXPORT ErrType load(const char* byteCode, U64 szBytes);
+    R_EXPORT ErrType load(const char* byteCode, U64 szBytes, ShaderIntermediateCode imm, ShaderType shaderType);
 
     // Save the compilation to a file.
     R_EXPORT ErrType saveToFile(const char* filePath);
 
-    R_EXPORT U32 disassemble(char* disassembledCode);
-    
     R_EXPORT Shader* convertTo(ShaderIntermediateCode intermediateCode);
 
     ShaderType getType() const { return m_shaderType; }
@@ -92,10 +87,10 @@ private:
     // Generate CrC from bytecode value.
     void genCrc();
 
-    ShaderIntermediateCode m_intermediateCode;
-    ShaderType m_shaderType;
-    std::vector<char> m_byteCode;
-    Hash64 m_crc;
+    ShaderIntermediateCode  m_intermediateCode;
+    ShaderType              m_shaderType;
+    std::vector<char>       m_byteCode;
+    Hash64                  m_crc;
     
 };
 } // Recluse

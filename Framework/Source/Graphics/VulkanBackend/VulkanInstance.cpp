@@ -19,9 +19,10 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL recluseDebugCallback(
   const char* msg,
   void* usrData)
 {
-  R_DEBUG(R_CHANNEL_VULKAN, "Validation layer: %s\n", msg);
-  //R_ASSERT(!(flags & VK_DEBUG_REPORT_ERROR_BIT_EXT), "");
-  return VK_FALSE;
+    
+    R_DEBUG(R_CHANNEL_VULKAN, "Validation layer: %s\n", msg);
+    //R_ASSERT(!(flags & VK_DEBUG_REPORT_ERROR_BIT_EXT), "");
+    return VK_FALSE;
 }
 
 

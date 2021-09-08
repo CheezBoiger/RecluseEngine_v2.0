@@ -1,5 +1,5 @@
 //
-#include "ShaderBuilder.hpp"
+#include "Recluse/Graphics/ShaderBuilder.hpp"
 
 #include "Recluse/Messaging.hpp"
 
@@ -124,16 +124,31 @@ namespace Recluse {
 
 class GlslangShaderBuilder : public ShaderBuilder {
 public:
-    GlslangShaderBuilder(ShaderType shaderType, ShaderIntermediateCode imm)
-        : ShaderBuilder(shaderType, imm) { }
+    GlslangShaderBuilder(ShaderIntermediateCode imm)
+        : ShaderBuilder(imm)
+        , m_isInitialized(false) { }
 
-    ErrType compile(const std::vector<char>& srcCode, std::vector<char>& byteCode, ShaderLang lang) override
+    ErrType setUp() override 
+    {
+        glslang::InitializeProcess();
+        m_isInitialized = true;
+        return REC_RESULT_OK;
+    }
+
+    ErrType tearDown() override
+    {
+        R_ASSERT(m_isInitialized == true);
+        glslang::FinalizeProcess();
+        m_isInitialized = false;
+        return REC_RESULT_OK;
+    }
+
+    ErrType onCompile(const std::vector<char>& srcCode, std::vector<char>& byteCode, ShaderLang lang, ShaderType shaderType) override
     {
         R_DEBUG("GLSLANG", "Compiling shader...");
-        glslang::InitializeProcess();
+        R_ASSERT(m_isInitialized == true);
 
         EShLanguage stage       = EShLangVertex;
-        ShaderType shaderType   = getShaderType();
 
         switch (shaderType) {
             case SHADER_TYPE_VERTEX:        stage = EShLangVertex; break;
@@ -193,18 +208,19 @@ public:
         byteCode.resize(spirv.size() * sizeof(U32)); // Byte code is in uint32 format.
         memcpy(byteCode.data(), spirv.data(), byteCode.size());
         
-        glslang::FinalizeProcess();
-
         return REC_RESULT_OK;
     }
+
+private:
+    B32 m_isInitialized;
 };
 
 #endif
 
-ShaderBuilder* createGlslangShaderBuilder(ShaderType shaderType, ShaderIntermediateCode imm)
+ShaderBuilder* createGlslangShaderBuilder(ShaderIntermediateCode imm)
 {
 #if defined RCL_GLSLANG
-    return new GlslangShaderBuilder(shaderType, imm);
+    return new GlslangShaderBuilder(imm);
 #else
     R_ERR("GLSLANG", "Glslang not enabled for compilation!");
     return nullptr;

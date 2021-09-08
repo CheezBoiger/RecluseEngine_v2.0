@@ -10,6 +10,7 @@
 #include "Recluse/Graphics/Resource.hpp"
 #include "Recluse/Graphics/ResourceView.hpp"
 #include "Recluse/Graphics/RenderPass.hpp"
+#include "Recluse/Graphics/ShaderBuilder.hpp"
 
 #include "Recluse/Memory/MemoryCommon.hpp"
 #include "Recluse/System/Window.hpp"
@@ -266,7 +267,9 @@ int main(int c, char* argv[])
     }
 
     {
-        Shader* pCompShader = Shader::create(INTERMEDIATE_SPIRV, SHADER_TYPE_COMPUTE);
+        ShaderBuilder* pBuilder = createGlslangShaderBuilder(INTERMEDIATE_SPIRV);
+        pBuilder->setUp();
+        Shader* pCompShader = Shader::create();
         std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
         FileBufferData file;
         std::string shaderSource = currDir + "/" + "test.cs.hlsl";
@@ -278,7 +281,7 @@ int main(int c, char* argv[])
 
         }
 
-        result = pCompShader->compile(file.buffer.data(), file.buffer.size(), SHADER_LANG_HLSL);
+        result = pBuilder->compile(pCompShader, file.buffer.data(), file.buffer.size(), SHADER_LANG_HLSL, SHADER_TYPE_COMPUTE);
 
         if (result != REC_RESULT_OK) {
     
@@ -301,6 +304,8 @@ int main(int c, char* argv[])
         }
 
         Shader::destroy(pCompShader);
+        pBuilder->tearDown();
+        freeShaderBuilder(pBuilder);
     }
 
     pWindow->open();

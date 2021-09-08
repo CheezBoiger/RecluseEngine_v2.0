@@ -1,6 +1,7 @@
 //
 #include "ShaderCompiler.hpp"
 #include "Recluse/Graphics/Shader.hpp"
+#include "Recluse/Graphics/ShaderBuilder.hpp"
 #include "Recluse/Filesystem/Filesystem.hpp"
 #include "Recluse/Filesystem/Archive.hpp"
 #include "Recluse/Messaging.hpp"
@@ -65,6 +66,7 @@ struct ShaderMetaData {
     std::string configs;
     std::string relativefilePath;
     ShaderType shaderType;
+    std::map<std::string, void*> preprocess;
 };
 
 
@@ -78,7 +80,8 @@ struct CompilerState {
 
 
 static struct {
-    std::vector<CompilerState> compilers;
+    std::string                 sourcePath;
+    std::vector<CompilerState>  compilers;
     std::vector<ShaderMetaData> shadersToCompile;
 } gConfigs;
 
@@ -175,17 +178,20 @@ static std::string generateShaderSceneView(ShaderLang lang)
     return sceneViewBufferStr;
 }
 
-ErrType compileShaders(const std::string& sourcePath, ShaderLang lang)
+ErrType compileShaders(ShaderLang lang)
 {
-    std::string sceneViewBufferStructStr = generateShaderSceneView(lang);
+    std::string sceneViewBufferStructStr    = generateShaderSceneView(lang);
+    std::string sourcePath                  = gConfigs.sourcePath;
 
     R_DEBUG("ShaderCompiler", "Result:\n%s", sceneViewBufferStructStr.c_str());
+    ShaderBuilder* pBuilder = createGlslangShaderBuilder(INTERMEDIATE_SPIRV);
+    pBuilder->setUp();
 
     for (auto& shaderMetadata = gConfigs.shadersToCompile.begin(); 
          shaderMetadata != gConfigs.shadersToCompile.end(); 
          ++shaderMetadata) {
         std::string sourceFilePath = sourcePath + "/" + shaderMetadata->relativefilePath;
-        Shader* pShader = Shader::create(INTERMEDIATE_SPIRV, shaderMetadata->shaderType);
+        Shader* pShader = Shader::create();
         FileBufferData buffer = { };
 
         ErrType result = File::readFrom(&buffer, shaderMetadata->relativefilePath);
@@ -211,9 +217,20 @@ ErrType compileShaders(const std::string& sourcePath, ShaderLang lang)
                 }    
                 
                 R_VERBOSE("ShaderCompiler", "%s", shaderSource.c_str());
-                result = pShader->compile(shaderSource.c_str(), shaderSource.size(), lang);
+                result = pBuilder->compile(pShader, shaderSource.c_str(), shaderSource.size(), 
+                    lang, shaderMetadata->shaderType);
+
+                if (result == REC_RESULT_OK) {
+                    //pShader->saveToFile()
+                }
         }
+
+        // Destroy the shader when finished.
+        Shader::destroy(pShader);
     }
+
+    pBuilder->tearDown();
+    freeShaderBuilder(pBuilder);
 
     return REC_RESULT_OK;
 }
@@ -303,7 +320,9 @@ ErrType setShaderFiles(const std::string& shadersPath)
     }
 
     if (jfile.find("global") != jfile.end()) {
-        auto global = jfile["global"];
+        auto global             = jfile["global"];
+        std::string sourcePath  = global["source_path"].get<std::string>();
+        gConfigs.sourcePath     = sourcePath;
     }
 
     if (jfile.find("shaders") != jfile.end()) {
@@ -311,9 +330,12 @@ ErrType setShaderFiles(const std::string& shadersPath)
         if (shaders.is_array()) {
             size_t sz = shaders.size();
             for (U32 i = 0; i < sz; ++i) {
-                std::string name = shaders[i]["name"].get<std::string>();
-                ShaderType shaderType = shaders[i]["type"].get<ShaderType>();
-                
+                std::string name                = shaders[i]["name"].get<std::string>();
+                ShaderType shaderType           = shaders[i]["type"].get<ShaderType>();
+                ShaderMetaData shaderMetadata   = { };
+                shaderMetadata.relativefilePath = name;
+
+                gConfigs.shadersToCompile.push_back(shaderMetadata);
             }
         }
     }

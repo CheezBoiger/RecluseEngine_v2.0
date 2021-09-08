@@ -1,5 +1,5 @@
 //
-#include "ShaderBuilder.hpp"
+#include "Recluse/Graphics/ShaderBuilder.hpp"
 #include "Win32/Win32Common.hpp"
 #include "Recluse/Messaging.hpp"
 
@@ -24,15 +24,16 @@ wchar_t* getShaderProfile(ShaderType type)
 
 class DXCShaderBuilder : public ShaderBuilder {
 public:
-    DXCShaderBuilder(ShaderType shaderType, ShaderIntermediateCode imm)
-        : ShaderBuilder(shaderType, imm) { }
+    DXCShaderBuilder(ShaderIntermediateCode imm)
+        : ShaderBuilder(imm) { }
 
-    ErrType compile(const std::vector<char>& srcCode, std::vector<char>& byteCode, ShaderLang lang) override 
+    ErrType onCompile(const std::vector<char>& srcCode, std::vector<char>& byteCode, 
+        ShaderLang lang, ShaderType shaderType) override 
     {
         R_DEBUG("DXC", "Compiling shader...");
 
         HRESULT hr              = S_OK;
-        wchar_t* targetProfile  = getShaderProfile(getShaderType());
+        wchar_t* targetProfile  = getShaderProfile(shaderType);
         const wchar_t* arguments[16]  = { };
         U32 argCount            = 0;
 
@@ -107,10 +108,10 @@ public:
 };
 #endif
 
-ShaderBuilder* createDxcShaderBuilder(ShaderType shaderType, ShaderIntermediateCode imm)
+ShaderBuilder* createDxcShaderBuilder(ShaderIntermediateCode imm)
 {
 #if defined RCL_DXC
-    return new DXCShaderBuilder(shaderType, imm);
+    return new DXCShaderBuilder(imm);
 #else
     R_ERR("DXC", "DXC was not enabled for compilation!");
     return nullptr;

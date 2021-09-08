@@ -35,11 +35,11 @@ void initialize(GraphicsDevice* pDevice, Engine::SceneBuffers* pBuffers)
 
     std::string staticVertShader = Engine::getBinaryShaderPath("Geometry/VertFactoryStatic");
     
-    Shader* pShader = Shader::create(Engine::intermediateCode, SHADER_TYPE_VERTEX);
+    Shader* pShader = Shader::create();
     FileBufferData data = { };
 
     File::readFrom(&data, staticVertShader);
-    pShader->load(data.buffer.data(), data.buffer.size());
+    pShader->load(data.buffer.data(), data.buffer.size(), INTERMEDIATE_SPIRV, SHADER_TYPE_VERTEX);
 
     ErrType result                              = REC_RESULT_OK;
     GraphicsPipelineStateDesc pipelineCi        = { };

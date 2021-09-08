@@ -9,6 +9,7 @@
 #include "Recluse/Graphics/Resource.hpp"
 #include "Recluse/Graphics/ResourceView.hpp"
 #include "Recluse/Graphics/RenderPass.hpp"
+#include "Recluse/Graphics/ShaderBuilder.hpp"
 
 #include "Recluse/Memory/MemoryCommon.hpp"
 #include "Recluse/System/Window.hpp"
@@ -303,8 +304,11 @@ int main(int c, char* argv[])
     }
 
     {
-        Shader* pVertShader = Shader::create(INTERMEDIATE_SPIRV, SHADER_TYPE_VERTEX);
-        Shader* pFragShader = Shader::create(INTERMEDIATE_SPIRV, SHADER_TYPE_PIXEL);
+        ShaderBuilder* pBuilder = createGlslangShaderBuilder(INTERMEDIATE_SPIRV);
+        pBuilder->setUp();
+
+        Shader* pVertShader = Shader::create();
+        Shader* pFragShader = Shader::create();
 
         std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
 
@@ -318,7 +322,7 @@ int main(int c, char* argv[])
     
         }
 
-        result = pVertShader->compile(file.buffer.data(), file.buffer.size(), SHADER_LANG_GLSL);
+        result = pBuilder->compile(pVertShader, file.buffer.data(), file.buffer.size(), SHADER_LANG_GLSL, SHADER_TYPE_VERTEX);
 
         if (result != REC_RESULT_OK) {
     
@@ -335,7 +339,7 @@ int main(int c, char* argv[])
     
         }
 
-        result = pFragShader->compile(file.buffer.data(), file.buffer.size(), SHADER_LANG_GLSL);
+        result = pBuilder->compile(pFragShader, file.buffer.data(), file.buffer.size(), SHADER_LANG_GLSL, SHADER_TYPE_FRAGEMENT);
         
         if (result != REC_RESULT_OK) {
     
@@ -384,7 +388,8 @@ int main(int c, char* argv[])
 
         Shader::destroy(pVertShader);
         Shader::destroy(pFragShader);
-        
+        pBuilder->tearDown();
+        freeShaderBuilder(pBuilder);
     }
     
     pWindow->open();

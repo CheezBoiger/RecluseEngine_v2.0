@@ -40,11 +40,10 @@ int main(int c, char* argv[])
     Recluse::setConfigs(configPath);
 
     Recluse::ErrType result = Recluse::REC_RESULT_OK;
-    string sourcePath       = ".";
 
     // Collect our arguments.
     Recluse::setShaderFiles(compilePath);
-    result = Recluse::compileShaders(sourcePath, Recluse::SHADER_LANG_HLSL);
+    result = Recluse::compileShaders(Recluse::SHADER_LANG_HLSL);
 
     if (result != Recluse::REC_RESULT_OK) {
 
