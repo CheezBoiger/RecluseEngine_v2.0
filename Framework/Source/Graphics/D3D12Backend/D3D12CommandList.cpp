@@ -31,6 +31,9 @@ ErrType D3D12CommandList::initialize(D3D12Device* pDevice, GraphicsQueueTypeFlag
             return destroy();
 
         }
+        // Close first.
+        m_graphicsCommandLists[i]->Close();
+
     }
 
     m_pDevice = pDevice;

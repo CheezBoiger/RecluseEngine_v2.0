@@ -36,6 +36,13 @@ ErrType D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo& i
     R_DEBUG(R_CHANNEL_D3D12, "Successfully created D3D12 device!");
 
     initializeBufferResources(info.buffering);
+    createCommandList(&m_pPrimaryCommandList, QUEUE_TYPE_PRESENT | QUEUE_TYPE_GRAPHICS);
+
+    if (m_windowHandle) {
+        createSwapchain(&m_swapchain, info.swapchainDescription);
+    }
+
+    m_bufferCount = info.buffering;
 
     return REC_RESULT_OK;
 }
@@ -43,6 +50,16 @@ ErrType D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo& i
 
 void D3D12Device::destroy()
 {
+    if (m_pPrimaryCommandList) {
+        destroyCommandList(m_pPrimaryCommandList);
+        m_pPrimaryCommandList = nullptr;
+    }
+
+    if (m_swapchain) {
+        destroySwapchain(m_swapchain);
+        m_swapchain = nullptr;
+    }
+
     if (m_graphicsQueue) {
         destroyCommandQueue(m_graphicsQueue);
         m_graphicsQueue = nullptr;
@@ -60,10 +77,10 @@ void D3D12Device::destroy()
 }
 
 
-ErrType D3D12Device::createSwapchain(GraphicsSwapchain** ppSwapchain, const SwapchainCreateDescription& desc)
+ErrType D3D12Device::createSwapchain(D3D12Swapchain** ppSwapchain, const SwapchainCreateDescription& desc)
 {
     ErrType result = REC_RESULT_OK;
-    D3D12Swapchain* pSwapchain = new D3D12Swapchain(desc);
+    D3D12Swapchain* pSwapchain = new D3D12Swapchain(desc, m_graphicsQueue);
 
     result = pSwapchain->initialize(this);
 
@@ -82,13 +99,12 @@ ErrType D3D12Device::createSwapchain(GraphicsSwapchain** ppSwapchain, const Swap
 }
 
 
-ErrType D3D12Device::destroySwapchain(GraphicsSwapchain* pSwapchain)
+ErrType D3D12Device::destroySwapchain(D3D12Swapchain* pSwapchain)
 {
     ErrType result = REC_RESULT_OK;
-    D3D12Swapchain* pD3D12Swapchain = static_cast<D3D12Swapchain*>(pSwapchain);
 
-    pD3D12Swapchain->destroy();
-    delete pD3D12Swapchain;
+    pSwapchain->destroy();
+    delete pSwapchain;
    
     return result;
 }
@@ -169,6 +185,16 @@ void D3D12Device::initializeBufferResources(U32 buffering)
             __uuidof(ID3D12CommandAllocator), (void**)&m_bufferResources[i].pAllocator);
 
         R_ASSERT(result == S_OK);
+
+        m_bufferResources[i].fenceValue = 0;
+        m_bufferResources[i].pEvent     = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+        result = m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, __uuidof(ID3D12Fence), 
+            (void**)&m_bufferResources[i].pFence);
+
+        if (FAILED(result)) {
+            R_ERR(R_CHANNEL_D3D12, "Failed to initialize a fence for frame resource: %d", i);
+        }
     }
 }
 
@@ -183,6 +209,12 @@ void D3D12Device::destroyBufferResources()
 
             m_bufferResources[i].pAllocator->Release();
             m_bufferResources[i].pAllocator = nullptr;
+
+            CloseHandle(m_bufferResources[i].pEvent);
+            m_bufferResources[i].pEvent = NULL;
+
+            m_bufferResources[i].pFence->Release();
+            m_bufferResources[i].pFence = nullptr;
 
         }
     
@@ -226,11 +258,11 @@ ErrType D3D12Device::destroyCommandList(D3D12CommandList* pList)
 }
 
 
-
 ErrType D3D12Device::copyResource(GraphicsResource* dst, GraphicsResource* src)
 {
     return REC_RESULT_NOT_IMPLEMENTED;
 }
+
 
 // Submits copy of regions from src resource to dst resource. Generally the caller thread will
 // be blocked until this function returns, so be sure to use when needed.
@@ -238,5 +270,17 @@ ErrType D3D12Device::copyBufferRegions(GraphicsResource* dst, GraphicsResource* 
     CopyBufferRegion* pRegions, U32 numRegions)
 {
     return REC_RESULT_NOT_IMPLEMENTED;
+}
+
+
+GraphicsCommandList* D3D12Device::getCommandList()
+{
+    return m_pPrimaryCommandList;
+}
+
+
+GraphicsSwapchain* D3D12Device::getSwapchain()
+{
+    return m_swapchain;
 }
 } // Recluse

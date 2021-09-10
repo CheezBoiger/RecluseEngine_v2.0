@@ -17,6 +17,9 @@ class D3D12CommandList;
 
 struct BufferResources {
     ID3D12CommandAllocator* pAllocator;
+    ID3D12Fence*            pFence;
+    HANDLE                  pEvent;
+    U64                     fenceValue;
 };
 
 class D3D12Device : public GraphicsDevice {
@@ -26,7 +29,10 @@ public:
         , m_device(nullptr)
         , m_pAdapter(nullptr)
         , m_currentBufferIndex(0)
-        , m_bufferCount(0) { }
+        , m_bufferCount(0)
+        , m_graphicsQueue(nullptr)
+        , m_pPrimaryCommandList(nullptr)
+        , m_swapchain(nullptr) { }
 
     ErrType initialize(D3D12Adapter* adapter, const DeviceCreateInfo& info);
     void destroy();
@@ -35,8 +41,8 @@ public:
     
     D3D12Adapter* getAdapter() const { return m_pAdapter; }
 
-    ErrType createSwapchain(GraphicsSwapchain** ppSwapchain, const SwapchainCreateDescription& desc);
-    ErrType destroySwapchain(GraphicsSwapchain* pSwapchain);
+    ErrType createSwapchain(D3D12Swapchain** ppSwapchain, const SwapchainCreateDescription& desc);
+    ErrType destroySwapchain(D3D12Swapchain* pSwapchain);
 
     ErrType createCommandQueue(D3D12Queue** ppQueue, GraphicsQueueTypeFlags type);
     ErrType destroyCommandQueue(D3D12Queue* pQueue);
@@ -68,6 +74,11 @@ public:
     ErrType copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, 
         CopyBufferRegion* pRegions, U32 numRegions) override;
 
+    GraphicsCommandList* getCommandList() override;
+    GraphicsSwapchain* getSwapchain() override;
+
+    BufferResources* getCurrentBufferResource() { return &m_bufferResources[m_currentBufferIndex]; }
+
 private:
 
     void initializeBufferResources(U32 buffering);
@@ -80,7 +91,8 @@ private:
     ID3D12Device*                   m_device;
     D3D12Adapter*                   m_pAdapter;
     D3D12Queue*                     m_graphicsQueue;
-    D3D12CommandList*               m_pPrimaryCommandList;  
+    D3D12CommandList*               m_pPrimaryCommandList;
+    D3D12Swapchain*                 m_swapchain;
 
     std::vector<BufferResources>    m_bufferResources;
     U32                             m_currentBufferIndex;

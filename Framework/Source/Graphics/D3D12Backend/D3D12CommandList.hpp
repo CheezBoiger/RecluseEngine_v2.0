@@ -17,6 +17,8 @@ public:
     void begin() override;
     void end() override;
 
+    ID3D12GraphicsCommandList* get() { return m_currentCmdList; }
+
 private:
     std::vector<ID3D12GraphicsCommandList4*>    m_graphicsCommandLists;
     std::vector<ID3D12CommandAllocator*>        m_allocators;

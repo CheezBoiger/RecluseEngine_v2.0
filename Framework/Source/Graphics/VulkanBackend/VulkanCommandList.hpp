@@ -14,13 +14,21 @@ class VulkanDevice;
 class VulkanRenderPass;
 class VulkanPipelineState;
 
+enum CommandListStatus {
+    COMMAND_LIST_RESET,
+    COMMAND_LIST_RECORDING,
+    COMMAND_LIST_READY
+};
+
 class VulkanCommandList : public GraphicsCommandList {
 public:
     VulkanCommandList()
         : m_boundRenderPass(VK_NULL_HANDLE)
         , m_boundPipelineState(VK_NULL_HANDLE)
         , m_pDevice(nullptr)
-        , m_currentCmdBuffer(VK_NULL_HANDLE) { }
+        , m_currentCmdBuffer(VK_NULL_HANDLE)
+        , m_currentIdx(0)
+        , m_status(COMMAND_LIST_RESET) { }
 
     ErrType initialize(VulkanDevice* pDevice, U32 queueFamilyIndex, 
         VkCommandPool* pools, U32 poolCount);
@@ -50,10 +58,17 @@ public:
     
     void transition(ResourceTransition* pTargets, U32 targetCounts) override;
 
+    CommandListStatus getStatus() const { return m_status; }
+
+    void setStatus(CommandListStatus status) { m_status = status; }
+
 private:
 
     inline void endRenderPass(VkCommandBuffer buffer);
     void resetBinds();
+
+    void beginCommandList(U32 idx);
+    void endCommandList(U32 idx);
 
     VulkanRenderPass*            m_boundRenderPass;
     VulkanPipelineState*         m_boundPipelineState;
@@ -61,6 +76,8 @@ private:
     std::vector<VkCommandPool>   m_pools;
     VulkanDevice*                m_pDevice;
     VkCommandBuffer              m_currentCmdBuffer;
+    U32                          m_currentIdx;
+    CommandListStatus            m_status;
     
 };
 } // Recluse

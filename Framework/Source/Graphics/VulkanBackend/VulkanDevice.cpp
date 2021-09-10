@@ -797,6 +797,8 @@ void VulkanDevice::prepare()
         }
     
     }
+
+    m_pPrimaryCommandList->setStatus(COMMAND_LIST_RESET);
 }
 
 

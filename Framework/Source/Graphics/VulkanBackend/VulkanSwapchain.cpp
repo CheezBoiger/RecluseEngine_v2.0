@@ -267,17 +267,23 @@ void VulkanSwapchain::submitCommandsForPresenting()
     m_pDevice->invalidateAllMappedRanges();
 
     VulkanImage* frame              = m_frameResources[m_currentFrameIndex];
+    VulkanCommandList* pCmdList     = static_cast<VulkanCommandList*>(m_pDevice->getCommandList());
     VkDevice device                 = m_pDevice->get();
     U32 bufferIdx                   = m_pDevice->getCurrentBufferIndex();
     VkImageMemoryBarrier imgBarrier = { };
     VkImageSubresourceRange range   = { };
-    VkCommandBuffer primaryCmdBuf   = static_cast<VulkanCommandList*>(m_pDevice->getCommandList())->get();
+    VkCommandBuffer primaryCmdBuf   = pCmdList->get();
     VkCommandBuffer singleUseCmdBuf = m_commandbuffers[bufferIdx];
     VkFence fence                   = m_pDevice->getCurrentFence();
     VkSemaphore signalSemaphore     = m_rawFrames.getSignalSemaphore(m_currentFrameIndex);
     VkSemaphore waitSemaphore       = m_rawFrames.getWaitSemaphore(m_currentFrameIndex);
 
     R_ASSERT(primaryCmdBuf != NULL);
+
+    if (pCmdList->getStatus() != COMMAND_LIST_READY) {
+        pCmdList->begin();
+        pCmdList->end();
+    }
 
     if (frame->getCurrentLayout() == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
 

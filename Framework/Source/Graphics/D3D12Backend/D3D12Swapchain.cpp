@@ -4,6 +4,7 @@
 #include "D3D12Adapter.hpp"
 #include "D3D12Instance.hpp"
 #include "D3D12Queue.hpp"
+#include "D3D12CommandList.hpp"
 #include "Recluse/Messaging.hpp"
 
 namespace Recluse {
@@ -105,10 +106,13 @@ GraphicsResourceView* D3D12Swapchain::getFrameView(U32 idx)
 ErrType D3D12Swapchain::present()
 {
     ID3D12CommandQueue* pQueue  = m_pBackbufferQueue->get();
-    ID3D12Fence* pFence         = nullptr;
     HRESULT result              = S_OK;
-    U64 currentFenceValue       = 0;
-    HANDLE eventHandle          = NULL;
+    BufferResources* pBR        = m_pDevice->getCurrentBufferResource();
+    HANDLE pEvent               = nullptr;
+    ID3D12Fence* pFence         = nullptr;
+    U64 currentValue            = 0;
+    
+    flushFinishedCommandLists();
 
     result = m_pSwapchain->Present(0, 0);
     
@@ -118,26 +122,30 @@ ErrType D3D12Swapchain::present()
 
     }
 
-    eventHandle         = m_frameResources[m_currentFrameIndex].pEvent;
-    pFence              = m_frameResources[m_currentFrameIndex].pFence;
-    currentFenceValue   = m_frameResources[m_currentFrameIndex].fenceValue;        
-
+    pBR->fenceValue     = pBR->fenceValue + 1;
+    pFence              = pBR->pFence;
+    currentValue        = pBR->fenceValue;
 
     // Set the value for the fence on GPU side, letting us know when our commands have finished.
-    pQueue->Signal(pFence, currentFenceValue);
+    pQueue->Signal(pFence, currentValue);
 
     m_currentFrameIndex = m_pSwapchain->GetCurrentBackBufferIndex();
 
-    if (pFence->GetCompletedValue() < currentFenceValue) {
+    m_pDevice->incrementBufferIndex();
+
+    pBR             = m_pDevice->getCurrentBufferResource();
+    pFence          = pBR->pFence;
+    pEvent          = pBR->pEvent;
+    currentValue    = pBR->fenceValue;
+
+    if (pFence->GetCompletedValue() < currentValue) {
     
-        pFence->SetEventOnCompletion(currentFenceValue, eventHandle);
-        WaitForSingleObjectEx(eventHandle, INFINITE, false);
+        pFence->SetEventOnCompletion(currentValue, pEvent);
+        WaitForSingleObjectEx(pEvent, INFINITE, false);
     
     }
 
-    m_frameResources[m_currentFrameIndex].fenceValue = currentFenceValue + 1;
-
-    m_pDevice->incrementBufferIndex();
+    //m_frameResources[m_currentFrameIndex].fenceValue = currentFenceValue + 1;
     m_pDevice->resetCurrentResources();
 
     return REC_RESULT_OK;
@@ -154,17 +162,10 @@ ErrType D3D12Swapchain::initializeFrameResources()
     for (U32 i = 0; i < m_frameResources.size(); ++i) {
     
         FrameResource& frameRes = m_frameResources[i];
-
-        frameRes.fenceValue = 0;
-        frameRes.pEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-
-        result = pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, __uuidof(ID3D12Fence), (void**)&frameRes.pFence);
-
-        if (FAILED(result)) {
-            R_ERR(R_CHANNEL_D3D12, "Failed to initialize a fence for frame resource: %d", i);
-        }
-
+        // TODO: No current frame resource handles.
     }
+
+    m_currentFrameIndex = m_pSwapchain->GetCurrentBackBufferIndex();
     
     return REC_RESULT_OK;
 }
@@ -175,12 +176,6 @@ ErrType D3D12Swapchain::destroyFrameResources()
     if (!m_frameResources.empty()) {
     
         for (U32 i = 0; i < m_frameResources.size(); ++i) {
-
-            CloseHandle(m_frameResources[i].pEvent);
-            m_frameResources[i].pEvent = nullptr;
-
-            m_frameResources[i].pFence->Release();
-            m_frameResources[i].pFence = nullptr;
             
         }
     
@@ -188,5 +183,19 @@ ErrType D3D12Swapchain::destroyFrameResources()
     }
 
     return REC_RESULT_NOT_IMPLEMENTED;
+}
+
+
+ErrType D3D12Swapchain::flushFinishedCommandLists()
+{
+    ID3D12CommandQueue* pQueue          = m_pBackbufferQueue->get();
+    ID3D12GraphicsCommandList* pCmdList = static_cast<D3D12CommandList*>(m_pDevice->getCommandList())->get();
+
+    if (pCmdList) {
+        ID3D12CommandList* pLists[] = { pCmdList };
+        pQueue->ExecuteCommandLists(1, pLists);
+    }
+
+    return REC_RESULT_OK;
 }
 } // Recluse

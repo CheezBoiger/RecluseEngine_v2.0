@@ -83,7 +83,6 @@ int main(int c, char* argv[])
         R_TRACE("Graphics", "Succeeded swapchain creation!");
 
         pWindow->open();
-
         while (!pWindow->shouldClose()) {
             RealtimeTick tick = RealtimeTick::getTick();
             R_TRACE("Graphics", "FPS: %f", 1.f / tick.getDeltaTimeS());

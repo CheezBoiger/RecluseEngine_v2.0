@@ -62,13 +62,13 @@ void VulkanCommandList::destroy(VulkanDevice* pDevice)
 }
 
 
-void VulkanCommandList::begin()
+void VulkanCommandList::beginCommandList(U32 idx)
 {
     VkCommandBufferBeginInfo info = { };
     info.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     info.flags              = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
     info.pInheritanceInfo   = nullptr;
-    U32 bufIndex            = m_pDevice->getCurrentBufferIndex();
+    U32 bufIndex            = idx;
     VkCommandBuffer buffer  = m_buffers[bufIndex];
 
     resetBinds();
@@ -76,8 +76,18 @@ void VulkanCommandList::begin()
     VkResult result = vkBeginCommandBuffer(buffer, &info);
 
     R_ASSERT(result == VK_SUCCESS);
+}
 
-    m_currentCmdBuffer = buffer;
+
+void VulkanCommandList::begin()
+{
+    U32 bufferIdx       = m_pDevice->getCurrentBufferIndex();
+    m_currentCmdBuffer  = m_buffers[bufferIdx];
+    m_currentIdx        = bufferIdx;
+
+    beginCommandList(bufferIdx);
+
+    m_status = COMMAND_LIST_RECORDING;
 }
 
 
@@ -87,7 +97,17 @@ void VulkanCommandList::end()
         endRenderPass(m_currentCmdBuffer);
     }
 
-    VkResult result = vkEndCommandBuffer(m_currentCmdBuffer);
+    endCommandList(m_currentIdx);
+
+    m_status = COMMAND_LIST_READY;
+}
+
+
+void VulkanCommandList::endCommandList(U32 idx)
+{
+    VkCommandBuffer cmdbuffer = m_buffers[idx];
+
+    VkResult result = vkEndCommandBuffer(cmdbuffer);
     
     R_ASSERT(result == VK_SUCCESS);
 }

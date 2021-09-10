@@ -11,19 +11,17 @@ class D3D12Device;
 class D3D12Queue;
 
 struct FrameResource {
-    ID3D12Fence*    pFence;
-    HANDLE          pEvent;
-    U64             fenceValue;
 };
 
 class D3D12Swapchain : public GraphicsSwapchain {
 public:
-    D3D12Swapchain(const SwapchainCreateDescription& desc)
+    D3D12Swapchain(const SwapchainCreateDescription& desc, D3D12Queue* pBackbufferQueue)
         : m_pSwapchain(nullptr)
         , m_maxFrames(0)
         , GraphicsSwapchain(desc)
         , m_pDevice(nullptr)
-        , m_pBackbufferQueue(nullptr) { }
+        , m_currentFrameIndex(0)
+        , m_pBackbufferQueue(pBackbufferQueue) { }
 
     ErrType initialize(D3D12Device* pDevice);
     void destroy();
@@ -38,6 +36,8 @@ private:
 
     ErrType initializeFrameResources();
     ErrType destroyFrameResources();
+    
+    ErrType flushFinishedCommandLists();
     
     IDXGISwapChain3*            m_pSwapchain;
     D3D12Device*                m_pDevice;
