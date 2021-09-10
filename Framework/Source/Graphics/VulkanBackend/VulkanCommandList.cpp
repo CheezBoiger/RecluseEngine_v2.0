@@ -337,6 +337,10 @@ void VulkanCommandList::transition(ResourceTransition* pTargets, U32 targetCount
     }
 
     if (numBarriers > 0) {
+
+        // End any render pass that may not have been cleaned up.
+        endRenderPass(m_currentCmdBuffer);
+
         vkCmdPipelineBarrier(m_currentCmdBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_DEPENDENCY_BY_REGION_BIT, 0, 
             nullptr, 0, nullptr, numBarriers, imgBarriers.data()); 

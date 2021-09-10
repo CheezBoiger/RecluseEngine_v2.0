@@ -7,8 +7,10 @@
 namespace Recluse {
 
 
-ErrType D3D12GraphicsCommandList::initialize(D3D12Device* pDevice)
+ErrType D3D12CommandList::initialize(D3D12Device* pDevice, GraphicsQueueTypeFlags flags)
 {
+    flags;
+
     HRESULT result                                      = S_OK;
     const std::vector<BufferResources>& bufferResources = pDevice->getBufferResources();
     ID3D12Device* device                                = pDevice->get();
@@ -37,13 +39,13 @@ ErrType D3D12GraphicsCommandList::initialize(D3D12Device* pDevice)
 }
 
 
-ErrType D3D12GraphicsCommandList::destroy()
+ErrType D3D12CommandList::destroy()
 {
     return REC_RESULT_OK;
 }
 
 
-void D3D12GraphicsCommandList::begin()
+void D3D12CommandList::begin()
 {
     R_ASSERT(m_pDevice != NULL);
     R_ASSERT(!m_graphicsCommandLists.empty());
@@ -57,7 +59,7 @@ void D3D12GraphicsCommandList::begin()
 }
 
 
-void D3D12GraphicsCommandList::end()
+void D3D12CommandList::end()
 {
     m_currentCmdList->Close();
 }

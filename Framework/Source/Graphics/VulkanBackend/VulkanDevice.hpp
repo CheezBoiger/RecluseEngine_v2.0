@@ -16,6 +16,8 @@ class VulkanQueue;
 class VulkanSwapchain;
 class VulkanAllocator;
 class VulkanDescriptorManager;
+class VulkanCommandList;
+class VulkanSwapchain;
 class Allocator;
 class MemoryPool;
 struct DeviceCreateInfo;
@@ -25,7 +27,8 @@ struct QueueFamily {
     U32                                     maxQueueCount;
     U32                                     queueFamilyIndex;
     U32                                     currentAvailableQueueIndex;
-    GraphicsQueueTypeFlags                  flags;
+    VkQueueFlags                            flags;
+    B32                                     isPresentSupported;
     std::vector<VkCommandPool>              commandPools;
 };
 
@@ -41,7 +44,10 @@ public:
         , m_currentBufferIndex(0)
         , m_pDescriptorManager(nullptr)
         , m_properties({ })
-        , m_memCache({ }) { 
+        , m_memCache({ })
+        , m_pPrimaryCommandList(nullptr)
+        , m_pGraphicsQueue(nullptr)
+        , m_swapchain(nullptr) { 
         for (U32 i = 0; i < RESOURCE_MEMORY_USAGE_COUNT; ++i) { 
             m_bufferPool[i].memory = VK_NULL_HANDLE;
             m_imagePool[i].memory = VK_NULL_HANDLE;
@@ -52,12 +58,10 @@ public:
 
     ErrType initialize(VulkanAdapter* iadapter, DeviceCreateInfo& info);
 
-    ErrType createSwapchain(GraphicsSwapchain** ppSwapchain, 
-        const SwapchainCreateDescription& pDesc) override;
+    ErrType createSwapchain(VulkanSwapchain** ppSwapchain, 
+        const SwapchainCreateDescription& pDesc);
 
-    ErrType destroySwapchain(GraphicsSwapchain* pSwapchain) override;
-
-    ErrType createCommandQueue(GraphicsQueue** ppQueue, GraphicsQueueTypeFlags type) override;
+    ErrType destroySwapchain(VulkanSwapchain* pSwapchain);
 
     ErrType createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc, ResourceState initState) override;
 
@@ -69,13 +73,11 @@ public:
 
     ErrType createRenderPass(RenderPass** ppRenderPass, const RenderPassDesc& desc) override;
 
-    ErrType destroyCommandQueue(GraphicsQueue* pQueue) override;
-
     ErrType destroyResource(GraphicsResource* pResource) override;
 
-    ErrType createCommandList(GraphicsCommandList** pList, GraphicsQueueTypeFlags flags) override;
+    ErrType createCommandList(VulkanCommandList** pList, VkQueueFlags flags);
 
-    ErrType destroyCommandList(GraphicsCommandList* pList) override;
+    ErrType destroyCommandList(VulkanCommandList* pList);
 
     ErrType destroyDescriptorSetLayout(DescriptorSetLayout* pLayout) override;
 
@@ -141,6 +143,23 @@ public:
 
     VkDeviceSize getNonCoherentSize() const { return m_properties.limits.nonCoherentAtomSize; }
 
+    GraphicsCommandList* getCommandList() override;
+
+    GraphicsSwapchain* getSwapchain() override;
+
+    VulkanQueue* getBackbufferQueue() { return m_pGraphicsQueue; }
+
+    // Not recommended, but submits a copy to this queue, and waits until the command has 
+    // completed.
+    ErrType copyResource(GraphicsResource* dst, GraphicsResource* src) override;
+
+    // Submits copy of regions from src resource to dst resource. Generally the caller thread will
+    // be blocked until this function returns, so be sure to use when needed.
+    ErrType copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, 
+        CopyBufferRegion* pRegions, U32 numRegions) override;
+
+    ErrType wait() override;
+
 private:
 
     ErrType createSurface(VkInstance instance, void* handle);
@@ -148,10 +167,14 @@ private:
     void createFences(U32 buffered);
     void allocateMemCache();
     void createDescriptorHeap();
+    ErrType createQueues();
+
+    ErrType createQueue(VulkanQueue** ppQueue, VkQueueFlags flags, B32 isPresentable);
 
     void destroyFences();
     void destroyCommandPools();
     void destroyDescriptorHeap();
+    ErrType destroyQueues();
     void freeMemCache();
 
     VulkanAdapter* m_adapter;
@@ -160,10 +183,8 @@ private:
     VkSurfaceKHR m_surface;
 
     std::vector<QueueFamily> m_queueFamilies;
-    std::list<VulkanQueue*> m_queues;
-    std::list<VulkanSwapchain*> m_swapchains;
     std::vector<VkFence>        m_fences;
-
+    std::vector<VkCommandPool> m_commandPools;
     struct {
         struct {
             MemoryPool* pool;
@@ -179,8 +200,12 @@ private:
     VulkanMemoryPool m_imagePool[RESOURCE_MEMORY_USAGE_COUNT];
     VulkanAllocator* m_bufferAllocators[RESOURCE_MEMORY_USAGE_COUNT];
     VulkanAllocator* m_imageAllocators[RESOURCE_MEMORY_USAGE_COUNT];
-    VulkanDescriptorManager* m_pDescriptorManager;
-    ShaderCache m_cache;
+
+    VulkanDescriptorManager*    m_pDescriptorManager;
+    VulkanCommandList*          m_pPrimaryCommandList;
+    VulkanQueue*                m_pGraphicsQueue;
+    ShaderCache                 m_cache;
+    VulkanSwapchain*            m_swapchain;
 
     // buffer count 
     U32 m_bufferCount;

@@ -20,21 +20,21 @@ namespace Recluse {
 // Serialize our enum types with the following for json configs.
 NLOHMANN_JSON_SERIALIZE_ENUM(Recluse::ShaderType,
     {
-        { Recluse::SHADER_TYPE_VERTEX, "vertex" },
-        { Recluse::SHADER_TYPE_PIXEL, "pixel" },
-        { Recluse::SHADER_TYPE_HULL, "hull" },
-        { Recluse::SHADER_TYPE_DOMAIN, "domain" },
-        { Recluse::SHADER_TYPE_COMPUTE, "compute" },
-        { Recluse::SHADER_TYPE_TESS_CONTROL, "tessc"},
-        { Recluse::SHADER_TYPE_TESS_EVAL, "tesse" },
-        { Recluse::SHADER_TYPE_GEOMETRY, "geometry"},
-        { Recluse::SHADER_TYPE_RAY_ANYHIT, "anyhit" },
-        { Recluse::SHADER_TYPE_RAY_CLOSESTHIT, "closesthit" },
-        { Recluse::SHADER_TYPE_RAY_GEN, "raygen" },
-        { Recluse::SHADER_TYPE_RAY_INTERSECT, "intersect" },
-        { Recluse::SHADER_TYPE_RAY_MISS, "raymiss" },
-        { Recluse::SHADER_TYPE_AMPLIFICATION, "amp" },
-        { Recluse::SHADER_TYPE_MESH, "mesh" }
+        { Recluse::SHADER_TYPE_VERTEX,          "vertex" },
+        { Recluse::SHADER_TYPE_PIXEL,           "pixel" },
+        { Recluse::SHADER_TYPE_HULL,            "hull" },
+        { Recluse::SHADER_TYPE_DOMAIN,          "domain" },
+        { Recluse::SHADER_TYPE_COMPUTE,         "compute" },
+        { Recluse::SHADER_TYPE_TESS_CONTROL,    "tessc"},
+        { Recluse::SHADER_TYPE_TESS_EVAL,       "tesse" },
+        { Recluse::SHADER_TYPE_GEOMETRY,        "geometry"},
+        { Recluse::SHADER_TYPE_RAY_ANYHIT,      "anyhit" },
+        { Recluse::SHADER_TYPE_RAY_CLOSESTHIT,  "closesthit" },
+        { Recluse::SHADER_TYPE_RAY_GEN,         "raygen" },
+        { Recluse::SHADER_TYPE_RAY_INTERSECT,   "intersect" },
+        { Recluse::SHADER_TYPE_RAY_MISS,        "raymiss" },
+        { Recluse::SHADER_TYPE_AMPLIFICATION,   "amp" },
+        { Recluse::SHADER_TYPE_MESH,            "mesh" }
     }
 )
 

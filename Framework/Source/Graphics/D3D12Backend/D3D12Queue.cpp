@@ -18,7 +18,7 @@ ErrType D3D12Queue::initialize(D3D12Device* pDevice)
     D3D12_COMMAND_QUEUE_DESC desc       = { };
     desc.NodeMask                       = 0;
     desc.Priority                       = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-    GraphicsQueueTypeFlags queueType    = getType();
+    GraphicsQueueTypeFlags queueType    = QUEUE_TYPE_PRESENT;
 
     if (queueType & QUEUE_TYPE_COMPUTE) type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
     if (queueType & QUEUE_TYPE_COPY) type = D3D12_COMMAND_LIST_TYPE_COPY;
@@ -52,11 +52,12 @@ void D3D12Queue::destroy()
     }
 }
 
-
+/*
 ErrType D3D12Queue::submit(const QueueSubmit* payload) 
 {
     // TODO: Implement d3d12 command lists.
    // m_queue->ExecuteCommandLists(payload->numCommandLists, );
     return REC_RESULT_NOT_IMPLEMENTED;
 }
+*/
 } // Recluse

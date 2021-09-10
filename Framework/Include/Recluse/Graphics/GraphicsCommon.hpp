@@ -150,4 +150,22 @@ struct CopyBufferRegion {
     U16               dstOffsetBytes;
     U64               szBytes;
 };
+
+
+struct SwapchainCreateDescription {
+    FrameBuffering buffering;
+    U32 desiredFrames;
+    U32 renderWidth;
+    U32 renderHeight;
+};
+
+
+enum GraphicsQueueType {
+    QUEUE_TYPE_PRESENT      = (1 << 0),
+    QUEUE_TYPE_GRAPHICS     = (1 << 1),
+    QUEUE_TYPE_COMPUTE      = (1 << 2),
+    QUEUE_TYPE_COPY         = (1 << 3)
+};
+
+typedef U32 GraphicsQueueTypeFlags;
 } // Recluse

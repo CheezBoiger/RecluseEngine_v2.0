@@ -7,6 +7,7 @@
 #include "VulkanAdapter.hpp"
 #include "VulkanResource.hpp"
 #include "VulkanViews.hpp"
+#include "VulkanCommandList.hpp"
 #include "Recluse/Messaging.hpp"
 
 
@@ -75,7 +76,7 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
 
     R_DEBUG(R_CHANNEL_VULKAN, "Successfully created vulkan swapchain!");
     
-    m_pBackbufferQueue  = static_cast<VulkanQueue*>(pDesc.pBackbufferQueue);
+    m_pBackbufferQueue  = pDevice->getBackbufferQueue();
     m_pDevice           = pDevice;
 
     buildFrameResources();
@@ -147,7 +148,7 @@ ErrType VulkanSwapchain::present()
 {
     R_ASSERT(m_pBackbufferQueue != NULL);
 
-    transitionCurrentFrameToPresentable();
+    submitCommandsForPresenting();
  
     ErrType err                     = REC_RESULT_OK;
     VkSwapchainKHR swapchains[]     = { m_swapchain };
@@ -259,19 +260,24 @@ void VulkanSwapchain::buildFrameResources()
 }
 
 
-void VulkanSwapchain::transitionCurrentFrameToPresentable()
+void VulkanSwapchain::submitCommandsForPresenting()
 {
-    // TODO: Likely want this to be recorded once...
+    // Flush all copies down for this run.
+    m_pDevice->flushAllMappedRanges();
+    m_pDevice->invalidateAllMappedRanges();
 
     VulkanImage* frame              = m_frameResources[m_currentFrameIndex];
     VkDevice device                 = m_pDevice->get();
     U32 bufferIdx                   = m_pDevice->getCurrentBufferIndex();
     VkImageMemoryBarrier imgBarrier = { };
     VkImageSubresourceRange range   = { };
+    VkCommandBuffer primaryCmdBuf   = static_cast<VulkanCommandList*>(m_pDevice->getCommandList())->get();
     VkCommandBuffer singleUseCmdBuf = m_commandbuffers[bufferIdx];
     VkFence fence                   = m_pDevice->getCurrentFence();
     VkSemaphore signalSemaphore     = m_rawFrames.getSignalSemaphore(m_currentFrameIndex);
     VkSemaphore waitSemaphore       = m_rawFrames.getWaitSemaphore(m_currentFrameIndex);
+
+    R_ASSERT(primaryCmdBuf != NULL);
 
     if (frame->getCurrentLayout() == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
 
@@ -280,11 +286,11 @@ void VulkanSwapchain::transitionCurrentFrameToPresentable()
         VkPipelineStageFlags waitStages[]   = { VK_PIPELINE_STAGE_ALL_COMMANDS_BIT };
         submitInfo.sType                    = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submitInfo.signalSemaphoreCount     = 1;
-        submitInfo.commandBufferCount       = 0;
+        submitInfo.commandBufferCount       = 1;
         submitInfo.pSignalSemaphores        = &signalSemaphore;
         submitInfo.waitSemaphoreCount       = 1;
         submitInfo.pWaitSemaphores          = &waitSemaphore;
-        submitInfo.pCommandBuffers          = nullptr;
+        submitInfo.pCommandBuffers          = &primaryCmdBuf;
         submitInfo.pWaitDstStageMask        = waitStages;
 
         vkQueueSubmit(m_pBackbufferQueue->get(), 1, &submitInfo, fence);
@@ -316,13 +322,14 @@ void VulkanSwapchain::transitionCurrentFrameToPresentable()
 
     VkSubmitInfo submitInfo             = { };
     VkPipelineStageFlags waitStages[]   = { VK_PIPELINE_STAGE_ALL_COMMANDS_BIT };
+    VkCommandBuffer buffers[2]          = { primaryCmdBuf, singleUseCmdBuf };
     submitInfo.sType                    = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submitInfo.signalSemaphoreCount     = 1; 
-    submitInfo.commandBufferCount       = 1;
+    submitInfo.commandBufferCount       = 2;
     submitInfo.pSignalSemaphores        = &signalSemaphore;
     submitInfo.waitSemaphoreCount       = 1;
     submitInfo.pWaitSemaphores          = &waitSemaphore;
-    submitInfo.pCommandBuffers          = &singleUseCmdBuf;
+    submitInfo.pCommandBuffers          = buffers;
     submitInfo.pWaitDstStageMask        = waitStages;
 
     vkQueueSubmit(m_pBackbufferQueue->get(), 1, &submitInfo, fence);

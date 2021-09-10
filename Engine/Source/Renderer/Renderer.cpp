@@ -74,25 +74,7 @@ void Renderer::initialize(void* windowHandle, const RendererConfigs& configs)
 
     }
 
-    result = m_pDevice->createCommandQueue(&m_graphicsQueue, 
-        QUEUE_TYPE_GRAPHICS | QUEUE_TYPE_PRESENT | QUEUE_TYPE_COMPUTE);
-
-    if (result != REC_RESULT_OK) {
-    
-        R_ERR("Renderer", "Failed to create command queue!");
-    
-    }
-
-    result = m_pDevice->createCommandList(&m_commandList, 
-        QUEUE_TYPE_GRAPHICS | QUEUE_TYPE_PRESENT | QUEUE_TYPE_COMPUTE);
-
-    if (result != REC_RESULT_OK) {
-    
-        R_ERR("Renderer", "Failed to create command list!");
-    
-    }
-
-    createSwapchain(configs);
+    m_commandList = m_pDevice->getCommandList();
 
     allocateSceneBuffers(configs);
 
@@ -102,21 +84,7 @@ void Renderer::initialize(void* windowHandle, const RendererConfigs& configs)
 
 void Renderer::cleanUp()
 {
-    if (m_graphicsQueue) {
-        // Wait for the queue to finish all work, before destroying things...    
-        m_graphicsQueue->wait();
-        m_pDevice->destroyCommandQueue(m_graphicsQueue);
-        m_graphicsQueue = nullptr;
-    }
-
     freeSceneBuffers();
-
-    destroySwapchain();
-
-    if (m_commandList) {
-        m_pDevice->destroyCommandList(m_commandList);
-        m_commandList = nullptr;
-    }
 
     // Clean up all modules, as well as resources handled by them...
     cleanUpModules();
@@ -169,12 +137,7 @@ void Renderer::render()
 
     m_commandList->end();
 
-
-    QueueSubmit submit      = { };
-    submit.numCommandLists  = 1;
-    submit.pCommandLists    = &m_commandList;
-
-    m_graphicsQueue->submit(&submit);
+    // Present.
     m_pSwapchain->present();
     
     resetCommandKeys();
@@ -347,37 +310,6 @@ void Renderer::pushRenderCommand(const RenderCommand& renderCommand)
     // Push the render command to the last, this will serve as our reference to render in
     // certain render passes.
     m_renderCommands->push(renderCommand);
-}
-
-
-void Renderer::createSwapchain(const RendererConfigs& configs)
-{
-    ErrType result                  = REC_RESULT_OK;
-    SwapchainCreateDescription desc = { };
-    desc.renderWidth                = configs.renderWidth;
-    desc.renderHeight               = configs.renderHeight;
-    desc.buffering                  = FRAME_BUFFERING_DOUBLE;
-    desc.desiredFrames              = configs.buffering;
-    desc.pBackbufferQueue           = m_graphicsQueue;
-
-    m_pDevice->createSwapchain(&m_pSwapchain, desc);
-
-    if (result != REC_RESULT_OK) {
-    
-        R_ERR("Renderer", "Failed to create swapchain!");
-    
-    }
-}
-
-
-void Renderer::destroySwapchain()
-{
-    if (m_pSwapchain) {
-        
-        m_pDevice->destroySwapchain(m_pSwapchain);
-        m_pSwapchain = nullptr;
-    
-    }
 }
 
 

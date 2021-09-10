@@ -2,7 +2,6 @@
 #include "Recluse/Graphics/GraphicsAdapter.hpp"
 #include "Recluse/Graphics/GraphicsInstance.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
-#include "Recluse/Graphics/CommandQueue.hpp"
 #include "Recluse/Graphics/CommandList.hpp"
 
 #include "Recluse/System/Window.hpp"
@@ -19,7 +18,6 @@ int main(int c, char* argv[])
     GraphicsSwapchain* pSwapchain   = nullptr;
     GraphicsDevice* pDevice         = nullptr;
     GraphicsInstance* pInstance       = GraphicsInstance::createInstance(GRAPHICS_API_VULKAN);
-    GraphicsQueue* pQueue           = nullptr;
 
     Window* pWindow = Window::create(u8"SwapchainInitialization", 0, 0, 128, 128);
 
@@ -60,8 +58,11 @@ int main(int c, char* argv[])
 
     DeviceCreateInfo deviceCreate   = { };
     deviceCreate.winHandle = pWindow->getNativeHandle();
-
     deviceCreate.buffering = 2;
+    deviceCreate.swapchainDescription.buffering                    = FRAME_BUFFERING_TRIPLE;
+    deviceCreate.swapchainDescription.desiredFrames                = 3;
+    deviceCreate.swapchainDescription.renderHeight                 = 128;
+    deviceCreate.swapchainDescription.renderWidth                  = 128;
 
     result = adapters[0]->createDevice(deviceCreate, &pDevice);
 
@@ -71,24 +72,9 @@ int main(int c, char* argv[])
 
     }
 
-    result = pDevice->createCommandQueue(&pQueue, QUEUE_TYPE_GRAPHICS | QUEUE_TYPE_PRESENT);
-
-    if (result != REC_RESULT_OK) {
+    pSwapchain = pDevice->getSwapchain();
     
-        R_ERR("Graphics", "Failed to create the presentation queue!");
-    
-    }
-
-    SwapchainCreateDescription scInfo   = { };
-    scInfo.buffering                    = FRAME_BUFFERING_TRIPLE;
-    scInfo.desiredFrames                = 3;
-    scInfo.renderHeight                 = 128;
-    scInfo.renderWidth                  = 128;
-    scInfo.pBackbufferQueue             = pQueue;
-
-    result = pDevice->createSwapchain(&pSwapchain, scInfo);
-    
-    if (result != REC_RESULT_OK) {
+    if (!pSwapchain) {
     
         R_ERR("Graphics", "Failed to create swapchain in test!");
     
@@ -106,9 +92,6 @@ int main(int c, char* argv[])
             pollEvents();
                     
         }
-
-        pDevice->destroySwapchain(pSwapchain);
-        pDevice->destroyCommandQueue(pQueue);
     }
 
     adapters[0]->destroyDevice(pDevice);

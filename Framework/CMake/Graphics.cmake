@@ -6,7 +6,7 @@ set ( RECLUSE_GRAPHICS_BUILD
     ${RECLUSE_GRAPHICS_INCLUDE}/GraphicsInstance.hpp
     ${RECLUSE_GRAPHICS_INCLUDE}/CommandList.hpp
     ${RECLUSE_GRAPHICS_INCLUDE}/CommandHandler.hpp
-    ${RECLUSE_GRAPHICS_INCLUDE}/CommandQueue.hpp
+    #${RECLUSE_GRAPHICS_INCLUDE}/CommandQueue.hpp
     ${RECLUSE_GRAPHICS_INCLUDE}/DescriptorSet.hpp
     ${RECLUSE_GRAPHICS_INCLUDE}/Format.hpp
     ${RECLUSE_GRAPHICS_INCLUDE}/GraphicsDevice.hpp

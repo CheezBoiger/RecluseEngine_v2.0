@@ -3,6 +3,7 @@
 
 #include "Recluse/Types.hpp"
 #include "Recluse/Graphics/GraphicsInstance.hpp"
+#include "Recluse/Graphics/GraphicsCommon.hpp"
 
 namespace Recluse {
 
@@ -19,8 +20,9 @@ struct R_EXPORT AdapterLimits {
 };
 
 struct R_EXPORT DeviceCreateInfo {
-    void*               winHandle;
-    U32                 buffering; // buffered resources count. 
+    void*                       winHandle;
+    SwapchainCreateDescription  swapchainDescription; // Swapchain description, if a window handle is present.
+    U32                         buffering; // buffered resources count. 
 };
 
 class GraphicsDevice;

@@ -64,7 +64,7 @@ void VulkanQueue::destroy()
     }
 }
 
-
+/*
 ErrType VulkanQueue::submit(const QueueSubmit* payload)
 {
     // Check if we need to clear our some flushes.
@@ -91,7 +91,7 @@ ErrType VulkanQueue::submit(const QueueSubmit* payload)
     
     return REC_RESULT_OK;
 }
-
+*/
 
 ErrType VulkanQueue::copyResource(GraphicsResource* dst, GraphicsResource* src)
 {

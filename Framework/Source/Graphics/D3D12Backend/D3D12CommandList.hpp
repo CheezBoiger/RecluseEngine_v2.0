@@ -8,10 +8,10 @@ namespace Recluse {
 
 class D3D12Device;
 
-class D3D12GraphicsCommandList : public GraphicsCommandList {
+class D3D12CommandList : public GraphicsCommandList {
 public:
     
-    ErrType initialize(D3D12Device* pDevice);
+    ErrType initialize(D3D12Device* pDevice, GraphicsQueueTypeFlags flags);
     ErrType destroy();
 
     void begin() override;

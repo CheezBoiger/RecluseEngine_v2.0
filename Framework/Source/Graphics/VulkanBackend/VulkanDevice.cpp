@@ -106,8 +106,10 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
         VkQueueFamilyProperties queueFamProps   = queueFamilies[i];
         B32 shouldCreateQueues                  = false;
 
-        queueInfo.queueCount    = 0;
-        queueInfo.sType         = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queueFamily.isPresentSupported  = false;
+        queueFamily.flags               = queueFamProps.queueFlags;
+        queueInfo.queueCount            = 0;
+        queueInfo.sType                 = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 
         if (m_surface) {
         
@@ -116,7 +118,7 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
                 R_DEBUG(R_CHANNEL_VULKAN, "Device supports present...");
 
                 queueInfo.queueCount += 1;
-                queueFamily.flags |= QUEUE_TYPE_PRESENT;
+                queueFamily.isPresentSupported = true;
                 shouldCreateQueues = true;
             
             }
@@ -126,7 +128,6 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
         if (queueFamProps.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
 
             queueInfo.queueCount += 1;
-            queueFamily.flags |= QUEUE_TYPE_GRAPHICS;
             shouldCreateQueues = true;
 
         } 
@@ -134,7 +135,6 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
         if (queueFamProps.queueFlags & VK_QUEUE_COMPUTE_BIT) {
 
             queueInfo.queueCount += 1;
-            queueFamily.flags |= QUEUE_TYPE_COMPUTE;
             shouldCreateQueues = true;
 
         } 
@@ -142,7 +142,6 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
         if (queueFamProps.queueFlags & VK_QUEUE_TRANSFER_BIT) {
         
             queueInfo.queueCount += 1;
-            queueFamily.flags |= QUEUE_TYPE_COPY;
             shouldCreateQueues = true;
         
         }
@@ -193,7 +192,15 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
     createFences(info.buffering);
     createDescriptorHeap();
     allocateMemCache();
+    createQueues();
+    
+    // Create a swapchain if we have our info.
+    if (info.winHandle) {
+        createSwapchain(&m_swapchain, info.swapchainDescription);
+    }
     m_bufferCount = info.buffering;
+
+    createCommandList(&m_pPrimaryCommandList, VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_TRANSFER_BIT | VK_QUEUE_COMPUTE_BIT);
 
     m_properties = adapter->getProperties();
 
@@ -204,24 +211,17 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
 void VulkanDevice::destroy(VkInstance instance)
 {
     vkDeviceWaitIdle(m_device);
+    if (m_swapchain) {
+        destroySwapchain(m_swapchain);
+        m_swapchain = nullptr;
+    }
+    destroyQueues();
     destroyCommandPools();
     destroyFences();
     destroyDescriptorHeap();
     freeMemCache();
 
     m_cache.clearCache(this);
-
-    if (!m_queues.empty()) {
-    
-        R_WARN(R_CHANNEL_VULKAN, "One or more queue handles still exist! This can cause memory leaks!");
-    
-    }
-
-    if (!m_swapchains.empty()) {
-    
-        R_WARN(R_CHANNEL_VULKAN, "One or more swapchain handles still exist! This can cause memory leaks!");
-    
-    }
 
     if (m_surface) {
     
@@ -287,11 +287,11 @@ void VulkanDevice::destroy(VkInstance instance)
 }
 
 
-ErrType VulkanDevice::createSwapchain(GraphicsSwapchain** ppSwapchain,
+ErrType VulkanDevice::createSwapchain(VulkanSwapchain** ppSwapchain,
     const SwapchainCreateDescription& pDesc)
 {
 
-    VulkanSwapchain* pSwapchain     = new VulkanSwapchain(pDesc);
+    VulkanSwapchain* pSwapchain     = new VulkanSwapchain(pDesc, m_pGraphicsQueue);
     VulkanInstance*   pNativeContext = m_adapter->getInstance();
 
     ErrType result = pSwapchain->build(this);
@@ -305,13 +305,11 @@ ErrType VulkanDevice::createSwapchain(GraphicsSwapchain** ppSwapchain,
 
     *ppSwapchain = pSwapchain;
 
-    m_swapchains.push_back(pSwapchain);
-
     return result;
 }
 
 
-ErrType VulkanDevice::destroySwapchain(GraphicsSwapchain* pSwapchain)
+ErrType VulkanDevice::destroySwapchain(VulkanSwapchain* pSwapchain)
 {
     ErrType result = REC_RESULT_OK;
 
@@ -323,39 +321,28 @@ ErrType VulkanDevice::destroySwapchain(GraphicsSwapchain* pSwapchain)
 
     }
 
-    VulkanSwapchain* pVs    = static_cast<VulkanSwapchain*>(pSwapchain);
+    VulkanQueue* pPq = pSwapchain->getPresentationQueue();
 
-    for (auto& iter = m_swapchains.begin(); iter != m_swapchains.end(); ++iter) {
-    
-        if (*iter == pVs) {
-            VulkanQueue* pPq = pVs->getPresentationQueue();
+    if (pPq) {
 
-            if (pPq) {
-
-                pPq->wait();
-
-            }
-
-            result = pVs->destroy();
-
-            if (result != REC_RESULT_OK) {
-    
-                R_ERR(R_CHANNEL_VULKAN, "Failed to destroy vulkan swapchain!");
-    
-            } else {
-
-                R_DEBUG(R_CHANNEL_VULKAN, "Destroyed vulkan swapchain...");
-        
-                m_swapchains.erase(iter);
-                delete pVs;
-    
-            }
-
-            break;
-
-        }
+        pPq->wait();
 
     }
+
+    result = pSwapchain->destroy();
+
+    if (result != REC_RESULT_OK) {
+    
+        R_ERR(R_CHANNEL_VULKAN, "Failed to destroy vulkan swapchain!");
+    
+    } else {
+
+        R_DEBUG(R_CHANNEL_VULKAN, "Destroyed vulkan swapchain...");
+        
+        delete pSwapchain;
+    
+    }
+
 
     return result;
 }
@@ -546,19 +533,46 @@ ErrType VulkanDevice::reserveMemory(const MemoryReserveDesc& desc)
 }
 
 
-ErrType VulkanDevice::createCommandQueue(GraphicsQueue** ppQueue, GraphicsQueueTypeFlags type)
+ErrType VulkanDevice::createQueues()
+{
+    // Lets create the primary queue.
+    ErrType result          = REC_RESULT_OK;
+    VkQueueFlags flags      = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT;
+    B32 isPresentSupported  = false;
+
+    if (m_windowHandle) {
+        isPresentSupported = true;
+    }
+
+    result = createQueue(&m_pGraphicsQueue, flags, isPresentSupported);
+
+    if (result != REC_RESULT_OK) { 
+        R_ERR(R_CHANNEL_VULKAN, "Failed to create main RHI queue!");
+    }
+
+    return result;
+}
+
+
+ErrType VulkanDevice::createQueue(VulkanQueue** ppQueue, VkQueueFlags flags, B32 isPresentable)
 {
     U32 queueFamilyIndex    = 0xFFFFFFFF;
     U32 queueIndex          = 0xFFFFFFFF;
     VulkanQueue* pQueue     = nullptr;
     QueueFamily* pFamily    = nullptr;
 
+    // Main queue first.
+
     for (U32 i = 0; i < m_queueFamilies.size(); ++i) {
 
         QueueFamily& family = m_queueFamilies[i];
 
-        if (family.flags & type) {
-            
+        if (family.flags & flags) {
+            if (isPresentable && !family.isPresentSupported) {
+                // If this queue family is not present supported, then check the next.
+                continue;
+            }
+
             // Check if we can get a queue from this family.
             if (family.currentAvailableQueueIndex < family.maxQueueCount) {
                 
@@ -582,40 +596,25 @@ ErrType VulkanDevice::createCommandQueue(GraphicsQueue** ppQueue, GraphicsQueueT
     
     }
 
-    pQueue = new VulkanQueue(type);
+    pQueue = new VulkanQueue(flags, isPresentable);
 
     ErrType err = pQueue->initialize(this, pFamily, queueFamilyIndex, queueIndex);
 
     if (err == REC_RESULT_OK) {
-
         *ppQueue = pQueue;
-
-        m_queues.push_back(pQueue);
-
     }
 
     return err;
 }
 
 
-ErrType VulkanDevice::destroyCommandQueue(GraphicsQueue* pQueue)
+ErrType VulkanDevice::destroyQueues()
 {
-    for (auto& iter = m_queues.begin(); iter != m_queues.end(); ++iter) {
-    
-        if (*iter == pQueue) {
-    
-            m_queues.erase(iter);
-            delete pQueue;
-
-            return REC_RESULT_OK;
-            
-        }
-    
+    if (m_pGraphicsQueue) {
+        delete m_pGraphicsQueue;
+        m_pGraphicsQueue = nullptr;
     }
-
-    R_WARN(R_CHANNEL_VULKAN, "This queue does not exist from this device. Ignoring this destruction function...");
-    
-    return REC_RESULT_FAILED;
+    return REC_RESULT_OK;
 }
 
 
@@ -727,7 +726,7 @@ void VulkanDevice::destroyCommandPools()
 }
 
 
-ErrType VulkanDevice::createCommandList(GraphicsCommandList** pList, GraphicsQueueTypeFlags flags)
+ErrType VulkanDevice::createCommandList(VulkanCommandList** pList, VkQueueFlags flags)
 {
     ErrType result = REC_RESULT_OK;
 
@@ -735,7 +734,7 @@ ErrType VulkanDevice::createCommandList(GraphicsCommandList** pList, GraphicsQue
 
     for (U32 i = 0; i < m_queueFamilies.size(); ++i) {
     
-        GraphicsQueueTypeFlags famFlags = m_queueFamilies[i].flags;
+        VkQueueFlags famFlags = m_queueFamilies[i].flags;
 
         if (flags & famFlags) {
             U32 queueFamilyIndex        = m_queueFamilies[i].queueFamilyIndex;
@@ -766,16 +765,14 @@ ErrType VulkanDevice::createCommandList(GraphicsCommandList** pList, GraphicsQue
 }
 
 
-ErrType VulkanDevice::destroyCommandList(GraphicsCommandList* pList)
+ErrType VulkanDevice::destroyCommandList(VulkanCommandList* pList)
 {
     if (pList) {
 
         R_DEBUG(R_CHANNEL_VULKAN, "Destroying command list...");
 
-        VulkanCommandList* pVc = static_cast<VulkanCommandList*>(pList);
-
-        pVc->destroy(this);
-        delete pVc;
+        pList->destroy(this);
+        delete pList;
 
         return REC_RESULT_OK;
     }
@@ -1216,5 +1213,36 @@ ErrType VulkanDevice::createComputePipelineState(PipelineState** ppPipelineState
     *ppPipelineState = pPipeline;
 
     return result;
+}
+
+
+GraphicsCommandList* VulkanDevice::getCommandList()
+{
+    return m_pPrimaryCommandList;
+}
+
+
+GraphicsSwapchain* VulkanDevice::getSwapchain()
+{
+    return m_swapchain;
+}
+
+
+ErrType VulkanDevice::copyResource(GraphicsResource* dst, GraphicsResource* src)
+{
+    return m_pGraphicsQueue->copyResource(dst, src);
+}
+
+ErrType VulkanDevice::copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, 
+    CopyBufferRegion* pRegions, U32 numRegions)
+{
+    return m_pGraphicsQueue->copyBufferRegions(dst, src, pRegions, numRegions);
+}
+
+
+ErrType VulkanDevice::wait()
+{
+    m_pGraphicsQueue->wait();
+    return REC_RESULT_OK;
 }
 } // Recluse

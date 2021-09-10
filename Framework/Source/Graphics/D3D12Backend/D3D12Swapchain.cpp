@@ -22,7 +22,7 @@ ErrType D3D12Swapchain::initialize(D3D12Device* pDevice)
     }
 
     const SwapchainCreateDescription& desc  = getDesc();
-    D3D12Queue* pQueue                      = static_cast<D3D12Queue*>(desc.pBackbufferQueue);
+    D3D12Queue* pQueue                      = pDevice->getBackbufferQueue();
     D3D12Instance* pInstance                = pDevice->getAdapter()->getInstance();
     IDXGIFactory2* pFactory                 = pInstance->get();
     ID3D12CommandQueue* pNativeQueue        = pQueue->get();    

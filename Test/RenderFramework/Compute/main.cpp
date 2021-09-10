@@ -1,7 +1,6 @@
 
 #include "Recluse/Graphics/GraphicsCommon.hpp"
 #include "Recluse/Graphics/CommandList.hpp"
-#include "Recluse/Graphics/CommandQueue.hpp"
 #include "Recluse/Graphics/DescriptorSet.hpp"
 #include "Recluse/Graphics/GraphicsAdapter.hpp"
 #include "Recluse/Graphics/GraphicsInstance.hpp"
@@ -59,7 +58,6 @@ int main(int c, char* argv[])
     GraphicsDevice* pDevice         = nullptr;
     GraphicsResource* pData         = nullptr;
     DescriptorSetLayout* pLayout    = nullptr;
-    GraphicsQueue* pQueue           = nullptr;
     PipelineState* pPipeline        = nullptr;
     GraphicsSwapchain* pSwapchain   = nullptr;
     GraphicsCommandList* pList      = nullptr;
@@ -99,6 +97,11 @@ int main(int c, char* argv[])
         DeviceCreateInfo info = { };
         info.buffering = 3;
         info.winHandle = pWindow->getNativeHandle();
+        info.swapchainDescription = { };
+        info.swapchainDescription.buffering = FRAME_BUFFERING_DOUBLE;
+        info.swapchainDescription.desiredFrames = 3;
+        info.swapchainDescription.renderWidth = pWindow->getWidth();
+        info.swapchainDescription.renderHeight = pWindow->getHeight();
 
         result = pAdapter->createDevice(info, &pDevice);
     }
@@ -124,30 +127,6 @@ int main(int c, char* argv[])
     
         R_ERR("TEST", "Failed to reserve memory on device!");
     
-    }
-
-    result = pDevice->createCommandQueue(&pQueue, QUEUE_TYPE_GRAPHICS | QUEUE_TYPE_PRESENT);
-    
-    if (result != REC_RESULT_OK) { 
-    
-        R_ERR("TEST", "Failed to create command queue...");
-    
-    }
-
-    {
-        SwapchainCreateDescription info = { };
-        info.buffering = FRAME_BUFFERING_DOUBLE;
-        info.desiredFrames = 3;
-        info.pBackbufferQueue = pQueue;
-        info.renderWidth = pWindow->getWidth();
-        info.renderHeight = pWindow->getHeight();
-        result = pDevice->createSwapchain(&pSwapchain, info);
-    }
-
-    if (result != REC_RESULT_OK) {
-    
-        R_ERR("TEST", "Failed to create swapchain!");    
-
     }
 
     {
@@ -177,13 +156,8 @@ int main(int c, char* argv[])
     }
     
     
-    result = pDevice->createCommandList(&pList, QUEUE_TYPE_GRAPHICS | QUEUE_TYPE_PRESENT);
-    
-    if (result != REC_RESULT_OK) {
-    
-        R_ERR("TEST", "Failed to create comamnd list!");
-    
-    }
+    pList = pDevice->getCommandList();
+    pSwapchain = pDevice->getSwapchain();
 
     sets.resize(pSwapchain->getDesc().desiredFrames);
     for (U32 i = 0; i < sets.size(); ++i) {
@@ -323,18 +297,13 @@ int main(int c, char* argv[])
             pList->dispatch(pWindow->getWidth() / 8 + 1, pWindow->getHeight() / 8 + 1, 1);
         pList->end();
 
-        QueueSubmit submit = { };
-        submit.numCommandLists = 1;
-        submit.pCommandLists = &pList;
-        pQueue->submit(&submit);
-
         pSwapchain->present();
 
         pollEvents();
     
     }
     
-    pQueue->wait();
+    pDevice->wait();
 
     pDevice->destroyResource(pData);
 
@@ -346,8 +315,6 @@ int main(int c, char* argv[])
 
     pDevice->destroyPipelineState(pPipeline);
     pDevice->destroyDescriptorSetLayout(pLayout);
-    pDevice->destroySwapchain(pSwapchain);
-    pDevice->destroyCommandQueue(pQueue);
     pAdapter->destroyDevice(pDevice);
     GraphicsInstance::destroyInstance(pInstance);
     Log::destroyLoggingSystem();

@@ -11,7 +11,6 @@
 #include "Recluse/Graphics/ResourceView.hpp"
 #include "Recluse/Graphics/CommandList.hpp"
 #include "Recluse/Graphics/DescriptorSet.hpp"
-#include "Recluse/Graphics/CommandQueue.hpp"
 #include "Recluse/Graphics/RenderPass.hpp"
 
 #include "Recluse/System/Window.hpp"
@@ -75,7 +74,6 @@ int main(int c, char* argv[])
     GraphicsCommandList* pList      = nullptr;
     DescriptorSetLayout* pLayout    = nullptr;
     GraphicsResource* pData         = nullptr;
-    GraphicsQueue* pQueue           = nullptr;
     DescriptorSet*  pSet            = nullptr;
     GraphicsSwapchain* pSwapchain   = nullptr;
     std::vector<RenderPass*> renderPasses;
@@ -119,6 +117,10 @@ int main(int c, char* argv[])
         DeviceCreateInfo info = { };
         info.buffering = 2;
         info.winHandle = pWindow->getNativeHandle();
+        info.swapchainDescription.buffering = FRAME_BUFFERING_TRIPLE;
+        info.swapchainDescription.desiredFrames = 2;
+        info.swapchainDescription.renderWidth = 1024;
+        info.swapchainDescription.renderHeight = 1024;
         result = pAdapter->createDevice(info, &pDevice);
     }
 
@@ -144,22 +146,8 @@ int main(int c, char* argv[])
     
     }
 
-    result = pDevice->createCommandQueue(&pQueue, QUEUE_TYPE_GRAPHICS | QUEUE_TYPE_PRESENT);
-
-    if (result != REC_RESULT_OK) {
-
-        R_ERR("TEST", "Failed to create device queue!");
-
-    }
-
     {
         SwapchainCreateDescription info = { };
-        info.buffering = FRAME_BUFFERING_TRIPLE;
-        info.desiredFrames = 2;
-        info.pBackbufferQueue = pQueue;
-        info.renderWidth = 1024;
-        info.renderHeight = 1024;
-        result = pDevice->createSwapchain(&pSwapchain, info);
     }
 
     if (result != REC_RESULT_OK) {
@@ -168,13 +156,7 @@ int main(int c, char* argv[])
 
     }
 
-    result = pDevice->createCommandList(&pList, QUEUE_TYPE_GRAPHICS);
-    
-    if (result != REC_RESULT_OK) {
-    
-        R_ERR("TEST", "Failed to create command list!");
-    
-    }
+    pList = pDevice->getCommandList();
 
     {
         GraphicsResourceDescription desc = { };
@@ -242,6 +224,8 @@ int main(int c, char* argv[])
     
     }
 
+    pSwapchain = pDevice->getSwapchain();
+
     {
         renderPasses.resize(pSwapchain->getDesc().desiredFrames);
         RenderPassDesc desc = { };
@@ -290,19 +274,12 @@ int main(int c, char* argv[])
             pList->transition(&trans, 1);
             pList->transition(&trans, 1);
         pList->end();
-
-        QueueSubmit submit = { };
-        submit.numCommandLists = 1;
-        submit.pCommandLists = &pList;
-
-        pQueue->submit(&submit);
-
         pSwapchain->present();
         pollEvents();
     }
 
     R_TRACE("TEST", "Exited game loop...");
-    pQueue->wait();    
+    pDevice->wait();    
 
     for (U32 i = 0; i < pSwapchain->getDesc().desiredFrames; ++i) {
         pDevice->destroyRenderPass(renderPasses[i]);
@@ -310,10 +287,7 @@ int main(int c, char* argv[])
 
     pDevice->destroyDescriptorSetLayout(pLayout);
     pDevice->destroyDescriptorSet(pSet);
-    pDevice->destroyResource(pData);
-    pDevice->destroyCommandList(pList);
-    pDevice->destroySwapchain(pSwapchain);
-    pDevice->destroyCommandQueue(pQueue);    
+    pDevice->destroyResource(pData); 
     pAdapter->destroyDevice(pDevice);
     Window::destroy(pWindow);
     GraphicsInstance::destroyInstance(pInstance);

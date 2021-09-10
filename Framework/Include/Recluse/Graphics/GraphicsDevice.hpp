@@ -2,7 +2,6 @@
 #pragma once
 
 #include "Recluse/Types.hpp"
-#include "Recluse/Graphics/CommandQueue.hpp"
 #include "Recluse/Graphics/Format.hpp"
 #include "Recluse/Graphics/DescriptorSet.hpp"
 #include "Recluse/Graphics/GraphicsCommon.hpp"
@@ -17,17 +16,7 @@ class GraphicsResourceView;
 class GraphicsPipeline;
 class GraphicsSwapchain;
 class GraphicsContext;
-class GraphicsQueue;
 class RenderPass;
-
-
-struct SwapchainCreateDescription {
-    FrameBuffering buffering;
-    U32 desiredFrames;
-    U32 renderWidth;
-    U32 renderHeight;
-    GraphicsQueue* pBackbufferQueue;
-};
 
 
 struct GraphicsResourceDescription {
@@ -81,16 +70,6 @@ public:
     virtual ErrType createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc, ResourceState initState) 
         { return REC_RESULT_NOT_IMPLEMENTED; }
 
-    //< Create a command list.
-    //< 
-    virtual ErrType createCommandList(GraphicsCommandList** pList, GraphicsQueueTypeFlags flags) 
-        { return REC_RESULT_NOT_IMPLEMENTED; }
-
-    //< Create a command queue.
-    //<
-    virtual ErrType createCommandQueue(GraphicsQueue** ppQueue, GraphicsQueueTypeFlags type) 
-        { return REC_RESULT_NOT_IMPLEMENTED; }
-
     virtual ErrType createDescriptorSetLayout(DescriptorSetLayout** ppLayout, const DescriptorSetLayoutDesc& desc)
         { return REC_RESULT_NOT_IMPLEMENTED; }
 
@@ -111,18 +90,29 @@ public:
     virtual ErrType createDescriptorSet(DescriptorSet** ppLayout, DescriptorSetLayout* pSetLayout) 
         { return REC_RESULT_NOT_IMPLEMENTED; }
 
-    virtual ErrType createSwapchain(GraphicsSwapchain** swapchain,
-        const SwapchainCreateDescription& pDescription) { return REC_RESULT_NOT_IMPLEMENTED; }
-
-    virtual ErrType destroySwapchain(GraphicsSwapchain* pSwapchain) { return REC_RESULT_NOT_IMPLEMENTED; }
-    virtual ErrType destroyCommandQueue(GraphicsQueue* pQueue) { return REC_RESULT_NOT_IMPLEMENTED; }
     virtual ErrType destroyResource(GraphicsResource* pResource) { return REC_RESULT_NOT_IMPLEMENTED; }
     virtual ErrType destroyResourceView(GraphicsResourceView* pResourceView) { return REC_RESULT_NOT_IMPLEMENTED; }
-    virtual ErrType destroyCommandList(GraphicsCommandList* pList) { return REC_RESULT_NOT_IMPLEMENTED; }
     virtual ErrType destroyRenderPass(RenderPass* pRenderPass) { return REC_RESULT_NOT_IMPLEMENTED; }
     virtual ErrType destroyPipelineState(PipelineState* pPipelineState) { return REC_RESULT_NOT_IMPLEMENTED; }
     virtual ErrType destroyDescriptorSet(DescriptorSet* pSet) { return REC_RESULT_NOT_IMPLEMENTED; }
     virtual ErrType destroyDescriptorSetLayout(DescriptorSetLayout* pSetLayout) { return REC_RESULT_NOT_IMPLEMENTED; }
+
+    // Obtain the graphics command list created by the device.
+    virtual GraphicsCommandList* getCommandList() { return nullptr; }
+    
+    virtual GraphicsSwapchain* getSwapchain() { return nullptr; }
+    
+    virtual ErrType wait() { return REC_RESULT_NOT_IMPLEMENTED; }
+    // Not recommended, but submits a copy to this queue, and waits until the command has 
+    // completed.
+    virtual ErrType copyResource(GraphicsResource* dst, GraphicsResource* src) 
+        { return REC_RESULT_NOT_IMPLEMENTED; }
+
+    // Submits copy of regions from src resource to dst resource. Generally the caller thread will
+    // be blocked until this function returns, so be sure to use when needed.
+    virtual ErrType copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, 
+        CopyBufferRegion* pRegions, U32 numRegions)
+        { return REC_RESULT_NOT_IMPLEMENTED; }
 
 private:
 };

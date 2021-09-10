@@ -62,7 +62,7 @@ int main(int c, char* argv[])
     }
 
     GraphicsCommandList* pList = nullptr;
-    result = pDevice->createCommandList(&pList, QUEUE_TYPE_GRAPHICS);
+    pList = pDevice->getCommandList();
 
     if (result != REC_RESULT_OK) {
     
@@ -74,9 +74,6 @@ int main(int c, char* argv[])
         pList->begin();
         pList->end();
 
-        
-
-        pDevice->destroyCommandList(pList);
     }
 
     adapters[0]->destroyDevice(pDevice);

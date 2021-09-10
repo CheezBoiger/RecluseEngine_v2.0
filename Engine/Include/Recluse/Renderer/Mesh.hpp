@@ -13,7 +13,6 @@ namespace Recluse {
 class GraphicsDevice;
 class GraphicsResource;
 class DescriptorSetLayout;
-class GraphicsQueue;
 class DescriptorSet;
 struct Bounds3D;
 class Material;

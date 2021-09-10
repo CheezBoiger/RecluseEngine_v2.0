@@ -46,7 +46,7 @@ public:
     ErrType initialize(GraphicsDevice* pDevice, U64 totalSzBytes, ResourceUsageFlags usage);
     ErrType destroy();
 
-    ErrType stream(GraphicsQueue* pQueue, void* ptr, U64 offsetBytes, U64 szBytes);
+    ErrType stream(GraphicsDevice* pDevice, void* ptr, U64 offsetBytes, U64 szBytes);
 
     GraphicsResource* get() const { return m_pResource; }
 private:

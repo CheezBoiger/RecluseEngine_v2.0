@@ -2,7 +2,6 @@
 #include "Recluse/Graphics/GraphicsAdapter.hpp"
 #include "Recluse/Graphics/GraphicsInstance.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
-#include "Recluse/Graphics/CommandQueue.hpp"
 #include "Recluse/Graphics/CommandList.hpp"
 
 #include "Recluse/System/Window.hpp"
@@ -19,7 +18,6 @@ int main(int c, char* argv[])
     GraphicsSwapchain* pSwapchain   = nullptr;
     GraphicsDevice* pDevice         = nullptr;
     GraphicsInstance* pInstance      = GraphicsInstance::createInstance(GRAPHICS_API_VULKAN);
-    GraphicsQueue* pQueue           = nullptr;
 
     Window* pWindow = Window::create(u8"CommandListSubmit", 0, 0, 128, 128);
 
@@ -60,7 +58,10 @@ int main(int c, char* argv[])
 
     DeviceCreateInfo deviceCreate   = { };
     deviceCreate.winHandle = pWindow->getNativeHandle();
-
+    deviceCreate.swapchainDescription.buffering                    = FRAME_BUFFERING_TRIPLE;
+    deviceCreate.swapchainDescription.desiredFrames                = 3;
+    deviceCreate.swapchainDescription.renderHeight                 = 128;
+    deviceCreate.swapchainDescription.renderWidth                  = 128;
     deviceCreate.buffering = 2;
 
     result = adapters[0]->createDevice(deviceCreate, &pDevice);
@@ -71,24 +72,9 @@ int main(int c, char* argv[])
 
     }
 
-    result = pDevice->createCommandQueue(&pQueue, QUEUE_TYPE_GRAPHICS | QUEUE_TYPE_PRESENT);
-
-    if (result != REC_RESULT_OK) {
+    pSwapchain = pDevice->getSwapchain();
     
-        R_ERR("Graphics", "Failed to create the presentation queue!");
-    
-    }
-
-    SwapchainCreateDescription scInfo   = { };
-    scInfo.buffering                    = FRAME_BUFFERING_TRIPLE;
-    scInfo.desiredFrames                = 3;
-    scInfo.renderHeight                 = 128;
-    scInfo.renderWidth                  = 128;
-    scInfo.pBackbufferQueue             = pQueue;
-
-    result = pDevice->createSwapchain(&pSwapchain, scInfo);
-    
-    if (result != REC_RESULT_OK) {
+    if (!pSwapchain) {
     
         R_ERR("Graphics", "Failed to create swapchain in test!");
     
@@ -101,14 +87,7 @@ int main(int c, char* argv[])
         GraphicsCommandList* pList = nullptr;
         GraphicsCommandList* pList2 = nullptr;
         
-        result = pDevice->createCommandList(&pList, QUEUE_TYPE_GRAPHICS);
-        result = pDevice->createCommandList(&pList2, QUEUE_TYPE_GRAPHICS);
-
-        if (result != REC_RESULT_OK) {
-        
-            R_ERR("Graphics", "Failed to create command list...")
-        
-        }
+        pList = pDevice->getCommandList();
 
         while (!pWindow->shouldClose()) {
             RealtimeTick tick = RealtimeTick::getTick();
@@ -116,33 +95,13 @@ int main(int c, char* argv[])
 
             pList->begin();
             pList->end();
-
-            pList2->begin();
-            pList2->end();
-
-            QueueSubmit submit      = { };
-            submit.numCommandLists  = 1;
-            submit.pCommandLists    = &pList;
-
-            pQueue->submit(&submit);
-
-            submit.pCommandLists = &pList2;
-
-            pQueue->submit(&submit);
-
             pSwapchain->present();
-
             pollEvents();
                     
         }
 
         // Wait until all command lists have been executed.
-        pQueue->wait();
-
-        pDevice->destroySwapchain(pSwapchain);
-        pDevice->destroyCommandList(pList);
-        pDevice->destroyCommandList(pList2);
-        pDevice->destroyCommandQueue(pQueue);
+        pDevice->wait();
     }
 
     adapters[0]->destroyDevice(pDevice);

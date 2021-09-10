@@ -2,7 +2,6 @@
 #include "Recluse/Renderer/Mesh.hpp"
 
 #include "Recluse/Graphics/GraphicsDevice.hpp"
-#include "Recluse/Graphics/CommandQueue.hpp"
 
 namespace Recluse {
 namespace Engine {
@@ -30,7 +29,7 @@ ErrType GPUBuffer::initialize(GraphicsDevice* pDevice, U64 totalSzBytes, Resourc
 }
 
 
-ErrType GPUBuffer::stream(GraphicsQueue* pQueue, void* ptr, U64 offsetBytes, U64 szBytes)
+ErrType GPUBuffer::stream(GraphicsDevice* pDevice, void* ptr, U64 offsetBytes, U64 szBytes)
 {
     ErrType result = REC_RESULT_OK;
     GraphicsResource* pStaging = nullptr;
@@ -57,7 +56,7 @@ ErrType GPUBuffer::stream(GraphicsQueue* pQueue, void* ptr, U64 offsetBytes, U64
     region.srcOffsetBytes   = 0;
     region.szBytes          = szBytes;
 
-    result = pQueue->copyBufferRegions(m_pResource, pStaging, &region, 1);
+    result = pDevice->copyBufferRegions(m_pResource, pStaging, &region, 1);
 
     m_pDevice->destroyResource(pStaging);
 

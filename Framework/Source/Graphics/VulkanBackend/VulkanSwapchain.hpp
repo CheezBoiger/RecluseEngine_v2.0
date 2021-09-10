@@ -17,12 +17,12 @@ struct QueueFamily;
 
 class VulkanSwapchain : public GraphicsSwapchain {
 public:
-    VulkanSwapchain(const SwapchainCreateDescription& desc) 
+    VulkanSwapchain(const SwapchainCreateDescription& desc, VulkanQueue* pBackbufferQueue) 
         : GraphicsSwapchain(desc)
         , m_swapchain(VK_NULL_HANDLE)
         , m_currentFrameIndex(0)
         , m_currentImageIndex(0)
-        , m_pBackbufferQueue(nullptr)
+        , m_pBackbufferQueue(pBackbufferQueue)
         , m_pDevice(nullptr)
         , m_queueFamily(nullptr) { }
 
@@ -60,7 +60,7 @@ private:
 
     void buildFrameResources();
     void queryCommandPools();
-    void transitionCurrentFrameToPresentable();
+    void submitCommandsForPresenting();
     inline void incrementFrameIndex() 
         { m_currentFrameIndex = (m_currentFrameIndex + 1) % m_rawFrames.getNumMaxFrames(); }
 

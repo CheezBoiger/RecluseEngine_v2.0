@@ -68,7 +68,6 @@ public:
     const RendererConfigs& getConfigs() const { return m_rendererConfigs; }
 
     GraphicsDevice* getDevice() const { return m_pDevice; }
-    GraphicsQueue* getGraphicsQueue() const { return m_graphicsQueue; }
 
     VertexBuffer* createVertexBuffer(U64 perVertexSzBytes, U64 totalVertices);
     IndexBuffer* createIndexBuffer(IndexType indexType, U64 totalIndices);
@@ -84,11 +83,9 @@ private:
     void setUpModules();
     void cleanUpModules();
     void createDevice(const RendererConfigs& configs);
-    void createSwapchain(const RendererConfigs& configs);
     void allocateSceneBuffers(const RendererConfigs& configs);    
 
     void destroyDevice();
-    void destroySwapchain();
     void freeSceneBuffers();
 
     void resetCommandKeys();
@@ -98,7 +95,6 @@ private:
     GraphicsInstance*        m_pInstance;
     GraphicsAdapter*        m_pAdapter;
     GraphicsDevice*         m_pDevice;
-    GraphicsQueue*          m_graphicsQueue;
     GraphicsCommandList*    m_commandList;
     GraphicsSwapchain*      m_pSwapchain;
 

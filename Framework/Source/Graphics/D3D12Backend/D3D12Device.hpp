@@ -12,6 +12,8 @@ namespace Recluse {
 class D3D12Adapter;
 class D3D12Allocator;
 class D3D12Swapchain;
+class D3D12Queue;
+class D3D12CommandList;
 
 struct BufferResources {
     ID3D12CommandAllocator* pAllocator;
@@ -33,11 +35,14 @@ public:
     
     D3D12Adapter* getAdapter() const { return m_pAdapter; }
 
-    ErrType createSwapchain(GraphicsSwapchain** ppSwapchain, const SwapchainCreateDescription& desc) override;
-    ErrType destroySwapchain(GraphicsSwapchain* pSwapchain) override;
+    ErrType createSwapchain(GraphicsSwapchain** ppSwapchain, const SwapchainCreateDescription& desc);
+    ErrType destroySwapchain(GraphicsSwapchain* pSwapchain);
 
-    ErrType createCommandQueue(GraphicsQueue** ppQueue, GraphicsQueueTypeFlags type) override;
-    ErrType destroyCommandQueue(GraphicsQueue* pQueue) override;
+    ErrType createCommandQueue(D3D12Queue** ppQueue, GraphicsQueueTypeFlags type);
+    ErrType destroyCommandQueue(D3D12Queue* pQueue);
+
+    ErrType createCommandList(D3D12CommandList** ppList, GraphicsQueueTypeFlags flags);
+    ErrType destroyCommandList(D3D12CommandList* pList);
 
     HWND getWindowHandle() const { return m_windowHandle; }
 
@@ -52,17 +57,30 @@ public:
     inline void incrementBufferIndex() 
         { m_currentBufferIndex = (m_currentBufferIndex + 1) % m_bufferCount; }
 
+    D3D12Queue* getBackbufferQueue() const { return m_graphicsQueue; }
+
+    // Not recommended, but submits a copy to this queue, and waits until the command has 
+    // completed.
+    ErrType copyResource(GraphicsResource* dst, GraphicsResource* src) override;
+
+    // Submits copy of regions from src resource to dst resource. Generally the caller thread will
+    // be blocked until this function returns, so be sure to use when needed.
+    ErrType copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, 
+        CopyBufferRegion* pRegions, U32 numRegions) override;
+
 private:
 
     void initializeBufferResources(U32 buffering);
     void destroyBufferResources();
 
     // Resource pools.
-    D3D12Allocator* m_bufferPool[RESOURCE_MEMORY_USAGE_COUNT];
-    D3D12Allocator* m_texturePool;
+    D3D12Allocator*                 m_bufferPool[RESOURCE_MEMORY_USAGE_COUNT];
+    D3D12Allocator*                 m_texturePool;
 
-    ID3D12Device* m_device;
-    D3D12Adapter* m_pAdapter;
+    ID3D12Device*                   m_device;
+    D3D12Adapter*                   m_pAdapter;
+    D3D12Queue*                     m_graphicsQueue;
+    D3D12CommandList*               m_pPrimaryCommandList;  
 
     std::vector<BufferResources>    m_bufferResources;
     U32                             m_currentBufferIndex;

@@ -16,8 +16,12 @@ public:
     ShaderBuilder(ShaderIntermediateCode imm)
         : m_imm(imm) { }
     virtual ~ShaderBuilder() { }
-
+    
+    // Set up the shader builder. Should be the warm up setup.
     virtual ErrType setUp() { return REC_RESULT_NOT_IMPLEMENTED; }
+
+    // Tear down the shader builder, that was initialized. Everything 
+    // that is initialized by the shaderbuilder should be cleaned up.
     virtual ErrType tearDown() { return REC_RESULT_NOT_IMPLEMENTED; }
 
     // compiler the shader and return the bytecode.
