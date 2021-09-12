@@ -4,6 +4,8 @@
 
 layout (location = 0) out vec4 color;
 
+#include "RecluseSceneBuffer.h"
+
 in VertexIn {
     vec4 posWS;
     vec3 normWS;
