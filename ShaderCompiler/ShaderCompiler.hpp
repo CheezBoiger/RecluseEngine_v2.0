@@ -12,6 +12,6 @@ ErrType addShaderToCompile(const std::string& filePath, const std::string& confi
 
 ErrType compileShaders(ShaderLang lang);
 
-ErrType setConfigs(const std::string& configPath);
+ErrType setConfigs(const std::string& configPath, U32 compilerIndex);
 ErrType setShaderFiles(const std::string& shadersPath);
 } // Recluse

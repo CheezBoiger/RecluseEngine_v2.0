@@ -39,6 +39,14 @@ NLOHMANN_JSON_SERIALIZE_ENUM(Recluse::ShaderType,
 )
 
 
+NLOHMANN_JSON_SERIALIZE_ENUM(Recluse::ShaderLang,
+    {
+        { Recluse::SHADER_LANG_GLSL, "glsl" },
+        { Recluse::SHADER_LANG_HLSL, "hlsl" }
+    }
+)
+
+
 #define SCENE_BUFFER_DECLARE_STR "RECLUSE_DECLARE_SCENE_BUFFER"
 #define SCENE_BUFFER_PARAM_STR "RECLUSE_SCENE_PARAMETER"
 #define SCENE_BUFFER_END_STR    "RECLUSE_END_SCENE_BUFFER"
@@ -76,6 +84,16 @@ struct CompilerState {
     std::string outputExt;
     std::string version;
     B32         appendExt;
+    struct {
+        // Global extension of our shaders.
+        // usually defined as ".*shaderTypeExt.*ext"
+        std::string                         ext;
+        std::map<ShaderType, std::string>   shaderTypeExt;
+    } input;
+
+    CompilerState() {
+        input.ext = "";
+    }
 };
 
 
@@ -83,6 +101,7 @@ static struct {
     std::string                 sourcePath;
     std::vector<CompilerState>  compilers;
     std::vector<ShaderMetaData> shadersToCompile;
+    CompilerState*              pCompilerState;
 } gConfigs;
 
 
@@ -180,11 +199,19 @@ static std::string generateShaderSceneView(ShaderLang lang)
 
 ErrType compileShaders(ShaderLang lang)
 {
+    R_ASSERT(gConfigs.pCompilerState != NULL);
+
     std::string sceneViewBufferStructStr    = generateShaderSceneView(lang);
     std::string sourcePath                  = gConfigs.sourcePath;
 
     R_DEBUG("ShaderCompiler", "Result:\n%s", sceneViewBufferStructStr.c_str());
+
+    // Set up the shader builder. We possibly want to be able to switch this out 
+    // if need be.
     ShaderBuilder* pBuilder = createGlslangShaderBuilder(INTERMEDIATE_SPIRV);
+
+    R_ASSERT(pBuilder != NULL);
+
     pBuilder->setUp();
 
     for (auto& shaderMetadata = gConfigs.shadersToCompile.begin(); 
@@ -194,7 +221,14 @@ ErrType compileShaders(ShaderLang lang)
         Shader* pShader = Shader::create();
         FileBufferData buffer = { };
 
-        ErrType result = File::readFrom(&buffer, shaderMetadata->relativefilePath);
+        sourceFilePath = sourceFilePath + "." + 
+            gConfigs.pCompilerState->input.shaderTypeExt[shaderMetadata->shaderType];
+
+        if (!gConfigs.pCompilerState->input.ext.empty()) {
+            sourceFilePath = sourceFilePath + "." + gConfigs.pCompilerState->input.ext;
+        }
+
+        ErrType result = File::readFrom(&buffer, sourceFilePath);
 
         if (result != REC_RESULT_OK) {
             R_ERR("ShaderCompiler", "Failed to read shader %s...", shaderMetadata->relativefilePath.c_str());
@@ -204,7 +238,10 @@ ErrType compileShaders(ShaderLang lang)
 
                 // Read the file buffer, and check for the scene buffer header include.
                 std::string shaderSource = "";
-                std::istringstream iss(buffer.buffer.data());
+                std::string str = buffer.buffer.data();
+                // Remove the access allocation from the std library string. Still need to figure out why it does that?
+                str = str.substr(0, buffer.buffer.size());
+                std::istringstream iss(str);
                 std::string line;
                 while (std::getline(iss, line)) {
                     size_t pos = line.find(SCENE_BUFFER_INCLUDE); 
@@ -222,6 +259,9 @@ ErrType compileShaders(ShaderLang lang)
 
                 if (result == REC_RESULT_OK) {
                     //pShader->saveToFile()
+                } else {
+                    R_ERR("ShaderCompiler", "Failed to compile shader! %s", 
+                        shaderMetadata->relativefilePath.c_str());
                 }
         }
 
@@ -249,7 +289,7 @@ ErrType addShaderToCompile(const std::string& filePath, const std::string& confi
 }
 
 
-ErrType setConfigs(const std::string& configPath)
+ErrType setConfigs(const std::string& configPath, U32 compilerIndex)
 {
     json jfile;
     {
@@ -277,20 +317,67 @@ ErrType setConfigs(const std::string& configPath)
         for (int i = 0; i < compilers.size(); ++i) {
             CompilerState compilerState = { };
             auto compiler               = compilers[i];
-            std::string lang            = compiler["language"].get<std::string>();
+            ShaderLang lang             = compiler["language"].get<ShaderLang>();
             std::string name            = compiler["name"].get<std::string>();
+            std::string ext             = "";
+            B32 appendExt               = false;
             compilerState.name          = name;
+            compilerState.language      = lang;
+            const char* langName        = "";
 
-            R_INFO("ShaderCompiler", "Name: %s, Language: %s", name.c_str(), lang.c_str());
+            if      (lang == SHADER_LANG_GLSL)  langName = "glsl";
+            else if (lang == SHADER_LANG_HLSL)  langName = "hlsl";
 
-            if (lang.compare("glsl") == 0) {
-                compilerState.language = SHADER_LANG_GLSL;
-            } else if (lang.compare("hlsl") == 0) {
-                compilerState.language = SHADER_LANG_HLSL;
+            if (compiler.find("output") != compiler.end()) {
+                auto output = compiler["output"];
+                ext         = output["ext"].get<std::string>();
+                appendExt   = output["append_shader_ext"].get<bool>();
+
+                compilerState.appendExt = appendExt;
+                compilerState.outputExt = ext;
+            } else {
+                R_ERR("ShaderCompiler", "Could not find the proper output parameters for this compiler info!");
             }
+
+            if (compiler.find("input") != compiler.end()) {
+                auto input              = compiler["input"];
+                compilerState.input.ext = input["ext"].get<std::string>();     
+            }
+
+            R_INFO("ShaderCompiler", "Name: %s, Language: %s, ext: %s, append ext: %s", name.c_str(), 
+                langName, ext.c_str(), (appendExt ? "true" : "false"));
 
             gConfigs.compilers.push_back(compilerState);
         }
+    }
+
+    // For now we will give all compilers the same shader type ext.
+    if (jfile.find("configs") != jfile.end()) {
+        auto configs    = jfile["configs"];
+        auto shaders    = configs["shaders"];
+        auto graphics   = shaders["graphics"];
+        auto general    = shaders["general"];
+
+        for (auto& compiler : gConfigs.compilers) {
+            auto shader = graphics["pixel"];
+            compiler.input.shaderTypeExt[SHADER_TYPE_PIXEL]     = shader["ext"].get<std::string>();
+            shader = graphics["vertex"];
+            compiler.input.shaderTypeExt[SHADER_TYPE_VERTEX]    = shader["ext"].get<std::string>();
+            shader = graphics["hull"];
+            compiler.input.shaderTypeExt[SHADER_TYPE_HULL]      = shader["ext"].get<std::string>();
+            shader = graphics["domain"];
+            compiler.input.shaderTypeExt[SHADER_TYPE_DOMAIN]    = shader["ext"].get<std::string>();
+            shader = graphics["geometry"];
+            compiler.input.shaderTypeExt[SHADER_TYPE_GEOMETRY]  = shader["ext"].get<std::string>();
+            shader = general["compute"];
+            compiler.input.shaderTypeExt[SHADER_TYPE_COMPUTE]   = shader["ext"].get<std::string>();
+        }
+    }
+
+    if (compilerIndex < gConfigs.compilers.size()) {
+        gConfigs.pCompilerState = &gConfigs.compilers[compilerIndex];
+    } else {
+        R_ERR("ShaderCompiler", "No compilers defined in config file!!");
     }
 
     return REC_RESULT_OK;
@@ -334,11 +421,13 @@ ErrType setShaderFiles(const std::string& shadersPath)
                 ShaderType shaderType           = shaders[i]["type"].get<ShaderType>();
                 ShaderMetaData shaderMetadata   = { };
                 shaderMetadata.relativefilePath = name;
+                shaderMetadata.shaderType       = shaderType;
 
                 gConfigs.shadersToCompile.push_back(shaderMetadata);
             }
         }
     }
+
     return REC_RESULT_OK;
 }
 } //

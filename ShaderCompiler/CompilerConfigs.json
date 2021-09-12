@@ -4,6 +4,9 @@
             "language": "glsl",
             "version": "latest",
             "name": "glslang",
+            "input": {
+                "ext": "glsl"
+            },
             "output": {
                 "ext": "spv",
                 "append_shader_ext": true
@@ -13,6 +16,9 @@
             "version": "latest",
             "name": "dxc",
             "language": "hlsl",
+            "input": {
+                "ext": "hlsl"
+            },
             "output": {
                 "ext": "cso",
                 "append_shader_ext": true

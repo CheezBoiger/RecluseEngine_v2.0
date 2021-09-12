@@ -1,7 +1,7 @@
 {
     "version": "0.0.0",
     "global": {
-        "source_path": "",
+        "source_path": "E:/Users/Magarcia/Github/RecluseEngine_v2.0/Test/ShadersTests",
         "include_paths": [],
         "preprocess": [
             {

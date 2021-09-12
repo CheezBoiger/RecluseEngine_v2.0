@@ -22,28 +22,32 @@ int main(int c, char* argv[])
     
     options.add_options()
         ("c,config", "Metadata configuration file for compiler.", cxxopts::value<string>())
-        ("f,file", "File containing all shaders and their options, to compile.", cxxopts::value<string>());
+        ("f,file", "File containing all shaders and their options, to compile.", cxxopts::value<string>()),
+        ("i,idx", "Compiler index.", cxxopts::value<int>()->default_value("0"));
     options.allow_unrecognised_options();
 
     auto parsed = options.parse(c, argv);
 
     string configPath;
     string compilePath;
+    int compilerIndex = 0;
 
     try {
         configPath       = parsed["config"].as<string>();
         compilePath      = parsed["file"].as<string>();
+        if (parsed.count("idx"))
+            compilerIndex    = parsed["idx"].as<int>();
     } catch (const exception& e) {
         R_ERR("ShaderCompiler", "%s", e.what());
     }
 
-    Recluse::setConfigs(configPath);
+    Recluse::setConfigs(configPath, compilerIndex);
 
     Recluse::ErrType result = Recluse::REC_RESULT_OK;
 
     // Collect our arguments.
     Recluse::setShaderFiles(compilePath);
-    result = Recluse::compileShaders(Recluse::SHADER_LANG_HLSL);
+    result = Recluse::compileShaders(Recluse::SHADER_LANG_GLSL);
 
     if (result != Recluse::REC_RESULT_OK) {
 

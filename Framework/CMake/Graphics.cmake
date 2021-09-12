@@ -122,6 +122,14 @@ if ( RCL_DX12 )
         ${RECLUSE_D3D12_DIR}/D3D12CommandList.cpp
         ${RECLUSE_D3D12_DIR}/D3D12Allocator.hpp
         ${RECLUSE_D3D12_DIR}/D3D12Allocator.cpp
+        ${RECLUSE_D3D12_DIR}/D3D12RenderPass.hpp
+        ${RECLUSE_D3D12_DIR}/D3D12RenderPass.cpp
+        ${RECLUSE_D3D12_DIR}/D3D12DescriptorTableManager.hpp
+        ${RECLUSE_D3D12_DIR}/D3D12DescriptorTableManager.cpp
+        ${RECLUSE_D3D12_DIR}/D3D12Resource.hpp
+        ${RECLUSE_D3D12_DIR}/D3D12Resource.cpp
+        ${RECLUSE_D3D12_DIR}/D3D12ResourceView.hpp
+        ${RECLUSE_D3D12_DIR}/D3D12ResourceView.cpp
     )
     if ( RCL_DXC )
         set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} dxcompiler.lib )
