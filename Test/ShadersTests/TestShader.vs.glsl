@@ -1,12 +1,14 @@
 #version 430
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
+#extension GL_GOOGLE_include_directive : enable
 
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec3 normal;
 layout (location = 2) in vec2 texcoords;
-
-#include "RecluseSceneBuffer.h"
+    
+#include "ViewManip.h"
+#include "RecluseSceneBuffer.h"  
 
 layout (set = 0, binding = 0) uniform Global {
     RecluseSceneView sceneView;

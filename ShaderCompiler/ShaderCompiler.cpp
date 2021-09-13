@@ -105,11 +105,17 @@ static struct {
 } gConfigs;
 
 
+void replaceLine(std::string& in, size_t currentPos, const std::string& from, const std::string& to)
+{
+    in.replace(currentPos, from.size(), to);
+}
+
+
 static std::string generateShaderSceneView(ShaderLang lang)
 {
     ErrType result = REC_RESULT_OK;
     // Scene view buffer string to be passed.
-    std::string sceneViewBufferStr  = "#ifndef __RECLUSE_SCENE_BUFFER_H__\n#define __RECLUSE_SCENE_BUFFER_H__\n";
+    std::string sceneViewBufferStr  = "#ifndef _RECLUSE_SCENE_BUFFER_H_\n#define _RECLUSE_SCENE_BUFFER_H_\n";
     // Start at this file and navigate to the Engine scene view file.
     std::string kShaderCompilerFile = Filesystem::getDirectoryFromPath(__FILE__);
     // Get the file we need.
@@ -235,26 +241,45 @@ ErrType compileShaders(ShaderLang lang)
             Shader::destroy(pShader);
             continue;
         } else {
-
                 // Read the file buffer, and check for the scene buffer header include.
-                std::string shaderSource = "";
-                std::string str = buffer.buffer.data();
+                size_t prevPos              = 0;
+                std::string str             = buffer.buffer.data();
+
                 // Remove the access allocation from the std library string. Still need to figure out why it does that?
                 str = str.substr(0, buffer.buffer.size());
                 std::istringstream iss(str);
                 std::string line;
+
                 while (std::getline(iss, line)) {
+                    size_t currentPos = iss.tellg();
                     size_t pos = line.find(SCENE_BUFFER_INCLUDE); 
                     if (pos != std::string::npos) {
                         // We found the include, now replace with the struct header.
-                        shaderSource += sceneViewBufferStructStr;
+                        replaceLine(str, prevPos, line, sceneViewBufferStructStr);
+                        // Update the stringstream.
+                        iss.str(str);
+                        iss.seekg(prevPos);
+                    } else if (line.find("#include") == 0) {
+                        //  include the file in, because we need to find nested files.
+                        size_t subIDx = line.find_first_of("\"") + 1;
+                        std::string includeFilePath = line.substr(subIDx, line.size() - subIDx);
+                        std::string includeSource = "";
+                        subIDx = includeFilePath.find_first_of("\"");
+                        includeFilePath = includeFilePath.substr(0, subIDx);
+                        result = File::readFrom(&buffer, gConfigs.sourcePath + "/" + includeFilePath);
+                        includeSource = buffer.buffer.data();
+                        includeSource = includeSource.substr(0, buffer.buffer.size());
+                        replaceLine(str, prevPos, line, includeSource);
+                        // update the stringstream.
+                        iss.str(str);
+                        iss.seekg(prevPos);
                     } else {
-                        shaderSource += line;
+                        prevPos = currentPos;
                     }
                 }    
                 
-                R_VERBOSE("ShaderCompiler", "%s", shaderSource.c_str());
-                result = pBuilder->compile(pShader, shaderSource.c_str(), shaderSource.size(), 
+                R_VERBOSE("ShaderCompiler", "%s", str.c_str());
+                result = pBuilder->compile(pShader, str.c_str(), str.size(), 
                     lang, shaderMetadata->shaderType);
 
                 if (result == REC_RESULT_OK) {
