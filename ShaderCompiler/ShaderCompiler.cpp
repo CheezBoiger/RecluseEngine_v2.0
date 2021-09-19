@@ -22,6 +22,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(Recluse::ShaderType,
     {
         { Recluse::SHADER_TYPE_VERTEX,          "vertex" },
         { Recluse::SHADER_TYPE_PIXEL,           "pixel" },
+        { RECLUSE::SHADER_TYPE_FRAGMENT,        "frag" },
         { Recluse::SHADER_TYPE_HULL,            "hull" },
         { Recluse::SHADER_TYPE_DOMAIN,          "domain" },
         { Recluse::SHADER_TYPE_COMPUTE,         "compute" },
@@ -278,7 +279,7 @@ ErrType compileShaders(ShaderLang lang)
                     }
                 }    
                 
-                R_VERBOSE("ShaderCompiler", "%s", str.c_str());
+                R_DEBUG("ShaderCompiler", "%s", str.c_str());
                 result = pBuilder->compile(pShader, str.c_str(), str.size(), 
                     lang, shaderMetadata->shaderType);
 

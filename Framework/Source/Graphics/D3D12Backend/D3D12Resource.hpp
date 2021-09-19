@@ -6,6 +6,7 @@
 
 namespace Recluse {
 
+class D3D12Device;
 
 class D3D12Resource : public GraphicsResource {
 public:
@@ -14,7 +15,7 @@ public:
         : GraphicsResource(desc)
         , m_pResource(nullptr) { }
 
-    ErrType initialize();
+    ErrType initialize(D3D12Device* pDevice, const GraphicsResourceDescription& desc, B32 makeCommitted = false);
     ErrType destroy();
 
 private:

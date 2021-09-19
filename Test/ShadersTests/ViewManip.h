@@ -1,7 +1,6 @@
 #ifndef VIEW_MANIP_H
 #define VIEW_MANIP_H
 
-#include "RecluseSceneBuffer.h"
 #include "Test.h"
 
 vec4 getNearAndFar(inout RecluseSceneView sceneView)
