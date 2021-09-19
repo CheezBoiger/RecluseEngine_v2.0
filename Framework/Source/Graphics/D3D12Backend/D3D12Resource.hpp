@@ -15,7 +15,7 @@ public:
         : GraphicsResource(desc)
         , m_pResource(nullptr) { }
 
-    ErrType initialize(D3D12Device* pDevice, const GraphicsResourceDescription& desc, B32 makeCommitted = false);
+    ErrType initialize(D3D12Device* pDevice, const GraphicsResourceDescription& desc, bool makeCommitted = false);
     ErrType destroy();
 
 private:
