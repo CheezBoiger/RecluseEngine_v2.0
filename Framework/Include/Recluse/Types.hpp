@@ -30,6 +30,7 @@ typedef double              F64;
 typedef U8                  B8;
 typedef U32                 B32;
 typedef U64                 B64;
+typedef bool                Bool;
 
 // Error type to use for error checking.
 typedef I32                 ErrType;

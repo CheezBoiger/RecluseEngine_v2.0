@@ -6,12 +6,31 @@
 #include "Win32/Win32Runtime.hpp"
 #include "Win32/IO/Win32Window.hpp"
 
+#include <hidusage.h>
+
 namespace Recluse {
 
 
 static struct {
     B32 initialized;
 } win32WindowFunctionality = { false };
+
+
+static void setRawInputDevices(HWND hwnd)
+{
+    RAWINPUTDEVICE rid  = { };
+    rid.hwndTarget      = hwnd;
+    
+    rid.usUsage     = HID_USAGE_GENERIC_MOUSE;
+    rid.usUsagePage = HID_USAGE_PAGE_GENERIC;
+    rid.dwFlags     = 0;
+
+    if (!RegisterRawInputDevices(&rid, 1, sizeof(RAWINPUTDEVICE))) {
+
+        R_ERR(R_CHANNEL_WIN32, "Failed to register raw input device to this window handle.");
+
+    }
+}
 
 
 B32 checkWindowRegistered()
@@ -99,6 +118,8 @@ Window* Window::create(const std::string& title, U32 x, U32 y, U32 width, U32 he
 
     MoveWindow(hwnd, 0, 0,
         windowRect.right - windowRect.left, windowRect.bottom - windowRect.top, FALSE);
+
+    setRawInputDevices(hwnd);
 
     UpdateWindow(hwnd);
 

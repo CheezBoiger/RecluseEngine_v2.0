@@ -13,9 +13,10 @@
 namespace Recluse {
 
 
-struct {
+static struct {
     U64 gTicksPerSecond;
     U64 gTime;
+    BYTE lpb[1 << 32];
 } gWin32Runtime;
 
 
@@ -80,6 +81,7 @@ U64 getLastTimeS()
     return gWin32Runtime.gTime;
 }
 
+
 U64 getCurrentTickS()
 {
     LARGE_INTEGER newTick;
@@ -125,10 +127,47 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
             break;
         }
         case WM_INPUT:
+        {
+            RAWINPUT* raw = (RAWINPUT*)gWin32Runtime.lpb;
+            U32 dx, dy;
+            UINT dwSize;
+        
+            if (GetRawInputData((HRAWINPUT)lParam, 
+                                RID_INPUT, 
+                                gWin32Runtime.lpb, 
+                                &dwSize, 
+                                sizeof(RAWINPUTHEADER)) == -1u) 
+            {
+
+                R_WARN(R_CHANNEL_WIN32, "Raw input not returning correct size.");
+                break;
+
+            }
+
+            if (raw->header.dwType == RIM_TYPEMOUSE) {
+                if (raw->data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE) {
+                    dx = raw->data.mouse.lLastX; // get the delta from last mouse pos.
+                    dy = raw->data.mouse.lLastY; // get the delta from last mouse pos.
+                } else {
+                    dx = raw->data.mouse.lLastX;
+                    dy = raw->data.mouse.lLastY;
+                }
+            }
+
+            // TODO: Set the mouse position.
+
+            break;
+        }
         case WM_KEYDOWN:
         case WM_KEYUP:
         case WM_MOVE:
         case WM_SIZE:
+        case WM_MOUSEMOVE:
+        case WM_SYSCOMMAND:
+        case WM_LBUTTONDOWN:
+        case WM_RBUTTONDOWN:
+        case WM_LBUTTONUP:
+        case WM_RBUTTONUP:
         default: break;
     }    
 
