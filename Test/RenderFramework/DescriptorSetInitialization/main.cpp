@@ -187,7 +187,7 @@ int main(int c, char* argv[])
         bindLayout.binding = 0;
         bindLayout.bindType = DESCRIPTOR_CONSTANT_BUFFER;
         bindLayout.numDescriptors = 1;
-        bindLayout.shaderStages = SHADER_TYPE_FRAGEMENT | SHADER_TYPE_VERTEX;
+        bindLayout.shaderStages = SHADER_TYPE_FRAGMENT | SHADER_TYPE_VERTEX;
 
         result = pDevice->createDescriptorSetLayout(&pLayout, desc);
         

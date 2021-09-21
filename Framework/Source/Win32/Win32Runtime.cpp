@@ -16,7 +16,7 @@ namespace Recluse {
 static struct {
     U64 gTicksPerSecond;
     U64 gTime;
-    BYTE lpb[1 << 32];
+    RAWINPUT lpb;
 } gWin32Runtime;
 
 
@@ -128,13 +128,13 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
         }
         case WM_INPUT:
         {
-            RAWINPUT* raw = (RAWINPUT*)gWin32Runtime.lpb;
+            RAWINPUT* raw = &gWin32Runtime.lpb;
             U32 dx, dy;
             UINT dwSize;
         
             if (GetRawInputData((HRAWINPUT)lParam, 
                                 RID_INPUT, 
-                                gWin32Runtime.lpb, 
+                                raw, 
                                 &dwSize, 
                                 sizeof(RAWINPUTHEADER)) == -1u) 
             {
@@ -155,7 +155,6 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
             }
 
             // TODO: Set the mouse position.
-
             break;
         }
         case WM_KEYDOWN:

@@ -153,7 +153,7 @@ int main(int c, char* argv[])
         bind.binding = 0;
         bind.bindType = DESCRIPTOR_CONSTANT_BUFFER;
         bind.numDescriptors = 1;
-        bind.shaderStages = SHADER_TYPE_VERTEX | SHADER_TYPE_FRAGEMENT;
+        bind.shaderStages = SHADER_TYPE_VERTEX | SHADER_TYPE_FRAGMENT;
 
         desc.pDescriptorBinds = &bind;
         
@@ -320,7 +320,7 @@ int main(int c, char* argv[])
     
         }
 
-        result = pBuilder->compile(pFragShader, file.buffer.data(), file.buffer.size(), SHADER_LANG_GLSL, SHADER_TYPE_FRAGEMENT);
+        result = pBuilder->compile(pFragShader, file.buffer.data(), file.buffer.size(), SHADER_LANG_GLSL, SHADER_TYPE_FRAGMENT);
         
         if (result != REC_RESULT_OK) {
     
