@@ -28,6 +28,8 @@ public:
 
     virtual R_EXPORT ErrType destroy() override;
 
+    virtual R_EXPORT ErrType getInput(IInputFeedback& feedback) override;
+
     F32 getXPos() const { return m_xPosition; }
     F32 getYPos() const { return m_yPosition; }
 

@@ -12,6 +12,8 @@ enum ScreenMode {
     SCREEN_MODE_WINDOW_BORDERLESS
 };
 
+class Mouse;
+
 typedef void(*WindowMouseFunction)();
 typedef void(*WindowKeyFunction)();
 typedef void(*OnWindowResizeFunction)();
@@ -30,7 +32,8 @@ public:
         , m_xPos(0)
         , m_yPos(0)
         , m_isMinimized(false)
-        , m_isShowing(false) { }
+        , m_isShowing(false)
+        , m_pMouseHandle(nullptr) { }
 
     // Create the window.
     static R_EXPORT Window* create(const std::string& title, U32 x, U32 y, U32 width, U32 height);
@@ -84,6 +87,10 @@ public:
 
     B32 shouldClose() const { return m_shouldClose; }
 
+    void setMouseHandle(Mouse* pMouse) { m_pMouseHandle = pMouse; }
+
+    Mouse* getMouseHandle() { return m_pMouseHandle; }
+
 private:
     // The window width
     U32 m_width;
@@ -109,5 +116,7 @@ private:
     WindowMouseFunction     m_mouseCallback;
     OnWindowResizeFunction  m_onWindowResizeCallback;
     OnWindowRelocateFunction  m_windowRelocateCallback;
+
+    Mouse* m_pMouseHandle;
 };
 } // Recluse

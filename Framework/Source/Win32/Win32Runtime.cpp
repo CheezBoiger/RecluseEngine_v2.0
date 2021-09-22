@@ -9,6 +9,7 @@
 #include "Recluse/System/Input.hpp"
 #include "Recluse/Messaging.hpp"
 #include "Recluse/System/Window.hpp"
+#include "Recluse/System/Mouse.hpp"
 
 namespace Recluse {
 
@@ -128,9 +129,17 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
         }
         case WM_INPUT:
         {
+            Mouse* pMouse = pWindow->getMouseHandle();
             RAWINPUT* raw = &gWin32Runtime.lpb;
+
             U32 dx, dy;
             UINT dwSize;
+
+            if (!pMouse) {
+                // Break early as there is no mouse attached to this 
+                // window.
+                break;
+            }
         
             if (GetRawInputData((HRAWINPUT)lParam, 
                                 RID_INPUT, 
@@ -146,15 +155,26 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
 
             if (raw->header.dwType == RIM_TYPEMOUSE) {
                 if (raw->data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE) {
-                    dx = raw->data.mouse.lLastX; // get the delta from last mouse pos.
-                    dy = raw->data.mouse.lLastY; // get the delta from last mouse pos.
+                    F32 prevX = pMouse->getLastXPos();
+                    F32 prevY = pMouse->getLastYPos();
+
+                    dx = raw->data.mouse.lLastX - prevX; // get the delta from last mouse pos.
+                    dy = raw->data.mouse.lLastY - prevY; // get the delta from last mouse pos.
+        
                 } else {
                     dx = raw->data.mouse.lLastX;
                     dy = raw->data.mouse.lLastY;
                 }
             }
 
+            IInputFeedback feedback = {};
+            feedback.state = INPUT_STATE_NONE;
+            feedback.xRate = dx;
+            feedback.yRate = dy;
+
             // TODO: Set the mouse position.
+            pMouse->setInput(feedback);
+
             break;
         }
         case WM_KEYDOWN:

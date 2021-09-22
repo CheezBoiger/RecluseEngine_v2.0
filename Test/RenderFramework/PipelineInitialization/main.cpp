@@ -17,6 +17,7 @@
 #include "Recluse/RealtimeTick.hpp"
 #include "Recluse/Filesystem/Filesystem.hpp"
 #include "Recluse/Messaging.hpp"
+#include "Recluse/System/Mouse.hpp"
 
 #include <cmath>
 
@@ -73,7 +74,11 @@ int main(int c, char* argv[])
     GraphicsSwapchain* pSwapchain   = nullptr;
     GraphicsCommandList* pList      = nullptr;
     Window* pWindow                 = Window::create("PipelineInitialization", 0, 0, 512, 512);
+    Mouse* pMouse                   = new Mouse();
     ErrType result                  = REC_RESULT_OK;
+
+    pMouse->initialize("Mouse1");
+    pWindow->setMouseHandle(pMouse);
 
     std::vector<RenderPass*> passes;
 
@@ -421,6 +426,9 @@ int main(int c, char* argv[])
     pDevice->destroyDescriptorSetLayout(pLayout);
     pAdapter->destroyDevice(pDevice);
     GraphicsInstance::destroyInstance(pInstance);
+    Window::destroy(pWindow);
+    pMouse->destroy();
+    delete pMouse;
     Log::destroyLoggingSystem();
     return 0;
 }
