@@ -14,8 +14,8 @@ enum InputState {
 
 
 struct IInputFeedback {
-    F32 xRate;
-    F32 yRate;
+    I32 xRate;
+    I32 yRate;
     InputState state;
 };
 
@@ -28,6 +28,6 @@ public:
 
     virtual ErrType getInput(IInputFeedback& feedback) = 0;
 
-    virtual ErrType setInput(const IInputFeedback& feedback) = 0;
+    virtual ErrType integrateInput(const IInputFeedback& feedback) = 0;
 };
 } // Recluse

@@ -13,6 +13,9 @@ class D3D12Allocator {
 public:
     D3D12Allocator(Allocator* pAllocator = nullptr);
 
+    ErrType initialize();
+    ErrType destroy();
+
     ErrType allocate(ID3D12Resource** pResource, U64 szBytes, U64 alignment);
 
     ErrType free(ID3D12Resource* pResource);

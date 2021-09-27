@@ -3,9 +3,15 @@
 
 namespace Recluse {
 
-ErrType Mouse::setInput(const IInputFeedback& feedback) 
+ErrType Mouse::integrateInput(const IInputFeedback& feedback) 
 {
-    return REC_RESULT_NOT_IMPLEMENTED;
+    
+    I32 xPosition = m_xPosition + feedback.xRate;
+    I32 yPosition = m_yPosition + feedback.yRate;
+
+    updatePosition(xPosition, yPosition);
+
+    return REC_RESULT_OK;
 }
 
 
@@ -22,6 +28,12 @@ ErrType Mouse::destroy()
 
 
 ErrType Mouse::getInput(IInputFeedback& feedback)
+{
+    return REC_RESULT_NOT_IMPLEMENTED;
+}
+
+
+ErrType Mouse::setIconPath(const std::string& iconPath)
 {
     return REC_RESULT_NOT_IMPLEMENTED;
 }

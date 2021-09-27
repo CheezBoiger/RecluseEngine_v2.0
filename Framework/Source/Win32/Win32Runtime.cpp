@@ -129,10 +129,11 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
         }
         case WM_INPUT:
         {
-            Mouse* pMouse = pWindow->getMouseHandle();
-            RAWINPUT* raw = &gWin32Runtime.lpb;
+            IInputFeedback feedback = { };
+            Mouse* pMouse           = pWindow->getMouseHandle();
+            RAWINPUT* raw           = &gWin32Runtime.lpb;
 
-            U32 dx, dy;
+            I32 dx = 0, dy = 0;
             UINT dwSize;
 
             if (!pMouse) {
@@ -155,8 +156,8 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
 
             if (raw->header.dwType == RIM_TYPEMOUSE) {
                 if (raw->data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE) {
-                    F32 prevX = pMouse->getLastXPos();
-                    F32 prevY = pMouse->getLastYPos();
+                    I32 prevX = pMouse->getLastXPos();
+                    I32 prevY = pMouse->getLastYPos();
 
                     dx = raw->data.mouse.lLastX - prevX; // get the delta from last mouse pos.
                     dy = raw->data.mouse.lLastY - prevY; // get the delta from last mouse pos.
@@ -167,13 +168,12 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
                 }
             }
 
-            IInputFeedback feedback = {};
             feedback.state = INPUT_STATE_NONE;
             feedback.xRate = dx;
             feedback.yRate = dy;
 
             // TODO: Set the mouse position.
-            pMouse->setInput(feedback);
+            pMouse->integrateInput(feedback);
 
             break;
         }
