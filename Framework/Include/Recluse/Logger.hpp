@@ -35,17 +35,17 @@ struct Log {
     LogMessage data;
 
     // One time initialize of the data structure for our logging system.
-    static R_EXPORT void initializeLoggingSystem();
+    static R_PUBLIC_API void initializeLoggingSystem();
     
     // Final call once the process is completely finished. 
-    static R_EXPORT void destroyLoggingSystem();
+    static R_PUBLIC_API void destroyLoggingSystem();
 
     Log(LogType type = LogMsg, const std::string& chan = u8"") {
         this->data.type = type;
         data.channel = chan;
     }
 
-    R_EXPORT ~Log();
+    R_PUBLIC_API ~Log();
 
     template<typename Type>
     Log& operator<<(const Type& data) {

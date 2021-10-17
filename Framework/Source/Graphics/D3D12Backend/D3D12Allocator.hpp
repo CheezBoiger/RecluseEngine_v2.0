@@ -19,6 +19,8 @@ public:
     ErrType allocate(ID3D12Resource** pResource, U64 szBytes, U64 alignment);
 
     ErrType free(ID3D12Resource* pResource);
+
+    ErrType collectGarbage();
     
 private:
     ID3D12Heap* m_pHeap;

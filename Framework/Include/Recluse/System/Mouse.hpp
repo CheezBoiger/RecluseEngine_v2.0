@@ -22,15 +22,15 @@ public:
         , m_isClamped(false)
         , m_isEnabled(false) { }
 
-    virtual R_EXPORT ErrType integrateInput(const IInputFeedback& feedback) override;
+    virtual R_PUBLIC_API ErrType integrateInput(const IInputFeedback& feedback) override;
 
-    virtual R_EXPORT ErrType initialize(const std::string& controllerName) override;
+    virtual R_PUBLIC_API ErrType initialize(const std::string& controllerName) override;
 
-    virtual R_EXPORT ErrType destroy() override;
+    virtual R_PUBLIC_API ErrType destroy() override;
 
-    virtual R_EXPORT ErrType getInput(IInputFeedback& feedback) override;
+    virtual R_PUBLIC_API ErrType getInput(IInputFeedback& feedback) override;
 
-    R_EXPORT ErrType setIconPath(const std::string& iconPath);
+    R_PUBLIC_API ErrType setIconPath(const std::string& iconPath);
 
     I32 getXPos() const { return m_xPosition; }
     I32 getYPos() const { return m_yPosition; }

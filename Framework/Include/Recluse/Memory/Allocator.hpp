@@ -20,7 +20,7 @@ typedef struct Allocation {
 
 //! Recluse Allocator class. This is the abstract class that is used for defining multiple allocation
 //! data structures.
-class R_EXPORT Allocator {
+class R_PUBLIC_API Allocator {
 public:
     virtual ~Allocator() { }
 

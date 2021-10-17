@@ -8,18 +8,18 @@
 namespace Recluse {
 
 
-struct R_EXPORT AdapterInfo {
+struct R_PUBLIC_API AdapterInfo {
     char            deviceName[256];
     U32             vendorId;
     char*           vendorName;
 };
 
 
-struct R_EXPORT AdapterLimits {
+struct R_PUBLIC_API AdapterLimits {
     
 };
 
-struct R_EXPORT DeviceCreateInfo {
+struct R_PUBLIC_API DeviceCreateInfo {
     void*                       winHandle;
     SwapchainCreateDescription  swapchainDescription; // Swapchain description, if a window handle is present.
     U32                         buffering; // buffered resources count. 
@@ -27,7 +27,7 @@ struct R_EXPORT DeviceCreateInfo {
 
 class GraphicsDevice;
 
-class R_EXPORT GraphicsAdapter {
+class R_PUBLIC_API GraphicsAdapter {
 public:
     virtual ~GraphicsAdapter() { }
 

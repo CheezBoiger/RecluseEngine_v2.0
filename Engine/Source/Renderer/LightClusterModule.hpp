@@ -7,6 +7,8 @@ namespace Recluse {
 namespace LightCluster {
 
 
-void cull(GraphicsCommandList* pCmdList);
+void cullLights(GraphicsCommandList* pCmdList);
+void combineForward(GraphicsCommandList* pCmdList, U64* keys, U64 sz);
+void combineDeferred(GraphicsCommandList* pCmdList);
 } // LightCluster
 } // Recluse

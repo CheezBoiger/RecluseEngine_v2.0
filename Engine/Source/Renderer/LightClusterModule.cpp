@@ -19,9 +19,19 @@ GraphicsResource* pLightGrid            = nullptr;
 GraphicsResource* pLightIndices         = nullptr;
 
 
-void cull(GraphicsCommandList* pList)
+void cullLights(GraphicsCommandList* pList)
 {
     
+}
+
+
+void combineForward(GraphicsCommandList* pList, U64* keys, U64 sz)
+{
+}
+
+
+void combineDeferred(GraphicsCommandList* pList)
+{
 }
 } // LightCluster
 } // Recluse

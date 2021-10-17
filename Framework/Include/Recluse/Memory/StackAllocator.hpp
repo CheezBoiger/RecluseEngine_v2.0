@@ -9,7 +9,7 @@ namespace Recluse {
 
 // Stack allocator, or linear allocator, which handles 
 // temporary data to be used briefly.
-class R_EXPORT StackAllocator : public Allocator {
+class R_PUBLIC_API StackAllocator : public Allocator {
 public:
     StackAllocator()
         : m_top(0ull) { }

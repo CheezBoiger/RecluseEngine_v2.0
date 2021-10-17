@@ -8,7 +8,7 @@
 namespace Recluse {
 
 
-struct R_EXPORT Float3 {
+struct R_PUBLIC_API Float3 {
     union {
         struct { F32 x, y, z; };
         struct { F32 r, g, b; };
@@ -40,10 +40,10 @@ struct R_EXPORT Float3 {
     inline Float3 operator>=(const Float3& rh) const;
     inline Float3 operator<=(const Float3& rh) const;
 
-    inline R_EXPORT friend Float3 operator*(F32 scalar, const Float3& rh);
-    inline R_EXPORT friend Float3 operator+(F32 scalar, const Float3& rh);
-    inline R_EXPORT friend Float3 operator-(F32 scalar, const Float3& rh);
-    inline R_EXPORT friend Float3 operator/(F32 scalar, const Float3& rh);
+    inline R_PUBLIC_API friend Float3 operator*(F32 scalar, const Float3& rh);
+    inline R_PUBLIC_API friend Float3 operator+(F32 scalar, const Float3& rh);
+    inline R_PUBLIC_API friend Float3 operator-(F32 scalar, const Float3& rh);
+    inline R_PUBLIC_API friend Float3 operator/(F32 scalar, const Float3& rh);
 };
 
 
@@ -80,7 +80,7 @@ struct Int3 {
 };
 
 
-struct R_EXPORT UInt3 {
+struct R_PUBLIC_API UInt3 {
     union {
         struct { U32 x, y, z; };
         struct { U32 r, g, b; };
@@ -89,7 +89,7 @@ struct R_EXPORT UInt3 {
 };
 
 
-struct R_EXPORT Short3 {
+struct R_PUBLIC_API Short3 {
     union {
         struct { I16 x, y, z; };
         struct { I16 r, g, b; };
@@ -98,7 +98,7 @@ struct R_EXPORT Short3 {
 };
 
 
-struct R_EXPORT UShort3 {
+struct R_PUBLIC_API UShort3 {
     union {
         struct { U16 x, y, z; };
         struct { U16 r, g, b; };
@@ -106,9 +106,9 @@ struct R_EXPORT UShort3 {
     };
 };
 
-R_EXPORT Float3  cross(const Float3& lh, const Float3& rh);
-R_EXPORT F32     dot(const Float3& lh, const Float3& rh);
-R_EXPORT F32     length(const Float3& v);
-R_EXPORT F32     length2(const Float3& v);
-R_EXPORT Float3  normalize(const Float3& v);
+R_PUBLIC_API Float3  cross(const Float3& lh, const Float3& rh);
+R_PUBLIC_API F32     dot(const Float3& lh, const Float3& rh);
+R_PUBLIC_API F32     length(const Float3& v);
+R_PUBLIC_API F32     length2(const Float3& v);
+R_PUBLIC_API Float3  normalize(const Float3& v);
 } // Reclue

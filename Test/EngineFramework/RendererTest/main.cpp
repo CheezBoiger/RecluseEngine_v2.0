@@ -37,7 +37,8 @@ int main(int c, char* argv[])
     while (!pWindow->shouldClose()) {
         DrawRenderCommand rcmd = { };
         rcmd.op = COMMAND_OP_DRAWABLE_INSTANCED;
-        rcmd.flags = RENDER_HAS_POSITION | RENDER_HAS_NORMAL | RENDER_PREZ;
+        rcmd.flags = RENDER_PREZ;
+        rcmd.vertexTypeFlags = VERTEX_ATTRIB_POSITION | VERTEX_ATTRIB_NORMAL;
         rcmd.numSubMeshes = 0;
 
         pRenderer->pushRenderCommand(rcmd);

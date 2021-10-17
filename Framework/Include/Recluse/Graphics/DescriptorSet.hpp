@@ -44,14 +44,14 @@ struct DescriptorSetBind {
     };
 };
 
-class R_EXPORT DescriptorSetLayout {
+class R_PUBLIC_API DescriptorSetLayout {
 public:
     DescriptorSetLayout() { }
     virtual ~DescriptorSetLayout() { }
 };
 
 
-class R_EXPORT DescriptorSet {
+class R_PUBLIC_API DescriptorSet {
 public:
 
     virtual ErrType update(DescriptorSetBind* pBinds, U32 bindCount) { return REC_RESULT_NOT_IMPLEMENTED; }

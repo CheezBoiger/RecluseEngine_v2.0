@@ -7,7 +7,7 @@
 namespace Recluse {
 
 
-struct R_EXPORT Matrix22 {
+struct R_PUBLIC_API Matrix22 {
     struct { F32 m[4]; };
 
     F32& operator[](U32 i) { return m[i]; }

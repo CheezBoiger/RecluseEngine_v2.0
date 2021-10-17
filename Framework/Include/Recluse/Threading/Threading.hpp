@@ -5,6 +5,7 @@
 
 namespace Recluse {
 
+// Thread function, used and called as the start routine for creating threads.
 typedef ErrType (*ThreadFunction)(void* data);
 
 enum ThreadResultCode {
@@ -14,28 +15,61 @@ enum ThreadResultCode {
     THREAD_RESULT_OK            = 0,
 };
 
-struct R_EXPORT Thread {
+
+enum ThreadState {
+    THREAD_STATE_NOT_RUNNING,
+    THREAD_STATE_RUNNING,
+    THREAD_STATE_SUSPENDED,
+    THREAD_STATE_IDLE,
+    THREAD_STATE_UNKNOWN
+};
+
+struct R_PUBLIC_API Thread {
     ThreadFunction      func;
     void*               payload;
     SizeT               uid;
     void*               handle;
     U32                 resultCode;
+    U32                 threadState;
 };
 
 
-R_EXPORT ErrType createThread(Thread* thread, ThreadFunction startRoutine);
-R_EXPORT ErrType resumeThread(Thread* thread);
-R_EXPORT ErrType stopThread(Thread* thread);
-R_EXPORT ErrType detachThread(Thread* thread);
-R_EXPORT ErrType joinThread(Thread* thread);
-R_EXPORT ErrType killThread(Thread* thread);
+typedef void* Mutex;
+typedef void* Cond;
 
-R_EXPORT void* createMutex();
-R_EXPORT ErrType lockMutex(void* mutex);
-R_EXPORT ErrType unlockMutex(void* mutex);
-R_EXPORT ErrType waitMutex(void* mutex, U64 waitTimeMs);
-R_EXPORT ErrType destroyMutex(void* mutex);
+R_PUBLIC_API ErrType createThread(Thread* thread, ThreadFunction startRoutine);
+R_PUBLIC_API ErrType resumeThread(Thread* thread);
+R_PUBLIC_API ErrType stopThread(Thread* thread);
+R_PUBLIC_API ErrType detachThread(Thread* thread);
+R_PUBLIC_API ErrType joinThread(Thread* thread);
+R_PUBLIC_API ErrType killThread(Thread* thread);
 
-R_EXPORT ErrType atomicAdd();
-R_EXPORT ErrType atomicSub();
+R_PUBLIC_API Mutex   createMutex();
+R_PUBLIC_API ErrType lockMutex(Mutex mutex);
+R_PUBLIC_API ErrType unlockMutex(Mutex mutex);
+R_PUBLIC_API ErrType waitMutex(Mutex mutex, U64 waitTimeMs);
+R_PUBLIC_API ErrType destroyMutex(Mutex mutex);
+
+R_PUBLIC_API ErrType atomicAdd();
+R_PUBLIC_API ErrType atomicSub();
+
+// C++ RAII locking mechanism within a scope.
+class R_PUBLIC_API ScopedLock {
+public:
+    ScopedLock(Mutex mutex) 
+        : m_mut(mutex)
+    {
+        lockMutex(m_mut); 
+    }
+
+    ~ScopedLock() 
+    {
+        unlockMutex(m_mut); 
+    }
+private:
+    Mutex m_mut;
+
+    ScopedLock(const ScopedLock&)   = delete;
+    ScopedLock(ScopedLock&&)        = delete;
+};
 } // Recluse

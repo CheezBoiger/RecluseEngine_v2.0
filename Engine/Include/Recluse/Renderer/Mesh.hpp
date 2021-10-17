@@ -21,14 +21,14 @@ namespace Engine {
 
 
 // Per mesh information.
-struct R_EXPORT PerMeshTransform {
+struct R_PUBLIC_API PerMeshTransform {
     Matrix44 world;
     Matrix44 worldToViewClip;
     Matrix44 n;
 };
 
 
-struct R_EXPORT SubMesh {
+struct R_PUBLIC_API SubMesh {
     std::string name;
     U64         offset;
     U64         numVertices;
@@ -39,18 +39,18 @@ class Mesh {
 public:
     virtual ~Mesh() { }
 
-    R_EXPORT Mesh()
+    R_PUBLIC_API Mesh()
         : m_pVertexBuffer(nullptr)
         , m_pIndexBuffer(nullptr) { }
 
-    R_EXPORT ErrType initialize(VertexBuffer* pVertexBuffer, IndexBuffer* pIndexBuffer);
+    R_PUBLIC_API ErrType initialize(VertexBuffer* pVertexBuffer, IndexBuffer* pIndexBuffer);
 
-    R_EXPORT VertexBuffer* getVertexBuffer() { return m_pVertexBuffer; }
-    R_EXPORT IndexBuffer* getIndexBuffer() { return m_pIndexBuffer; }
+    R_PUBLIC_API VertexBuffer* getVertexBuffer() { return m_pVertexBuffer; }
+    R_PUBLIC_API IndexBuffer* getIndexBuffer() { return m_pIndexBuffer; }
 
-    R_EXPORT const std::vector<SubMesh*>& getSubMeshes() { return m_submeshes; };
+    R_PUBLIC_API const std::vector<SubMesh*>& getSubMeshes() { return m_submeshes; };
 
-    R_EXPORT void addSubmeshes(U32 numSubmeshes, SubMesh* pSubmeshes) {
+    R_PUBLIC_API void addSubmeshes(U32 numSubmeshes, SubMesh* pSubmeshes) {
         for (U32 i = 0; i < numSubmeshes; ++i) { 
             m_subMeshMap[pSubmeshes[i].name] = pSubmeshes[i];
             m_submeshes.push_back(&m_subMeshMap[pSubmeshes[i].name]);

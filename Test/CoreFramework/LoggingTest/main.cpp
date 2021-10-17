@@ -48,7 +48,7 @@ int main(int c, char* argv[])
     
     for (U32 i = 0; i < threads.size(); ++i) {
         uids[i] = i;
-        threads[i].payload = &uids[i]; 
+        threads[i].payload = &uids[i];
         createThread(&threads[i], printHello);
     
     }

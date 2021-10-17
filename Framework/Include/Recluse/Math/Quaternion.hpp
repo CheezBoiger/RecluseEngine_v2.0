@@ -10,7 +10,7 @@
 namespace Recluse {
 
 
-struct R_EXPORT Quaternion {
+struct R_PUBLIC_API Quaternion {
 
     F32 x, y, z, w;
     
@@ -35,16 +35,16 @@ struct R_EXPORT Quaternion {
 };
 
 
-R_EXPORT Quaternion normalize(const Quaternion& quat);
-R_EXPORT F32        norm(const Quaternion& quat);
-R_EXPORT F32        norm2(const Quaternion& quat);
-R_EXPORT F32        dot(const Quaternion& a, const Quaternion& b);
-R_EXPORT Quaternion lookRotation(const Float3& dir, const Float3& up);
-R_EXPORT Quaternion conjugate(const Quaternion& quat);
-R_EXPORT Quaternion inverse(const Quaternion& quat);
-R_EXPORT Quaternion angleAxis(const Float3& axis, F32 radians);
-R_EXPORT Quaternion eulerToQuat(const Float3& euler);
-R_EXPORT Float3     quatToEuler(const Quaternion& quat);
-R_EXPORT Matrix44   quatToMat44(const Quaternion& quat);
-R_EXPORT Quaternion slerp(const Quaternion& a, const Quaternion& b, F32 t);
+R_PUBLIC_API Quaternion normalize(const Quaternion& quat);
+R_PUBLIC_API F32        norm(const Quaternion& quat);
+R_PUBLIC_API F32        norm2(const Quaternion& quat);
+R_PUBLIC_API F32        dot(const Quaternion& a, const Quaternion& b);
+R_PUBLIC_API Quaternion lookRotation(const Float3& dir, const Float3& up);
+R_PUBLIC_API Quaternion conjugate(const Quaternion& quat);
+R_PUBLIC_API Quaternion inverse(const Quaternion& quat);
+R_PUBLIC_API Quaternion angleAxis(const Float3& axis, F32 radians);
+R_PUBLIC_API Quaternion eulerToQuat(const Float3& euler);
+R_PUBLIC_API Float3     quatToEuler(const Quaternion& quat);
+R_PUBLIC_API Matrix44   quatToMat44(const Quaternion& quat);
+R_PUBLIC_API Quaternion slerp(const Quaternion& a, const Quaternion& b, F32 t);
 } // Recluse

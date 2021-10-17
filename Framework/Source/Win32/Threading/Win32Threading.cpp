@@ -22,6 +22,9 @@ ErrType createThread(Thread* pThread, ThreadFunction startRoutine)
 
     handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)startRoutine, 
                 pThread->payload, 0, (LPDWORD)&pThread->uid);
+
+    pThread->threadState    = THREAD_STATE_RUNNING;
+    pThread->resultCode     = THREAD_RESULT_NOT_READY;
     
     exitCodeSuccess     = GetExitCodeThread(handle, &resultCode);
     pThread->resultCode = resultCode;
@@ -29,7 +32,9 @@ ErrType createThread(Thread* pThread, ThreadFunction startRoutine)
     if (handle == NULL) {
        
         R_ERR(R_CHANNEL_WIN32, "Failed to create thread! Result: %d", GetLastError());
-        
+
+        pThread->threadState = THREAD_STATE_UNKNOWN;
+
         return REC_RESULT_FAILED;
     }
 
@@ -47,6 +52,7 @@ ErrType joinThread(Thread* pThread)
     
     WaitForSingleObject(pThread->handle, INFINITE);
     GetExitCodeThread(pThread->handle, (LPDWORD)&pThread->resultCode);
+    pThread->threadState = THREAD_STATE_NOT_RUNNING;
 
     return REC_RESULT_OK;
 }
@@ -56,20 +62,50 @@ ErrType killThread(Thread* pThread)
 {
     R_ASSERT(pThread != NULL);
 
+    R_DEBUG(R_CHANNEL_WIN32, "Killing thread=%d ...", pThread->uid);
+
     TerminateThread(pThread->handle, 0);
-    
+
+    pThread->threadState = THREAD_STATE_UNKNOWN;
+
     return REC_RESULT_OK;
 }
 
 
-void* createMutex()
+ErrType stopThread(Thread* pThread)
+{
+    R_ASSERT(pThread != NULL);
+    R_ASSERT(pThread->threadState == THREAD_STATE_RUNNING); 
+
+    SuspendThread(pThread->handle);
+    
+    pThread->threadState = THREAD_STATE_SUSPENDED;
+
+    return REC_RESULT_OK;
+}
+
+
+ErrType resumeThread(Thread* pThread)
+{
+    R_ASSERT(pThread != NULL);
+    R_ASSERT(pThread->threadState == THREAD_STATE_SUSPENDED);
+
+    ResumeThread(pThread->handle);
+
+    pThread->threadState = THREAD_STATE_RUNNING;    
+
+    return REC_RESULT_OK;
+}
+
+
+Mutex createMutex()
 {
     HANDLE handle = CreateMutex(nullptr, FALSE, nullptr);
     return handle;
 }
 
 
-ErrType destroyMutex(void* mutex)
+ErrType destroyMutex(Mutex mutex)
 {
     if (!mutex) {
 
@@ -83,7 +119,7 @@ ErrType destroyMutex(void* mutex)
 }
 
 
-ErrType lockMutex(void* mutex)
+ErrType lockMutex(Mutex mutex)
 {
     DWORD result = WaitForSingleObject(mutex, INFINITE);
 
@@ -101,14 +137,14 @@ ErrType lockMutex(void* mutex)
 }
 
 
-ErrType unlockMutex(void* mutex)
+ErrType unlockMutex(Mutex mutex)
 {
     ReleaseMutex(mutex);
     return REC_RESULT_OK;
 }
 
 
-ErrType waitMutex(void* mutex, U64 waitTimeMs)
+ErrType waitMutex(Mutex mutex, U64 waitTimeMs)
 {
     DWORD result = WaitForSingleObject(mutex, (DWORD)waitTimeMs);
 

@@ -11,7 +11,7 @@ namespace Recluse {
 
 // ShaderBuilder, handles high level shading languages, and transforms them into
 // bytecode to be read to the gpu.
-class R_EXPORT ShaderBuilder {
+class R_PUBLIC_API ShaderBuilder {
 public:
     ShaderBuilder(ShaderIntermediateCode imm)
         : m_imm(imm) { }
@@ -42,8 +42,8 @@ private:
 };
 
 // Must be newly allocated.
-R_EXPORT ShaderBuilder* createGlslangShaderBuilder(ShaderIntermediateCode imm);
-R_EXPORT ShaderBuilder* createDxcShaderBuilder(ShaderIntermediateCode imm);
+R_PUBLIC_API ShaderBuilder* createGlslangShaderBuilder(ShaderIntermediateCode imm);
+R_PUBLIC_API ShaderBuilder* createDxcShaderBuilder(ShaderIntermediateCode imm);
 
 static void freeShaderBuilder(ShaderBuilder* pBuilder) {
     delete pBuilder;

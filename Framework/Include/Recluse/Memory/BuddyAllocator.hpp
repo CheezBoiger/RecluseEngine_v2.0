@@ -19,7 +19,7 @@ struct BuddyBlock {
 
 // Buddy allocator implementation.
 //
-class R_EXPORT BuddyAllocator : public Allocator {
+class R_PUBLIC_API BuddyAllocator : public Allocator {
 private:
     ErrType onInitialize() override;
     ErrType onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override;

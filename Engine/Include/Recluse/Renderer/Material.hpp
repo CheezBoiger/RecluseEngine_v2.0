@@ -13,7 +13,7 @@ namespace Engine {
 
 class Renderer;
 
-class R_EXPORT Texture2D {
+class R_PUBLIC_API Texture2D {
 public:
     Texture2D() 
         : m_resource(nullptr) { }
@@ -34,7 +34,7 @@ private:
 };
 
 
-class R_EXPORT TextureView {
+class R_PUBLIC_API TextureView {
 public:
     TextureView()
         : m_texture(nullptr)
@@ -81,35 +81,35 @@ class Material {
 public:
     virtual ~Material() { }
 
-    R_EXPORT Material(MaterialType type) 
+    R_PUBLIC_API Material(MaterialType type) 
         : m_matType(type)
         , m_flags(0) { }
 
-    R_EXPORT MaterialType getMatType() const { return m_matType; }
+    R_PUBLIC_API MaterialType getMatType() const { return m_matType; }
 
-    R_EXPORT B32 addTex(Texture2D* pTexture, const std::string& attrib) {
+    R_PUBLIC_API B32 addTex(Texture2D* pTexture, const std::string& attrib) {
         m_matMap[attrib] = pTexture;
         return true;
     }
 
-    R_EXPORT B32 hasTex(const std::string& attrib) {
+    R_PUBLIC_API B32 hasTex(const std::string& attrib) {
         return m_matMap.find(attrib) != m_matMap.end();
     }
 
-    R_EXPORT Texture2D* getTex(const std::string& attrib) {
+    R_PUBLIC_API Texture2D* getTex(const std::string& attrib) {
         return m_matMap[attrib];
     }
 
-    R_EXPORT B32 removeTex(const std::string& attrib) {
+    R_PUBLIC_API B32 removeTex(const std::string& attrib) {
         if (hasTex(attrib)) {
             m_matMap.erase(attrib);
         }
         return false;    
     }
 
-    R_EXPORT void setSurfaceType(SurfaceTypeFlags flags) { m_flags = flags; }
+    R_PUBLIC_API void setSurfaceType(SurfaceTypeFlags flags) { m_flags = flags; }
 
-    R_EXPORT SurfaceTypeFlags getSurfaceTypeFlags() { return m_flags; }
+    R_PUBLIC_API SurfaceTypeFlags getSurfaceTypeFlags() { return m_flags; }
 
 protected:
     SurfaceTypeFlags m_flags;

@@ -15,7 +15,7 @@ struct MapRange {
 
 // Graphics Resource description.
 //
-class R_EXPORT GraphicsResource {
+class R_PUBLIC_API GraphicsResource {
 public:
     GraphicsResource(GraphicsResourceDescription& desc)
         : m_desc(desc) { }

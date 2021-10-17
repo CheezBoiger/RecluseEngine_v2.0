@@ -47,6 +47,8 @@ static void printLog(const LogMessage* log)
 
 ErrType displayFunction(void* data)
 {
+    (void)data;
+
     while (isLogging) {
 
         LogMessage* pLog    = nullptr;
@@ -90,7 +92,7 @@ void LoggingQueue::store(const Log& log)
     alignedSzBytes          = R_ALLOC_MASK(alignedSzBytes, ARCH_PTR_SZ_BYTES);
     SizeT poolSzBytes       = m_pool->getTotalSizeBytes();
 
-    lockMutex(m_mutex);
+    ScopedLock lck(m_mutex);
 
     if (!m_head) {
 
@@ -142,14 +144,12 @@ void LoggingQueue::store(const Log& log)
         }
 
     }
-
-    unlockMutex(m_mutex);
 }
 
 
 void LoggingQueue::dequeue()
 {
-    lockMutex(m_mutex);
+    ScopedLock scoped(m_mutex);
 
     if (m_tail != m_head) {
 
@@ -164,8 +164,6 @@ void LoggingQueue::dequeue()
         m_head = nullptr;
 
     }
-
-    unlockMutex(m_mutex);
 }
 
 
@@ -245,12 +243,9 @@ LogMessage* LoggingQueue::getHead() const
 {
     LogMessage* pLog = nullptr;
 
-    lockMutex(m_mutex);
+    ScopedLock lck(m_mutex);
 
     pLog = (m_head) ? &m_head->logMessage : nullptr;
-
-    unlockMutex(m_mutex);
-
     return pLog;    
 }
 } // Recluse

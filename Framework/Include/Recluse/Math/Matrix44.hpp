@@ -7,7 +7,7 @@
 namespace Recluse {
 
 
-struct R_EXPORT Matrix44 {
+struct R_PUBLIC_API Matrix44 {
     F32 m[16];
 
     Matrix44(F32 a00 = 1.0f, F32 a01 = 0.0f, F32 a02 = 0.0f, F32 a03 = 0.0f,
@@ -43,19 +43,19 @@ struct R_EXPORT Matrix44 {
     inline Matrix44 operator/=(F32 scalar) const;
 };
 
-R_EXPORT Matrix44 rotate(const Matrix44& init, const Float3& axis, F32 radius);
-R_EXPORT Matrix44 transpose(const Matrix44& init);
-R_EXPORT Matrix44 identity();
-R_EXPORT Matrix44 translate(const Matrix44& init, const Float3& trans);
-R_EXPORT Matrix44 scale(const Matrix44& init, const Float4& scalar);
-R_EXPORT Matrix44 adjugate(const Matrix44& init);
-R_EXPORT Matrix44 inverse(const Matrix44& init);
-R_EXPORT F32      determinant(const Matrix44& init);
-R_EXPORT Matrix44 perspectiveLH(F32 fov, F32 aspect, F32 ne, F32 fa);
-R_EXPORT Matrix44 perspectiveRH(F32 fov, F32 aspect, F32 ne, F32 fa);
-R_EXPORT Matrix44 orthographicLH(F32 top, F32 bottom, F32 left, F32 right, F32 ne, F32 fa);
-R_EXPORT Matrix44 orthographicRH(F32 top, F32 bottom, F32 left, F32 right, F32 ne, F32 fa);
-R_EXPORT Matrix44 lookAt(const Float3& position, const Float3& target, const Float3& up);
-R_EXPORT Matrix44 lookAtRH(const Float3& position, const Float3& target, const Float3& up);
-R_EXPORT Matrix44 operator*(const Matrix44& lh, const Float4& rh);
+R_PUBLIC_API Matrix44 rotate(const Matrix44& init, const Float3& axis, F32 radius);
+R_PUBLIC_API Matrix44 transpose(const Matrix44& init);
+R_PUBLIC_API Matrix44 identity();
+R_PUBLIC_API Matrix44 translate(const Matrix44& init, const Float3& trans);
+R_PUBLIC_API Matrix44 scale(const Matrix44& init, const Float4& scalar);
+R_PUBLIC_API Matrix44 adjugate(const Matrix44& init);
+R_PUBLIC_API Matrix44 inverse(const Matrix44& init);
+R_PUBLIC_API F32      determinant(const Matrix44& init);
+R_PUBLIC_API Matrix44 perspectiveLH(F32 fov, F32 aspect, F32 ne, F32 fa);
+R_PUBLIC_API Matrix44 perspectiveRH(F32 fov, F32 aspect, F32 ne, F32 fa);
+R_PUBLIC_API Matrix44 orthographicLH(F32 top, F32 bottom, F32 left, F32 right, F32 ne, F32 fa);
+R_PUBLIC_API Matrix44 orthographicRH(F32 top, F32 bottom, F32 left, F32 right, F32 ne, F32 fa);
+R_PUBLIC_API Matrix44 lookAt(const Float3& position, const Float3& target, const Float3& up);
+R_PUBLIC_API Matrix44 lookAtRH(const Float3& position, const Float3& target, const Float3& up);
+R_PUBLIC_API Matrix44 operator*(const Matrix44& lh, const Float4& rh);
 } // Recluse

@@ -126,14 +126,23 @@ void Renderer::render()
         }
 
         PreZ::generate(m_commandList, m_renderCommands, 
-            m_commandKeys[RENDER_PREZ].data(), m_commandKeys[RENDER_PREZ].size());
+            m_commandKeys[RENDER_PREZ].data(), 
+            m_commandKeys[RENDER_PREZ].size());
 
         // Asyncronous Queue -> Do Light culling here.
-        LightCluster::cull(m_commandList);
+        LightCluster::cullLights(m_commandList);
 
         AOV::generate(m_commandList, m_renderCommands,
-            m_commandKeys[RENDER_GBUFFER].data(), m_commandKeys[RENDER_GBUFFER].size());
-        
+            m_commandKeys[RENDER_GBUFFER].data(), 
+            m_commandKeys[RENDER_GBUFFER].size());
+
+        // Deferred rendering combine.
+        LightCluster::combineDeferred(m_commandList);
+
+        // Forward pass combine.
+        LightCluster::combineForward(m_commandList, 
+            m_commandKeys[RENDER_FORWARD_OPAQUE].data(), 
+            m_commandKeys[RENDER_FORWARD_OPAQUE].size());
 
     m_commandList->end();
 
@@ -288,7 +297,7 @@ void Renderer::pushRenderCommand(const RenderCommand& renderCommand)
 
     // Store mesh commands to be referenced for each draw pass.
     CommandKey key                  = { m_renderCommands->getNumberCommands() };
-    PassTypeFlags renderFlags       = renderCommand.flags;
+    RenderPassTypeFlags renderFlags       = renderCommand.flags;
 
     if (renderFlags & RENDER_PREZ) {
         m_commandKeys[RENDER_PREZ].push_back(key.value);

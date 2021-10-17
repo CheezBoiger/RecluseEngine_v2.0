@@ -3,7 +3,7 @@
 
 #if defined(_WIN32)
 #define RECLUSE_WINDOWS 1
-#define R_EXPORT __declspec(dllexport)
+#define R_PUBLIC_API __declspec(dllexport)
 #define R_IMPORT __declspec(dllimport)
 #define R_FORCEINLINE __forceinline
 #define R_NOVTABLE __declspec(novtable)
@@ -14,7 +14,7 @@
 #endif
 #elif deifned(__linux__)
 #define RECLUSE_LINUX
-#define R_EXPORT
+#define R_PUBLIC_API
 #define R_IMPORT
 #define R_FORCEINLINE 
 #define R_NOVTABLE

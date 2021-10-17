@@ -14,7 +14,7 @@
 namespace Recluse {
 
 
-struct R_EXPORT ApplicationInfo {
+struct R_PUBLIC_API ApplicationInfo {
     const char* appName;
     const char* engineName;
     U32         appMajor : 10;
@@ -32,17 +32,17 @@ class GraphicsAdapter;
 class GraphicsInstance {
 public:
 
-    static R_EXPORT GraphicsInstance* createInstance(enum GraphicsAPI api = GRAPHICS_API_VULKAN);
-    static R_EXPORT ErrType destroyInstance(GraphicsInstance* pInstance);
+    static R_PUBLIC_API GraphicsInstance* createInstance(enum GraphicsAPI api = GRAPHICS_API_VULKAN);
+    static R_PUBLIC_API ErrType destroyInstance(GraphicsInstance* pInstance);
 
-    R_EXPORT ErrType initialize(const ApplicationInfo& appInfo, EnableLayerFlags flags) { 
+    R_PUBLIC_API ErrType initialize(const ApplicationInfo& appInfo, EnableLayerFlags flags) { 
         ErrType err = onInitialize(appInfo, flags);
         queryGraphicsAdapters();
         return err;
     }
 
     // Get available adapters.
-    R_EXPORT std::vector<GraphicsAdapter*>& getGraphicsAdapters() { return m_graphicsAdapters; }
+    R_PUBLIC_API std::vector<GraphicsAdapter*>& getGraphicsAdapters() { return m_graphicsAdapters; }
 
 protected:
     // Called in initialize.

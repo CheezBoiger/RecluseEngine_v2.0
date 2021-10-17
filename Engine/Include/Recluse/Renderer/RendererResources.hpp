@@ -34,7 +34,7 @@ static std::string getBinaryShaderPath(const std::string& relativePath)
 }
 
 
-class R_EXPORT GPUBuffer {
+class R_PUBLIC_API GPUBuffer {
 public:
     GPUBuffer()
         : m_pResource(nullptr)
@@ -57,7 +57,7 @@ private:
 };
 
 
-class R_EXPORT IndexBuffer : public GPUBuffer {
+class R_PUBLIC_API IndexBuffer : public GPUBuffer {
 public:
     IndexBuffer() { }
 
@@ -82,7 +82,7 @@ private:
 };
 
 
-class R_EXPORT VertexBuffer : public GPUBuffer {
+class R_PUBLIC_API VertexBuffer : public GPUBuffer {
 public:
     VertexBuffer() { }
 

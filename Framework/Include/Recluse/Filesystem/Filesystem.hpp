@@ -12,7 +12,7 @@ struct FileBufferData {
 };
 
 
-struct R_EXPORT File {
+struct R_PUBLIC_API File {
     File()
         : m_isOpen(false)
         , m_fileHandle(nullptr) { }
@@ -37,11 +37,11 @@ private:
 
 class Filesystem {
 public:
-    static R_EXPORT std::string getCurrentDir();
-    static R_EXPORT std::string getDirectoryFromPath(const std::string& path);
+    static R_PUBLIC_API std::string getCurrentDir();
+    static R_PUBLIC_API std::string getDirectoryFromPath(const std::string& path);
 
-    static R_EXPORT std::string isFile(const std::string& path);
+    static R_PUBLIC_API std::string isFile(const std::string& path);
 
-    static R_EXPORT std::string join(const std::string& path0, const std::string& path1);
+    static R_PUBLIC_API std::string join(const std::string& path0, const std::string& path1);
 };
 } // Recluse 

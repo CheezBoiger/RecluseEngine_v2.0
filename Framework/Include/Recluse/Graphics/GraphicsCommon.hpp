@@ -92,7 +92,7 @@ enum FrameBuffering {
 };
 
 
-enum R_EXPORT LayerFeatures {
+enum R_PUBLIC_API LayerFeatures {
     LAYER_FEATURE_RAY_TRACING_BIT   = (1 << 0),
     LAYER_FEATURE_MESH_SHADING_BIT  = (1 << 1),
     LAYER_FEATURE_DEBUG_VALIDATION_BIT         = (1 << 2),
@@ -104,7 +104,8 @@ typedef U32 EnableLayerFlags;
 
 
 enum GraphicsAPI {
-    GRAPHICS_API_SOFTWARE,
+    GRAPHICS_API_SOFTWARE_RASTERIZER,
+    GRAPHICS_API_SOFTWARE_RAYTRACER,
     GRAPHICS_API_VULKAN,
     GRAPHICS_API_OPENGL,
     GRAPHICS_API_D3D11,

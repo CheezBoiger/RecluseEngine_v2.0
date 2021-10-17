@@ -7,7 +7,7 @@ namespace Recluse {
 
 struct Matrix44;
 
-struct R_EXPORT Float4 {
+struct R_PUBLIC_API Float4 {
     union {
         struct { F32 x, y, z, w; };
         struct { F32 r, g, b, a; };
@@ -50,7 +50,7 @@ struct R_EXPORT Float4 {
 };
 
 
-struct R_EXPORT UInt4 {
+struct R_PUBLIC_API UInt4 {
     union {
         struct { U32 x, y, z, w; };
         struct { U32 s, t, r, q; };
@@ -89,9 +89,9 @@ struct R_EXPORT UInt4 {
     inline UInt4 operator<(const UInt4& rh) const;
 };
 
-R_EXPORT F32 dot(const Float4& a, const Float4& b);
-R_EXPORT F32 length(const Float4& a);
-R_EXPORT F32 length2(const Float4& a);
+R_PUBLIC_API F32 dot(const Float4& a, const Float4& b);
+R_PUBLIC_API F32 length(const Float4& a);
+R_PUBLIC_API F32 length2(const Float4& a);
 // [1 x 4] * [4 x 4} = [1 x 4]
-R_EXPORT Float4 operator*(const Float4& lh, const Matrix44& rh);
+R_PUBLIC_API Float4 operator*(const Float4& lh, const Matrix44& rh);
 } // Recluse

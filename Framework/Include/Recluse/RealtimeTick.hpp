@@ -11,7 +11,7 @@ class RealtimeTick {
 public:
 
     // Get the realtime tick.
-    static R_EXPORT RealtimeTick getTick();
+    static R_PUBLIC_API RealtimeTick getTick();
 
     // Get the current time in sec.
     F32 getCurrentTimeS() const { return m_currentTimeS; }
@@ -21,7 +21,7 @@ public:
     
     // Initialize the realtime tick manager. Should be 
     // called first, before calling getTick().
-    static R_EXPORT void initialize();
+    static R_PUBLIC_API void initialize();
 
 private:
     // Realtime tick initializer. Be sure to call this once and reference

@@ -5,7 +5,9 @@
 #include <stdio.h>
 
 #if defined(_DEBUG)
+#ifndef RECLUSE_DEBUG
 #define RECLUSE_DEBUG 1
+#endif
 #endif
 
 // Logging functions.
@@ -27,9 +29,11 @@
 #include <assert.h>
 #define R_ASSERT_LOG()
 #define R_ASSERT(expression) assert(expression)
+#define R_ASSERT_MSG(expression, msg) assert(expression && msg)
 #define R_DEBUG(chan, str, ...) R_LOG(chan, Recluse::LogDebug, str, __VA_ARGS__)
 #else
 #define R_ASSERT_LOG()
 #define R_ASSERT(expression)
+#define R_ASSERT_MSG(expression, msg)
 #define R_DEBUG(chan, str, ...)
 #endif

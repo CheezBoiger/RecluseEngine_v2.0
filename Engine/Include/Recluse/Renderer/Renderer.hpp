@@ -33,6 +33,15 @@ class Primitive;
 struct RenderCommand;
 class RenderCommandList;
 
+
+enum QualitySetting {
+    QUALITY_NONE,
+    QUALITY_LOW,
+    QUALITY_MEDIUM,
+    QUALITY_HIGH,
+    QUALITY_BEST
+};
+
 struct MeshDescription {
 };
 
@@ -46,13 +55,20 @@ struct RendererConfigs {
     U32 renderHeight;
     U32 buffering;
     GraphicsAPI api;
+    Bool enableMotionBlur;
+    Bool enableHeatHaze;
+    Bool enableChromaticAberration;
+    Bool enableScreenSpaceShadows;
+    Bool enableSubsurfaceScattering;
+    Bool enableParticleMotion;
+    QualitySetting shadowQuality;
 };
 
 
 // Top level rendering engine. Implements Render Harware Interface, and 
 // manages all resources and states created in game graphics. This will usually
 // implement any render passes and stages of the graphics pipeline.
-class R_EXPORT Renderer {
+class R_PUBLIC_API Renderer {
 public:
 
     void initialize(void* pWindowHandle, const RendererConfigs& configs);
@@ -92,7 +108,7 @@ private:
     void sortCommandKeys();
 
     // Graphics context and information.
-    GraphicsInstance*        m_pInstance;
+    GraphicsInstance*       m_pInstance;
     GraphicsAdapter*        m_pAdapter;
     GraphicsDevice*         m_pDevice;
     GraphicsCommandList*    m_commandList;

@@ -7,5 +7,5 @@ namespace Recluse {
 
 
 // Poll events for the system.
-extern R_EXPORT void pollEvents();
+extern R_PUBLIC_API void pollEvents();
 } // Recluse

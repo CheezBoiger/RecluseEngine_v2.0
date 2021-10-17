@@ -6,7 +6,7 @@
 
 namespace Recluse {
 
-struct R_EXPORT Float2 { 
+struct R_PUBLIC_API Float2 { 
     union {
         struct { F32 x, y; };
         struct { F32 r, g; };
@@ -37,7 +37,7 @@ struct R_EXPORT Float2 {
 };
 
 
-struct R_EXPORT Int2 {
+struct R_PUBLIC_API Int2 {
     union {
         struct { I32 x, y; };
         struct { I32 r, g; };
@@ -73,7 +73,7 @@ struct R_EXPORT Int2 {
     inline Int2 operator>>(U32 shft) const;
 };
 
-class R_EXPORT UInt2 {
+class R_PUBLIC_API UInt2 {
     union {
         struct { U32 x, y; };
         struct { U32 r, g; };
@@ -95,7 +95,7 @@ class R_EXPORT UInt2 {
 };
 
 
-struct R_EXPORT Short2 {
+struct R_PUBLIC_API Short2 {
     union {
         struct { I16 x, y; };
         struct { I16 r, g; };
@@ -104,7 +104,7 @@ struct R_EXPORT Short2 {
 };
 
 
-struct R_EXPORT UShort2 {
+struct R_PUBLIC_API UShort2 {
     union {
         struct { U16 x, y; };
         struct { U16 r, g; };
@@ -112,15 +112,15 @@ struct R_EXPORT UShort2 {
     };
 };
 
-F32 R_EXPORT dot(const Float2& a, const Float2& b);
-F32 R_EXPORT dot(const Int2& a, const Int2& b);
-F32 R_EXPORT dot(const UInt2& a, const UInt2& b);
+F32 R_PUBLIC_API dot(const Float2& a, const Float2& b);
+F32 R_PUBLIC_API dot(const Int2& a, const Int2& b);
+F32 R_PUBLIC_API dot(const UInt2& a, const UInt2& b);
 
-F32 R_EXPORT sqrt(const Float2& a);
-F32 R_EXPORT length(const Float2& a);
-F32 R_EXPORT length2(const Float2& a);
+F32 R_PUBLIC_API sqrt(const Float2& a);
+F32 R_PUBLIC_API length(const Float2& a);
+F32 R_PUBLIC_API length2(const Float2& a);
 
-Float2 R_EXPORT normalize(const Float2& a);
-Int2 R_EXPORT normalize(const Int2& a);
-UInt2 R_EXPORT normalize(const UInt2& a);
+Float2 R_PUBLIC_API normalize(const Float2& a);
+Int2 R_PUBLIC_API normalize(const Int2& a);
+UInt2 R_PUBLIC_API normalize(const UInt2& a);
 } // Recluse

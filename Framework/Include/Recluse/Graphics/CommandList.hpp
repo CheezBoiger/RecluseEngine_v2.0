@@ -27,7 +27,7 @@ struct ResourceTransition {
 #define MAKE_RESOURCE_TRANSITION(pResource, dstState, baseMip, mips, baseLayer, layers) { pResource, dstState, layers, baseLayer, mips, baseMip }
 
 
-class R_EXPORT GraphicsCommandList {
+class R_PUBLIC_API GraphicsCommandList {
 public:
     virtual ~GraphicsCommandList() { }
 

@@ -50,7 +50,7 @@ public:
     virtual ~GameObject() { }
 
     // Initialize the game object.
-    R_EXPORT void initialize() {
+    R_PUBLIC_API void initialize() {
         m_status = GAME_OBJECT_STATUS_INITIALIZING;
         onInitialize();
         m_status = GAME_OBJECT_STATUS_INITIALIZED;
@@ -58,52 +58,52 @@ public:
     
     // Wake the game object, this should be called when
     // game object is asleep, or first time initialized.
-    R_EXPORT void wake() { 
+    R_PUBLIC_API void wake() { 
         m_status = GAME_OBJECT_STATUS_WAKING;
         onWake();
         m_status = GAME_OBJECT_STATUS_AWAKE;
     }
 
     // Update the game object, per tick.
-    R_EXPORT void update(const RealtimeTick& tick) {
+    R_PUBLIC_API void update(const RealtimeTick& tick) {
         m_status = GAME_OBJECT_STATUS_ACTIVE;
         onUpdate(tick);
     }
 
     // Put game object to sleep.
-    R_EXPORT void sleep() {
+    R_PUBLIC_API void sleep() {
         m_status = GAME_OBJECT_STATUS_SLEEPING;
         onSleep();
         m_status = GAME_OBJECT_STATUS_ASLEEP;
     }
 
-    R_EXPORT void destroy() {
+    R_PUBLIC_API void destroy() {
         onDestroy();
         m_status = GAME_OBJECT_STATUS_DESTROYED;
     }
 
-    virtual R_EXPORT ErrType serialize(Archive* pArchive) override { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual R_PUBLIC_API ErrType serialize(Archive* pArchive) override { return REC_RESULT_NOT_IMPLEMENTED; }
 
-    virtual R_EXPORT ErrType deserialize(Archive* pArchive) override { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual R_PUBLIC_API ErrType deserialize(Archive* pArchive) override { return REC_RESULT_NOT_IMPLEMENTED; }
 
     // Get the game object name.
-    R_EXPORT const std::string& getName() const { return m_name; }
+    R_PUBLIC_API const std::string& getName() const { return m_name; }
 
     // Get the game object tag.
-    R_EXPORT const std::string& getTag() const { return m_tag; }
+    R_PUBLIC_API const std::string& getTag() const { return m_tag; }
 
     // Grab the game object status.
-    R_EXPORT GameObjectStatus getStatus() const { return m_status; }
+    R_PUBLIC_API GameObjectStatus getStatus() const { return m_status; }
 
     // Get the game object parent.
-    R_EXPORT GameObject* getParent() const { return m_pParentNode; }
+    R_PUBLIC_API GameObject* getParent() const { return m_pParentNode; }
 
-    R_EXPORT GameUUID getUUID() const { return m_guuid; }
+    R_PUBLIC_API GameUUID getUUID() const { return m_guuid; }
 
     // Add a node to this game object. This game object becomes the 
     // parent of pNode. Any game objects that are similar to this one,
     // will not be added as a child.
-    R_EXPORT void addChild(GameObject* pNode) { 
+    R_PUBLIC_API void addChild(GameObject* pNode) { 
 
         // No need to do anything if this node already exists in this game object.
         if (pNode->getParent() == this) return;
@@ -124,7 +124,7 @@ public:
     }
 
     // Removes a child from this game object.
-    R_EXPORT void removeChild(GameObject* pNode) {
+    R_PUBLIC_API void removeChild(GameObject* pNode) {
         if (pNode->m_pParentNode != this) {
             // Can not remove this node if it doesn't belong to 
             // this game object.
@@ -140,11 +140,11 @@ public:
 
     // Get the reference to the scene.
     //
-    R_EXPORT Scene* getScene() const { return m_pSceneRef; }
+    R_PUBLIC_API Scene* getScene() const { return m_pSceneRef; }
 
-    R_EXPORT std::vector<GameObject*>& getChildren() { return m_childrenNodes; }
+    R_PUBLIC_API std::vector<GameObject*>& getChildren() { return m_childrenNodes; }
 
-    R_EXPORT B32 isParent(GameObject* pChild) const {
+    R_PUBLIC_API B32 isParent(GameObject* pChild) const {
         auto iter = std::find(m_childrenNodes.begin(), m_childrenNodes.end(), pChild);
         return (iter != m_childrenNodes.end());
     }
@@ -156,22 +156,22 @@ public:
 protected:
 
     // Override on initialize for your game object script.
-    virtual R_EXPORT void onInitialize() { }
+    virtual R_PUBLIC_API void onInitialize() { }
 
     // Override on wake, to determine what to wake up in the game object.
-    virtual R_EXPORT void onWake() { }
+    virtual R_PUBLIC_API void onWake() { }
 
     // Override update for each update on the game object.
-    virtual R_EXPORT void onUpdate(const RealtimeTick& tick) { }
+    virtual R_PUBLIC_API void onUpdate(const RealtimeTick& tick) { }
 
     // Override on update fixed, for any fixed updates.
-    virtual R_EXPORT void onUpdateFixed(const RealtimeTick& tick) { }
+    virtual R_PUBLIC_API void onUpdateFixed(const RealtimeTick& tick) { }
 
     // Override when game object sleeps.
-    virtual R_EXPORT void onSleep() { }
+    virtual R_PUBLIC_API void onSleep() { }
 
     // Override when game object must clean up any manual objects.
-    virtual R_EXPORT void onDestroy() { }
+    virtual R_PUBLIC_API void onDestroy() { }
 
     // Game Object tag.
     std::string m_tag;

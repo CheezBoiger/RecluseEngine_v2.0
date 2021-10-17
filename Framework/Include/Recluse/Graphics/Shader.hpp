@@ -53,8 +53,8 @@ class Shader final {
 public:
     ~Shader() { }
 
-    static R_EXPORT Shader* create();
-    static R_EXPORT void destroy(Shader* pShader);
+    static R_PUBLIC_API Shader* create();
+    static R_PUBLIC_API void destroy(Shader* pShader);
 
 private:
 
@@ -67,12 +67,12 @@ public:
 
     ShaderIntermediateCode getIntermediateCodeType() const { return m_intermediateCode; }
 
-    R_EXPORT ErrType load(const char* byteCode, U64 szBytes, ShaderIntermediateCode imm, ShaderType shaderType);
+    R_PUBLIC_API ErrType load(const char* byteCode, U64 szBytes, ShaderIntermediateCode imm, ShaderType shaderType);
 
     // Save the compilation to a file.
-    R_EXPORT ErrType saveToFile(const char* filePath);
+    R_PUBLIC_API ErrType saveToFile(const char* filePath);
 
-    R_EXPORT Shader* convertTo(ShaderIntermediateCode intermediateCode);
+    R_PUBLIC_API Shader* convertTo(ShaderIntermediateCode intermediateCode);
 
     ShaderType getType() const { return m_shaderType; }
 

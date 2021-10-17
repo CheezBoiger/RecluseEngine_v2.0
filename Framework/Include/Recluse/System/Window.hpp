@@ -36,16 +36,16 @@ public:
         , m_pMouseHandle(nullptr) { }
 
     // Create the window.
-    static R_EXPORT Window* create(const std::string& title, U32 x, U32 y, U32 width, U32 height);
+    static R_PUBLIC_API Window* create(const std::string& title, U32 x, U32 y, U32 width, U32 height);
 
     // Destroy the window.
-    static R_EXPORT ErrType destroy(Window* pWindow);
+    static R_PUBLIC_API ErrType destroy(Window* pWindow);
 
     // close the window.
-    R_EXPORT void close();
+    R_PUBLIC_API void close();
 
     // Open the window, j
-    R_EXPORT void open();
+    R_PUBLIC_API void open();
 
     // obtain the native window handle.
     void* getNativeHandle() { return m_handle; }

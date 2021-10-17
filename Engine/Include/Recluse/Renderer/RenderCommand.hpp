@@ -15,22 +15,20 @@ namespace Recluse {
 namespace Engine {
 
 
-enum PassType : U32 {
-    RENDER_HAS_POSITION    = 0x001,
-    RENDER_HAS_NORMAL      = 0x002,
-    RENDER_HAS_TEXCOORDS   = 0x004,
-    RENDER_HAS_TANGENT     = 0x008,
-    RENDER_HAS_BITANGENT   = 0x010,
-    RENDER_HAS_BONES       = 0x020,
-    RENDER_PREZ            = 0x040,
-    RENDER_SHADOW          = 0x080,
-    RENDER_PARTICLE        = 0x100,
-    RENDER_GBUFFER         = 0x200,
-    RENDER_HAS_MATERIAL    = 0x400
+enum RenderPassType : U32 {
+
+    RENDER_PREZ                 = 0x0001,
+    RENDER_SHADOW               = 0x0002,
+    RENDER_PARTICLE             = 0x0004,
+    RENDER_GBUFFER              = 0x0008,
+    RENDER_HAS_MATERIAL         = 0x0010,
+    RENDER_FORWARD_OPAQUE       = 0x0020,
+    RENDER_FORWARD_TRANSPARENT  = 0x0040,
+    RENDER_HAZE                 = 0x0080
 };
 
 
-typedef U32 PassTypeFlags;
+typedef U32 RenderPassTypeFlags;
 
 enum CommandOp {
     COMMAND_OP_DRAWABLE_INSTANCED,
@@ -39,19 +37,31 @@ enum CommandOp {
 };
 
 
-typedef U32 PassTypeFlags;
+enum VertexAttribFlag {
+  VERTEX_ATTRIB_POSITION   = 0x0001,
+  VERTEX_ATTRIB_NORMAL     = 0x0002,
+  VERTEX_ATTRIB_TEXCOORDS  = 0x0004,
+  VERTEX_ATTRIB_TANGENT    = 0x0008,
+  VERTEX_ATTRIB_BITANGENT  = 0x0010,
+  VERTEX_ATTRIB_BONES      = 0x0020,
+};
+
+typedef U32 VertexAttribFlags;
+typedef U32 RenderPassTypeFlags;
 
 struct RenderCommand {
-    CommandOp               op;                 // 8 B
-    PassTypeFlags           flags;              // 16 B
+    CommandOp               op          : 24;   //
+    U32                     stencilRef  : 8;    // 4 B
+    RenderPassTypeFlags     flags;              // 8 B
 };
 
 
 struct DrawableRenderCommand : public RenderCommand {
-    GraphicsResource**  ppVertexBuffers;        // 24 B
-    U64*                pOffsets;               // 32 B
-    PerMeshTransform*   pPerMeshTransform;      // 40 B
-    U32                 numVertexBuffers;       // 44 B
+    GraphicsResource**  ppVertexBuffers;                // 16 B
+    U64*                pOffsets;                       // 24 B
+    PerMeshTransform*   pPerMeshTransform;              // 32 B
+    U32                 numVertexBuffers    : 8;        // 
+    VertexAttribFlags   vertexTypeFlags     : 24;       // 36 B
 };
 
 
@@ -92,7 +102,7 @@ struct DrawRenderCommand : public DrawableRenderCommand {
 
 // High level render command list, which will be read by the low level backend, once the render thread
 // is kicked off. Should reset every frame render.
-class R_EXPORT RenderCommandList {
+class R_PUBLIC_API RenderCommandList {
 public:
     RenderCommandList()
         : m_pAllocator(nullptr)

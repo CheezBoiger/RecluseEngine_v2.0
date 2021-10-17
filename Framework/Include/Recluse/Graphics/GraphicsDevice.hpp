@@ -60,7 +60,7 @@ struct RenderPassDesc {
 };
 
 
-class R_EXPORT GraphicsDevice {
+class R_PUBLIC_API GraphicsDevice {
 public:
     // Reserve memory to be used for graphics resources.
     virtual ErrType reserveMemory(const MemoryReserveDesc& desc) { return REC_RESULT_NOT_IMPLEMENTED; }
@@ -123,20 +123,20 @@ public:
     GraphicsSwapchain(const SwapchainCreateDescription& desc)
         : m_desc(desc) { }
 
-    R_EXPORT virtual ~GraphicsSwapchain() { }
+    R_PUBLIC_API virtual ~GraphicsSwapchain() { }
 
     // Rebuild the swapchain if need be. Pass in NULL to rebuild the swapchain as is.
     // Be sure to update any new frame info and handles that are managed by the front engine!
-    R_EXPORT ErrType rebuild(const SwapchainCreateDescription& desc) { 
+    R_PUBLIC_API ErrType rebuild(const SwapchainCreateDescription& desc) { 
         m_desc = desc;
         return onRebuild(); 
     }
 
     // Present the current image.
-    R_EXPORT virtual ErrType present() { return REC_RESULT_NOT_IMPLEMENTED; }
+    R_PUBLIC_API virtual ErrType present() { return REC_RESULT_NOT_IMPLEMENTED; }
 
     // Get the current frame index, updates after every present call.
-    R_EXPORT virtual U32 getCurrentFrameIndex() { return REC_RESULT_NOT_IMPLEMENTED; }
+    R_PUBLIC_API virtual U32 getCurrentFrameIndex() { return REC_RESULT_NOT_IMPLEMENTED; }
 
     virtual GraphicsResource* getFrame(U32 idx) = 0;
     virtual GraphicsResourceView* getFrameView(U32 idx) = 0;

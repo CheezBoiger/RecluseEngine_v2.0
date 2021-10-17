@@ -18,7 +18,7 @@ namespace PreZ {
 
 GraphicsResourceView* pSceneDepthView = nullptr;
 
-std::unordered_map<Engine::PassTypeFlags, PipelineState*> pipelines;
+std::unordered_map<Engine::VertexAttribFlags, PipelineState*> pipelines;
 RenderPass* pPreZPass = nullptr;
 
 static void createPipelines(GraphicsPipelineStateDesc& pipelineCi)
@@ -92,8 +92,8 @@ void generate(GraphicsCommandList* pCommandList, Engine::RenderCommandList* pMes
 {
     Engine::RenderCommand** pRenderCommands     = pMeshCommandList->getRenderCommands();
     const GraphicsResourceDescription& depth    = pSceneDepthView->getResource()->getDesc();
-    Rect depthRect              = { };
-    depthRect.x                 = depthRect.y   = 0.f;
+    Rect depthRect                              = { };
+    depthRect.x         = depthRect.y           = 0.f;
 
     depthRect.width     = depth.width;
     depthRect.height    = depth.height;
@@ -106,11 +106,11 @@ void generate(GraphicsCommandList* pCommandList, Engine::RenderCommandList* pMes
     
         U64 key = keys[i];
         Engine::RenderCommand* pRCmd            = pRenderCommands[key];
-        Engine::PassTypeFlags flags             = pRCmd->flags;
+        Engine::RenderPassTypeFlags flags       = pRCmd->flags;
         PipelineState* pipeline                 = pipelines[flags];
         Engine::DrawableRenderCommand* meshCmd  = nullptr;
 
-        R_ASSERT(pipeline != NULL);
+        R_ASSERT_MSG(pipeline != NULL, "No pipeline exists for this mesh!");
 
         if (meshCmd->op != Engine::COMMAND_OP_DRAWABLE_INDEXED_INSTANCED || 
             meshCmd->op != Engine::COMMAND_OP_DRAWABLE_INSTANCED) {
