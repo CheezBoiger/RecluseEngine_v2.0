@@ -29,6 +29,18 @@ Matrix44::Matrix44(F32 a00, F32 a01, F32 a02, F32 a03,
 }
 
 
+Matrix44::Matrix44(const Float4& row0,
+                   const Float4& row1,
+                   const Float4& row2,
+                   const Float4& row3)
+{
+    this->row0 = *(__m128*)&row0.x;
+    this->row1 = *(__m128*)&row1.x;
+    this->row2 = *(__m128*)&row2.x;
+    this->row3 = *(__m128*)&row3.x;
+}
+
+
 Matrix44 rotate(const Matrix44& lh, const Float3& ax, F32 radians)
 {
     F32 cosine          = cosf(radians);
@@ -230,19 +242,25 @@ Matrix44 inverse(const Matrix44& lh)
 {
     F32 det         = determinant(lh);
     F32 denom       = 0.f;
-    Matrix44 adj    = identity();
-
     if (det == 0.f)
-        return adj;
-    
+        return Matrix44::identity();
+
+    Matrix44 adj = adjugate(lh);
+
     denom = 1.f / det;
     return adj * denom;
 }
 
 
-Matrix44 identity()
+Matrix44 Matrix44::identity()
 {
-    return Matrix44();
+    return Matrix44
+    (
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    );
 }
 
 
@@ -437,5 +455,79 @@ F32& Matrix44::get(U32 row, U32 col)
     R_ASSERT(row < 4 && col < 4);
     
     return m[4u * row + col];
+}
+
+
+Matrix44 perspectiveLH_Aspect(F32 fov, F32 aspect, F32 ne, F32 fa)
+{
+    Matrix44 persp;
+    F32 tanFoV  = tanf(fov * 0.5f);
+    F32 yS      = 1.0f / tanFoV;
+    F32 xS      = yS / aspect;
+    
+    persp[0] = xS;
+    persp[5] = yS;
+    persp[10] = fa / (fa - ne);
+    persp[11] = 1.0f;
+    persp[14] = -ne * fa / (fa - ne);
+
+    return persp;
+}
+
+
+Matrix44 perspectiveRH_Aspect(F32 fov, F32 aspect, F32 ne, F32 fa)
+{
+    Matrix44 persp;
+
+    F32 tanFoV = tanf(fov * 0.5f);
+    F32 yS = 1.0f / tanFoV;
+    F32 xS = yS / aspect;
+
+    persp[0] = xS;
+    persp[5] = yS;
+    persp[10] = fa / (ne - fa);
+    persp[11] = -1.0f;
+    persp[14] = ne * fa / (ne - fa);
+
+    return persp;
+}
+
+
+Matrix44 perspectiveLH(F32 w, F32 h, F32 ne, F32 fa)
+{
+    Matrix44 persp;
+
+    persp[0] = 2 * ne / w;
+    persp[5] = 2 * ne / h;
+    persp[10] = fa / (fa - ne);
+    persp[11] = 1.0f;
+    persp[14] = ne * fa / (ne - fa);
+
+    return persp;
+}
+
+
+Matrix44 perspectiveRH(F32 w, F32 h, F32 ne, F32 fa)
+{
+    Matrix44 persp;
+
+    persp[0] = 2 * ne / w;
+    persp[5] = 2 * ne / h;
+    persp[10] = fa / (ne - fa);
+    persp[11] = -1.0f;
+    persp[14] = ne * fa / (ne - fa);
+
+    return persp;
+}
+
+
+Float4 operator*(const Matrix44& lh, const Float4& rh)
+{
+    Float4 res;
+    res[0] = lh[0] * rh[0] + lh[1] * rh[1] + lh[2] * rh[2] + lh[3] * rh[3];
+    res[1] = lh[4] * rh[0] + lh[5] * rh[1] + lh[6] * rh[2] + lh[7] * rh[3];
+    res[2] = lh[8] * rh[0] + lh[9] * rh[1] + lh[10] * rh[2] + lh[11] * rh[3];
+    res[3] = lh[12] * rh[0] + lh[13] * rh[1] + lh[14] * rh[2] + lh[15] * rh[3];
+    return res;
 }
 } // Recluse

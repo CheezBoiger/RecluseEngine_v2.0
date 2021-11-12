@@ -16,6 +16,7 @@ class GraphicsResourceView;
 class GraphicsPipeline;
 class GraphicsSwapchain;
 class GraphicsContext;
+class GraphicsSampler;
 class RenderPass;
 
 
@@ -90,6 +91,10 @@ public:
     virtual ErrType createDescriptorSet(DescriptorSet** ppLayout, DescriptorSetLayout* pSetLayout) 
         { return REC_RESULT_NOT_IMPLEMENTED; }
 
+    virtual ErrType createSampler(GraphicsSampler** ppSampler, const SamplerCreateDesc& desc) 
+        { return REC_RESULT_NOT_IMPLEMENTED; }
+
+    virtual ErrType destroySampler(GraphicsSampler* pSampler) { return REC_RESULT_NOT_IMPLEMENTED; }
     virtual ErrType destroyResource(GraphicsResource* pResource) { return REC_RESULT_NOT_IMPLEMENTED; }
     virtual ErrType destroyResourceView(GraphicsResourceView* pResourceView) { return REC_RESULT_NOT_IMPLEMENTED; }
     virtual ErrType destroyRenderPass(RenderPass* pRenderPass) { return REC_RESULT_NOT_IMPLEMENTED; }

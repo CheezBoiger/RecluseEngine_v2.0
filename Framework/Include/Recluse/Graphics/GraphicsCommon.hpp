@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Recluse/Types.hpp"
+#include "Recluse/Graphics/Format.hpp"
 
 namespace Recluse {
 
@@ -154,10 +155,60 @@ struct CopyBufferRegion {
 
 
 struct SwapchainCreateDescription {
-    FrameBuffering buffering;
-    U32 desiredFrames;
-    U32 renderWidth;
-    U32 renderHeight;
+    FrameBuffering  buffering;
+    U32             desiredFrames;
+    U32             renderWidth;
+    U32             renderHeight;
+    ResourceFormat  format;
+};
+
+
+enum SamplerAddressMode {
+    SAMPLER_ADDRESS_MODE_REPEAT,
+    SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT,
+    SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+    SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER,
+    SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE
+};
+
+
+enum Filter {
+    FILTER_LINEAR,
+    FILTER_NEAREST,
+    FILTER_CUBIC_IMG
+};
+
+
+enum SamplerMipMapMode {
+    SAMPLER_MIP_MAP_MODE_NEAREST,
+    SAMPLER_MIP_MAP_MODE_LINEAR
+};
+
+
+enum CompareOp {
+  COMPARE_OP_NEVER,
+  COMPARE_OP_LESS,
+  COMPARE_OP_EQUAL,
+  COMPARE_OP_LESS_OR_EQUAL,
+  COMPARE_OP_GREATER,
+  COMPARE_OP_NOT_EQUAL,
+  COMPARE_OP_GREATER_OR_EQUAL,
+  COMPARE_OP_ALWAYS
+};
+
+
+struct SamplerCreateDesc {
+    SamplerAddressMode addrModeU;
+    SamplerAddressMode addrModeV;
+    SamplerAddressMode addrModeW;
+    F32 minLod;
+    F32 maxLod;
+    Filter magFilter;
+    Filter minFilter;
+    CompareOp compareOp;
+    SamplerMipMapMode mipMapMode;
+    Bool anisotropyEnable;
+    Bool compareEnable;
 };
 
 

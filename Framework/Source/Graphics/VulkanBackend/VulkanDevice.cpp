@@ -1247,4 +1247,35 @@ ErrType VulkanDevice::wait()
     m_pGraphicsQueue->wait();
     return REC_RESULT_OK;
 }
+
+
+ErrType VulkanDevice::createSampler(GraphicsSampler** ppSampler, const SamplerCreateDesc& desc)
+{
+    ErrType result              = REC_RESULT_OK;
+    VulkanSampler* pVSampler    = new VulkanSampler();
+    
+    result = pVSampler->initialize(this, desc);
+
+    if (result != REC_RESULT_OK) {
+        pVSampler->destroy(this);
+        return result;
+    }
+
+    *ppSampler = pVSampler;
+
+    return REC_RESULT_OK;
+}
+
+ErrType VulkanDevice::destroySampler(GraphicsSampler* pSampler)
+{
+    if (!pSampler) return REC_RESULT_NULL_PTR_EXCEPTION;
+    ErrType result = REC_RESULT_OK;
+    VulkanSampler* pVSampler = static_cast<VulkanSampler*>(pSampler);
+
+    result = pVSampler->destroy(this);
+
+    delete pVSampler;
+
+    return result;
+}
 } // Recluse

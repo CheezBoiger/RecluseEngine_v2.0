@@ -3,17 +3,23 @@
 
 #include "Recluse/Types.hpp"
 #include "Recluse/Algorithms/Common.hpp"
+#include "Recluse/Memory/Allocator.hpp"
+
+#include <initializer_list>
 
 namespace Recluse {
 
 
-template<typename T, typename Cmp = SimpleCompare<T>>
+template<typename T, 
+         typename Compare = GenericCompare<T>,
+         typename AllocatorType = DefaultAllocator,
+         class MemPool = MemoryPool>
 class LinkedList {
 
     typedef T   LinkedListT;
     typedef T*  LinkedListTPtr;
     typedef T&  LinkedListTRef;
-    typedef Cmp LinkedListCompare;
+    typedef Compare LinkedListCompare;
 
     typedef struct LinkedNode {
         const LinkedListT   data;
@@ -39,7 +45,9 @@ public:
 
     void pushBack(const LinkedListTRef& lh) 
     {
-        
+        if (!m_pRoot) {
+            m_pRoot = 
+        }
     }
 
     void get() 
@@ -63,8 +71,13 @@ public:
         return;
     }
 
+    Bool isEmpty() const { return m_totalNodes == 0; }
+    SizeT getTotalNodes() const { return m_totalNodes; }
+
 private:
-    LinkedListCompare m_cmp;
-    PLinkedNode m_pRoot;
+    LinkedListCompare   m_cmp;
+    SizeT               m_totalNodes;
+    PLinkedNode         m_pRoot;
+    PLinkedNode         m_pTail;
 };
 } // Recluse

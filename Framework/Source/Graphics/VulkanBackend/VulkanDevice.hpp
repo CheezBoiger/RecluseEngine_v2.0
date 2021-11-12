@@ -73,6 +73,10 @@ public:
 
     ErrType createRenderPass(RenderPass** ppRenderPass, const RenderPassDesc& desc) override;
 
+    ErrType createSampler(GraphicsSampler** ppSampler, const SamplerCreateDesc& desc) override;
+
+    ErrType destroySampler(GraphicsSampler* pSampler) override;
+
     ErrType destroyResource(GraphicsResource* pResource) override;
 
     ErrType createCommandList(VulkanCommandList** pList, VkQueueFlags flags);

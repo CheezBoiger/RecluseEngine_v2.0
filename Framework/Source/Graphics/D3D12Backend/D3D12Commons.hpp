@@ -18,21 +18,6 @@
 namespace Dxgi {
 
 
-static SIZE_T getNativeFormatSize(Recluse::ResourceFormat format)
-{
-    return 0ull;
-}
-
-
-static DXGI_FORMAT getNativeFormat(Recluse::ResourceFormat format)
-{
-    switch (format) {
-        case Recluse::RESOURCE_FORMAT_R8G8B8A8_UNORM:
-            return DXGI_FORMAT_R8G8B8A8_UNORM;
-        default:
-            break;
-    }
-
-    return DXGI_FORMAT_UNKNOWN;
-}
-}
+extern SIZE_T getNativeFormatSize(Recluse::ResourceFormat format);
+extern DXGI_FORMAT getNativeFormat(Recluse::ResourceFormat format);
+} // Dxgi

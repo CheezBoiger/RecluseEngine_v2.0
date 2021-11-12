@@ -7,10 +7,10 @@
 namespace Recluse {
 
 template<typename T, 
-         typename Cmp = SimpleCompare<T>>
+         class Compare = GenericCompare<T>>
 static void selectionSort(T* pArr, U64 start, U64 sz)
 {
-    Cmp cmp = { };
+    Compare compare = { };
 
     for (U64 i = 0; i < (sz - 1); ++i) 
     {
@@ -18,7 +18,7 @@ static void selectionSort(T* pArr, U64 start, U64 sz)
 
         for (U64 j = (i + 1); j < sz; ++j) 
         {
-            if (cmp(pArr[desired], pArr[j])) 
+            if (compare(pArr[desired], pArr[j])) 
             {
                 desired = j;
             }

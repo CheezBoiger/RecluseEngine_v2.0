@@ -1,6 +1,6 @@
 //
 #include "Recluse/Math/Vector4.hpp"
-
+#include "Recluse/Math/Matrix44.hpp"
 
 namespace Recluse {
 
@@ -187,5 +187,18 @@ F32 length(const Float4& a)
 F32 length2(const Float4& a)
 {
     return dot(a, a);
+}
+
+
+Float4 operator*(const Float4& lh, const Matrix44& rh)
+{
+    Float4 res;
+
+    res[0] = lh[0] * rh[0] + lh[1] * rh[1] + lh[2] * rh[2] + lh[3] * rh[3];
+    res[1] = lh[0] * rh[4] + lh[1] * rh[5] + lh[2] * rh[6] + lh[3] * rh[7];
+    res[2] = lh[0] * rh[8] + lh[1] * rh[9] + lh[2] * rh[10] + lh[3] * rh[11];
+    res[3] = lh[0] * rh[12] + lh[1] * rh[13] + lh[2] * rh[14] + lh[3] * rh[15];
+
+    return res;
 }
 } // Recluse

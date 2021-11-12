@@ -32,4 +32,30 @@ private:
     VkImageLayout m_expectedLayout;
     VkImageSubresourceRange m_subresourceRange;
 };
+
+
+class VulkanSampler : public GraphicsSampler {
+public:
+    VulkanSampler()
+        : m_sampler(VK_NULL_HANDLE)
+    {
+    }
+
+    virtual ~VulkanSampler() { }
+
+    ErrType initialize(VulkanDevice* pDevice, const SamplerCreateDesc& desc);
+    ErrType destroy(VulkanDevice* pDevice);
+
+    virtual SamplerCreateDesc getDesc() override {
+        return SamplerCreateDesc();
+    }
+
+    VkSampler get() { return m_sampler; }
+
+    VkSamplerCreateInfo getCopyInfo() const { return m_info; }
+
+private:
+    VkSampler m_sampler;
+    VkSamplerCreateInfo m_info;
+};
 } // Recluse

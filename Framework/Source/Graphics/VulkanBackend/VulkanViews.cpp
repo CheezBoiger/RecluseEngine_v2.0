@@ -85,4 +85,94 @@ ErrType VulkanResourceView::destroy(VulkanDevice* pDevice)
 
     return result;
 }
+
+
+static VkSamplerAddressMode getAddressMode(SamplerAddressMode mode)
+{
+    switch (mode) {
+        case SAMPLER_ADDRESS_MODE_REPEAT:
+        default: return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        case SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE:
+            return VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
+        case SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER:
+            return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+        case SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE:
+            return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        case SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT:
+            return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+    }
+}
+
+
+static VkFilter getFilter(Filter filter)
+{
+    switch (filter) {
+        case FILTER_LINEAR:
+        default:
+            return VK_FILTER_LINEAR;
+        case FILTER_NEAREST:
+            return VK_FILTER_NEAREST;
+        case FILTER_CUBIC_IMG:
+            return VK_FILTER_CUBIC_IMG;
+    }
+}
+
+
+static VkSamplerMipmapMode getMipMapMode(SamplerMipMapMode mode)
+{
+    switch (mode) {
+        case SAMPLER_MIP_MAP_MODE_LINEAR:
+        default:
+            return VK_SAMPLER_MIPMAP_MODE_LINEAR;
+        case SAMPLER_MIP_MAP_MODE_NEAREST:
+            return VK_SAMPLER_MIPMAP_MODE_NEAREST;
+    }
+}
+
+
+ErrType VulkanSampler::initialize(VulkanDevice* pDevice, const SamplerCreateDesc& desc)
+{
+    R_ASSERT(pDevice != NULL);
+
+    VkDevice device             = pDevice->get();
+    VkSamplerCreateInfo cInfo   = { };
+    VkResult result             = VK_SUCCESS;
+
+    cInfo.sType             = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    cInfo.addressModeU      = getAddressMode(desc.addrModeU);
+    cInfo.addressModeV      = getAddressMode(desc.addrModeV);    
+    cInfo.addressModeW      = getAddressMode(desc.addrModeW);
+    cInfo.anisotropyEnable  = desc.anisotropyEnable;
+    cInfo.compareEnable     = desc.compareEnable;
+    cInfo.compareOp         = Vulkan::getNativeCompareOp(desc.compareOp);
+    cInfo.magFilter         = getFilter(desc.magFilter);
+    cInfo.minFilter         = getFilter(desc.minFilter);
+    cInfo.minLod            = desc.minLod;
+    cInfo.maxLod            = desc.maxLod;
+    cInfo.mipmapMode        = getMipMapMode(desc.mipMapMode);
+    cInfo.flags             = 0;
+
+    result = vkCreateSampler(device, &cInfo, nullptr, &m_sampler);
+
+    if (result != VK_SUCCESS) {
+        return REC_RESULT_FAILED;
+    }
+    
+    return REC_RESULT_OK;
+}
+
+
+ErrType VulkanSampler::destroy(VulkanDevice* pDevice)
+{
+    R_ASSERT(pDevice != NULL);
+
+    VkDevice device = pDevice->get();
+    
+    if (m_sampler) {
+        vkDestroySampler(device, m_sampler, nullptr);
+        m_sampler = VK_NULL_HANDLE;
+    }
+
+    return REC_RESULT_OK;
+}
 } // Recluse

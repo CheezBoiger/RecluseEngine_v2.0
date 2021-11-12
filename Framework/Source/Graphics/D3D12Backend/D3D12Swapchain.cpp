@@ -30,12 +30,21 @@ ErrType D3D12Swapchain::initialize(D3D12Device* pDevice)
     HRESULT result                          = S_OK;
     DXGI_SWAP_CHAIN_DESC1 swapchainDesc     = { };
     IDXGISwapChain1* swapchain1             = nullptr;
+    DXGI_FORMAT format                      = Dxgi::getNativeFormat(desc.format);
+
+    {
+        D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport = pDevice->checkFormatSupport(desc.format);
+        if (!(formatSupport.Support1 & D3D12_FORMAT_SUPPORT1_DISPLAY)) {
+            R_WARN(R_CHANNEL_D3D12, "Swapchain format not supported for display, using default...");
+            format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        }
+    }
 
     swapchainDesc.Width                     = desc.renderWidth;
     swapchainDesc.Height                    = desc.renderHeight;
     swapchainDesc.BufferCount               = desc.desiredFrames;
     swapchainDesc.BufferUsage               = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapchainDesc.Format                    = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapchainDesc.Format                    = format;
     swapchainDesc.AlphaMode                 = DXGI_ALPHA_MODE_UNSPECIFIED;
     swapchainDesc.Scaling                   = DXGI_SCALING_STRETCH;
     swapchainDesc.Stereo                    = FALSE;

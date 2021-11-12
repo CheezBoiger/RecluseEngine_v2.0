@@ -46,20 +46,6 @@ static VkCullModeFlags getNativeCullMode(CullMode mode)
     }
 }
 
-static VkCompareOp getNativeCompareOp(CompareOp op)
-{
-    switch (op) {
-        case COMPARE_OP_ALWAYS: return VK_COMPARE_OP_ALWAYS;
-        case COMPARE_OP_EQUAL: return VK_COMPARE_OP_EQUAL;
-        case COMPARE_OP_GREATER: return VK_COMPARE_OP_GREATER;
-        case COMPARE_OP_GREATER_OR_EQUAL: return VK_COMPARE_OP_GREATER_OR_EQUAL;
-        case COMPARE_OP_LESS: return VK_COMPARE_OP_LESS;
-        case COMPARE_OP_LESS_OR_EQUAL: return VK_COMPARE_OP_LESS_OR_EQUAL;
-        case COMPARE_OP_NOT_EQUAL: return VK_COMPARE_OP_NOT_EQUAL;
-        case COMPARE_OP_NEVER: 
-        default: return VK_COMPARE_OP_NEVER;
-    }
-}
 
 static VkPolygonMode getNativePolygonMode(PolygonMode polygonMode)
 {
@@ -246,7 +232,7 @@ static VkPipelineDepthStencilStateCreateInfo getDepthStencilInfo(const GraphicsP
     VkPipelineDepthStencilStateCreateInfo info  = { };
     info.sType                                  = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     info.depthBoundsTestEnable                  = (VkBool32)ds.depthBoundsTestEnable;
-    info.depthCompareOp                         = getNativeCompareOp(ds.depthCompareOp);
+    info.depthCompareOp                         = Vulkan::getNativeCompareOp(ds.depthCompareOp);
     info.depthTestEnable                        = (VkBool32)ds.depthTestEnable;
     info.depthWriteEnable                       = (VkBool32)ds.depthWriteEnable;
     info.front;

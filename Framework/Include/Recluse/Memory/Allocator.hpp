@@ -89,5 +89,16 @@ private:
     U64 m_usedSizeBytes;
     U64 m_totalAllocations;
 };
+
+
+class DefaultAllocator : public Allocator {
+public:
+
+    virtual ErrType onInitialize() override { return REC_RESULT_OK; }
+
+    virtual ErrType onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override {
+        return REC_RESULT_OK;
+    }
+};
 } // Recluse
 #endif // RECLUSE_ALLOCATOR_HPP

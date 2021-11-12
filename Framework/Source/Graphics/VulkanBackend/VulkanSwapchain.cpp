@@ -30,7 +30,10 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
 {
     VkSwapchainCreateInfoKHR createInfo         = { };
     const SwapchainCreateDescription& pDesc     = getDesc();
+    VkSurfaceKHR surface                        = pDevice->getSurface();
     VkResult result                             = VK_SUCCESS;
+    VkFormat vkFormat                           = Vulkan::getVulkanFormat(pDesc.format);
+    VkColorSpaceKHR colorSpace                  = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
 
     if (pDesc.renderWidth <= 0 || pDesc.renderHeight <= 0) {
 
@@ -39,13 +42,34 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
         return REC_RESULT_INVALID_ARGS;    
 
     }
+
+    {
+        VulkanAdapter* pAdapter = pDevice->getAdapter();
+        std::vector<VkSurfaceFormatKHR> supportedFormats = pAdapter->getSurfaceFormats(surface);
+        for (VkSurfaceFormatKHR& sF : supportedFormats) {
+            if (sF.format == vkFormat) {
+                colorSpace = sF.colorSpace;
+                break;
+            } else {
+                vkFormat = VK_FORMAT_UNDEFINED;
+            }
+        }
+
+        if (vkFormat == VK_FORMAT_UNDEFINED) {
+            // Use the default first.
+            R_WARN(R_CHANNEL_VULKAN, "Using default supported surface format, as could either not find specified, or auotmatic.");
+            R_ASSERT_MSG(supportedFormats.empty() == false, "No supported formats were found for this physical device!");
+            vkFormat    = supportedFormats[0].format;
+            colorSpace  = supportedFormats[0].colorSpace;
+        }
+    }
     
     // TODO: We need to pass a struct input for desired configurations.
     createInfo.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     createInfo.clipped          = VK_TRUE;
-    createInfo.imageColorSpace  = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-    createInfo.imageFormat      = VK_FORMAT_R8G8B8A8_UNORM;
-    createInfo.surface          = pDevice->getSurface();
+    createInfo.imageColorSpace  = colorSpace;
+    createInfo.imageFormat      = vkFormat;
+    createInfo.surface          = surface;
     createInfo.imageExtent      = { pDesc.renderWidth, pDesc.renderHeight };
     createInfo.oldSwapchain     = (m_swapchain) ? m_swapchain : VK_NULL_HANDLE;
     createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;

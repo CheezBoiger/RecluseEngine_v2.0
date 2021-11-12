@@ -177,7 +177,10 @@ ErrType VulkanDescriptorSet::update(DescriptorSetBind* pBinds, U32 bindCount)
             } break;
             case VK_DESCRIPTOR_TYPE_SAMPLER: 
             {
-                imgInfos[imgCount].sampler  = VK_NULL_HANDLE;
+                R_ASSERT(bind.sampler.pSampler != NULL);
+
+                VkSampler sampler           = static_cast<VulkanSampler*>(bind.sampler.pSampler)->get();
+                imgInfos[imgCount].sampler  = sampler;
                 writeSet[i].pImageInfo      = &imgInfos[imgCount++];
             } break;
 

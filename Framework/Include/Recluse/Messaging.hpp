@@ -10,6 +10,10 @@
 #endif
 #endif
 
+#if defined(R_DEVELOPER)
+#define RECLUSE_DEVELOPER 1
+#endif
+
 // Logging functions.
 #define R_LOG(chan, logType, format, ...) { \
     Recluse::Log r__log__(logType, chan); \
@@ -24,8 +28,26 @@
 #define R_VERBOSE(chan, format, ...) R_LOG(chan, Recluse::LogVerbose, format, __VA_ARGS__)
 #define R_TRACE(chan, format, ...) R_LOG(chan, Recluse::LogTrace, format, __VA_ARGS__)
 
+#if defined(RECLUSE_DEBUG) || defined(RECLUSE_DEVELOPER)
+namespace Recluse {
+namespace Asserts {
+
+enum Result {
+    ASSERT_OK,
+    ASSERT_DEBUG,
+    ASSERT_IGNORE,
+    ASSERT_IGNORE_ALL,
+    ASSERT_TERMINATE
+};
+
+// Assert handler deals with info needed to ensure, check, and debug code.
+class AssertHandler {
+public:
+    static Result check(Bool cond, const char* functionStr, const char* msg);
+};
+} // Asserts
+} // Recluse 
 // Debugging macros and definitions. To be ignored on building release.
-#if defined(RECLUSE_DEBUG)
 #include <assert.h>
 #define R_ASSERT_LOG()
 #define R_ASSERT(expression) assert(expression)

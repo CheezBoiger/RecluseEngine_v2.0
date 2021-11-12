@@ -3,6 +3,7 @@
 
 #include "Win32/Win32Common.hpp"
 #include "D3D12Commons.hpp"
+#include "D3D12DescriptorTableManager.hpp"
 
 #include "Recluse/Graphics/GraphicsAdapter.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
@@ -79,6 +80,10 @@ public:
 
     BufferResources* getCurrentBufferResource() { return &m_bufferResources[m_currentBufferIndex]; }
 
+    D3D12_CPU_DESCRIPTOR_HANDLE createSampler(const D3D12_SAMPLER_DESC& desc);
+
+    D3D12_FEATURE_DATA_FORMAT_SUPPORT checkFormatSupport(ResourceFormat format);
+
 private:
 
     void initializeBufferResources(U32 buffering);
@@ -93,6 +98,8 @@ private:
     D3D12Queue*                     m_graphicsQueue;
     D3D12CommandList*               m_pPrimaryCommandList;
     D3D12Swapchain*                 m_swapchain;
+
+    DescriptorHeapManager           m_descHeapManager;
 
     std::vector<BufferResources>    m_bufferResources;
     U32                             m_currentBufferIndex;

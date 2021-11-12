@@ -16,7 +16,7 @@ static void swap(T& lh, T& rh)
 
 
 template <typename T>
-class SimpleCompare 
+class GenericCompare 
 {
  public:
   Bool operator() const (const T& lh, const T& rh) const { return lh < rh; }

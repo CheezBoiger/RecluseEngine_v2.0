@@ -261,4 +261,16 @@ VkFormatProperties VulkanAdapter::getFormatProperties(VkFormat format) const
     
     return props;
 }
+
+
+std::vector<VkSurfaceFormatKHR> VulkanAdapter::getSurfaceFormats(VkSurfaceKHR surface)
+{
+    R_ASSERT(m_phyDevice != NULL);
+
+    U32 formatCount = 0;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(m_phyDevice, surface, &formatCount, nullptr);
+    std::vector<VkSurfaceFormatKHR> formats(formatCount);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(m_phyDevice, surface, &formatCount, formats.data());
+    return formats;
+}
 } // Recluse 

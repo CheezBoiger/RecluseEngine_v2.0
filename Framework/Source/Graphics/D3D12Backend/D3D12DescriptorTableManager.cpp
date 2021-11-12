@@ -6,7 +6,7 @@
 namespace Recluse {
 
 
-D3D12DescriptorHeapManagement::D3D12DescriptorHeapManagement(D3D12Device* pDevice)
+D3D12DescriptorHeap::D3D12DescriptorHeap(D3D12Device* pDevice)
     : m_pDevice(pDevice)
     , m_pCPUDescriptorHeap(nullptr)
     , m_pGPUDescriptorHeap(nullptr)
@@ -16,7 +16,7 @@ D3D12DescriptorHeapManagement::D3D12DescriptorHeapManagement(D3D12Device* pDevic
 }
 
 
-ErrType D3D12DescriptorHeapManagement::initialize(D3D12_DESCRIPTOR_HEAP_TYPE type, U32 entries)
+ErrType D3D12DescriptorHeap::initialize(D3D12_DESCRIPTOR_HEAP_TYPE type, U32 entries)
 {
     R_ASSERT(m_pDevice != NULL);
 
@@ -53,12 +53,13 @@ ErrType D3D12DescriptorHeapManagement::initialize(D3D12_DESCRIPTOR_HEAP_TYPE typ
 
     m_descHeapType  = type;
     m_descIncSz     = pDevice->GetDescriptorHandleIncrementSize(type);
+    m_maxEntries    = entries;
 
     return REC_RESULT_OK;
 }
 
 
-ErrType D3D12DescriptorHeapManagement::destroy()
+ErrType D3D12DescriptorHeap::destroy()
 {
     R_ASSERT(m_pDevice != NULL);
 
@@ -76,7 +77,7 @@ ErrType D3D12DescriptorHeapManagement::destroy()
 }
 
 
-ErrType D3D12DescriptorHeapManagement::update(U32 startEntry, U32 endEntry)
+ErrType D3D12DescriptorHeap::update(U32 startEntry, U32 endEntry)
 {
     R_ASSERT(m_pDevice != NULL);
 
@@ -101,7 +102,7 @@ ErrType D3D12DescriptorHeapManagement::update(U32 startEntry, U32 endEntry)
 }
 
 
-D3D12_CPU_DESCRIPTOR_HANDLE D3D12DescriptorHeapManagement::createRenderTargetView(
+D3D12_CPU_DESCRIPTOR_HANDLE D3D12DescriptorHeap::createRenderTargetView(
     U32 entryOffset, const D3D12_RENDER_TARGET_VIEW_DESC& desc,
     ID3D12Resource* pResource)
 {
@@ -120,7 +121,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12DescriptorHeapManagement::createRenderTargetVie
 }
 
 
-D3D12_CPU_DESCRIPTOR_HANDLE D3D12DescriptorHeapManagement::createDepthStencilView(
+D3D12_CPU_DESCRIPTOR_HANDLE D3D12DescriptorHeap::createDepthStencilView(
     U32 entryOffset, const D3D12_DEPTH_STENCIL_VIEW_DESC& desc,
     ID3D12Resource* pResource)
 {
@@ -139,7 +140,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12DescriptorHeapManagement::createDepthStencilVie
 }
 
 
-D3D12_CPU_DESCRIPTOR_HANDLE D3D12DescriptorHeapManagement::createShaderResourceView(
+D3D12_CPU_DESCRIPTOR_HANDLE D3D12DescriptorHeap::createShaderResourceView(
     U32 entryOffset, const D3D12_SHADER_RESOURCE_VIEW_DESC& desc,
     ID3D12Resource* pResource)
 {
@@ -158,7 +159,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12DescriptorHeapManagement::createShaderResourceV
 }
 
 
-D3D12_CPU_DESCRIPTOR_HANDLE D3D12DescriptorHeapManagement::createUnorderedAccessView(
+D3D12_CPU_DESCRIPTOR_HANDLE D3D12DescriptorHeap::createUnorderedAccessView(
     U32 entryOffset, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc,
     ID3D12Resource* pResource)
 {
@@ -177,7 +178,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12DescriptorHeapManagement::createUnorderedAccess
 }
 
 
-D3D12_GPU_DESCRIPTOR_HANDLE D3D12DescriptorHeapManagement::getGPUHandle(U32 entryOffset)
+D3D12_GPU_DESCRIPTOR_HANDLE D3D12DescriptorHeap::getGPUHandle(U32 entryOffset)
 {
     R_ASSERT(m_descHeapType != D3D12_DESCRIPTOR_HEAP_TYPE_RTV && m_descHeapType != D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
@@ -195,5 +196,23 @@ D3D12_GPU_DESCRIPTOR_HANDLE D3D12DescriptorHeapManagement::getGPUHandle(U32 entr
     D3D12_GPU_DESCRIPTOR_HANDLE handle  = { address };
 
     return handle;
+}
+
+
+D3D12_CPU_DESCRIPTOR_HANDLE D3D12DescriptorHeap::createSampler(U32 entryOffset,
+    const D3D12_SAMPLER_DESC& desc)
+{
+    R_ASSERT(m_descHeapType == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+
+    ID3D12Device* pDevice   = m_pDevice->get();
+    U64 offset64            = static_cast<U64>(entryOffset);
+    U64 incSz64             = static_cast<U64>(m_descIncSz);
+
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuBaseHandle   = m_pCPUDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuDstHandle    = { cpuBaseHandle.ptr + offset64 * incSz64 };
+
+    pDevice->CreateSampler(&desc, cpuDstHandle);
+
+    return cpuDstHandle;
 }
 } // Recluse

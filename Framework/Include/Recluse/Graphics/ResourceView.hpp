@@ -23,4 +23,13 @@ public:
 private:
     ResourceViewDesc m_desc;
 };
+
+
+class GraphicsSampler {
+public:
+    virtual ~GraphicsSampler() { }
+
+    // Get a copy.
+    virtual SamplerCreateDesc getDesc() = 0;
+};
 } // Recluse

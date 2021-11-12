@@ -49,4 +49,28 @@ static VkSampleCountFlagBits getSamples(Recluse::U32 count)
 
 
 extern VkShaderStageFlags getShaderStages(Recluse::ShaderTypeFlags flags);
+
+
+static VkCompareOp getNativeCompareOp(Recluse::CompareOp op) 
+{
+    switch (op) {
+    case Recluse::COMPARE_OP_ALWAYS:
+        return VK_COMPARE_OP_ALWAYS;
+    case Recluse::COMPARE_OP_EQUAL:
+        return VK_COMPARE_OP_EQUAL;
+    case Recluse::COMPARE_OP_GREATER:
+        return VK_COMPARE_OP_GREATER;
+    case Recluse::COMPARE_OP_GREATER_OR_EQUAL:
+        return VK_COMPARE_OP_GREATER_OR_EQUAL;
+    case Recluse::COMPARE_OP_LESS:
+        return VK_COMPARE_OP_LESS;
+    case Recluse::COMPARE_OP_LESS_OR_EQUAL:
+        return VK_COMPARE_OP_LESS_OR_EQUAL;
+    case Recluse::COMPARE_OP_NOT_EQUAL:
+        return VK_COMPARE_OP_NOT_EQUAL;
+    case Recluse::COMPARE_OP_NEVER:
+    default:
+        return VK_COMPARE_OP_NEVER;
+    }
+}
 } // Vulkan

@@ -3,6 +3,7 @@
 
 #include "Recluse/Types.hpp"
 #include "Recluse/Graphics/Format.hpp"
+#include "Recluse/Graphics/GraphicsCommon.hpp"
 #include "Recluse/Graphics/DescriptorSet.hpp"
 
 namespace Recluse {
@@ -69,18 +70,6 @@ enum CullMode {
     CULL_MODE_FRONT,
     CULL_MODE_BACK,
     CULL_MODE_FRONT_AND_BACK
-};
-
-
-enum CompareOp {
-    COMPARE_OP_NEVER,
-    COMPARE_OP_LESS,
-    COMPARE_OP_EQUAL,
-    COMPARE_OP_LESS_OR_EQUAL,
-    COMPARE_OP_GREATER,
-    COMPARE_OP_NOT_EQUAL,
-    COMPARE_OP_GREATER_OR_EQUAL,
-    COMPARE_OP_ALWAYS
 };
 
 

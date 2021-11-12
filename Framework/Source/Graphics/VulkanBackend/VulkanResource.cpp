@@ -4,6 +4,7 @@
 #include "VulkanAllocator.hpp"
 #include "VulkanDevice.hpp"
 #include "VulkanAdapter.hpp"
+#include "VulkanCommons.hpp"
 
 #include "Recluse/Messaging.hpp"
 
@@ -23,27 +24,6 @@ VkImageLayout getVulkanImageLayout(Recluse::ResourceState state)
         case Recluse::RESOURCE_STATE_DEPTH_STENCIL_WRITE:  return VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
         case Recluse::RESOURCE_STATE_PRESENT: return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
         default: return VK_IMAGE_LAYOUT_UNDEFINED;
-    }
-}
-
-VkFormat getVulkanFormat(Recluse::ResourceFormat format)
-{
-    switch (format) {
-        case Recluse::RESOURCE_FORMAT_B8G8R8A8_SRGB: return VK_FORMAT_B8G8R8A8_SRGB;
-        case Recluse::RESOURCE_FORMAT_R8G8B8A8_UNORM: return VK_FORMAT_R8G8B8A8_UNORM;
-        case Recluse::RESOURCE_FORMAT_R16G16B16A16_FLOAT: return VK_FORMAT_R16G16B16A16_SFLOAT;
-        case Recluse::RESOURCE_FORMAT_R11G11B10_FLOAT: return VK_FORMAT_B10G11R11_UFLOAT_PACK32;
-        case Recluse::RESOURCE_FORMAT_D32_FLOAT: return VK_FORMAT_D32_SFLOAT;
-        case Recluse::RESOURCE_FORMAT_R32_FLOAT: return VK_FORMAT_R32_SFLOAT;
-        case Recluse::RESOURCE_FORMAT_D24_UNORM_S8_UINT: return VK_FORMAT_D24_UNORM_S8_UINT;
-        case Recluse::RESOURCE_FORMAT_R16G16_FLOAT: return VK_FORMAT_R16G16_SFLOAT;
-        case Recluse::RESOURCE_FORMAT_R32G32B32A32_FLOAT: return VK_FORMAT_R32G32B32A32_SFLOAT;
-        case Recluse::RESOURCE_FORMAT_R32G32B32A32_UINT: return VK_FORMAT_R32G32B32A32_UINT;
-        case Recluse::RESOURCE_FORMAT_R32G32_FLOAT: return VK_FORMAT_R32G32_SFLOAT;
-        case Recluse::RESOURCE_FORMAT_R32G32_UINT: return VK_FORMAT_R32G32_UINT;
-        case Recluse::RESOURCE_FORMAT_D32_FLOAT_S8_UINT: return VK_FORMAT_D32_SFLOAT_S8_UINT;
-        case Recluse::RESOURCE_FORMAT_R8_UINT: return VK_FORMAT_R8_UINT;
-        default: return VK_FORMAT_UNDEFINED;
     }
 }
 } // Vulkan

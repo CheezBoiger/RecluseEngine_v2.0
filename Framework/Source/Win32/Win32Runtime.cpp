@@ -13,12 +13,40 @@
 
 namespace Recluse {
 
-
 static struct {
     U64 gTicksPerSecond;
     U64 gTime;
     RAWINPUT lpb;
 } gWin32Runtime;
+
+namespace Asserts {
+
+Result AssertHandler::check(Bool cond, const char* functionStr, const char* msg)
+{
+    if (cond) return ASSERT_OK;
+
+    std::string message = "";
+    message += functionStr;
+    message += "\n\n";
+    message += msg;
+
+    // If the assert is false, we should handle it.
+    DWORD hresult = MessageBox(NULL, msg, NULL, MB_ABORTRETRYIGNORE);
+
+    switch (hresult) {
+        case IDRETRY:
+            return ASSERT_DEBUG;
+        case IDABORT:
+            return ASSERT_TERMINATE;
+        case IDCANCEL:
+            return ASSERT_IGNORE;
+        default:
+            break;
+    }
+
+    return ASSERT_IGNORE;
+}
+} // Asserts
 
 
 void enableOSColorInput()
@@ -187,6 +215,7 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
         case WM_RBUTTONDOWN:
         case WM_LBUTTONUP:
         case WM_RBUTTONUP:
+        case WM_PAINT:
         default: break;
     }    
 

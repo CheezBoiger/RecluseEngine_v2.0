@@ -12,18 +12,20 @@ namespace Recluse {
 
 class D3D12Device;
 
-class D3D12DescriptorHeapManagement {
+class D3D12DescriptorHeap {
 public:
 
-    D3D12DescriptorHeapManagement(D3D12Device* pDevice);
+    D3D12DescriptorHeap(D3D12Device* pDevice);
 
-    ~D3D12DescriptorHeapManagement() {
+    ~D3D12DescriptorHeap() {
     }
 
     ErrType initialize(D3D12_DESCRIPTOR_HEAP_TYPE type, U32 entries);
     ErrType destroy();
 
     ErrType update(U32 startEntry, U32 endEntry);
+
+    UINT getMaxEntries() const { return m_maxEntries; }
 
     D3D12_CPU_DESCRIPTOR_HANDLE createRenderTargetView(
         U32 entryOffset, const D3D12_RENDER_TARGET_VIEW_DESC& desc, 
@@ -56,6 +58,7 @@ private:
     ID3D12DescriptorHeap* m_pGPUDescriptorHeap;
     D3D12_DESCRIPTOR_HEAP_TYPE m_descHeapType;
     UINT                        m_descIncSz;
+    UINT                        m_maxEntries;
 };
 
 
@@ -79,7 +82,34 @@ class D3D12DescriptorSet : public DescriptorSet {
 public:
 
 private:
-    D3D12DescriptorHeapManagement*  m_pManagement;
+    D3D12DescriptorHeap*  m_pManagement;
     std::vector<DescriptorTable>    m_tables;
+};
+
+
+class DescriptorHeapManager {
+public:
+
+    D3D12_CPU_DESCRIPTOR_HANDLE createSampler(const D3D12_SAMPLER_DESC& desc) {
+        UINT maxEntries = m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER].pHeap->getMaxEntries();
+        UINT currOffset = m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER].currentOffset;
+        if (currOffset < maxEntries) {
+            m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER].currentOffset += 1;
+        } else {
+            m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER].currentOffset = 0;
+        }
+        return m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER].pHeap->createSampler(
+            m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER].currentOffset, desc);
+    }
+    
+private:
+
+    struct HeapMetaData {
+        D3D12DescriptorHeap* pHeap;
+        UINT64              currentOffset;
+    };
+
+    HeapMetaData m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES];
+    
 };
 } // Recluse 

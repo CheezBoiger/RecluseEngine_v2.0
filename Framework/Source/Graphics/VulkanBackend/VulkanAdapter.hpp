@@ -65,6 +65,8 @@ public:
     
     VulkanInstance* getInstance() const { return m_instance; }
 
+    std::vector<VkSurfaceFormatKHR> getSurfaceFormats(VkSurfaceKHR surface);
+
 private:
 
     // Do not allow copying.

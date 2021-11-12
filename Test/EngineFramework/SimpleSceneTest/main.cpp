@@ -9,11 +9,49 @@
 #include "Recluse/Math/Vector2.hpp"
 #include "Recluse/Scene/Scene.hpp"
 #include "Recluse/Game/GameObject.hpp"
-
+#include "Recluse/MessageBus.hpp"
+#include <Windows.h>
 #include <vector>
 
 using namespace Recluse;
 using namespace Recluse::Engine;
+
+Recluse::MessageBus g_bus;
+
+class AssertoHandler {
+public:
+    enum AssertResult {
+        ASSERT_OK,
+        ASSERT_DEBUG,
+        ASSERT_IGNORE,
+        ASSERT_STOP
+    };
+    static int check(Bool cond, const char* functionStr, const char* msg) {
+        if (cond) {
+            return ASSERT_OK;
+        }
+        std::string mstr;
+        mstr += functionStr;
+        mstr += "\n\n";
+        mstr += msg;
+        DWORD res = MessageBox(NULL, mstr.c_str(), NULL, MB_ABORTRETRYIGNORE);
+        switch (res) {
+            case IDRETRY: return ASSERT_DEBUG;
+            default: return ASSERT_OK;
+        }
+    }
+};
+
+#define RE_ASSERT(cond, msg) {                                 \
+    int _ = AssertoHandler::check(cond, __FUNCTION__, msg);                          \
+    switch (_) { case AssertoHandler::ASSERT_DEBUG: DebugBreak(); break; default: break; } \
+    }
+
+struct InputMessage : public AMessage {
+  std::string getEvent() override { return "Noob"; }
+  U32 value;
+};
+
 
 // Testing the game object behavior!
 class TestObject : public Engine::GameObject {
@@ -22,6 +60,11 @@ public:
 
     void onInitialize() override {
         m_name = "Super Test Object";
+      std::function<void(AMessage*)> fun = [&](AMessage* message) {
+          InputMessage* input = static_cast<InputMessage*>(message);
+          R_VERBOSE(m_name.c_str(), "Message: %s, value=%d", input->getEvent().c_str(), input->value);
+      }; 
+      g_bus.addReceiver(fun);
     }
 
     void onUpdate(const RealtimeTick& tick) override {
@@ -54,6 +97,9 @@ public:
 
     void onUpdate(const RealtimeTick& tick) override {
         GameObject* parent = getParent();
+        InputMessage message = { };
+        message.value = 70;
+        g_bus.pushMessage(message);
         if (parent) {
             R_WARN(m_name.c_str(), "I am a child object! My father is %s!", parent->getName().c_str());
         } else {
@@ -66,6 +112,7 @@ int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
     RealtimeTick::initialize();
+    g_bus.initialize();
 
     Engine::GameObject* obj = new TestObject();
     Engine::GameObject* obj1 = new TestObject1();
@@ -83,12 +130,15 @@ int main(int c, char* argv[])
     while ((counter++) < 500) {
         RealtimeTick tick = RealtimeTick::getTick();
         pScene->update(tick);
+
+        g_bus.notifyAll();
+        g_bus.clearQueue();
     }
 
     pScene->destroy();
-
     delete obj;  
     delete pScene;
     Log::destroyLoggingSystem();
+    g_bus.cleanUp();
     return 0;
 }

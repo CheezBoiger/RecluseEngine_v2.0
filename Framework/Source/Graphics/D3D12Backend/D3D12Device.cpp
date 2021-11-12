@@ -283,4 +283,27 @@ GraphicsSwapchain* D3D12Device::getSwapchain()
 {
     return m_swapchain;
 }
+
+
+D3D12_CPU_DESCRIPTOR_HANDLE D3D12Device::createSampler(const D3D12_SAMPLER_DESC& desc)
+{
+    D3D12_CPU_DESCRIPTOR_HANDLE handle = m_descHeapManager.createSampler(desc);
+    return handle;
+}
+
+
+D3D12_FEATURE_DATA_FORMAT_SUPPORT D3D12Device::checkFormatSupport(ResourceFormat format)
+{
+    D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport = { };
+
+    formatSupport.Format = Dxgi::getNativeFormat(format);
+
+    if (FAILED(m_device->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, 
+        &formatSupport, sizeof(formatSupport))))
+    {
+        R_ERR(R_CHANNEL_D3D12, "Failed to query for proper format support on device!");
+    }
+
+    return formatSupport;
+}
 } // Recluse
