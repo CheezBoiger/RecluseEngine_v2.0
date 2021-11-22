@@ -13,6 +13,8 @@ class D3D12Adapter;
 
 class D3D12Instance : public GraphicsInstance {
 public:
+    D3D12Instance() : GraphicsInstance(GRAPHICS_API_D3D12) { }
+    virtual ~D3D12Instance() { }
 
     IDXGIFactory2* get() const { return m_pFactory; }
 

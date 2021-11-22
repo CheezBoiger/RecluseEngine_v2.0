@@ -33,6 +33,20 @@ class Primitive;
 struct RenderCommand;
 class RenderCommandList;
 
+enum RenderPassType : U32 {
+
+  RENDER_PREZ = 0x0001,
+  RENDER_SHADOW = 0x0002,
+  RENDER_PARTICLE = 0x0004,
+  RENDER_GBUFFER = 0x0008,
+  RENDER_HAS_MATERIAL = 0x0010,
+  RENDER_FORWARD_OPAQUE = 0x0020,
+  RENDER_FORWARD_TRANSPARENT = 0x0040,
+  RENDER_HAZE = 0x0080
+};
+
+typedef U32 RenderPassTypeFlags;
+
 
 enum QualitySetting {
     QUALITY_NONE,
@@ -70,13 +84,14 @@ struct RendererConfigs {
 // implement any render passes and stages of the graphics pipeline.
 class R_PUBLIC_API Renderer {
 public:
+    static Renderer* getMain();
 
     void initialize(void* pWindowHandle, const RendererConfigs& configs);
     void cleanUp();
 
     void recreate(const RendererConfigs& newConfigs);
 
-    void pushRenderCommand(const RenderCommand& renderCommand);
+    void pushRenderCommand(const RenderCommand& renderCommand, RenderPassTypeFlags renderFlags);
 
     void render();
     void present();
@@ -119,7 +134,7 @@ private:
     void*                   m_windowHandle;
 
     // Scene buffer objects.
-    SceneBuffers            m_sceneBuffers;
+    SceneBufferDefinitions            m_sceneBuffers;
     RenderCommandList*       m_renderCommands;
 
     struct CommandKey {

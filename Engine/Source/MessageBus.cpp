@@ -32,8 +32,25 @@ void MessageBus::cleanUp()
 }
 
 
-void MessageBus::addReceiver(MessageReceiveFunc receiver)
+void MessageBus::addReceiver(const std::string& nodeName, MessageReceiveFunc receiver)
 {
     m_messageReceivers.push_back(receiver);
+    m_receiverNodeNames[nodeName] = m_messageReceivers.size() - 1;
+}
+
+
+void MessageBus::notifyOne(const std::string& nodeName)
+{
+    if (m_receiverNodeNames.find(nodeName) == m_receiverNodeNames.end()) {
+        R_ERR(__FUNCTION__, "Unable to find the node name=%s", nodeName.c_str());
+        return;
+    }
+
+    MessageReceiveFunc func =  m_messageReceivers[m_receiverNodeNames[nodeName]];
+
+    while (!m_messages.empty()) {
+        func(m_messages.front());
+        m_messages.pop();    
+    }
 }
 } // Recluse

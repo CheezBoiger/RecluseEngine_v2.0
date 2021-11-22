@@ -6,6 +6,7 @@
 #include "Recluse/RealtimeTick.hpp"
 #include "Recluse/Logger.hpp"
 #include "Recluse/Messaging.hpp"
+#include "Recluse/Application.hpp"
 
 #include "Recluse/Renderer/Renderer.hpp"
 #include "Recluse/Renderer/RenderCommand.hpp"
@@ -37,11 +38,10 @@ int main(int c, char* argv[])
     while (!pWindow->shouldClose()) {
         DrawRenderCommand rcmd = { };
         rcmd.op = COMMAND_OP_DRAWABLE_INSTANCED;
-        rcmd.flags = RENDER_PREZ;
         rcmd.vertexTypeFlags = VERTEX_ATTRIB_POSITION | VERTEX_ATTRIB_NORMAL;
         rcmd.numSubMeshes = 0;
 
-        pRenderer->pushRenderCommand(rcmd);
+        pRenderer->pushRenderCommand(rcmd, RENDER_PREZ);
 
         pRenderer->render();
 

@@ -169,4 +169,10 @@ Int2 Int2::operator>>(U32 shft) const
 {
     return Int2(x >> shft, y >> shft);
 }
+
+
+Float2 lerp(const Float2& a, const Float2& b, F32 t)
+{
+    return R_LERP(a, b, t);
+}
 } // Recluse

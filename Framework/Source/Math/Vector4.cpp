@@ -201,4 +201,10 @@ Float4 operator*(const Float4& lh, const Matrix44& rh)
 
     return res;
 }
+
+
+Float4 lerp(const Float4& a, const Float4& b, F32 t)
+{
+    return R_LERP(a, b, t);
+}
 } // Recluse

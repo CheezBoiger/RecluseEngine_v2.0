@@ -6,6 +6,7 @@
 #include "Recluse/Types.hpp"
 #include <queue>
 #include <functional>
+#include <map>
 
 namespace Recluse {
 
@@ -34,7 +35,8 @@ class MessageBus {
     R_PUBLIC_API void initialize();
     R_PUBLIC_API void cleanUp();
 
-    R_PUBLIC_API void addReceiver(MessageReceiveFunc receiver);
+    R_PUBLIC_API void addReceiver(const std::string& nodeName, 
+        MessageReceiveFunc receiver);
 
     template<typename MessageType>
     void pushMessage(const MessageType& message) {
@@ -58,7 +60,7 @@ class MessageBus {
         }
     }
 
-    void notifyOne(const std::string& nodeName);
+    R_PUBLIC_API void notifyOne(const std::string& nodeName);
 
     void clearQueue() {
         if (m_messages.empty())
@@ -70,5 +72,6 @@ private:
     MemoryPool* m_messageMemPool;
     std::queue<AMessage*> m_messages;
     std::vector<MessageReceiveFunc> m_messageReceivers;
+    std::map<std::string, U32> m_receiverNodeNames;
 };
 } // Recluse

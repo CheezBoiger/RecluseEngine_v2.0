@@ -14,22 +14,6 @@
 namespace Recluse {
 namespace Engine {
 
-
-enum RenderPassType : U32 {
-
-    RENDER_PREZ                 = 0x0001,
-    RENDER_SHADOW               = 0x0002,
-    RENDER_PARTICLE             = 0x0004,
-    RENDER_GBUFFER              = 0x0008,
-    RENDER_HAS_MATERIAL         = 0x0010,
-    RENDER_FORWARD_OPAQUE       = 0x0020,
-    RENDER_FORWARD_TRANSPARENT  = 0x0040,
-    RENDER_HAZE                 = 0x0080
-};
-
-
-typedef U32 RenderPassTypeFlags;
-
 enum CommandOp {
     COMMAND_OP_DRAWABLE_INSTANCED,
     COMMAND_OP_DRAWABLE_INDEXED_INSTANCED,
@@ -52,7 +36,6 @@ typedef U32 RenderPassTypeFlags;
 struct RenderCommand {
     CommandOp               op          : 24;   //
     U32                     stencilRef  : 8;    // 4 B
-    RenderPassTypeFlags     flags;              // 8 B
 };
 
 

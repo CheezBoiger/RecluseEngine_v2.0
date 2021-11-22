@@ -164,4 +164,10 @@ Float3 cross(const Float3& lh, const Float3& rh)
             lh.x * rh.y - lh.y * rh.x
     };
 }
+
+
+Float3 lerp(const Float3& a, const Float3& b, F32 t)
+{
+    return R_LERP(a, b, t);
+}
 } // Recluse

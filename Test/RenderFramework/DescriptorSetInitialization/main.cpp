@@ -256,7 +256,7 @@ int main(int c, char* argv[])
         RealtimeTick tick = RealtimeTick::getTick();
         R_TRACE("TEST", "FPS: %f", 1.0f / tick.getDeltaTimeS());
         F32 color[] = { 0.0f, 1.0f, 0.0f, 1.0f };
-        F32 color2[] = { 1.0f, 0.0f, 0.0f, 1.0f };
+        F32 color2[] = { 0.0f, 0.0f, 1.0f, 1.0f };
         if (index != 0) index--;
         Rect rect = { 200.f + index, 200.f, 1024.f/2.f, 1024.f/2.f };
         Rect rect2 = { 0.f, 0.f, 1024.f, 1024.f };

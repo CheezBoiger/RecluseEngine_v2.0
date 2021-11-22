@@ -25,7 +25,7 @@ static void createPipelines(GraphicsPipelineStateDesc& pipelineCi)
 {
 }
 
-void initialize(GraphicsDevice* pDevice, Engine::SceneBuffers* pBuffers)
+void initialize(GraphicsDevice* pDevice, Engine::SceneBufferDefinitions* pBuffers)
 {
     R_ASSERT(pBuffers->pSceneDepth                  != NULL);
     R_ASSERT(pBuffers->pSceneDepth->getResource()   != NULL);
@@ -106,19 +106,20 @@ void generate(GraphicsCommandList* pCommandList, Engine::RenderCommandList* pMes
     
         U64 key = keys[i];
         Engine::RenderCommand* pRCmd            = pRenderCommands[key];
-        Engine::RenderPassTypeFlags flags       = pRCmd->flags;
-        PipelineState* pipeline                 = pipelines[flags];
+        PipelineState* pipeline                 = nullptr;
         Engine::DrawableRenderCommand* meshCmd  = nullptr;
-
-        R_ASSERT_MSG(pipeline != NULL, "No pipeline exists for this mesh!");
 
         if (meshCmd->op != Engine::COMMAND_OP_DRAWABLE_INDEXED_INSTANCED || 
             meshCmd->op != Engine::COMMAND_OP_DRAWABLE_INSTANCED) {
             continue;
         }
 
-        meshCmd = static_cast<Engine::DrawableRenderCommand*>(pRCmd);
- 
+        meshCmd                         = static_cast<Engine::DrawableRenderCommand*>(pRCmd);
+        Engine::VertexAttribFlags flags = meshCmd->vertexTypeFlags;
+        pipeline                        = pipelines[flags];
+
+        R_ASSERT_MSG(pipeline != NULL, "No pipeline exists for this mesh!");
+
         pCommandList->bindVertexBuffers(meshCmd->numVertexBuffers, meshCmd->ppVertexBuffers, meshCmd->pOffsets);
         pCommandList->setPipelineState(pipeline, BIND_TYPE_GRAPHICS);
 

@@ -1,6 +1,7 @@
 // 
 #pragma once
 
+#include "Recluse/Math/MathIntrinsics.hpp"
 #include "Recluse/Math/Vector3.hpp"
 
 namespace Recluse {
@@ -13,6 +14,7 @@ struct R_PUBLIC_API Float4 {
         struct { F32 r, g, b, a; };
         struct { F32 s, t, r, q; };
         struct { F32 u, v, w, c; };
+        __m128 row;
     };
 
     inline Float4(F32 x = 0.f, F32 y = 0.f, F32 z = 0.f, F32 w = 0.f)
@@ -57,7 +59,7 @@ struct R_PUBLIC_API UInt4 {
         struct { U32 r, g, b, a; };
     };
 
-    UInt4(U32 x = 0.f, U32 y = 0.f, U32 z = 0.f, U32 w = 0.f)
+    UInt4(U32 x = 0, U32 y = 0, U32 z = 0, U32 w = 0)
         : x(x), y(y), z(z), w(w) { }
 
     inline U32& operator[](U32 i) { return (&x)[i]; }
@@ -94,4 +96,5 @@ R_PUBLIC_API F32 length(const Float4& a);
 R_PUBLIC_API F32 length2(const Float4& a);
 // [1 x 4] * [4 x 4} = [1 x 4]
 R_PUBLIC_API Float4 operator*(const Float4& lh, const Matrix44& rh);
+R_PUBLIC_API Float4 lerp(const Float4& a, const Float4& b, F32 t);
 } // Recluse

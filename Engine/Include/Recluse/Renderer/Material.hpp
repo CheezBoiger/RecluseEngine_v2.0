@@ -12,8 +12,29 @@ namespace Recluse {
 namespace Engine {
 
 class Renderer;
+class TextureView;
 
-class R_PUBLIC_API Texture2D {
+// Texture Lookup, this is also used as helpers in texture handlers.
+struct TextureViewID {
+    Hash64 resourceCrC;
+    ResourceViewType type;
+    ResourceFormat format;
+    ResourceViewDimension dimension;
+};
+
+class R_PUBLIC_API TextureResource {
+public:
+    TextureResource() { }
+    virtual ~TextureResource() { }
+
+    Hash64 getCrC() const { return m_crc; }
+    void genCrC(void* pUnique, U64 sz);
+
+private:
+    Hash64 m_crc;
+};
+
+class R_PUBLIC_API Texture2D : public TextureResource {
 public:
     Texture2D() 
         : m_resource(nullptr) { }
@@ -26,28 +47,34 @@ public:
 
     GraphicsResource* getResource() { return m_resource; }
 
-    Hash64 getCrC() const { return m_crc; }
+    TextureView* getTextureView(const TextureViewID& id);
 
 private:
-    Hash64 m_crc;
     GraphicsResource* m_resource;
 };
 
 
-class R_PUBLIC_API TextureView {
+class R_PUBLIC_API TextureView : public TextureResource {
 public:
     TextureView()
         : m_texture(nullptr)
         , m_view(nullptr) { }
 
+    // initializes and stores the texture view into the texture database.
     ErrType initialize(Renderer* pRenderer, Texture2D* pTexture, ResourceViewDesc& desc);
+
+    // destroys this texture view, along with the lookup from the texture database.
     ErrType destroy(Renderer* pRenderer);
 
     Texture2D* getTexture() const { return m_texture; }
     GraphicsResourceView* getView() const { return m_view; }
+
 private:
     GraphicsResourceView* m_view;
     Texture2D* m_texture;
+    ResourceViewDimension m_viewDim;
+    ResourceViewType m_viewType;
+    ResourceFormat m_viewFormat;
 };
 
 
@@ -67,6 +94,8 @@ typedef U32 SurfaceTypeFlags;
 enum MaterialType {
     MATERIAL_TYPE_PBR_ROUGH_METAL,
     MATERIAL_TYPE_PBR_GLOSS_SPEC,
+    MATERIAL_TYPE_PHONG_DIFFUSE_SPEC,
+    MATERIAL_TYPE_FLAT,
     MATERIAL_TYPE_OTHER
 };
 
@@ -81,9 +110,10 @@ class Material {
 public:
     virtual ~Material() { }
 
-    R_PUBLIC_API Material(MaterialType type) 
+    R_PUBLIC_API Material(const std::string& matName, MaterialType type) 
         : m_matType(type)
-        , m_flags(0) { }
+        , m_flags(0)
+        , m_matName(matName) { }
 
     R_PUBLIC_API MaterialType getMatType() const { return m_matType; }
 
@@ -111,10 +141,22 @@ public:
 
     R_PUBLIC_API SurfaceTypeFlags getSurfaceTypeFlags() { return m_flags; }
 
+    const std::string& getName() const { return m_matName; }
+
 protected:
     SurfaceTypeFlags m_flags;
     MaterialType m_matType;
     std::unordered_map<std::string, Texture2D*> m_matMap;
+    std::string m_matName;
 };
+
+
+// Need to call these in order to properly create textures.
+void initializeTextureLUT();
+void cleanupTextureLUT();
+
+TextureView* lookupTextureView(const TextureViewID& id);
+ErrType addTextureView(const TextureViewID& id);
+ErrType removeTextureView(const TextureViewID& id);
 } // Engine
 } // Recluse

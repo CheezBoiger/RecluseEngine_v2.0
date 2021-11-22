@@ -17,6 +17,7 @@ static struct {
     U64 gTicksPerSecond;
     U64 gTime;
     RAWINPUT lpb;
+    DWORD mainThreadId = GetCurrentThreadId();
 } gWin32Runtime;
 
 namespace Asserts {
@@ -232,5 +233,17 @@ void pollEvents()
         DispatchMessage(&msg);
     
     }
+}
+
+
+U64 getMainThreadId()
+{
+    return (U64)gWin32Runtime.mainThreadId;
+}
+
+
+U64 getCurrentThreadId()
+{
+    return (U64)GetCurrentThreadId();
 }
 } // Recluse

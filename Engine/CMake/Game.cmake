@@ -14,4 +14,5 @@ set ( RECLUSE_ENGINE_COMPILE_FILES
 	${RECLUSE_ENGINE_INCLUDE_DIR}/Recluse/Application.hpp
 	${RECLUSE_ENGINE_INCLUDE_DIR}/Recluse/MessageBus.hpp
 	${RECLUSE_ENGINE_SOURCE_DIR}/MessageBus.cpp
+	${RECLUSE_ENGINE_SOURCE_DIR}/Application.cpp
 )

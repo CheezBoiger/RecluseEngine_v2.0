@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Recluse/Math/MathCommons.hpp"
+#include "Recluse/Math/MathIntrinsics.hpp"
 #include "Recluse/Types.hpp"
 
 #include "Recluse/Math/Vector4.hpp"
@@ -11,9 +12,11 @@ namespace Recluse {
 
 
 struct R_PUBLIC_API Quaternion {
+    union {
+        struct { F32 x, y, z, w; };
+        __m128 row;
+    };
 
-    F32 x, y, z, w;
-    
     Quaternion(F32 x = 0.0f, F32 y = 0.0f, F32 z = 0.0f, F32 w = 1.0f)
         : x(x), y(y), z(z), w(w) { }
 

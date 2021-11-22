@@ -31,7 +31,11 @@ class GraphicsAdapter;
 
 class GraphicsInstance {
 public:
+    GraphicsInstance(GraphicsAPI api)
+        : m_api(api) { }
 
+    virtual ~GraphicsInstance() { }
+    
     static R_PUBLIC_API GraphicsInstance* createInstance(enum GraphicsAPI api = GRAPHICS_API_VULKAN);
     static R_PUBLIC_API ErrType destroyInstance(GraphicsInstance* pInstance);
 
@@ -43,6 +47,9 @@ public:
 
     // Get available adapters.
     R_PUBLIC_API std::vector<GraphicsAdapter*>& getGraphicsAdapters() { return m_graphicsAdapters; }
+
+    // Get the runtime graphics api.
+    GraphicsAPI getApi() const { return m_api; }
 
 protected:
     // Called in initialize.
@@ -66,5 +73,8 @@ private:
         freeGraphicsAdapters();
         onDestroy();
     }
+
+    // Graphics api used.
+    GraphicsAPI m_api;
 };
 } // Recluse

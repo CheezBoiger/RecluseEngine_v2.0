@@ -10,7 +10,7 @@
 namespace Recluse {
 namespace PreZ {
 
-void initialize(GraphicsDevice* pDevice, Engine::SceneBuffers* pBuffers);
+void initialize(GraphicsDevice* pDevice, Engine::SceneBufferDefinitions* pBuffers);
 void destroy(GraphicsDevice* pDevice);
 void generate(GraphicsCommandList* pCommandList, Engine::RenderCommandList* pMeshCommandList, U64* keys, U64 sz);
 } // PreZ

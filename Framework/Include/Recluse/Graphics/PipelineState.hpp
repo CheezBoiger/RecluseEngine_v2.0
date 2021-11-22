@@ -223,7 +223,15 @@ struct ComputePipelineStateDesc : public PipelineStateDesc {
 
 
 struct RayTracingPipelineStateDesc : public PipelineStateDesc {
+    Shader* pClosestHit;
+    Shader* pAnyHit;
+    Shader* pMiss;
+    Shader* pRayGen;
+    Shader* pIntersect;
 
+    struct AccelerationStructure {
+        GraphicsResource* pScratch;
+    } acceleration;
 };
 
 

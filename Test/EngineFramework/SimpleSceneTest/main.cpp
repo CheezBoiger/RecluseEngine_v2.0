@@ -64,7 +64,7 @@ public:
           InputMessage* input = static_cast<InputMessage*>(message);
           R_VERBOSE(m_name.c_str(), "Message: %s, value=%d", input->getEvent().c_str(), input->value);
       }; 
-      g_bus.addReceiver(fun);
+      g_bus.addReceiver("TestObject", fun);
     }
 
     void onUpdate(const RealtimeTick& tick) override {

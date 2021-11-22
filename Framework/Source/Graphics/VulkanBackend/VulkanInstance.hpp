@@ -10,7 +10,8 @@ namespace Recluse {
 
 class VulkanInstance : public GraphicsInstance {
 public:
-
+    VulkanInstance() : GraphicsInstance(GRAPHICS_API_VULKAN) { }
+    virtual ~VulkanInstance() { }
     // Initialize the vulkan context.
     ErrType onInitialize(const ApplicationInfo& appInfo, EnableLayerFlags layerFlags) override;
 

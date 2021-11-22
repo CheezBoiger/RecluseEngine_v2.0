@@ -291,13 +291,12 @@ void Renderer::sortCommandKeys()
 }
 
 
-void Renderer::pushRenderCommand(const RenderCommand& renderCommand)
+void Renderer::pushRenderCommand(const RenderCommand& renderCommand, RenderPassTypeFlags renderFlags)
 {
     R_ASSERT(m_renderCommands != NULL);
 
     // Store mesh commands to be referenced for each draw pass.
     CommandKey key                  = { m_renderCommands->getNumberCommands() };
-    RenderPassTypeFlags renderFlags       = renderCommand.flags;
 
     if (renderFlags & RENDER_PREZ) {
         m_commandKeys[RENDER_PREZ].push_back(key.value);

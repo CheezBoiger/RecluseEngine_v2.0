@@ -15,4 +15,10 @@ float indirectIlluminationAndAO(float visibility, float3 albedo)
 	return max(visibility, occlusion);
 }
 
+
+// Simple Implementation of Specular Occlusion from Sabastien Lagarde.
+float computeSpecOcclusion(float NoV, float AO, float roughness)
+{
+	return saturate(pow(NoV + AO, exp2(-16 * roughness - 1)) - 1 + AO);
+}
 #endif // AMBIENT_OCCLUSION_HLSLI

@@ -43,14 +43,14 @@ struct R_PUBLIC_API Matrix44 {
     inline Matrix44 operator*(F32 scalar) const;
     inline Matrix44 operator/(F32 scalar) const;  
 
-    inline Matrix44 operator*=(const Matrix44& rh) const;
-    inline Matrix44 operator+=(const Matrix44& rh) const;
-    inline Matrix44 operator-=(const Matrix44& rh) const;
+    inline void operator*=(const Matrix44& rh);
+    inline void operator+=(const Matrix44& rh);
+    inline void operator-=(const Matrix44& rh);
 
-    inline Matrix44 operator*=(F32 scalar) const;
-    inline Matrix44 operator+=(F32 scalar) const;
-    inline Matrix44 operator-=(F32 scalar) const;
-    inline Matrix44 operator/=(F32 scalar) const;
+    inline void operator*=(F32 scalar);
+    inline void operator+=(F32 scalar);
+    inline void operator-=(F32 scalar);
+    inline void operator/=(F32 scalar);
 
     static Matrix44 identity();
 };

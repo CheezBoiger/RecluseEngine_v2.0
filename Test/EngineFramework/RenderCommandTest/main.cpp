@@ -40,7 +40,6 @@ void fillList(RenderCommandList& list)
 
     rcmd.op = COMMAND_OP_DRAWABLE_INSTANCED;
     rcmd.numVertexBuffers = 2;
-    rcmd.flags = RENDER_PREZ;
     rcmd.numSubMeshes = 12;
     rcmd.pSubMeshes = submeshes;
 

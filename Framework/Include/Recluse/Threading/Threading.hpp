@@ -52,6 +52,8 @@ R_PUBLIC_API ErrType destroyMutex(Mutex mutex);
 
 R_PUBLIC_API ErrType atomicAdd();
 R_PUBLIC_API ErrType atomicSub();
+R_PUBLIC_API U64     getMainThreadId();
+R_PUBLIC_API U64     getCurrentThreadId();
 
 // C++ RAII locking mechanism within a scope.
 class R_PUBLIC_API ScopedLock {

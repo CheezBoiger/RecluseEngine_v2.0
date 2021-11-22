@@ -98,7 +98,7 @@ private:
 };
 
 
-struct SceneBuffers {
+struct SceneBufferDefinitions {
     std::vector<GPUBuffer*> pSceneViewBuffers;
     Texture2D* pSceneAlbedo;
     Texture2D* pSceneAo;
