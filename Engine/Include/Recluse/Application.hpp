@@ -29,8 +29,28 @@ enum JobType {
 
 typedef U32 JobTypeFlags;
 
+struct JobMessage : public AMessage {
+    JobMessage(const std::string& msg) 
+        : m_msg(msg) 
+    {
+        
+    }
+
+    virtual std::string getEvent() override {
+        return m_msg;    
+    }
+private:
+    std::string m_msg;
+};
+
 class R_PUBLIC_API Application {
 public:
+
+    Application()
+        : m_pWindow(nullptr)
+        , m_pScene(nullptr)
+        , m_initialized(false)
+    { }
 
     virtual         ~Application() { }    
     virtual void    update(const RealtimeTick& tick) { }
@@ -51,6 +71,7 @@ public:
     Thread*         getJobThread(JobType jobType);
 
     Engine::Scene* getScene() { return m_pScene; }
+    Window* getWindow() { return m_pWindow; }
 
     Bool isInitialized() const { return m_initialized; }
 
@@ -62,6 +83,7 @@ protected:
     void markInitialized() { m_initialized = true; } 
 
 private:
+    Window* m_pWindow;
     Engine::Scene* m_pScene;
     std::list<Thread> m_threads;
     std::map<JobType, Thread*> m_jobThreads;

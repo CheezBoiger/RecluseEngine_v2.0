@@ -1,6 +1,7 @@
 //
 
 #include "LightClusterModule.hpp"
+#include "Recluse/Messaging.hpp"
 
 #include "Recluse/Graphics/PipelineState.hpp"
 #include "Recluse/Graphics/CommandList.hpp"
@@ -21,7 +22,13 @@ GraphicsResource* pLightIndices         = nullptr;
 
 void cullLights(GraphicsCommandList* pList)
 {
-    
+    R_ASSERT(pList != NULL);
+
+    if (pList->supportsAsyncCompute()) {
+        
+    } else {
+        
+    }
 }
 
 

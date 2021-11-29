@@ -40,8 +40,8 @@ public:
     virtual void drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 firstIndex, U32 vertexOffset, U32 firstInstance) { }
     virtual void drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstVertex, U32 firstInstance) { }
 
-    virtual void drawInstancedIndirect() { }
-    virtual void drawIndexedInstancedIndirect() { }
+    virtual void drawInstancedIndirect(GraphicsResource* pParams) { }
+    virtual void drawIndexedInstancedIndirect(GraphicsResource* pParams) { }
 
     virtual void setScissors(U32 numScissors, Rect* pRects) { }
     virtual void setViewports(U32 numViewports, Viewport* pViewports) { }
@@ -62,6 +62,12 @@ public:
     virtual void copyBufferRegions(CopyBufferRegion* pRegions, U32 numRegions) { }
 
     virtual void transition(ResourceTransition* pTargets, U32 targetCounts) { }
+
+    virtual Bool supportsAsyncCompute() { return false; }
+
+    virtual void dispatchAsync(U32 x, U32 y, U32 z) { }
+
+    virtual void dispatchIndirect(GraphicsResource* pParams) { }
 
 private:
     

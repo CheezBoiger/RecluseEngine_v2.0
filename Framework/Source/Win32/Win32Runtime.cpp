@@ -20,6 +20,7 @@ static struct {
     DWORD mainThreadId = GetCurrentThreadId();
 } gWin32Runtime;
 
+#if defined(RECLUSE_DEBUG) || defined(RECLUSE_DEVELOPER)
 namespace Asserts {
 
 Result AssertHandler::check(Bool cond, const char* functionStr, const char* msg)
@@ -48,7 +49,7 @@ Result AssertHandler::check(Bool cond, const char* functionStr, const char* msg)
     return ASSERT_IGNORE;
 }
 } // Asserts
-
+#endif
 
 void enableOSColorInput()
 {

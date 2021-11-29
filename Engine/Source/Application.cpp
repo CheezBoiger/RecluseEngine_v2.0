@@ -17,11 +17,15 @@ MessageBus* MainThreadLoop::k_pMessageBus   = nullptr;
 
 ErrType MainThreadLoop::loadApp(Application* pApp)
 {
-    if (!pApp->isInitialized()) {
-        pApp->init();
-    }
-    k_pApp = pApp;
-    return REC_RESULT_OK;
+    ErrType result = REC_RESULT_OK;
+
+    if (!pApp->isInitialized())
+        result = pApp->init();
+
+    if (result == REC_RESULT_OK)
+        k_pApp = pApp;
+
+    return result;
 }
 
 

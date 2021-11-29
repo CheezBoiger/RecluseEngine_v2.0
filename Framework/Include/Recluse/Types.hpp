@@ -51,6 +51,8 @@ typedef U32 SizeT;
 #define ARCH_PTR_SZ_BYTES 4
 #endif
 
+#define R_STRINGIFY(s) (#s)
+
 enum RecResult {
     REC_RESULT_OK,
     REC_RESULT_FAILED = -999,

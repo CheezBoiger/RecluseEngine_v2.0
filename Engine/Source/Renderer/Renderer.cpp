@@ -5,6 +5,7 @@
 #include "Recluse/Graphics/GraphicsInstance.hpp"
 #include "Recluse/Graphics/GraphicsAdapter.hpp"
 #include "Recluse/Memory/MemoryCommon.hpp"
+#include "Recluse/System/Window.hpp"
 
 #include "Recluse/Messaging.hpp"
 
@@ -128,6 +129,12 @@ void Renderer::render()
         PreZ::generate(m_commandList, m_renderCommands, 
             m_commandKeys[RENDER_PREZ].data(), 
             m_commandKeys[RENDER_PREZ].size());
+
+        // Re-transition back to read only.
+        if (pSceneDepth->getCurrentResourceState() != RESOURCE_STATE_DEPTH_STENCIL_READONLY) {
+            ResourceTransition trans = MAKE_RESOURCE_TRANSITION(pSceneDepth, RESOURCE_STATE_DEPTH_STENCIL_READONLY, 0, 1, 0, 1);
+            m_commandList->transition(&trans, 1);
+        }
 
         // Asyncronous Queue -> Do Light culling here.
         LightCluster::cullLights(m_commandList);
@@ -395,6 +402,51 @@ ErrType Renderer::destroyTexture2D(Texture2D* pTexture)
     pTexture->destroy(this);
     delete pTexture;
 
+    return REC_RESULT_OK;
+}
+
+
+static ErrType kRendererJob(void* pData)
+{
+    Renderer* pRenderer = Renderer::getMain();
+
+    // Initialize module herer.
+    while (pRenderer->isActive() && pRenderer->isRunning()) {
+        pRenderer->render();
+        pRenderer->present();
+    }
+
+    return REC_RESULT_OK;
+}
+
+
+ErrType Renderer::onInitializeModule(Application* pApp)
+{
+    {
+        Renderer* pRenderer = Renderer::getMain();
+        Window* pWindow = pApp->getWindow();
+        RendererConfigs configs = { };
+        pRenderer->initialize(pWindow->getNativeHandle(), configs);
+    }
+
+    MainThreadLoop::getMessageBus()->addReceiver(
+        "Renderer", [=] (AMessage* pMsg) -> void { 
+        std::string ev = pMsg->getEvent();
+        if (ev.compare("Renderer") == 0) {
+            JobMessage* pJobMessage = static_cast<JobMessage*>(pMsg);
+            Renderer* pRenderer = Renderer::getMain();
+            if (pRenderer->isActive()) {
+                // Handle the message.
+            }
+        }
+    });
+
+    return pApp->loadJobThread(JOB_TYPE_RENDERER, kRendererJob);
+}
+
+
+ErrType Renderer::onCleanUpModule(Application* pApp)
+{
     return REC_RESULT_OK;
 }
 } // Engine

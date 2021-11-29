@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Recluse/Types.hpp"
+#include "Recluse/EngineModule.hpp"
 #include "Recluse/Renderer/RendererResources.hpp"
 #include "Recluse/Graphics/GraphicsCommon.hpp"
 #include "Recluse/Memory/MemoryPool.hpp"
@@ -82,10 +83,8 @@ struct RendererConfigs {
 // Top level rendering engine. Implements Render Harware Interface, and 
 // manages all resources and states created in game graphics. This will usually
 // implement any render passes and stages of the graphics pipeline.
-class R_PUBLIC_API Renderer {
+class R_PUBLIC_API Renderer : public EngineModule<Renderer> {
 public:
-    static Renderer* getMain();
-
     void initialize(void* pWindowHandle, const RendererConfigs& configs);
     void cleanUp();
 
@@ -109,6 +108,9 @@ public:
     ErrType destroyGPUBuffer(GPUBuffer* pBuffer);
 
 private:
+
+    virtual ErrType onInitializeModule(Application* pApp) override;
+    virtual ErrType onCleanUpModule(Application* pApp) override;
 
     void determineAdapter(std::vector<GraphicsAdapter*>& adapters);
     void setUpModules();
