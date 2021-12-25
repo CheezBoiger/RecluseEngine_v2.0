@@ -10,3 +10,13 @@
 
 #define R_R_SHIFT(m, s)         ((m) >> (s))
 #define R_L_SHIFT(m, s)         ((m) << (s))
+
+
+namespace Recluse {
+
+template<class T, class S>
+T* rDynamicCast(S* obj)
+{
+    return static_cast<T*>(obj);
+}
+} // Recluse

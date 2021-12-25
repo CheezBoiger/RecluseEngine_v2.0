@@ -9,71 +9,6 @@
 
 namespace Recluse {
 
-
-Application* MainThreadLoop::k_pApp         = nullptr;
-Window* MainThreadLoop::k_pWindow           = nullptr;
-ThreadPool* MainThreadLoop::k_pThreadPool   = nullptr;
-MessageBus* MainThreadLoop::k_pMessageBus   = nullptr;
-
-ErrType MainThreadLoop::loadApp(Application* pApp)
-{
-    ErrType result = REC_RESULT_OK;
-
-    if (!pApp->isInitialized())
-        result = pApp->init();
-
-    if (result == REC_RESULT_OK)
-        k_pApp = pApp;
-
-    return result;
-}
-
-
-ErrType MainThreadLoop::initialize() 
-{
-    k_pMessageBus = new MessageBus();
-    k_pMessageBus->initialize();
-
-    return REC_RESULT_OK;
-}
-
-
-ErrType MainThreadLoop::run()
-{
-    R_ASSERT(k_pWindow      != NULL);
-    R_ASSERT(k_pMessageBus  != NULL);
-
-    while (k_pWindow->shouldClose()) {
-        RealtimeTick tick = RealtimeTick::getTick();
-        pollEvents();
-        if (k_pApp) {
-
-            // Update the application tick. Usually game logic is here.
-            // This is our sim thread.
-            k_pApp->update(tick);
-            
-        } else {
-            R_WARN(__FUNCTION__, "No application loaded to run!");
-        }
-
-        // Notify all message receivers.
-        k_pMessageBus->notifyAll();
-    }
-
-    return REC_RESULT_OK;
-}
-
-
-ErrType MainThreadLoop::cleanUp()
-{
-    // Clean up the message bus.
-    k_pMessageBus->cleanUp();
-    delete k_pMessageBus;
-
-    return REC_RESULT_OK;
-}
-
-
 #define LOAD_JOB_THREAD(jobType, flags, thread, jobThreadADT) \
     if (flags & jobType) {                        \
         if (jobThreadADT.find(jobType) != jobThreadADT.end()) \
@@ -111,22 +46,93 @@ Thread* Application::getJobThread(JobType jobType)
     return m_jobThreads[jobType];
 }
 
+namespace MainThreadLoop {
 
-Application* MainThreadLoop::getApp()
+Application* k_pApp         = nullptr;
+Window* k_pWindow           = nullptr;
+ThreadPool* k_pThreadPool   = nullptr;
+MessageBus* k_pMessageBus   = nullptr;
+Mutex k_pMessageMutex       = nullptr;
+
+ErrType loadApp(Application* pApp)
+{
+    ErrType result = REC_RESULT_OK;
+
+    if (!pApp->isInitialized())
+        result = pApp->init();
+
+    if (result == REC_RESULT_OK)
+        k_pApp = pApp;
+
+    return result;
+}
+
+
+ErrType initialize() 
+{
+    k_pMessageMutex = createMutex();
+    k_pMessageBus = new MessageBus();
+    k_pMessageBus->initialize();
+
+    return REC_RESULT_OK;
+}
+
+
+ErrType MainThreadLoop::run()
+{
+    R_ASSERT(k_pWindow      != NULL);
+    R_ASSERT(k_pMessageBus  != NULL);
+
+    while (k_pWindow->shouldClose()) {
+        RealtimeTick tick = RealtimeTick::getTick();
+        pollEvents();
+        if (k_pApp) {
+
+            // Update the application tick. Usually game logic is here.
+            // This is our sim thread.
+            k_pApp->update(tick);
+            
+        } else {
+            R_WARN(__FUNCTION__, "No application loaded to run!");
+        }
+
+        // Notify all message receivers.
+        ScopedLock lck(k_pMessageMutex);
+        k_pMessageBus->notifyAll();
+    }
+
+    return REC_RESULT_OK;
+}
+
+
+ErrType cleanUp()
+{
+    destroyMutex(k_pMessageMutex);
+    // Clean up the message bus.
+    k_pMessageBus->cleanUp();
+    delete k_pMessageBus;
+
+    return REC_RESULT_OK;
+}
+
+
+
+Application* getApp()
 {
     return k_pApp;
 }
 
 
-Bool MainThreadLoop::isMainThread()
+Bool isMainThread()
 {
     return getMainThreadId() == getCurrentThreadId();
 }
 
 
-MessageBus* MainThreadLoop::getMessageBus()
+MessageBus* getMessageBus()
 {
     R_ASSERT_MSG(k_pMessageBus, "No message bus was initialized! NULL!!");
     return k_pMessageBus;
 }
+} // MainThreadLoop
 } // Recluse

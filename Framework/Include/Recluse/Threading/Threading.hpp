@@ -44,7 +44,7 @@ R_PUBLIC_API ErrType detachThread(Thread* thread);
 R_PUBLIC_API ErrType joinThread(Thread* thread);
 R_PUBLIC_API ErrType killThread(Thread* thread);
 
-R_PUBLIC_API Mutex   createMutex();
+R_PUBLIC_API Mutex   createMutex(const char* name = nullptr);
 R_PUBLIC_API ErrType lockMutex(Mutex mutex);
 R_PUBLIC_API ErrType unlockMutex(Mutex mutex);
 R_PUBLIC_API ErrType waitMutex(Mutex mutex, U64 waitTimeMs);

@@ -109,5 +109,25 @@ struct SceneBufferDefinitions {
     Texture2D* pSceneDepth;
     TextureView* pDepthStencilView;
 };
+
+namespace RenderDB {
+
+typedef U32 RenderID;
+
+extern R_PUBLIC_API Bool         registerTexture2D(RenderID id);
+extern R_PUBLIC_API Bool         registerGPUBuffer(RenderID id);
+
+extern R_PUBLIC_API Bool         isCachedGPUBuffer(RenderID id);
+extern R_PUBLIC_API Bool         isCachedTexture2D(RenderID id);
+
+extern R_PUBLIC_API Texture2D*   getTexture2D(RenderID id);
+extern R_PUBLIC_API GPUBuffer*   getGPUBuffer(RenderID id);
+
+extern R_PUBLIC_API ErrType      cacheGPUBuffer(RenderID id, GPUBuffer* pBuffer);
+extern R_PUBLIC_API ErrType      cacheTexture2D(RenderID id, Texture2D* pTexture);
+
+extern R_PUBLIC_API Bool         removeTexture2D(RenderID id);
+extern R_PUBLIC_API Bool         removeGPUBuffer(RenderID id);
+} // RenderDB
 } // Engine
 } // Recluse

@@ -53,9 +53,11 @@ public:
 #define R_ASSERT(expression) assert(expression)
 #define R_ASSERT_MSG(expression, msg) assert(expression && msg)
 #define R_DEBUG(chan, str, ...) R_LOG(chan, Recluse::LogDebug, str, __VA_ARGS__)
+#define R_DEBUG_WRAP(cond) cond
 #else
 #define R_ASSERT_LOG()
 #define R_ASSERT(expression)
 #define R_ASSERT_MSG(expression, msg)
 #define R_DEBUG(chan, str, ...)
+#define R_DEBUG_WRAP(cond)
 #endif

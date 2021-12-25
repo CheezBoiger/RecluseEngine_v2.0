@@ -12,7 +12,7 @@
 #else
     #define RECLUSE_32BIT
 #endif
-#elif deifned(__linux__)
+#elif defined(__linux__)
 #define RECLUSE_LINUX
 #define R_PUBLIC_API
 #define R_IMPORT

@@ -105,6 +105,8 @@ enum MaterialType {
 #define R_MAT_ROUGHMETAL "RoughMetal"
 #define R_MAT_GLOSSSPEC "GlossSpec"
 #define R_MAT_HEIGHT "HeightMap"
+#define R_MAT_LIGHTMAP "LightMap"
+#define R_MAT_EMISSIVE "Emissive"
 
 class Material {
 public:
@@ -152,11 +154,11 @@ protected:
 
 
 // Need to call these in order to properly create textures.
-void initializeTextureLUT();
-void cleanupTextureLUT();
+R_PUBLIC_API void initializeTextureLUT();
+R_PUBLIC_API void cleanupTextureLUT();
 
-TextureView* lookupTextureView(const TextureViewID& id);
-ErrType addTextureView(const TextureViewID& id);
-ErrType removeTextureView(const TextureViewID& id);
+R_PUBLIC_API TextureView* lookupTextureView(const TextureViewID& id);
+R_PUBLIC_API ErrType addTextureView(const TextureViewID& id);
+R_PUBLIC_API ErrType removeTextureView(const TextureViewID& id);
 } // Engine
 } // Recluse

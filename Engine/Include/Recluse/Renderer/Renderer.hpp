@@ -7,6 +7,7 @@
 #include "Recluse/Graphics/GraphicsCommon.hpp"
 #include "Recluse/Memory/MemoryPool.hpp"
 #include "Recluse/Memory/Allocator.hpp"
+#include "Recluse/Application.hpp"
 
 #include <vector>
 #include <unordered_map>
@@ -33,6 +34,20 @@ class Mesh;
 class Primitive;
 struct RenderCommand;
 class RenderCommandList;
+
+struct RenderMessage : public JobMessage {
+public:
+    enum Request {
+        PAUSE,
+        RESUME,
+        SHUTDOWN,
+        CHANGE_CONFIG,
+        SCENE_UPDATE,
+    };
+
+    Application* pApp;
+    Request req;
+};
 
 enum RenderPassType : U32 {
 
@@ -136,8 +151,8 @@ private:
     void*                   m_windowHandle;
 
     // Scene buffer objects.
-    SceneBufferDefinitions            m_sceneBuffers;
-    RenderCommandList*       m_renderCommands;
+    SceneBufferDefinitions  m_sceneBuffers;
+    RenderCommandList*      m_renderCommands;
 
     struct CommandKey {
         union {

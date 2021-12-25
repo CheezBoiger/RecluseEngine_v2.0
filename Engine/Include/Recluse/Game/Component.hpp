@@ -10,9 +10,14 @@ class GameObject;
 
 typedef U64 ComponentUUID;
 
+// Declaration semantics used for editor.
+#define R_COMPONENT_DECLARE(varType, varName, varValue)
+
 // Component abstraction class.
 class R_PUBLIC_API Component : public Serializable {
 public:
+    static const U64 unknownComponent = ~0u;
+
     // Default component construction.
     Component()
         : m_pGameObject(nullptr)
@@ -21,9 +26,9 @@ public:
 
     virtual ~Component() { }
 
-    ErrType serialize(Archive* pArchive) override { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual ErrType serialize(Archive* pArchive) override { return REC_RESULT_NOT_IMPLEMENTED; }
 
-    ErrType deserialize(Archive* pArchive) override { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual ErrType deserialize(Archive* pArchive) override { return REC_RESULT_NOT_IMPLEMENTED; }
 
     // Get the component owner.
     GameObject* getOwner() const { return m_pGameObject; }
@@ -32,10 +37,12 @@ public:
     ComponentUUID getUUID() const { return m_cuuid; }
 
     // Check if the component is enabled.
-    B32 isEnabled() const { return m_enable; }
+    R_COMPONENT_DECLARE("visible", "public", true)
+    Bool isEnabled() const { return m_enable; }
 
     // Enable the component.
-    void setEnable(B32 enable) { m_enable = enable; if (enable) onEnable(); }
+    R_COMPONENT_DECLARE("visible", "public", true)
+    void setEnable(Bool enable) { m_enable = enable; if (enable) onEnable(); }
 
     // Initialize the component.
     void initialize(GameObject* pGameObject) {
@@ -71,6 +78,6 @@ private:
     ComponentUUID m_cuuid;
 
     // Flag whether this component is enabled or not.
-    B32 m_enable;
+    Bool m_enable;
 };
 } // Recluse

@@ -98,8 +98,9 @@ ErrType resumeThread(Thread* pThread)
 }
 
 
-Mutex createMutex()
+Mutex createMutex(const char* name)
 {
+    name;
     HANDLE handle = CreateMutex(nullptr, FALSE, nullptr);
     return handle;
 }

@@ -410,10 +410,15 @@ static ErrType kRendererJob(void* pData)
 {
     Renderer* pRenderer = Renderer::getMain();
 
-    // Initialize module herer.
-    while (pRenderer->isActive() && pRenderer->isRunning()) {
-        pRenderer->render();
-        pRenderer->present();
+    // Initialize module here.
+    while (pRenderer->isActive()) {
+
+        // Render interpolation is required.
+
+        if (pRenderer->isRunning()) {
+            pRenderer->render();
+            pRenderer->present();
+        }
     }
 
     return REC_RESULT_OK;
@@ -433,10 +438,29 @@ ErrType Renderer::onInitializeModule(Application* pApp)
         "Renderer", [=] (AMessage* pMsg) -> void { 
         std::string ev = pMsg->getEvent();
         if (ev.compare("Renderer") == 0) {
-            JobMessage* pJobMessage = static_cast<JobMessage*>(pMsg);
+            R_DEBUG("Renderer", "Received message!");
+            RenderMessage* pJobMessage = static_cast<RenderMessage*>(pMsg);
             Renderer* pRenderer = Renderer::getMain();
             if (pRenderer->isActive()) {
                 // Handle the message.
+                switch (pJobMessage->req) {
+                    case RenderMessage::RESUME:
+                        pRenderer->enableRunning(true);
+                        break;
+                    case RenderMessage::PAUSE:
+                        pRenderer->enableRunning(false);
+                        break;
+                    case RenderMessage::SHUTDOWN: 
+                    {
+                        pRenderer->enableRunning(false);
+                        pRenderer->cleanUpModule(pJobMessage->pApp);
+                        break;
+                    }
+                    case RenderMessage::CHANGE_CONFIG:
+                    case RenderMessage::SCENE_UPDATE:
+                    default:
+                        break;
+                }
             }
         }
     });
@@ -447,7 +471,19 @@ ErrType Renderer::onInitializeModule(Application* pApp)
 
 ErrType Renderer::onCleanUpModule(Application* pApp)
 {
+    Renderer::getMain()->cleanUp();
     return REC_RESULT_OK;
+}
+
+
+void Renderer::destroyDevice()
+{
+    if (m_pDevice) {
+        m_pAdapter->destroyDevice(m_pDevice);
+        m_pDevice = nullptr;
+    } R_DEBUG_WRAP( else { 
+        R_WARN("Renderer", "No such graphics device exists for this renderer."); 
+    })
 }
 } // Engine
 } // Recluse

@@ -1,4 +1,5 @@
 //
+#pragma once
 #include "Recluse/Scene/Scene.hpp"
 #include "Recluse/Scene/SceneLoader.hpp"
 
@@ -94,24 +95,18 @@ private:
 // Main loop to run your application. Be sure to call this on the main thread!
 // Allows for configuration of job tasks to the engine, along with other configs
 // regarding your game.
-class R_PUBLIC_API MainThreadLoop {
-public:
-    static ErrType      loadApp(Application* pApp);
-    static ErrType      run();
-    static ErrType      initialize();
-    static ErrType      cleanUp();
+namespace MainThreadLoop {
 
-    static Application* getApp();
 
-    // This is operating system specific.
-    static Bool isMainThread();
-    static MessageBus* getMessageBus();
+R_PUBLIC_API ErrType        loadApp(Application* pApp);
+R_PUBLIC_API ErrType        run();
+R_PUBLIC_API ErrType        initialize();
+R_PUBLIC_API ErrType        cleanUp();
 
-private:
-    static Window*              k_pWindow;
-    static Application*         k_pApp;
-    static ThreadPool*          k_pThreadPool;
-    static MessageBus*          k_pMessageBus;
+R_PUBLIC_API Application*   getApp();
 
-};
+// This is operating system specific.
+R_PUBLIC_API Bool           isMainThread();
+R_PUBLIC_API MessageBus*    getMessageBus();
+} // MainThreadLoop
 } // Recluse
