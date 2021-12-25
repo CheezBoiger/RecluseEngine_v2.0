@@ -171,9 +171,9 @@ void Renderer::determineAdapter(std::vector<GraphicsAdapter*>& adapters)
         result = pAdapter->getAdapterInfo(&info);
     
         if (result != REC_RESULT_OK) {
-    
+
             R_ERR("Renderer", "Failed to query adapter info.");
-        
+
         }
 
         R_DEBUG("Adapter Name: %s\n\t\tVendor: %s", info.deviceName, info.vendorName);

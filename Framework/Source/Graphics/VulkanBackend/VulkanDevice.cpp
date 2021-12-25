@@ -31,11 +31,11 @@ std::vector<const char*> getDeviceExtensions()
 void checkAvailableDeviceExtensions(const VulkanAdapter* adapter, std::vector<const char*>& extensions)
 {
     std::vector<VkExtensionProperties> deviceExtensions = adapter->getDeviceExtensionProperties();
-    
+
     for (U32 i = 0; i < extensions.size(); ++i) {
         B32 found = false;
         for (U32 j = 0; j < deviceExtensions.size(); ++j) { 
-    
+
             if (strcmp(deviceExtensions[j].extensionName, extensions[i]) == 0) {
 
                 R_DEBUG(R_CHANNEL_VULKAN, "Found %s Spec Version: %d", deviceExtensions[j].extensionName,
@@ -184,7 +184,7 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
         
         return -1;
     }
-    
+
     m_adapter = adapter;
 
     // Create the command pool.
@@ -297,7 +297,7 @@ ErrType VulkanDevice::createSwapchain(VulkanSwapchain** ppSwapchain,
     ErrType result = pSwapchain->build(this);
 
     if (result != 0) {
-        
+
         R_ERR(R_CHANNEL_VULKAN, "Swapchain failed to create");
 
         return -1;
@@ -733,7 +733,7 @@ ErrType VulkanDevice::createCommandList(VulkanCommandList** pList, VkQueueFlags 
     R_DEBUG(R_CHANNEL_VULKAN, "Creating command list...");
 
     for (U32 i = 0; i < m_queueFamilies.size(); ++i) {
-    
+
         VkQueueFlags famFlags = m_queueFamilies[i].flags;
 
         if (flags & famFlags) {
@@ -745,14 +745,14 @@ ErrType VulkanDevice::createCommandList(VulkanCommandList** pList, VkQueueFlags 
                 (U32)m_queueFamilies[i].commandPools.size());
 
             if (result != REC_RESULT_OK) {
-            
+
                 R_ERR(R_CHANNEL_VULKAN, "Could not create CommandList...");
 
                 pVList->destroy(this);
                 delete pVList;
 
                 return result;
-            
+
             }
 
             *pList = pVList;
@@ -786,19 +786,31 @@ void VulkanDevice::prepare()
     U32 currentBufferIndex = getCurrentBufferIndex();
 
     for (U32 i = 0; i < m_queueFamilies.size(); ++i) {
-    
+
         VkCommandPool pool = m_queueFamilies[i].commandPools[currentBufferIndex];
         VkResult result = vkResetCommandPool(m_device, pool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
 
         if (result != VK_SUCCESS) {
-        
+
             R_ERR(R_CHANNEL_VULKAN, "Failed to reset command pool!");
-        
+
         }
-    
+
     }
 
     m_pPrimaryCommandList->setStatus(COMMAND_LIST_RESET);
+
+    VulkanAllocator::VulkanAllocUpdateFlags allocUpdate = 
+        VulkanAllocator::VULKAN_ALLOC_SHIFT_FRAME_INDEX & 
+        VulkanAllocator::VULKAN_ALLOC_UPDATE_FLAG;
+
+    for (U32 i = 0; i < RESOURCE_MEMORY_USAGE_COUNT; ++i) {
+        m_bufferAllocators[i]->update(allocUpdate);
+    }
+
+    for (U32 i = 0;i < RESOURCE_MEMORY_USAGE_COUNT; ++i) {
+        m_imageAllocators[i]->update(allocUpdate);
+    }
 }
 
 
@@ -806,14 +818,14 @@ void VulkanDevice::createFences(U32 buffering)
 {
     m_fences.resize(buffering);
     for (U32 i = 0; i < m_fences.size(); ++i) {
-    
+
         // Create fences with signalled bit, in order for the swapchain to properly 
         // wait on our fences, this should handle initial startup of application rendering, and not cause a block.
         VkFenceCreateInfo info = { };
         info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
         vkCreateFence(m_device, &info, nullptr, &m_fences[i]);
-    
+
     }
 }
 
@@ -821,9 +833,9 @@ void VulkanDevice::createFences(U32 buffering)
 void VulkanDevice::destroyFences()
 {
     for (U32 i = 0; i < m_fences.size(); ++i) {
-    
+
         vkDestroyFence(m_device, m_fences[i], nullptr);
-    
+
     }
 }
 
@@ -834,10 +846,10 @@ ErrType VulkanDevice::createResourceView(GraphicsResourceView** ppView, const Re
     ErrType err               = pView->initialize(this);
 
     if (err != REC_RESULT_OK) {
-    
+
         pView->destroy(this);
         delete pView;
-    
+
     }
 
     *ppView = pView;

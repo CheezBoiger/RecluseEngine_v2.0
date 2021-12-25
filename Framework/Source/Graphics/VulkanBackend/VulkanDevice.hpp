@@ -200,10 +200,10 @@ private:
         } flush;
     } m_memCache;
 
-    VulkanMemoryPool m_bufferPool[RESOURCE_MEMORY_USAGE_COUNT];
-    VulkanMemoryPool m_imagePool[RESOURCE_MEMORY_USAGE_COUNT];
-    VulkanAllocator* m_bufferAllocators[RESOURCE_MEMORY_USAGE_COUNT];
-    VulkanAllocator* m_imageAllocators[RESOURCE_MEMORY_USAGE_COUNT];
+    VulkanMemoryPool m_bufferPool       [RESOURCE_MEMORY_USAGE_COUNT];
+    VulkanMemoryPool m_imagePool        [RESOURCE_MEMORY_USAGE_COUNT];
+    VulkanAllocator* m_bufferAllocators [RESOURCE_MEMORY_USAGE_COUNT];
+    VulkanAllocator* m_imageAllocators  [RESOURCE_MEMORY_USAGE_COUNT];
 
     VulkanDescriptorManager*    m_pDescriptorManager;
     VulkanCommandList*          m_pPrimaryCommandList;
