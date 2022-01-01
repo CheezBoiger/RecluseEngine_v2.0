@@ -471,7 +471,8 @@ ErrType VulkanDevice::reserveMemory(const MemoryReserveDesc& desc)
         // TODO: Need to add allocator for buffers later.
         m_bufferAllocators[i] = new VulkanAllocator();
         m_bufferAllocators[i]->initialize(new BuddyAllocator(), 
-            &m_bufferPool[i]);
+            &m_bufferPool[i],
+            m_bufferCount);
     }
     
     // Create image pools.
@@ -527,7 +528,8 @@ ErrType VulkanDevice::reserveMemory(const MemoryReserveDesc& desc)
     // TODO: Need to add allocator for images later.
     m_imageAllocators[RESOURCE_MEMORY_USAGE_GPU_ONLY] = new VulkanAllocator();
     m_imageAllocators[RESOURCE_MEMORY_USAGE_GPU_ONLY]->initialize(new StackAllocator(),
-        &m_imagePool[RESOURCE_MEMORY_USAGE_GPU_ONLY]);
+        &m_imagePool[RESOURCE_MEMORY_USAGE_GPU_ONLY], 
+        m_bufferCount);
 #endif
     return REC_RESULT_OK;
 }
@@ -800,16 +802,20 @@ void VulkanDevice::prepare()
 
     m_pPrimaryCommandList->setStatus(COMMAND_LIST_RESET);
 
-    VulkanAllocator::VulkanAllocUpdateFlags allocUpdate = 
-        VulkanAllocator::VULKAN_ALLOC_SHIFT_FRAME_INDEX & 
+    const VulkanAllocator::VulkanAllocUpdateFlags allocUpdate = 
+        VulkanAllocator::VULKAN_ALLOC_SET_FRAME_INDEX & 
         VulkanAllocator::VULKAN_ALLOC_UPDATE_FLAG;
+    VulkanAllocator::UpdateConfig config;
+    config.flags = allocUpdate;
+    config.frameIndex = currentBufferIndex;
+    config.garbageBufferCount = m_bufferCount;
 
     for (U32 i = 0; i < RESOURCE_MEMORY_USAGE_COUNT; ++i) {
-        m_bufferAllocators[i]->update(allocUpdate);
+        m_bufferAllocators[i]->update(config);
     }
 
     for (U32 i = 0;i < RESOURCE_MEMORY_USAGE_COUNT; ++i) {
-        m_imageAllocators[i]->update(allocUpdate);
+        m_imageAllocators[i]->update(config);
     }
 }
 

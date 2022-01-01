@@ -24,12 +24,12 @@ ErrType Application::loadJobThread(JobTypeFlags flags, ThreadFunction func)
     if (result == REC_RESULT_OK) {
         m_threads.push_back(pThread);
 
-        LOAD_JOB_THREAD(JOB_TYPE_RENDERER, flags, &m_threads.back(), m_jobThreads);
-        LOAD_JOB_THREAD(JOB_TYPE_SIMULATION, flags, &m_threads.back(), m_jobThreads);
-        LOAD_JOB_THREAD(JOB_TYPE_AI, flags, &m_threads.back(), m_jobThreads);
-        LOAD_JOB_THREAD(JOB_TYPE_ANIMATION, flags, &m_threads.back(), m_jobThreads);
-        LOAD_JOB_THREAD(JOB_TYPE_PHYSICS, flags, &m_threads.back(), m_jobThreads);
-        LOAD_JOB_THREAD(JOB_TYPE_AUDIO, flags, &m_threads.back(), m_jobThreads);
+        LOAD_JOB_THREAD(JOB_TYPE_RENDERER,      flags, &m_threads.back(), m_jobThreads);
+        LOAD_JOB_THREAD(JOB_TYPE_SIMULATION,    flags, &m_threads.back(), m_jobThreads);
+        LOAD_JOB_THREAD(JOB_TYPE_AI,            flags, &m_threads.back(), m_jobThreads);
+        LOAD_JOB_THREAD(JOB_TYPE_ANIMATION,     flags, &m_threads.back(), m_jobThreads);
+        LOAD_JOB_THREAD(JOB_TYPE_PHYSICS,       flags, &m_threads.back(), m_jobThreads);
+        LOAD_JOB_THREAD(JOB_TYPE_AUDIO,         flags, &m_threads.back(), m_jobThreads);
     }
 
     return result;
@@ -52,7 +52,8 @@ Application* k_pApp         = nullptr;
 Window* k_pWindow           = nullptr;
 ThreadPool* k_pThreadPool   = nullptr;
 MessageBus* k_pMessageBus   = nullptr;
-Mutex k_pMessageMutex       = nullptr;
+Mutex k_pMessageMutex       = MutexValue::kNull;
+F32 k_fixedTickRateSeconds  = 1.0f / 60.0f;
 
 ErrType loadApp(Application* pApp)
 {
@@ -70,6 +71,8 @@ ErrType loadApp(Application* pApp)
 
 ErrType initialize() 
 {
+    R_ASSERT(k_pMessageMutex == MutexValue::kNull);
+
     k_pMessageMutex = createMutex();
     k_pMessageBus = new MessageBus();
     k_pMessageBus->initialize();
@@ -108,6 +111,8 @@ ErrType MainThreadLoop::run()
 ErrType cleanUp()
 {
     destroyMutex(k_pMessageMutex);
+    k_pMessageMutex = MutexValue::kNull;
+
     // Clean up the message bus.
     k_pMessageBus->cleanUp();
     delete k_pMessageBus;
@@ -133,6 +138,18 @@ MessageBus* getMessageBus()
 {
     R_ASSERT_MSG(k_pMessageBus, "No message bus was initialized! NULL!!");
     return k_pMessageBus;
+}
+
+
+F32 getFixedTickRate()
+{
+    return k_fixedTickRateSeconds;
+}
+
+
+void setFixedTickRate(F32 tickRateSeconds)
+{
+    k_fixedTickRateSeconds = tickRateSeconds;
 }
 } // MainThreadLoop
 } // Recluse

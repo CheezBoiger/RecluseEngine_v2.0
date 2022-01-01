@@ -79,14 +79,14 @@ private:
 
 
 enum SurfaceType {
-    SURFACE_OPAQUE = (1 << 0),
-    SURFACE_TRANSPARENT = (1 << 1),
-    SURFACE_TRANSPARENT_CUTOUT = (1 << 2),
-    SURFACE_SUBSURFACE = (1 << 3),
-    SURFACE_FLAT = (1 << 4),
-    SURFACE_PARTICLE = (1 << 5),
-    SURFACE_SHADOWS = (1 << 6),
-    SURFACE_SELF_SHADOW = (1 << 7)
+    SURFACE_OPAQUE              = (1 << 0),
+    SURFACE_TRANSPARENT         = (1 << 1),
+    SURFACE_TRANSPARENT_CUTOUT  = (1 << 2),
+    SURFACE_SUBSURFACE          = (1 << 3),
+    SURFACE_FLAT                = (1 << 4),
+    SURFACE_PARTICLE            = (1 << 5),
+    SURFACE_SHADOWS             = (1 << 6),
+    SURFACE_SELF_SHADOW         = (1 << 7)
 };
 
 typedef U32 SurfaceTypeFlags;
@@ -99,14 +99,14 @@ enum MaterialType {
     MATERIAL_TYPE_OTHER
 };
 
-#define R_MAT_ALBEDO "Albedo"
-#define R_MAT_NORMAL "Normal"
-#define R_MAT_AO "Ao"
-#define R_MAT_ROUGHMETAL "RoughMetal"
-#define R_MAT_GLOSSSPEC "GlossSpec"
-#define R_MAT_HEIGHT "HeightMap"
-#define R_MAT_LIGHTMAP "LightMap"
-#define R_MAT_EMISSIVE "Emissive"
+#define R_MAT_ALBEDO        "Albedo"
+#define R_MAT_NORMAL        "Normal"
+#define R_MAT_AO            "AmbientOcclusion"
+#define R_MAT_ROUGHMETAL    "RoughMetal"
+#define R_MAT_GLOSSSPEC     "GlossSpec"
+#define R_MAT_HEIGHT        "HeightMap"
+#define R_MAT_LIGHTMAP      "LightMap"
+#define R_MAT_EMISSIVE      "Emissive"
 
 class Material {
 public:

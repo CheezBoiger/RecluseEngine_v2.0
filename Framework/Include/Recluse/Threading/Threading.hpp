@@ -37,6 +37,13 @@ struct R_PUBLIC_API Thread {
 typedef void* Mutex;
 typedef void* Cond;
 
+
+namespace MutexValue {
+
+constexpr Mutex kNull = nullptr;
+
+} // MutexVal
+
 R_PUBLIC_API ErrType createThread(Thread* thread, ThreadFunction startRoutine);
 R_PUBLIC_API ErrType resumeThread(Thread* thread);
 R_PUBLIC_API ErrType stopThread(Thread* thread);

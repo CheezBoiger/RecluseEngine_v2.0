@@ -44,6 +44,10 @@ private:
     std::string m_msg;
 };
 
+
+// Application interface for your application.
+// This should, and would be integrated into your game, in order to 
+// connect to the engine components, as well as the editor system.
 class R_PUBLIC_API Application {
 public:
 
@@ -54,6 +58,8 @@ public:
     { }
 
     virtual         ~Application() { }    
+
+    // System update.
     virtual void    update(const RealtimeTick& tick) { }
 
     ErrType cleanUp() { 
@@ -74,7 +80,7 @@ public:
     Engine::Scene* getScene() { return m_pScene; }
     Window* getWindow() { return m_pWindow; }
 
-    Bool isInitialized() const { return m_initialized; }
+    inline Bool isInitialized() const { return m_initialized; }
 
 protected:
 
@@ -84,11 +90,11 @@ protected:
     void markInitialized() { m_initialized = true; } 
 
 private:
-    Window* m_pWindow;
-    Engine::Scene* m_pScene;
-    std::list<Thread> m_threads;
-    std::map<JobType, Thread*> m_jobThreads;
-    Bool m_initialized;
+    Window*                     m_pWindow;
+    Engine::Scene*              m_pScene;
+    std::list<Thread>           m_threads;
+    std::map<JobType, Thread*>  m_jobThreads;
+    Bool                        m_initialized;
 };
 
 
@@ -102,8 +108,10 @@ R_PUBLIC_API ErrType        loadApp(Application* pApp);
 R_PUBLIC_API ErrType        run();
 R_PUBLIC_API ErrType        initialize();
 R_PUBLIC_API ErrType        cleanUp();
+R_PUBLIC_API void           setFixedTickRate(F32 tickRateSeconds);
 
 R_PUBLIC_API Application*   getApp();
+R_PUBLIC_API F32            getFixedTickRate();
 
 // This is operating system specific.
 R_PUBLIC_API Bool           isMainThread();

@@ -174,28 +174,28 @@ protected:
     virtual R_PUBLIC_API void onDestroy() { }
 
     // Game Object tag.
-    std::string m_tag;
+    std::string                 m_tag;
 
     // Game object name.
-   std::string m_name;
+   std::string                  m_name;
 
 private:
 
-    GameObjectStatus m_status;
+    GameObjectStatus            m_status;
 
     // The Parent node that this game object may be associated to.
-    GameObject* m_pParentNode;
+    GameObject*                 m_pParentNode;
 
     // All children game object nodes associated with this game object.
     // Keep in mind that any object children must also inherit the world transform from the 
     // game object parent.
-    std::vector<GameObject*> m_childrenNodes;
+    std::vector<GameObject*>    m_childrenNodes;
 
     // Game Object uuid.
-    GameUUID m_guuid;
+    GameUUID                    m_guuid;
 
     // Reference to the scene.
-    Scene* m_pSceneRef;
+    Scene*                      m_pSceneRef;
 };
 } // Engine
 } // Recluse
