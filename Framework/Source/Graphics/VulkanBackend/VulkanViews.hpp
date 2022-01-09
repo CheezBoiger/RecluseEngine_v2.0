@@ -9,7 +9,8 @@ namespace Recluse {
 
 class VulkanDevice;
 
-class VulkanResourceView : public GraphicsResourceView {
+class VulkanResourceView : public GraphicsResourceView 
+{
 public:
     VulkanResourceView(const ResourceViewDesc& desc)
         : GraphicsResourceView(desc)
@@ -28,13 +29,14 @@ public:
     VkImageSubresourceRange getSubresourceRange() const { return m_subresourceRange; }
 
 private:
-    VkImageView m_view;
-    VkImageLayout m_expectedLayout;
+    VkImageView             m_view;
+    VkImageLayout           m_expectedLayout;
     VkImageSubresourceRange m_subresourceRange;
 };
 
 
-class VulkanSampler : public GraphicsSampler {
+class VulkanSampler : public GraphicsSampler 
+{
 public:
     VulkanSampler()
         : m_sampler(VK_NULL_HANDLE)
@@ -55,7 +57,7 @@ public:
     VkSamplerCreateInfo getCopyInfo() const { return m_info; }
 
 private:
-    VkSampler m_sampler;
+    VkSampler           m_sampler;
     VkSamplerCreateInfo m_info;
 };
 } // Recluse

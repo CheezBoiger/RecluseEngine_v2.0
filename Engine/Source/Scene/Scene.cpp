@@ -42,7 +42,7 @@ void Scene::update(const RealtimeTick& tick)
 
     PtrType currObjectPtr   = allocator->getBaseAddr();
     PtrType top             = allocator->getTop();
-    memcpy((void*)output.ptr, m_gameObjects.data(), m_gameObjects.size() * 8ull);
+    memcpy((void*)output.baseAddress, m_gameObjects.data(), m_gameObjects.size() * 8ull);
     
     while (currObjectPtr < top) {
     
@@ -53,7 +53,7 @@ void Scene::update(const RealtimeTick& tick)
 
             // We need to allocate some more.
             err = allocator->allocate(&output, 8llu * children.size(), ARCH_PTR_SZ_BYTES);
-            memcpy((void*)output.ptr, children.data(), children.size() * 8ull);
+            memcpy((void*)output.baseAddress, children.data(), children.size() * 8ull);
             // Update the top.
             top = allocator->getTop();
 

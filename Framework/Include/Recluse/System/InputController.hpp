@@ -6,20 +6,23 @@
 namespace Recluse {
 
 
-enum InputState {
+enum InputState 
+{
     INPUT_STATE_NONE,
     INPUT_STATE_DOWN,
     INPUT_STATE_UP
 };
 
 
-struct IInputFeedback {
+struct IInputFeedback 
+{
     I32 xRate;
     I32 yRate;
     InputState state;
 };
 
-class IInputController {
+class IInputController 
+{
 public:
     virtual ~IInputController() { }
     

@@ -12,7 +12,8 @@ class Shader;
 class VulkanDevice;
 
 
-class ShaderCache {
+class ShaderCache 
+{
 public:
 
     VkShaderModule getCachedShaderModule(VulkanDevice* pDevice, Shader* pShader);

@@ -8,7 +8,8 @@
 namespace Recluse {
 
 
-class D3D12Sampler : public GraphicsSampler {
+class D3D12Sampler : public GraphicsSampler 
+{
 public:
     D3D12Sampler()
         : m_samplerCPUAddr({ 0 }) { }

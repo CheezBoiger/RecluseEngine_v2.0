@@ -21,7 +21,8 @@ class Scene;
 typedef U64 GameUUID;
 typedef Hash64 RGUID;
 
-enum GameObjectStatus {
+enum GameObjectStatus 
+{
     GAME_OBJECT_STATUS_UNUSED,
     GAME_OBJECT_STATUS_INITIALIZING,
     GAME_OBJECT_STATUS_INITIALIZED,
@@ -45,12 +46,14 @@ enum GameObjectStatus {
 // Game object, which holds all our object logic and script behavior.
 // Kept as native C++, this class holds scripting behavior, which 
 // will be used by objects in the game world.
-class GameObject : public Serializable {
+class GameObject : public Serializable 
+{
 public:
     virtual ~GameObject() { }
 
     // Initialize the game object.
-    R_PUBLIC_API void initialize() {
+    R_PUBLIC_API void initialize() 
+    {
         m_status = GAME_OBJECT_STATUS_INITIALIZING;
         onInitialize();
         m_status = GAME_OBJECT_STATUS_INITIALIZED;
@@ -58,26 +61,30 @@ public:
     
     // Wake the game object, this should be called when
     // game object is asleep, or first time initialized.
-    R_PUBLIC_API void wake() { 
+    R_PUBLIC_API void wake() 
+    { 
         m_status = GAME_OBJECT_STATUS_WAKING;
         onWake();
         m_status = GAME_OBJECT_STATUS_AWAKE;
     }
 
     // Update the game object, per tick.
-    R_PUBLIC_API void update(const RealtimeTick& tick) {
+    R_PUBLIC_API void update(const RealtimeTick& tick) 
+    {
         m_status = GAME_OBJECT_STATUS_ACTIVE;
         onUpdate(tick);
     }
 
     // Put game object to sleep.
-    R_PUBLIC_API void sleep() {
+    R_PUBLIC_API void sleep() 
+    {
         m_status = GAME_OBJECT_STATUS_SLEEPING;
         onSleep();
         m_status = GAME_OBJECT_STATUS_ASLEEP;
     }
 
-    R_PUBLIC_API void destroy() {
+    R_PUBLIC_API void destroy() 
+    {
         onDestroy();
         m_status = GAME_OBJECT_STATUS_DESTROYED;
     }
@@ -103,14 +110,15 @@ public:
     // Add a node to this game object. This game object becomes the 
     // parent of pNode. Any game objects that are similar to this one,
     // will not be added as a child.
-    R_PUBLIC_API void addChild(GameObject* pNode) { 
-
+    R_PUBLIC_API void addChild(GameObject* pNode) 
+    { 
         // No need to do anything if this node already exists in this game object.
         if (pNode->getParent() == this) return;
 
         // Check if there is not already a parent node. If so, we will
         // remove it from it's original parent, and replace with this.
-        if (pNode->m_pParentNode) {
+        if (pNode->m_pParentNode) 
+        {
             pNode->getParent()->removeChild(pNode);
         }
  
@@ -118,21 +126,25 @@ public:
     
         auto iter = std::find(m_childrenNodes.begin(), m_childrenNodes.end(), pNode);
 
-        if (iter == m_childrenNodes.end()) {
+        if (iter == m_childrenNodes.end()) 
+        {
             m_childrenNodes.push_back(pNode);
         }
     }
 
     // Removes a child from this game object.
-    R_PUBLIC_API void removeChild(GameObject* pNode) {
-        if (pNode->m_pParentNode != this) {
+    R_PUBLIC_API void removeChild(GameObject* pNode) 
+    {
+        if (pNode->m_pParentNode != this) 
+        {
             // Can not remove this node if it doesn't belong to 
             // this game object.
             return;
         }
 
         auto iter = std::find(m_childrenNodes.begin(), m_childrenNodes.end(), pNode);
-        if (iter != m_childrenNodes.end()) {
+        if (iter != m_childrenNodes.end()) 
+        {
             m_childrenNodes.erase(iter);
             pNode->m_pParentNode = nullptr;
         }
@@ -144,7 +156,8 @@ public:
 
     R_PUBLIC_API std::vector<GameObject*>& getChildren() { return m_childrenNodes; }
 
-    R_PUBLIC_API B32 isParent(GameObject* pChild) const {
+    R_PUBLIC_API B32 isParent(GameObject* pChild) const 
+    {
         auto iter = std::find(m_childrenNodes.begin(), m_childrenNodes.end(), pChild);
         return (iter != m_childrenNodes.end());
     }

@@ -53,7 +53,8 @@ typedef U32 SizeT;
 
 #define R_STRINGIFY(s) (#s)
 
-enum RecResult {
+enum RecResult 
+{
     REC_RESULT_OK,
     REC_RESULT_FAILED = -999,
     REC_RESULT_INVALID_ARGS,

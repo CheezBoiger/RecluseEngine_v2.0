@@ -12,7 +12,8 @@ namespace Recluse {
 class VulkanDevice;
 
 
-class VulkanDescriptorManager {
+class VulkanDescriptorManager 
+{
 public:
 
     VulkanDescriptorManager() 

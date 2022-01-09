@@ -18,7 +18,8 @@ Shader* Shader::create()
 
 void Shader::destroy(Shader* pShader)
 {
-    if (pShader) {
+    if (pShader) 
+    {
         delete pShader;
     }
 }
@@ -45,8 +46,14 @@ ErrType Shader::load(const char* pByteCode, U64 szBytes, ShaderIntermediateCode 
 }
 
 
-ErrType ShaderBuilder::compile(Shader* pShader, const char* sourceCode, U64 sourceCodeBytes, 
-    ShaderLang lang, ShaderType shaderType)
+ErrType ShaderBuilder::compile
+    (
+        Shader* pShader, 
+        const char* sourceCode, 
+        U64 sourceCodeBytes, 
+        ShaderLang lang, 
+        ShaderType shaderType
+    )
 {
     ErrType result              = REC_RESULT_OK;
 
@@ -59,14 +66,13 @@ ErrType ShaderBuilder::compile(Shader* pShader, const char* sourceCode, U64 sour
 
     result = onCompile(srcCodeString, byteCodeString, lang, shaderType);
 
-    if (result == REC_RESULT_OK) {
-
+    if (result == REC_RESULT_OK) 
+    {
         pShader->load(byteCodeString.data(), byteCodeString.size(), getIntermediateCode(), shaderType);
-    
-    } else {
-
+    } 
+    else 
+    {
         R_ERR("Shader", "Failed to compile shader!");
-
     }
 
     return result;
@@ -83,8 +89,8 @@ ErrType Shader::saveToFile(const char* filePath)
 {
     ErrType result = REC_RESULT_OK;
     FileBufferData data = { };
-    data.buffer.resize(m_byteCode.size());
-    std::copy(m_byteCode.begin(), m_byteCode.end(), data.buffer.begin());
+    data.resize(m_byteCode.size());
+    std::copy(m_byteCode.begin(), m_byteCode.end(), data.begin());
 
     return File::writeTo(&data, std::string(filePath));
 }

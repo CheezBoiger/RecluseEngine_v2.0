@@ -11,10 +11,9 @@ ErrType Archive::open(char* access)
 
     result = m_file.open(m_filepath, access);
     
-    if (m_file.isOpen()) {
-    
+    if (m_file.isOpen()) 
+    {
         m_cursor = 0000;
-    
     }
 
     m_filepath = m_filepath;
@@ -25,10 +24,9 @@ ErrType Archive::open(char* access)
 
 ErrType Archive::close()
 {
-    if (m_file.isOpen()) {
-    
+    if (m_file.isOpen()) 
+    {
         m_file.close();
-
     }
     
     return REC_RESULT_OK;
@@ -39,9 +37,12 @@ ErrType Archive::write(void* ptr, U64 sz)
 {
     ErrType result = REC_RESULT_OK;
 
-    if (m_file.isOpen()) {
+    if (m_file.isOpen()) 
+    {
         result = m_file.write(ptr, sz);
-    } else {
+    } 
+    else 
+    {
         result = REC_RESULT_NOT_FOUND;
     }
     
@@ -52,9 +53,12 @@ ErrType Archive::write(void* ptr, U64 sz)
 ErrType Archive::read(void* ptr, U64 sz)
 {
     ErrType result = REC_RESULT_OK;
-    if (m_file.isOpen()) {
+    if (m_file.isOpen()) 
+    {
         result = m_file.read(ptr, sz);
-    } else {
+    } 
+    else 
+    {
         result = REC_RESULT_NOT_FOUND;
     }
 

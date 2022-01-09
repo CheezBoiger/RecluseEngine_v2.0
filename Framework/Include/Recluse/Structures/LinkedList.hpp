@@ -10,18 +10,23 @@
 namespace Recluse {
 
 
-template<typename T, 
-         typename Compare = GenericCompare<T>,
-         typename AllocatorType = DefaultAllocator,
-         class MemPool = MemoryPool>
-class LinkedList {
+template
+    <
+        typename T, 
+        typename Compare = GenericCompare<T>,
+        typename AllocatorType = DefaultAllocator,
+        class MemPool = MemoryPool
+    >
+class LinkedList 
+{
 
     typedef T   LinkedListT;
     typedef T*  LinkedListTPtr;
     typedef T&  LinkedListTRef;
     typedef Compare LinkedListCompare;
 
-    typedef struct LinkedNode {
+    typedef struct LinkedNode 
+    {
         const LinkedListT   data;
         struct LinkedNode*  pNext;
     } *PLinkedNode;
@@ -45,7 +50,8 @@ public:
 
     void pushBack(const LinkedListTRef& lh) 
     {
-        if (!m_pRoot) {
+        if (!m_pRoot) 
+        {
             m_pRoot = 
         }
     }

@@ -9,14 +9,17 @@ namespace Recluse {
 
 
 template<typename ModuleImpl>
-class EngineModule {
+class EngineModule 
+{
 public:
-    static ModuleImpl* getMain() {
+    static ModuleImpl* getMain() 
+    {
         static ModuleImpl k_pMain;
         return &k_pMain;
     }
 
-    static const char* getModuleName() {
+    static const char* getModuleName() 
+    {
         return R_STRINGIFY(ModuleImpl);
     }
     
@@ -25,22 +28,27 @@ public:
     virtual ErrType onInitializeModule(Application* pApp) { return REC_RESULT_NOT_IMPLEMENTED; }
     virtual ErrType onCleanUpModule(Application* pApp) { return REC_RESULT_NOT_IMPLEMENTED; }
     
-    ErrType initializeModule(Application* pApp) {
+    ErrType initializeModule(Application* pApp) 
+    {
         isActive() = true;
         m_sync = createMutex(R_STRINGIFY(ModuleImpl));
         return onInitializeModule(pApp); 
     }
 
-    ErrType cleanUpModule(Application* pApp) { 
+    ErrType cleanUpModule(Application* pApp) 
+    { 
         ErrType result = onCleanUpModule(pApp);
-        if (result == REC_RESULT_OK) {
+        if (result == REC_RESULT_OK) 
+        {
             isActive() = false;
             destroyMutex(m_sync);
         }
+
         return result; 
     }
 
-    Bool& isActive() {
+    Bool& isActive() 
+    {
         static Bool active = false;
         return active;
     }

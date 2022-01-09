@@ -11,7 +11,8 @@ namespace Recluse {
 class D3D12Adapter;
 
 
-class D3D12Instance : public GraphicsInstance {
+class D3D12Instance : public GraphicsInstance 
+{
 public:
     D3D12Instance() : GraphicsInstance(GRAPHICS_API_D3D12) { }
     virtual ~D3D12Instance() { }

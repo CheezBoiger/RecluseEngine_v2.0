@@ -11,7 +11,8 @@
 namespace Recluse {
 
 
-class AMessage {
+class AMessage 
+{
 public:
     virtual ~AMessage() { }
 
@@ -21,8 +22,9 @@ public:
 typedef std::function<void(AMessage*)> MessageReceiveFunc;
 
 // Simple Message bus to be used for input messaging.
-class MessageBus {
- public:
+class MessageBus 
+{
+public:
     friend class Recluse::AMessage;
 
     MessageBus()
@@ -35,24 +37,31 @@ class MessageBus {
     R_PUBLIC_API void initialize();
     R_PUBLIC_API void cleanUp();
 
-    R_PUBLIC_API void addReceiver(const std::string& nodeName, 
-        MessageReceiveFunc receiver);
+    R_PUBLIC_API void addReceiver
+                        (
+                            const std::string& nodeName, 
+                            MessageReceiveFunc receiver
+                        );
 
     template<typename MessageType>
-    void pushMessage(const MessageType& message) {
+    void pushMessage(const MessageType& message) 
+    {
         static_assert(std::is_base_of<AMessage, MessageType>::value, "Must be a base of AMessage!");
         Allocation alloc = { };
         ErrType err = m_pMessageAllocator->allocate(&alloc, sizeof(MessageType), 4ull);
-        MessageType* pMessage = reinterpret_cast<MessageType*>(alloc.ptr);
+        MessageType* pMessage = reinterpret_cast<MessageType*>(alloc.baseAddress);
         new (pMessage) MessageType;
         *pMessage = message;
         m_messages.push(pMessage);
     }
 
-    void notifyAll() {
+    void notifyAll() 
+    {
         // Notify all message receivers.
-        while (!m_messages.empty()) {
-            for (MessageReceiveFunc func : m_messageReceivers) {
+        while (!m_messages.empty()) 
+        {
+            for (MessageReceiveFunc func : m_messageReceivers) 
+            {
                 func(m_messages.front());
             }
             
@@ -62,7 +71,8 @@ class MessageBus {
 
     R_PUBLIC_API void notifyOne(const std::string& nodeName);
 
-    void clearQueue() {
+    void clearQueue() 
+    {
         if (m_messages.empty())
             m_pMessageAllocator->reset();
     }

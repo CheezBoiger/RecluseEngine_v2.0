@@ -7,7 +7,8 @@ namespace Recluse {
 
 struct Ray;
 
-struct R_PUBLIC_API Bounds3D {
+struct R_PUBLIC_API Bounds3D 
+{
     Float3 mmin;
     Float3 mmax;
 };

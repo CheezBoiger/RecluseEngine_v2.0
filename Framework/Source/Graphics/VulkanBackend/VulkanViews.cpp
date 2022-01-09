@@ -28,8 +28,8 @@ ErrType VulkanResourceView::initialize(VulkanDevice* pDevice)
     info.components.b                           = VK_COMPONENT_SWIZZLE_B;
     info.components.a                           = VK_COMPONENT_SWIZZLE_A;
 
-    switch (desc.dimension) {
-    
+    switch (desc.dimension) 
+    {
         case RESOURCE_VIEW_DIMENSION_1D: info.viewType = VK_IMAGE_VIEW_TYPE_1D; break;
         case RESOURCE_VIEW_DIMENSION_1D_ARRAY: info.viewType = VK_IMAGE_VIEW_TYPE_1D_ARRAY; break;
         case RESOURCE_VIEW_DIMENSION_2D: info.viewType = VK_IMAGE_VIEW_TYPE_2D; break;
@@ -39,22 +39,21 @@ ErrType VulkanResourceView::initialize(VulkanDevice* pDevice)
         case RESOURCE_VIEW_DIMENSION_CUBE: info.viewType = VK_IMAGE_VIEW_TYPE_CUBE; break;
         case RESOURCE_VIEW_DIMENSION_CUBE_ARRAY: info.viewType = VK_IMAGE_VIEW_TYPE_CUBE_ARRAY; break;
         default: break;
-    
     }
 
-    if (desc.type == RESOURCE_VIEW_TYPE_DEPTH_STENCIL) {
-
+    if (desc.type == RESOURCE_VIEW_TYPE_DEPTH_STENCIL) 
+    {
         info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-
-    } else {
-    
+    } 
+    else 
+    {
         info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    
     }
 
     VkResult vResult = vkCreateImageView(pDevice->get(), &info, nullptr, &m_view);
 
-    switch (desc.type) {
+    switch (desc.type) 
+    {
         case RESOURCE_VIEW_TYPE_DEPTH_STENCIL: m_expectedLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL; break;
         case RESOURCE_VIEW_TYPE_RENDER_TARGET: m_expectedLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; break;
         case RESOURCE_VIEW_TYPE_SHADER_RESOURCE: m_expectedLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL; break;
@@ -73,14 +72,13 @@ ErrType VulkanResourceView::destroy(VulkanDevice* pDevice)
 {
     ErrType result = REC_RESULT_OK;
 
-    if (m_view) {
-
+    if (m_view) 
+    {
         R_DEBUG(R_CHANNEL_VULKAN, "Destroying resource view...");
     
         vkDestroyImageView(pDevice->get(), m_view, nullptr);
         
         m_view = VK_NULL_HANDLE;
-    
     }
 
     return result;
@@ -89,7 +87,8 @@ ErrType VulkanResourceView::destroy(VulkanDevice* pDevice)
 
 static VkSamplerAddressMode getAddressMode(SamplerAddressMode mode)
 {
-    switch (mode) {
+    switch (mode) 
+    {
         case SAMPLER_ADDRESS_MODE_REPEAT:
         default: return VK_SAMPLER_ADDRESS_MODE_REPEAT;
         case SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE:
@@ -106,7 +105,8 @@ static VkSamplerAddressMode getAddressMode(SamplerAddressMode mode)
 
 static VkFilter getFilter(Filter filter)
 {
-    switch (filter) {
+    switch (filter) 
+    {
         case FILTER_LINEAR:
         default:
             return VK_FILTER_LINEAR;
@@ -120,7 +120,8 @@ static VkFilter getFilter(Filter filter)
 
 static VkSamplerMipmapMode getMipMapMode(SamplerMipMapMode mode)
 {
-    switch (mode) {
+    switch (mode) 
+    {
         case SAMPLER_MIP_MAP_MODE_LINEAR:
         default:
             return VK_SAMPLER_MIPMAP_MODE_LINEAR;
@@ -154,7 +155,8 @@ ErrType VulkanSampler::initialize(VulkanDevice* pDevice, const SamplerCreateDesc
 
     result = vkCreateSampler(device, &cInfo, nullptr, &m_sampler);
 
-    if (result != VK_SUCCESS) {
+    if (result != VK_SUCCESS) 
+    {
         return REC_RESULT_FAILED;
     }
     
@@ -168,7 +170,8 @@ ErrType VulkanSampler::destroy(VulkanDevice* pDevice)
 
     VkDevice device = pDevice->get();
     
-    if (m_sampler) {
+    if (m_sampler) 
+    {
         vkDestroySampler(device, m_sampler, nullptr);
         m_sampler = VK_NULL_HANDLE;
     }

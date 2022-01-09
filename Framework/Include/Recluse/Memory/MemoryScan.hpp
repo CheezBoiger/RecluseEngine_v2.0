@@ -12,7 +12,8 @@ namespace Recluse {
 class MemoryPool;
 
 
-class MemoryScanner {
+class MemoryScanner 
+{
 public:
     void scanMemoryLeaks(const MemoryPool* pool) { }
 

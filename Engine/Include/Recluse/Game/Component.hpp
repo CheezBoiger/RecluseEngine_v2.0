@@ -14,7 +14,8 @@ typedef U64 ComponentUUID;
 #define R_COMPONENT_DECLARE(varType, varName, varValue)
 
 // Component abstraction class.
-class R_PUBLIC_API Component : public Serializable {
+class R_PUBLIC_API Component : public Serializable 
+{
 public:
     static const U64 unknownComponent = ~0u;
 
@@ -45,8 +46,10 @@ public:
     void setEnable(Bool enable) { m_enable = enable; if (enable) onEnable(); }
 
     // Initialize the component.
-    void initialize(GameObject* pGameObject) {
-        if (!pGameObject) {
+    void initialize(GameObject* pGameObject) 
+    {
+        if (!pGameObject) 
+        {
             return;
         } 
 
@@ -57,7 +60,8 @@ public:
     }
 
     // clean up the component.
-    void cleanUp() {
+    void cleanUp() 
+    {
         m_enable = false;
         onCleanUp();
     }

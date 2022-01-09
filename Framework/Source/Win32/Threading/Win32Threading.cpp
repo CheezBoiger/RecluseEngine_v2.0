@@ -11,8 +11,9 @@ ErrType createThread(Thread* pThread, ThreadFunction startRoutine)
     DWORD resultCode = 0;
     HANDLE handle = NULL;
     BOOL exitCodeSuccess = FALSE;
-    if (!pThread) {
-
+    
+    if (!pThread) 
+    {
         R_ERR(R_CHANNEL_WIN32, "pThread input passed is null! This is not valid!");
 
         return REC_RESULT_INVALID_ARGS;
@@ -29,8 +30,8 @@ ErrType createThread(Thread* pThread, ThreadFunction startRoutine)
     exitCodeSuccess     = GetExitCodeThread(handle, &resultCode);
     pThread->resultCode = resultCode;
 
-    if (handle == NULL) {
-       
+    if (handle == NULL) 
+    {   
         R_ERR(R_CHANNEL_WIN32, "Failed to create thread! Result: %d", GetLastError());
 
         pThread->threadState = THREAD_STATE_UNKNOWN;
@@ -108,10 +109,9 @@ Mutex createMutex(const char* name)
 
 ErrType destroyMutex(Mutex mutex)
 {
-    if (!mutex) {
-
+    if (!mutex) 
+    {
         return REC_RESULT_NULL_PTR_EXCEPTION;
-
     }
 
     CloseHandle(mutex);
@@ -124,14 +124,13 @@ ErrType lockMutex(Mutex mutex)
 {
     DWORD result = WaitForSingleObject(mutex, INFINITE);
 
-    switch (result) {
-
+    switch (result) 
+    {
         case WAIT_OBJECT_0:
             return REC_RESULT_OK;
 
         default: 
             return REC_RESULT_FAILED;
-
     }
 
     return REC_RESULT_OK;
@@ -149,8 +148,8 @@ ErrType waitMutex(Mutex mutex, U64 waitTimeMs)
 {
     DWORD result = WaitForSingleObject(mutex, (DWORD)waitTimeMs);
 
-    switch (result) {
-
+    switch (result) 
+    {
         case WAIT_OBJECT_0:
             return REC_RESULT_OK;
 
@@ -159,7 +158,6 @@ ErrType waitMutex(Mutex mutex, U64 waitTimeMs)
 
         default:
             return REC_RESULT_FAILED;
-
     }
     
     return REC_RESULT_FAILED;

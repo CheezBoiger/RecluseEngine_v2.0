@@ -13,12 +13,23 @@
 #include <list>
 #include <functional>
 
+#define R_RETAIL        (0)
+#define R_RELEASE       (0)
+#define R_DEBUG         (0)
+#define R_DEVELOPER     (0)
+
+#define R_CLIENT        (2)
+#define R_SERVER        (3)
+
+#define R_NET_TYPE      (R_CLIENT)
+
 namespace Recluse {
 
 class Window;
 class Application;
 
-enum JobType {
+enum JobType 
+{
     JOB_TYPE_RENDERER,
     JOB_TYPE_PHYSICS,
     JOB_TYPE_AUDIO,
@@ -30,14 +41,16 @@ enum JobType {
 
 typedef U32 JobTypeFlags;
 
-struct JobMessage : public AMessage {
+struct JobMessage : public AMessage 
+{
     JobMessage(const std::string& msg) 
         : m_msg(msg) 
     {
         
     }
 
-    virtual std::string getEvent() override {
+    virtual std::string getEvent() override 
+    {
         return m_msg;    
     }
 private:
@@ -48,7 +61,8 @@ private:
 // Application interface for your application.
 // This should, and would be integrated into your game, in order to 
 // connect to the engine components, as well as the editor system.
-class R_PUBLIC_API Application {
+class R_PUBLIC_API Application 
+{
 public:
 
     Application()
@@ -62,12 +76,14 @@ public:
     // System update.
     virtual void    update(const RealtimeTick& tick) { }
 
-    ErrType cleanUp() { 
+    ErrType cleanUp() 
+    { 
         m_initialized = false;
         return onCleanUp();
     }
 
-    ErrType init() { 
+    ErrType init() 
+    { 
         ErrType result = onInit();
         if (result == REC_RESULT_OK)
             markInitialized();

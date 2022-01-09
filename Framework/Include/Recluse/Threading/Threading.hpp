@@ -8,7 +8,8 @@ namespace Recluse {
 // Thread function, used and called as the start routine for creating threads.
 typedef ErrType (*ThreadFunction)(void* data);
 
-enum ThreadResultCode {
+enum ThreadResultCode 
+{
     THREAD_RESULT_UNKNOWN       = -999,
     THREAD_RESULT_NOT_READY     = -2,
     THREAD_RESULT_FAILED        = -1,
@@ -16,7 +17,8 @@ enum ThreadResultCode {
 };
 
 
-enum ThreadState {
+enum ThreadState 
+{
     THREAD_STATE_NOT_RUNNING,
     THREAD_STATE_RUNNING,
     THREAD_STATE_SUSPENDED,
@@ -24,7 +26,9 @@ enum ThreadState {
     THREAD_STATE_UNKNOWN
 };
 
-struct R_PUBLIC_API Thread {
+
+struct R_PUBLIC_API Thread 
+{
     ThreadFunction      func;
     void*               payload;
     SizeT               uid;
@@ -63,7 +67,8 @@ R_PUBLIC_API U64     getMainThreadId();
 R_PUBLIC_API U64     getCurrentThreadId();
 
 // C++ RAII locking mechanism within a scope.
-class R_PUBLIC_API ScopedLock {
+class R_PUBLIC_API ScopedLock 
+{
 public:
     ScopedLock(Mutex mutex) 
         : m_mut(mutex)

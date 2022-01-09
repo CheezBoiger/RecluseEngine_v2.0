@@ -5,13 +5,18 @@
 
 namespace Recluse {
 
-struct RGUID {
-    union {
-        struct {
+struct RGUID 
+{
+    union 
+    {
+        struct 
+        {
             U64 major;
             U64 minor;
         };
-        struct {
+
+        struct 
+        {
             U32 hash0;
             U32 hash1;
             U32 hash2;

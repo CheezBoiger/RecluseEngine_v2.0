@@ -8,10 +8,14 @@
 namespace Recluse {
 
 
-struct R_PUBLIC_API Matrix44 {
-    union {
+struct R_PUBLIC_API Matrix44 
+{
+    union 
+    {
         F32 m[16];
-        struct {
+        
+        struct 
+        {
             __m128 row0;
             __m128 row1;
             __m128 row2;
@@ -20,14 +24,21 @@ struct R_PUBLIC_API Matrix44 {
     };
 
     // Contructors.
-    Matrix44(F32 a00 = 0.0f, F32 a01 = 0.0f, F32 a02 = 0.0f, F32 a03 = 0.0f,
-             F32 a10 = 0.0f, F32 a11 = 0.0f, F32 a12 = 0.0f, F32 a13 = 0.0f,
-             F32 a20 = 0.0f, F32 a21 = 0.0f, F32 a22 = 0.0f, F32 a23 = 0.0f,
-             F32 a30 = 0.0f, F32 a31 = 0.0f, F32 a32 = 0.0f, F32 a33 = 0.0f);
-    Matrix44(const Float4& row0,
-             const Float4& row1,
-             const Float4& row2,
-             const Float4& row3);
+    Matrix44
+        (
+            F32 a00 = 0.0f, F32 a01 = 0.0f, F32 a02 = 0.0f, F32 a03 = 0.0f,
+            F32 a10 = 0.0f, F32 a11 = 0.0f, F32 a12 = 0.0f, F32 a13 = 0.0f,
+            F32 a20 = 0.0f, F32 a21 = 0.0f, F32 a22 = 0.0f, F32 a23 = 0.0f,
+            F32 a30 = 0.0f, F32 a31 = 0.0f, F32 a32 = 0.0f, F32 a33 = 0.0f
+        );
+
+    Matrix44
+        (
+            const Float4& row0,
+            const Float4& row1,
+            const Float4& row2,
+            const Float4& row3
+        );
 
     F32 get(U32 row, U32 col) const;
     F32& get(U32 row, U32 col);

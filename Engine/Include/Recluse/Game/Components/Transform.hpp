@@ -10,7 +10,8 @@
 namespace Recluse {
 
 
-class Transform : public Component {
+class Transform : public Component 
+{
 public:
 
     // The World position of the transform.

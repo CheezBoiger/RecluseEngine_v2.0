@@ -4,9 +4,12 @@
 namespace Recluse {
 
 
-Matrix33::Matrix33(F32 a00, F32 a01, F32 a02,
-                   F32 a10, F32 a11, F32 a12,
-                   F32 a20, F32 a21, F32 a22)
+Matrix33::Matrix33
+                (
+                    F32 a00, F32 a01, F32 a02,
+                    F32 a10, F32 a11, F32 a12,
+                    F32 a20, F32 a21, F32 a22
+                )
 {
     m[0] = a00;
     m[1] = a01;
@@ -20,9 +23,12 @@ Matrix33::Matrix33(F32 a00, F32 a01, F32 a02,
 }
 
 
-Matrix33::Matrix33(const Float3& row0,
-                   const Float3& row1,
-                   const Float3& row2)
+Matrix33::Matrix33
+                (
+                    const Float3& row0,
+                    const Float3& row1,
+                    const Float3& row2
+                )
 {
     m[0] = row0[0];
     m[1] = row0[1];

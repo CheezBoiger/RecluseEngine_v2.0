@@ -39,7 +39,7 @@ void initialize(GraphicsDevice* pDevice, Engine::SceneBufferDefinitions* pBuffer
     FileBufferData data = { };
 
     File::readFrom(&data, staticVertShader);
-    pShader->load(data.buffer.data(), data.buffer.size(), INTERMEDIATE_SPIRV, SHADER_TYPE_VERTEX);
+    pShader->load(data.data(), data.size(), INTERMEDIATE_SPIRV, SHADER_TYPE_VERTEX);
 
     ErrType result                              = REC_RESULT_OK;
     GraphicsPipelineStateDesc pipelineCi        = { };
@@ -54,12 +54,11 @@ void initialize(GraphicsDevice* pDevice, Engine::SceneBufferDefinitions* pBuffer
 
     result = pDevice->createRenderPass(&pPreZPass, rpCi);
 
-    if (result != REC_RESULT_OK) {
-    
+    if (result != REC_RESULT_OK) 
+    {
         R_ERR("PreZRenderModule", "Failed to create render pass!");
 
         return;
-    
     }
 
     pipelineCi.raster.cullMode          = CULL_MODE_BACK;
@@ -102,15 +101,19 @@ void generate(GraphicsCommandList* pCommandList, Engine::RenderCommandList* pMes
     pCommandList->setRenderPass(pPreZPass);
     pCommandList->clearDepthStencil(1.0f, 0, depthRect);
 
-    for (U64 i = 0; i < sz; ++i) {
-    
+    for (U64 i = 0; i < sz; ++i) 
+    {
         U64 key = keys[i];
         Engine::RenderCommand* pRCmd            = pRenderCommands[key];
         PipelineState* pipeline                 = nullptr;
         Engine::DrawableRenderCommand* meshCmd  = nullptr;
 
-        if (meshCmd->op != Engine::COMMAND_OP_DRAWABLE_INDEXED_INSTANCED || 
-            meshCmd->op != Engine::COMMAND_OP_DRAWABLE_INSTANCED) {
+        if 
+            (
+                meshCmd->op != Engine::COMMAND_OP_DRAWABLE_INDEXED_INSTANCED 
+                || meshCmd->op != Engine::COMMAND_OP_DRAWABLE_INSTANCED
+            ) 
+        {
             continue;
         }
 
@@ -123,26 +126,32 @@ void generate(GraphicsCommandList* pCommandList, Engine::RenderCommandList* pMes
         pCommandList->bindVertexBuffers(meshCmd->numVertexBuffers, meshCmd->ppVertexBuffers, meshCmd->pOffsets);
         pCommandList->setPipelineState(pipeline, BIND_TYPE_GRAPHICS);
 
-        switch (meshCmd->op) {
-
+        switch (meshCmd->op) 
+        {
             case Engine::COMMAND_OP_DRAWABLE_INDEXED_INSTANCED:
             {
                 Engine::DrawIndexedRenderCommand* pIndexedCmd = 
                     static_cast<Engine::DrawIndexedRenderCommand*>(meshCmd);
 
-                pCommandList->bindIndexBuffer(pIndexedCmd->pIndexBuffer, 
-                    pIndexedCmd->indexType, pIndexedCmd->indexType);
+                pCommandList->bindIndexBuffer
+                                (
+                                    pIndexedCmd->pIndexBuffer, 
+                                    pIndexedCmd->indexType, 
+                                    pIndexedCmd->indexType
+                                );
 
-                for (U32 submeshIdx = 0; submeshIdx < pIndexedCmd->numSubMeshes; ++submeshIdx) {
-                
+                for (U32 submeshIdx = 0; submeshIdx < pIndexedCmd->numSubMeshes; ++submeshIdx) 
+                {
                     Engine::IndexedInstancedSubMesh& submesh = pIndexedCmd->pSubMeshes[submeshIdx];
                     
-                    pCommandList->drawIndexedInstanced(
-                        submesh.indexCount,
-                        submesh.instanceCount,
-                        submesh.firstIndex,
-                        submesh.vertexOffset,
-                        submesh.firstInstance);
+                    pCommandList->drawIndexedInstanced
+                                        (
+                                            submesh.indexCount,
+                                            submesh.instanceCount,
+                                            submesh.firstIndex,
+                                            submesh.vertexOffset,
+                                            submesh.firstInstance
+                                        );
                 }
 
                 break;
@@ -152,18 +161,19 @@ void generate(GraphicsCommandList* pCommandList, Engine::RenderCommandList* pMes
             {
                 Engine::DrawRenderCommand* pDrawCmd = static_cast<Engine::DrawRenderCommand*>(meshCmd);
 
-                for (U32 submeshIdx = 0; submeshIdx < pDrawCmd->numSubMeshes; ++submeshIdx) {
-                
+                for (U32 submeshIdx = 0; submeshIdx < pDrawCmd->numSubMeshes; ++submeshIdx) 
+                {
                     Engine::InstancedSubMesh& submesh = pDrawCmd->pSubMeshes[submeshIdx];
 
-                    pCommandList->drawInstanced(
-                        submesh.vertexCount,
-                        submesh.instanceCount,
-                        submesh.firstVertex,
-                        submesh.firstInstance);
+                    pCommandList->drawInstanced
+                                        (
+                                            submesh.vertexCount,
+                                            submesh.instanceCount,
+                                            submesh.firstVertex,
+                                            submesh.firstInstance
+                                        );
                 
                 }                
-
                 break;
             }
         }

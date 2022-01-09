@@ -7,7 +7,8 @@ namespace Recluse {
 
 class Archive;
 
-class Serializable {
+class Serializable 
+{
 public:
     virtual ~Serializable() { }
 

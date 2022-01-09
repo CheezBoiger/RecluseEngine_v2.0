@@ -10,9 +10,10 @@
 namespace Recluse {
 
 #define LOAD_JOB_THREAD(jobType, flags, thread, jobThreadADT) \
-    if (flags & jobType) {                        \
-        if (jobThreadADT.find(jobType) != jobThreadADT.end()) \
-            jobThreadADT[jobType] = thread; \
+    { \
+        if (flags & jobType) \
+            if (jobThreadADT.find(jobType) != jobThreadADT.end()) \
+                jobThreadADT[jobType] = thread; \
     }
 
 ErrType Application::loadJobThread(JobTypeFlags flags, ThreadFunction func)
@@ -21,7 +22,8 @@ ErrType Application::loadJobThread(JobTypeFlags flags, ThreadFunction func)
     ErrType result = REC_RESULT_OK;
     result = createThread(&pThread, func);
 
-    if (result == REC_RESULT_OK) {
+    if (result == REC_RESULT_OK) 
+    {
         m_threads.push_back(pThread);
 
         LOAD_JOB_THREAD(JOB_TYPE_RENDERER,      flags, &m_threads.back(), m_jobThreads);
@@ -38,7 +40,8 @@ ErrType Application::loadJobThread(JobTypeFlags flags, ThreadFunction func)
 
 Thread* Application::getJobThread(JobType jobType)
 {
-    if (m_jobThreads.find(jobType) == m_jobThreads.end()) {
+    if (m_jobThreads.find(jobType) == m_jobThreads.end()) 
+    {
         R_WARN("Application", "No job thread available for job type=%d", jobType);
         return nullptr;
     }
@@ -83,19 +86,22 @@ ErrType initialize()
 
 ErrType MainThreadLoop::run()
 {
-    R_ASSERT(k_pWindow      != NULL);
-    R_ASSERT(k_pMessageBus  != NULL);
+    R_ASSERT(k_pWindow          != NULL);
+    R_ASSERT(k_pMessageBus      != NULL);
+    R_ASSERT(k_pMessageMutex    != MutexValue::kNull);
 
-    while (k_pWindow->shouldClose()) {
+    while (k_pWindow->shouldClose()) 
+    {
         RealtimeTick tick = RealtimeTick::getTick();
         pollEvents();
-        if (k_pApp) {
-
+        if (k_pApp) 
+        {
             // Update the application tick. Usually game logic is here.
             // This is our sim thread.
-            k_pApp->update(tick);
-            
-        } else {
+            k_pApp->update(tick);   
+        } 
+        else 
+        {
             R_WARN(__FUNCTION__, "No application loaded to run!");
         }
 

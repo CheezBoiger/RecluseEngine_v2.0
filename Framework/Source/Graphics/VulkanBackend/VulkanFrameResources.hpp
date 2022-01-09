@@ -13,7 +13,8 @@ namespace Recluse {
 class VulkanSwapchain;
 
 
-class VulkanFrameResources {
+class VulkanFrameResources 
+{
 public:
 
     void build(VulkanSwapchain* pSwapchain);

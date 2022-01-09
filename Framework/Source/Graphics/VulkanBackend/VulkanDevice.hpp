@@ -23,7 +23,8 @@ class MemoryPool;
 struct DeviceCreateInfo;
 
 
-struct QueueFamily {
+struct QueueFamily 
+{
     U32                                     maxQueueCount;
     U32                                     queueFamilyIndex;
     U32                                     currentAvailableQueueIndex;
@@ -33,7 +34,8 @@ struct QueueFamily {
 };
 
 
-class VulkanDevice : public GraphicsDevice {
+class VulkanDevice : public GraphicsDevice 
+{
 public:
     VulkanDevice()
         : m_device(VK_NULL_HANDLE)
@@ -47,8 +49,10 @@ public:
         , m_memCache({ })
         , m_pPrimaryCommandList(nullptr)
         , m_pGraphicsQueue(nullptr)
-        , m_swapchain(nullptr) { 
-        for (U32 i = 0; i < RESOURCE_MEMORY_USAGE_COUNT; ++i) { 
+        , m_swapchain(nullptr) 
+    { 
+        for (U32 i = 0; i < RESOURCE_MEMORY_USAGE_COUNT; ++i) 
+        { 
             m_bufferPool[i].memory = VK_NULL_HANDLE;
             m_imagePool[i].memory = VK_NULL_HANDLE;
             m_bufferAllocators[i] = nullptr;
@@ -189,15 +193,20 @@ private:
     std::vector<QueueFamily> m_queueFamilies;
     std::vector<VkFence>        m_fences;
     std::vector<VkCommandPool> m_commandPools;
-    struct {
-        struct {
+    struct 
+    {
+        struct 
+        {
             MemoryPool* pool;
             Allocator* allocator;
         } invalid;
-        struct {
+
+        struct 
+        {
             MemoryPool* pool;
             Allocator* allocator;
         } flush;
+
     } m_memCache;
 
     VulkanMemoryPool m_bufferPool       [RESOURCE_MEMORY_USAGE_COUNT];

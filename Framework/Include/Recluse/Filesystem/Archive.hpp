@@ -7,7 +7,8 @@
 namespace Recluse {
 
 
-class Archive {
+class Archive 
+{
 public:
 
     R_PUBLIC_API Archive(const std::string& filepath)

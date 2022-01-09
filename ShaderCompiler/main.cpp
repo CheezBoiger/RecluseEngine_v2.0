@@ -32,12 +32,15 @@ int main(int c, char* argv[])
     string compilePath;
     int compilerIndex = 0;
 
-    try {
+    try 
+    {
         configPath       = parsed["config"].as<string>();
         compilePath      = parsed["file"].as<string>();
         if (parsed.count("idx"))
             compilerIndex    = parsed["idx"].as<int>();
-    } catch (const exception& e) {
+    } 
+    catch (const exception& e) 
+    {
         R_ERR("ShaderCompiler", "%s", e.what());
     }
 
@@ -49,12 +52,11 @@ int main(int c, char* argv[])
     Recluse::setShaderFiles(compilePath);
     result = Recluse::compileShaders(Recluse::SHADER_LANG_GLSL);
 
-    if (result != Recluse::REC_RESULT_OK) {
-
+    if (result != Recluse::REC_RESULT_OK) 
+    {
         R_ERR("ShaderCompiler", "Failed to compile some or all shaders!");
 
         return -1;
-
     }    
 
     R_VERBOSE("ShaderCompiler", "Finished!");

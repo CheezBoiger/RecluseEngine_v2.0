@@ -15,7 +15,8 @@ static VkDescriptorType getDescriptorType(DescriptorBindType bindType)
 {
     VkDescriptorType type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 
-    switch (bindType) {
+    switch (bindType) 
+    {
         case DESCRIPTOR_CONSTANT_BUFFER:        type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER; break;
         case DESCRIPTOR_SAMPLER:                type = VK_DESCRIPTOR_TYPE_SAMPLER; break;
         case DESCRIPTOR_SHADER_RESOURCE_VIEW:   type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE; break;
@@ -36,7 +37,8 @@ ErrType VulkanDescriptorSetLayout::initialize(VulkanDevice* pDevice, const Descr
 
     std::vector<VkDescriptorSetLayoutBinding> bindings(desc.numDescriptorBinds);
 
-    for (U32 i = 0; i < desc.numDescriptorBinds; ++i) {
+    for (U32 i = 0; i < desc.numDescriptorBinds; ++i) 
+    {
         const DescriptorBindDesc& bindDesc = desc.pDescriptorBinds[i];
 
         bindings[i].binding             = bindDesc.binding;
@@ -44,7 +46,6 @@ ErrType VulkanDescriptorSetLayout::initialize(VulkanDevice* pDevice, const Descr
         bindings[i].descriptorType      = getDescriptorType(bindDesc.bindType);
         bindings[i].stageFlags          = Vulkan::getShaderStages(bindDesc.shaderStages);
         bindings[i].pImmutableSamplers  = nullptr;  // We will eventually...
-    
     }
 
     ci.sType            = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -53,11 +54,10 @@ ErrType VulkanDescriptorSetLayout::initialize(VulkanDevice* pDevice, const Descr
 
     result = vkCreateDescriptorSetLayout(device, &ci, nullptr, &m_layout);
 
-    if (result != VK_SUCCESS) {
-
+    if (result != VK_SUCCESS) 
+    {
         R_ERR(R_CHANNEL_VULKAN, "Failed to create Vulkan descriptor set layout!");
         return REC_RESULT_FAILED;
-
     }
 
     return REC_RESULT_OK;
@@ -66,13 +66,11 @@ ErrType VulkanDescriptorSetLayout::initialize(VulkanDevice* pDevice, const Descr
 
 ErrType VulkanDescriptorSetLayout::destroy(VulkanDevice* pDevice)
 {
-    if (m_layout) {
-    
+    if (m_layout) 
+    {
         R_DEBUG(R_CHANNEL_VULKAN, "Destroying Vulkan Descriptor Set Layout...");
-
         vkDestroyDescriptorSetLayout(pDevice->get(), m_layout, nullptr);
         m_layout = VK_NULL_HANDLE;
-    
     }
 
     return REC_RESULT_OK;
@@ -94,12 +92,10 @@ ErrType VulkanDescriptorSet::initialize(VulkanDevice* pDevice, VulkanDescriptorS
 
     result = vkAllocateDescriptorSets(device, &allocIf, &m_set);
 
-    if (result != VK_SUCCESS) {
-    
+    if (result != VK_SUCCESS) 
+    {
         R_ERR(R_CHANNEL_VULKAN, "Failed to allocate vulkan descriptor set!!");
-
         return REC_RESULT_FAILED;
-    
     }
 
     m_pDevice = pDevice;    
@@ -114,20 +110,19 @@ ErrType VulkanDescriptorSet::destroy()
     VkDescriptorPool pool   = m_pDevice->getDescriptorHeap()->get();
     VkResult result         = VK_SUCCESS;
 
-    if (m_set) {
-    
+    if (m_set) 
+    {
         R_DEBUG(R_CHANNEL_VULKAN, "freeing vulkan descriptor set...");
     
         result = vkFreeDescriptorSets(device, pool, 1, &m_set);
         
-        if (result != VK_SUCCESS) {
-        
+        if (result != VK_SUCCESS) 
+        {
             R_ERR(R_CHANNEL_VULKAN, "Failed to free vulkan native descriptor set!");
-        
-        } else {
-        
-            m_set = VK_NULL_HANDLE;
-            
+        } 
+        else 
+        {
+            m_set = VK_NULL_HANDLE;   
         }
 
     }
@@ -150,8 +145,8 @@ ErrType VulkanDescriptorSet::update(DescriptorSetBind* pBinds, U32 bindCount)
     U32 bufCount = 0;
     U32 imgCount = 0;
 
-    for (U32 i = 0; i < bindCount; ++i) {
-    
+    for (U32 i = 0; i < bindCount; ++i) 
+    {
         DescriptorSetBind& bind = pBinds[i];
         writeSet[i].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         writeSet[i].descriptorCount = bind.descriptorCount;
@@ -163,8 +158,8 @@ ErrType VulkanDescriptorSet::update(DescriptorSetBind* pBinds, U32 bindCount)
         // We don't have support for handling multiple descriptors.
         R_ASSERT(bind.descriptorCount == 1);
     
-        switch (writeSet[i].descriptorType) {
-
+        switch (writeSet[i].descriptorType) 
+        {
             case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
             case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
             case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
@@ -175,6 +170,7 @@ ErrType VulkanDescriptorSet::update(DescriptorSetBind* pBinds, U32 bindCount)
                 imgInfos[imgCount].imageLayout  = pView->getExpectedLayout();   
                 writeSet[i].pImageInfo          = &imgInfos[imgCount++];
             } break;
+
             case VK_DESCRIPTOR_TYPE_SAMPLER: 
             {
                 R_ASSERT(bind.sampler.pSampler != NULL);
@@ -196,7 +192,6 @@ ErrType VulkanDescriptorSet::update(DescriptorSetBind* pBinds, U32 bindCount)
             default: 
                 break;
         }
-    
     }
 
     U32 writeCount = (U32)writeSet.size();

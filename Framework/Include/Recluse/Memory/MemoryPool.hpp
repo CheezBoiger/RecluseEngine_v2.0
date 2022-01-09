@@ -40,7 +40,8 @@ static void rlsFreeArray(Type* ptr)
 class MemoryScanner;
 
 
-class R_PUBLIC_API MemoryPool {
+class R_PUBLIC_API MemoryPool 
+{
 public:
     MemoryPool(U64 szBytes, U64 pageSize = 4096ull);
 
@@ -63,9 +64,10 @@ private:
     U64     m_pageSzBytes;
     B32     m_isMalloc;
 
-    struct MemScanNodes {
-        MemoryScanner* pScanner;
-        struct MemScanNodes* next;
+    struct MemScanNodes 
+    {
+        MemoryScanner*          pScanner;
+        struct MemScanNodes*    next;
 
         MemScanNodes(MemoryScanner* scanner = nullptr, struct MemScanNodes* nextNode = nullptr)
             : pScanner(scanner)

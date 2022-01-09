@@ -17,7 +17,8 @@ namespace Engine {
 
 class Camera;
 
-class Scene : public Serializable {
+class Scene : public Serializable 
+{
 public:
     Scene() 
         : m_currentCamera(nullptr)

@@ -47,6 +47,7 @@ void MemoryPool::addScanner(MemoryScanner* scanner)
         m_pScanStart = new MemScanNodes(scanner);
         return;
     }
+
     MemScanNodes* node = new MemScanNodes(scanner);
     
     while (trav->next) 

@@ -8,7 +8,8 @@
 
 namespace Recluse {
 
-class VulkanInstance : public GraphicsInstance {
+class VulkanInstance : public GraphicsInstance 
+{
 public:
     VulkanInstance() : GraphicsInstance(GRAPHICS_API_VULKAN) { }
     virtual ~VulkanInstance() { }
@@ -20,21 +21,13 @@ public:
     void onDestroy() override;
 
     // Getter functions.
-    VkInstance get() {
-        return m_instance;
-    }
+    VkInstance get() { return m_instance; }
 
-    VkInstance get() const {
-        return m_instance;
-    }
+    VkInstance get() const { return m_instance; }
 
-    VkInstance operator()() {
-        return get();
-    }
+    VkInstance operator()() { return get(); }
 
-    VkInstance operator()() const {
-        return get();
-    }
+    VkInstance operator()() const { return get(); }
 
     // Get process address.
     PFN_vkVoidFunction getProcAddr(const char* funcName);

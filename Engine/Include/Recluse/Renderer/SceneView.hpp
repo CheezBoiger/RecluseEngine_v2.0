@@ -40,7 +40,8 @@ RECLUSE_DECLARE_SCENE_BUFFER(RecluseSceneView)
 RECLUSE_END_SCENE_BUFFER();
 
 
-struct StaticVertex {
+struct StaticVertex 
+{
     Float3 vPosition;
     Float3 vNormal;
     Float3 vTangent;
@@ -49,7 +50,8 @@ struct StaticVertex {
 };
 
 
-struct SkinnedVertex {
+struct SkinnedVertex 
+{
     Float3 vPosition;
     Float3 vNormal;
     Float3 vTangent;
@@ -60,7 +62,8 @@ struct SkinnedVertex {
 };
 
 
-struct StaticMorph {
+struct StaticMorph 
+{
     Float3 vPosition;
     Float3 vNormal;
 };

@@ -24,9 +24,12 @@ void cullLights(GraphicsCommandList* pList)
 {
     R_ASSERT(pList != NULL);
 
-    if (pList->supportsAsyncCompute()) {
+    if (pList->supportsAsyncCompute()) 
+    {
         
-    } else {
+    } 
+    else 
+    {
         
     }
 }

@@ -12,68 +12,91 @@ class MemoryPool;
 
 
 //! Recluse allocation struct. Contains info of the suballocation for the requested data.
-typedef struct Allocation {
-    PtrType ptr;
-    U64     sizeBytes;
+typedef struct Allocation 
+{
+    PtrType baseAddress;        //< Base address/ starting address of the allocated object.
+    U64     sizeBytes;          //< The size of the allocated memory that represents this object.
 } *PAllocation, &RAllocation;
 
 
 //! Recluse Allocator class. This is the abstract class that is used for defining multiple allocation
 //! data structures.
-class R_PUBLIC_API Allocator {
+class R_PUBLIC_API Allocator 
+{
 public:
     virtual ~Allocator() { }
 
     Allocator() : m_totalAllocations(0), m_totalSizeBytes(0), m_usedSizeBytes(0), m_pMemoryBaseAddr(0ull) { }
 
     //! Allocator mem size and page size (usually 4kb). 
-    void initialize(PtrType pBasePtr, U64 sizeBytes) {
-        m_totalSizeBytes = sizeBytes;
-        m_pMemoryBaseAddr = pBasePtr;
-        m_usedSizeBytes = 0;
+    void initialize(PtrType pBasePtr, U64 sizeBytes) 
+    {
+        m_totalSizeBytes    = sizeBytes;
+        m_pMemoryBaseAddr   = pBasePtr;
+        m_usedSizeBytes     = 0;
         onInitialize();
     }
 
     //! Allocation requirements.
-    ErrType allocate(Allocation* pOutput, U64 requestSz, U16 alignment) {
+    ErrType allocate(Allocation* pOutput, U64 requestSz, U16 alignment) 
+    {
         ErrType err = onAllocate(pOutput, requestSz, alignment);
-        if (err == REC_RESULT_OK) {
-            m_totalAllocations += 1;
-            m_usedSizeBytes += pOutput->sizeBytes;
+        if (err == REC_RESULT_OK) 
+        {
+            m_totalAllocations  += 1;
+            m_usedSizeBytes     += pOutput->sizeBytes;
         }
 
         return err;
     }
 
-    ErrType free(Allocation* pOutput) {
+    ErrType free(Allocation* pOutput) 
+    {
         ErrType err = onFree(pOutput);
-        if (err == REC_RESULT_OK) {
-            m_usedSizeBytes -= pOutput->sizeBytes;
-            m_totalAllocations -= 1;
+        if (err == REC_RESULT_OK) 
+        {
+            m_usedSizeBytes     -= pOutput->sizeBytes;
+            m_totalAllocations  -= 1;
         }
     
         return err;
     }
 
-    void reset() {
+    void reset() 
+    {
         onReset();
-        m_usedSizeBytes = 0;
-        m_totalAllocations = 0;
+        m_usedSizeBytes     = 0;
+        m_totalAllocations  = 0;
     }
 
-    void cleanUp() {
+    void cleanUp() 
+    {
         onCleanUp();
-        m_totalAllocations = 0;
-        m_totalSizeBytes = 0;
-        m_usedSizeBytes = 0;
-        m_pMemoryBaseAddr = 0ull;
+        m_totalAllocations  = 0;
+        m_totalSizeBytes    = 0;
+        m_usedSizeBytes     = 0;
+        m_pMemoryBaseAddr   = 0ull;
     }
 
-    inline U64 getTotalSizeBytes() const { return m_totalSizeBytes; }
-    inline U64 getUsedSizeBytes() const { return m_usedSizeBytes; }
-    inline U64 getTotalAllocations() const { return m_totalAllocations; }
+    inline U64 getTotalSizeBytes() const 
+    { 
+        return m_totalSizeBytes; 
+    }
 
-    inline PtrType getBaseAddr() { return m_pMemoryBaseAddr; }
+    inline U64 getUsedSizeBytes() const 
+    { 
+        return m_usedSizeBytes; 
+    }
+
+    inline U64 getTotalAllocations() const 
+    { 
+        return m_totalAllocations; 
+    }
+
+    inline PtrType getBaseAddr() 
+    { 
+        return m_pMemoryBaseAddr; 
+    }
 
 protected:
 
@@ -84,19 +107,24 @@ protected:
     virtual ErrType onCleanUp() = 0;
 
 private:
-    U64 m_totalSizeBytes;
+    U64     m_totalSizeBytes;
     PtrType m_pMemoryBaseAddr;
-    U64 m_usedSizeBytes;
-    U64 m_totalAllocations;
+    U64     m_usedSizeBytes;
+    U64     m_totalAllocations;
 };
 
 
-class DefaultAllocator : public Allocator {
+class DefaultAllocator : public Allocator 
+{
 public:
 
-    virtual ErrType onInitialize() override { return REC_RESULT_OK; }
+    virtual ErrType onInitialize() override 
+    { 
+        return REC_RESULT_OK; 
+    }
 
-    virtual ErrType onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override {
+    virtual ErrType onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override 
+    {
         return REC_RESULT_OK;
     }
 };

@@ -8,8 +8,10 @@ namespace Recluse {
 
 struct Matrix44;
 
-struct R_PUBLIC_API Float4 {
-    union {
+struct R_PUBLIC_API Float4 
+{
+    union 
+    {
         struct { F32 x, y, z, w; };
         struct { F32 r, g, b, a; };
         struct { F32 s, t, r, q; };
@@ -52,8 +54,10 @@ struct R_PUBLIC_API Float4 {
 };
 
 
-struct R_PUBLIC_API UInt4 {
-    union {
+struct R_PUBLIC_API UInt4 
+{
+    union 
+    {
         struct { U32 x, y, z, w; };
         struct { U32 s, t, r, q; };
         struct { U32 r, g, b, a; };

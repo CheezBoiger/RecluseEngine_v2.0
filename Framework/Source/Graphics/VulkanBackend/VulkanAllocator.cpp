@@ -6,11 +6,14 @@
 namespace Recluse {
 
 
-B32 isMemoryResourcesOnSeparatePages(VkDeviceSize offsetA, 
-    VkDeviceSize sizeA,     
-    VkDeviceSize offsetB, 
-    VkDeviceSize sizeB, 
-    VkDeviceSize bufferImageGranularity)
+static B32 isMemoryResourcesOnSeparatePages
+                (
+                    VkDeviceSize offsetA, 
+                    VkDeviceSize sizeA,     
+                    VkDeviceSize offsetB, 
+                    VkDeviceSize sizeB, 
+                    VkDeviceSize bufferImageGranularity
+                )
 {
     VkDeviceSize endA       = offsetA + sizeA - 1;
     VkDeviceSize endPageA   = endA & ~(bufferImageGranularity - 1);
@@ -31,15 +34,15 @@ ErrType VulkanAllocator::allocate(VulkanMemory* pOut, VkMemoryRequirements& requ
 
     result = m_allocator->allocate(&allocation, requirements.size, (U16)requirements.alignment);
     
-    if (result != REC_RESULT_OK) {
-    
+    if (result != REC_RESULT_OK) 
+    {
         R_ERR(R_CHANNEL_VULKAN, "Failed to allocate memory!");
 
         return result;
     }
 
     pOut->sizeBytes     = allocation.sizeBytes;
-    pOut->offsetBytes   = allocation.ptr;
+    pOut->offsetBytes   = allocation.baseAddress;
     pOut->baseAddr      = m_pool->basePtr;
     pOut->deviceMemory  = m_pool->memory;
     
@@ -53,19 +56,21 @@ ErrType VulkanAllocator::free(VulkanMemory* pOut, Bool immediate)
     
     ErrType result = REC_RESULT_OK;    
 
-    if (!pOut) {
-    
+    if (!pOut) 
+    {
         return REC_RESULT_NULL_PTR_EXCEPTION;
-    
     }
 
-    if (immediate) {
+    if (immediate) 
+    {
         Allocation allocation   = { };
-        allocation.ptr          = pOut->offsetBytes;
+        allocation.baseAddress          = pOut->offsetBytes;
         allocation.sizeBytes    = pOut->sizeBytes;
 
         result = m_allocator->free(&allocation);
-    } else {
+    } 
+    else 
+    {
         // Push back a copy.
         std::vector<VulkanMemory>& garbageChute = m_frameGarbage[m_garbageIndex];
         garbageChute.push_back(*pOut);
@@ -78,13 +83,15 @@ ErrType VulkanAllocator::free(VulkanMemory* pOut, Bool immediate)
 void VulkanAllocator::destroy()
 {
     // Perform a full garbage cleanup.
-    for (U32 i = 0; i < m_frameGarbage.size(); ++i) {
+    for (U32 i = 0; i < m_frameGarbage.size(); ++i) 
+    {
         emptyGarbage(i);
     }
 
     m_frameGarbage.clear();
 
-    if (m_allocator) {
+    if (m_allocator) 
+    {
 
         m_allocator->cleanUp();
 
@@ -100,20 +107,27 @@ void VulkanAllocator::emptyGarbage(U32 index)
     std::vector<VulkanMemory>& garbage = m_frameGarbage[index];
     ErrType result;
 
-    for (U32 i = 0; i < garbage.size(); ++i) {
+    for (U32 i = 0; i < garbage.size(); ++i) 
+    {
         result = REC_RESULT_OK;
         
         VulkanMemory& mrange    = garbage[i];
         Allocation alloc        = { };
 
-        alloc.ptr               = mrange.offsetBytes;
+        alloc.baseAddress               = mrange.offsetBytes;
         alloc.sizeBytes         = mrange.sizeBytes;
 
         result = m_allocator->free(&alloc);
 
-        if (result != REC_RESULT_OK) {
-            R_ERR("Allocator", "Failed to free garbage addr=%llu, at base addr=%llu", 
-                (U64)mrange.baseAddr + mrange.offsetBytes, (U64)mrange.baseAddr);
+        if (result != REC_RESULT_OK) 
+        {
+            R_ERR
+                (
+                    "Allocator", 
+                    "Failed to free garbage addr=%llu, at base addr=%llu", 
+                    (U64)mrange.baseAddr + mrange.offsetBytes, 
+                    (U64)mrange.baseAddr
+                );
         }
     }
 
@@ -123,12 +137,17 @@ void VulkanAllocator::emptyGarbage(U32 index)
 
 void VulkanAllocator::update(const UpdateConfig& config) 
 {
-    if ((config.flags & VULKAN_ALLOC_GARBAGE_RESIZE) &&
-      (config.garbageBufferCount != (U32)m_frameGarbage.size())) {
+    if 
+        (
+            (config.flags & VULKAN_ALLOC_GARBAGE_RESIZE) 
+            && (config.garbageBufferCount != (U32)m_frameGarbage.size())
+        ) 
+    {
         const U32 newGarbageCount = config.garbageBufferCount;
         // Clean up all garbage before doing this...
         R_DEBUG("VulkanAllocator", "Updating garbage buffers...");
-        for (U32 i = 0; i < (U32)m_frameGarbage.size(); ++i) {
+        for (U32 i = 0; i < (U32)m_frameGarbage.size(); ++i) 
+        {
             emptyGarbage(i);
         }
         
@@ -138,18 +157,31 @@ void VulkanAllocator::update(const UpdateConfig& config)
 
     U32 garbageSize = (U32)m_frameGarbage.size();
         
-    if (config.flags & VULKAN_ALLOC_SET_FRAME_INDEX) {
-        if (config.frameIndex >= garbageSize) {
-            R_ERR("VulkanAllocator", "frameIndex to set (=%d), is larger than the number "
-                "of garbage frames (=%d)! Ignoring set...", config.frameIndex, garbageSize);
-        } else {
+    if (config.flags & VULKAN_ALLOC_SET_FRAME_INDEX) 
+    {
+        if (config.frameIndex >= garbageSize) 
+        {
+            R_ERR
+                (
+                    "VulkanAllocator", 
+                    "frameIndex to set (=%d), is larger than the number "
+                    "of garbage frames (=%d)! Ignoring set...", 
+                    config.frameIndex, 
+                    garbageSize
+                );
+        } 
+        else 
+        {
             m_garbageIndex = config.frameIndex;
         }
-    } else if (config.flags & VULKAN_ALLOC_INCREMENT_FRAME_INDEX) {
+    } 
+    else if (config.flags & VULKAN_ALLOC_INCREMENT_FRAME_INDEX) 
+    {
         m_garbageIndex = (m_garbageIndex + 1) % garbageSize;
     }
 
-    if (config.flags & VULKAN_ALLOC_UPDATE_FLAG) {
+    if (config.flags & VULKAN_ALLOC_UPDATE_FLAG)
+    {
         emptyGarbage(m_garbageIndex);
     }
 }
@@ -160,7 +192,8 @@ void VulkanAllocator::clear()
     R_ASSERT(m_pool->memory != NULL);
     R_ASSERT(m_allocator    != NULL);
 
-    for (U32 i = 0; i < (U32)m_frameGarbage.size(); ++i) {
+    for (U32 i = 0; i < (U32)m_frameGarbage.size(); ++i) 
+    {
       m_frameGarbage[i].clear();
     }
 

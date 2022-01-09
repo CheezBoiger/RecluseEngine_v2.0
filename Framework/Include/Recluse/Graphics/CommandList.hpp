@@ -15,7 +15,8 @@ class PipelineState;
 class DescriptorSet;
 
 
-struct ResourceTransition {
+struct ResourceTransition 
+{
     GraphicsResource*   pResource;
     ResourceState       dstState;
     U32                 layers;
@@ -27,7 +28,8 @@ struct ResourceTransition {
 #define MAKE_RESOURCE_TRANSITION(pResource, dstState, baseMip, mips, baseLayer, layers) { pResource, dstState, layers, baseLayer, mips, baseMip }
 
 
-class R_PUBLIC_API GraphicsCommandList {
+class R_PUBLIC_API GraphicsCommandList 
+{
 public:
     virtual ~GraphicsCommandList() { }
 
@@ -61,6 +63,9 @@ public:
     virtual void copyResource(GraphicsResource* dst, GraphicsResource* src) { }
     virtual void copyBufferRegions(CopyBufferRegion* pRegions, U32 numRegions) { }
 
+    // Transitiion a resource to a given state. This is a modern API specific feature,
+    // which is handled by managed drivers for older APIs, yet we reinforce this for older 
+    // API anyways, in order to ensure newer APIs will still conform!
     virtual void transition(ResourceTransition* pTargets, U32 targetCounts) { }
 
     virtual Bool supportsAsyncCompute() { return false; }

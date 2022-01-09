@@ -13,11 +13,12 @@
 
 namespace Recluse {
 
-static struct {
-    U64 gTicksPerSecond;
-    U64 gTime;
-    RAWINPUT lpb;
-    DWORD mainThreadId = GetCurrentThreadId();
+static struct 
+{
+    U64             gTicksPerSecond;                     //< ticks in seconds.
+    U64             gTime;                               //< time 
+    RAWINPUT        lpb;                                 //< raw input.
+    const DWORD     mainThreadId = GetCurrentThreadId(); //< this is the main thread id!
 } gWin32Runtime;
 
 #if defined(RECLUSE_DEBUG) || defined(RECLUSE_DEVELOPER)
@@ -35,7 +36,8 @@ Result AssertHandler::check(Bool cond, const char* functionStr, const char* msg)
     // If the assert is false, we should handle it.
     DWORD hresult = MessageBox(NULL, msg, NULL, MB_ABORTRETRYIGNORE);
 
-    switch (hresult) {
+    switch (hresult) 
+    {
         case IDRETRY:
             return ASSERT_DEBUG;
         case IDABORT:
@@ -55,30 +57,27 @@ void enableOSColorInput()
 {
     HANDLE stdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 
-    if (stdOutHandle == INVALID_HANDLE_VALUE) {
-            
+    if (stdOutHandle == INVALID_HANDLE_VALUE) 
+    {        
         R_ERR(R_CHANNEL_WIN32, "Unable to obtain standard output handle.");
 
         return;
-
     }
 
     DWORD dwMode = 0; 
 
-    if (!GetConsoleMode(stdOutHandle, &dwMode)) {
-
+    if (!GetConsoleMode(stdOutHandle, &dwMode)) 
+    {
         R_ERR(R_CHANNEL_WIN32, "Unable to get output handle mode!");
 
         return;
-
     }
 
     dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;   
     
-    if (!SetConsoleMode(stdOutHandle, dwMode)) {
-    
+    if (!SetConsoleMode(stdOutHandle, dwMode)) 
+    {
         R_ERR(R_CHANNEL_WIN32, "Unable to set the output handle mode for virtual terminal processing!");
-    
     }
 }
 
@@ -149,8 +148,8 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
     // Reinterpret hwnd to window pointer.
     Window* pWindow = reinterpret_cast<Window*>(GetPropW(hwnd, R_WIN32_PROP_NAME));
 
-    switch (uMsg) {
-
+    switch (uMsg) 
+    {
         case WM_CLOSE:
         case WM_QUIT:
         {
@@ -166,17 +165,24 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
             I32 dx = 0, dy = 0;
             UINT dwSize;
 
-            if (!pMouse) {
+            if (!pMouse) 
+            {
                 // Break early as there is no mouse attached to this 
                 // window.
                 break;
             }
         
-            if (GetRawInputData((HRAWINPUT)lParam, 
-                                RID_INPUT, 
-                                raw, 
-                                &dwSize, 
-                                sizeof(RAWINPUTHEADER)) == -1u) 
+            if 
+                (
+                    GetRawInputData
+                        (
+                            (HRAWINPUT)lParam, 
+                            RID_INPUT, 
+                            raw, 
+                            &dwSize, 
+                            sizeof(RAWINPUTHEADER)
+                        ) == -1u
+                ) 
             {
 
                 R_WARN(R_CHANNEL_WIN32, "Raw input not returning correct size.");
@@ -184,15 +190,18 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
 
             }
 
-            if (raw->header.dwType == RIM_TYPEMOUSE) {
-                if (raw->data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE) {
+            if (raw->header.dwType == RIM_TYPEMOUSE) 
+            {
+                if (raw->data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE) 
+                {
                     I32 prevX = pMouse->getLastXPos();
                     I32 prevY = pMouse->getLastYPos();
 
                     dx = raw->data.mouse.lLastX - prevX; // get the delta from last mouse pos.
                     dy = raw->data.mouse.lLastY - prevY; // get the delta from last mouse pos.
-        
-                } else {
+                } 
+                else 
+                {
                     dx = raw->data.mouse.lLastX;
                     dy = raw->data.mouse.lLastY;
                 }
@@ -228,11 +237,10 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
 void pollEvents()
 {
     MSG msg;
-    while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
-
+    while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) 
+    {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
-    
     }
 }
 

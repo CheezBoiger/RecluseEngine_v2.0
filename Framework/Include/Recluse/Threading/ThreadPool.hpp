@@ -13,13 +13,15 @@ namespace Recluse {
 typedef ThreadFunction ThreadJob;
 
 
-struct R_PUBLIC_API JobFinishedPayload {
+struct R_PUBLIC_API JobFinishedPayload 
+{
     ThreadJob   func;
     SizeT       uid;
     U32         resultCode;
 };
 
-class ThreadPool {
+class ThreadPool 
+{
 public:
     R_PUBLIC_API ThreadPool(U32 numWorkers = 2);
     R_PUBLIC_API ~ThreadPool();

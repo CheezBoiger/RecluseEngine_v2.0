@@ -36,24 +36,20 @@ void VulkanQueue::wait()
 {
     VkResult result = vkQueueWaitIdle(m_queue);
     
-    if (result != VK_SUCCESS) {
-    
+    if (result != VK_SUCCESS) 
+    {
         R_WARN(R_CHANNEL_VULKAN, "Failed to wait for queue idle!");
-    
     }
 }
 
 
 void VulkanQueue::destroy()
 {
-    if (m_queue) {
-
+    if (m_queue) 
+    {
         R_DEBUG(R_CHANNEL_VULKAN, "Destroying vulkan queue handle...");
-
         wait();
-
         m_queue = VK_NULL_HANDLE;
-
     }
 
     if (m_fence) {
@@ -74,7 +70,8 @@ ErrType VulkanQueue::submit(const QueueSubmit* payload)
     VkSubmitInfo submitIf = { };
     VkCommandBuffer pBuffers[8];
     
-    for (U32 bufferCount = 0; bufferCount < payload->numCommandLists; ++bufferCount) {
+    for (U32 bufferCount = 0; bufferCount < payload->numCommandLists; ++bufferCount) 
+    {
         VulkanCommandList* pVc      = static_cast<VulkanCommandList*>(payload->pCommandLists[bufferCount]);
         VkCommandBuffer cmdBuffer   = pVc->get();
         pBuffers[bufferCount]       = cmdBuffer;
@@ -105,11 +102,12 @@ ErrType VulkanQueue::copyResource(GraphicsResource* dst, GraphicsResource* src)
     VkDevice device             = m_pDevice->get();
     VkCommandBuffer cmdBuffer   = beginOneTimeCommandBuffer();
 
-    if (dstDim == RESOURCE_DIMENSION_BUFFER) { 
+    if (dstDim == RESOURCE_DIMENSION_BUFFER) 
+    { 
         VulkanBuffer* dstBuffer = static_cast<VulkanBuffer*>(dst);
 
-        if (srcDim == RESOURCE_DIMENSION_BUFFER) {
-
+        if (srcDim == RESOURCE_DIMENSION_BUFFER) 
+        {
             VulkanBuffer* srcBuffer = static_cast<VulkanBuffer*>(src);
             VkBufferCopy region     = { };
             region.size             = dstDesc.width;
@@ -117,16 +115,22 @@ ErrType VulkanQueue::copyResource(GraphicsResource* dst, GraphicsResource* src)
             region.srcOffset        = 0;
             vkCmdCopyBuffer(cmdBuffer, srcBuffer->get(), dstBuffer->get(), 1, &region);
 
-        } else {
-
+        } 
+        else 
+        {
             VulkanImage* pSrcImage      = static_cast<VulkanImage*>(src);
             VkBufferImageCopy region    = { };
             // TODO:
-            vkCmdCopyImageToBuffer(cmdBuffer, pSrcImage->get(), pSrcImage->getCurrentLayout(),
-                dstBuffer->get(), 1, &region);
-
+            vkCmdCopyImageToBuffer
+                (
+                    cmdBuffer, 
+                    pSrcImage->get(), 
+                    pSrcImage->getCurrentLayout(),
+                    dstBuffer->get(), 
+                    1, 
+                    &region
+                );
         }
-
     } 
 
     vkEndCommandBuffer(cmdBuffer);
@@ -159,10 +163,9 @@ VkCommandBuffer VulkanQueue::beginOneTimeCommandBuffer()
     allocInfo.level                         = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     result = vkAllocateCommandBuffers(device, &allocInfo, &cmdBuffer);
 
-    if (result != VK_SUCCESS) {
-    
+    if (result != VK_SUCCESS) 
+    {
         return VK_NULL_HANDLE;
-    
     }
 
     VkCommandBufferBeginInfo begin  = { };
@@ -174,8 +177,13 @@ VkCommandBuffer VulkanQueue::beginOneTimeCommandBuffer()
 }
 
 
-ErrType VulkanQueue::copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, 
-    CopyBufferRegion* pRegions, U32 numRegions)
+ErrType VulkanQueue::copyBufferRegions
+    (
+        GraphicsResource* dst, 
+        GraphicsResource* src, 
+        CopyBufferRegion* pRegions, 
+        U32 numRegions
+    )
 {
     VkBuffer dstBuf             = static_cast<VulkanBuffer*>(dst)->get();
     VkBuffer srcBuf             = static_cast<VulkanBuffer*>(src)->get();
@@ -184,7 +192,8 @@ ErrType VulkanQueue::copyBufferRegions(GraphicsResource* dst, GraphicsResource* 
 
     std::vector<VkBufferCopy> bufferCopies(numRegions);
     
-    for (U32 i = 0; i < numRegions; ++i) {
+    for (U32 i = 0; i < numRegions; ++i) 
+    {
         bufferCopies[i].srcOffset = (VkDeviceSize)pRegions[i].srcOffsetBytes;
         bufferCopies[i].dstOffset = (VkDeviceSize)pRegions[i].dstOffsetBytes;
         bufferCopies[i].size      = (VkDeviceSize)pRegions[i].szBytes;

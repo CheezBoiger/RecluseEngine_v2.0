@@ -45,10 +45,9 @@ ErrType GPUBuffer::stream(GraphicsDevice* pDevice, void* ptr, U64 offsetBytes, U
 
     result = m_pDevice->createResource(&pStaging, stageDesc, RESOURCE_STATE_COPY_DST);
 
-    if (result != REC_RESULT_OK) {
-    
+    if (result != REC_RESULT_OK) 
+    {
         return result;
-
     }
 
     CopyBufferRegion region = { };
@@ -66,11 +65,10 @@ ErrType GPUBuffer::stream(GraphicsDevice* pDevice, void* ptr, U64 offsetBytes, U
 
 ErrType GPUBuffer::destroy()
 {
-    if (m_pResource) {
-    
+    if (m_pResource) 
+    {
         m_pDevice->destroyResource(m_pResource);
-        m_pResource = nullptr;
-        
+        m_pResource = nullptr;   
     }
 
     return REC_RESULT_OK;
@@ -79,7 +77,6 @@ ErrType GPUBuffer::destroy()
 
 ErrType Mesh::initialize(VertexBuffer* pVertexBuffer, IndexBuffer* pIndexBuffer)
 {
-
     return REC_RESULT_OK;
 }
 } // Engine

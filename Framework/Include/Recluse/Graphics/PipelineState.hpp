@@ -12,26 +12,30 @@ namespace Recluse {
 class RenderPass;
 class Shader;
 
-struct PipelineStateDesc {
+struct PipelineStateDesc 
+{
     RenderPass*     pRenderPass;
     DescriptorSetLayout** ppDescriptorLayouts;
     U32                   numDescriptorSetLayouts;
 };
 
 
-struct ShaderModule {
+struct ShaderModule 
+{
     void* byteCode;
     U32 szBytes;
 };
 
 
-enum InputRate {
+enum InputRate 
+{
     INPUT_RATE_PER_VERTEX,
     INPUT_RATE_PER_INSTANCE
 };
 
 
-enum PrimitiveTopology {
+enum PrimitiveTopology 
+{
     PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
     PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
     PRIMITIVE_TOPOLOGY_POINT_LIST,
@@ -40,13 +44,15 @@ enum PrimitiveTopology {
 };
 
 
-enum FrontFace {
+enum FrontFace 
+{
     FRONT_FACE_COUNTER_CLOCKWISE,
     FRONT_FACE_CLOCKWISE
 };
 
 
-enum StencilOp {
+enum StencilOp 
+{
     STENCIL_OP_KEEP,
     STENCIL_OP_ZERO,
     STENCIL_OP_REPLACE,
@@ -58,14 +64,16 @@ enum StencilOp {
 };
 
 
-enum PolygonMode {
+enum PolygonMode 
+{
     POLYGON_MODE_FILL,
     POLYGON_MODE_LINE,
     POLYGON_MODE_POINT
 };
 
 
-enum CullMode {
+enum CullMode 
+{
     CULL_MODE_NONE,
     CULL_MODE_FRONT,
     CULL_MODE_BACK,
@@ -73,25 +81,28 @@ enum CullMode {
 };
 
 
-struct VertexAttribute {
-    U32 loc;
-    U32 offset;             // offset within the vertex attribute.
-    ResourceFormat format;
-    char* semantic;
+struct VertexAttribute 
+{
+    U32             loc;
+    U32             offset;             // offset within the vertex attribute.
+    ResourceFormat  format;
+    char*           semantic;
     
 };
 
 
-struct VertexBinding {
-    U32 binding;
-    U32 stride;                         // Data Step rate between consecutive elements.
-    InputRate inputRate;
-    VertexAttribute* pVertexAttributes;
-    U32 numVertexAttributes;
+struct VertexBinding 
+{
+    U32                 binding;
+    U32                 stride;                         // Data Step rate between consecutive elements.
+    InputRate           inputRate;
+    VertexAttribute*    pVertexAttributes;
+    U32                 numVertexAttributes;
 };
 
 
-enum LogicOp {
+enum LogicOp 
+{
     LOGIC_OP_CLEAR,
     LOGIC_OP_AND,
     LOGIC_OP_AND_REVERSE,
@@ -110,7 +121,8 @@ enum LogicOp {
     LOGIC_OP_SET
 };
 
-enum BlendFactor {
+enum BlendFactor 
+{
     BLEND_FACTOR_ZERO,
     BLEND_FACTOR_ONE,
     BLEND_FACTOR_SRC_COLOR,
@@ -133,7 +145,8 @@ enum BlendFactor {
 };
 
 
-enum BlendOp {
+enum BlendOp 
+{
     BLEND_OP_ADD,
     BLEND_OP_SUBTRACT,
     BLEND_OP_REVERSE_SUBTRACT,
@@ -142,7 +155,8 @@ enum BlendOp {
 };
 
 
-enum ColorComponent {
+enum ColorComponent 
+{
     COLOR_R = 0x1,
     COLOR_G = 0x2, 
     COLOR_B = 0x4,
@@ -153,7 +167,8 @@ enum ColorComponent {
 typedef U32 ColorComponentMaskFlags;
 
 
-struct RenderTargetBlendState {
+struct RenderTargetBlendState 
+{
     B32                     blendEnable;
     BlendFactor             srcColorBlendFactor;
     BlendFactor             dstColorBlendFactor;
@@ -165,19 +180,22 @@ struct RenderTargetBlendState {
 };
 
 
-struct GraphicsPipelineStateDesc : public PipelineStateDesc {
+struct GraphicsPipelineStateDesc : public PipelineStateDesc 
+{
     Shader* pVS;
     Shader* pHS;
     Shader* pDS;
     Shader* pGS;
     Shader* pPS;
     
-    struct VertexInput {
+    struct VertexInput 
+    {
         VertexBinding* pVertexBindings;
         U32             numVertexBindings;
     } vi;
 
-    struct DepthStencil {
+    struct DepthStencil 
+    {
         B8  depthBoundsTestEnable;
         B8  depthTestEnable;
         B8  stencilTestEnable;
@@ -187,7 +205,8 @@ struct GraphicsPipelineStateDesc : public PipelineStateDesc {
         CompareOp depthCompareOp;
     } ds;
 
-    struct RasterState {
+    struct RasterState 
+    {
         CullMode cullMode;
         FrontFace frontFace;
         PolygonMode polygonMode;
@@ -199,7 +218,8 @@ struct GraphicsPipelineStateDesc : public PipelineStateDesc {
             depthBiasEnable : 1;
     } raster;
 
-    struct BlendState {
+    struct BlendState 
+    {
         B32     logicOpEnable;
         LogicOp logicOp;
         F32     blendConstants[4];
@@ -207,7 +227,8 @@ struct GraphicsPipelineStateDesc : public PipelineStateDesc {
         RenderTargetBlendState* attachments;
     } blend;
 
-    struct TessellationState {
+    struct TessellationState 
+    {
         U32 numControlPoints;
     } tess;
 
@@ -217,25 +238,29 @@ struct GraphicsPipelineStateDesc : public PipelineStateDesc {
 };
 
 
-struct ComputePipelineStateDesc : public PipelineStateDesc {
+struct ComputePipelineStateDesc : public PipelineStateDesc 
+{
     Shader* pCS;
 };
 
 
-struct RayTracingPipelineStateDesc : public PipelineStateDesc {
+struct RayTracingPipelineStateDesc : public PipelineStateDesc 
+{
     Shader* pClosestHit;
     Shader* pAnyHit;
     Shader* pMiss;
     Shader* pRayGen;
     Shader* pIntersect;
 
-    struct AccelerationStructure {
+    struct AccelerationStructure 
+    {
         GraphicsResource* pScratch;
     } acceleration;
 };
 
 
-class PipelineState {
+class PipelineState 
+{
 public:
     virtual ~PipelineState() { }
 };

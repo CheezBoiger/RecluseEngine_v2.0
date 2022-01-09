@@ -30,8 +30,8 @@ void Renderer::initialize(void* windowHandle, const RendererConfigs& configs)
 
     m_pInstance = GraphicsInstance::createInstance(configs.api);
     
-    if (!m_pInstance) {
-
+    if (!m_pInstance) 
+    {
         R_ERR("Renderer", "Failed to create graphics context, aborting...");
 
         return;
@@ -45,10 +45,9 @@ void Renderer::initialize(void* windowHandle, const RendererConfigs& configs)
 
     result = m_pInstance->initialize(info, flags);
 
-    if (result != REC_RESULT_OK) {
-
+    if (result != REC_RESULT_OK) 
+    {
         R_ERR("Renderer", "Failed to initialize instance!");        
-
     }
 
     std::vector<GraphicsAdapter*> adapters = m_pInstance->getGraphicsAdapters();
@@ -69,10 +68,9 @@ void Renderer::initialize(void* windowHandle, const RendererConfigs& configs)
         result = m_pDevice->reserveMemory(reserveDesc);
     }
 
-    if (result != REC_RESULT_OK) {
-    
+    if (result != REC_RESULT_OK) 
+    {
         R_ERR("Renderer", "ReserveMemory call completed with result: %d", result);
-
     }
 
     m_commandList = m_pDevice->getCommandList();
@@ -90,7 +88,8 @@ void Renderer::cleanUp()
     // Clean up all modules, as well as resources handled by them...
     cleanUpModules();
 
-    if (m_pDevice) {
+    if (m_pDevice) 
+    {
         m_pAdapter->destroyDevice(m_pDevice);
     }
 }
@@ -100,10 +99,9 @@ void Renderer::present()
 {
     ErrType result = m_pSwapchain->present();
 
-    if (result != REC_RESULT_OK) {
-
+    if (result != REC_RESULT_OK) 
+    {
         R_WARN("Renderer", "Swapchain present returns with err code: %d", result);
-
     }
 }
 
@@ -119,19 +117,25 @@ void Renderer::render()
         GraphicsResource* pSceneDepth = m_sceneBuffers.pSceneDepth->getResource();
         //GraphicsResource* pSceneAlbedo = m_sceneBuffers.pSceneAlbedo->getResource();
         
-        if (pSceneDepth->getCurrentResourceState() != RESOURCE_STATE_DEPTH_STENCIL_WRITE) {
+        if (pSceneDepth->getCurrentResourceState() != RESOURCE_STATE_DEPTH_STENCIL_WRITE) 
+        {
             // Transition the resource.
             ResourceTransition trans        = MAKE_RESOURCE_TRANSITION(pSceneDepth, RESOURCE_STATE_DEPTH_STENCIL_WRITE, 0, 1, 0, 1);
             //ResourceTransition albedoTrans  = MAKE_RESOURCE_TRANSITION(pSceneAlbedo, RESOURCE_STATE_RENDER_TARGET, 0, 1, 0, 1);
             m_commandList->transition(&trans, 1);            
         }
 
-        PreZ::generate(m_commandList, m_renderCommands, 
-            m_commandKeys[RENDER_PREZ].data(), 
-            m_commandKeys[RENDER_PREZ].size());
+        PreZ::generate
+                (
+                    m_commandList, 
+                    m_renderCommands, 
+                    m_commandKeys[RENDER_PREZ].data(), 
+                    m_commandKeys[RENDER_PREZ].size()
+                );
 
         // Re-transition back to read only.
-        if (pSceneDepth->getCurrentResourceState() != RESOURCE_STATE_DEPTH_STENCIL_READONLY) {
+        if (pSceneDepth->getCurrentResourceState() != RESOURCE_STATE_DEPTH_STENCIL_READONLY) 
+        {
             ResourceTransition trans = MAKE_RESOURCE_TRANSITION(pSceneDepth, RESOURCE_STATE_DEPTH_STENCIL_READONLY, 0, 1, 0, 1);
             m_commandList->transition(&trans, 1);
         }
@@ -139,17 +143,24 @@ void Renderer::render()
         // Asyncronous Queue -> Do Light culling here.
         LightCluster::cullLights(m_commandList);
 
-        AOV::generate(m_commandList, m_renderCommands,
-            m_commandKeys[RENDER_GBUFFER].data(), 
-            m_commandKeys[RENDER_GBUFFER].size());
+        AOV::generate
+                (
+                    m_commandList, 
+                    m_renderCommands,
+                    m_commandKeys[RENDER_GBUFFER].data(), 
+                    m_commandKeys[RENDER_GBUFFER].size()
+                );
 
         // Deferred rendering combine.
         LightCluster::combineDeferred(m_commandList);
 
         // Forward pass combine.
-        LightCluster::combineForward(m_commandList, 
-            m_commandKeys[RENDER_FORWARD_OPAQUE].data(), 
-            m_commandKeys[RENDER_FORWARD_OPAQUE].size());
+        LightCluster::combineForward
+                        (
+                            m_commandList, 
+                            m_commandKeys[RENDER_FORWARD_OPAQUE].data(), 
+                            m_commandKeys[RENDER_FORWARD_OPAQUE].size()
+                        );
 
     m_commandList->end();
 
@@ -162,7 +173,8 @@ void Renderer::render()
 
 void Renderer::determineAdapter(std::vector<GraphicsAdapter*>& adapters)
 {
-    for (U32 i = 0; i < adapters.size(); ++i) {
+    for (U32 i = 0; i < adapters.size(); ++i) 
+    {
         AdapterInfo info            = { };
         AdapterLimits limits        = { };
         GraphicsAdapter* pAdapter   = adapters[i];
@@ -170,10 +182,9 @@ void Renderer::determineAdapter(std::vector<GraphicsAdapter*>& adapters)
 
         result = pAdapter->getAdapterInfo(&info);
     
-        if (result != REC_RESULT_OK) {
-
+        if (result != REC_RESULT_OK) 
+        {
             R_ERR("Renderer", "Failed to query adapter info.");
-
         }
 
         R_DEBUG("Adapter Name: %s\n\t\tVendor: %s", info.deviceName, info.vendorName);
@@ -194,10 +205,9 @@ void Renderer::createDevice(const RendererConfigs& configs)
     
     result = m_pAdapter->createDevice(info, &m_pDevice);
 
-    if (result != REC_RESULT_OK) {
-    
-        R_ERR("Renderer", "Failed to create device!");
-        
+    if (result != REC_RESULT_OK) 
+    {
+        R_ERR("Renderer", "Failed to create device!");   
     }
 }
 
@@ -205,8 +215,14 @@ void Renderer::createDevice(const RendererConfigs& configs)
 void Renderer::setUpModules()
 {
     m_sceneBuffers.pSceneDepth = new Texture2D();
-    m_sceneBuffers.pSceneDepth->initialize(this, RESOURCE_FORMAT_D32_FLOAT_S8_UINT, 
-        m_rendererConfigs.renderWidth, m_rendererConfigs.renderHeight, 1, 1);
+    m_sceneBuffers.pSceneDepth->initialize
+                                    (
+                                        this, 
+                                        RESOURCE_FORMAT_D32_FLOAT_S8_UINT, 
+                                        m_rendererConfigs.renderWidth, 
+                                        m_rendererConfigs.renderHeight, 
+                                        1, 1
+                                    );
 
     PreZ::initialize(m_pDevice, &m_sceneBuffers);
 }
@@ -225,11 +241,10 @@ VertexBuffer* Renderer::createVertexBuffer(U64 perVertexSzBytes, U64 totalVertic
 
     result = pBuffer->initializeVertices(m_pDevice, perVertexSzBytes, totalVertices);
 
-    if (result != REC_RESULT_OK) {
-    
+    if (result != REC_RESULT_OK) 
+    {
         delete pBuffer;
         pBuffer = nullptr;
-
     }
 
     return pBuffer;
@@ -243,11 +258,10 @@ IndexBuffer* Renderer::createIndexBuffer(IndexType indexType, U64 totalIndices)
     
     result = pBuffer->initializeIndices(m_pDevice, indexType, totalIndices);
 
-    if (result != REC_RESULT_OK) {
-    
+    if (result != REC_RESULT_OK) 
+    {
         delete pBuffer;
         pBuffer = nullptr;
-    
     }
 
     return pBuffer;
@@ -258,10 +272,9 @@ ErrType Renderer::destroyGPUBuffer(GPUBuffer* pBuffer)
 {
     ErrType result = REC_RESULT_OK;
 
-    if (!pBuffer) {
-
+    if (!pBuffer) 
+    {
         return REC_RESULT_FAILED;
-
     }
 
     result = pBuffer->destroy();
@@ -273,27 +286,27 @@ ErrType Renderer::destroyGPUBuffer(GPUBuffer* pBuffer)
 
 void Renderer::resetCommandKeys()
 {
-    for (auto& cmdLists : m_commandKeys) {
-    
+    for (auto& cmdLists : m_commandKeys) 
+    {
         cmdLists.second.clear();
-    
     }
 }
 
 
 void Renderer::sortCommandKeys()
 {
-    struct Cmp { 
-        bool operator()(const U64 a, const U64 b) const { 
+    struct Cmp 
+    { 
+        bool operator()(const U64 a, const U64 b) const 
+        { 
             return a < b;
         }
     } pred;
 
-    for (auto& cmdLists : m_commandKeys) {
-    
+    for (auto& cmdLists : m_commandKeys) 
+    {
         std::vector<U64>& list = cmdLists.second;
         std::sort(list.begin(), list.end(), pred);
-    
     }
 }
 
@@ -305,20 +318,24 @@ void Renderer::pushRenderCommand(const RenderCommand& renderCommand, RenderPassT
     // Store mesh commands to be referenced for each draw pass.
     CommandKey key                  = { m_renderCommands->getNumberCommands() };
 
-    if (renderFlags & RENDER_PREZ) {
+    if (renderFlags & RENDER_PREZ) 
+    {
         m_commandKeys[RENDER_PREZ].push_back(key.value);
     }
 
-    if (renderFlags & RENDER_GBUFFER) {
+    if (renderFlags & RENDER_GBUFFER) 
+    {
         m_commandKeys[RENDER_GBUFFER].push_back(key.value);
     }
 
-    if (renderFlags & RENDER_SHADOW) {
+    if (renderFlags & RENDER_SHADOW) 
+    {
         m_commandKeys[RENDER_SHADOW].push_back(key.value);
     }
 
     // Mesh is treated as particles.
-    if (renderFlags & RENDER_PARTICLE) {
+    if (renderFlags & RENDER_PARTICLE) 
+    {
         m_commandKeys[RENDER_PARTICLE].push_back(key.value);
     }
 
@@ -354,25 +371,26 @@ void Renderer::allocateSceneBuffers(const RendererConfigs& configs)
 void Renderer::freeSceneBuffers()
 {
 
-    if (m_sceneBuffers.pDepthStencilView) {
+    if (m_sceneBuffers.pDepthStencilView) 
+    {
         m_sceneBuffers.pDepthStencilView->destroy(this);
         delete m_sceneBuffers.pDepthStencilView;
         m_sceneBuffers.pDepthStencilView = nullptr;
     }
 
-    if (m_sceneBuffers.pSceneDepth) {
+    if (m_sceneBuffers.pSceneDepth) 
+    {
     
         destroyTexture2D(m_sceneBuffers.pSceneDepth);
         m_sceneBuffers.pSceneDepth = nullptr;
 
     }
 
-    if (m_renderCommands) {
-    
+    if (m_renderCommands) 
+    {
         m_renderCommands->destroy();
         delete m_renderCommands;
         m_renderCommands = nullptr;
-    
     }
 }
 
@@ -384,11 +402,10 @@ Texture2D* Renderer::createTexture2D(U32 width, U32 height, U32 mips, U32 layers
 
     result = pTexture->initialize(this, format, width, height, layers, mips);
 
-    if (result != REC_RESULT_OK) {
-    
+    if (result != REC_RESULT_OK) 
+    {
         pTexture->destroy(this);
         delete pTexture;
-    
     }
   
     return pTexture;
@@ -411,11 +428,11 @@ static ErrType kRendererJob(void* pData)
     Renderer* pRenderer = Renderer::getMain();
 
     // Initialize module here.
-    while (pRenderer->isActive()) {
-
+    while (pRenderer->isActive()) 
+    {
         // Render interpolation is required.
-
-        if (pRenderer->isRunning()) {
+        if (pRenderer->isRunning()) 
+        {
             pRenderer->render();
             pRenderer->present();
         }
@@ -434,36 +451,45 @@ ErrType Renderer::onInitializeModule(Application* pApp)
         pRenderer->initialize(pWindow->getNativeHandle(), configs);
     }
 
-    MainThreadLoop::getMessageBus()->addReceiver(
-        "Renderer", [=] (AMessage* pMsg) -> void { 
-        std::string ev = pMsg->getEvent();
-        if (ev.compare("Renderer") == 0) {
-            R_DEBUG("Renderer", "Received message!");
-            RenderMessage* pJobMessage = static_cast<RenderMessage*>(pMsg);
-            Renderer* pRenderer = Renderer::getMain();
-            if (pRenderer->isActive()) {
-                // Handle the message.
-                switch (pJobMessage->req) {
-                    case RenderMessage::RESUME:
-                        pRenderer->enableRunning(true);
-                        break;
-                    case RenderMessage::PAUSE:
-                        pRenderer->enableRunning(false);
-                        break;
-                    case RenderMessage::SHUTDOWN: 
+    MainThreadLoop::getMessageBus()->addReceiver
+        (
+            "Renderer", [=] (AMessage* pMsg) -> void 
+                { 
+                    std::string ev = pMsg->getEvent();
+                    if (ev.compare("Renderer") == 0) 
                     {
-                        pRenderer->enableRunning(false);
-                        pRenderer->cleanUpModule(pJobMessage->pApp);
-                        break;
+                        R_DEBUG("Renderer", "Received message!");
+                        RenderMessage* pJobMessage = static_cast<RenderMessage*>(pMsg);
+                        Renderer* pRenderer = Renderer::getMain();
+                        if (pRenderer->isActive()) 
+                        {
+                            // Handle the message.
+                            switch (pJobMessage->req) 
+                            {
+                                case RenderMessage::RESUME:
+                                    pRenderer->enableRunning(true);
+                                    break;
+
+                                case RenderMessage::PAUSE:
+                                    pRenderer->enableRunning(false);
+                                    break;
+
+                                case RenderMessage::SHUTDOWN: 
+                                {
+                                    pRenderer->enableRunning(false);
+                                    pRenderer->cleanUpModule(pJobMessage->pApp);
+                                    break;
+                                }
+
+                                case RenderMessage::CHANGE_CONFIG:
+                                case RenderMessage::SCENE_UPDATE:
+                                default:
+                                    break;
+                            }
+                        }
                     }
-                    case RenderMessage::CHANGE_CONFIG:
-                    case RenderMessage::SCENE_UPDATE:
-                    default:
-                        break;
                 }
-            }
-        }
-    });
+        );
 
     return pApp->loadJobThread(JOB_TYPE_RENDERER, kRendererJob);
 }
@@ -478,12 +504,17 @@ ErrType Renderer::onCleanUpModule(Application* pApp)
 
 void Renderer::destroyDevice()
 {
-    if (m_pDevice) {
+    if (m_pDevice) 
+    {
         m_pAdapter->destroyDevice(m_pDevice);
         m_pDevice = nullptr;
-    } R_DEBUG_WRAP( else { 
-        R_WARN("Renderer", "No such graphics device exists for this renderer."); 
-    })
+    } 
+    R_DEBUG_WRAP
+        ( else 
+            { 
+                R_WARN("Renderer", "No such graphics device exists for this renderer."); 
+            }
+        )
 }
 } // Engine
 } // Recluse

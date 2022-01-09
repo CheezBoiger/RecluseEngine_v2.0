@@ -8,8 +8,10 @@
 namespace Recluse {
 
 
-struct R_PUBLIC_API Float3 {
-    union {
+struct R_PUBLIC_API Float3 
+{
+    union 
+    {
         struct { F32 x, y, z; };
         struct { F32 r, g, b; };
         struct { F32 u, v, w; };
@@ -47,8 +49,10 @@ struct R_PUBLIC_API Float3 {
 };
 
 
-struct Int3 {
-    union {
+struct Int3 
+{
+    union 
+    {
         struct { I32 x, y, z; };
         struct { I32 r, g, b; };
         struct { I32 u, v, w; };
@@ -80,8 +84,10 @@ struct Int3 {
 };
 
 
-struct R_PUBLIC_API UInt3 {
-    union {
+struct R_PUBLIC_API UInt3 
+{
+    union 
+    {
         struct { U32 x, y, z; };
         struct { U32 r, g, b; };
         struct { U32 u, v, w; };
@@ -89,8 +95,10 @@ struct R_PUBLIC_API UInt3 {
 };
 
 
-struct R_PUBLIC_API Short3 {
-    union {
+struct R_PUBLIC_API Short3 
+{
+    union 
+    {
         struct { I16 x, y, z; };
         struct { I16 r, g, b; };
         struct { I16 u, v, w; };
@@ -98,8 +106,10 @@ struct R_PUBLIC_API Short3 {
 };
 
 
-struct R_PUBLIC_API UShort3 {
-    union {
+struct R_PUBLIC_API UShort3 
+{
+    union 
+    {
         struct { U16 x, y, z; };
         struct { U16 r, g, b; };
         struct { U16 u, v, w; };

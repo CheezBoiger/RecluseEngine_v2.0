@@ -5,10 +5,13 @@
 namespace Recluse {
 
 
-Matrix44::Matrix44(F32 a00, F32 a01, F32 a02, F32 a03,
-                   F32 a10, F32 a11, F32 a12, F32 a13,
-                   F32 a20, F32 a21, F32 a22, F32 a23,
-                   F32 a30, F32 a31, F32 a32, F32 a33)
+Matrix44::Matrix44
+                (
+                    F32 a00, F32 a01, F32 a02, F32 a03,
+                    F32 a10, F32 a11, F32 a12, F32 a13,
+                    F32 a20, F32 a21, F32 a22, F32 a23,
+                    F32 a30, F32 a31, F32 a32, F32 a33
+                )
 {
     m[0]  = a00;
     m[1]  = a01;
@@ -29,10 +32,13 @@ Matrix44::Matrix44(F32 a00, F32 a01, F32 a02, F32 a03,
 }
 
 
-Matrix44::Matrix44(const Float4& row0,
-                   const Float4& row1,
-                   const Float4& row2,
-                   const Float4& row3)
+Matrix44::Matrix44
+            (
+                const Float4& row0,
+                const Float4& row1,
+                const Float4& row2,
+                const Float4& row3
+            )
 {
     this->row0 = *(__m128*)&row0.x;
     this->row1 = *(__m128*)&row1.x;
@@ -50,24 +56,25 @@ Matrix44 rotate(const Matrix44& lh, const Float3& ax, F32 radians)
     Float3 axis         = normalize(ax);
     
     // Solves Rodrigues' Rotation Formula, applied to the final result. 
-    Matrix44 rotator = {
-        cosine + (axis.x * axis.x) * oneMinusCosine,      
-        oneMinusCosine * axis.y * axis.x + axis.z * sine, 
-        axis.z * axis.x * oneMinusCosine - axis.y * sine, 
-        0,
-        axis.x * axis.y * oneMinusCosine - axis.z * sine, 
-        cosine + (axis.y * axis.y) * oneMinusCosine,      
-        axis.z * axis.y * oneMinusCosine + axis.x * sine, 
-        0,
-        axis.x * axis.z * oneMinusCosine + axis.y * sine, 
-        axis.y * axis.z * oneMinusCosine - axis.x * sine, 
-        cosine + (axis.z * axis.z) * oneMinusCosine,      
-        0,
-        0,                                                
-        0,                                                
-        0,                                                
-        1        
-    };
+    Matrix44 rotator = 
+        {
+            cosine + (axis.x * axis.x) * oneMinusCosine,      
+            oneMinusCosine * axis.y * axis.x + axis.z * sine, 
+            axis.z * axis.x * oneMinusCosine - axis.y * sine, 
+            0,
+            axis.x * axis.y * oneMinusCosine - axis.z * sine, 
+            cosine + (axis.y * axis.y) * oneMinusCosine,      
+            axis.z * axis.y * oneMinusCosine + axis.x * sine, 
+            0,
+            axis.x * axis.z * oneMinusCosine + axis.y * sine, 
+            axis.y * axis.z * oneMinusCosine - axis.x * sine, 
+            cosine + (axis.z * axis.z) * oneMinusCosine,      
+            0,
+            0,                                                
+            0,                                                
+            0,                                                
+            1        
+        };
     
     return lh * rotator;
 }
@@ -255,12 +262,12 @@ Matrix44 inverse(const Matrix44& lh)
 Matrix44 Matrix44::identity()
 {
     return Matrix44
-    (
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-    );
+                (
+                    1.0f, 0.0f, 0.0f, 0.0f,
+                    0.0f, 1.0f, 0.0f, 0.0f,
+                    0.0f, 0.0f, 1.0f, 0.0f,
+                    0.0f, 0.0f, 0.0f, 1.0f
+                );
 }
 
 

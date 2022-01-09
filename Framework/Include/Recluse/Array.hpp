@@ -6,7 +6,8 @@
 namespace Recluse {
 
 template<typename T>
-class Array {
+class Array 
+{
 public:
 
 private:

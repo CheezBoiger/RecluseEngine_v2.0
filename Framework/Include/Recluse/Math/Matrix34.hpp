@@ -7,11 +7,14 @@
 namespace Recluse {
 
 
-class Matrix34 {
+class Matrix34 
+{
 public:
-    union {
+    union 
+    {
         F32 m[12];
-        struct {
+        struct 
+        {
             __m128 row0;
             __m128 row1;
             __m128 row2;

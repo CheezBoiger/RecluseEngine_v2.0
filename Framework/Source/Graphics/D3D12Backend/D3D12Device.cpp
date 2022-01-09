@@ -20,15 +20,15 @@ ErrType D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo& i
     result = D3D12CreateDevice(pAdapter, D3D_FEATURE_LEVEL_11_1, __uuidof(ID3D12Device), (void**)&m_device);
 
 
-    if (result != S_OK) {
-    
+    if (result != S_OK) 
+    {
         return REC_RESULT_FAILED;
-    
     }
 
     m_pAdapter = adapter;
 
-    if (info.winHandle) {
+    if (info.winHandle) 
+    {
         m_windowHandle = (HWND)info.winHandle;
         createCommandQueue(&m_graphicsQueue, QUEUE_TYPE_PRESENT);
     }
@@ -38,7 +38,8 @@ ErrType D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo& i
     initializeBufferResources(info.buffering);
     createCommandList(&m_pPrimaryCommandList, QUEUE_TYPE_PRESENT | QUEUE_TYPE_GRAPHICS);
 
-    if (m_windowHandle) {
+    if (m_windowHandle) 
+    {
         createSwapchain(&m_swapchain, info.swapchainDescription);
     }
 
@@ -50,29 +51,31 @@ ErrType D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo& i
 
 void D3D12Device::destroy()
 {
-    if (m_pPrimaryCommandList) {
+    if (m_pPrimaryCommandList) 
+    {
         destroyCommandList(m_pPrimaryCommandList);
         m_pPrimaryCommandList = nullptr;
     }
 
-    if (m_swapchain) {
+    if (m_swapchain) 
+    {
         destroySwapchain(m_swapchain);
         m_swapchain = nullptr;
     }
 
-    if (m_graphicsQueue) {
+    if (m_graphicsQueue) 
+    {
         destroyCommandQueue(m_graphicsQueue);
         m_graphicsQueue = nullptr;
     }
 
     destroyBufferResources();
 
-    if (m_device) {
-    
+    if (m_device) 
+    {
         R_DEBUG(R_CHANNEL_D3D12, "Destroying D3D12 device...");
 
         m_device->Release();
-    
     }
 }
 
@@ -84,8 +87,8 @@ ErrType D3D12Device::createSwapchain(D3D12Swapchain** ppSwapchain, const Swapcha
 
     result = pSwapchain->initialize(this);
 
-    if (result != REC_RESULT_OK) {
-
+    if (result != REC_RESULT_OK) 
+    {
         R_ERR(R_CHANNEL_D3D12, "Failed to create d3d swapchain!");
 
         pSwapchain->destroy();
@@ -117,15 +120,14 @@ ErrType D3D12Device::createCommandQueue(D3D12Queue** ppQueue, GraphicsQueueTypeF
 
     result = pD3D12Queue->initialize(this);
 
-    if (result != REC_RESULT_OK) {
-    
+    if (result != REC_RESULT_OK) 
+    {
         R_ERR(R_CHANNEL_D3D12, "Failed to create d3d12 queue!");
 
         pD3D12Queue->destroy();
         delete pD3D12Queue;
 
         return result;    
-
     }
 
     *ppQueue = pD3D12Queue;
@@ -136,10 +138,9 @@ ErrType D3D12Device::createCommandQueue(D3D12Queue** ppQueue, GraphicsQueueTypeF
 
 ErrType D3D12Device::destroyCommandQueue(D3D12Queue* pQueue)
 {
-    if (!pQueue) {
-
+    if (!pQueue) 
+    {
         return REC_RESULT_NULL_PTR_EXCEPTION;
-
     }
 
     D3D12Queue* pD3D12Queue = pQueue;
@@ -165,7 +166,8 @@ void D3D12Device::resetCurrentResources()
         
     result = buffer.pAllocator->Reset();
 
-    if (FAILED(result)) {
+    if (FAILED(result)) 
+    {
         R_ERR(R_CHANNEL_WIN32, "Failed to properly reset allocators.");
     }
 
@@ -179,20 +181,30 @@ void D3D12Device::initializeBufferResources(U32 buffering)
 
     R_DEBUG(R_CHANNEL_D3D12, "Initializing buffer resources.");
 
-    for (U32 i = 0; i < m_bufferResources.size(); ++i) {
-        
-        result = m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, 
-            __uuidof(ID3D12CommandAllocator), (void**)&m_bufferResources[i].pAllocator);
+    for (U32 i = 0; i < m_bufferResources.size(); ++i) 
+    {    
+        result = m_device->CreateCommandAllocator
+                                (
+                                    D3D12_COMMAND_LIST_TYPE_DIRECT, 
+                                    __uuidof(ID3D12CommandAllocator), 
+                                    (void**)&m_bufferResources[i].pAllocator
+                                );
 
         R_ASSERT(result == S_OK);
 
         m_bufferResources[i].fenceValue = 0;
         m_bufferResources[i].pEvent     = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-        result = m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, __uuidof(ID3D12Fence), 
-            (void**)&m_bufferResources[i].pFence);
+        result = m_device->CreateFence
+                                (
+                                    0, 
+                                    D3D12_FENCE_FLAG_NONE, 
+                                    __uuidof(ID3D12Fence), 
+                                    (void**)&m_bufferResources[i].pFence
+                                );
 
-        if (FAILED(result)) {
+        if (FAILED(result)) 
+        {
             R_ERR(R_CHANNEL_D3D12, "Failed to initialize a fence for frame resource: %d", i);
         }
     }
@@ -203,10 +215,10 @@ void D3D12Device::destroyBufferResources()
 {
     R_DEBUG(R_CHANNEL_D3D12, "Destroying buffer resources.");
 
-    for (U32 i = 0; i < m_bufferResources.size(); ++i) {
-    
-        if (m_bufferResources[i].pAllocator) {
-
+    for (U32 i = 0; i < m_bufferResources.size(); ++i) 
+    {
+        if (m_bufferResources[i].pAllocator) 
+        {
             m_bufferResources[i].pAllocator->Release();
             m_bufferResources[i].pAllocator = nullptr;
 
@@ -215,9 +227,7 @@ void D3D12Device::destroyBufferResources()
 
             m_bufferResources[i].pFence->Release();
             m_bufferResources[i].pFence = nullptr;
-
         }
-    
     }
 
     m_bufferResources.clear();
@@ -231,7 +241,8 @@ ErrType D3D12Device::createCommandList(D3D12CommandList** ppList, GraphicsQueueT
 
     result = pList->initialize(this, flags);
 
-    if (result != REC_RESULT_OK) {
+    if (result != REC_RESULT_OK) 
+    {
         R_ERR(R_CHANNEL_D3D12, "Failed to create command list!");
         pList->destroy();
 
@@ -266,8 +277,13 @@ ErrType D3D12Device::copyResource(GraphicsResource* dst, GraphicsResource* src)
 
 // Submits copy of regions from src resource to dst resource. Generally the caller thread will
 // be blocked until this function returns, so be sure to use when needed.
-ErrType D3D12Device::copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, 
-    CopyBufferRegion* pRegions, U32 numRegions)
+ErrType D3D12Device::copyBufferRegions
+    (
+        GraphicsResource* dst, 
+        GraphicsResource* src, 
+        CopyBufferRegion* pRegions, 
+        U32 numRegions
+    )
 {
     return REC_RESULT_NOT_IMPLEMENTED;
 }
@@ -298,8 +314,18 @@ D3D12_FEATURE_DATA_FORMAT_SUPPORT D3D12Device::checkFormatSupport(ResourceFormat
 
     formatSupport.Format = Dxgi::getNativeFormat(format);
 
-    if (FAILED(m_device->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, 
-        &formatSupport, sizeof(formatSupport))))
+    if 
+        (
+            FAILED
+                (
+                    m_device->CheckFeatureSupport
+                                    (
+                                        D3D12_FEATURE_FORMAT_SUPPORT, 
+                                        &formatSupport, 
+                                        sizeof(formatSupport)
+                                    )
+                )
+        )
     {
         R_ERR(R_CHANNEL_D3D12, "Failed to query for proper format support on device!");
     }

@@ -14,13 +14,15 @@ class VulkanDevice;
 class VulkanRenderPass;
 class VulkanPipelineState;
 
-enum CommandListStatus {
+enum CommandListStatus 
+{
     COMMAND_LIST_RESET,
     COMMAND_LIST_RECORDING,
     COMMAND_LIST_READY
 };
 
-class VulkanCommandList : public GraphicsCommandList {
+class VulkanCommandList : public GraphicsCommandList 
+{
 public:
     VulkanCommandList()
         : m_boundRenderPass(VK_NULL_HANDLE)

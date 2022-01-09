@@ -41,31 +41,36 @@ ErrType BuddyAllocator::onAllocate(Allocation* pOutput, U64 requestSz, U16 align
     
     U32 nthBit          = (U32)ceil(log2(alignedSzBytes));
     
-    if (m_freeList[nthBit].size() > 0) {
+    if (m_freeList[nthBit].size() > 0) 
+    {
     
         BuddyBlock block = m_freeList[nthBit][0];
         m_freeList[nthBit].erase(m_freeList[nthBit].begin());
 
-        pOutput->ptr                    = baseAddr + block.offsetBytes;
-        pOutput->sizeBytes              = alignedSzBytes;
-        m_allocatedBlocks[pOutput->ptr] = block.memSzBytes;
+        pOutput->baseAddress                    = baseAddr + block.offsetBytes;
+        pOutput->sizeBytes                      = alignedSzBytes;
+        m_allocatedBlocks[pOutput->baseAddress] = block.memSzBytes;
     
-    } else {
+    } 
+    else 
+    {
     
         U32 i = 0;
-        for (i = nthBit + 1; i < m_maxOrder; ++i) {
-        
-            if (m_freeList[i].size() != 0) {
+        for (i = nthBit + 1; i < m_maxOrder; ++i) 
+        {
+            if (m_freeList[i].size() != 0) 
+            {
                 break;
             }
 
         }
 
-        if (i == m_maxOrder) {
-        
-            return REC_RESULT_OUT_OF_MEMORY;
-            
-        } else {
+        if (i == m_maxOrder) 
+        {
+            return REC_RESULT_OUT_OF_MEMORY;   
+        } 
+        else 
+        {
         
             BuddyBlock block    = { };
             block               = m_freeList[i][0];
@@ -74,8 +79,8 @@ ErrType BuddyAllocator::onAllocate(Allocation* pOutput, U64 requestSz, U16 align
             m_freeList[i].erase(m_freeList[i].begin());
             i--;
 
-            for (; i >= nthBit; --i) {
-
+            for (; i >= nthBit; --i) 
+            {
                 // split to two blocks and push back.
                 BuddyBlock blockLeft;
                 BuddyBlock blockRight;
@@ -91,14 +96,12 @@ ErrType BuddyAllocator::onAllocate(Allocation* pOutput, U64 requestSz, U16 align
 
                 block = m_freeList[i][0];
                 m_freeList[i].erase(m_freeList[i].begin());
-
             }
         
-            pOutput->ptr                    = baseAddr + block.offsetBytes;
-            pOutput->sizeBytes              = alignedSzBytes;
-            m_allocatedBlocks[pOutput->ptr] = block.memSzBytes;
+            pOutput->baseAddress                    = baseAddr + block.offsetBytes;
+            pOutput->sizeBytes                      = alignedSzBytes;
+            m_allocatedBlocks[pOutput->baseAddress] = block.memSzBytes;
         }
-    
     }
 
     return REC_RESULT_OK;
@@ -107,8 +110,8 @@ ErrType BuddyAllocator::onAllocate(Allocation* pOutput, U64 requestSz, U16 align
 
 ErrType BuddyAllocator::onFree(Allocation* pOutput)
 {
-    if (m_allocatedBlocks.find(pOutput->ptr) == m_allocatedBlocks.end()) {
-    
+    if (m_allocatedBlocks.find(pOutput->baseAddress) == m_allocatedBlocks.end()) 
+    {
         return REC_RESULT_FAILED;
     
     }
@@ -116,9 +119,9 @@ ErrType BuddyAllocator::onFree(Allocation* pOutput)
     PtrType baseAddr    = getBaseAddr();
     U64 szBytes         = pOutput->sizeBytes;
     U32 nthBit          = (U32)ceil(log2(szBytes));
-    U32 buddyNumber     = (U32)(pOutput->ptr / m_allocatedBlocks[pOutput->ptr]);
+    U32 buddyNumber     = (U32)(pOutput->baseAddress / m_allocatedBlocks[pOutput->baseAddress]);
     SizeT buddyAddr     = 0;
-    U64 allocOffset     = pOutput->ptr - baseAddr;
+    U64 allocOffset     = pOutput->baseAddress - baseAddr;
 
     BuddyBlock block    = { };
     block.offsetBytes   = allocOffset;
@@ -126,32 +129,27 @@ ErrType BuddyAllocator::onFree(Allocation* pOutput)
 
     m_freeList[nthBit].push_back(block);
 
-    if ((buddyNumber & 1)) {
-    
-        buddyAddr = allocOffset - (1ull << nthBit);
-    
-    } else {
-    
-        buddyAddr = allocOffset + (1ull << nthBit);
-    
-    }
+    buddyAddr = (buddyNumber & 1)
+        ? (allocOffset - (1ull << nthBit)) 
+        : (allocOffset + (1ull << nthBit));
 
     //
-    for (U32 i = 0; i < m_freeList[nthBit].size(); ++i) {
-    
+    for (U32 i = 0; i < m_freeList[nthBit].size(); ++i) 
+    {
         // Merge blocks together, if applicable.
-        if (m_freeList[nthBit][i].offsetBytes == buddyAddr) {
-        
+        if (m_freeList[nthBit][i].offsetBytes == buddyAddr) 
+        {
             // Check if even, merge with alloc offset. Otherwise, use buddyaddr
-            if (!(buddyNumber & 1)) {
-            
+            if (!(buddyNumber & 1)) 
+            {
                 BuddyBlock newBlock     = { };
                 newBlock.offsetBytes    = allocOffset;
                 newBlock.memSzBytes     = 2ull * (1ull << nthBit);
                 m_freeList[nthBit + 1].push_back(newBlock);
              
-            } else {
-            
+            } 
+            else 
+            {
                 BuddyBlock newBlock     = { };
                 newBlock.offsetBytes    = buddyAddr;
                 newBlock.memSzBytes     = 2ull * (1ull << nthBit);
@@ -164,11 +162,10 @@ ErrType BuddyAllocator::onFree(Allocation* pOutput)
 
             break;
         }
-    
     }
 
     // Erase the block after.
-    m_allocatedBlocks.erase(pOutput->ptr);
+    m_allocatedBlocks.erase(pOutput->baseAddress);
 
     return REC_RESULT_OK;
 }
@@ -182,7 +179,6 @@ ErrType BuddyAllocator::onReset()
 
 ErrType BuddyAllocator::onCleanUp()
 {
-
     // Wipe out everything.
     m_freeList.clear();
     m_allocatedBlocks.clear();

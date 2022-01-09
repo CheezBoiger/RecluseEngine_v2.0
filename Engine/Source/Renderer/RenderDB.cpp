@@ -14,7 +14,8 @@ std::unordered_map<RenderID, GPUBuffer*> k_gpuBufferMap;
 
 Texture2D* getTexture2D(RenderID id)
 {
-    if (!isCachedTexture2D(id)) {
+    if (!isCachedTexture2D(id)) 
+    {
         R_WARN("RenderDB", "Unable to find texture id=%d in map.", id);
         return nullptr;
     }
@@ -25,7 +26,8 @@ Texture2D* getTexture2D(RenderID id)
 
 GPUBuffer* getGPUBuffer(RenderID id)
 {
-    if (!isCachedGPUBuffer(id)) {
+    if (!isCachedGPUBuffer(id)) 
+    {
         R_WARN("RenderDB", "Unable to find gpu buffer id=%d", id);
         return nullptr;
     }
@@ -36,7 +38,8 @@ GPUBuffer* getGPUBuffer(RenderID id)
 
 ErrType cacheGPUBuffer(RenderID id, GPUBuffer* pBuffer)
 {
-    if (isCachedGPUBuffer(id) && k_gpuBufferMap[id] != nullptr) {
+    if (isCachedGPUBuffer(id) && k_gpuBufferMap[id] != nullptr) 
+    {
         return REC_RESULT_FAILED;
     }
 
@@ -59,7 +62,8 @@ ErrType cacheTexture2D(RenderID id, Texture2D* pTexture)
 
 Bool removeTexture2D(RenderID id)
 {
-    if (k_textureMap.find(id) == k_textureMap.end()) {
+    if (k_textureMap.find(id) == k_textureMap.end()) 
+    {
         return false;
     }
     
@@ -71,7 +75,8 @@ Bool removeTexture2D(RenderID id)
 
 Bool removeGPUBuffer(RenderID id)
 {
-    if (k_gpuBufferMap.find(id) == k_gpuBufferMap.end()) {
+    if (k_gpuBufferMap.find(id) == k_gpuBufferMap.end()) 
+    {
         return false;
     }
     
@@ -83,7 +88,8 @@ Bool removeGPUBuffer(RenderID id)
 
 Bool registerTexture2D(RenderID id)
 {
-    if (isCachedTexture2D(id)) {
+    if (isCachedTexture2D(id)) 
+    {
         return false;
     }
 

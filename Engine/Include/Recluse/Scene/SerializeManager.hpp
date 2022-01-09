@@ -7,12 +7,14 @@
 namespace Recluse {
 namespace Engine {
 
-struct GameObjectSerializer {
+struct GameObjectSerializer 
+{
     GameObject* (*createGameObject)();    
 };
 
 
-class SerializeManager {
+class SerializeManager 
+{
 public:
 
     static GameObjectSerializer* getObject();

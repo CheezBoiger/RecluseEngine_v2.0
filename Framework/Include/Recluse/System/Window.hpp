@@ -6,7 +6,8 @@
 namespace Recluse {
 
 
-enum ScreenMode {
+enum ScreenMode 
+{
     SCREEN_MODE_WINDOWED,
     SCREEN_MODE_FULLSCREEN,
     SCREEN_MODE_WINDOW_BORDERLESS
@@ -22,7 +23,8 @@ typedef void(*OnWindowRelocateFunction)();
 // Window objects, to be instantiated and destroyed by the application.
 // Rendering systems will need this in order to draw to the screen.
 // This is an operating system dependent implementation.
-class Window {
+class Window 
+{
 public:
     Window()
         : m_shouldClose(false)

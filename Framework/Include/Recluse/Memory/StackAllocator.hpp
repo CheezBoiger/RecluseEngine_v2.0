@@ -9,49 +9,55 @@ namespace Recluse {
 
 // Stack allocator, or linear allocator, which handles 
 // temporary data to be used briefly.
-class R_PUBLIC_API StackAllocator : public Allocator {
+class R_PUBLIC_API StackAllocator : public Allocator 
+{
 public:
     StackAllocator()
         : m_top(0ull) { }
 
-    ErrType onInitialize() override {
+    ErrType onInitialize() override 
+    {
         m_top = (PtrType)getBaseAddr();
         return REC_RESULT_OK;
     }
 
-    ErrType onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override {
+    ErrType onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override 
+    {
         PtrType neededSzBytes   = R_ALLOC_MASK(requestSz, alignment);
         U64 totalSzBytes        = getTotalSizeBytes();
         PtrType szAddr          = getBaseAddr() + totalSzBytes;
         PtrType endAddr         = m_top + neededSzBytes;
     
-        if (endAddr >= szAddr) {
-    
+        if (endAddr >= szAddr) 
+        {
             return REC_RESULT_OUT_OF_MEMORY;
-    
         }
 
-        pOutput->ptr        = m_top;
-        pOutput->sizeBytes  = neededSzBytes;
-        m_top               = endAddr;
+        pOutput->baseAddress        = m_top;
+        pOutput->sizeBytes          = neededSzBytes;
+        m_top                       = endAddr;
 
         return REC_RESULT_OK;
     }
 
-    PtrType getTop() const {
+    PtrType getTop() const 
+    {
         return m_top;
     }
 
-    ErrType onReset() override { 
+    ErrType onReset() override 
+    { 
         m_top = (PtrType)getBaseAddr();
         return REC_RESULT_OK;
     }
 
-    ErrType onCleanUp() override {
+    ErrType onCleanUp() override 
+    {
         return REC_RESULT_OK;
     }
 
-    ErrType onFree(Allocation* pOutput) {
+    ErrType onFree(Allocation* pOutput) 
+    {
         return REC_RESULT_OK;
     }
 

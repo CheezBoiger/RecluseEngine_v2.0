@@ -11,7 +11,8 @@ namespace Recluse {
 // Max number of buttons supported by this engine.
 #define MAX_MOUSE_BUTTONS 12
 
-class Mouse : public IInputController {
+class Mouse : public IInputController 
+{
 public:
     Mouse()
         : m_xLastPosition(0.f)
@@ -49,7 +50,8 @@ public:
 
     // Updates the position of this mouse, which will also 
     // update the last known position.
-    void updatePosition(I32 x, I32 y) {
+    void updatePosition(I32 x, I32 y) 
+    {
         m_xLastPosition = m_xPosition; 
         m_yLastPosition = m_yPosition; 
         m_xPosition = x; 

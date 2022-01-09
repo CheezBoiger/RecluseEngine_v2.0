@@ -15,12 +15,13 @@
 #endif
 
 // Logging functions.
-#define R_LOG(chan, logType, format, ...) { \
-    Recluse::Log r__log__(logType, chan); \
-    Recluse::SizeT r__sz__ = snprintf(nullptr, 0, format, __VA_ARGS__); \
-    r__log__.data.msg.resize(r__sz__ + 1u); \
-    snprintf((char*)r__log__.data.msg.data(), r__log__.data.msg.size(), format, __VA_ARGS__); \
-}
+#define R_LOG(chan, logType, format, ...) \
+    { \
+        Recluse::Log r__log__(logType, chan); \
+        Recluse::SizeT r__sz__ = snprintf(nullptr, 0, format, __VA_ARGS__); \
+        r__log__.data.msg.resize(r__sz__ + 1u); \
+        snprintf((char*)r__log__.data.msg.data(), r__log__.data.msg.size(), format, __VA_ARGS__); \
+    }
 
 #define R_ERR(chan, format, ...) R_LOG(chan, Recluse::LogError, format, __VA_ARGS__)
 #define R_INFO(chan, format, ...) R_LOG(chan, Recluse::LogInfo, format, __VA_ARGS__)
@@ -32,7 +33,8 @@
 namespace Recluse {
 namespace Asserts {
 
-enum Result {
+enum Result 
+{
     ASSERT_OK,
     ASSERT_DEBUG,
     ASSERT_IGNORE,
@@ -41,7 +43,8 @@ enum Result {
 };
 
 // Assert handler deals with info needed to ensure, check, and debug code.
-class AssertHandler {
+class AssertHandler 
+{
 public:
     static Result check(Bool cond, const char* functionStr, const char* msg);
 };

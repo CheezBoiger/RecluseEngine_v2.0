@@ -13,45 +13,56 @@ class GraphicsResourceView;
 class GraphicsSampler;
 
 
-struct DescriptorBindDesc {
+struct DescriptorBindDesc 
+{
     DescriptorBindType bindType;        // The Descriptor Bind type.
     ShaderTypeFlags    shaderStages;    // Shader stages accessible to the descriptor set layout.
     U32                binding;         // Binding slot to put our resource.
     U32                numDescriptors;  // Number of descriptors in array.
 };
 
-struct DescriptorSetLayoutDesc {
+struct DescriptorSetLayoutDesc 
+{
     DescriptorBindDesc* pDescriptorBinds;
     U32             numDescriptorBinds;
 };
 
-struct DescriptorSetBind {
+struct DescriptorSetBind 
+{
     DescriptorBindType  bindType;
     U32                 binding;
     U32                 descriptorCount;
-    union {
-        struct {
+    union 
+    {
+        struct 
+        {
             GraphicsResource*   buffer;
             U64                 offset;
             U64                 sizeBytes;
         } cb;
-        struct {
+        
+        struct 
+        {
             GraphicsResourceView* pView;
         } srv;
-        struct { 
+        
+        struct 
+        { 
             GraphicsSampler* pSampler;
         } sampler;
     };
 };
 
-class R_PUBLIC_API DescriptorSetLayout {
+class R_PUBLIC_API DescriptorSetLayout 
+{
 public:
     DescriptorSetLayout() { }
     virtual ~DescriptorSetLayout() { }
 };
 
 
-class R_PUBLIC_API DescriptorSet {
+class R_PUBLIC_API DescriptorSet 
+{
 public:
 
     virtual ErrType update(DescriptorSetBind* pBinds, U32 bindCount) { return REC_RESULT_NOT_IMPLEMENTED; }

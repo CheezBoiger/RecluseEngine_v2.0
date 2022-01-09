@@ -35,27 +35,31 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
     VkFormat vkFormat                           = Vulkan::getVulkanFormat(pDesc.format);
     VkColorSpaceKHR colorSpace                  = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
 
-    if (pDesc.renderWidth <= 0 || pDesc.renderHeight <= 0) {
-
+    if (pDesc.renderWidth <= 0 || pDesc.renderHeight <= 0) 
+    {
         R_ERR(R_CHANNEL_VULKAN, "Can not define a RenderWidth or Height less than 1!");
 
         return REC_RESULT_INVALID_ARGS;    
-
     }
 
     {
         VulkanAdapter* pAdapter = pDevice->getAdapter();
         std::vector<VkSurfaceFormatKHR> supportedFormats = pAdapter->getSurfaceFormats(surface);
-        for (VkSurfaceFormatKHR& sF : supportedFormats) {
-            if (sF.format == vkFormat) {
+        for (VkSurfaceFormatKHR& sF : supportedFormats) 
+        {
+            if (sF.format == vkFormat) 
+            {
                 colorSpace = sF.colorSpace;
                 break;
-            } else {
+            } 
+            else 
+            {
                 vkFormat = VK_FORMAT_UNDEFINED;
             }
         }
 
-        if (vkFormat == VK_FORMAT_UNDEFINED) {
+        if (vkFormat == VK_FORMAT_UNDEFINED) 
+        {
             // Use the default first.
             R_WARN(R_CHANNEL_VULKAN, "Using default supported surface format, as could either not find specified, or auotmatic.");
             R_ASSERT_MSG(supportedFormats.empty() == false, "No supported formats were found for this physical device!");
@@ -82,7 +86,8 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
     createInfo.pQueueFamilyIndices = nullptr;
     createInfo.queueFamilyIndexCount = 0;
 
-    switch (pDesc.buffering) {
+    switch (pDesc.buffering) 
+    {
         default:
         case FRAME_BUFFERING_SINGLE: createInfo.presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR; break;
         case FRAME_BUFFERING_DOUBLE: createInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR; break;
@@ -91,8 +96,8 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
     
     result = vkCreateSwapchainKHR(pDevice->get(), &createInfo, nullptr, &m_swapchain);
 
-    if (result != VK_SUCCESS) {
-        
+    if (result != VK_SUCCESS) 
+    {    
         R_ERR(R_CHANNEL_VULKAN, "Failed to create swapchain!");
 
         return REC_RESULT_FAILED;
@@ -107,15 +112,22 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
     queryCommandPools();
 
     VkSemaphore imageAvailableSema = getWaitSemaphore(m_currentFrameIndex);
-    result = vkAcquireNextImageKHR(m_pDevice->get(), m_swapchain, UINT64_MAX, 
-        imageAvailableSema, VK_NULL_HANDLE, &m_currentImageIndex);
 
-    if (result != VK_SUCCESS) {
+    result = vkAcquireNextImageKHR
+                (
+                    m_pDevice->get(), 
+                    m_swapchain, 
+                    UINT64_MAX, 
+                    imageAvailableSema, 
+                    VK_NULL_HANDLE, 
+                    &m_currentImageIndex
+                );
 
+    if (result != VK_SUCCESS) 
+    {
         R_WARN(R_CHANNEL_VULKAN, "AcquireNextImage was not successful...");    
 
         return REC_RESULT_FAILED;
-    
     }
 
     return REC_RESULT_OK;
@@ -137,12 +149,12 @@ ErrType VulkanSwapchain::destroy()
     VkDevice device     = m_pDevice->get();
     VkInstance instance = m_pDevice->getAdapter()->getInstance()->get();    
 
-    if (m_swapchain) {
-
+    if (m_swapchain) 
+    {
         m_rawFrames.destroy(this);
 
-        for (U32 i = 0; i < m_frameResources.size(); ++i) {
-        
+        for (U32 i = 0; i < m_frameResources.size(); ++i) 
+        {   
             m_frameViews[i]->destroy(m_pDevice);
             // Do not call m_frameResources[i]->destroy(), images are originally handled
             // by the swapchain.
@@ -154,14 +166,17 @@ ErrType VulkanSwapchain::destroy()
         m_swapchain = VK_NULL_HANDLE;
 
         R_DEBUG(R_CHANNEL_VULKAN, "Destroyed swapchain.");
-
     }
 
-    for (U32 i = 0; i < m_commandbuffers.size(); ++i) {
-    
-        vkFreeCommandBuffers(device, m_queueFamily->commandPools[i],
-            1, &m_commandbuffers[i]);    
-        
+    for (U32 i = 0; i < m_commandbuffers.size(); ++i) 
+    {
+        vkFreeCommandBuffers
+            (
+                device, 
+                m_queueFamily->commandPools[i],
+                1, 
+                &m_commandbuffers[i]
+            );   
     }
 
     return REC_RESULT_OK;
@@ -192,10 +207,9 @@ ErrType VulkanSwapchain::present()
     
     VkResult result = vkQueuePresentKHR(m_pBackbufferQueue->get(), &info);
 
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-    
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) 
+    {
         err = REC_RESULT_NEEDS_UPDATE;
-    
     }
 
     m_pDevice->incrementBufferIndex();
@@ -205,23 +219,28 @@ ErrType VulkanSwapchain::present()
     incrementFrameIndex();
     imageAvailableSema = getWaitSemaphore(m_currentFrameIndex);
 
-    result = vkAcquireNextImageKHR(m_pDevice->get(), m_swapchain, UINT64_MAX, 
-        imageAvailableSema, VK_NULL_HANDLE, &m_currentImageIndex);
+    result = vkAcquireNextImageKHR
+                (
+                    m_pDevice->get(), 
+                    m_swapchain, 
+                    UINT64_MAX, 
+                    imageAvailableSema, 
+                    VK_NULL_HANDLE, 
+                    &m_currentImageIndex
+                );
 
-    if (result != VK_SUCCESS) {
-
+    if (result != VK_SUCCESS) 
+    {
         R_WARN(R_CHANNEL_VULKAN, "AcquireNextImage was not successful...");    
 
         err = REC_RESULT_FAILED;
-    
     }
 
     result = vkWaitForFences(device, 1, &frameFence, VK_TRUE, UINT64_MAX);
 
-    if (result != REC_RESULT_OK) {
-    
+    if (result != REC_RESULT_OK) 
+    {
         R_WARN(R_CHANNEL_VULKAN, "Fence wait failed...");
-    
     }
 
     vkResetFences(device, 1, &frameFence);
@@ -249,8 +268,8 @@ void VulkanSwapchain::buildFrameResources()
     // used to pass as reference back to the high level API.
     //
     // We do need to create our view resources however.
-    for (U32 i = 0; i < numMaxFrames; ++i) {
-    
+    for (U32 i = 0; i < numMaxFrames; ++i) 
+    {
         VkImage frame = m_rawFrames.getImage(i);
 
         GraphicsResourceDescription desc = { };
@@ -279,7 +298,6 @@ void VulkanSwapchain::buildFrameResources()
         
         m_frameViews[i] = new VulkanResourceView(viewDesc);
         m_frameViews[i]->initialize(m_pDevice);
-    
     }
 }
 
@@ -304,13 +322,14 @@ void VulkanSwapchain::submitCommandsForPresenting()
 
     R_ASSERT(primaryCmdBuf != NULL);
 
-    if (pCmdList->getStatus() != COMMAND_LIST_READY) {
+    if (pCmdList->getStatus() != COMMAND_LIST_READY) 
+    {
         pCmdList->begin();
         pCmdList->end();
     }
 
-    if (frame->getCurrentLayout() == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
-
+    if (frame->getCurrentLayout() == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) 
+    {
         // Push an empty submittal, in order to signal the semaphores.
         VkSubmitInfo submitInfo             = { };
         VkPipelineStageFlags waitStages[]   = { VK_PIPELINE_STAGE_ALL_COMMANDS_BIT };
@@ -326,7 +345,6 @@ void VulkanSwapchain::submitCommandsForPresenting()
         vkQueueSubmit(m_pBackbufferQueue->get(), 1, &submitInfo, fence);
 
         return;
-    
     }
     
     range.aspectMask        = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -344,9 +362,16 @@ void VulkanSwapchain::submitCommandsForPresenting()
         vkBeginCommandBuffer(singleUseCmdBuf, &begin);
     }
 
-    vkCmdPipelineBarrier(singleUseCmdBuf, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, 0, nullptr, 1, 
-        &imgBarrier);
+    vkCmdPipelineBarrier
+        (
+            singleUseCmdBuf, 
+            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 
+            VK_DEPENDENCY_BY_REGION_BIT, 
+            0, nullptr, 
+            0, nullptr, 
+            1, &imgBarrier
+        );
 
     vkEndCommandBuffer(singleUseCmdBuf);
 
@@ -371,28 +396,25 @@ void VulkanSwapchain::queryCommandPools()
     const std::vector<QueueFamily>& queueFamilies = m_pDevice->getQueueFamilies();
     VkDevice device = m_pDevice->get();
 
-    for (U32 i = 0; i < queueFamilies.size(); ++i) {
-    
-        if (queueFamilies[i].flags & (QUEUE_TYPE_GRAPHICS | QUEUE_TYPE_COPY)) {
-
+    for (U32 i = 0; i < queueFamilies.size(); ++i) 
+    {
+        if (queueFamilies[i].flags & (QUEUE_TYPE_GRAPHICS | QUEUE_TYPE_COPY)) 
+        {
             m_commandbuffers.resize(queueFamilies[i].commandPools.size());
             m_queueFamily = &queueFamilies[i];
 
-            for (U32 j = 0; j < queueFamilies[i].commandPools.size(); ++j) {
-            
+            for (U32 j = 0; j < queueFamilies[i].commandPools.size(); ++j) 
+            {    
                 VkCommandBufferAllocateInfo allocIf = { };
-                allocIf.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-                allocIf.commandBufferCount = 1;
-                allocIf.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-                allocIf.commandPool  = queueFamilies[i].commandPools[j];
+                allocIf.sType                       = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+                allocIf.commandBufferCount          = 1;
+                allocIf.level                       = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+                allocIf.commandPool                 = queueFamilies[i].commandPools[j];
                 vkAllocateCommandBuffers(device, &allocIf, &m_commandbuffers[j]);
-            
             }
 
             break;
-        
         }
-
     }
 }
 } // Recluse

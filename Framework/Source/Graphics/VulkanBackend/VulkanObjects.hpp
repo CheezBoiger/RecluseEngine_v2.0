@@ -12,7 +12,8 @@ namespace Recluse {
 
 class VulkanDevice;
 
-class VulkanRenderPass : public RenderPass {
+class VulkanRenderPass : public RenderPass 
+{
 public:
     VulkanRenderPass()
         : m_fbo(VK_NULL_HANDLE)
@@ -38,11 +39,12 @@ private:
     VkFramebuffer   m_fbo;
     VkRect2D        m_renderArea;
 
-    RenderPassDesc m_desc;
+    RenderPassDesc  m_desc;
 };
 
 
-class VulkanDescriptorSetLayout : public DescriptorSetLayout {
+class VulkanDescriptorSetLayout : public DescriptorSetLayout 
+{
 public:
     VulkanDescriptorSetLayout()
         : m_layout(VK_NULL_HANDLE) { }
@@ -57,7 +59,8 @@ private:
 };
 
 
-class VulkanDescriptorSet : public DescriptorSet {
+class VulkanDescriptorSet : public DescriptorSet 
+{
 public:
     VulkanDescriptorSet()
         : m_set(VK_NULL_HANDLE)
@@ -73,6 +76,6 @@ public:
 
 private:
     VkDescriptorSet m_set;
-    VulkanDevice* m_pDevice;
+    VulkanDevice*   m_pDevice;
 };
 } // Recluse

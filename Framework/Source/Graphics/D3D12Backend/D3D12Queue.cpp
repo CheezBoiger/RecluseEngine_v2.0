@@ -29,8 +29,8 @@ ErrType D3D12Queue::initialize(D3D12Device* pDevice)
     
     result = device->CreateCommandQueue(&desc, __uuidof(ID3D12CommandQueue), (void**)&m_queue);
 
-    if (result != S_OK) {
-    
+    if (result != S_OK) 
+    {
         R_ERR(R_CHANNEL_D3D12, "Failed to create command queue!");
 
         return REC_RESULT_FAILED;        
@@ -42,13 +42,12 @@ ErrType D3D12Queue::initialize(D3D12Device* pDevice)
 
 void D3D12Queue::destroy()
 {
-    if (m_queue) {
-    
+    if (m_queue) 
+    {
         R_DEBUG(R_CHANNEL_D3D12, "Releasing D3D12 queue...");
         
         m_queue->Release();
-        m_queue = nullptr;
-        
+        m_queue = nullptr;    
     }
 }
 

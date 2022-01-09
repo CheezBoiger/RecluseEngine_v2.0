@@ -15,7 +15,8 @@ class VulkanResourceView;
 
 struct QueueFamily;
 
-class VulkanSwapchain : public GraphicsSwapchain {
+class VulkanSwapchain : public GraphicsSwapchain 
+{
 public:
     VulkanSwapchain(const SwapchainCreateDescription& desc, VulkanQueue* pBackbufferQueue) 
         : GraphicsSwapchain(desc)

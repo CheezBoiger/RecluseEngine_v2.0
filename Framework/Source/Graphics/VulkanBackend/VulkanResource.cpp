@@ -13,7 +13,8 @@ namespace Vulkan {
 
 VkImageLayout getVulkanImageLayout(Recluse::ResourceState state)
 {
-    switch (state) {
+    switch (state) 
+    {
         case Recluse::RESOURCE_STATE_GENERAL: return VK_IMAGE_LAYOUT_GENERAL;
         case Recluse::RESOURCE_STATE_STORAGE: return VK_IMAGE_LAYOUT_GENERAL;
         case Recluse::RESOURCE_STATE_SHADER_RESOURCE: return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -40,31 +41,29 @@ ErrType VulkanResource::initialize(VulkanDevice* pDevice, GraphicsResourceDescri
 
     result = onCreate(pDevice, desc, initState);
 
-    if (result != REC_RESULT_OK) {
-    
+    if (result != REC_RESULT_OK) 
+    {
         R_ERR(R_CHANNEL_VULKAN, "Unable to create resource object!");
 
         destroy();
 
         return result;
-    
     }
     
     result = onGetMemoryRequirements(pDevice, memoryRequirements);
 
     // allocate our resource.
-    if (desc.dimension == RESOURCE_DIMENSION_BUFFER) {
-
+    if (desc.dimension == RESOURCE_DIMENSION_BUFFER) 
+    {
         allocator = pDevice->getBufferAllocator(desc.memoryUsage);
-
-    } else {
-
+    } 
+    else 
+    {
         allocator = pDevice->getImageAllocator(desc.memoryUsage);
-
     }
 
-    if (!allocator) {
-
+    if (!allocator) 
+    {
         R_ERR(R_CHANNEL_VULKAN, "No allocator for the given resource to allocate from!");
 
         destroy();
@@ -74,14 +73,13 @@ ErrType VulkanResource::initialize(VulkanDevice* pDevice, GraphicsResourceDescri
 
     result = allocator->allocate(&m_memory, memoryRequirements);
 
-    if (result != REC_RESULT_OK) {
-    
+    if (result != REC_RESULT_OK) 
+    {
         R_ERR(R_CHANNEL_VULKAN, "Unable to allocate memory for resource!");
 
         destroy();
 
         return result;
-    
     }
 
     result = onBind(pDevice);
@@ -98,38 +96,35 @@ void VulkanResource::destroy()
 
     onDestroy(m_pDevice);
 
-    if (m_memory.deviceMemory) {
-
-        if (desc.dimension == RESOURCE_DIMENSION_BUFFER) { 
-
+    if (m_memory.deviceMemory) 
+    {
+        if (desc.dimension == RESOURCE_DIMENSION_BUFFER) 
+        { 
             R_DEBUG(R_CHANNEL_VULKAN, "Freeing allocated buffer...");
             
             allocator = m_pDevice->getBufferAllocator(desc.memoryUsage);
-
-        } else {
-
+        } 
+        else 
+        {
             R_DEBUG(R_CHANNEL_VULKAN, "Freeing allocated image...");
 
             allocator = m_pDevice->getImageAllocator(desc.memoryUsage);
-
         }
 
-        if (!allocator) {
-    
+        if (!allocator) 
+        {
             R_ERR(R_CHANNEL_VULKAN, "No allocator provided for this memory! Can not destroy...");
 
             result = REC_RESULT_FAILED;
-        
-        } else {
-
+        } 
+        else 
+        {
             result = allocator->free(&m_memory);
-
         }
 
-        if (result != REC_RESULT_OK) {
-    
+        if (result != REC_RESULT_OK) 
+        {
             R_ERR(R_CHANNEL_VULKAN, "Vulkan resource memory failed to free!");
-    
         }
 
     }
@@ -158,12 +153,11 @@ ErrType VulkanBuffer::onCreate(VulkanDevice* pDevice, GraphicsResourceDescriptio
     
     vulkanResult = vkCreateBuffer(pDevice->get(), &info, nullptr, &m_buffer);
 
-    if (vulkanResult != VK_SUCCESS) {
-    
+    if (vulkanResult != VK_SUCCESS) 
+    {
         R_ERR(R_CHANNEL_VULKAN, "Failed to create vulkan buffer!");
         
         result = REC_RESULT_FAILED;
-    
     }
 
     return result;
@@ -174,14 +168,13 @@ ErrType VulkanBuffer::onDestroy(VulkanDevice* pDevice)
 {
     ErrType result = REC_RESULT_OK;
 
-    if (m_buffer) {
-
+    if (m_buffer) 
+    {
         R_DEBUG(R_CHANNEL_VULKAN, "Destroying buffer...");
 
         vkDestroyBuffer(pDevice->get(), m_buffer, nullptr);
         
         m_buffer = VK_NULL_HANDLE;
-    
     }
     
     return result;
@@ -192,34 +185,42 @@ VkFormatFeatureFlags VulkanImage::loadFormatFeatures(VkImageCreateInfo& info, Re
 {
     VkFormatFeatureFlags featureFlags = 0;
 
-    if (usage & RESOURCE_USAGE_RENDER_TARGET) {
+    if (usage & RESOURCE_USAGE_RENDER_TARGET) 
+    {
         info.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
         featureFlags |= VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT;
     }
 
-    if (usage & RESOURCE_USAGE_SHADER_RESOURCE) { 
+    if (usage & RESOURCE_USAGE_SHADER_RESOURCE) 
+    { 
         info.usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
         featureFlags |= VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
     }
 
-    if (usage & RESOURCE_USAGE_DEPTH_STENCIL) { 
+    if (usage & RESOURCE_USAGE_DEPTH_STENCIL) 
+    { 
         info.usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
         featureFlags |= VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
     }
 
-    if (usage & RESOURCE_USAGE_TRANSFER_DESTINATION) { 
+    if (usage & RESOURCE_USAGE_TRANSFER_DESTINATION) 
+    { 
         info.usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
         featureFlags |= VK_FORMAT_FEATURE_TRANSFER_DST_BIT;
     }
 
-    if (usage & RESOURCE_USAGE_TRANSFER_SOURCE) { 
+    if (usage & RESOURCE_USAGE_TRANSFER_SOURCE) 
+    { 
         info.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
         featureFlags |= VK_FORMAT_FEATURE_TRANSFER_SRC_BIT;
     }
-    if (usage & RESOURCE_USAGE_STORAGE_IMAGE) {
+
+    if (usage & RESOURCE_USAGE_STORAGE_IMAGE) 
+    {
         info.usage |= VK_IMAGE_USAGE_STORAGE_BIT;
         featureFlags |= VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT;
     }
+
     return featureFlags;
 }
 
@@ -247,8 +248,8 @@ ErrType VulkanImage::onCreate(VulkanDevice* pDevice, GraphicsResourceDescription
     info.samples            = Vulkan::getSamples(desc.samples);
     info.format             = format;
 
-    switch (desc.dimension) {
-    
+    switch (desc.dimension) 
+    {
         case RESOURCE_DIMENSION_1D: info.imageType = VK_IMAGE_TYPE_1D; break;
         case RESOURCE_DIMENSION_2D: info.imageType = VK_IMAGE_TYPE_2D; break;
         case RESOURCE_DIMENSION_3D: info.imageType = VK_IMAGE_TYPE_3D; break;
@@ -257,33 +258,32 @@ ErrType VulkanImage::onCreate(VulkanDevice* pDevice, GraphicsResourceDescription
     
     featureFlags = loadFormatFeatures(info, desc.usage);
 
-    if (property.optimalTilingFeatures & featureFlags) {
-    
+    if (property.optimalTilingFeatures & featureFlags) 
+    {
         info.tiling = VK_IMAGE_TILING_OPTIMAL;
-    
-    } else if (property.linearTilingFeatures & featureFlags) {
-    
+    } 
+    else if (property.linearTilingFeatures & featureFlags) 
+    {
         info.tiling = VK_IMAGE_TILING_LINEAR;
-    
-    } else {
-    
+    } 
+    else 
+    {
         R_ERR(R_CHANNEL_VULKAN, "Could not find a proper tiling scheme for the given format!");
-    
     }
 
-    switch (info.samples) {
+    switch (info.samples) 
+    {
         case VK_SAMPLE_COUNT_1_BIT: break;
         default: info.usage |= VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT; break;
     }
 
     vulkanResult = vkCreateImage(pDevice->get(), &info, nullptr, &m_image);
 
-    if (vulkanResult != VK_SUCCESS) {
-    
+    if (vulkanResult != VK_SUCCESS)
+    {
         R_ERR(R_CHANNEL_VULKAN, "Failed to create vulkan image!");
 
         result = REC_RESULT_FAILED;
-
     }
     
     m_currentLayout = info.initialLayout;
@@ -296,14 +296,13 @@ ErrType VulkanImage::onDestroy(VulkanDevice* pDevice)
 {
     ErrType result = REC_RESULT_OK;
 
-    if (m_image) {
-    
+    if (m_image) 
+    {
         R_DEBUG(R_CHANNEL_VULKAN, "Destroying image...");
 
         vkDestroyImage(pDevice->get(), m_image, nullptr);
             
         m_image = VK_NULL_HANDLE;
-    
     }
     
     return result;
@@ -334,10 +333,9 @@ ErrType VulkanBuffer::onBind(VulkanDevice* pDevice)
 
     VkResult result = vkBindBufferMemory(pDevice->get(), m_buffer, memory.deviceMemory, memory.offsetBytes);
     
-    if (result != VK_SUCCESS) {
-        
+    if (result != VK_SUCCESS) 
+    {    
         return REC_RESULT_FAILED;
-    
     }
     
     return REC_RESULT_OK;
@@ -350,10 +348,9 @@ ErrType VulkanImage::onBind(VulkanDevice* pDevice)
     
     VkResult result = vkBindImageMemory(pDevice->get(), m_image, memory.deviceMemory, memory.offsetBytes);
 
-    if (result != VK_SUCCESS) {
-    
+    if (result != VK_SUCCESS) 
+    {
         return REC_RESULT_FAILED;
-    
     }
 
     return REC_RESULT_OK;
@@ -368,19 +365,17 @@ ErrType VulkanResource::map(void** ptr, MapRange* pReadRange)
     VkDeviceSize offsetBytes    = m_memory.offsetBytes;
     VkDeviceSize sizeBytes      = m_memory.sizeBytes;
     
-    if (pReadRange) {
-
+    if (pReadRange) 
+    {
         offsetBytes += pReadRange->offsetBytes;
         sizeBytes    = pReadRange->sizeBytes;
-
     } 
 
     *ptr = (void*)((PtrType)m_memory.baseAddr + offsetBytes);
 
-    if (vr != VK_SUCCESS) {
-        
+    if (vr != VK_SUCCESS) 
+    {    
         result = REC_RESULT_FAILED;
-    
     }
 
     return result;
@@ -398,11 +393,10 @@ ErrType VulkanResource::unmap(MapRange* pWriteRange)
     VkDeviceSize offsetBytes                = m_memory.offsetBytes;
     VkDeviceSize sizeBytes                  = VK_WHOLE_SIZE;
 
-    if (pWriteRange) {
-    
+    if (pWriteRange) 
+    {
         offsetBytes += pWriteRange->offsetBytes;
         sizeBytes    = pWriteRange->sizeBytes;
-    
     }
 
     mappedRange.sType   = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
@@ -410,15 +404,17 @@ ErrType VulkanResource::unmap(MapRange* pWriteRange)
     mappedRange.offset  = offsetBytes;
     mappedRange.size    = sizeBytes;
 
-    if (desc.memoryUsage == RESOURCE_MEMORY_USAGE_CPU_ONLY || 
-        desc.memoryUsage == RESOURCE_MEMORY_USAGE_CPU_TO_GPU) {
-
+    if 
+        (
+            desc.memoryUsage == RESOURCE_MEMORY_USAGE_CPU_ONLY 
+            || desc.memoryUsage == RESOURCE_MEMORY_USAGE_CPU_TO_GPU
+        ) 
+    {
         m_pDevice->pushFlushMemoryRange(mappedRange);
-
-    } else {
-
+    } 
+    else 
+    {
         m_pDevice->pushInvalidateMemoryRange(mappedRange);
-
     }
 
     return result;
@@ -437,7 +433,8 @@ VkImageMemoryBarrier VulkanImage::transition(ResourceState dstState, VkImageSubr
     barrier.srcAccessMask                   = m_currentAccessMask;
     barrier.subresourceRange                = range;
 
-    switch (dstImageLayout) {
+    switch (dstImageLayout) 
+    {
         case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
             barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT; 
             break;

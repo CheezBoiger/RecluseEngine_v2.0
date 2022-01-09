@@ -11,7 +11,8 @@
 namespace Recluse {
 
 
-static struct {
+static struct 
+{
     B32 initialized;
 } win32WindowFunctionality = { false };
 
@@ -25,28 +26,28 @@ static void setRawInputDevices(HWND hwnd)
     rid.usUsagePage = HID_USAGE_PAGE_GENERIC;
     rid.dwFlags     = 0;
 
-    if (!RegisterRawInputDevices(&rid, 1, sizeof(RAWINPUTDEVICE))) {
-
+    if (!RegisterRawInputDevices(&rid, 1, sizeof(RAWINPUTDEVICE))) 
+    {
         R_ERR(R_CHANNEL_WIN32, "Failed to register raw input device to this window handle.");
-
     }
 }
 
 
-B32 checkWindowRegistered()
+static B32 checkWindowRegistered()
 {
-    if (!win32WindowFunctionality.initialized) {
+    if (!win32WindowFunctionality.initialized) 
+    {
         WNDCLASSEXW winClass = { };
-        winClass.cbSize = sizeof(WNDCLASSEXW);
-        winClass.lpszClassName = R_WIN32_WINDOW_NAME;
-        winClass.hInstance = GetModuleHandle(NULL);
-        winClass.hIcon = LoadIcon(GetModuleHandle(NULL), IDI_APPLICATION);
-        winClass.hCursor = LoadCursor(NULL, IDC_ARROW);
-        winClass.style = CS_VREDRAW | CS_HREDRAW | CS_OWNDC;
-        winClass.lpfnWndProc = win32RuntimeProc;
+        winClass.cbSize         = sizeof(WNDCLASSEXW);
+        winClass.lpszClassName  = R_WIN32_WINDOW_NAME;
+        winClass.hInstance      = GetModuleHandle(NULL);
+        winClass.hIcon          = LoadIcon(GetModuleHandle(NULL), IDI_APPLICATION);
+        winClass.hCursor        = LoadCursor(NULL, IDC_ARROW);
+        winClass.style          = CS_VREDRAW | CS_HREDRAW | CS_OWNDC;
+        winClass.lpfnWndProc    = win32RuntimeProc;
         
-        if (!RegisterClassExW(&winClass)) {
-    
+        if (!RegisterClassExW(&winClass)) 
+        {
             R_ERR(R_CHANNEL_WIN32, "Failed to initialize native Win32 window system!");
             
             return win32WindowFunctionality.initialized;
@@ -61,18 +62,23 @@ B32 checkWindowRegistered()
 
 Window* Window::create(const std::string& title, U32 x, U32 y, U32 width, U32 height)
 {
-    R_DEBUG(R_CHANNEL_WIN32, "Creating window: %s, X: %d Y: %d Width: %d, Height: %d", 
-        title.c_str(), x, y, width, height);
+    R_DEBUG
+        (
+            R_CHANNEL_WIN32, 
+            "Creating window: %s, X: %d Y: %d Width: %d, Height: %d", 
+            title.c_str(), 
+            x, y, 
+            width, height
+        );
 
     Window* pWindow     = nullptr; 
     HWND hwnd           = nullptr;
 
-    if (!checkWindowRegistered()) {
-
+    if (!checkWindowRegistered()) 
+    {
         R_ERR(R_CHANNEL_WIN32, "Failed to create window handle.");
         
         return nullptr;
-
     }
 
     {    
@@ -86,19 +92,27 @@ Window* Window::create(const std::string& title, U32 x, U32 y, U32 width, U32 he
 
         MultiByteToWideChar(CP_UTF8, 0, title.c_str(), (int )title.size(), ltitle, size);
 
-        hwnd = CreateWindowExW(NULL, R_WIN32_WINDOW_NAME,
-            ltitle, (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX), 
-            x, y, width, height, NULL, NULL, GetModuleHandle(NULL), NULL);
+        hwnd = CreateWindowExW
+                    (
+                        NULL, 
+                        R_WIN32_WINDOW_NAME,
+                        ltitle, 
+                        (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX), 
+                        x, y, 
+                        width, height, 
+                        NULL, 
+                        NULL, 
+                        GetModuleHandle(NULL), NULL
+                    );
 
         delete[] ltitle;
     }
 
-    if (!hwnd) {
-    
+    if (!hwnd) 
+    {
         R_ERR(R_CHANNEL_WIN32, "Failed to creat window handle!");
         
         return nullptr;
-
     }
 
     pWindow             = new Window();
@@ -116,8 +130,14 @@ Window* Window::create(const std::string& title, U32 x, U32 y, U32 width, U32 he
 
     AdjustWindowRect(&windowRect, WS_CAPTION, GetMenu(hwnd) != NULL);
 
-    MoveWindow(hwnd, 0, 0,
-        windowRect.right - windowRect.left, windowRect.bottom - windowRect.top, FALSE);
+    MoveWindow
+        (
+            hwnd, 
+            0, 0,
+            windowRect.right - windowRect.left, 
+            windowRect.bottom - windowRect.top, 
+            FALSE
+        );
 
     setRawInputDevices(hwnd);
 
@@ -131,11 +151,10 @@ Window* Window::create(const std::string& title, U32 x, U32 y, U32 width, U32 he
 
 void Window::close()
 {
-    if (m_shouldClose) {
-
+    if (m_shouldClose) 
+    {
         R_TRACE(R_CHANNEL_WIN32, "This window is already closed! Ignoring call...");
         return;
-
     }
 
     R_DEBUG(R_CHANNEL_WIN32, "Closing window...");    
@@ -144,10 +163,9 @@ void Window::close()
 
     BOOL result = DestroyWindow(hwnd);
 
-    if (result == FALSE) {
-
+    if (result == FALSE) 
+    {
         R_ERR(R_CHANNEL_WIN32, "Failed to close window handle! Error: %d", GetLastError());
-
         return;
     }
 
@@ -164,17 +182,16 @@ ErrType Window::destroy(Window* pWindow)
 
     BOOL result = FALSE;
 
-    if (!pWindow) {
-
+    if (!pWindow) 
+    {
         R_WARN(R_CHANNEL_WIN32, "Null window handle passed... Can not close. Ignoring...");
 
         return REC_RESULT_NULL_PTR_EXCEPTION;
     }
 
-    if (!pWindow->shouldClose()) {
-
+    if (!pWindow->shouldClose()) 
+    {
         pWindow->close();
-
     }
 
     // delete the API window handle.

@@ -9,7 +9,8 @@ namespace Recluse {
 
 class GraphicsResource;
 
-class GraphicsResourceView {
+class GraphicsResourceView 
+{
 public:
     virtual ~GraphicsResourceView() { }
 
@@ -25,7 +26,8 @@ private:
 };
 
 
-class GraphicsSampler {
+class GraphicsSampler 
+{
 public:
     virtual ~GraphicsSampler() { }
 

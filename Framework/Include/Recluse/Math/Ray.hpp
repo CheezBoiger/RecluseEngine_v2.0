@@ -6,7 +6,8 @@
 namespace Recluse {
 
 
-struct R_PUBLIC_API Ray {
+struct R_PUBLIC_API Ray 
+{
     Float3 o;
     Float3 dir;
 };

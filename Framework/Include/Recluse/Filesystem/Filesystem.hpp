@@ -7,12 +7,11 @@
 namespace Recluse {
 
 
-struct FileBufferData {
-    std::vector<char> buffer;    
-};
+typedef std::vector<char> FileBufferData;
 
 
-struct R_PUBLIC_API File {
+struct R_PUBLIC_API File 
+{
     File()
         : m_isOpen(false)
         , m_fileHandle(nullptr) { }
@@ -35,7 +34,8 @@ private:
 };
 
 
-class Filesystem {
+class Filesystem 
+{
 public:
     static R_PUBLIC_API std::string getCurrentDir();
     static R_PUBLIC_API std::string getDirectoryFromPath(const std::string& path);

@@ -15,8 +15,8 @@ ErrType D3D12Swapchain::initialize(D3D12Device* pDevice)
     R_DEBUG(R_CHANNEL_D3D12, "Creating dxgi swapchain...");
     HWND windowHandle = pDevice->getWindowHandle();
 
-    if (!windowHandle) {
-
+    if (!windowHandle) 
+    {
         R_ERR(R_CHANNEL_D3D12, "Can not create swapchain without a window handle!");
 
         return REC_RESULT_FAILED;
@@ -34,7 +34,8 @@ ErrType D3D12Swapchain::initialize(D3D12Device* pDevice)
 
     {
         D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport = pDevice->checkFormatSupport(desc.format);
-        if (!(formatSupport.Support1 & D3D12_FORMAT_SUPPORT1_DISPLAY)) {
+        if (!(formatSupport.Support1 & D3D12_FORMAT_SUPPORT1_DISPLAY)) 
+        {
             R_WARN(R_CHANNEL_D3D12, "Swapchain format not supported for display, using default...");
             format = DXGI_FORMAT_R8G8B8A8_UNORM;
         }
@@ -52,11 +53,18 @@ ErrType D3D12Swapchain::initialize(D3D12Device* pDevice)
     swapchainDesc.SampleDesc.Count          = 1;
     swapchainDesc.SampleDesc.Quality        = 0;
 
-    result = pFactory->CreateSwapChainForHwnd(pNativeQueue, windowHandle, &swapchainDesc, 
-        nullptr, nullptr, &swapchain1);
+    result = pFactory->CreateSwapChainForHwnd
+                            (
+                                pNativeQueue, 
+                                windowHandle, 
+                                &swapchainDesc, 
+                                nullptr, 
+                                nullptr, 
+                                &swapchain1
+                            );
 
-    if (result != S_OK) {
-    
+    if (result != S_OK) 
+    {
         R_ERR(R_CHANNEL_D3D12, "Failed to create d3d12 swapchain!");
         
         return REC_RESULT_FAILED;
@@ -65,8 +73,8 @@ ErrType D3D12Swapchain::initialize(D3D12Device* pDevice)
     result = swapchain1->QueryInterface<IDXGISwapChain3>(&m_pSwapchain);
     swapchain1->Release();
 
-    if (FAILED(result)) {
-        
+    if (FAILED(result)) 
+    {    
         R_ERR(R_CHANNEL_D3D12, "Could not query for swapchain3 interface!");
 
         destroy();
@@ -89,13 +97,12 @@ void D3D12Swapchain::destroy()
 {
     destroyFrameResources();
 
-    if (m_pSwapchain) {
-    
+    if (m_pSwapchain) 
+    { 
         R_DEBUG(R_CHANNEL_D3D12, "Destroying swapchain...");
 
         m_pSwapchain->Release();
         m_pSwapchain = nullptr;
-
     }
 }
 
@@ -125,10 +132,9 @@ ErrType D3D12Swapchain::present()
 
     result = m_pSwapchain->Present(0, 0);
     
-    if (FAILED(result)) {
-
+    if (FAILED(result)) 
+    {
         R_ERR(R_CHANNEL_D3D12, "Failed to present current frame: %d");        
-
     }
 
     pBR->fenceValue     = pBR->fenceValue + 1;
@@ -147,11 +153,10 @@ ErrType D3D12Swapchain::present()
     pEvent          = pBR->pEvent;
     currentValue    = pBR->fenceValue;
 
-    if (pFence->GetCompletedValue() < currentValue) {
-    
+    if (pFence->GetCompletedValue() < currentValue) 
+    {
         pFence->SetEventOnCompletion(currentValue, pEvent);
         WaitForSingleObjectEx(pEvent, INFINITE, false);
-    
     }
 
     //m_frameResources[m_currentFrameIndex].fenceValue = currentFenceValue + 1;
@@ -168,8 +173,8 @@ ErrType D3D12Swapchain::initializeFrameResources()
 
     m_frameResources.resize(m_maxFrames);
     
-    for (U32 i = 0; i < m_frameResources.size(); ++i) {
-    
+    for (U32 i = 0; i < m_frameResources.size(); ++i) 
+    {
         FrameResource& frameRes = m_frameResources[i];
         // TODO: No current frame resource handles.
     }
@@ -182,10 +187,11 @@ ErrType D3D12Swapchain::initializeFrameResources()
 
 ErrType D3D12Swapchain::destroyFrameResources()
 {
-    if (!m_frameResources.empty()) {
-    
-        for (U32 i = 0; i < m_frameResources.size(); ++i) {
-            
+    if (!m_frameResources.empty()) 
+    {
+        for (U32 i = 0; i < m_frameResources.size(); ++i) 
+        {
+            // TODO(): Wut do we do here?
         }
     
         m_frameResources.clear();
@@ -200,7 +206,8 @@ ErrType D3D12Swapchain::flushFinishedCommandLists()
     ID3D12CommandQueue* pQueue          = m_pBackbufferQueue->get();
     ID3D12GraphicsCommandList* pCmdList = static_cast<D3D12CommandList*>(m_pDevice->getCommandList())->get();
 
-    if (pCmdList) {
+    if (pCmdList) 
+    {
         ID3D12CommandList* pLists[] = { pCmdList };
         pQueue->ExecuteCommandLists(1, pLists);
     }

@@ -11,8 +11,13 @@
 namespace Recluse {
 
 
-ErrType VulkanCommandList::initialize(VulkanDevice* pDevice, U32 queueFamilyIndex, 
-    VkCommandPool* pools, U32 poolCount)
+ErrType VulkanCommandList::initialize
+    (
+        VulkanDevice* pDevice, 
+        U32 queueFamilyIndex, 
+        VkCommandPool* pools, 
+        U32 poolCount
+    )
 {
     ErrType result                                  = REC_RESULT_OK;
     VkDevice device                                 = pDevice->get();
@@ -20,8 +25,8 @@ ErrType VulkanCommandList::initialize(VulkanDevice* pDevice, U32 queueFamilyInde
     m_buffers.resize(poolCount);
     m_pools.resize(m_buffers.size());
 
-    for (U32 j = 0; j < poolCount; ++j) {
-
+    for (U32 j = 0; j < poolCount; ++j) 
+    {
         VkCommandPool pool                    = pools[j];
         VkCommandBufferAllocateInfo allocInfo = { };
         
@@ -32,10 +37,9 @@ ErrType VulkanCommandList::initialize(VulkanDevice* pDevice, U32 queueFamilyInde
 
         VkResult r = vkAllocateCommandBuffers(device, &allocInfo, &m_buffers[j]);
 
-        if (r != VK_SUCCESS) {
-
+        if (r != VK_SUCCESS) 
+        {
             R_ERR(R_CHANNEL_VULKAN, "Failed to allocate command buffer!");
-
         }
         
         m_pools[j] = pools[j];
@@ -49,15 +53,13 @@ ErrType VulkanCommandList::initialize(VulkanDevice* pDevice, U32 queueFamilyInde
 
 void VulkanCommandList::destroy(VulkanDevice* pDevice)
 {
-    for (U32 i = 0; i < m_buffers.size(); ++i) {
-        
-        if (m_buffers[i] != VK_NULL_HANDLE) {
-        
+    for (U32 i = 0; i < m_buffers.size(); ++i) 
+    {    
+        if (m_buffers[i] != VK_NULL_HANDLE) 
+        {   
             vkFreeCommandBuffers(pDevice->get(), m_pools[i], 1, &m_buffers[i]);
             m_buffers[i] = VK_NULL_HANDLE;
-        
         }
-    
     }
 }
 
@@ -93,7 +95,8 @@ void VulkanCommandList::begin()
 
 void VulkanCommandList::end()
 {
-    if (m_boundRenderPass) {
+    if (m_boundRenderPass) 
+    {
         endRenderPass(m_currentCmdBuffer);
     }
 
@@ -124,17 +127,17 @@ void VulkanCommandList::setRenderPass(RenderPass* pRenderPass)
 {
     R_ASSERT(pRenderPass != NULL);
 
-    if (pRenderPass == m_boundRenderPass) {
+    if (pRenderPass == m_boundRenderPass) 
+    {
         return;
     }
 
     VulkanRenderPass* pVrp  = static_cast<VulkanRenderPass*>(pRenderPass);
 
     // End current render pass if it doesn't match this one...
-    if (m_boundRenderPass != pVrp) {
-
-        endRenderPass(m_currentCmdBuffer);
-        
+    if (m_boundRenderPass != pVrp) 
+    {
+        endRenderPass(m_currentCmdBuffer);   
     }
 
     VkRenderPassBeginInfo beginInfo = { };
@@ -153,11 +156,10 @@ void VulkanCommandList::setRenderPass(RenderPass* pRenderPass)
 
 void VulkanCommandList::endRenderPass(VkCommandBuffer buffer)
 {
-    if (m_boundRenderPass) {
-
+    if (m_boundRenderPass) 
+    {
         vkCmdEndRenderPass(buffer);
         m_boundRenderPass = nullptr;
-
     }   
 }
 
@@ -222,15 +224,23 @@ void VulkanCommandList::bindDescriptorSets(U32 count, DescriptorSet** pSets, Bin
 
     SETBIND(bindType, bindPoint)
 
-    while (numDescriptorSetsBound < count) {
-
+    while (numDescriptorSetsBound < count)
+    {
         VulkanDescriptorSet* pSet                   = static_cast<VulkanDescriptorSet*>(pSets[numDescriptorSetsBound]);
         descriptorSets[numDescriptorSetsBound++]    = pSet->get();
-
     }
 
-    vkCmdBindDescriptorSets(m_currentCmdBuffer, bindPoint, layout, 0, numDescriptorSetsBound,
-        descriptorSets, 0, nullptr);
+    vkCmdBindDescriptorSets
+        (
+            m_currentCmdBuffer, 
+            bindPoint, 
+            layout, 
+            0, 
+            numDescriptorSetsBound,
+            descriptorSets, 
+            0, 
+            nullptr
+        );
 }
 
 
@@ -238,11 +248,10 @@ void VulkanCommandList::bindVertexBuffers(U32 numBuffers, GraphicsResource** ppV
 {
     VkBuffer vertexBuffers[8];
     
-    for (U32 i = 0; i < numBuffers; ++i) {
-    
+    for (U32 i = 0; i < numBuffers; ++i) 
+    {
         VulkanBuffer* pVb   = static_cast<VulkanBuffer*>(ppVertexBuffers[i]);
         vertexBuffers[i]    = pVb->get();
-    
     }
 
     vkCmdBindVertexBuffers(m_currentCmdBuffer, 0, numBuffers, vertexBuffers, pOffsets);
@@ -263,28 +272,34 @@ void VulkanCommandList::copyResource(GraphicsResource* dst, GraphicsResource* sr
     ResourceDimension dstDim = dstDesc.dimension;
     ResourceDimension srcDim = srcDesc.dimension;
 
-    if (dstDim == RESOURCE_DIMENSION_BUFFER) { 
+    if (dstDim == RESOURCE_DIMENSION_BUFFER) 
+    { 
         VulkanBuffer* dstBuffer = static_cast<VulkanBuffer*>(dst);
 
-        if (srcDim == RESOURCE_DIMENSION_BUFFER) {
-
+        if (srcDim == RESOURCE_DIMENSION_BUFFER) 
+        {
             VulkanBuffer* srcBuffer = static_cast<VulkanBuffer*>(src);
             VkBufferCopy region     = { };
             region.size             = dstDesc.width;
             region.dstOffset        = 0;
             region.srcOffset        = 0;
             vkCmdCopyBuffer(m_currentCmdBuffer, srcBuffer->get(), dstBuffer->get(), 1, &region);
-
-        } else {
-
+        } 
+        else 
+        {
             VulkanImage* pSrcImage      = static_cast<VulkanImage*>(src);
             VkBufferImageCopy region    = { };
             // TODO:
-            vkCmdCopyImageToBuffer(m_currentCmdBuffer, pSrcImage->get(), pSrcImage->getCurrentLayout(),
-                dstBuffer->get(), 1, &region);
-
+            vkCmdCopyImageToBuffer
+                (
+                    m_currentCmdBuffer, 
+                    pSrcImage->get(), 
+                    pSrcImage->getCurrentLayout(),
+                    dstBuffer->get(), 
+                    1, 
+                    &region
+                );
         }
-
     } 
 }
 
@@ -292,15 +307,14 @@ void VulkanCommandList::copyResource(GraphicsResource* dst, GraphicsResource* sr
 void VulkanCommandList::setViewports(U32 numViewports, Viewport* pViewports)
 {
     VkViewport viewports[8];
-    for (U32 i = 0; i < numViewports; ++i) {
-    
+    for (U32 i = 0; i < numViewports; ++i) 
+    {
         viewports[i].x          = pViewports[i].x;
         viewports[i].y          = pViewports[i].y;
         viewports[i].width      = pViewports[i].width;
         viewports[i].height     = pViewports[i].height;
         viewports[i].minDepth   = pViewports[i].minDepth;
         viewports[i].maxDepth   = pViewports[i].maxDepth;
-    
     }
 
     vkCmdSetViewport(m_currentCmdBuffer, 0, numViewports, viewports);
@@ -310,13 +324,12 @@ void VulkanCommandList::setViewports(U32 numViewports, Viewport* pViewports)
 void VulkanCommandList::setScissors(U32 numScissors, Rect* pRects) 
 {
     VkRect2D scissors[8];
-    for (U32 i = 0; i < numScissors; ++i) {
-
+    for (U32 i = 0; i < numScissors; ++i) 
+    {
         scissors[i].extent.width    = (U32)pRects[i].width;
         scissors[i].extent.height   = (U32)pRects[i].height;
         scissors[i].offset.x        = (I32)pRects[i].x;
         scissors[i].offset.y        = (I32)pRects[i].y;    
-    
     }
 
     vkCmdSetScissor(m_currentCmdBuffer, 0, numScissors, scissors);
@@ -347,8 +360,11 @@ void VulkanCommandList::transition(ResourceTransition* pTargets, U32 targetCount
         range.levelCount                    = resTransition.mips;
         range.aspectMask                    = VK_IMAGE_ASPECT_COLOR_BIT;
         
-        if (resTransition.dstState == RESOURCE_STATE_DEPTH_STENCIL_READONLY || 
-            resTransition.dstState == RESOURCE_STATE_DEPTH_STENCIL_WRITE)
+        if 
+            (
+                resTransition.dstState == RESOURCE_STATE_DEPTH_STENCIL_READONLY || 
+                resTransition.dstState == RESOURCE_STATE_DEPTH_STENCIL_WRITE
+            )
         {
             range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
         }
@@ -356,14 +372,24 @@ void VulkanCommandList::transition(ResourceTransition* pTargets, U32 targetCount
         imgBarriers[numBarriers++] = pVr->transition(resTransition.dstState, range);
     }
 
-    if (numBarriers > 0) {
-
+    if (numBarriers > 0) 
+    {
         // End any render pass that may not have been cleaned up.
         endRenderPass(m_currentCmdBuffer);
 
-        vkCmdPipelineBarrier(m_currentCmdBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_DEPENDENCY_BY_REGION_BIT, 0, 
-            nullptr, 0, nullptr, numBarriers, imgBarriers.data()); 
+        vkCmdPipelineBarrier
+            (
+                m_currentCmdBuffer, 
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 
+                VK_DEPENDENCY_BY_REGION_BIT, 
+                0, 
+                nullptr, 
+                0, 
+                nullptr, 
+                numBarriers, 
+                imgBarriers.data()
+            ); 
     }
 }
 
@@ -373,7 +399,8 @@ void VulkanCommandList::bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offs
     VkDeviceSize offset     = (VkDeviceSize)offsetBytes;
     VkIndexType indexType   = VK_INDEX_TYPE_UINT32;
 
-    switch (indexType) {
+    switch (indexType) 
+    {
         case INDEX_TYPE_UINT16: indexType = VK_INDEX_TYPE_UINT16; break;
         default: indexType = VK_INDEX_TYPE_UINT32; break;
     }

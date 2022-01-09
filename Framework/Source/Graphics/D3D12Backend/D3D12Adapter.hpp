@@ -14,7 +14,8 @@ namespace Recluse {
 class D3D12Instance;
 class D3D12Device;
 
-class D3D12Adapter : public GraphicsAdapter {
+class D3D12Adapter : public GraphicsAdapter 
+{
 public:
     static std::vector<IDXGIAdapter*> getAdapters(D3D12Instance* pInstance);
 

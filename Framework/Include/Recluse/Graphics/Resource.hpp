@@ -8,14 +8,16 @@
 namespace Recluse {
 
 
-struct MapRange {
+struct MapRange 
+{
     U64 offsetBytes;
     U64 sizeBytes;
 };
 
 // Graphics Resource description.
 //
-class R_PUBLIC_API GraphicsResource {
+class R_PUBLIC_API GraphicsResource 
+{
 public:
     GraphicsResource(GraphicsResourceDescription& desc)
         : m_desc(desc) { }

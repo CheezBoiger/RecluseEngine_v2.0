@@ -122,7 +122,8 @@ namespace Recluse {
 
 #if defined RCL_GLSLANG
 
-class GlslangShaderBuilder : public ShaderBuilder {
+class GlslangShaderBuilder : public ShaderBuilder 
+{
 public:
     GlslangShaderBuilder(ShaderIntermediateCode imm)
         : ShaderBuilder(imm)
@@ -150,13 +151,13 @@ public:
 
         EShLanguage stage       = EShLangVertex;
 
-        switch (shaderType) {
+        switch (shaderType) 
+        {
             case SHADER_TYPE_VERTEX:        stage = EShLangVertex; break;
             case SHADER_TYPE_FRAGMENT:      stage = EShLangFragment; break;
             case SHADER_TYPE_COMPUTE:       stage = EShLangCompute; break;
             case SHADER_TYPE_TESS_CONTROL:  stage = EShLangTessControl; break;
             case SHADER_TYPE_TESS_EVAL:     stage = EShLangTessEvaluation; break;
-        
             // TODO: Support more shaders!
         }
 
@@ -171,8 +172,8 @@ public:
         const char* str                     = srcCode.data();
         EShMessages messages                = (EShMessages)((int)EShMsgSpvRules | (int)EShMsgVulkanRules);
 
-        if (lang == SHADER_LANG_HLSL) {
-
+        if (lang == SHADER_LANG_HLSL) 
+        {
             R_DEBUG("GLSLANG", "HLSL used, compiling to SPIRV...");
 
             shader.setEnvInput(glslang::EShSourceHlsl, stage, client, clientVersion);            
@@ -186,22 +187,20 @@ public:
         shader.setAutoMapLocations(true);   // --aml, which will allow for implicit location mapping 
                                             // for builtin blocks.
     
-        if (!shader.parse(&DefaultTBuiltInResource, 450, false, messages)) {
-
+        if (!shader.parse(&DefaultTBuiltInResource, 450, false, messages)) 
+        {
             R_ERR("GLSLANG", "Compile Error: %s", shader.getInfoLog());
 
             return REC_RESULT_FAILED;
-
         }
 
         program.addShader(&shader);
     
-        if (!program.link(messages)) {
-
+        if (!program.link(messages)) 
+        {
             R_ERR("GLSLANG", "Failed to link shader program!");
 
             return REC_RESULT_FAILED;
-
         }
 
         glslang::GlslangToSpv(*program.getIntermediate(stage), spirv, &logger);

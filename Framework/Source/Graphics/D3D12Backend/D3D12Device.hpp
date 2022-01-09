@@ -16,14 +16,16 @@ class D3D12Swapchain;
 class D3D12Queue;
 class D3D12CommandList;
 
-struct BufferResources {
+struct BufferResources 
+{
     ID3D12CommandAllocator* pAllocator;
     ID3D12Fence*            pFence;
     HANDLE                  pEvent;
     U64                     fenceValue;
 };
 
-class D3D12Device : public GraphicsDevice {
+class D3D12Device : public GraphicsDevice 
+{
 public:
     D3D12Device()
         : m_windowHandle(nullptr)

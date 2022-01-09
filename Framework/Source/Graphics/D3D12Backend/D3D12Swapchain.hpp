@@ -13,7 +13,8 @@ class D3D12Queue;
 struct FrameResource {
 };
 
-class D3D12Swapchain : public GraphicsSwapchain {
+class D3D12Swapchain : public GraphicsSwapchain 
+{
 public:
     D3D12Swapchain(const SwapchainCreateDescription& desc, D3D12Queue* pBackbufferQueue)
         : m_pSwapchain(nullptr)

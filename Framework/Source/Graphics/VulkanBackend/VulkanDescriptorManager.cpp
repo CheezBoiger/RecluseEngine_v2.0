@@ -39,10 +39,9 @@ void VulkanDescriptorManager::initialize(VulkanDevice* pDevice)
 
     result = vkCreateDescriptorPool(device, &ci, nullptr, &m_pool);
 
-    if (result != VK_SUCCESS) {
-    
+    if (result != VK_SUCCESS) 
+    {
         R_ERR(R_CHANNEL_VULKAN, "Failed to create vulkan descriptor pool!");
-    
     }
 
 }
@@ -52,13 +51,11 @@ void VulkanDescriptorManager::destroy(VulkanDevice* pDevice)
 {
     VkDevice device = pDevice->get();
 
-    if (m_pool) {
-    
+    if (m_pool) 
+    {
         R_DEBUG(R_CHANNEL_VULKAN, "Destroying vulkan descriptor pool...");
-    
         vkDestroyDescriptorPool(device, m_pool, nullptr);
         m_pool = VK_NULL_HANDLE;
-    
     }
 }
 } // Recluse

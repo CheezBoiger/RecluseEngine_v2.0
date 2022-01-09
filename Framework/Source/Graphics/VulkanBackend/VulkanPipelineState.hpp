@@ -10,7 +10,8 @@ namespace Recluse {
 class VulkanDevice;
 
 
-class VulkanPipelineState : public PipelineState {
+class VulkanPipelineState : public PipelineState 
+{
 public:
     VulkanPipelineState()
         : m_pipeline(VK_NULL_HANDLE)
@@ -32,7 +33,8 @@ protected:
 };
 
 
-class VulkanGraphicsPipelineState : public VulkanPipelineState {
+class VulkanGraphicsPipelineState : public VulkanPipelineState 
+{
 public:
     virtual ~VulkanGraphicsPipelineState() { }
 
@@ -41,7 +43,8 @@ public:
 };
 
 
-class VulkanComputePipelineState : public VulkanPipelineState {
+class VulkanComputePipelineState : public VulkanPipelineState 
+{
 public:
     virtual ~VulkanComputePipelineState() { }
     

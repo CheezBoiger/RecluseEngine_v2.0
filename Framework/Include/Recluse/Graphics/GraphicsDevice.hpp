@@ -20,7 +20,8 @@ class GraphicsSampler;
 class RenderPass;
 
 
-struct GraphicsResourceDescription {
+struct GraphicsResourceDescription 
+{
     U32                 width;
     U32                 height;
     U32                 depth;
@@ -34,13 +35,15 @@ struct GraphicsResourceDescription {
 };
 
 
-struct MemoryReserveDesc {
+struct MemoryReserveDesc 
+{
     U64 bufferPools[RESOURCE_MEMORY_USAGE_COUNT];
     U64 texturePoolGPUOnly;
 };
 
 
-struct ResourceViewDesc {
+struct ResourceViewDesc 
+{
     ResourceViewType        type;
     ResourceFormat          format;
     ResourceViewDimension   dimension;
@@ -52,7 +55,8 @@ struct ResourceViewDesc {
 };
 
 
-struct RenderPassDesc {
+struct RenderPassDesc 
+{
     GraphicsResourceView* ppRenderTargetViews[8];
     U32                   numRenderTargets;
     U32                   width;
@@ -61,7 +65,8 @@ struct RenderPassDesc {
 };
 
 
-class R_PUBLIC_API GraphicsDevice {
+class R_PUBLIC_API GraphicsDevice 
+{
 public:
     // Reserve memory to be used for graphics resources.
     virtual ErrType reserveMemory(const MemoryReserveDesc& desc) { return REC_RESULT_NOT_IMPLEMENTED; }
@@ -115,15 +120,21 @@ public:
 
     // Submits copy of regions from src resource to dst resource. Generally the caller thread will
     // be blocked until this function returns, so be sure to use when needed.
-    virtual ErrType copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, 
-        CopyBufferRegion* pRegions, U32 numRegions)
+    virtual ErrType copyBufferRegions
+                        (
+                            GraphicsResource* dst, 
+                            GraphicsResource* src, 
+                            CopyBufferRegion* pRegions, 
+                            U32 numRegions
+                        )
         { return REC_RESULT_NOT_IMPLEMENTED; }
 
 private:
 };
 
 
-class GraphicsSwapchain {
+class GraphicsSwapchain 
+{
 public:
     GraphicsSwapchain(const SwapchainCreateDescription& desc)
         : m_desc(desc) { }
@@ -132,7 +143,8 @@ public:
 
     // Rebuild the swapchain if need be. Pass in NULL to rebuild the swapchain as is.
     // Be sure to update any new frame info and handles that are managed by the front engine!
-    R_PUBLIC_API ErrType rebuild(const SwapchainCreateDescription& desc) { 
+    R_PUBLIC_API ErrType rebuild(const SwapchainCreateDescription& desc) 
+    { 
         m_desc = desc;
         return onRebuild(); 
     }

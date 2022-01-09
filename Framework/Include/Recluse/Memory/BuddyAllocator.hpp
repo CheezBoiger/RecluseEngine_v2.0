@@ -11,15 +11,17 @@
 namespace Recluse {
 
 
-struct BuddyBlock {
-    U64 memSzBytes;     // Likely sizes of 64 KB
-    U64 offsetBytes;    // Offset of the buddy block in virtual memory.
-    U64 blockId;        // block id.
+struct BuddyBlock 
+{
+    U64     memSzBytes;     // Likely sizes of 64 KB
+    U64     offsetBytes;    // Offset of the buddy block in virtual memory.
+    U64     blockId;        // block id.
 };
 
 // Buddy allocator implementation.
 //
-class R_PUBLIC_API BuddyAllocator : public Allocator {
+class R_PUBLIC_API BuddyAllocator : public Allocator 
+{
 private:
     ErrType onInitialize() override;
     ErrType onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override;

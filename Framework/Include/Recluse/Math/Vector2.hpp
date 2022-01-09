@@ -6,8 +6,10 @@
 
 namespace Recluse {
 
-struct R_PUBLIC_API Float2 { 
-    union {
+struct R_PUBLIC_API Float2 
+{ 
+    union 
+    {
         struct { F32 x, y; };
         struct { F32 r, g; };
         struct { F32 u, v; };
@@ -37,8 +39,10 @@ struct R_PUBLIC_API Float2 {
 };
 
 
-struct R_PUBLIC_API Int2 {
-    union {
+struct R_PUBLIC_API Int2 
+{
+    union 
+    {
         struct { I32 x, y; };
         struct { I32 r, g; };
         struct { I32 u, v; };
@@ -73,8 +77,10 @@ struct R_PUBLIC_API Int2 {
     inline Int2 operator>>(U32 shft) const;
 };
 
-class R_PUBLIC_API UInt2 {
-    union {
+class R_PUBLIC_API UInt2 
+{
+    union 
+    {
         struct { U32 x, y; };
         struct { U32 r, g; };
         struct { U32 u, v; };
@@ -95,8 +101,10 @@ class R_PUBLIC_API UInt2 {
 };
 
 
-struct R_PUBLIC_API Short2 {
-    union {
+struct R_PUBLIC_API Short2 
+{
+    union 
+    {
         struct { I16 x, y; };
         struct { I16 r, g; };
         struct { I16 u, v; };
@@ -104,8 +112,10 @@ struct R_PUBLIC_API Short2 {
 };
 
 
-struct R_PUBLIC_API UShort2 {
-    union {
+struct R_PUBLIC_API UShort2 
+{
+    union 
+    {
         struct { U16 x, y; };
         struct { U16 r, g; };
         struct { U16 u, v; };

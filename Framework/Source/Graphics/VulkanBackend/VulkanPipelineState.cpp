@@ -14,7 +14,8 @@ namespace Recluse {
 
 static VkPrimitiveTopology getNativeTopology(PrimitiveTopology topology)
 {
-    switch ( topology ) {
+    switch ( topology ) 
+    {
         case PRIMITIVE_TOPOLOGY_LINE_STRIP: return VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
         case PRIMITIVE_TOPOLOGY_LINE_LIST: return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
         case PRIMITIVE_TOPOLOGY_POINT_LIST: return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
@@ -27,7 +28,8 @@ static VkPrimitiveTopology getNativeTopology(PrimitiveTopology topology)
 
 static VkVertexInputRate getNativeVertexInputRate(InputRate rate)
 {
-    switch (rate) {
+    switch (rate) 
+    {
         case INPUT_RATE_PER_INSTANCE: return VK_VERTEX_INPUT_RATE_INSTANCE;
         case INPUT_RATE_PER_VERTEX: 
         default: return VK_VERTEX_INPUT_RATE_VERTEX;
@@ -37,7 +39,8 @@ static VkVertexInputRate getNativeVertexInputRate(InputRate rate)
 
 static VkCullModeFlags getNativeCullMode(CullMode mode)
 {
-    switch (mode) {
+    switch (mode) 
+    {
         case CULL_MODE_BACK: return VK_CULL_MODE_BACK_BIT;
         case CULL_MODE_FRONT: return VK_CULL_MODE_FRONT_BIT;
         case CULL_MODE_FRONT_AND_BACK: return VK_CULL_MODE_FRONT_AND_BACK;
@@ -49,7 +52,8 @@ static VkCullModeFlags getNativeCullMode(CullMode mode)
 
 static VkPolygonMode getNativePolygonMode(PolygonMode polygonMode)
 {
-    switch (polygonMode) {
+    switch (polygonMode) 
+    {
         case POLYGON_MODE_LINE: return VK_POLYGON_MODE_LINE;
         case POLYGON_MODE_POINT: return VK_POLYGON_MODE_POINT;
         case POLYGON_MODE_FILL:
@@ -60,7 +64,8 @@ static VkPolygonMode getNativePolygonMode(PolygonMode polygonMode)
 
 static VkStencilOp getNativeStencilOp(StencilOp op) 
 {
-    switch (op) {
+    switch (op) 
+    {
         case STENCIL_OP_DECREMENT_AND_CLAMP: return VK_STENCIL_OP_DECREMENT_AND_CLAMP;
         case STENCIL_OP_DECREMENT_AND_WRAP: return VK_STENCIL_OP_DECREMENT_AND_WRAP;
         case STENCIL_OP_INCREMENT_AND_CLAMP: return VK_STENCIL_OP_INCREMENT_AND_CLAMP;
@@ -76,7 +81,8 @@ static VkStencilOp getNativeStencilOp(StencilOp op)
 
 static VkFrontFace getNativeFrontFace(FrontFace face)
 {
-    switch (face) {
+    switch (face) 
+    {
         case FRONT_FACE_CLOCKWISE: return VK_FRONT_FACE_CLOCKWISE;
         case FRONT_FACE_COUNTER_CLOCKWISE:
         default: return VK_FRONT_FACE_COUNTER_CLOCKWISE;
@@ -86,7 +92,8 @@ static VkFrontFace getNativeFrontFace(FrontFace face)
 
 static VkLogicOp getLogicOp(LogicOp op)
 {
-    switch (op) {
+    switch (op) 
+    {
         case LOGIC_OP_CLEAR: return VK_LOGIC_OP_CLEAR;
         case LOGIC_OP_AND: return VK_LOGIC_OP_AND;
         case LOGIC_OP_AND_REVERSE: return VK_LOGIC_OP_AND_REVERSE;
@@ -110,7 +117,8 @@ static VkLogicOp getLogicOp(LogicOp op)
 
 static VkBlendFactor getBlendFactor(BlendFactor op)
 {
-    switch (op) {
+    switch (op) 
+    {
         case BLEND_FACTOR_ZERO: return VK_BLEND_FACTOR_ZERO;
         case BLEND_FACTOR_ONE: return VK_BLEND_FACTOR_ONE;
         case BLEND_FACTOR_SRC_COLOR: return VK_BLEND_FACTOR_SRC_COLOR;
@@ -136,7 +144,8 @@ static VkBlendFactor getBlendFactor(BlendFactor op)
 
 static VkBlendOp getBlendOp(BlendOp op)
 {
-    switch (op) {
+    switch (op) 
+    {
         case BLEND_OP_ADD: return VK_BLEND_OP_ADD;
         case BLEND_OP_SUBTRACT: return VK_BLEND_OP_SUBTRACT;
         case BLEND_OP_REVERSE_SUBTRACT: return VK_BLEND_OP_REVERSE_SUBTRACT;
@@ -186,14 +195,18 @@ static VkPipelineInputAssemblyStateCreateInfo getAssemblyInfo(PrimitiveTopology 
 }
 
 
-static VkPipelineVertexInputStateCreateInfo getVertexInputInfo(const GraphicsPipelineStateDesc::VertexInput& vi,
-    std::vector<VkVertexInputAttributeDescription>& attributes, std::vector<VkVertexInputBindingDescription>& bindings)
+static VkPipelineVertexInputStateCreateInfo getVertexInputInfo
+    (
+        const GraphicsPipelineStateDesc::VertexInput& vi,
+        std::vector<VkVertexInputAttributeDescription>& attributes, 
+        std::vector<VkVertexInputBindingDescription>& bindings
+    )
 {
     VkPipelineVertexInputStateCreateInfo info = { };
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
-    for (U32 i = 0; i < vi.numVertexBindings; ++i) {
-    
+    for (U32 i = 0; i < vi.numVertexBindings; ++i) 
+    {
         VertexBinding& vertexBind   = vi.pVertexBindings[i];
         U32 binding                 = vertexBind.binding;
         {
@@ -205,16 +218,15 @@ static VkPipelineVertexInputStateCreateInfo getVertexInputInfo(const GraphicsPip
             bindings.push_back(bindingDescription);
         }
 
-        for (U32 attribIdx = 0; attribIdx < vertexBind.numVertexAttributes; ++attribIdx) {
-
+        for (U32 attribIdx = 0; attribIdx < vertexBind.numVertexAttributes; ++attribIdx) 
+        {
             VertexAttribute& attrib                     = vertexBind.pVertexAttributes[attribIdx];
             VkVertexInputAttributeDescription attribute = { };
             attribute.binding                           = binding;
             attribute.format                            = Vulkan::getVulkanFormat(attrib.format);
             attribute.location                          = attrib.loc;
             attribute.offset                            = attrib.offset;
-            attributes.push_back(attribute);
-            
+            attributes.push_back(attribute);   
         }
     }
 
@@ -271,8 +283,8 @@ static VkPipelineColorBlendStateCreateInfo getBlendInfo(const GraphicsPipelineSt
 
     blendAttachments.resize(state.numAttachments);
 
-    for (U32 i = 0; i < state.numAttachments; ++i) {
-
+    for (U32 i = 0; i < state.numAttachments; ++i) 
+    {
         RenderTargetBlendState& blendState      = state.attachments[i];
 
         blendAttachments[i].blendEnable         = blendState.blendEnable;
@@ -336,11 +348,10 @@ VkResult VulkanPipelineState::createLayout(VulkanDevice* pDevice, const Pipeline
     VkPipelineLayoutCreateInfo pli  = { };
     std::vector<VkDescriptorSetLayout> descriptorSetLayouts(desc.numDescriptorSetLayouts);
 
-    for (U32 i = 0; i < desc.numDescriptorSetLayouts; ++i) {
-
+    for (U32 i = 0; i < desc.numDescriptorSetLayouts; ++i) 
+    {
         VulkanDescriptorSetLayout* pSetLayout = static_cast<VulkanDescriptorSetLayout*>(desc.ppDescriptorLayouts[i]);
         descriptorSetLayouts[i] = pSetLayout->get();
-    
     }
 
     // TODO: Maybe we can cache the pipeline layout?
@@ -356,18 +367,16 @@ void VulkanPipelineState::destroy(VulkanDevice* pDevice)
 {   
     R_DEBUG(R_CHANNEL_VULKAN, "Destroying vulkan pipeline state...");
 
-    if (m_pipelineLayout) {
-    
+    if (m_pipelineLayout) 
+    {
         vkDestroyPipelineLayout(pDevice->get(), m_pipelineLayout, nullptr);
         m_pipelineLayout = nullptr;
-    
     }
     
-    if (m_pipeline) {
-
+    if (m_pipeline) 
+    {
         vkDestroyPipeline(pDevice->get(), m_pipeline, nullptr);
         m_pipeline = nullptr;    
-
     }
 }
 
@@ -397,14 +406,13 @@ ErrType VulkanGraphicsPipelineState::initialize(VulkanDevice* pDevice, const Gra
 
     result = createLayout(pDevice, desc);
     
-    if (result != VK_SUCCESS) {
-    
+    if (result != VK_SUCCESS) 
+    {
         R_ERR(R_CHANNEL_VULKAN, "Failed to create pipeline state layout.");
 
         destroy(pDevice);
 
         return REC_RESULT_FAILED;
-    
     }
 
     ci.sType                = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -419,7 +427,8 @@ ErrType VulkanGraphicsPipelineState::initialize(VulkanDevice* pDevice, const Gra
     ci.pMultisampleState    = &multisampleState;
     ci.stageCount           = 0;
     
-    if (desc.pVS) {
+    if (desc.pVS) 
+    {
         shaderStages[ci.stageCount]         = { };
         shaderStages[ci.stageCount].module  = pShaderCache->getCachedShaderModule(pDevice, desc.pVS);
         shaderStages[ci.stageCount].stage   = VK_SHADER_STAGE_VERTEX_BIT;
@@ -428,7 +437,8 @@ ErrType VulkanGraphicsPipelineState::initialize(VulkanDevice* pDevice, const Gra
         ci.stageCount += 1;
     }
 
-    if (desc.pPS) {
+    if (desc.pPS) 
+    {
         shaderStages[ci.stageCount]         = { };
         shaderStages[ci.stageCount].module  = pShaderCache->getCachedShaderModule(pDevice, desc.pPS);
         shaderStages[ci.stageCount].stage   = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -442,14 +452,13 @@ ErrType VulkanGraphicsPipelineState::initialize(VulkanDevice* pDevice, const Gra
 
     result = vkCreateGraphicsPipelines(device, nullptr, 1, &ci, nullptr, &m_pipeline);
    
-    if (result != VK_SUCCESS) {
-    
+    if (result != VK_SUCCESS) 
+    {
         R_ERR(R_CHANNEL_VULKAN, "Failed to create vulkan pipeline state.");
         
         destroy(pDevice);
         
         return REC_RESULT_FAILED;
-    
     }
 
     return REC_RESULT_OK;
@@ -465,14 +474,13 @@ ErrType VulkanComputePipelineState::initialize(VulkanDevice* pDevice, const Comp
     
     result = createLayout(pDevice, desc);
 
-    if (result != VK_SUCCESS) {
-    
+    if (result != VK_SUCCESS) 
+    {
         R_ERR(R_CHANNEL_VULKAN, "Failed to create pipeline layout for Compute pipelinestate...");
         
         destroy(pDevice);
         
         return REC_RESULT_FAILED;
-    
     }
 
     createInfo.sType        = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
@@ -485,14 +493,13 @@ ErrType VulkanComputePipelineState::initialize(VulkanDevice* pDevice, const Comp
 
     result = vkCreateComputePipelines(device, nullptr, 1, &createInfo, nullptr, &m_pipeline);
 
-    if (result != VK_SUCCESS) {
-
+    if (result != VK_SUCCESS) 
+    {
         R_ERR(R_CHANNEL_VULKAN, "Failed to create compute pipeline state!");
 
         destroy(pDevice);
 
         return REC_RESULT_FAILED;
-
     }
 
     return REC_RESULT_OK;

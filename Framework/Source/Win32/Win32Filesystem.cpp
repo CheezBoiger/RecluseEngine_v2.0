@@ -23,14 +23,15 @@ ErrType File::readFrom(FileBufferData* pFile, const std::string& filePath)
 
     result = file.open(filePath, "r");
 
-    if (file.isOpen()) {
+    if (file.isOpen()) 
+    {
         DWORD sz        = (DWORD)file.getFileSz();
 
-        pFile->buffer.resize(sz);
-        result = file.read(pFile->buffer.data(), pFile->buffer.size());
+        pFile->resize(sz);
+        result = file.read(pFile->data(), pFile->size());
         file.close();
         
-        R_DEBUG(R_CHANNEL_WIN32, "Read %d bytes of data from file: %s", pFile->buffer.size(), filePath.c_str());
+        R_DEBUG(R_CHANNEL_WIN32, "Read %d bytes of data from file: %s", pFile->size(), filePath.c_str());
     }
 
     return result;
@@ -44,11 +45,12 @@ ErrType File::writeTo(FileBufferData* pFile, const std::string& filePath)
     
     result = file.open(filePath, "w");
     
-    if (file.isOpen()) {
-        result = file.write(pFile->buffer.data(), pFile->buffer.size());
+    if (file.isOpen()) 
+    {
+        result = file.write(pFile->data(), pFile->size());
         file.close();
 
-        R_DEBUG(R_CHANNEL_WIN32, "Wrote %d bytes of data to file: %s", pFile->buffer.size(), filePath.c_str());
+        R_DEBUG(R_CHANNEL_WIN32, "Wrote %d bytes of data to file: %s", pFile->size(), filePath.c_str());
     }
 
     return result;
@@ -57,42 +59,52 @@ ErrType File::writeTo(FileBufferData* pFile, const std::string& filePath)
 
 ErrType File::open(const std::string& filePath, char* access)
 {
-    if (m_isOpen) {
-
+    if (m_isOpen) 
+    {
         R_ERR(R_CHANNEL_WIN32, "This File is already open...");
 
         return REC_RESULT_OK;
-
     }
 
     DWORD acc = 0;
     DWORD o = OPEN_EXISTING;
     U64 len = strlen(access);
 
-    for (U32 i = 0; i < len; ++i) {
-        if (access[i] == 'w') {
+    for (U32 i = 0; i < len; ++i) 
+    {
+        if (access[i] == 'w') 
+        {
             acc |= GENERIC_WRITE;
             o = CREATE_ALWAYS;
-        } else if (access[i] == 'r') {
+        } 
+        else if (access[i] == 'r') 
+        {
             acc |= GENERIC_READ; 
-        } else if (access[i] == '+') {
+        } 
+        else if (access[i] == '+') 
+        {
             acc |= FILE_APPEND_DATA;
         }
     }
 
-    if ((acc & (FILE_APPEND_DATA))) {
+    if ((acc & (FILE_APPEND_DATA))) 
+    {
         o = OPEN_ALWAYS;
     }
     
-    HANDLE handle = CreateFile(filePath.c_str(),
-        acc, 
-        0, 
-        NULL, 
-        o, 
-        FILE_ATTRIBUTE_NORMAL, 
-        NULL);
+    HANDLE handle = CreateFile
+                        (
+                            filePath.c_str(),
+                            acc, 
+                            0, 
+                            NULL, 
+                            o, 
+                            FILE_ATTRIBUTE_NORMAL, 
+                            NULL
+                        );
 
-    if (handle == INVALID_HANDLE_VALUE) {
+    if (handle == INVALID_HANDLE_VALUE) 
+    {
         R_ERR(R_CHANNEL_WIN32, "Failed to open file: %s", filePath.c_str());
         return REC_RESULT_FAILED;
     }
@@ -106,13 +118,16 @@ ErrType File::open(const std::string& filePath, char* access)
 
 void File::close()
 {
-    if (m_fileHandle) {
-        
+    if (m_fileHandle) 
+    {    
         BOOL closed = CloseHandle((HANDLE)m_fileHandle);
-        if (closed) {
+        if (closed) 
+        {
             m_fileHandle    = nullptr;
             m_isOpen        = false;
-        } else {
+        } 
+        else 
+        {
             R_ERR(R_CHANNEL_WIN32, "Failed to close file!");
         }
     }
@@ -124,12 +139,11 @@ ErrType File::write(void* ptr, U64 szBytes)
     DWORD numBytesWritten   = 0;
     BOOL isWritten          = WriteFile(m_fileHandle, ptr, (DWORD)szBytes, &numBytesWritten, 0);
 
-    if (!isWritten) {
-    
+    if (!isWritten) 
+    {
         R_ERR(R_CHANNEL_WIN32, "Failed to write to file...");
 
         return REC_RESULT_FAILED;
-
     }
 
     return REC_RESULT_OK;
@@ -139,23 +153,24 @@ ErrType File::write(void* ptr, U64 szBytes)
 ErrType File::read(void* ptr, U64 szBytes)
 {
     // Return invalid if we are requesting to read nothing...
-    if (szBytes == 0) {
+    if (szBytes == 0) 
+    {
         return REC_RESULT_INVALID_ARGS;
     }
 
     DWORD bytesRead = 0;
     BOOL isRead     = ReadFile((HANDLE)m_fileHandle, ptr, szBytes, &bytesRead, NULL);
 
-    if (!isRead) {
-
+    if (!isRead) 
+    {
         R_ERR(R_CHANNEL_WIN32, "Failed to read to file!");
 
         return REC_RESULT_FAILED;
-
     }
 
     // zero bytes read means we probably reached end of file...
-    if (bytesRead == 0) {
+    if (bytesRead == 0) 
+    {
         return REC_RESULT_FAILED;
     }
 

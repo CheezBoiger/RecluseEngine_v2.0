@@ -13,7 +13,8 @@ class VulkanDevice;
 struct QueueFamily;
 
 // Vulkan queue implementation, inherits from GraphicsQueue API.
-class VulkanQueue {
+class VulkanQueue 
+{
 public:
     VulkanQueue(VkQueueFlags type, B32 isPresentSupported = false) 
         : m_queue(nullptr)

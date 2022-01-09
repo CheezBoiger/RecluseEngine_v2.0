@@ -11,7 +11,8 @@ namespace Recluse {
 
 // ShaderBuilder, handles high level shading languages, and transforms them into
 // bytecode to be read to the gpu.
-class R_PUBLIC_API ShaderBuilder {
+class R_PUBLIC_API ShaderBuilder 
+{
 public:
     ShaderBuilder(ShaderIntermediateCode imm)
         : m_imm(imm) { }
@@ -34,8 +35,13 @@ public:
 
 private:
 
-    virtual ErrType onCompile(const std::vector<char>& srcCode, std::vector<char>& byteCode, 
-        ShaderLang lang, ShaderType shaderType) 
+    virtual ErrType onCompile
+                        (
+                            const std::vector<char>& srcCode, 
+                            std::vector<char>& byteCode, 
+                            ShaderLang lang, 
+                            ShaderType shaderType
+                        ) 
         { return REC_RESULT_NOT_IMPLEMENTED; }
 
     ShaderIntermediateCode m_imm;

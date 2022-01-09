@@ -30,7 +30,8 @@ static void printLog(const LogMessage* log)
     char* color     = R_COLOR_RESET;
     char* logStr    = "";
 
-    switch (log->type) {
+    switch (log->type) 
+    {
         case LogWarn:       color = R_COLOR_YELLOW;     logStr = "W"; break;
         case LogDebug:      color = R_COLOR_MAGENTA;    logStr = "D"; break;
         case LogVerbose:    color = R_COLOR_CYAN;       logStr = "V"; break;
@@ -49,28 +50,26 @@ ErrType displayFunction(void* data)
 {
     (void)data;
 
-    while (isLogging) {
-
+    while (isLogging) 
+    {
         LogMessage* pLog    = nullptr;
         pLog                = loggingQueue->getHead();
 
-        if (pLog) {
-
+        if (pLog) 
+        {
             // TODO: Include the timestamp as well.
             printLog(pLog);
             // Remove the log
             loggingQueue->dequeue();
-
         }
     }
 
     // Check last time if there are any more logs to display before dropping out.
-    while (loggingQueue->getHead() != NULL) {
-
+    while (loggingQueue->getHead() != NULL) 
+    {
         LogMessage* pLog = loggingQueue->getHead();
         printLog(pLog);
         loggingQueue->dequeue();
-
     }
 
     return REC_RESULT_OK;
@@ -78,10 +77,9 @@ ErrType displayFunction(void* data)
 
 Log::~Log()
 {
-    if (loggingQueue && isLogging) {
-
+    if (loggingQueue && isLogging) 
+    {
         loggingQueue->store(*this);
-
     }
 }
 
@@ -94,12 +92,12 @@ void LoggingQueue::store(const Log& log)
 
     ScopedLock lck(m_mutex);
 
-    if (!m_head) {
-
+    if (!m_head) 
+    {
         SizeT newCursor = m_cursor;
     
-        if ((newCursor + alignedSzBytes) >= (m_pool->getBaseAddress() + poolSzBytes)) {
-
+        if ((newCursor + alignedSzBytes) >= (m_pool->getBaseAddress() + poolSzBytes)) 
+        {
             newCursor   = m_pool->getBaseAddress();
             m_cursor    = newCursor;
 
@@ -115,21 +113,20 @@ void LoggingQueue::store(const Log& log)
 
         // Cursor should be after tail.
         m_cursor            = newCursor + alignedSzBytes;
-
-    } else {
-
+    } 
+    else 
+    {
         PtrType addrHead    = (PtrType)m_head;
         PtrType temp        = m_cursor + alignedSzBytes;
 
-        if (temp >= (m_pool->getBaseAddress() + poolSzBytes)) {
-
+        if (temp >= (m_pool->getBaseAddress() + poolSzBytes)) 
+        {
             m_cursor    = m_pool->getBaseAddress();
             temp        = m_cursor + alignedSzBytes;
-
         }
 
-        if (m_cursor != addrHead) {
-
+        if (m_cursor != addrHead) 
+        {
             LogNode* newNode = (LogNode*)m_cursor;
             newNode->~LogNode();
             new (newNode) LogNode;
@@ -142,7 +139,6 @@ void LoggingQueue::store(const Log& log)
             
             m_cursor            = temp;
         }
-
     }
 }
 
@@ -151,18 +147,17 @@ void LoggingQueue::dequeue()
 {
     ScopedLock scoped(m_mutex);
 
-    if (m_tail != m_head) {
-
+    if (m_tail != m_head) 
+    {
         m_head->logMessage.type = LogDontStore;
         LogNode* node           = m_head;
         m_head                  = m_head->pNext;
         node->~LogNode();
-
-    } else {
-
+    } 
+    else 
+    {
         m_tail = nullptr;
         m_head = nullptr;
-
     }
 }
 
@@ -178,12 +173,11 @@ void LoggingQueue::initialize(U64 maxLogs)
     m_pool              = new MemoryPool(szTotalBytes);
 
     // Preinitialize the ring buffer full of logs.
-    for (U64 i = 0; i < m_pool->getTotalSizeBytes(); i += szLogNode) {
-    
+    for (U64 i = 0; i < m_pool->getTotalSizeBytes(); i += szLogNode) 
+    {
         U64 addr        = m_pool->getBaseAddress() + i;
         LogNode* node   = (LogNode*)addr;
         new (node) LogNode;
-    
     }
 
     m_cursor = m_pool->getBaseAddress();
@@ -192,15 +186,15 @@ void LoggingQueue::initialize(U64 maxLogs)
 
 void LoggingQueue::cleanup()
 {
-    if (m_mutex) {
-    
+    if (m_mutex) 
+    {
         destroyMutex(m_mutex);
     
         m_mutex = nullptr;
-    
     }
 
-    if (m_pool) {
+    if (m_pool) 
+    {
         delete m_pool;
         m_pool = nullptr;
     }
@@ -209,7 +203,8 @@ void LoggingQueue::cleanup()
 
 void Log::initializeLoggingSystem()
 {
-    if (!loggingQueue) {
+    if (!loggingQueue) 
+    {
         loggingQueue = rlsMalloc<LoggingQueue>(sizeof(LoggingQueue));
         loggingQueue->initialize();
     }
@@ -227,13 +222,12 @@ void Log::destroyLoggingSystem()
     isLogging = false;
     joinThread(&displayThread);
 
-    if (loggingQueue) {
-
+    if (loggingQueue) 
+    {
         loggingQueue->cleanup();
 
         rlsFree<LoggingQueue>(loggingQueue);
         loggingQueue = nullptr;   
-
     }
 
 }

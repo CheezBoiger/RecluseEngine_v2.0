@@ -35,9 +35,11 @@ class Primitive;
 struct RenderCommand;
 class RenderCommandList;
 
-struct RenderMessage : public JobMessage {
+struct RenderMessage : public JobMessage 
+{
 public:
-    enum Request {
+    enum Request 
+    {
         PAUSE,
         RESUME,
         SHUTDOWN,
@@ -49,22 +51,23 @@ public:
     Request req;
 };
 
-enum RenderPassType : U32 {
-
-  RENDER_PREZ = 0x0001,
-  RENDER_SHADOW = 0x0002,
-  RENDER_PARTICLE = 0x0004,
-  RENDER_GBUFFER = 0x0008,
-  RENDER_HAS_MATERIAL = 0x0010,
-  RENDER_FORWARD_OPAQUE = 0x0020,
-  RENDER_FORWARD_TRANSPARENT = 0x0040,
-  RENDER_HAZE = 0x0080
+enum RenderPassType : U32 
+{
+    RENDER_PREZ = 0x0001,
+    RENDER_SHADOW = 0x0002,
+    RENDER_PARTICLE = 0x0004,
+    RENDER_GBUFFER = 0x0008,
+    RENDER_HAS_MATERIAL = 0x0010,
+    RENDER_FORWARD_OPAQUE = 0x0020,
+    RENDER_FORWARD_TRANSPARENT = 0x0040,
+    RENDER_HAZE = 0x0080
 };
 
 typedef U32 RenderPassTypeFlags;
 
 
-enum QualitySetting {
+enum QualitySetting
+{
     QUALITY_NONE,
     QUALITY_LOW,
     QUALITY_MEDIUM,
@@ -72,15 +75,18 @@ enum QualitySetting {
     QUALITY_BEST
 };
 
-struct MeshDescription {
+struct MeshDescription 
+{
 };
 
 
-struct MaterialDescription {
+struct MaterialDescription 
+{
 
 };
 
-struct RendererConfigs {
+struct RendererConfigs 
+{
     U32 renderWidth;
     U32 renderHeight;
     U32 buffering;
@@ -98,7 +104,8 @@ struct RendererConfigs {
 // Top level rendering engine. Implements Render Harware Interface, and 
 // manages all resources and states created in game graphics. This will usually
 // implement any render passes and stages of the graphics pipeline.
-class R_PUBLIC_API Renderer : public EngineModule<Renderer> {
+class R_PUBLIC_API Renderer : public EngineModule<Renderer> 
+{
 public:
     void initialize(void* pWindowHandle, const RendererConfigs& configs);
     void cleanUp();
@@ -154,13 +161,16 @@ private:
     SceneBufferDefinitions  m_sceneBuffers;
     RenderCommandList*      m_renderCommands;
 
-    struct CommandKey {
-        union {
+    struct CommandKey 
+    {
+        union 
+        {
             U64 value;
         };
     };
 
-    struct KeySorter {
+    struct KeySorter 
+    {
         U64 start;
         U64 end;
 

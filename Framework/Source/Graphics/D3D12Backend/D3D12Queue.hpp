@@ -8,7 +8,8 @@ namespace Recluse {
 
 class D3D12Device;
 
-class D3D12Queue {
+class D3D12Queue 
+{
 public:
     D3D12Queue(GraphicsQueueTypeFlags queueType)
         : m_queue(nullptr) { }

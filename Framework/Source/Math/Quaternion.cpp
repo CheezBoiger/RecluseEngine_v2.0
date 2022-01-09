@@ -113,8 +113,8 @@ Quaternion slerp(const Quaternion& a, const Quaternion& b, F32 t)
     Quaternion q;
     Quaternion q1;
 
-    if (fabs(d) > kThreshold) {
-        
+    if (fabs(d) > kThreshold) 
+    {    
         q = a + (b - a) * t;
         return normalize(q);
     
@@ -122,8 +122,8 @@ Quaternion slerp(const Quaternion& a, const Quaternion& b, F32 t)
 
     q = b;
 
-    if (d < 0.0f) {
-    
+    if (d < 0.0f) 
+    {
         q = -b;
         d = -d;
     

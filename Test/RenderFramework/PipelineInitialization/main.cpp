@@ -23,19 +23,22 @@
 
 using namespace Recluse;
 
-struct Vertex {
+struct Vertex 
+{
     F32 position[2];
 };
 
 
-Vertex vertices[] = {
+Vertex vertices[] = 
+{
     { -1.0f,  0.0f },
     {  0.0f, -1.0f },
     {  1.0f,  0.0f }
 };
 
 
-struct ConstData {
+struct ConstData 
+{
     float color[4];
     float pad[2];
     float offset[2];
@@ -82,12 +85,10 @@ int main(int c, char* argv[])
 
     std::vector<RenderPass*> passes;
 
-    if (!pInstance) { 
-    
+    if (!pInstance) 
+    { 
         R_ERR("TEST", "Failed to create instance!");
-    
         return -1;
-    
     }
 
     {
@@ -100,10 +101,9 @@ int main(int c, char* argv[])
         result = pInstance->initialize(app, flags);
     }
     
-    if (result != REC_RESULT_OK) {
-    
-        R_ERR("TEST", "Failed to initialize context!");
-        
+    if (result != REC_RESULT_OK) 
+    {
+        R_ERR("TEST", "Failed to initialize context!");   
     }
 
     pAdapter = pInstance->getGraphicsAdapters()[0];
@@ -121,10 +121,9 @@ int main(int c, char* argv[])
         result = pAdapter->createDevice(info, &pDevice);
     }
 
-    if (result != REC_RESULT_OK) {
-    
+    if (result != REC_RESULT_OK) 
+    {
         R_ERR("TEST", "Failed to create device!");
-    
     }
 
     {
@@ -138,16 +137,14 @@ int main(int c, char* argv[])
         result = pDevice->reserveMemory(desc);
     }
 
-    if (result != REC_RESULT_OK) {
-    
+    if (result != REC_RESULT_OK) 
+    {
         R_ERR("TEST", "Failed to reserve memory on device!");
-    
     }
 
-    if (result != REC_RESULT_OK) {
-    
-        R_ERR("TEST", "Failed to create swapchain!");    
-
+    if (result != REC_RESULT_OK) 
+    {
+        R_ERR("TEST", "Failed to create swapchain!");
     }
 
     {
@@ -165,10 +162,9 @@ int main(int c, char* argv[])
         result = pDevice->createDescriptorSetLayout(&pLayout, desc);
     }
 
-    if (result != REC_RESULT_OK) {
-    
-        R_ERR("TEST", "Failed to create descriptor set layout...");    
-
+    if (result != REC_RESULT_OK) 
+    { 
+        R_ERR("TEST", "Failed to create descriptor set layout...");
     }
     
     
@@ -185,24 +181,23 @@ int main(int c, char* argv[])
 
         passes.resize(pSwapchain->getDesc().desiredFrames);
 
-        for (U32 i = 0; i < passes.size(); ++i) {
+        for (U32 i = 0; i < passes.size(); ++i) 
+        {
             GraphicsResourceView* pView = pSwapchain->getFrameView(i);
             desc.ppRenderTargetViews[0] = pView;
             result = pDevice->createRenderPass(&passes[i], desc);      
-            if (result != REC_RESULT_OK) {
-
+            if (result != REC_RESULT_OK) 
+            {
                 R_ERR("TEST", "Failed to create render pass...");
-
             }
         }
     }
 
     result = pDevice->createDescriptorSet(&pSet, pLayout); 
 
-    if (result != REC_RESULT_OK) {
-    
+    if (result != REC_RESULT_OK) 
+    {
         R_ERR("TEST", "Failed to create descriptor set!");
-    
     }
 
     {
@@ -215,11 +210,12 @@ int main(int c, char* argv[])
         result = pDevice->createResource(&pData, desc, RESOURCE_STATE_VERTEX_AND_CONST_BUFFER);
     }
 
-    if (result != REC_RESULT_OK) {
-
+    if (result != REC_RESULT_OK) 
+    {
         R_ERR("TEST", "Failed to create data resource!");    
-
-    } else {
+    } 
+    else 
+    {
         
         ConstData dat = { };
         dat.color[0] = 1.0f;
@@ -280,10 +276,9 @@ int main(int c, char* argv[])
         region.szBytes = sizeof(vertices);
         result = pDevice->copyBufferRegions(pVertexBuffer, pTemp, &region, 1);
 
-        if (result != REC_RESULT_OK) {
-    
+        if (result != REC_RESULT_OK) 
+        {
             R_ERR("TEST", "Failed to stream vertex data to vertex buffer!");
-    
         }    
 
         pDevice->destroyResource(pTemp);
@@ -302,35 +297,31 @@ int main(int c, char* argv[])
         std::string shaderSource = currDir + "/" + "test.vs.glsl";
         result = File::readFrom(&file, shaderSource);
 
-        if (result != REC_RESULT_OK) {
-    
+        if (result != REC_RESULT_OK) 
+        {
             R_ERR("TEST", "Could not find %s", shaderSource.c_str());
-    
         }
 
-        result = pBuilder->compile(pVertShader, file.buffer.data(), file.buffer.size(), SHADER_LANG_GLSL, SHADER_TYPE_VERTEX);
+        result = pBuilder->compile(pVertShader, file.data(), file.size(), SHADER_LANG_GLSL, SHADER_TYPE_VERTEX);
 
-        if (result != REC_RESULT_OK) {
-    
+        if (result != REC_RESULT_OK) 
+        {
             R_ERR("TEST", "Failed to compile glsl shader vert!");
-    
         }
 
         shaderSource = currDir + "/" + "test.fs.glsl";
         result = File::readFrom(&file, shaderSource);
             
-        if (result != REC_RESULT_OK) {
-    
+        if (result != REC_RESULT_OK) 
+        {
             R_ERR("TEST", "Could not find %s", shaderSource.c_str());
-    
         }
 
-        result = pBuilder->compile(pFragShader, file.buffer.data(), file.buffer.size(), SHADER_LANG_GLSL, SHADER_TYPE_FRAGMENT);
+        result = pBuilder->compile(pFragShader, file.data(), file.size(), SHADER_LANG_GLSL, SHADER_TYPE_FRAGMENT);
         
-        if (result != REC_RESULT_OK) {
-    
+        if (result != REC_RESULT_OK) 
+        {
             R_ERR("TEST", "Failed to compile glsl shader frag!");
-    
         }
         
         GraphicsPipelineStateDesc desc = { };
@@ -391,7 +382,8 @@ int main(int c, char* argv[])
 
     U64 offset = 0;
 
-    while (!pWindow->shouldClose()) {
+    while (!pWindow->shouldClose()) 
+    {
         RealtimeTick tick = RealtimeTick::getTick();
         R_VERBOSE("Game", "%f", tick.getDeltaTimeS());
         updateConstData(pData, tick);

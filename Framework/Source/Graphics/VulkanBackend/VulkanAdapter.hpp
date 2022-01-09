@@ -12,17 +12,20 @@ namespace Recluse {
 class VulkanDevice;
 
 
-class VulkanAdapter : public GraphicsAdapter {
+class VulkanAdapter : public GraphicsAdapter 
+{
 public:
     ~VulkanAdapter();
 
-    VulkanAdapter(VulkanAdapter&& a) { 
+    VulkanAdapter(VulkanAdapter&& a) 
+    { 
         m_devices = std::move(a.m_devices); 
         m_phyDevice = a.m_phyDevice; 
         m_instance = a.m_instance;
     }
 
-    VulkanAdapter& operator=(VulkanAdapter&& a) {
+    VulkanAdapter& operator=(VulkanAdapter&& a) 
+    {
         m_devices = std::move(a.m_devices);
         m_phyDevice = a.m_phyDevice;
         m_instance = a.m_instance;
@@ -41,13 +44,9 @@ public:
 
     U32 VulkanAdapter::findMemoryType(U32 filter, ResourceMemoryUsage usage) const;
 
-    VkPhysicalDevice operator()() const {
-        return m_phyDevice;
-    }
+    VkPhysicalDevice operator()() const { return m_phyDevice; }
 
-    VkPhysicalDevice get() const { 
-        return m_phyDevice;
-    }
+    VkPhysicalDevice get() const { return m_phyDevice; }
 
     VkPhysicalDeviceProperties getProperties() const;
     VkPhysicalDeviceMemoryProperties getMemoryProperties() const;

@@ -13,7 +13,8 @@ class VulkanCommandList;
 
 // Vulkan resource inherits from GraphicsResource, which is what will
 // be used by the engine API.
-class VulkanResource : public GraphicsResource {
+class VulkanResource : public GraphicsResource 
+{
 public:
     VulkanResource(GraphicsResourceDescription& desc)
         : GraphicsResource(desc) 
@@ -58,7 +59,8 @@ private:
 };
 
 
-class VulkanBuffer : public VulkanResource {
+class VulkanBuffer : public VulkanResource 
+{
 public:
     VulkanBuffer(GraphicsResourceDescription& desc) 
         : VulkanResource(desc)
@@ -79,7 +81,8 @@ private:
 };
 
 
-class VulkanImage : public VulkanResource {
+class VulkanImage : public VulkanResource 
+{
 public:
     VulkanImage(GraphicsResourceDescription& desc, 
             VkImage image = VK_NULL_HANDLE, 

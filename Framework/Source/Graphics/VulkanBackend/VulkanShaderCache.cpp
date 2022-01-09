@@ -19,7 +19,8 @@ VkShaderModule ShaderCache::getCachedShaderModule(VulkanDevice* pDevice, Shader*
 {
     Hash64 hash = pShader->getCrc();
 
-    if (isShaderCached(pShader)) {
+    if (isShaderCached(pShader)) 
+    {
         return cache[hash];
     }
 
@@ -33,13 +34,16 @@ ErrType ShaderCache::cacheShader(VulkanDevice* pDevice, Shader* pShader)
     VkResult result             = VK_SUCCESS;
     VkShaderModule shaderModule = VK_NULL_HANDLE;
 
-    if (!isShaderCached(pShader)) {
+    if (!isShaderCached(pShader)) 
+    {
         VkShaderModuleCreateInfo info = { };
         info.sType      = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
         info.pCode      = (uint32_t*)pShader->getByteCode();
         info.codeSize   = (size_t)pShader->getSzBytes();
         result = vkCreateShaderModule(pDevice->get(), &info, nullptr, &shaderModule);
-        if (result != VK_SUCCESS) {
+        
+        if (result != VK_SUCCESS) 
+        {
             return REC_RESULT_FAILED;
         }
         
@@ -58,8 +62,10 @@ B32 ShaderCache::isShaderCached(Shader* pShader)
 
 void ShaderCache::clearCache(VulkanDevice* pDevice)
 {
-    for (auto keyval : cache) {
-        if (keyval.second) {
+    for (auto keyval : cache) 
+    {
+        if (keyval.second) 
+        {
             vkDestroyShaderModule(pDevice->get(), keyval.second, nullptr);
         }
     }

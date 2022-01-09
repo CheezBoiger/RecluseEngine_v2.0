@@ -10,7 +10,8 @@
 namespace Recluse {
 
 
-enum ShaderIntermediateCode {
+enum ShaderIntermediateCode 
+{
     INTERMEDIATE_UNKNOWN,
     INTERMEDIATE_DXIL,
     INTERMEDIATE_DXBC,
@@ -18,14 +19,16 @@ enum ShaderIntermediateCode {
 };
 
 
-enum ShaderLang {
+enum ShaderLang 
+{
     SHADER_LANG_GLSL,
     SHADER_LANG_HLSL,
     SHADER_LANG_COUNT
 };
 
 
-enum ShaderType {
+enum ShaderType 
+{
     SHADER_TYPE_NONE            = (0),
     SHADER_TYPE_VERTEX          = (1<<0),
     SHADER_TYPE_HULL            = (1<<1),
@@ -49,7 +52,8 @@ enum ShaderType {
 typedef U32 ShaderTypeFlags;
 
 
-class Shader final {
+class Shader final 
+{
 public:
     ~Shader() { }
 

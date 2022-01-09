@@ -10,13 +10,15 @@
 namespace Recluse {
 
 
-struct LogNode {
+struct LogNode 
+{
     struct LogNode* pNext;
     LogMessage      logMessage;
 };
 
 
-class LoggingQueue {
+class LoggingQueue 
+{
 public:
     LoggingQueue() 
         : m_pool(nullptr)
@@ -50,7 +52,8 @@ private:
 };
 
 
-class LogDisplay {
+class LogDisplay 
+{
 public:
     LogDisplay(U64 delayNs = 0ull)
         : m_displayThread(nullptr) { }

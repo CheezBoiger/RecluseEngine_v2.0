@@ -17,7 +17,8 @@ ErrType D3D12Sampler::initialize(D3D12Device* pDevice, const SamplerCreateDesc& 
 
     m_samplerCPUAddr = pDevice->createSampler(samplerDesc);
 
-    if (m_samplerCPUAddr.ptr == 0) {
+    if (m_samplerCPUAddr.ptr == 0) 
+    {
         R_ERR(R_CHANNEL_D3D12, "Failed to alloc sampler from device!");
         return REC_RESULT_FAILED;
     }

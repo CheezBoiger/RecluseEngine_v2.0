@@ -208,7 +208,7 @@ struct meow_dump
 };
 extern "C" meow_dump *MeowDumpTo;
 meow_dump *MeowDumpTo;
-#define MEOW_DUMP_STATE(T, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, ptr) \
+#define MEOW_DUMP_STATE(T, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, baseAddress) \
 if(MeowDumpTo) \
 { \
     MeowDumpTo->xmm[0] = xmm0; \
@@ -219,7 +219,7 @@ if(MeowDumpTo) \
     MeowDumpTo->xmm[5] = xmm5; \
     MeowDumpTo->xmm[6] = xmm6; \
     MeowDumpTo->xmm[7] = xmm7; \
-    MeowDumpTo->Ptr = ptr; \
+    MeowDumpTo->Ptr = baseAddress; \
     MeowDumpTo->Title = T; \
     ++MeowDumpTo; \
 }

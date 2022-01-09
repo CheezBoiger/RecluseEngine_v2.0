@@ -14,7 +14,8 @@
 namespace Recluse {
 
 
-struct R_PUBLIC_API ApplicationInfo {
+struct R_PUBLIC_API ApplicationInfo 
+{
     const char* appName;
     const char* engineName;
     U32         appMajor : 10;
@@ -29,7 +30,8 @@ struct R_PUBLIC_API ApplicationInfo {
 class GraphicsAdapter;
 
 
-class GraphicsInstance {
+class GraphicsInstance 
+{
 public:
     GraphicsInstance(GraphicsAPI api)
         : m_api(api) { }
@@ -39,7 +41,8 @@ public:
     static R_PUBLIC_API GraphicsInstance* createInstance(enum GraphicsAPI api = GRAPHICS_API_VULKAN);
     static R_PUBLIC_API ErrType destroyInstance(GraphicsInstance* pInstance);
 
-    R_PUBLIC_API ErrType initialize(const ApplicationInfo& appInfo, EnableLayerFlags flags) { 
+    R_PUBLIC_API ErrType initialize(const ApplicationInfo& appInfo, EnableLayerFlags flags) 
+    { 
         ErrType err = onInitialize(appInfo, flags);
         queryGraphicsAdapters();
         return err;
@@ -69,7 +72,8 @@ protected:
 
 private:
     // Destroys the context, should be called by the destroyContext() function.
-    void destroy() { 
+    void destroy() 
+    { 
         freeGraphicsAdapters();
         onDestroy();
     }

@@ -8,21 +8,24 @@ namespace Recluse {
 
 class GraphicsResource;
 
-enum BindType {
+enum BindType 
+{
     BIND_TYPE_GRAPHICS,
     BIND_TYPE_COMPUTE,
     BIND_TYPE_RAY_TRACE,
 };
 
 
-enum ResourceDimension {
+enum ResourceDimension 
+{
     RESOURCE_DIMENSION_BUFFER,
     RESOURCE_DIMENSION_1D,
     RESOURCE_DIMENSION_2D,
     RESOURCE_DIMENSION_3D
 };
 
-enum ResourceViewDimension {
+enum ResourceViewDimension 
+{
     RESOURCE_VIEW_DIMENSION_BUFFER,
     RESOURCE_VIEW_DIMENSION_1D,
     RESOURCE_VIEW_DIMENSION_1D_ARRAY,
@@ -35,7 +38,8 @@ enum ResourceViewDimension {
 };
 
 
-enum ResourceMemoryUsage {
+enum ResourceMemoryUsage 
+{
     RESOURCE_MEMORY_USAGE_CPU_ONLY,
     RESOURCE_MEMORY_USAGE_GPU_ONLY,
     RESOURCE_MEMORY_USAGE_CPU_TO_GPU,
@@ -44,7 +48,8 @@ enum ResourceMemoryUsage {
 };
 
 
-enum ResourceUsage {
+enum ResourceUsage 
+{
     RESOURCE_USAGE_VERTEX_BUFFER            = (1 << 0),
     RESOURCE_USAGE_INDEX_BUFFER             = (1 << 1),
     RESOURCE_USAGE_STORAGE_BUFFER           = (1 << 2),
@@ -62,7 +67,8 @@ enum ResourceUsage {
 typedef U32 ResourceUsageFlags;
 
 
-enum ResourceViewType {
+enum ResourceViewType 
+{
     RESOURCE_VIEW_TYPE_RENDER_TARGET,
     RESOURCE_VIEW_TYPE_SHADER_RESOURCE,
     RESOURCE_VIEW_TYPE_STORAGE_BUFFER,
@@ -71,7 +77,8 @@ enum ResourceViewType {
 };
 
 
-enum ResourceState {
+enum ResourceState 
+{
     RESOURCE_STATE_RENDER_TARGET,
     RESOURCE_STATE_SHADER_RESOURCE,
     RESOURCE_STATE_COPY_DST,
@@ -86,14 +93,16 @@ enum ResourceState {
 };
 
 
-enum FrameBuffering {
+enum FrameBuffering 
+{
     FRAME_BUFFERING_SINGLE, // Single immediate run.
     FRAME_BUFFERING_DOUBLE, // VSync
     FRAME_BUFFERING_TRIPLE // Triple buffering.
 };
 
 
-enum R_PUBLIC_API LayerFeatures {
+enum R_PUBLIC_API LayerFeatures 
+{
     LAYER_FEATURE_RAY_TRACING_BIT   = (1 << 0),
     LAYER_FEATURE_MESH_SHADING_BIT  = (1 << 1),
     LAYER_FEATURE_DEBUG_VALIDATION_BIT         = (1 << 2),
@@ -104,7 +113,8 @@ enum R_PUBLIC_API LayerFeatures {
 typedef U32 EnableLayerFlags;
 
 
-enum GraphicsAPI {
+enum GraphicsAPI 
+{
     GRAPHICS_API_SOFTWARE_RASTERIZER,
     GRAPHICS_API_SOFTWARE_RAYTRACER,
     GRAPHICS_API_VULKAN,
@@ -114,7 +124,8 @@ enum GraphicsAPI {
 };
 
 
-enum DescriptorBindType {
+enum DescriptorBindType 
+{
     DESCRIPTOR_SHADER_RESOURCE_VIEW,
     DESCRIPTOR_STORAGE_BUFFER,
     DESCRIPTOR_STORAGE_IMAGE,
@@ -123,13 +134,15 @@ enum DescriptorBindType {
 };
 
 
-enum IndexType {
+enum IndexType 
+{
     INDEX_TYPE_UINT16,
     INDEX_TYPE_UINT32
 };
 
 
-struct Viewport {
+struct Viewport 
+{
     F32 x;
     F32 y;
     F32 width;
@@ -139,7 +152,8 @@ struct Viewport {
 };
 
 
-struct Rect {
+struct Rect 
+{
     F32 x, 
         y, 
         width, 
@@ -147,14 +161,16 @@ struct Rect {
 };
 
 
-struct CopyBufferRegion {
+struct CopyBufferRegion 
+{
     U64               srcOffsetBytes;
     U16               dstOffsetBytes;
     U64               szBytes;
 };
 
 
-struct SwapchainCreateDescription {
+struct SwapchainCreateDescription 
+{
     FrameBuffering  buffering;
     U32             desiredFrames;
     U32             renderWidth;
@@ -163,7 +179,8 @@ struct SwapchainCreateDescription {
 };
 
 
-enum SamplerAddressMode {
+enum SamplerAddressMode 
+{
     SAMPLER_ADDRESS_MODE_REPEAT,
     SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT,
     SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
@@ -172,47 +189,52 @@ enum SamplerAddressMode {
 };
 
 
-enum Filter {
+enum Filter 
+{
     FILTER_LINEAR,
     FILTER_NEAREST,
     FILTER_CUBIC_IMG
 };
 
 
-enum SamplerMipMapMode {
+enum SamplerMipMapMode 
+{
     SAMPLER_MIP_MAP_MODE_NEAREST,
     SAMPLER_MIP_MAP_MODE_LINEAR
 };
 
 
-enum CompareOp {
-  COMPARE_OP_NEVER,
-  COMPARE_OP_LESS,
-  COMPARE_OP_EQUAL,
-  COMPARE_OP_LESS_OR_EQUAL,
-  COMPARE_OP_GREATER,
-  COMPARE_OP_NOT_EQUAL,
-  COMPARE_OP_GREATER_OR_EQUAL,
-  COMPARE_OP_ALWAYS
+enum CompareOp 
+{
+    COMPARE_OP_NEVER,
+    COMPARE_OP_LESS,
+    COMPARE_OP_EQUAL,
+    COMPARE_OP_LESS_OR_EQUAL,
+    COMPARE_OP_GREATER,
+    COMPARE_OP_NOT_EQUAL,
+    COMPARE_OP_GREATER_OR_EQUAL,
+    COMPARE_OP_ALWAYS
 };
 
 
-struct SamplerCreateDesc {
-    SamplerAddressMode addrModeU;
-    SamplerAddressMode addrModeV;
-    SamplerAddressMode addrModeW;
-    F32 minLod;
-    F32 maxLod;
-    Filter magFilter;
-    Filter minFilter;
-    CompareOp compareOp;
-    SamplerMipMapMode mipMapMode;
-    Bool anisotropyEnable;
-    Bool compareEnable;
+struct SamplerCreateDesc 
+{
+    SamplerAddressMode  addrModeU;
+    SamplerAddressMode  addrModeV;
+    SamplerAddressMode  addrModeW;
+    F32                 minLod;
+    F32                 maxLod;
+    Filter              magFilter;
+    Filter              minFilter;
+    CompareOp           compareOp;
+    SamplerMipMapMode   mipMapMode;
+    Bool                anisotropyEnable;
+    Bool                compareEnable;
 };
 
 
-enum GraphicsQueueType {
+enum GraphicsQueueType 
+{
     QUEUE_TYPE_PRESENT      = (1 << 0),
     QUEUE_TYPE_GRAPHICS     = (1 << 1),
     QUEUE_TYPE_COMPUTE      = (1 << 2),

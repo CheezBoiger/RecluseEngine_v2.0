@@ -9,7 +9,8 @@ namespace Recluse {
 class GraphicsResourceView;
 
 // Render Pass info to be used for rendering.
-class RenderPass {
+class RenderPass 
+{
 public:
     virtual ~RenderPass() { }
 

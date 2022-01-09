@@ -7,7 +7,8 @@ namespace Recluse {
 
 // Realtime Tick object. Handles Obtaining the 
 // tick from the operating system clock.
-class RealtimeTick {
+class RealtimeTick 
+{
 public:
 
     // Get the realtime tick.

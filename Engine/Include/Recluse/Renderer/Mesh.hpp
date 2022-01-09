@@ -21,21 +21,24 @@ namespace Engine {
 
 
 // Per mesh information.
-struct R_PUBLIC_API PerMeshTransform {
+struct R_PUBLIC_API PerMeshTransform 
+{
     Matrix44 world;
     Matrix44 worldToViewClip;
     Matrix44 n;
 };
 
 
-struct R_PUBLIC_API SubMesh {
+struct R_PUBLIC_API SubMesh 
+{
     std::string name;
     U64         offset;
     U64         numVertices;
 };
 
 
-class Mesh {
+class Mesh 
+{
 public:
     virtual ~Mesh() { }
 
@@ -50,8 +53,10 @@ public:
 
     R_PUBLIC_API const std::vector<SubMesh*>& getSubMeshes() { return m_submeshes; };
 
-    R_PUBLIC_API void addSubmeshes(U32 numSubmeshes, SubMesh* pSubmeshes) {
-        for (U32 i = 0; i < numSubmeshes; ++i) { 
+    R_PUBLIC_API void addSubmeshes(U32 numSubmeshes, SubMesh* pSubmeshes) 
+    {
+        for (U32 i = 0; i < numSubmeshes; ++i) 
+        { 
             m_subMeshMap[pSubmeshes[i].name] = pSubmeshes[i];
             m_submeshes.push_back(&m_subMeshMap[pSubmeshes[i].name]);
         }
@@ -67,7 +72,8 @@ private:
 
 typedef GPUBuffer PerInstancedMeshBuffer;
 
-class MeshInstanced {
+class MeshInstanced 
+{
 public:
     
     ErrType initializeInstanced();

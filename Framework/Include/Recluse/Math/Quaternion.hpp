@@ -11,8 +11,10 @@
 namespace Recluse {
 
 
-struct R_PUBLIC_API Quaternion {
-    union {
+struct R_PUBLIC_API Quaternion 
+{
+    union 
+    {
         struct { F32 x, y, z, w; };
         __m128 row;
     };

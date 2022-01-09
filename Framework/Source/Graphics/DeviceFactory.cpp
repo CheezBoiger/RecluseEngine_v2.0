@@ -17,7 +17,8 @@ namespace Recluse {
 
 GraphicsInstance* GraphicsInstance::createInstance(enum GraphicsAPI api)
 {
-    switch (api) {
+    switch (api) 
+    {
 #if defined RCL_DX12
         case GRAPHICS_API_D3D12:
         {
@@ -45,12 +46,10 @@ GraphicsInstance* GraphicsInstance::createInstance(enum GraphicsAPI api)
 
 ErrType GraphicsInstance::destroyInstance(GraphicsInstance* pInstance)
 {
-    if (!pInstance) {
-
-        R_ERR("Graphics", "Null pointer passed to %s", __FUNCTION__);    
-
+    if (!pInstance) 
+    {
+        R_ERR("Graphics", "Null pointer passed to %s", __FUNCTION__);
         return REC_RESULT_NULL_PTR_EXCEPTION;
-    
     }
 
     pInstance->destroy();

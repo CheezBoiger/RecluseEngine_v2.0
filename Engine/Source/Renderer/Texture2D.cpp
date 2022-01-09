@@ -12,28 +12,34 @@ namespace Engine {
 
 class TextureViewIDHasher {
 public:
-    SizeT operator()(const TextureViewID& h) const {
+    SizeT operator()(const TextureViewID& h) const 
+    {
         // Not idea, but we gotta...
         return recluseHash((void*)&h, sizeof(TextureViewID));
     }
 };
 
 
-class TextureViewIDComparer {
+class TextureViewIDComparer 
+{
 public:
-  Bool operator()(const TextureViewID& lh, const TextureViewID& rh) const {
-    return (lh.dimension == rh.dimension) && 
-           (lh.format == rh.format) &&
-           (lh.resourceCrC == rh.resourceCrC) && 
-           (lh.type == rh.type);
-  }
+    Bool operator()(const TextureViewID& lh, const TextureViewID& rh) const 
+    {
+        return (lh.dimension == rh.dimension) && 
+                (lh.format == rh.format) &&
+                (lh.resourceCrC == rh.resourceCrC) && 
+                (lh.type == rh.type);
+    }
 };
 
 // Texture Management Handler.
-std::unordered_map<TextureViewID, 
-                   TextureView*, 
-                   TextureViewIDHasher,
-                   TextureViewIDComparer> gTextureViewLUT;
+static std::unordered_map
+    <
+        TextureViewID, 
+        TextureView*, 
+        TextureViewIDHasher,
+        TextureViewIDComparer
+    > gTextureViewLUT;
 
 ErrType Texture2D::initialize(Renderer* pRenderer, ResourceFormat format, U32 width, U32 height, U32 arrayLevel, U32 mips)
 {
@@ -52,7 +58,8 @@ ErrType Texture2D::initialize(Renderer* pRenderer, ResourceFormat format, U32 wi
     desc.samples        = 1;
     desc.format         = format;
 
-    switch (desc.format) {
+    switch (desc.format) 
+    {
         case RESOURCE_FORMAT_D24_UNORM_S8_UINT:
         case RESOURCE_FORMAT_D32_FLOAT:
         case RESOURCE_FORMAT_D32_FLOAT_S8_UINT:
@@ -62,8 +69,8 @@ ErrType Texture2D::initialize(Renderer* pRenderer, ResourceFormat format, U32 wi
 
     result = pDevice->createResource(&m_resource, desc, RESOURCE_STATE_SHADER_RESOURCE);
 
-    if (result != REC_RESULT_OK) {
-    
+    if (result != REC_RESULT_OK) 
+    {
         R_ERR("Texture2D", "Failed to create texture2D resource.");
         return result;
     }
@@ -83,11 +90,10 @@ void TextureResource::genCrC(void* pUnique, U64 sz)
 
 void Texture2D::destroy(Renderer* pRenderer)
 {
-    if (m_resource) {
-    
+    if (m_resource) 
+    {
         pRenderer->getDevice()->destroyResource(m_resource);
-        m_resource = nullptr;
-        
+        m_resource = nullptr;   
     }
 }
 
@@ -119,7 +125,8 @@ ErrType TextureView::initialize(Renderer* pRenderer, Texture2D* pTexture, Resour
 
 ErrType TextureView::destroy(Renderer* pRenderer)
 {
-    if (m_view) {
+    if (m_view) 
+    {
         pRenderer->getDevice()->destroyResourceView(m_view);
         m_view = nullptr;
     }
@@ -136,7 +143,8 @@ TextureView* Texture2D::getTextureView(const TextureViewID& id)
 
 TextureView* lookupTextureView(const TextureViewID& id)
 {
-    if (gTextureViewLUT.find(id) == gTextureViewLUT.end()) {
+    if (gTextureViewLUT.find(id) == gTextureViewLUT.end()) 
+    {
         return nullptr;
     }
 

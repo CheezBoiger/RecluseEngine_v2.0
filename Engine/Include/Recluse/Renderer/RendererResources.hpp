@@ -19,8 +19,8 @@ const ShaderIntermediateCode intermediateCode  = INTERMEDIATE_SPIRV;
 
 static const char* getBinaryShaderExtension()
 {
-    switch (intermediateCode) {
-    
+    switch (intermediateCode) 
+    {
         case INTERMEDIATE_DXBC: return "dxbc";
         case INTERMEDIATE_DXIL: return "dxil";
         case INTERMEDIATE_SPIRV: return "spv";
@@ -34,7 +34,8 @@ static std::string getBinaryShaderPath(const std::string& relativePath)
 }
 
 
-class R_PUBLIC_API GPUBuffer {
+class R_PUBLIC_API GPUBuffer 
+{
 public:
     GPUBuffer()
         : m_pResource(nullptr)
@@ -57,13 +58,16 @@ private:
 };
 
 
-class R_PUBLIC_API IndexBuffer : public GPUBuffer {
+class R_PUBLIC_API IndexBuffer : public GPUBuffer 
+{
 public:
     IndexBuffer() { }
 
-    ErrType initializeIndices(GraphicsDevice* pDevice, IndexType type, U64 totalIndices) {
+    ErrType initializeIndices(GraphicsDevice* pDevice, IndexType type, U64 totalIndices) 
+    {
         U64 szIndex = 0;
-        switch (type) {
+        switch (type) 
+        {
             case INDEX_TYPE_UINT16: szIndex = 2ull; break;
             case INDEX_TYPE_UINT32:
             default: szIndex = 4ull; break;
@@ -82,11 +86,13 @@ private:
 };
 
 
-class R_PUBLIC_API VertexBuffer : public GPUBuffer {
+class R_PUBLIC_API VertexBuffer : public GPUBuffer 
+{
 public:
     VertexBuffer() { }
 
-    ErrType initializeVertices(GraphicsDevice* pDevice, U64 perVertexSzBytes, U64 totalVertices) {
+    ErrType initializeVertices(GraphicsDevice* pDevice, U64 perVertexSzBytes, U64 totalVertices) 
+    {
         m_perVertexSzBytes = perVertexSzBytes;
         m_totalVertices = totalVertices;
         return initialize(pDevice, perVertexSzBytes * totalVertices, RESOURCE_USAGE_VERTEX_BUFFER);
@@ -98,7 +104,8 @@ private:
 };
 
 
-struct SceneBufferDefinitions {
+struct SceneBufferDefinitions 
+{
     std::vector<GPUBuffer*> pSceneViewBuffers;
     Texture2D* pSceneAlbedo;
     Texture2D* pSceneAo;

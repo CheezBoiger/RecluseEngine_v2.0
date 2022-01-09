@@ -11,7 +11,8 @@ namespace Recluse {
 
 class VulkanDevice;
 
-struct VulkanMemory {
+struct VulkanMemory 
+{
     VkDeviceMemory  deviceMemory;
     VkDeviceSize    offsetBytes;
     VkDeviceSize    sizeBytes;
@@ -21,10 +22,12 @@ struct VulkanMemory {
 
 // Vulkan allocator manager, handles memory heaps provided by Vulkan API.
 //
-class VulkanAllocator {
+class VulkanAllocator 
+{
 public:
 
-    enum VulkanAllocUpdateFlag {
+    enum VulkanAllocUpdateFlag 
+    {
         VULKAN_ALLOC_NONE_FLAG              = 0,
         VULKAN_ALLOC_UPDATE_FLAG            = ( 1 << 0 ),
         VULKAN_ALLOC_SET_FRAME_INDEX        = ( 1 << 1 ),
@@ -35,7 +38,8 @@ public:
 
     typedef U32 VulkanAllocUpdateFlags;
 
-    struct UpdateConfig {
+    struct UpdateConfig 
+    {
         VulkanAllocUpdateFlags flags;
         U32 frameIndex          : 16;
         U32 garbageBufferCount  : 16;
@@ -49,9 +53,12 @@ public:
 
     ~VulkanAllocator() { }
 
-    ErrType initialize(Allocator* pAllocator, 
-                       VulkanMemoryPool* poolRef,
-                       U32 garbageBufferCount) 
+    ErrType initialize
+                (
+                    Allocator* pAllocator, 
+                    VulkanMemoryPool* poolRef,
+                    U32 garbageBufferCount
+                ) 
     {
         m_allocator = pAllocator; 
         m_pool = poolRef;

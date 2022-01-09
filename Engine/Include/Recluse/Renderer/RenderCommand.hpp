@@ -14,32 +14,36 @@
 namespace Recluse {
 namespace Engine {
 
-enum CommandOp {
+enum CommandOp 
+{
     COMMAND_OP_DRAWABLE_INSTANCED,
     COMMAND_OP_DRAWABLE_INDEXED_INSTANCED,
     COMMAND_OP_DISPATCH
 };
 
 
-enum VertexAttribFlag {
-  VERTEX_ATTRIB_POSITION   = 0x0001,
-  VERTEX_ATTRIB_NORMAL     = 0x0002,
-  VERTEX_ATTRIB_TEXCOORDS  = 0x0004,
-  VERTEX_ATTRIB_TANGENT    = 0x0008,
-  VERTEX_ATTRIB_BITANGENT  = 0x0010,
-  VERTEX_ATTRIB_BONES      = 0x0020,
+enum VertexAttribFlag 
+{
+    VERTEX_ATTRIB_POSITION   = 0x0001,
+    VERTEX_ATTRIB_NORMAL     = 0x0002,
+    VERTEX_ATTRIB_TEXCOORDS  = 0x0004,
+    VERTEX_ATTRIB_TANGENT    = 0x0008,
+    VERTEX_ATTRIB_BITANGENT  = 0x0010,
+    VERTEX_ATTRIB_BONES      = 0x0020,
 };
 
 typedef U32 VertexAttribFlags;
 typedef U32 RenderPassTypeFlags;
 
-struct RenderCommand {
+struct RenderCommand 
+{
     CommandOp               op          : 24;   //
     U32                     stencilRef  : 8;    // 4 B
 };
 
 
-struct DrawableRenderCommand : public RenderCommand {
+struct DrawableRenderCommand : public RenderCommand 
+{
     GraphicsResource**  ppVertexBuffers;                // 16 B
     U64*                pOffsets;                       // 24 B
     PerMeshTransform*   pPerMeshTransform;              // 32 B
@@ -48,7 +52,8 @@ struct DrawableRenderCommand : public RenderCommand {
 };
 
 
-struct IndexedInstancedSubMesh {
+struct IndexedInstancedSubMesh 
+{
     Material* pMaterial;                        // 
     U32 indexCount;                             // 
     U32 firstInstance;                          // 
@@ -58,7 +63,8 @@ struct IndexedInstancedSubMesh {
 };
 
 
-struct DrawIndexedRenderCommand : public DrawableRenderCommand {
+struct DrawIndexedRenderCommand : public DrawableRenderCommand 
+{
     GraphicsResource*           pIndexBuffer;   // 56 B
     IndexedInstancedSubMesh*    pSubMeshes;     // 64 B
     U64                         offset;         // 72 B
@@ -67,7 +73,8 @@ struct DrawIndexedRenderCommand : public DrawableRenderCommand {
 };
 
 
-struct InstancedSubMesh {
+struct InstancedSubMesh 
+{
     Material* pMaterial;                        //
     U32 vertexCount;                            // 
     U32 instanceCount;                          // 
@@ -76,7 +83,8 @@ struct InstancedSubMesh {
 };
 
 
-struct DrawRenderCommand : public DrawableRenderCommand {
+struct DrawRenderCommand : public DrawableRenderCommand 
+{
     InstancedSubMesh*   pSubMeshes;             // 56 B
     U32                 numSubMeshes;           // 60 B
                                                 // 64 B
@@ -85,7 +93,8 @@ struct DrawRenderCommand : public DrawableRenderCommand {
 
 // High level render command list, which will be read by the low level backend, once the render thread
 // is kicked off. Should reset every frame render.
-class R_PUBLIC_API RenderCommandList {
+class R_PUBLIC_API RenderCommandList 
+{
 public:
     RenderCommandList()
         : m_pAllocator(nullptr)

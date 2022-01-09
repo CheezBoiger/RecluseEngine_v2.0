@@ -13,7 +13,8 @@ namespace Recluse {
 //! String class object. Defines the standard type for string objects in Recluse engine.
 //! Note:   This does not absolutely need to be used for applications, but would be desirable
 //!         in order to manually handle string types in C++.
-class String {
+class String 
+{
 public:
     String() : m_size(0), m_cStr(nullptr) { }
     String(String&& other);

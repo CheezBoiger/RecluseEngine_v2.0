@@ -6,6 +6,9 @@
 #include "Recluse/Serialization/Hasher.hpp"
 
 namespace Recluse {
+
+class Shader;
+
 namespace ShaderMap {
 
 

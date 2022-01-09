@@ -5,7 +5,8 @@
 
 namespace Recluse {
 
-enum ResourceFormat {
+enum ResourceFormat 
+{
     RESOURCE_FORMAT_R8G8B8A8_UNORM,
     RESOURCE_FORMAT_R16G16B16A16_FLOAT,
     RESOURCE_FORMAT_R11G11B10_FLOAT,

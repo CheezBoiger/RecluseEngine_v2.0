@@ -12,7 +12,8 @@ namespace Recluse {
 
 class D3D12Device;
 
-class D3D12DescriptorHeap {
+class D3D12DescriptorHeap 
+{
 public:
 
     D3D12DescriptorHeap(D3D12Device* pDevice);
@@ -27,28 +28,46 @@ public:
 
     UINT getMaxEntries() const { return m_maxEntries; }
 
-    D3D12_CPU_DESCRIPTOR_HANDLE createRenderTargetView(
-        U32 entryOffset, const D3D12_RENDER_TARGET_VIEW_DESC& desc, 
-        ID3D12Resource* pResource);
+    D3D12_CPU_DESCRIPTOR_HANDLE createRenderTargetView
+                                    (
+                                        U32 entryOffset, 
+                                        const D3D12_RENDER_TARGET_VIEW_DESC& desc, 
+                                        ID3D12Resource* pResource
+                                    );
 
-    D3D12_CPU_DESCRIPTOR_HANDLE createDepthStencilView(
-        U32 entryOffset, const D3D12_DEPTH_STENCIL_VIEW_DESC& desc,
-        ID3D12Resource* pResource);
+    D3D12_CPU_DESCRIPTOR_HANDLE createDepthStencilView
+                                    (
+                                        U32 entryOffset, 
+                                        const D3D12_DEPTH_STENCIL_VIEW_DESC& desc,
+                                        ID3D12Resource* pResource
+                                    );
 
-    D3D12_CPU_DESCRIPTOR_HANDLE createShaderResourceView(
-        U32 entryOffset, const D3D12_SHADER_RESOURCE_VIEW_DESC& desc,
-        ID3D12Resource* pResource);
+    D3D12_CPU_DESCRIPTOR_HANDLE createShaderResourceView
+                                    (
+                                        U32 entryOffset, 
+                                        const D3D12_SHADER_RESOURCE_VIEW_DESC& desc,
+                                        ID3D12Resource* pResource
+                                    );
 
-    D3D12_CPU_DESCRIPTOR_HANDLE createUnorderedAccessView(
-        U32 entryOffset, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc,
-        ID3D12Resource* pResource);
+    D3D12_CPU_DESCRIPTOR_HANDLE createUnorderedAccessView
+                                    (
+                                        U32 entryOffset, 
+                                        const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc,
+                                        ID3D12Resource* pResource
+                                    );
 
-    D3D12_CPU_DESCRIPTOR_HANDLE createConstantBufferView(
-        U32 entryOffset, const D3D12_CONSTANT_BUFFER_VIEW_DESC& desc,
-        ID3D12Resource* pResource);
+    D3D12_CPU_DESCRIPTOR_HANDLE createConstantBufferView
+                                    (
+                                        U32 entryOffset, 
+                                        const D3D12_CONSTANT_BUFFER_VIEW_DESC& desc,
+                                        ID3D12Resource* pResource
+                                    );
 
-    D3D12_CPU_DESCRIPTOR_HANDLE createSampler(
-        U32 entryOffset, const D3D12_SAMPLER_DESC& desc);
+    D3D12_CPU_DESCRIPTOR_HANDLE createSampler
+                                    (
+                                        U32 entryOffset, 
+                                        const D3D12_SAMPLER_DESC& desc
+                                    );
 
     D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandle(U32 entryOffset = 0u);
 
@@ -62,13 +81,15 @@ private:
 };
 
 
-struct DescriptorTable {
+struct DescriptorTable 
+{
     U64 offset;
     U64 entries;
 };
 
 
-class D3D12DescriptorSetLayout : public DescriptorSetLayout {
+class D3D12DescriptorSetLayout : public DescriptorSetLayout 
+{
 public:
     
     ID3D12RootSignature* get() { return m_pRootSignature; }
@@ -78,7 +99,8 @@ private:
 };
 
 
-class D3D12DescriptorSet : public DescriptorSet {
+class D3D12DescriptorSet : public DescriptorSet 
+{
 public:
 
 private:
@@ -87,24 +109,35 @@ private:
 };
 
 
-class DescriptorHeapManager {
+class DescriptorHeapManager 
+{
 public:
 
-    D3D12_CPU_DESCRIPTOR_HANDLE createSampler(const D3D12_SAMPLER_DESC& desc) {
+    D3D12_CPU_DESCRIPTOR_HANDLE createSampler(const D3D12_SAMPLER_DESC& desc) 
+    {
         UINT maxEntries = m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER].pHeap->getMaxEntries();
         UINT currOffset = m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER].currentOffset;
-        if (currOffset < maxEntries) {
+
+        if (currOffset < maxEntries) 
+        {
             m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER].currentOffset += 1;
-        } else {
+        } 
+        else 
+        {
             m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER].currentOffset = 0;
         }
-        return m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER].pHeap->createSampler(
-            m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER].currentOffset, desc);
+
+        return m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER].pHeap->createSampler
+                                                                    (
+                                                                        m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER].currentOffset, 
+                                                                        desc
+                                                                    );
     }
     
 private:
 
-    struct HeapMetaData {
+    struct HeapMetaData 
+    {
         D3D12DescriptorHeap* pHeap;
         UINT64              currentOffset;
     };

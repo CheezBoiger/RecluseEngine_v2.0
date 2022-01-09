@@ -18,19 +18,27 @@ ErrType D3D12CommandList::initialize(D3D12Device* pDevice, GraphicsQueueTypeFlag
     m_allocators.resize(bufferResources.size());
     m_graphicsCommandLists.resize(m_allocators.size());
 
-    for (U32 i = 0; i < m_allocators.size(); ++i) {
+    for (U32 i = 0; i < m_allocators.size(); ++i) 
+    {
+        m_allocators[i] = bufferResources[i].pAllocator;
 
-        m_allocators[i] = bufferResources[i].pAllocator;        
-        result = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_allocators[i], 
-            nullptr, __uuidof(ID3D12GraphicsCommandList4), (void**)&m_graphicsCommandLists[i]);
+        result = device->CreateCommandList
+                            (
+                                0, 
+                                D3D12_COMMAND_LIST_TYPE_DIRECT, 
+                                m_allocators[i], 
+                                nullptr, 
+                                __uuidof(ID3D12GraphicsCommandList4), 
+                                (void**)&m_graphicsCommandLists[i]
+                            );
 
-        if (FAILED(result)) {
-            
+        if (FAILED(result)) 
+        {    
             R_ERR(R_CHANNEL_D3D12, "Failed to create d3d12 graphics command list!");
             
             return destroy();
-
         }
+
         // Close first.
         m_graphicsCommandLists[i]->Close();
 

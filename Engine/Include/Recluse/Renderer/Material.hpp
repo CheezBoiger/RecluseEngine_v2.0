@@ -15,14 +15,16 @@ class Renderer;
 class TextureView;
 
 // Texture Lookup, this is also used as helpers in texture handlers.
-struct TextureViewID {
-    Hash64 resourceCrC;
-    ResourceViewType type;
-    ResourceFormat format;
-    ResourceViewDimension dimension;
+struct TextureViewID 
+{
+    Hash64                  resourceCrC;
+    ResourceViewType        type;
+    ResourceFormat          format;
+    ResourceViewDimension   dimension;
 };
 
-class R_PUBLIC_API TextureResource {
+class R_PUBLIC_API TextureResource 
+{
 public:
     TextureResource() { }
     virtual ~TextureResource() { }
@@ -34,7 +36,8 @@ private:
     Hash64 m_crc;
 };
 
-class R_PUBLIC_API Texture2D : public TextureResource {
+class R_PUBLIC_API Texture2D : public TextureResource 
+{
 public:
     Texture2D() 
         : m_resource(nullptr) { }
@@ -54,7 +57,8 @@ private:
 };
 
 
-class R_PUBLIC_API TextureView : public TextureResource {
+class R_PUBLIC_API TextureView : public TextureResource 
+{
 public:
     TextureView()
         : m_texture(nullptr)
@@ -78,7 +82,8 @@ private:
 };
 
 
-enum SurfaceType {
+enum SurfaceType 
+{
     SURFACE_OPAQUE              = (1 << 0),
     SURFACE_TRANSPARENT         = (1 << 1),
     SURFACE_TRANSPARENT_CUTOUT  = (1 << 2),
@@ -91,7 +96,8 @@ enum SurfaceType {
 
 typedef U32 SurfaceTypeFlags;
 
-enum MaterialType {
+enum MaterialType 
+{
     MATERIAL_TYPE_PBR_ROUGH_METAL,
     MATERIAL_TYPE_PBR_GLOSS_SPEC,
     MATERIAL_TYPE_PHONG_DIFFUSE_SPEC,
@@ -108,7 +114,8 @@ enum MaterialType {
 #define R_MAT_LIGHTMAP      "LightMap"
 #define R_MAT_EMISSIVE      "Emissive"
 
-class Material {
+class Material 
+{
 public:
     virtual ~Material() { }
 

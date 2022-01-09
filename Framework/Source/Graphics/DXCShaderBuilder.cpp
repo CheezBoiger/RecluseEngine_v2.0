@@ -13,7 +13,8 @@ namespace Recluse {
 
 wchar_t* getShaderProfile(ShaderType type)
 {
-    switch (type) {
+    switch (type) 
+    {
         case SHADER_TYPE_VERTEX: return L"vs_6_0";
         case SHADER_TYPE_PIXEL: return L"ps_6_0";
         case SHADER_TYPE_COMPUTE: return L"cs_6_0"; 
@@ -22,7 +23,8 @@ wchar_t* getShaderProfile(ShaderType type)
 }
 
 
-class DXCShaderBuilder : public ShaderBuilder {
+class DXCShaderBuilder : public ShaderBuilder 
+{
 public:
     DXCShaderBuilder(ShaderIntermediateCode imm)
         : ShaderBuilder(imm) { }
@@ -44,20 +46,17 @@ public:
         
         hr = DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&library));
 
-        if (FAILED(hr)) {
-        
+        if (FAILED(hr)) 
+        {
             R_ERR("DXC", "Failed to create library for parsing!");
-
             return REC_RESULT_FAILED;
-        
         }
 
         hr = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler));
         
-        if (FAILED(hr)) {
-
-            R_ERR("DXC", "Failed to create dxc compiler!");        
-            
+        if (FAILED(hr)) 
+        {
+            R_ERR("DXC", "Failed to create dxc compiler!");   
             return REC_RESULT_FAILED;
 
         }
@@ -65,36 +64,38 @@ public:
         UINT32 srcSizeBytes = (UINT32)srcCode.size();
         hr = library->CreateBlobWithEncodingFromPinned(srcCode.data(), srcSizeBytes, CP_UTF8, &sourceBlob);
         
-        if (FAILED(hr)) {
+        if (FAILED(hr)) 
+        {
             R_ERR("DXC", "Failed to create a blob!!");
         }
 
-        if (getIntermediateCode() == INTERMEDIATE_SPIRV) {
+        if (getIntermediateCode() == INTERMEDIATE_SPIRV) 
+        {
             arguments[argCount++] = L"-spirv";
         }
         
-        hr = compiler->Compile(
-            sourceBlob, 
-            NULL, 
-            L"main", 
-            targetProfile, 
-            arguments, argCount, 
-            NULL, 0, 
-            NULL, &result);
+        hr = compiler->Compile
+            (
+                sourceBlob, 
+                NULL, 
+                L"main", 
+                targetProfile, 
+                arguments, argCount, 
+                NULL, 0, 
+                NULL, &result
+            );
 
-        if (FAILED(hr)) {
-
+        if (FAILED(hr)) 
+        {
             CComPtr<IDxcBlobEncoding> errorBlob;
             hr = result->GetErrorBuffer(&errorBlob);
 
-            if (SUCCEEDED(hr) && errorBlob) {
-
-                R_ERR("DXC", "Errors found: \n%s", (const char*)errorBlob->GetBufferPointer());    
-                
+            if (SUCCEEDED(hr) && errorBlob) 
+            {
+                R_ERR("DXC", "Errors found: \n%s", (const char*)errorBlob->GetBufferPointer());   
             }   
         
             return REC_RESULT_FAILED;
-     
         }
 
         CComPtr<IDxcBlob> code;

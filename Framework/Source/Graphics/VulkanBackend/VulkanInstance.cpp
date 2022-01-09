@@ -9,17 +9,18 @@
 namespace Recluse {
 
 
-static VKAPI_ATTR VkBool32 VKAPI_CALL recluseDebugCallback(
-  VkDebugReportFlagsEXT flags,
-  VkDebugReportObjectTypeEXT objType,
-  U64 obj,
-  size_t location,
-  I32 code,
-  const char* layerPrefix,
-  const char* msg,
-  void* usrData)
+static VKAPI_ATTR VkBool32 VKAPI_CALL recluseDebugCallback
+    (
+        VkDebugReportFlagsEXT flags,
+        VkDebugReportObjectTypeEXT objType,
+        U64 obj,
+        size_t location,
+        I32 code,
+        const char* layerPrefix,
+        const char* msg,
+        void* usrData
+    )
 {
-    
     R_DEBUG(R_CHANNEL_VULKAN, "Validation layer: %s\n", msg);
     //R_ASSERT(!(flags & VK_DEBUG_REPORT_ERROR_BIT_EXT), "");
     return VK_FALSE;
@@ -35,33 +36,34 @@ void VulkanInstance::setDebugCallback()
     ci.pfnCallback = recluseDebugCallback;
     auto vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)
         vkGetInstanceProcAddr(m_instance, "vkCreateDebugReportCallbackEXT");
-    if (!vkCreateDebugReportCallbackEXT) {
-    
+    if (!vkCreateDebugReportCallbackEXT) 
+    {
         R_ERR(R_CHANNEL_VULKAN, "Failed to initialize our vulkan reporting.");
         return;
     }
 
     VkResult result = vkCreateDebugReportCallbackEXT(m_instance, &ci, nullptr, &m_debugReportCallback);
 
-    if (result != VK_SUCCESS) {
-    
+    if (result != VK_SUCCESS) 
+    {
         R_ERR(R_CHANNEL_VULKAN, "Failed to create debug report callback!");
-    
     }
 }
 
 
 static std::vector<const char*> loadExtensions(EnableLayerFlags flags)
 {
-    std::vector<const char*> extensions = { 
-       VK_KHR_SURFACE_EXTENSION_NAME
+    std::vector<const char*> extensions = 
+        { 
+            VK_KHR_SURFACE_EXTENSION_NAME
 #if defined(RECLUSE_WINDOWS)
-    , VK_KHR_WIN32_SURFACE_EXTENSION_NAME
+            , VK_KHR_WIN32_SURFACE_EXTENSION_NAME
 #endif
-    , "VK_KHR_get_physical_device_properties2"
-    };
+            , "VK_KHR_get_physical_device_properties2"
+        };
 
-    if (flags & LAYER_FEATURE_DEBUG_VALIDATION_BIT) {
+    if (flags & LAYER_FEATURE_DEBUG_VALIDATION_BIT) 
+    {
         extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);    
     }
 
@@ -76,45 +78,44 @@ static void checkForValidExtensions(std::vector<const char*>& wantedExtensions)
 
     VkResult result = vkEnumerateInstanceExtensionProperties(nullptr, &count, nullptr);
 
-    if (result != VK_SUCCESS) {
-
+    if (result != VK_SUCCESS) 
+    {
         R_ERR(R_CHANNEL_VULKAN, "Failed to query for vulkan instance extensions!");
-
         return;
-
     }
 
     properties.resize(count);
     vkEnumerateInstanceExtensionProperties(nullptr, &count, properties.data());    
 
 
-    for (U32 i = 0; i < wantedExtensions.size(); ++i) {
-
+    for (U32 i = 0; i < wantedExtensions.size(); ++i) 
+    {
         B32 foundExtension = false;
 
-        for (U32 j = 0; j < properties.size(); ++j) {
-
-            if (strcmp(properties[j].extensionName, wantedExtensions[i]) == 0) {
-
-                R_DEBUG(R_CHANNEL_VULKAN, "Found extension %s : version %d ", 
-                    properties[j].extensionName, properties[j].specVersion);
+        for (U32 j = 0; j < properties.size(); ++j) 
+        {
+            if (strcmp(properties[j].extensionName, wantedExtensions[i]) == 0) 
+            {
+                R_DEBUG
+                    (
+                        R_CHANNEL_VULKAN, 
+                        "Found extension %s : version %d ", 
+                        properties[j].extensionName, 
+                        properties[j].specVersion
+                    );
 
                 foundExtension = true;
                 break;
             } 
-
         }
 
-        if (!foundExtension) {
+        if (!foundExtension) 
+        {
             // Not supported.
-
             R_WARN(R_CHANNEL_VULKAN, "Extension %s not supported.", wantedExtensions[i]);
-
             wantedExtensions.erase(wantedExtensions.begin() + i);
-
             --i;
         }
-
     }
 }
 
@@ -123,10 +124,13 @@ static std::vector<const char*> loadLayers(EnableLayerFlags flags)
 {
     std::vector<const char*> desiredLayers = { };
 
-    if (flags & LAYER_FEATURE_DEBUG_VALIDATION_BIT) {
+    if (flags & LAYER_FEATURE_DEBUG_VALIDATION_BIT) 
+    {
         desiredLayers.push_back("VK_LAYER_KHRONOS_validation");
     }
-    if (flags & LAYER_FEATURE_API_DUMP_BIT) {
+
+    if (flags & LAYER_FEATURE_API_DUMP_BIT) 
+    {
         desiredLayers.push_back("VK_LAYER_LUNARG_api_dump");
     }
 
@@ -144,38 +148,30 @@ void checkForValidLayers(std::vector<const char*>& wantedLayers)
     result = vkEnumerateInstanceLayerProperties(&count, layerProperties.data());
 
     // Seach and remove any layers that aren't available in the instance.
-    for (I32 i = 0; i < wantedLayers.size(); ++i) {
+    for (I32 i = 0; i < wantedLayers.size(); ++i) 
+    {
         B32 found = false;
-        for (U32 j = 0; j < layerProperties.size(); ++j) {
-
+        for (U32 j = 0; j < layerProperties.size(); ++j) 
+        {
             VkLayerProperties properties = layerProperties[j];
 
             // If 
-            if (strcmp(wantedLayers[i], properties.layerName) == 0) {
-
+            if (strcmp(wantedLayers[i], properties.layerName) == 0) 
+            {
                 found = true;    
-        
                 R_DEBUG(R_CHANNEL_VULKAN, "Found layer %s : version %d", properties.layerName, properties.specVersion);
-
                 break;
             }
-
         }
 
-        if (!found) {
-
+        if (!found) 
+        {
             // Remove and decrement search index by 1.
-
             R_WARN(R_CHANNEL_VULKAN, "%s was not found.", wantedLayers[i]);
-
             wantedLayers.erase(wantedLayers.begin() + i);
-
             --i;
-
         }
-
     }
-
 }
 
 
@@ -210,20 +206,21 @@ ErrType VulkanInstance::onInitialize(const ApplicationInfo& appInfo, EnableLayer
     createInfo.ppEnabledExtensionNames  = extensions.data();
 
     VkResult result = vkCreateInstance(&createInfo, nullptr, &m_instance);
-    if (result != VK_SUCCESS) {
+    
+    if (result != VK_SUCCESS) 
+    {
         nullify();
     }
 
     R_DEBUG(R_CHANNEL_VULKAN, "Application: %s\nEngine: %s", m_appName.c_str(), m_engineName.c_str());
 
-    if (flags & LAYER_FEATURE_DEBUG_VALIDATION_BIT) {
-    
+    if (flags & LAYER_FEATURE_DEBUG_VALIDATION_BIT) 
+    {
         setDebugCallback();
-    
     }
 
     m_engineVersion = nativeAppInfo.engineVersion;
-    m_appVersion = nativeAppInfo.applicationVersion;
+    m_appVersion    = nativeAppInfo.applicationVersion;
 
     return 0;
 }
@@ -240,15 +237,14 @@ void VulkanInstance::onDestroy()
 
     destroyDebugCallback();
 
-    if (m_instance) {
-
+    if (m_instance) 
+    {
         R_DEBUG(R_CHANNEL_VULKAN, "Destroying context...");
 
         vkDestroyInstance(m_instance, nullptr);
         nullify();
 
         R_DEBUG(R_CHANNEL_VULKAN, "Successfully destroyed context!")
-
     }
 }
 
@@ -264,7 +260,8 @@ void VulkanInstance::queryGraphicsAdapters()
     std::vector<VulkanAdapter> devices = VulkanAdapter::getAvailablePhysicalDevices(this);
     std::vector<GraphicsAdapter*> adapters(devices.size());
 
-    for (U32 i = 0; i < adapters.size(); ++i) {
+    for (U32 i = 0; i < adapters.size(); ++i) 
+    {
         adapters[i] = new VulkanAdapter(std::move(devices[i]));
     }
 
@@ -274,7 +271,8 @@ void VulkanInstance::queryGraphicsAdapters()
 
 void VulkanInstance::freeGraphicsAdapters()
 {
-    for (U32 i = 0; i < m_graphicsAdapters.size(); ++i) {
+    for (U32 i = 0; i < m_graphicsAdapters.size(); ++i) 
+    {
         delete m_graphicsAdapters[i];
     }
 }
@@ -282,19 +280,16 @@ void VulkanInstance::freeGraphicsAdapters()
 
 void VulkanInstance::destroyDebugCallback()
 {
-    if (m_debugReportCallback) {
-    
+    if (m_debugReportCallback) 
+    {
         auto vkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT)
             vkGetInstanceProcAddr(m_instance, "vkDestroyDebugReportCallbackEXT");
 
-        if (vkDestroyDebugReportCallbackEXT) {
-
+        if (vkDestroyDebugReportCallbackEXT) 
+        {
             vkDestroyDebugReportCallbackEXT(m_instance, m_debugReportCallback, nullptr);
-
             m_debugReportCallback = VK_NULL_HANDLE;
-
         }
-    
     }
 }
 } // Recluse
