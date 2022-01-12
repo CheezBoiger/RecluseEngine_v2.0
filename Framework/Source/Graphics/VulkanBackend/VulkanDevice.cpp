@@ -32,6 +32,7 @@ void checkAvailableDeviceExtensions(const VulkanAdapter* adapter, std::vector<co
 {
     std::vector<VkExtensionProperties> deviceExtensions = adapter->getDeviceExtensionProperties();
 
+    // Query all device extensions available for this device.
     for (U32 i = 0; i < extensions.size(); ++i) 
     {
         B32 found = false;
@@ -815,8 +816,11 @@ ErrType VulkanDevice::destroyCommandList(VulkanCommandList* pList)
 
 void VulkanDevice::prepare()
 {
+    // NOTE(): Get the current buffer index, this is usually the buffer that we recently have 
+    // access to.
     U32 currentBufferIndex = getCurrentBufferIndex();
 
+    // Reset the current buffer's command pools.
     for (U32 i = 0; i < m_queueFamilies.size(); ++i) 
     {
         VkCommandPool pool = m_queueFamilies[i].commandPools[currentBufferIndex];
@@ -828,6 +832,7 @@ void VulkanDevice::prepare()
         }
     }
 
+    // Reset this current command list.
     m_pPrimaryCommandList->setStatus(COMMAND_LIST_RESET);
 
     const VulkanAllocator::VulkanAllocUpdateFlags allocUpdate = 
@@ -840,6 +845,7 @@ void VulkanDevice::prepare()
     config.frameIndex           = currentBufferIndex;
     config.garbageBufferCount   = m_bufferCount;
 
+    // Call up allocators to update.
     for (U32 i = 0; i < RESOURCE_MEMORY_USAGE_COUNT; ++i) 
     {
         if (m_bufferAllocators[i])

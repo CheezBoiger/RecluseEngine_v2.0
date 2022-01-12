@@ -25,17 +25,28 @@ public:
     
     virtual ~EngineModule() { }
 
+    static ErrType initializeModule(Application* pApp)
+    {
+        return getMain()->initializeInstance(pApp);
+    }
+
+    static ErrType cleanUpModule(Application* pApp)
+    {
+        return getMain()->cleanUpInstance(pApp);
+    }
+
+private:
     virtual ErrType onInitializeModule(Application* pApp) { return REC_RESULT_NOT_IMPLEMENTED; }
     virtual ErrType onCleanUpModule(Application* pApp) { return REC_RESULT_NOT_IMPLEMENTED; }
     
-    ErrType initializeModule(Application* pApp) 
+    ErrType initializeInstance(Application* pApp) 
     {
         isActive() = true;
         m_sync = createMutex(R_STRINGIFY(ModuleImpl));
         return onInitializeModule(pApp); 
     }
 
-    ErrType cleanUpModule(Application* pApp) 
+    ErrType cleanUpInstance(Application* pApp) 
     { 
         ErrType result = onCleanUpModule(pApp);
         if (result == REC_RESULT_OK) 
@@ -46,6 +57,8 @@ public:
 
         return result; 
     }
+
+public:
 
     Bool& isActive() 
     {

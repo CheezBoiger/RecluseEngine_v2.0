@@ -100,8 +100,14 @@ public:
 
 protected:
 
-    virtual ErrType onInit() { return REC_RESULT_OK; }
-    virtual ErrType onCleanUp() { return REC_RESULT_OK; }
+    //! Application specific initialization. This requires 
+    //! individual app owners to initialize each module for their 
+    //! game system.
+    virtual ErrType onInit() = 0;
+    
+    //! Like onInit(), cleans up all application defined resources.
+    //! Requires all modules initialized, to be cleaned up manually as well.
+    virtual ErrType onCleanUp() = 0;
 
     void markInitialized() { m_initialized = true; } 
 

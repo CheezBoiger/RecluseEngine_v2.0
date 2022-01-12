@@ -32,17 +32,26 @@ static void printLog(const LogMessage* log)
 
     switch (log->type) 
     {
-        case LogWarn:       color = R_COLOR_YELLOW;     logStr = "W"; break;
-        case LogDebug:      color = R_COLOR_MAGENTA;    logStr = "D"; break;
-        case LogVerbose:    color = R_COLOR_CYAN;       logStr = "V"; break;
-        case LogError:      color = R_COLOR_RED;        logStr = "E"; break;        
-        case LogTrace:      color = R_COLOR_GREEN;      logStr = "T"; break;
-        case LogInfo:                                   logStr = "I"; break;
+        case LogWarn:       color = R_COLOR_YELLOW;     logStr = "Warn"; break;
+        case LogDebug:      color = R_COLOR_MAGENTA;    logStr = "Debug"; break;
+        case LogVerbose:    color = R_COLOR_CYAN;       logStr = "Verbose"; break;
+        case LogError:      color = R_COLOR_RED;        logStr = "Error"; break;        
+        case LogTrace:      color = R_COLOR_GREEN;      logStr = "Trace"; break;
+        case LogInfo:                                   logStr = "Info"; break;
         case LogMsg:
         default: break;
     }
 
-    printf("%s [%s] %s: %s" R_COLOR_RESET "\n", color, logStr, log->channel.c_str(), log->msg.c_str());
+    printf
+        (
+            "%s " R_COLOR_RESET "[%s%s" R_COLOR_RESET  "] %s: %s%s" R_COLOR_RESET "\n", 
+            color,
+            color, 
+            logStr,
+            log->channel.c_str(),
+            color,
+            log->msg.c_str()
+        );
 }
 
 

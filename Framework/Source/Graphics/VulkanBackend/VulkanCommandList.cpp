@@ -12,12 +12,12 @@ namespace Recluse {
 
 
 ErrType VulkanCommandList::initialize
-    (
-        VulkanDevice* pDevice, 
-        U32 queueFamilyIndex, 
-        VkCommandPool* pools, 
-        U32 poolCount
-    )
+                                (
+                                    VulkanDevice* pDevice, 
+                                    U32 queueFamilyIndex, 
+                                    VkCommandPool* pools, 
+                                    U32 poolCount
+                                )
 {
     ErrType result                                  = REC_RESULT_OK;
     VkDevice device                                 = pDevice->get();
@@ -25,6 +25,9 @@ ErrType VulkanCommandList::initialize
     m_buffers.resize(poolCount);
     m_pools.resize(m_buffers.size());
 
+    // For each command pool, be sure to allocate a command buffer handle
+    // that reference our primary. We need to have one command buffer
+    // for each frame reference.
     for (U32 j = 0; j < poolCount; ++j) 
     {
         VkCommandPool pool                    = pools[j];
@@ -53,6 +56,8 @@ ErrType VulkanCommandList::initialize
 
 void VulkanCommandList::destroy(VulkanDevice* pDevice)
 {
+    // Destroy all buffers, ensure they correspond to the proper 
+    // command pool.
     for (U32 i = 0; i < m_buffers.size(); ++i) 
     {    
         if (m_buffers[i] != VK_NULL_HANDLE) 
@@ -73,6 +78,7 @@ void VulkanCommandList::beginCommandList(U32 idx)
     U32 bufIndex            = idx;
     VkCommandBuffer buffer  = m_buffers[bufIndex];
 
+    // Reset all binding info that is referenced.
     resetBinds();
 
     VkResult result = vkBeginCommandBuffer(buffer, &info);

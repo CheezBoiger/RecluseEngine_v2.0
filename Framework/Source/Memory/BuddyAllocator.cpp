@@ -123,6 +123,7 @@ ErrType BuddyAllocator::onFree(Allocation* pOutput)
     SizeT buddyAddr     = 0;
     U64 allocOffset     = pOutput->baseAddress - baseAddr;
 
+    // memSzBytes is always the power of our N-th value.
     BuddyBlock block    = { };
     block.offsetBytes   = allocOffset;
     block.memSzBytes    = (1ull << nthBit);

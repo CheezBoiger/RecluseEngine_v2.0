@@ -32,14 +32,30 @@ public:
         , m_currentIdx(0)
         , m_status(COMMAND_LIST_RESET) { }
 
-    ErrType initialize(VulkanDevice* pDevice, U32 queueFamilyIndex, 
-        VkCommandPool* pools, U32 poolCount);
 
+    //! Initialize the command buffer, using queue family and the command pools 
+    //!
+    ErrType initialize
+                (
+                    VulkanDevice* pDevice, 
+                    U32 queueFamilyIndex, 
+                    VkCommandPool* pools, 
+                    U32 poolCount
+                );
+
+    //! Destroy the Vulkan handle of this command buffer.
     void destroy(VulkanDevice* pDevice);
 
+    //! Get the native handle of this command buffer. Vulkan specific.
     VkCommandBuffer get() const;
 
+    //! Begin the command list. This will usually query the 
+    //! current buffer available to the device on CPU.
     void begin() override;
+
+    //! Ends recording of this command buffer. Be sure to 
+    //! call this function after begin(), and after all commands 
+    //! you wish to record.
     void end() override;
 
     void setRenderPass(RenderPass* pRenderPass) override;

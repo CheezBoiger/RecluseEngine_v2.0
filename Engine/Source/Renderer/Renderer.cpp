@@ -430,6 +430,7 @@ static ErrType kRendererJob(void* pData)
     // Initialize module here.
     while (pRenderer->isActive()) 
     {
+        ScopedLock(getMutex());
         // Render interpolation is required.
         if (pRenderer->isRunning()) 
         {
@@ -445,10 +446,10 @@ static ErrType kRendererJob(void* pData)
 ErrType Renderer::onInitializeModule(Application* pApp)
 {
     {
-        Renderer* pRenderer = Renderer::getMain();
         Window* pWindow = pApp->getWindow();
         RendererConfigs configs = { };
-        pRenderer->initialize(pWindow->getNativeHandle(), configs);
+
+        initialize(pWindow->getNativeHandle(), configs);
     }
 
     MainThreadLoop::getMessageBus()->addReceiver
@@ -460,29 +461,33 @@ ErrType Renderer::onInitializeModule(Application* pApp)
                     {
                         R_DEBUG("Renderer", "Received message!");
                         RenderMessage* pJobMessage = static_cast<RenderMessage*>(pMsg);
-                        Renderer* pRenderer = Renderer::getMain();
-                        if (pRenderer->isActive()) 
+                        if (isActive()) 
                         {
                             // Handle the message.
                             switch (pJobMessage->req) 
                             {
                                 case RenderMessage::RESUME:
-                                    pRenderer->enableRunning(true);
+                                    enableRunning(true);
                                     break;
 
                                 case RenderMessage::PAUSE:
-                                    pRenderer->enableRunning(false);
+                                    enableRunning(false);
                                     break;
 
                                 case RenderMessage::SHUTDOWN: 
                                 {
-                                    pRenderer->enableRunning(false);
-                                    pRenderer->cleanUpModule(pJobMessage->pApp);
+                                    enableRunning(false);
+                                    cleanUpModule(pJobMessage->pApp);
                                     break;
                                 }
 
                                 case RenderMessage::CHANGE_CONFIG:
+                                    break;
+
                                 case RenderMessage::SCENE_UPDATE:
+                                    update(0.f, 0.f);
+                                    break;
+
                                 default:
                                     break;
                             }
@@ -515,6 +520,15 @@ void Renderer::destroyDevice()
                 R_WARN("Renderer", "No such graphics device exists for this renderer."); 
             }
         )
+}
+
+
+void Renderer::update(F32 currentTime, F32 deltaTime)
+{
+    ScopedLock(getMutex());
+
+    m_renderState.currentTime   = currentTime;
+    m_renderState.deltaTime     = deltaTime;
 }
 } // Engine
 } // Recluse

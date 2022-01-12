@@ -129,6 +129,8 @@ public:
 
     ErrType destroyGPUBuffer(GPUBuffer* pBuffer);
 
+    void update(F32 currentTime, F32 deltaTime);
+
 private:
 
     virtual ErrType onInitializeModule(Application* pApp) override;
@@ -178,6 +180,12 @@ private:
 
         void sortKeys();
     };
+
+    struct 
+    {
+        F32 currentTime;
+        F32 deltaTime;
+    } m_renderState;
 
     // command keys identify the index within the render command, to begin rendering for.
     std::unordered_map<U32, std::vector<U64>> m_commandKeys;
