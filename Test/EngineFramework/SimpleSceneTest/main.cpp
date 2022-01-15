@@ -111,7 +111,7 @@ public:
 int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
-    RealtimeTick::initialize();
+    RealtimeTick::initializeWatch(0);
     g_bus.initialize();
 
     Engine::GameObject* obj = new TestObject();
@@ -128,7 +128,7 @@ int main(int c, char* argv[])
 
     U64 counter = 0;
     while ((counter++) < 500) {
-        RealtimeTick tick = RealtimeTick::getTick();
+        RealtimeTick tick = RealtimeTick::getTick(0);
         pScene->update(tick);
 
         g_bus.notifyAll();

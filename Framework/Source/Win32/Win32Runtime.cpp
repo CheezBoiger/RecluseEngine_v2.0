@@ -11,14 +11,26 @@
 #include "Recluse/System/Window.hpp"
 #include "Recluse/System/Mouse.hpp"
 
+#define MAX_WATCH_TYPE_INDICES 32
+
 namespace Recluse {
+
+
+static U64 initializeTicksPerSecond() 
+{
+    LARGE_INTEGER freq;
+    QueryPerformanceFrequency(&freq);
+    return freq.QuadPart;
+}
+
 
 static struct 
 {
-    U64             gTicksPerSecond;                     //< ticks in seconds.
-    U64             gTime;                               //< time 
-    RAWINPUT        lpb;                                 //< raw input.
-    const DWORD     mainThreadId = GetCurrentThreadId(); //< this is the main thread id!
+    Win32RuntimeTick ticks[MAX_WATCH_TYPE_INDICES];
+    U64             gTicksPerSecond = initializeTicksPerSecond();   //< ticks in seconds.
+    RAWINPUT        lpb;                                            //< raw input.
+    const DWORD     mainThreadId    = GetCurrentThreadId();         //< this is the main thread id!
+    Bool            isInitialized   = false;
 } gWin32Runtime;
 
 #if defined(RECLUSE_DEBUG) || defined(RECLUSE_DEVELOPER)
@@ -82,21 +94,9 @@ void enableOSColorInput()
 }
 
 
-static void initializePerformanceTimer()
+void Win32RuntimeTick::updateLastTimeS(U64 newLastTimeS)
 {
-    LARGE_INTEGER freq;
-    LARGE_INTEGER counter;
-    QueryPerformanceFrequency(&freq);
-    QueryPerformanceCounter(&counter);
-
-    gWin32Runtime.gTicksPerSecond   = freq.QuadPart;
-    gWin32Runtime.gTime             = counter.QuadPart;
-}
-
-
-void updateLastTimeS(U64 newLastTimeS)
-{
-    gWin32Runtime.gTime = newLastTimeS;
+    m_time = newLastTimeS;
 }
 
 
@@ -106,9 +106,9 @@ U64 getTicksPerSecondS()
 }
 
 
-U64 getLastTimeS()
+U64 Win32RuntimeTick::getLastTimeS() const
 {
-    return gWin32Runtime.gTime;
+    return m_time;
 }
 
 
@@ -119,27 +119,39 @@ U64 getCurrentTickS()
     return newTick.QuadPart;
 }
 
-RealtimeTick::RealtimeTick()
+RealtimeTick::RealtimeTick(U32 watchType)
 {
-    U64 ticksPerSecond  = getTicksPerSecondS();
-    U64 lastTimeS       = getLastTimeS();
-    U64 currentTimeS    = getCurrentTickS();
+    R_ASSERT(watchType < MAX_WATCH_TYPE_INDICES);
+
+    Win32RuntimeTick& nativeTick = gWin32Runtime.ticks[watchType];
+    
+    const U64 ticksPerSecond  = getTicksPerSecondS();
+    const U64 lastTimeS       = nativeTick.getLastTimeS();
+    const U64 currentTimeS    = getCurrentTickS();
 
     m_deltaTimeS        = F32(currentTimeS - lastTimeS) / ticksPerSecond;
     m_currentTimeS      = F32(currentTimeS);
-    gWin32Runtime.gTime = currentTimeS;
+
+    nativeTick.updateLastTimeS(currentTimeS);
 }
 
 
-void RealtimeTick::initialize()
+void RealtimeTick::initializeWatch(U32 watchType)
 {
-    initializePerformanceTimer();
+    // Check if we need to initialize any global params.
+    if (gWin32Runtime.isInitialized)
+    {
+        initializeTicksPerSecond();
+        gWin32Runtime.isInitialized = true;
+    }
+
+    gWin32Runtime.ticks[watchType] = Win32RuntimeTick();
 }
 
 
-RealtimeTick RealtimeTick::getTick()
+RealtimeTick RealtimeTick::getTick(U32 watchType)
 {
-    return RealtimeTick();
+    return RealtimeTick(watchType);
 }
 
 

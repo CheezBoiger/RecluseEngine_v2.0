@@ -10,7 +10,7 @@ using namespace Recluse;
 
 inline void logTick()
 {
-    RealtimeTick tick = RealtimeTick::getTick();
+    RealtimeTick tick = RealtimeTick::getTick(0);
     R_DEBUG("Core", "Finished: %f secs", tick.getDeltaTimeS());
 }
 
@@ -19,7 +19,7 @@ int main()
     Log::initializeLoggingSystem();
 
     // Initialize the realtime tick.
-    RealtimeTick::initialize();
+    RealtimeTick::initializeWatch(0);
 
     R_DEBUG("Core", "Initialize buddy memory allocator.");
     BuddyAllocator* pAllocator = new BuddyAllocator();

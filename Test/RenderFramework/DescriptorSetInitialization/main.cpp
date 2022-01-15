@@ -65,7 +65,7 @@ void updateResource(GraphicsResource* pResource)
 int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
-    RealtimeTick::initialize();
+    RealtimeTick::initializeWatch(0);
 
     GraphicsInstance* pInstance       = nullptr;
     GraphicsAdapter* pAdapter       = nullptr;
@@ -253,7 +253,7 @@ int main(int c, char* argv[])
 
     U32 index = 200;
     while (!pWindow->shouldClose()) {
-        RealtimeTick tick = RealtimeTick::getTick();
+        RealtimeTick tick = RealtimeTick::getTick(0);
         R_TRACE("TEST", "FPS: %f", 1.0f / tick.getDeltaTimeS());
         F32 color[] = { 0.0f, 1.0f, 0.0f, 1.0f };
         F32 color2[] = { 0.0f, 0.0f, 1.0f, 1.0f };

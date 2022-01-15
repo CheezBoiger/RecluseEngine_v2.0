@@ -101,12 +101,40 @@ struct RendererConfigs
 };
 
 
-// Top level rendering engine. Implements Render Harware Interface, and 
+template<class K, class V>
+class MapContainer
+{
+    typedef V* Iterator;
+    typedef const V* ConstIterator;
+public:
+    MapContainer(std::unordered_map<K, V>* keys = nullptr)
+        : pCommandKeys(keys)
+    {
+    }
+
+    Bool isValid() const { return pCommandKeys ? true : false; }
+
+    std::unordered_map<K, V>& get() { return (*pCommandKeys); }
+   
+    V& operator[](K i) { return (*pCommandKeys)[i]; }
+    const V& operator[](K i) const { return (*pCommandKeys)[i]; }
+        
+private:
+    std::unordered_map<K, V>* pCommandKeys;
+};
+
+typedef MapContainer<U32, std::vector<U64>> CommandKeyContainer;
+
+
+// Top level rendering engine. Implements Render Hardware Interface, and 
 // manages all resources and states created in game graphics. This will usually
 // implement any render passes and stages of the graphics pipeline.
-class R_PUBLIC_API Renderer : public EngineModule<Renderer> 
+class R_PUBLIC_API Renderer final : public EngineModule<Renderer> 
 {
 public:
+    Renderer();
+    ~Renderer();
+
     void initialize(void* pWindowHandle, const RendererConfigs& configs);
     void cleanUp();
 
@@ -140,7 +168,9 @@ private:
     void setUpModules();
     void cleanUpModules();
     void createDevice(const RendererConfigs& configs);
-    void allocateSceneBuffers(const RendererConfigs& configs);    
+    void allocateSceneBuffers(const RendererConfigs& configs);
+
+    void interpolateTime();
 
     void destroyDevice();
     void freeSceneBuffers();
@@ -160,8 +190,10 @@ private:
     void*                   m_windowHandle;
 
     // Scene buffer objects.
-    SceneBufferDefinitions  m_sceneBuffers;
-    RenderCommandList*      m_renderCommands;
+    SceneBufferDefinitions              m_sceneBuffers;
+    std::vector<RenderCommandList*>     m_renderCommands;
+    U32                                 m_currentFrameIndex;
+    U32                                 m_maxBufferCount;
 
     struct CommandKey 
     {
@@ -183,12 +215,19 @@ private:
 
     struct 
     {
+        F32 currentTick;
         F32 currentTime;
         F32 deltaTime;
+
+        F32 fixedTick;
+        F32 startTick;
+        F32 endTick;
     } m_renderState;
 
     // command keys identify the index within the render command, to begin rendering for.
-    std::unordered_map<U32, std::vector<U64>> m_commandKeys;
+    std::vector<std::unordered_map<U32, std::vector<U64>>>  m_commandKeys;
+    RenderCommandList*                                      m_currentRenderCommands;
+    CommandKeyContainer                                     m_currentCommandKeys;
 };
 } // Engine
 } // Recluse

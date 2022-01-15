@@ -3,20 +3,35 @@
 
 namespace Recluse {
 
+
 // Grab ticks per second.
 U64 getTicksPerSecondS();
-U64 getLastTimeS();
 U64 getCurrentTickS();
 
-void updateLastTimeS(U64 newLastTimeS);
+class Win32RuntimeTick 
+{
+public:
+    Win32RuntimeTick()
+    {
+        updateLastTimeS(getCurrentTickS());
+    }
+
+    U64 getLastTimeS() const;
+
+    void updateLastTimeS(U64 newLastTimeS);
+
+private:
+    U64 m_time;
+    
+};
 
 extern LRESULT CALLBACK win32RuntimeProc
-    (
-        HWND hwnd,
-        UINT uMsg, 
-        WPARAM wParam, 
-        LPARAM lParam
-    );
+                            (
+                                HWND hwnd,
+                                UINT uMsg, 
+                                WPARAM wParam, 
+                                LPARAM lParam
+                            );
 
 
 

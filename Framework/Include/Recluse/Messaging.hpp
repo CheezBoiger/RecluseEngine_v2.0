@@ -23,7 +23,6 @@
         snprintf((char*)r__log__.data.msg.data(), r__log__.data.msg.size(), format, __VA_ARGS__); \
     }
 
-#define R_ERR(chan, format, ...) R_LOG(chan, Recluse::LogError, format, __VA_ARGS__)
 #define R_INFO(chan, format, ...) R_LOG(chan, Recluse::LogInfo, format, __VA_ARGS__)
 #define R_WARN(chan, format, ...) R_LOG(chan, Recluse::LogWarn, format, __VA_ARGS__)
 #define R_VERBOSE(chan, format, ...) R_LOG(chan, Recluse::LogVerbose, format, __VA_ARGS__)
@@ -63,4 +62,14 @@ public:
 #define R_ASSERT_MSG(expression, msg)
 #define R_DEBUG(chan, str, ...)
 #define R_DEBUG_WRAP(cond)
+#endif
+
+#if defined(RECLUSE_DEBUG) || defined(RECLUSE_DEVELOPER)
+#define R_ERR(chan, format, ...) \
+    { \
+        R_ASSERT_MSG(false, "ERROR"); \
+        R_LOG(chan, Recluse::LogError, format, __VA_ARGS__); \
+    }
+#else
+#define R_ERR(chan, format, ...) R_LOG(chan, Recluse::LogError, format, __VA_ARGS__)
 #endif

@@ -21,8 +21,21 @@ namespace Recluse {
 namespace Engine {
 
 
+Renderer::Renderer()
+{
+}
+
+
+Renderer::~Renderer()
+{
+}
+
+
 void Renderer::initialize(void* windowHandle, const RendererConfigs& configs)
 {
+    R_ASSERT_MSG(configs.buffering >= 1, "Must at least be one buffer count!");
+    m_rendererConfigs = configs;
+
     EnableLayerFlags flags  = 0;
     ApplicationInfo info    = { };
     ErrType result          = REC_RESULT_OK;
@@ -128,9 +141,9 @@ void Renderer::render()
         PreZ::generate
                 (
                     m_commandList, 
-                    m_renderCommands, 
-                    m_commandKeys[RENDER_PREZ].data(), 
-                    m_commandKeys[RENDER_PREZ].size()
+                    m_currentRenderCommands, 
+                    m_currentCommandKeys[RENDER_PREZ].data(), 
+                    m_currentCommandKeys[RENDER_PREZ].size()
                 );
 
         // Re-transition back to read only.
@@ -146,9 +159,9 @@ void Renderer::render()
         AOV::generate
                 (
                     m_commandList, 
-                    m_renderCommands,
-                    m_commandKeys[RENDER_GBUFFER].data(), 
-                    m_commandKeys[RENDER_GBUFFER].size()
+                    m_currentRenderCommands,
+                    m_currentCommandKeys[RENDER_GBUFFER].data(), 
+                    m_currentCommandKeys[RENDER_GBUFFER].size()
                 );
 
         // Deferred rendering combine.
@@ -158,8 +171,8 @@ void Renderer::render()
         LightCluster::combineForward
                         (
                             m_commandList, 
-                            m_commandKeys[RENDER_FORWARD_OPAQUE].data(), 
-                            m_commandKeys[RENDER_FORWARD_OPAQUE].size()
+                            m_currentCommandKeys[RENDER_FORWARD_OPAQUE].data(), 
+                            m_currentCommandKeys[RENDER_FORWARD_OPAQUE].size()
                         );
 
     m_commandList->end();
@@ -198,9 +211,15 @@ void Renderer::determineAdapter(std::vector<GraphicsAdapter*>& adapters)
 
 void Renderer::createDevice(const RendererConfigs& configs)
 {
-    DeviceCreateInfo info   = { };
-    info.buffering          = configs.buffering;
-    info.winHandle          = m_windowHandle;
+    DeviceCreateInfo info                   = { };
+    info.buffering                          = configs.buffering;
+    info.winHandle                          = m_windowHandle;
+    info.swapchainDescription.buffering     = FRAME_BUFFERING_SINGLE;
+    info.swapchainDescription.desiredFrames = 3;
+    info.swapchainDescription.format        = RESOURCE_FORMAT_R8G8B8A8_UNORM;
+    info.swapchainDescription.renderWidth   = configs.renderWidth;
+    info.swapchainDescription.renderHeight  = configs.renderHeight;
+
     ErrType result          = REC_RESULT_OK;
     
     result = m_pAdapter->createDevice(info, &m_pDevice);
@@ -286,7 +305,14 @@ ErrType Renderer::destroyGPUBuffer(GPUBuffer* pBuffer)
 
 void Renderer::resetCommandKeys()
 {
-    for (auto& cmdLists : m_commandKeys) 
+    m_currentFrameIndex = (m_currentFrameIndex + 1) % m_maxBufferCount;
+    
+    m_currentCommandKeys = CommandKeyContainer(&m_commandKeys[m_currentFrameIndex]);
+    m_currentRenderCommands = m_renderCommands[m_currentFrameIndex];
+    
+    R_ASSERT(m_currentCommandKeys.isValid());
+
+    for (auto& cmdLists : m_currentCommandKeys.get()) 
     {
         cmdLists.second.clear();
     }
@@ -295,6 +321,8 @@ void Renderer::resetCommandKeys()
 
 void Renderer::sortCommandKeys()
 {
+    R_ASSERT(m_currentCommandKeys.isValid());
+
     struct Cmp 
     { 
         bool operator()(const U64 a, const U64 b) const 
@@ -303,7 +331,7 @@ void Renderer::sortCommandKeys()
         }
     } pred;
 
-    for (auto& cmdLists : m_commandKeys) 
+    for (auto& cmdLists : m_currentCommandKeys.get()) 
     {
         std::vector<U64>& list = cmdLists.second;
         std::sort(list.begin(), list.end(), pred);
@@ -313,35 +341,35 @@ void Renderer::sortCommandKeys()
 
 void Renderer::pushRenderCommand(const RenderCommand& renderCommand, RenderPassTypeFlags renderFlags)
 {
-    R_ASSERT(m_renderCommands != NULL);
+    R_ASSERT(m_currentRenderCommands != NULL);
 
     // Store mesh commands to be referenced for each draw pass.
-    CommandKey key                  = { m_renderCommands->getNumberCommands() };
+    CommandKey key                  = { m_currentRenderCommands->getNumberCommands() };
 
     if (renderFlags & RENDER_PREZ) 
     {
-        m_commandKeys[RENDER_PREZ].push_back(key.value);
+        m_currentCommandKeys[RENDER_PREZ].push_back(key.value);
     }
 
     if (renderFlags & RENDER_GBUFFER) 
     {
-        m_commandKeys[RENDER_GBUFFER].push_back(key.value);
+        m_currentCommandKeys[RENDER_GBUFFER].push_back(key.value);
     }
 
     if (renderFlags & RENDER_SHADOW) 
     {
-        m_commandKeys[RENDER_SHADOW].push_back(key.value);
+        m_currentCommandKeys[RENDER_SHADOW].push_back(key.value);
     }
 
     // Mesh is treated as particles.
     if (renderFlags & RENDER_PARTICLE) 
     {
-        m_commandKeys[RENDER_PARTICLE].push_back(key.value);
+        m_currentCommandKeys[RENDER_PARTICLE].push_back(key.value);
     }
 
     // Push the render command to the last, this will serve as our reference to render in
     // certain render passes.
-    m_renderCommands->push(renderCommand);
+    m_currentRenderCommands->push(renderCommand);
 }
 
 
@@ -363,8 +391,18 @@ void Renderer::allocateSceneBuffers(const RendererConfigs& configs)
     m_sceneBuffers.pDepthStencilView = new TextureView();
     m_sceneBuffers.pDepthStencilView->initialize(this, m_sceneBuffers.pSceneDepth, viewDesc);
 
-    m_renderCommands = new RenderCommandList();
-    m_renderCommands->initialize();
+    m_renderCommands.resize(configs.buffering);
+    m_maxBufferCount = configs.buffering;
+    for (U32 i = 0; i < configs.buffering; ++i)
+    {
+        m_renderCommands[i] = new RenderCommandList();
+        m_renderCommands[i]->initialize();
+    }
+
+    m_commandKeys.resize(m_maxBufferCount);
+
+    m_currentRenderCommands = m_renderCommands[0];
+    m_currentCommandKeys = CommandKeyContainer(&m_commandKeys[0]);
 }
 
 
@@ -386,12 +424,12 @@ void Renderer::freeSceneBuffers()
 
     }
 
-    if (m_renderCommands) 
+    for (U64 i = 0; i < m_renderCommands.size(); ++i) 
     {
-        m_renderCommands->destroy();
-        delete m_renderCommands;
-        m_renderCommands = nullptr;
+        m_renderCommands[i]->destroy();
+        delete m_renderCommands[i];
     }
+    m_renderCommands.clear();
 }
 
 
@@ -431,6 +469,11 @@ static ErrType kRendererJob(void* pData)
     while (pRenderer->isActive()) 
     {
         ScopedLock(getMutex());
+
+        RealtimeTick tick = RealtimeTick::getTick(JOB_TYPE_RENDERER);
+
+        pRenderer->update(tick.getCurrentTimeS(), tick.getDeltaTimeS());
+
         // Render interpolation is required.
         if (pRenderer->isRunning()) 
         {
@@ -450,6 +493,9 @@ ErrType Renderer::onInitializeModule(Application* pApp)
         RendererConfigs configs = { };
 
         initialize(pWindow->getNativeHandle(), configs);
+
+        // Initialize the renderer watch.
+        RealtimeTick::initializeWatch(JOB_TYPE_RENDERER);
     }
 
     MainThreadLoop::getMessageBus()->addReceiver
@@ -485,7 +531,6 @@ ErrType Renderer::onInitializeModule(Application* pApp)
                                     break;
 
                                 case RenderMessage::SCENE_UPDATE:
-                                    update(0.f, 0.f);
                                     break;
 
                                 default:
@@ -527,8 +572,26 @@ void Renderer::update(F32 currentTime, F32 deltaTime)
 {
     ScopedLock(getMutex());
 
+    // Current time is just the time given during app's life.
     m_renderState.currentTime   = currentTime;
     m_renderState.deltaTime     = deltaTime;
+
+    const F32 currentTick       = m_renderState.currentTime;
+    const F32 deltaTick         = m_renderState.deltaTime;
+    const F32 endTick           = m_renderState.endTick;
+    const F32 startStart        = m_renderState.startTick;
+    const F32 fixedTick         = m_renderState.fixedTick;
+
+    F32 interpTick = currentTick + deltaTime;
+
+    if (interpTick >= endTick)
+    {
+        // New time block, must update.
+        m_renderState.startTick = endTick;
+        m_renderState.endTick   = endTick + fixedTick;
+    }
+
+    m_renderState.currentTick   = interpTick;
 }
 } // Engine
 } // Recluse

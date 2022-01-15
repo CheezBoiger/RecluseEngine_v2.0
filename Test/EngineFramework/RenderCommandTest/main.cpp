@@ -65,17 +65,17 @@ void fillList(RenderCommandList& list)
 int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
-    RealtimeTick::initialize();
+    RealtimeTick::initializeWatch(0);
 
     RenderCommandList list;
 
     list.initialize();
 
-    RealtimeTick tick = RealtimeTick::getTick();
+    RealtimeTick tick = RealtimeTick::getTick(0);
 
     fillList(list);
 
-    tick = RealtimeTick::getTick();
+    tick = RealtimeTick::getTick(0);
 
     R_TRACE("TEST", "Took %f secs to fill commandlist.", tick.getDeltaTimeS());
 
@@ -109,7 +109,7 @@ int main(int c, char* argv[])
     
     }
 
-    tick = RealtimeTick::getTick();
+    tick = RealtimeTick::getTick(0);
     R_VERBOSE("TEST", "Took %f secs to read list.", tick.getDeltaTimeS());
 
     list.reset();

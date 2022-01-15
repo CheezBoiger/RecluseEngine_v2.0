@@ -11,7 +11,7 @@ int main()
     Log::initializeLoggingSystem();
 
     // Initialize the realtime tick.
-    RealtimeTick::initialize();
+    RealtimeTick::initializeWatch(0);
 
     // initialize our max time.
     F32 seconds     = 0.f;
@@ -20,7 +20,7 @@ int main()
     while(1) {
 
         // Get the current tick.
-        RealtimeTick tick   = RealtimeTick::getTick();
+        RealtimeTick tick   = RealtimeTick::getTick(0);
         seconds            += tick.getDeltaTimeS();
 
         R_VERBOSE("TIMING", "Current Time: %f, Delta Time: %f Seconds: %f", tick.getCurrentTimeS(), tick.getDeltaTimeS(), seconds);

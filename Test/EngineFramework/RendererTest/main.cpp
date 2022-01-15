@@ -20,7 +20,7 @@ using namespace Recluse::Engine;
 int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
-    RealtimeTick::initialize();
+    RealtimeTick::initializeWatch(0);
     
     Window* pWindow = Window::create("Renderer Test", 0, 0, 512, 512);
     Renderer* pRenderer = new Renderer();

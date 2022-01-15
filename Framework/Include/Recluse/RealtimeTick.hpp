@@ -12,7 +12,7 @@ class RealtimeTick
 public:
 
     // Get the realtime tick.
-    static R_PUBLIC_API RealtimeTick getTick();
+    static R_PUBLIC_API RealtimeTick getTick(U32 watchType);
 
     // Get the current time in sec.
     F32 getCurrentTimeS() const { return m_currentTimeS; }
@@ -22,12 +22,12 @@ public:
     
     // Initialize the realtime tick manager. Should be 
     // called first, before calling getTick().
-    static R_PUBLIC_API void initialize();
+    static R_PUBLIC_API void initializeWatch(U32 watchType);
 
 private:
     // Realtime tick initializer. Be sure to call this once and reference
     // the object across all objects!
-    RealtimeTick();
+    RealtimeTick(U32 watchType);
 
     // Current time in seconds.
     F32 m_currentTimeS;

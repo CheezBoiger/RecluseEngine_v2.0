@@ -92,7 +92,7 @@ ErrType MainThreadLoop::run()
 
     while (k_pWindow->shouldClose()) 
     {
-        RealtimeTick tick = RealtimeTick::getTick();
+        RealtimeTick tick = RealtimeTick::getTick(0);
         pollEvents();
         if (k_pApp) 
         {
