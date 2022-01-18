@@ -9,6 +9,8 @@
 #include "Recluse/Memory/Allocator.hpp"
 #include "Recluse/Application.hpp"
 
+#include "Recluse/Structures/HashMap.hpp"
+
 #include <vector>
 #include <unordered_map>
 
@@ -38,6 +40,10 @@ class RenderCommandList;
 struct RenderMessage : public JobMessage 
 {
 public:
+    RenderMessage()
+        : JobMessage("Renderer")
+    { }
+
     enum Request 
     {
         PAUSE,
@@ -100,28 +106,6 @@ struct RendererConfigs
     QualitySetting shadowQuality;
 };
 
-
-template<class K, class V>
-class MapContainer
-{
-    typedef V* Iterator;
-    typedef const V* ConstIterator;
-public:
-    MapContainer(std::unordered_map<K, V>* keys = nullptr)
-        : pCommandKeys(keys)
-    {
-    }
-
-    Bool isValid() const { return pCommandKeys ? true : false; }
-
-    std::unordered_map<K, V>& get() { return (*pCommandKeys); }
-   
-    V& operator[](K i) { return (*pCommandKeys)[i]; }
-    const V& operator[](K i) const { return (*pCommandKeys)[i]; }
-        
-private:
-    std::unordered_map<K, V>* pCommandKeys;
-};
 
 typedef MapContainer<U32, std::vector<U64>> CommandKeyContainer;
 

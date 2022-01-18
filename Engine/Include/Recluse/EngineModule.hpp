@@ -4,19 +4,30 @@
 #include "Recluse/Types.hpp"
 #include "Recluse/Application.hpp"
 #include "Recluse/Threading/Threading.hpp"
+#include "Recluse/Memory/MemoryCommon.hpp"
+
 
 namespace Recluse {
+namespace Engine {
 
+// This must be defined for every module that is used by the engine.
+#define DEFINE_ENGINE_MODULE(ModuleImpl) \
+    ModuleImpl* Recluse::Engine::EngineModule<ModuleImpl>::getMain() \
+    { \
+        static ModuleImpl k_main; \
+        return &k_main; \
+    }
 
+//! EngineModule defines the singleton module used by the game engine.
+//! This usually handles the normal intantiation and destruction of the 
+//! module system, which should not be created more than once.
 template<typename ModuleImpl>
 class EngineModule 
 {
 public:
-    static ModuleImpl* getMain() 
-    {
-        static ModuleImpl k_pMain;
-        return &k_pMain;
-    }
+
+    //! Get the main singleton of this engine module.
+    static ModuleImpl* getMain();
 
     static const char* getModuleName() 
     {
@@ -32,17 +43,22 @@ public:
 
     static ErrType cleanUpModule(Application* pApp)
     {
-        return getMain()->cleanUpInstance(pApp);
+        ErrType result = getMain()->cleanUpInstance(pApp);
+        return result;
     }
 
 private:
+
+    //! On initialize.
     virtual ErrType onInitializeModule(Application* pApp) { return REC_RESULT_NOT_IMPLEMENTED; }
+    //! On clean up.
     virtual ErrType onCleanUpModule(Application* pApp) { return REC_RESULT_NOT_IMPLEMENTED; }
     
+    //! Member function that is used to begin instantiating the object.
     ErrType initializeInstance(Application* pApp) 
     {
-        isActive() = true;
         m_sync = createMutex(R_STRINGIFY(ModuleImpl));
+        m_isActive = true;
         return onInitializeModule(pApp); 
     }
 
@@ -51,7 +67,7 @@ private:
         ErrType result = onCleanUpModule(pApp);
         if (result == REC_RESULT_OK) 
         {
-            isActive() = false;
+            m_isActive = false;
             destroyMutex(m_sync);
         }
 
@@ -60,10 +76,9 @@ private:
 
 public:
 
-    Bool& isActive() 
+    Bool isActive() const 
     {
-        static Bool active = false;
-        return active;
+        return m_isActive;
     }
 
     Bool isRunning() const { return m_isRunning; }
@@ -73,7 +88,9 @@ public:
     Mutex getMutex() { return m_sync; }
 
 private:
-    Bool m_isRunning = false;
+    volatile Bool m_isRunning = false;
+    volatile Bool m_isActive  = false;
     Mutex m_sync;
 };
+} // Engine
 } // Recluse

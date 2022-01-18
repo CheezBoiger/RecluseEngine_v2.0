@@ -67,8 +67,9 @@ class R_PUBLIC_API Application
 public:
 
     Application()
-        : m_pWindow(nullptr)
+        : m_pWindowRef(nullptr)
         , m_pScene(nullptr)
+        , m_pMessageBusRef(nullptr)
         , m_initialized(false)
     { }
 
@@ -79,12 +80,20 @@ public:
 
     ErrType cleanUp() 
     { 
-        m_initialized = false;
-        return onCleanUp();
+        ErrType result = onCleanUp();
+        if (result == REC_RESULT_OK)
+        {
+            // Do no destroy window, this should be handled externally.
+            m_pWindowRef = nullptr;
+            m_initialized = false;
+        }
+        return result;
     }
 
-    ErrType init() 
+    ErrType init(Window* pWindowHandle, MessageBus* pMessageBus) 
     { 
+        m_pWindowRef        = pWindowHandle;
+        m_pMessageBusRef    = pMessageBus;
         ErrType result = onInit();
         if (result == REC_RESULT_OK)
             markInitialized();
@@ -94,8 +103,9 @@ public:
     ErrType         loadJobThread(JobTypeFlags flags, ThreadFunction func);
     Thread*         getJobThread(JobType jobType);
 
-    Engine::Scene* getScene() { return m_pScene; }
-    Window* getWindow() { return m_pWindow; }
+    Engine::Scene*  getScene() { return m_pScene; }
+    Window*         getWindow() { return m_pWindowRef; }
+    MessageBus*     getMessageBus() { return m_pMessageBusRef; }
 
     inline Bool isInitialized() const { return m_initialized; }
 
@@ -113,7 +123,8 @@ protected:
     void markInitialized() { m_initialized = true; } 
 
 private:
-    Window*                     m_pWindow;
+    Window*                     m_pWindowRef;
+    MessageBus*                 m_pMessageBusRef;
     Engine::Scene*              m_pScene;
     std::list<Thread>           m_threads;
     std::map<JobType, Thread*>  m_jobThreads;

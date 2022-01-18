@@ -57,13 +57,20 @@ ThreadPool* k_pThreadPool   = nullptr;
 MessageBus* k_pMessageBus   = nullptr;
 Mutex k_pMessageMutex       = MutexValue::kNull;
 F32 k_fixedTickRateSeconds  = 1.0f / 60.0f;
+Bool k_mainLoopInitialized  = false;
 
 ErrType loadApp(Application* pApp)
 {
+    R_ASSERT_MSG
+        (
+            k_mainLoopInitialized, 
+            "Main Loop must be initialized first before calling this function!"
+        );
+
     ErrType result = REC_RESULT_OK;
 
     if (!pApp->isInitialized())
-        result = pApp->init();
+        result = pApp->init(k_pWindow, k_pMessageBus);
 
     if (result == REC_RESULT_OK)
         k_pApp = pApp;
@@ -80,6 +87,14 @@ ErrType initialize()
     k_pMessageBus = new MessageBus();
     k_pMessageBus->initialize();
 
+    k_pWindow = Window::create(u8"TestApp", 0, 0, 800, 600);
+    k_pWindow->open();
+
+    k_mainLoopInitialized = true;
+
+    // initialize the main watch.
+    RealtimeTick::initializeWatch(JOB_TYPE_MAIN);    
+
     return REC_RESULT_OK;
 }
 
@@ -90,7 +105,7 @@ ErrType MainThreadLoop::run()
     R_ASSERT(k_pMessageBus      != NULL);
     R_ASSERT(k_pMessageMutex    != MutexValue::kNull);
 
-    while (k_pWindow->shouldClose()) 
+    while (!k_pWindow->shouldClose()) 
     {
         RealtimeTick tick = RealtimeTick::getTick(0);
         pollEvents();
@@ -116,6 +131,16 @@ ErrType MainThreadLoop::run()
 
 ErrType cleanUp()
 {
+    ErrType result = REC_RESULT_OK; 
+
+    if (k_pApp)
+    {
+        result = k_pApp->cleanUp();
+    }
+
+    Window::destroy(k_pWindow);
+    k_pWindow = nullptr;
+
     destroyMutex(k_pMessageMutex);
     k_pMessageMutex = MutexValue::kNull;
 
@@ -123,9 +148,9 @@ ErrType cleanUp()
     k_pMessageBus->cleanUp();
     delete k_pMessageBus;
 
-    return REC_RESULT_OK;
+    k_mainLoopInitialized = false;
+    return result;
 }
-
 
 
 Application* getApp()

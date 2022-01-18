@@ -17,9 +17,13 @@
 
 #include <algorithm>
 
+#define R_NULLIFY_RENDER 1
+
 namespace Recluse {
 namespace Engine {
 
+
+DEFINE_ENGINE_MODULE(Renderer);
 
 Renderer::Renderer()
 {
@@ -68,6 +72,7 @@ void Renderer::initialize(void* windowHandle, const RendererConfigs& configs)
     determineAdapter(adapters);
 
     createDevice(configs);
+    m_pSwapchain = m_pDevice->getSwapchain();
 
     {
         MemoryReserveDesc reserveDesc = { };
@@ -124,7 +129,7 @@ void Renderer::render()
     sortCommandKeys();
 
     m_commandList->begin();
-
+#if (!R_NULLIFY_RENDER)
         // TODO: Would make more sense to manually transition the resource itself, 
         //       and not the resource view...
         GraphicsResource* pSceneDepth = m_sceneBuffers.pSceneDepth->getResource();
@@ -174,9 +179,8 @@ void Renderer::render()
                             m_currentCommandKeys[RENDER_FORWARD_OPAQUE].data(), 
                             m_currentCommandKeys[RENDER_FORWARD_OPAQUE].size()
                         );
-
+#endif
     m_commandList->end();
-
     // Present.
     m_pSwapchain->present();
     
@@ -243,13 +247,13 @@ void Renderer::setUpModules()
                                         1, 1
                                     );
 
-    PreZ::initialize(m_pDevice, &m_sceneBuffers);
+    //PreZ::initialize(m_pDevice, &m_sceneBuffers);
 }
 
 
 void Renderer::cleanUpModules()
 {
-    PreZ::destroy(m_pDevice);
+    //PreZ::destroy(m_pDevice);
 }
 
 
@@ -472,11 +476,10 @@ static ErrType kRendererJob(void* pData)
 
         RealtimeTick tick = RealtimeTick::getTick(JOB_TYPE_RENDERER);
 
-        pRenderer->update(tick.getCurrentTimeS(), tick.getDeltaTimeS());
-
         // Render interpolation is required.
         if (pRenderer->isRunning()) 
         {
+            pRenderer->update(tick.getCurrentTimeS(), tick.getDeltaTimeS());
             pRenderer->render();
             pRenderer->present();
         }
@@ -491,6 +494,10 @@ ErrType Renderer::onInitializeModule(Application* pApp)
     {
         Window* pWindow = pApp->getWindow();
         RendererConfigs configs = { };
+        configs.buffering = 1;
+        configs.api = GRAPHICS_API_VULKAN;
+        configs.renderWidth = 800;
+        configs.renderHeight = 600;
 
         initialize(pWindow->getNativeHandle(), configs);
 
@@ -547,7 +554,9 @@ ErrType Renderer::onInitializeModule(Application* pApp)
 
 ErrType Renderer::onCleanUpModule(Application* pApp)
 {
-    Renderer::getMain()->cleanUp();
+    ScopedLock(getMutex());
+    cleanUp();
+    enableRunning(false);
     return REC_RESULT_OK;
 }
 
@@ -582,7 +591,7 @@ void Renderer::update(F32 currentTime, F32 deltaTime)
     const F32 startStart        = m_renderState.startTick;
     const F32 fixedTick         = m_renderState.fixedTick;
 
-    F32 interpTick = currentTick + deltaTime;
+    F32 interpTick              = currentTick + deltaTime;
 
     if (interpTick >= endTick)
     {

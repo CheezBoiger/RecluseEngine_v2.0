@@ -3,6 +3,8 @@
 
 #include "Recluse/Arch.hpp"
 
+#include <memory>
+
 #define R_ALLOC_MASK(m, a)      (((m) + ((a)-1)) & ~((a)-1))
 #define R_1KB                   (1024ULL)
 #define R_1MB                   (1024ULL * 1024ULL)

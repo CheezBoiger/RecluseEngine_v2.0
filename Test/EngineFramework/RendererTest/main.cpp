@@ -17,41 +17,49 @@
 using namespace Recluse;
 using namespace Recluse::Engine;
 
-int main(int c, char* argv[])
+
+class TestApplication : public Application
 {
-    Log::initializeLoggingSystem();
-    RealtimeTick::initializeWatch(0);
-    
-    Window* pWindow = Window::create("Renderer Test", 0, 0, 512, 512);
-    Renderer* pRenderer = new Renderer();
+public:
 
-    RendererConfigs configs = { };
-    configs.api = GRAPHICS_API_VULKAN;
-    configs.buffering = 3;
-    configs.renderWidth = pWindow->getWidth();
-    configs.renderHeight = pWindow->getHeight();
+    virtual void update(const RealtimeTick& tick) override
+    {
+       DrawRenderCommand rcmd = {};
+       rcmd.op = COMMAND_OP_DRAWABLE_INSTANCED;
+       rcmd.vertexTypeFlags = VERTEX_ATTRIB_POSITION | VERTEX_ATTRIB_NORMAL;
+       rcmd.numSubMeshes = 0;
+       //pRenderer->pushRenderCommand(rcmd, RENDER_PREZ);
 
-    pRenderer->initialize(pWindow->getNativeHandle(), configs);
-
-    pWindow->open();
-
-    while (!pWindow->shouldClose()) {
-        DrawRenderCommand rcmd = { };
-        rcmd.op = COMMAND_OP_DRAWABLE_INSTANCED;
-        rcmd.vertexTypeFlags = VERTEX_ATTRIB_POSITION | VERTEX_ATTRIB_NORMAL;
-        rcmd.numSubMeshes = 0;
-
-        pRenderer->pushRenderCommand(rcmd, RENDER_PREZ);
-
-        pRenderer->render();
-
-        pRenderer->present();
-        pollEvents();
+       R_VERBOSE("GameLoop", "time=%f fps", 1.f / tick.getDeltaTimeS());
     }
 
-    delete pRenderer;
-    Window::destroy(pWindow);
+    virtual ErrType onInit() override
+    {
+        Log::initializeLoggingSystem();
+        RealtimeTick::initializeWatch(0);
+        Renderer::initializeModule(this);
 
-    Log::destroyLoggingSystem();
+        RenderMessage message = { };
+        message.pApp = this;
+        message.req = RenderMessage::RESUME;
+        getMessageBus()->pushMessage(message);
+        return REC_RESULT_OK;
+    }
+
+    virtual ErrType onCleanUp() override
+    {
+        Renderer::cleanUpModule(this);
+        Log::destroyLoggingSystem();     
+        return REC_RESULT_OK;
+    }
+};
+
+int main(int c, char* argv[])
+{
+    TestApplication testApp = {};
+    MainThreadLoop::initialize();
+    MainThreadLoop::loadApp(&testApp);
+    MainThreadLoop::run();
+    MainThreadLoop::cleanUp();
     return 0;
 }
