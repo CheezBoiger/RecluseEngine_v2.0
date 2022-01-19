@@ -70,7 +70,7 @@ R_PUBLIC_API U64     getCurrentThreadId();
 class R_PUBLIC_API ScopedLock 
 {
 public:
-    ScopedLock(Mutex mutex) 
+    volatile ScopedLock(Mutex mutex) 
         : m_mut(mutex)
     {
         lockMutex(m_mut); 

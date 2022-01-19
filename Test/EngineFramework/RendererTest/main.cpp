@@ -48,6 +48,10 @@ public:
 
     virtual ErrType onCleanUp() override
     {
+        RenderMessage message = { };
+        message.pApp = this;
+        message.req = RenderMessage::SHUTDOWN;
+        getMessageBus()->pushMessage(message);
         Renderer::cleanUpModule(this);
         Log::destroyLoggingSystem();     
         return REC_RESULT_OK;

@@ -127,7 +127,6 @@ void Renderer::present()
 void Renderer::render()
 {
     sortCommandKeys();
-
     m_commandList->begin();
 #if (!R_NULLIFY_RENDER)
         // TODO: Would make more sense to manually transition the resource itself, 
@@ -468,11 +467,12 @@ ErrType Renderer::destroyTexture2D(Texture2D* pTexture)
 static ErrType kRendererJob(void* pData)
 {
     Renderer* pRenderer = Renderer::getMain();
+    Mutex renderMutex   = pRenderer->getMutex();
 
     // Initialize module here.
     while (pRenderer->isActive()) 
     {
-        ScopedLock(getMutex());
+        ScopedLock lck(renderMutex);
 
         RealtimeTick tick = RealtimeTick::getTick(JOB_TYPE_RENDERER);
 
@@ -554,7 +554,7 @@ ErrType Renderer::onInitializeModule(Application* pApp)
 
 ErrType Renderer::onCleanUpModule(Application* pApp)
 {
-    ScopedLock(getMutex());
+    ScopedLock lck(getMutex());
     cleanUp();
     enableRunning(false);
     return REC_RESULT_OK;
@@ -579,8 +579,6 @@ void Renderer::destroyDevice()
 
 void Renderer::update(F32 currentTime, F32 deltaTime)
 {
-    ScopedLock(getMutex());
-
     // Current time is just the time given during app's life.
     m_renderState.currentTime   = currentTime;
     m_renderState.deltaTime     = deltaTime;
@@ -600,7 +598,9 @@ void Renderer::update(F32 currentTime, F32 deltaTime)
         m_renderState.endTick   = endTick + fixedTick;
     }
 
-    m_renderState.currentTick   = interpTick;
+    m_renderState.currentTick = interpTick;
+
+    R_VERBOSE("Renderer", "RenderTime=%.f fps", 1.f / deltaTick);
 }
 } // Engine
 } // Recluse
