@@ -11,7 +11,8 @@
 #include "Recluse/System/Window.hpp"
 #include "Recluse/System/Mouse.hpp"
 
-#define MAX_WATCH_TYPE_INDICES 32
+#define MAX_WATCH_TYPE_INDICES      (16)
+#define STOPWATCH_INDEX             (MAX_WATCH_TYPE_INDICES - 1)
 
 namespace Recluse {
 
@@ -26,11 +27,15 @@ static U64 initializeTicksPerSecond()
 
 static struct 
 {
-    Win32RuntimeTick ticks[MAX_WATCH_TYPE_INDICES];
-    U64             gTicksPerSecond = initializeTicksPerSecond();   //< ticks in seconds.
-    RAWINPUT        lpb;                                            //< raw input.
-    const DWORD     mainThreadId    = GetCurrentThreadId();         //< this is the main thread id!
-    Bool            isInitialized   = false;
+    // NOTE(): We don't really need a hash table or a map for this, 
+    // since we are only storing a few keys/watches. Simple arrays will do.
+    Win32RuntimeTick    ticks[MAX_WATCH_TYPE_INDICES]   = { };
+    U64                 watchId[MAX_WATCH_TYPE_INDICES] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    U64                 gTicksPerSecond = initializeTicksPerSecond();   //< ticks in seconds.
+    RAWINPUT            lpb;                                            //< raw input.
+    const DWORD         mainThreadId    = GetCurrentThreadId();         //< this is the main thread id!
+    Bool                isInitialized   = false;
 } gWin32Runtime;
 
 #if defined(RECLUSE_DEBUG) || defined(RECLUSE_DEVELOPER)
@@ -94,9 +99,11 @@ void enableOSColorInput()
 }
 
 
-void Win32RuntimeTick::updateLastTimeS(U64 newLastTimeS)
+void Win32RuntimeTick::updateLastTimeS(U64 newLastTimeS, F32 delta)
 {
-    m_time = newLastTimeS;
+    m_time          = newLastTimeS;
+    m_currentTimeS  = F32(newLastTimeS);
+    m_deltaTimeS    = delta;
 }
 
 
@@ -119,33 +126,88 @@ U64 getCurrentTickS()
     return newTick.QuadPart;
 }
 
+
+void RealtimeTick::updateWatch(U64 id, U32 watchType)
+{
+    R_ASSERT(watchType < MAX_WATCH_TYPE_INDICES);
+
+    if (gWin32Runtime.watchId[watchType] == 0)
+    {
+        R_ERR
+            (
+                "RealtimeTick", 
+                "This watch=%d is not initialized! Can not update!", 
+                watchType
+            );
+        return;
+    }
+
+    if (gWin32Runtime.watchId[watchType] != id)
+    {
+        R_ERR
+            (
+                "RealtimeTick", 
+                "Can not update watch=%d. Id=%llu does not own it!", 
+                watchType, id
+            );
+        return;
+    }
+
+    // Otherwise, lets just update.
+
+    Win32RuntimeTick& nativeTick    = gWin32Runtime.ticks[watchType];
+    
+    const U64 ticksPerSecond        = getTicksPerSecondS();
+    const U64 lastTimeS             = nativeTick.getLastTimeS();
+    const U64 currentTimeS          = getCurrentTickS();
+
+    F32 fDeltaTime                  = F32(currentTimeS - lastTimeS) / F32(ticksPerSecond);
+
+    nativeTick.updateLastTimeS(currentTimeS, fDeltaTime);
+}
+
+
 RealtimeTick::RealtimeTick(U32 watchType)
 {
     R_ASSERT(watchType < MAX_WATCH_TYPE_INDICES);
 
-    Win32RuntimeTick& nativeTick = gWin32Runtime.ticks[watchType];
+    if (gWin32Runtime.watchId[watchType] == 0)
+    {
+        R_ERR("RealtimeTick", "Can't query uninitialized watch=%d!", watchType);
+    }
     
-    const U64 ticksPerSecond  = getTicksPerSecondS();
-    const U64 lastTimeS       = nativeTick.getLastTimeS();
-    const U64 currentTimeS    = getCurrentTickS();
-
-    m_deltaTimeS        = F32(currentTimeS - lastTimeS) / ticksPerSecond;
-    m_currentTimeS      = F32(currentTimeS);
-
-    nativeTick.updateLastTimeS(currentTimeS);
+    const Win32RuntimeTick& nativeTick = gWin32Runtime.ticks[watchType];
+    
+    m_currentTimeS  = nativeTick.getCurrentTime();
+    m_deltaTimeS    = nativeTick.getDelta();
 }
 
 
-void RealtimeTick::initializeWatch(U32 watchType)
+void RealtimeTick::initializeWatch(U64 id, U32 watchType)
 {
+    R_ASSERT(watchType < MAX_WATCH_TYPE_INDICES);
+
     // Check if we need to initialize any global params.
-    if (gWin32Runtime.isInitialized)
+    if (!gWin32Runtime.isInitialized)
     {
         initializeTicksPerSecond();
-        gWin32Runtime.isInitialized = true;
+        gWin32Runtime.isInitialized             = true;
     }
 
-    gWin32Runtime.ticks[watchType] = Win32RuntimeTick();
+    // If the watch is already initialized with the id, then we ignore init.
+    // Otherwise, proceed with the intialization.
+    if 
+        (
+            gWin32Runtime.watchId[watchType] != 0 &&
+            gWin32Runtime.watchId[watchType] != id
+        )
+    {
+        R_ERR("RealtimeTick", "Watch type is already initialized! Ignoring...");
+        return;
+    }
+   
+    gWin32Runtime.watchId[watchType]    = id;
+    gWin32Runtime.ticks[watchType]      = Win32RuntimeTick();
 }
 
 
@@ -266,5 +328,36 @@ U64 getMainThreadId()
 U64 getCurrentThreadId()
 {
     return (U64)GetCurrentThreadId();
+}
+
+
+RealtimeStopWatch::RealtimeStopWatch()
+{
+    if (!gWin32Runtime.isInitialized)
+    {
+        initializeTicksPerSecond();
+        gWin32Runtime.isInitialized = true;
+    }
+
+    const U64 currentTime = getCurrentTickS();
+
+    m_currentTimeU64 = currentTime;
+}
+
+
+RealtimeStopWatch::operator Recluse::RealtimeTick()
+{
+    RealtimeTick tick = RealtimeTick();
+    tick.m_currentTimeS = F32(m_currentTimeU64);
+    tick.m_deltaTimeS = F32(m_currentTimeU64) / F32(getTicksPerSecondS());
+    return tick;
+}
+
+
+RealtimeStopWatch RealtimeStopWatch::operator-(const RealtimeStopWatch& rh)
+{
+    RealtimeStopWatch watch;
+    watch.m_currentTimeU64 = m_currentTimeU64 - rh.m_currentTimeU64;
+    return watch;
 }
 } // Recluse

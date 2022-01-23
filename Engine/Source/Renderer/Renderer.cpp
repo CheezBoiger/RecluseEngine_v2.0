@@ -468,11 +468,16 @@ static ErrType kRendererJob(void* pData)
 {
     Renderer* pRenderer = Renderer::getMain();
     Mutex renderMutex   = pRenderer->getMutex();
+    U64 threadId        = getCurrentThreadId();
+
+        // Initialize the renderer watch.
+    RealtimeTick::initializeWatch(threadId, JOB_TYPE_RENDERER);
 
     // Initialize module here.
     while (pRenderer->isActive()) 
     {
         ScopedLock lck(renderMutex);
+        RealtimeTick::updateWatch(threadId, JOB_TYPE_RENDERER);
 
         RealtimeTick tick = RealtimeTick::getTick(JOB_TYPE_RENDERER);
 
@@ -500,9 +505,6 @@ ErrType Renderer::onInitializeModule(Application* pApp)
         configs.renderHeight = 600;
 
         initialize(pWindow->getNativeHandle(), configs);
-
-        // Initialize the renderer watch.
-        RealtimeTick::initializeWatch(JOB_TYPE_RENDERER);
     }
 
     MainThreadLoop::getMessageBus()->addReceiver
@@ -599,8 +601,6 @@ void Renderer::update(F32 currentTime, F32 deltaTime)
     }
 
     m_renderState.currentTick = interpTick;
-
-    R_VERBOSE("Renderer", "RenderTime=%.f fps", 1.f / deltaTick);
 }
 } // Engine
 } // Recluse

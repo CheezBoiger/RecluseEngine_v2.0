@@ -81,16 +81,14 @@ public:
         return m_isActive;
     }
 
-    Bool isRunning() const { return m_isRunning; }
-
-    void enableRunning(Bool enable) { ScopedLock lck(m_sync); m_isRunning = enable; }
-
-    Mutex getMutex() { return m_sync; }
+    Bool            isRunning() const { return m_isRunning; }
+    void            enableRunning(Bool enable) { ScopedLock lck(m_sync); m_isRunning = enable; }
+    Mutex           getMutex() { return m_sync; }
 
 private:
-    volatile Bool m_isRunning = false;
-    volatile Bool m_isActive  = false;
-    Mutex m_sync;
+    volatile Bool   m_isRunning = false;
+    volatile Bool   m_isActive  = false;
+    Mutex           m_sync;
 };
 } // Engine
 } // Recluse

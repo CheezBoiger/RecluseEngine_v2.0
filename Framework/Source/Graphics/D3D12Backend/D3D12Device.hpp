@@ -83,8 +83,14 @@ public:
     BufferResources* getCurrentBufferResource() { return &m_bufferResources[m_currentBufferIndex]; }
 
     D3D12_CPU_DESCRIPTOR_HANDLE createSampler(const D3D12_SAMPLER_DESC& desc);
+    D3D12_CPU_DESCRIPTOR_HANDLE createRenderTargetView(const D3D12_RENDER_TARGET_VIEW_DESC& desc);
+    D3D12_CPU_DESCRIPTOR_HANDLE createDepthStencilView(const D3D12_DEPTH_STENCIL_VIEW_DESC& desc);
+    D3D12_CPU_DESCRIPTOR_HANDLE createShaderResourceView(const D3D12_SHADER_RESOURCE_VIEW_DESC& desc);
+    D3D12_CPU_DESCRIPTOR_HANDLE createUnorderedAccessView(const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc);
 
     D3D12_FEATURE_DATA_FORMAT_SUPPORT checkFormatSupport(ResourceFormat format);
+
+    DescriptorHeapManager* getDescriptorHeapManager() { return &m_descHeapManager; }
 
 private:
 

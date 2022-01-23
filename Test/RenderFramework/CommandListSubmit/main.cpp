@@ -13,7 +13,7 @@ using namespace Recluse;
 int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
-    RealtimeTick::initializeWatch(0);
+    RealtimeTick::initializeWatch(1ull, 0);
 
     GraphicsSwapchain* pSwapchain   = nullptr;
     GraphicsDevice* pDevice         = nullptr;
@@ -90,6 +90,7 @@ int main(int c, char* argv[])
         pList = pDevice->getCommandList();
 
         while (!pWindow->shouldClose()) {
+            RealtimeTick::updateWatch(1ull, 0);
             RealtimeTick tick = RealtimeTick::getTick(0);
             R_TRACE("Graphics", "FPS: %f", 1.f / tick.getDeltaTimeS());
 

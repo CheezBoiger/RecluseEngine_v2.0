@@ -70,6 +70,11 @@ public:
         R_ASSERT_MSG(false, "ERROR"); \
         R_LOG(chan, Recluse::LogError, format, __VA_ARGS__); \
     }
+// NOTE(): We should always be implementing a function when needed, but for development purposes,
+// we can simply place a warning assert to let us know it is not written. Otherwise, to 
+// the user, this is entirely ignored.
+#define R_NO_IMPL() R_ASSERT_MSG(false, "No implementation for %s", __FUNCTION__)
 #else
 #define R_ERR(chan, format, ...) R_LOG(chan, Recluse::LogError, format, __VA_ARGS__)
+#define R_NO_IMPL()
 #endif

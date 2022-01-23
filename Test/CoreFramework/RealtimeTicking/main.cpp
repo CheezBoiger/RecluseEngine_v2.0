@@ -11,13 +11,14 @@ int main()
     Log::initializeLoggingSystem();
 
     // Initialize the realtime tick.
-    RealtimeTick::initializeWatch(0);
+    RealtimeTick::initializeWatch(1ull, 0);
 
     // initialize our max time.
     F32 seconds     = 0.f;
     F32 maxTimeS    = 60.0f;
 
     while(1) {
+        RealtimeTick::updateWatch(1ull, 0);
 
         // Get the current tick.
         RealtimeTick tick   = RealtimeTick::getTick(0);

@@ -308,6 +308,34 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12Device::createSampler(const D3D12_SAMPLER_DESC&
 }
 
 
+D3D12_CPU_DESCRIPTOR_HANDLE D3D12Device::createRenderTargetView(const D3D12_RENDER_TARGET_VIEW_DESC& desc)
+{
+    R_NO_IMPL();
+    return {};
+}
+
+
+D3D12_CPU_DESCRIPTOR_HANDLE D3D12Device::createDepthStencilView(const D3D12_DEPTH_STENCIL_VIEW_DESC& desc)
+{
+    R_NO_IMPL();
+    return {};
+}
+
+
+D3D12_CPU_DESCRIPTOR_HANDLE D3D12Device::createShaderResourceView(const D3D12_SHADER_RESOURCE_VIEW_DESC& desc)
+{
+    R_NO_IMPL();
+    return {};
+}
+
+
+D3D12_CPU_DESCRIPTOR_HANDLE D3D12Device::createUnorderedAccessView(const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc)
+{
+    R_NO_IMPL();
+    return {};
+}
+
+
 D3D12_FEATURE_DATA_FORMAT_SUPPORT D3D12Device::checkFormatSupport(ResourceFormat format)
 {
     D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport = { };

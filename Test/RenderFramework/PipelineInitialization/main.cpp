@@ -63,7 +63,7 @@ void updateConstData(GraphicsResource* pData, RealtimeTick& tick)
 int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
-    RealtimeTick::initializeWatch(0);
+    RealtimeTick::initializeWatch(1ull, 0);
 
     GraphicsInstance* pInstance       = GraphicsInstance::createInstance(GRAPHICS_API_VULKAN);
     GraphicsAdapter* pAdapter       = nullptr;
@@ -384,6 +384,7 @@ int main(int c, char* argv[])
 
     while (!pWindow->shouldClose()) 
     {
+        RealtimeTick::updateWatch(1ull, 0);
         RealtimeTick tick = RealtimeTick::getTick(0);
         R_VERBOSE("Game", "%f", tick.getDeltaTimeS());
         updateConstData(pData, tick);

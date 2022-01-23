@@ -158,7 +158,7 @@ public:
 int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
-    RealtimeTick::initializeWatch(0);
+    RealtimeTick::initializeWatch(1ull, 0);
 
     Engine::GameObject* obj = new TestObject();
     TestObject1* obj1 = new TestObject1();
@@ -180,6 +180,7 @@ int main(int c, char* argv[])
 
     U64 counter = 0;
     while ((counter++) < 500) {
+        RealtimeTick::updateWatch(1ull, 0);
         RealtimeTick tick = RealtimeTick::getTick(0);
         pScene->update(tick);
     }

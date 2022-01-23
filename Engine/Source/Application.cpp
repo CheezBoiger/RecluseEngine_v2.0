@@ -93,7 +93,7 @@ ErrType initialize()
     k_mainLoopInitialized = true;
 
     // initialize the main watch.
-    RealtimeTick::initializeWatch(JOB_TYPE_MAIN);    
+    RealtimeTick::initializeWatch(getMainThreadId(), JOB_TYPE_MAIN);    
 
     return REC_RESULT_OK;
 }
@@ -107,6 +107,7 @@ ErrType MainThreadLoop::run()
 
     while (!k_pWindow->shouldClose()) 
     {
+        RealtimeTick::updateWatch(getCurrentThreadId(), JOB_TYPE_MAIN);
         RealtimeTick tick = RealtimeTick::getTick(0);
         pollEvents();
         if (k_pApp) 

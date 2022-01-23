@@ -24,19 +24,19 @@ public:
 
     virtual void update(const RealtimeTick& tick) override
     {
-       DrawRenderCommand rcmd = {};
-       rcmd.op = COMMAND_OP_DRAWABLE_INSTANCED;
-       rcmd.vertexTypeFlags = VERTEX_ATTRIB_POSITION | VERTEX_ATTRIB_NORMAL;
-       rcmd.numSubMeshes = 0;
-       //pRenderer->pushRenderCommand(rcmd, RENDER_PREZ);
+        DrawRenderCommand rcmd = {};
+        rcmd.op = COMMAND_OP_DRAWABLE_INSTANCED;
+        rcmd.vertexTypeFlags = VERTEX_ATTRIB_POSITION | VERTEX_ATTRIB_NORMAL;
+        rcmd.numSubMeshes = 0;
+        //pRenderer->pushRenderCommand(rcmd, RENDER_PREZ);
 
-       R_VERBOSE("GameLoop", "time=%f fps", 1.f / tick.getDeltaTimeS());
+        R_VERBOSE("GameLoop", "time=%f fps", 1.f / tick.getDeltaTimeS());
+        R_VERBOSE("GameLoop", "renderTime=%f fps", 1.f / RealtimeTick::getTick(JOB_TYPE_RENDERER).getDeltaTimeS());
     }
 
     virtual ErrType onInit() override
     {
         Log::initializeLoggingSystem();
-        RealtimeTick::initializeWatch(0);
         Renderer::initializeModule(this);
 
         RenderMessage message = { };

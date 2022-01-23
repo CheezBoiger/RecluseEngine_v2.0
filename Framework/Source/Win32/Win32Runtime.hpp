@@ -13,15 +13,19 @@ class Win32RuntimeTick
 public:
     Win32RuntimeTick()
     {
-        updateLastTimeS(getCurrentTickS());
+        updateLastTimeS(getCurrentTickS(), 0.f);
     }
 
     U64 getLastTimeS() const;
+    F32 getCurrentTime() const { return m_currentTimeS; }
+    F32 getDelta() const { return m_deltaTimeS; }
 
-    void updateLastTimeS(U64 newLastTimeS);
+    void updateLastTimeS(U64 newLastTimeS, F32 deltaTime);
 
 private:
     U64 m_time;
+    F32 m_currentTimeS;
+    F32 m_deltaTimeS;
     
 };
 
