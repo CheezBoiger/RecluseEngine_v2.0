@@ -17,7 +17,7 @@ using namespace Recluse;
 using namespace Recluse::Engine;
 
 // Testing the game object behavior!
-class TestObject : public Engine::GameObject {
+class TestObject : public ECS::GameObject {
 public:
     R_PUBLIC_DECLARE_GAME_OBJECT(TestObject, "7C56ED72-A8C3-4428-952C-9BC7D4DB42C6")
 
@@ -31,7 +31,7 @@ public:
 };
 
 
-struct TestObject1 : public Engine::GameObject {
+struct TestObject1 : public ECS::GameObject {
 public:
     R_PUBLIC_DECLARE_GAME_OBJECT(TestObject1, "B8353C91-B1EC-4517-B7DC-0CBADB10A398")
 
@@ -69,7 +69,7 @@ private:
 };
 
 
-struct ChildObject : public Engine::GameObject {
+struct ChildObject : public ECS::GameObject {
 public:
     R_PUBLIC_DECLARE_GAME_OBJECT(ChildObject, "E8C5D1C7-9758-4BF8-A17D-D1DC14D59769")
 
@@ -91,23 +91,23 @@ public:
 class GameWorldScene : public Engine::Scene {
 public:
     ErrType serialize(Archive* pArchive) override {
-        std::queue<Engine::GameObject*> objects;
-        const std::vector<Engine::GameObject*>& gameObjects = getGameObjects();
+        std::queue<ECS::GameObject*> objects;
+        const std::vector<ECS::GameObject*>& gameObjects = getGameObjects();
         for (auto gameObject : gameObjects) {
             objects.push(gameObject);
         } 
 
         while (!objects.empty()) {
-            Engine::GameObject* pObject = objects.front();
+            ECS::GameObject* pObject = objects.front();
             objects.pop();
             
-            Engine::RGUID rguid                                 = pObject->getClassGUID();
-            const std::vector<Engine::GameObject*>& children    = pObject->getChildren();
+            ECS::RGUID rguid                                 = pObject->getClassGUID();
+            const std::vector<ECS::GameObject*>& children    = pObject->getChildren();
             U32 numChildren                                     = (U32)children.size();
             const char* name                                    = pObject->getClassName();
             U32 nameSz                                          = strlen(name);
 
-            pArchive->write(&rguid, sizeof(Engine::RGUID));
+            pArchive->write(&rguid, sizeof(ECS::RGUID));
             pArchive->write(&numChildren, 4);
             pArchive->write(&nameSz, sizeof(U32));
             pArchive->write((void*)name, nameSz);
@@ -122,11 +122,11 @@ public:
 
         ErrType result = REC_RESULT_OK;
         while (result == REC_RESULT_OK) {
-            Engine::RGUID rguid;
+            ECS::RGUID rguid;
             U32 numChilren  = 0;
             U32 nameSz      = 0;
             char name[128];
-            result          = pArchive->read(&rguid, sizeof(Engine::RGUID));
+            result          = pArchive->read(&rguid, sizeof(ECS::RGUID));
             result          = pArchive->read(&numChilren, sizeof(U32));
             result          = pArchive->read(&nameSz, sizeof(U32));
             result          = pArchive->read(name, nameSz);
@@ -160,9 +160,9 @@ int main(int c, char* argv[])
     Log::initializeLoggingSystem();
     RealtimeTick::initializeWatch(1ull, 0);
 
-    Engine::GameObject* obj = new TestObject();
+    ECS::GameObject* obj = new TestObject();
     TestObject1* obj1 = new TestObject1();
-    Engine::GameObject* child = new ChildObject();
+    ECS::GameObject* child = new ChildObject();
     obj1->initialize();
     obj->initialize();  
     child->initialize();

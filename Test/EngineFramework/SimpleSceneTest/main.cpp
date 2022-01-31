@@ -54,7 +54,7 @@ struct InputMessage : public AMessage {
 
 
 // Testing the game object behavior!
-class TestObject : public Engine::GameObject {
+class TestObject : public ECS::GameObject {
 public:
     R_PUBLIC_DECLARE_GAME_OBJECT(TestObject, "7C56ED72-A8C3-4428-952C-9BC7D4DB42C6")
 
@@ -73,7 +73,7 @@ public:
 };
 
 
-struct TestObject1 : public Engine::GameObject {
+struct TestObject1 : public ECS::GameObject {
 public:
     R_PUBLIC_DECLARE_GAME_OBJECT(TestObject1, "B8353C91-B1EC-4517-B7DC-0CBADB10A398")
 
@@ -87,7 +87,7 @@ public:
 };
 
 
-struct ChildObject : public Engine::GameObject {
+struct ChildObject : public ECS::GameObject {
 public:
     R_PUBLIC_DECLARE_GAME_OBJECT(ChildObject, "E8C5D1C7-9758-4BF8-A17D-D1DC14D59769")
 
@@ -114,9 +114,9 @@ int main(int c, char* argv[])
     RealtimeTick::initializeWatch(1ull, 0);
     g_bus.initialize();
 
-    Engine::GameObject* obj = new TestObject();
-    Engine::GameObject* obj1 = new TestObject1();
-    Engine::GameObject* child = new ChildObject();
+    ECS::GameObject* obj = new TestObject();
+    ECS::GameObject* obj1 = new TestObject1();
+    ECS::GameObject* child = new ChildObject();
     obj1->initialize();
     obj->initialize();  
     child->initialize();

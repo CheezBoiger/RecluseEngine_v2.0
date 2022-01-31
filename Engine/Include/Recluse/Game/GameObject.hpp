@@ -41,9 +41,9 @@ enum GameObjectStatus
 
 #define R_PUBLIC_DECLARE_GAME_OBJECT(_class, guuid) \
     public: \
-    static RGUID classGUID() { return recluseHash(guuid, sizeof(guuid)); } \
+    static Recluse::ECS::RGUID classGUID() { return recluseHash(guuid, sizeof(guuid)); } \
     static const char* className() { return #_class; } \
-    virtual RGUID getClassGUID() const override { return classGUID(); } \
+    virtual Recluse::ECS::RGUID getClassGUID() const override { return classGUID(); } \
     virtual const char* getClassName() const override { return className(); }
     
     
