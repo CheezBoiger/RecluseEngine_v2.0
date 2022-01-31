@@ -7,33 +7,36 @@
 #include "Recluse/Math/Vector3.hpp"
 #include "Recluse/Math/Quaternion.hpp"
 
+
 namespace Recluse {
 
 
-class Transform : public Component 
+// Transform component that stores transformations
+// and positioning of a given entity.
+class Transform : public ECS::Component 
 {
 public:
+    virtual ~Transform() { }
 
-    // The World position of the transform.
-    Float3 position;
+    R_EDITOR_DECLARE("visible", "public", true)
+    R_EDITOR_DECLARE("visible", "default", Float3(0.f, 0.f, 0.f))
+    Float3      position;       // The World position of the transform.
+    R_EDITOR_DECLARE("visible", "public", true)
+    Float3      localPosition;  // The local position, relative to the parent.
+    R_EDITOR_DECLARE("visible", "public", true)
+    Quaternion  rotation;       // Rotation of the transform in world.
+    R_EDITOR_DECLARE("visible", "public", true)
+    Quaternion  localRotation;  // local rotation relative to the parent.
+    R_EDITOR_DECLARE("visible", "public", true)
+    Float3      eulerAngles;    // rotation represented in euler angles (roll, pitch, yaw.)
 
-    // The local position, relative to the parent.
-    Float3 localPosition;
-
-    // 
-    Quaternion rotation;
-
-    //
-    Quaternion localRotation;
-
-    // 
-    Float3 eulerAngles;
+    // Update the transform.
+    virtual void update(const RealtimeTick& tick) override;
 
 private:
-    // Local to World Matrix.
-    Matrix44 m_localToWorld;
-
-    // World to Local Matrix.
-    Matrix44 m_worldToLocal;
+    Matrix44 m_localToWorld;        // Local to World Matrix.
+    Matrix44 m_worldToLocal;        // World to Local Matrix.
+    Matrix44 m_prevLocalToWorld;    // Previous Local To World.
+    Matrix44 m_prevWorldToLocal;    // Previous World To Local.
 };
 } // Recluse

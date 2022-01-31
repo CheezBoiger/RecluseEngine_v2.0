@@ -83,7 +83,7 @@ set ( RECLUSE_CORE_BUILD
     ${RECLUSE_CORE_INCLUDE_MEMORY}/MemoryPool.hpp
     ${RECLUSE_CORE_INCLUDE_MEMORY}/MemoryScan.hpp
     ${RECLUSE_CORE_INCLUDE_MEMORY}/PoolAllocator.hpp
-    ${RECLUSE_CORE_INCLUDE_MEMORY}/StackAllocator.hpp
+    ${RECLUSE_CORE_INCLUDE_MEMORY}/LinearAllocator.hpp
     ${RECLUSE_CORE_INCLUDE_MEMORY}/MemoryCommon.hpp
     ${RECLUSE_CORE_SOURCE_MEMORY}/MemoryPool.cpp
     ${RECLUSE_CORE_SOURCE_MEMORY}/BuddyAllocator.cpp

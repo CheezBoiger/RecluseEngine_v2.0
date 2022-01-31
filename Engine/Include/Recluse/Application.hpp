@@ -3,6 +3,8 @@
 #include "Recluse/Scene/Scene.hpp"
 #include "Recluse/Scene/SceneLoader.hpp"
 
+#include "Recluse/Game/GameSystem.hpp"
+
 #include "Recluse/RealtimeTick.hpp"
 #include "Recluse/Memory/Allocator.hpp"
 #include "Recluse/Memory/MemoryPool.hpp"

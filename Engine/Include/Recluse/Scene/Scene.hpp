@@ -30,17 +30,17 @@ public:
     R_PUBLIC_API void initialize();
     R_PUBLIC_API void destroy();
 
-    R_PUBLIC_API void addGameObject(GameObject* pGameObject);
+    R_PUBLIC_API void addGameObject(ECS::GameObject* pGameObject);
     R_PUBLIC_API void removeGameObject(U32 idx);
-    R_PUBLIC_API GameObject* findGameObject(const std::string& name);
-    R_PUBLIC_API GameObject* getGameObject(U32 idx);
+    R_PUBLIC_API ECS::GameObject* findGameObject(const std::string& name);
+    R_PUBLIC_API ECS::GameObject* getGameObject(U32 idx);
 
     R_PUBLIC_API void setName(const std::string& name);
     const std::string& getName() const { return m_name; }
 
     // Get game objects inside this scene.
     //
-    R_PUBLIC_API std::vector<GameObject*>& getGameObjects() { return m_gameObjects; }
+    R_PUBLIC_API std::vector<ECS::GameObject*>& getGameObjects() { return m_gameObjects; }
 
     // Serialize the scene.
     R_PUBLIC_API ErrType save(Archive* pArchive);
@@ -76,14 +76,14 @@ protected:
 private:
 
     // Game objects in the scene.
-    std::vector<GameObject*> m_gameObjects;
-    std::string                 m_name;
+    std::vector<ECS::GameObject*>   m_gameObjects;
+    std::string                     m_name;
 
     // Current camera set in scene.
-    Camera*                     m_currentCamera;
+    Camera*                         m_currentCamera;
 
-    MemoryPool*                 m_gameMemPool;
-    Allocator*                  m_gameMemAllocator;
+    MemoryPool*                     m_gameMemPool;
+    Allocator*                      m_gameMemAllocator;
 };
 } // Engine
 } // Recluse

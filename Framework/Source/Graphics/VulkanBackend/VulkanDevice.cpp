@@ -16,7 +16,7 @@
 
 #include "Recluse/Memory/MemoryPool.hpp"
 #include "Recluse/Memory/Allocator.hpp"
-#include "Recluse/Memory/StackAllocator.hpp"
+#include "Recluse/Memory/LinearAllocator.hpp"
 #include "Recluse/Memory/BuddyAllocator.hpp"
 
 namespace Recluse {
@@ -551,7 +551,7 @@ ErrType VulkanDevice::reserveMemory(const MemoryReserveDesc& desc)
     m_imageAllocators[RESOURCE_MEMORY_USAGE_GPU_ONLY] = new VulkanAllocator();
     m_imageAllocators[RESOURCE_MEMORY_USAGE_GPU_ONLY]->initialize
         (
-            new StackAllocator(),
+            new LinearAllocator(),
             &m_imagePool[RESOURCE_MEMORY_USAGE_GPU_ONLY], 
             m_bufferCount
         );
@@ -1092,8 +1092,8 @@ void VulkanDevice::allocateMemCache()
     U64 cacheSizeBytes              = R_ALLOC_MASK(sizeof(VkMappedMemoryRange) * 128ull, ARCH_PTR_SZ_BYTES);
     m_memCache.flush.pool           = new MemoryPool(cacheSizeBytes);
     m_memCache.invalid.pool         = new MemoryPool(cacheSizeBytes);
-    m_memCache.flush.allocator      = new StackAllocator();
-    m_memCache.invalid.allocator    = new StackAllocator();
+    m_memCache.flush.allocator      = new LinearAllocator();
+    m_memCache.invalid.allocator    = new LinearAllocator();
 
     m_memCache.flush.allocator->initialize(m_memCache.flush.pool->getBaseAddress(), cacheSizeBytes);
     m_memCache.invalid.allocator->initialize(m_memCache.invalid.pool->getBaseAddress(), cacheSizeBytes);

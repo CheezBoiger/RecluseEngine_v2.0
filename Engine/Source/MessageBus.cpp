@@ -2,7 +2,7 @@
 #include "Recluse/MessageBus.hpp"
 #include "Recluse/Messaging.hpp"
 
-#include "Recluse/Memory/StackAllocator.hpp"
+#include "Recluse/Memory/LinearAllocator.hpp"
 #include "Recluse/Memory/MemoryCommon.hpp"
 
 namespace Recluse {
@@ -11,7 +11,7 @@ namespace Recluse {
 void MessageBus::initialize()
 {
     m_messageMemPool = new MemoryPool(R_1MB * 2ull);
-    m_pMessageAllocator = new StackAllocator();
+    m_pMessageAllocator = new LinearAllocator();
     m_pMessageAllocator->initialize(m_messageMemPool->getBaseAddress(), 
         m_messageMemPool->getTotalSizeBytes());
 }

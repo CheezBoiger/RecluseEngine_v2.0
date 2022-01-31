@@ -3,7 +3,7 @@
 
 #include "Recluse/Memory/MemoryCommon.hpp"
 #include "Recluse/Memory/Allocator.hpp"
-#include "Recluse/Memory/StackAllocator.hpp"
+#include "Recluse/Memory/LinearAllocator.hpp"
 #include "Recluse/Memory/MemoryPool.hpp"
 
 #include "Recluse/Types.hpp"
@@ -20,7 +20,7 @@ void RenderCommandList::initialize()
     if (!m_pool) 
     {
         m_pool = new MemoryPool(szBytes);
-        m_pAllocator = new StackAllocator();
+        m_pAllocator = new LinearAllocator();
 
         m_pAllocator->initialize(m_pool->getBaseAddress(), m_pool->getTotalSizeBytes());
     }
@@ -29,7 +29,7 @@ void RenderCommandList::initialize()
     {
         szBytes = R_ALLOC_MASK(64 * R_1KB, ARCH_PTR_SZ_BYTES);
         m_pointerPool = new MemoryPool(szBytes);
-        m_pointerAllocator = new StackAllocator();
+        m_pointerAllocator = new LinearAllocator();
     
         m_pointerAllocator->initialize(m_pointerPool->getBaseAddress(), m_pointerPool->getTotalSizeBytes());
     }

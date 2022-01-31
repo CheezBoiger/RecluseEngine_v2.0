@@ -2,16 +2,20 @@
 #pragma once
 
 #include "Recluse/Types.hpp"
+#include "Recluse/RealtimeTick.hpp"
 #include "Recluse/Serialization/Serializable.hpp"
 
+#include "Recluse/Game/GameSystem.hpp"
+
 namespace Recluse {
+namespace ECS {
 
 class GameObject;
 
 typedef U64 ComponentUUID;
 
 // Declaration semantics used for editor.
-#define R_COMPONENT_DECLARE(varType, varName, varValue)
+#define R_EDITOR_DECLARE(varType, varName, varValue)
 
 // Component abstraction class.
 class R_PUBLIC_API Component : public Serializable 
@@ -38,11 +42,11 @@ public:
     ComponentUUID getUUID() const { return m_cuuid; }
 
     // Check if the component is enabled.
-    R_COMPONENT_DECLARE("visible", "public", true)
+    R_EDITOR_DECLARE("visible", "public", true)
     Bool isEnabled() const { return m_enable; }
 
     // Enable the component.
-    R_COMPONENT_DECLARE("visible", "public", true)
+    R_EDITOR_DECLARE("visible", "public", true)
     void setEnable(Bool enable) { m_enable = enable; if (enable) onEnable(); }
 
     // Initialize the component.
@@ -67,7 +71,7 @@ public:
     }
 
     // update the component accordingly.
-    virtual void update() { }
+    virtual void update(const RealtimeTick& tick) { }
 
 private:
 
@@ -84,4 +88,5 @@ private:
     // Flag whether this component is enabled or not.
     Bool m_enable;
 };
+} // ECS
 } // Recluse

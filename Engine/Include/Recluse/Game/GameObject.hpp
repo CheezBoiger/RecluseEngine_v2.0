@@ -14,9 +14,14 @@
 
 namespace Recluse {
 namespace Engine {
+class Scene;
+} // Engine
+} // Recluse
+
+namespace Recluse {
+namespace ECS {
 
 class Component;
-class Scene;
 
 typedef U64 GameUUID;
 typedef Hash64 RGUID;
@@ -152,7 +157,7 @@ public:
 
     // Get the reference to the scene.
     //
-    R_PUBLIC_API Scene* getScene() const { return m_pSceneRef; }
+    R_PUBLIC_API Engine::Scene* getScene() const { return m_pSceneRef; }
 
     R_PUBLIC_API std::vector<GameObject*>& getChildren() { return m_childrenNodes; }
 
@@ -208,7 +213,7 @@ private:
     GameUUID                    m_guuid;
 
     // Reference to the scene.
-    Scene*                      m_pSceneRef;
+    Engine::Scene*              m_pSceneRef;
 };
-} // Engine
+} // ECS
 } // Recluse
