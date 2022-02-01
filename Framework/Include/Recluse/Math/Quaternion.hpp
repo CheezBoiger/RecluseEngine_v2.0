@@ -35,8 +35,32 @@ struct R_PUBLIC_API Quaternion
     inline Quaternion operator/(F32 scalar) const;
 
     inline Quaternion operator-() const;
+    inline Quaternion operator~() const;
     
     inline Float3 operator*(const Float3& rh) const;
+};
+
+
+struct R_PUBLIC_API DualQuaternion
+{
+    Quaternion real;    // Real part.
+    Quaternion dual;    // Dual part.
+
+    DualQuaternion
+            (
+                const Quaternion& r = Quaternion(), 
+                const Quaternion& d = Quaternion()
+            )
+        : real(r)
+        , dual(d)
+    {
+    }
+
+    inline DualQuaternion operator+(const DualQuaternion& rh)
+    {
+        return DualQuaternion(real + rh.real, dual + rh.dual);
+    }
+    
 };
 
 

@@ -1,21 +1,26 @@
 //
 #pragma once
 
+#include "Recluse/Types.hpp"
 #include "Recluse/Game/GameSystem.hpp"
-#include "Recluse/Game/Components/Transform.hpp"
+
+#include "Recluse/Game/Components/RendererComponent.hpp"
 
 namespace Recluse {
 
 
-class TransformSystem : public ECS::SystemDefinition<Transform>
+class RendererSystem : public ECS::SystemDefinition<RendererComponent>
 {
 public:
-    virtual ~TransformSystem() { }
 
-    virtual ErrType onInitialize()                      override;
-    virtual ErrType onCleanUp()                         override;
-    virtual void    updateComponents(F32 deltaTime)     override;
-    virtual ErrType allocateComponent(Transform** pOut) override;
-    virtual ErrType freeComponent(Transform** pIn)      override;
+    virtual         ~RendererSystem() { }
+
+    virtual ErrType allocateComponent(RendererComponent** pOut) override;
+    virtual ErrType freeComponent(RendererComponent** pOut)     override;
+    
+    virtual ErrType onInitialize()                              override;
+    virtual ErrType onCleanUp()                                 override;
+    virtual void    updateComponents(F32 deltaTime)             override;
+    virtual ErrType clearAll()                                  override;
 };
 } // Recluse

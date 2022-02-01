@@ -70,8 +70,8 @@ public:
         onCleanUp();
     }
 
-    // update the component accordingly.
-    virtual void update(const RealtimeTick& tick) { }
+    // update the component accordingly. This must be defined for all components.
+    virtual void update(const RealtimeTick& tick) = 0;
 
 private:
 

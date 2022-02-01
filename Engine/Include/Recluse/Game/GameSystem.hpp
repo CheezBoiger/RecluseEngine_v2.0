@@ -9,6 +9,8 @@ namespace Recluse {
 namespace ECS {
 
 
+//! System is the high level provision that oversees all
+//! game components to their respect.
 class System
 {
 public:
@@ -28,8 +30,10 @@ private:
     U32 m_priority;
 };
 
-// System is the high level provision that oversees all 
-// game components to their respect.
+
+//! SystemDefinition is the required definition of the given system, which is to 
+//! define how to allocate, free, and update all components the application interacts 
+//! with. Do not inherit directly from System, instead inherit from this!
 template<typename Comp>
 class SystemDefinition : public System
 {
