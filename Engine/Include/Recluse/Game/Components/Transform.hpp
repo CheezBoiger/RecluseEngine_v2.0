@@ -31,7 +31,7 @@ public:
     Float3      eulerAngles;    // rotation represented in euler angles (roll, pitch, yaw.)
 
     // Update the transform.
-    virtual void update(const RealtimeTick& tick) override;
+    virtual void onUpdate(const RealtimeTick& tick) override;
 
 private:
     Matrix44 m_localToWorld;        // Local to World Matrix.

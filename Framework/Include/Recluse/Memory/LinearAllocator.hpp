@@ -56,7 +56,7 @@ public:
         return REC_RESULT_OK;
     }
 
-    ErrType onFree(Allocation* pOutput) 
+    ErrType onFree(Allocation* pOutput) override
     {
         return REC_RESULT_OK;
     }

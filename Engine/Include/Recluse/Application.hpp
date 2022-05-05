@@ -111,6 +111,12 @@ public:
 
     inline Bool isInitialized() const { return m_initialized; }
 
+    Bool registerSystem(ECS::System* pSystem)
+    {
+        m_systems.push(pSystem);
+        return true;
+    }
+
 protected:
 
     //! Application specific initialization. This requires 
@@ -130,6 +136,14 @@ private:
     Engine::Scene*              m_pScene;
     std::list<Thread>           m_threads;
     std::map<JobType, Thread*>  m_jobThreads;
+
+    std::priority_queue
+        <
+            ECS::System*,
+            std::vector<ECS::System*>,
+            ECS::SystemPointerComparer
+        >                       m_systems;
+
     Bool                        m_initialized;
 };
 

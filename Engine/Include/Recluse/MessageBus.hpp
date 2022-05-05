@@ -47,11 +47,10 @@ public:
     void pushMessage(const MessageType& message) 
     {
         static_assert(std::is_base_of<AMessage, MessageType>::value, "Must be a base of AMessage!");
-        Allocation alloc = { };
-        ErrType err = m_pMessageAllocator->allocate(&alloc, sizeof(MessageType), 4ull);
-        MessageType* pMessage = reinterpret_cast<MessageType*>(alloc.baseAddress);
-        new (pMessage) MessageType;
-        *pMessage = message;
+        
+        MessageType* pMessage   = new (m_pMessageAllocator) MessageType();
+        *pMessage               = message;
+        
         m_messages.push(pMessage);
     }
 

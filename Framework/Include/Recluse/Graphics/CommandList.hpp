@@ -3,6 +3,7 @@
 
 #include "Recluse/Types.hpp"
 #include "Recluse/Arch.hpp"
+#include "Recluse/Messaging.hpp"
 #include "Recluse/Graphics/GraphicsCommon.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 
@@ -70,9 +71,9 @@ public:
 
     virtual Bool supportsAsyncCompute() { return false; }
 
-    virtual void dispatchAsync(U32 x, U32 y, U32 z) { }
+    virtual void dispatchAsync(U32 x, U32 y, U32 z) { R_ASSERT(supportsAsyncCompute()); }
 
-    virtual void dispatchIndirect(GraphicsResource* pParams) { }
+    virtual void dispatchIndirect(GraphicsResource* pParams) { R_ASSERT(supportsAsyncCompute()); }
 
 private:
     

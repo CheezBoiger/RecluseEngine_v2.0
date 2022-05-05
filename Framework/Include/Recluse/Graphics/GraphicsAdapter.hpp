@@ -18,7 +18,14 @@ struct R_PUBLIC_API AdapterInfo
 
 struct R_PUBLIC_API AdapterLimits 
 {
-    
+    U32     maxConstBufferBinds;
+    U32     maxUavBinds;
+    U32     maxSrvBinds;
+
+    Bool    hasGeometryShaders;
+    Bool    hasRaytracing;
+    Bool    hasMeshShaders;
+    Bool    hasAsyncCompute;
 };
 
 struct R_PUBLIC_API DeviceCreateInfo 

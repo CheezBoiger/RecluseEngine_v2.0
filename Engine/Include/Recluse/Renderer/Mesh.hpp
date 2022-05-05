@@ -20,6 +20,11 @@ class Material;
 namespace Engine {
 
 
+typedef Float3 MeshRotationData;
+typedef Float3 MeshTranslateData;
+typedef Float3 MeshScaleData;
+
+
 // Per mesh information.
 struct R_PUBLIC_API PerMeshTransform 
 {
@@ -34,6 +39,13 @@ struct R_PUBLIC_API SubMesh
     std::string name;
     U64         offset;
     U64         numVertices;
+};
+
+
+struct MeshLod
+{
+    U64 index;
+    U64 offsetVert;
 };
 
 
@@ -71,15 +83,41 @@ private:
 
 
 typedef GPUBuffer PerInstancedMeshBuffer;
+typedef GPUBuffer InstancedMeshBuffer;
+typedef U64       InstancedMeshId;
+
+
+//< 
+class InstancedMeshHandler
+{
+public:
+
+    //< Register a mesh id. Get the assigned mesh id to update with.
+    R_PUBLIC_API InstancedMeshId RegisterMeshId();
+    
+    //< Unregister a mesh id. 
+    R_PUBLIC_API Bool            UnregisterMeshId();
+
+    //< Update the mesh handler.
+    R_PUBLIC_API void            update();
+
+private:
+    InstancedMeshBuffer             m_instancedMeshBuffer;
+    
+    // CPU side transform data.
+    std::vector<MeshTranslateData>  m_dataTranslates;   //< Mesh Translations.
+    std::vector<MeshRotationData>   m_dataRotations;    //< Mesh Rotations;
+    std::vector<MeshScaleData>      m_dataScales;       //< Mesh Scales;
+};
 
 class MeshInstanced 
 {
 public:
     
-    ErrType initializeInstanced();
+    R_PUBLIC_API ErrType initializeInstanced();
 
 private:
-    
+    InstancedMeshHandler* m_instancedMeshHandler;
     PerInstancedMeshBuffer m_perInstancedMeshBuffer;
 };
 } // Engine

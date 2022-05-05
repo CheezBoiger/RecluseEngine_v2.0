@@ -73,35 +73,35 @@ void RenderCommandList::destroy()
 ErrType RenderCommandList::push(const RenderCommand& renderCommand)
 {
     Allocation allocation = { };
-    ErrType result = REC_RESULT_OK;
 
     switch (renderCommand.op) 
     {
         case COMMAND_OP_DRAWABLE_INSTANCED:
         {
-            COPY_COMMAND_TO_POOL(DrawRenderCommand, renderCommand);  
+            //COPY_COMMAND_TO_POOL(DrawRenderCommand, renderCommand);
+            DrawRenderCommand* pCommand = new (m_pAllocator, &allocation) DrawRenderCommand();
+            *pCommand = static_cast<const DrawRenderCommand&>(renderCommand);
             break;     
         }
 
         case COMMAND_OP_DRAWABLE_INDEXED_INSTANCED:
         {
-            COPY_COMMAND_TO_POOL(DrawIndexedRenderCommand, renderCommand); 
+            //COPY_COMMAND_TO_POOL(DrawIndexedRenderCommand, renderCommand); 
+            DrawIndexedRenderCommand* pCommand = new (m_pAllocator, &allocation) DrawIndexedRenderCommand();
+            *pCommand = static_cast<const DrawIndexedRenderCommand&>(renderCommand);
             break;
         }
     }
 
+    PtrType p = allocation.baseAddress;
+    ErrType result = m_pointerAllocator->allocate(&allocation, ARCH_PTR_SZ_BYTES, ARCH_PTR_SZ_BYTES);
+
     if (result == REC_RESULT_OK) 
     {
-        PtrType p = allocation.baseAddress;
-        result = m_pointerAllocator->allocate(&allocation, ARCH_PTR_SZ_BYTES, ARCH_PTR_SZ_BYTES);
-
-        if (result == REC_RESULT_OK) 
-        {
-            *(RenderCommand**)allocation.baseAddress = (RenderCommand*)p;
-        }
+        *(RenderCommand**)allocation.baseAddress = (RenderCommand*)p;
     }
     
-    return result;
+    return REC_RESULT_OK;
 }
 
 

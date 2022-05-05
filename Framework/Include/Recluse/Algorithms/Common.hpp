@@ -19,6 +19,6 @@ template <typename T>
 class GenericCompare 
 {
  public:
-    Bool operator() const (const T& lh, const T& rh) const { return lh < rh; }
+    Bool operator() (const T& lh, const T& rh) const { return lh < rh; }
 };
 } // Recluse

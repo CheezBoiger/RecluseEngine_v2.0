@@ -87,6 +87,7 @@ set ( RECLUSE_CORE_BUILD
     ${RECLUSE_CORE_INCLUDE_MEMORY}/MemoryCommon.hpp
     ${RECLUSE_CORE_SOURCE_MEMORY}/MemoryPool.cpp
     ${RECLUSE_CORE_SOURCE_MEMORY}/BuddyAllocator.cpp
+	${RECLUSE_CORE_SOURCE_MEMORY}/AllocatorCommon.cpp
     ${RECLUSE_CORE_INCLUDE_THREADING}/Threading.hpp
     ${RECLUSE_CORE_INCLUDE_THREADING}/ThreadPool.hpp
     ${RECLUSE_CORE_INCLUDE}/Types.hpp

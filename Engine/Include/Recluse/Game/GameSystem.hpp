@@ -43,6 +43,26 @@ public:
     virtual ErrType freeComponent(Comp** pIn)       = 0;
 };
 
+
+class SystemComparer
+{
+public:
+    Bool operator()(const System& lh, const System& rh) const 
+    {
+        return lh.getPriority() < rh.getPriority();
+    }
+};
+
+
+class SystemPointerComparer
+{
+public:
+    Bool operator()(const System* lh, const System* rh) const
+    {
+        return lh->getPriority() < rh->getPriority();
+    }
+};
+
 typedef void* SystemPtr;
 
 } // ECS

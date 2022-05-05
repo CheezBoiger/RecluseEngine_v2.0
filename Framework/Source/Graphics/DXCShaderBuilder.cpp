@@ -29,40 +29,55 @@ public:
     DXCShaderBuilder(ShaderIntermediateCode imm)
         : ShaderBuilder(imm) { }
 
-    ErrType onCompile(const std::vector<char>& srcCode, std::vector<char>& byteCode, 
-        ShaderLang lang, ShaderType shaderType) override 
+    ErrType setUp() override
     {
-        R_DEBUG("DXC", "Compiling shader...");
-
-        HRESULT hr              = S_OK;
-        wchar_t* targetProfile  = getShaderProfile(shaderType);
-        const wchar_t* arguments[16]  = { };
-        U32 argCount            = 0;
-
-        CComPtr<IDxcCompiler> compiler;
-        CComPtr<IDxcOperationResult> result;
-        CComPtr<IDxcBlobEncoding> sourceBlob;
-        CComPtr<IDxcLibrary> library;
+        HRESULT hr = S_OK;
+        hr = DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&m_library));
         
-        hr = DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&library));
-
-        if (FAILED(hr)) 
+        if (FAILED(hr))
         {
             R_ERR("DXC", "Failed to create library for parsing!");
             return REC_RESULT_FAILED;
         }
 
-        hr = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler));
-        
-        if (FAILED(hr)) 
-        {
-            R_ERR("DXC", "Failed to create dxc compiler!");   
-            return REC_RESULT_FAILED;
+        hr = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&m_compiler));
 
+        if (FAILED(hr))
+        {
+            R_ERR("DXC", "Failed to create dxc compiler!");
+            return REC_RESULT_FAILED;
         }
 
+        return REC_RESULT_OK;
+    }
+
+    ErrType tearDown() override
+    {
+        if (m_compiler)
+            m_compiler.Release();
+        if (m_library)
+            m_library.Release();
+        return REC_RESULT_OK;
+    }
+
+    ErrType onCompile(const std::vector<char>& srcCode, std::vector<char>& byteCode, 
+        ShaderLang lang, ShaderType shaderType) override 
+    {
+        R_ASSERT(m_library != NULL);
+        R_ASSERT(m_compiler != NULL);
+
+        R_DEBUG("DXC", "Compiling shader...");
+        
+        CComPtr<IDxcOperationResult> result;
+        CComPtr<IDxcBlobEncoding> sourceBlob;
+
+        HRESULT hr                      = S_OK;
+        wchar_t* targetProfile          = getShaderProfile(shaderType);
+        const wchar_t* arguments[16]    = { };
+        U32 argCount                    = 0;
+
         UINT32 srcSizeBytes = (UINT32)srcCode.size();
-        hr = library->CreateBlobWithEncodingFromPinned(srcCode.data(), srcSizeBytes, CP_UTF8, &sourceBlob);
+        hr = m_library->CreateBlobWithEncodingFromPinned(srcCode.data(), srcSizeBytes, CP_UTF8, &sourceBlob);
         
         if (FAILED(hr)) 
         {
@@ -74,7 +89,7 @@ public:
             arguments[argCount++] = L"-spirv";
         }
         
-        hr = compiler->Compile
+        hr = m_compiler->Compile
             (
                 sourceBlob, 
                 NULL, 
@@ -106,6 +121,10 @@ public:
 
         return REC_RESULT_OK;
     }
+
+private:
+    CComPtr<IDxcCompiler> m_compiler;
+    CComPtr<IDxcLibrary> m_library;
 };
 #endif
 

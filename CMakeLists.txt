@@ -12,3 +12,6 @@ add_subdirectory( ShaderCompiler )
 
 # Engine subdirectory.
 add_subdirectory ( Engine )
+
+# Editor subdirectory
+add_subdirectory ( RecluseEditor )

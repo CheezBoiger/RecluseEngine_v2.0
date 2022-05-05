@@ -20,6 +20,8 @@ typedef U64 ComponentUUID;
 // Component abstraction class.
 class R_PUBLIC_API Component : public Serializable 
 {
+protected:
+    static const U32 kUpdateFlagZero = 0;
 public:
     static const U64 unknownComponent = ~0u;
 
@@ -71,10 +73,21 @@ public:
     }
 
     // update the component accordingly. This must be defined for all components.
-    virtual void update(const RealtimeTick& tick) = 0;
+    void update(const RealtimeTick& tick)
+    {   
+        onUpdate(tick);
+        clearUpdateFlags();
+    }
+
+    void setUpdateFlags(U32 updateFlags) { m_updateFlags = updateFlags; }
+
+    U32 getUpdateFlags() const { return m_updateFlags; }
+
+    void clearUpdateFlags() { m_updateFlags = kUpdateFlagZero; }
 
 private:
 
+    virtual void onUpdate(const RealtimeTick& tick) { }
     virtual void onInitialize() { }
     virtual void onCleanUp() { }
     virtual void onEnable() { }
@@ -87,6 +100,8 @@ private:
 
     // Flag whether this component is enabled or not.
     Bool m_enable;
+
+    U32 m_updateFlags;
 };
 } // ECS
 } // Recluse

@@ -36,6 +36,10 @@ GraphicsInstance* GraphicsInstance::createInstance(enum GraphicsAPI api)
             return ins;
         }
 #endif
+        case GRAPHICS_API_OPENGL:
+        case GRAPHICS_API_D3D11:
+        case GRAPHICS_API_SOFTWARE_RASTERIZER:
+        case GRAPHICS_API_SOFTWARE_RAYTRACER:
         default:
             R_ERR("Graphics", "Unsupported graphics api. Can not create instance!");
 

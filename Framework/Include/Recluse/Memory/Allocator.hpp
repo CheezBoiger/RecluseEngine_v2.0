@@ -129,4 +129,18 @@ public:
     }
 };
 } // Recluse
+
+
+// Operator overload for placement new.
+// This will allow us to overload the placement new operator in c++, to utilize our custom memory allocations.:
+// ex. 
+//          Object* pObj = new (allocator) Object();
+//
+R_PUBLIC_API void*   operator new (size_t sizeBytes, Recluse::Allocator* alloc, Recluse::Allocation* pOutput = nullptr);
+
+// Operator overload for deleting allocated pointers.
+// This is a helpful function, instead of having to all individually the object allocator, and performing a bunch of
+// stuff...
+//
+R_PUBLIC_API void    operator delete (void* ptr, Recluse::Allocator* alloc);
 #endif // RECLUSE_ALLOCATOR_HPP

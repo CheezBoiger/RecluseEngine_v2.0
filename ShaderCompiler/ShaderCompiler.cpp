@@ -126,6 +126,8 @@ static std::string generateShaderSceneView(ShaderLang lang)
     // Start at this file and navigate to the Engine scene view file.
     std::string kShaderCompilerFile = Filesystem::getDirectoryFromPath(__FILE__);
     // Get the file we need.
+    // TODO(): We may want to specify this as a path outside of the ShaderCompiler. In short, we want to 
+    //          have our path defined in the json file.
     std::string pathToSceneViewFile = kShaderCompilerFile + "/../Engine/Include/Recluse/Renderer/SceneView.hpp";
     
     FileBufferData data             = { };
