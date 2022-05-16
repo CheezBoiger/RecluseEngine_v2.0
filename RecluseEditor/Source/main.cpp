@@ -2,7 +2,7 @@
 #include "Recluse/Algorithms/Bubblesort.hpp"
 #include "Recluse/Messaging.hpp"
 #include "Recluse/EditorSDK/EditorDeclarations.hpp"
-#include "Recluse/RealtimeTick.hpp"
+#include "Recluse/Time.hpp"
 
 #define R_EDITOR_CHAN "RecluseEditor"
 

@@ -20,6 +20,29 @@ typedef void(*WindowKeyFunction)();
 typedef void(*OnWindowResizeFunction)();
 typedef void(*OnWindowRelocateFunction)();
 
+// Monitor description information, usually handled when querying multiple monitors from 
+// the operating system.
+struct MonitorDesc
+{
+    U32 nativeWidth;
+    U32 nativeHeight;
+    F32 refreshRate;
+    // Native handle to the monitor, should only read if necessary!
+    void* handle;
+    Bool isPrimary;
+};
+
+
+//////////////////////////////////////////////////////////////////////////////////
+// Monitor querying api calls, this is usually specific to each operating system.
+//
+//
+R_PUBLIC_API extern U32              getMonitorCount();
+R_PUBLIC_API extern Bool             queryMonitors(MonitorDesc* pDescsOut, U32 count);
+R_PUBLIC_API extern MonitorDesc      getActiveMonitor();
+//
+//////////////////////////////////////////////////////////////////////////////////
+
 // Window objects, to be instantiated and destroyed by the application.
 // Rendering systems will need this in order to draw to the screen.
 // This is an operating system dependent implementation.
@@ -35,63 +58,47 @@ public:
         , m_yPos(0)
         , m_isMinimized(false)
         , m_isShowing(false)
-        , m_pMouseHandle(nullptr) { }
+        , m_pMouseHandle(nullptr)
+        , m_keyCallback(nullptr) { }
 
     // Create the window.
     static R_PUBLIC_API Window* create(const std::string& title, U32 x, U32 y, U32 width, U32 height);
-
     // Destroy the window.
     static R_PUBLIC_API ErrType destroy(Window* pWindow);
+    static R_PUBLIC_API Window* getActiveFocusedWindow();
 
     // close the window.
-    R_PUBLIC_API void close();
-
-    // Open the window, j
-    R_PUBLIC_API void open();
-
+    R_PUBLIC_API void           close();
+    // Open the window,
+    R_PUBLIC_API void           open();
     // obtain the native window handle.
-    void* getNativeHandle() { return m_handle; }
-
+    void*                       getNativeHandle() { return m_handle; }
     // Set the screen mode.
-    void setScreenMode(ScreenMode mode);
-
+    void                        setScreenMode(ScreenMode mode);
     // Set the title of the window.
-    void setTitle(const std::string& title);
-
+    void                        setTitle(const std::string& title);
     // Programmatically resize the window.
-    void setScreenSize(U32 width, U32 height);
-
+    void                        setScreenSize(U32 width, U32 height);
     // Set the window to the center of your screen.
-    void setToCenter();
-
+    void                        setToCenter();
     // Set the window to a location on your screen.
-    void setToPosition(U32 x, U32 y);
+    void                        setToPosition(U32 x, U32 y);
+    void                        restore();
+    void                        minimize();
+    void                        maximize();
+    B32                         isMinimized() const { return m_isMinimized; }
+    U32                         getWidth() const { return m_width; }
+    U32                         getHeight() const { return m_height; }
+    U32                         getPosX() const { return m_xPos; }
+    U32                         getPosY() const { return m_yPos; }
+    const std::string&          getTitle() const { return m_title; }
+    ScreenMode                  getScreenMode() const { return m_screenMode; }
+    B32                         shouldClose() const { return m_shouldClose; }
+    void                        setMouseHandle(Mouse* pMouse) { m_pMouseHandle = pMouse; }
+    Mouse*                      getMouseHandle() { return m_pMouseHandle; }
 
-    void restore();
-
-    void minimize();
-
-    void maximize();
-
-    B32 isMinimized() const { return m_isMinimized; }
-
-    U32 getWidth() const { return m_width; }
-    
-    U32 getHeight() const { return m_height; }
-
-    U32 getPosX() const { return m_xPos; }
-
-    U32 getPosY() const { return m_yPos; }
-
-    const std::string& getTitle() const { return m_title; }
-
-    ScreenMode getScreenMode() const { return m_screenMode; }
-
-    B32 shouldClose() const { return m_shouldClose; }
-
-    void setMouseHandle(Mouse* pMouse) { m_pMouseHandle = pMouse; }
-
-    Mouse* getMouseHandle() { return m_pMouseHandle; }
+    // Grabs the display monitor that has the most area of intesection with the window.
+    MonitorDesc getCurrentActiveMonitor();
 
 private:
     // The window width
@@ -114,10 +121,10 @@ private:
     std::string m_title;
     void* m_handle;
 
-    WindowKeyFunction       m_keyCallback;
-    WindowMouseFunction     m_mouseCallback;
-    OnWindowResizeFunction  m_onWindowResizeCallback;
-    OnWindowRelocateFunction  m_windowRelocateCallback;
+    WindowKeyFunction           m_keyCallback;
+    WindowMouseFunction         m_mouseCallback;
+    OnWindowResizeFunction      m_onWindowResizeCallback;
+    OnWindowRelocateFunction    m_windowRelocateCallback;
 
     Mouse* m_pMouseHandle;
 };

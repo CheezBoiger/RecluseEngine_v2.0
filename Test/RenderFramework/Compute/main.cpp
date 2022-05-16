@@ -15,7 +15,7 @@
 #include "Recluse/System/Window.hpp"
 #include "Recluse/System/Input.hpp"
 
-#include "Recluse/RealtimeTick.hpp"
+#include "Recluse/Time.hpp"
 #include "Recluse/Filesystem/Filesystem.hpp"
 #include "Recluse/Messaging.hpp"
 

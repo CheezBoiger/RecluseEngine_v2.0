@@ -3,7 +3,7 @@
 #include "Recluse/Memory/BuddyAllocator.hpp"
 #include "Recluse/Memory/MemoryCommon.hpp"
 #include "Recluse/Messaging.hpp"
-#include "Recluse/RealtimeTick.hpp"
+#include "Recluse/Time.hpp"
 #include "Recluse/Messaging.hpp"
 
 using namespace Recluse;

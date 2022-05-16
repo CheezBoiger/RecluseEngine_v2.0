@@ -2,7 +2,7 @@
 #include <iostream>
 
 #include "Recluse/Messaging.hpp"
-#include "Recluse/RealtimeTick.hpp"
+#include "Recluse/Time.hpp"
 
 using namespace Recluse;
 

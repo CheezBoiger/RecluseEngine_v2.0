@@ -5,7 +5,7 @@
 
 #include "Recluse/Game/GameSystem.hpp"
 
-#include "Recluse/RealtimeTick.hpp"
+#include "Recluse/Time.hpp"
 #include "Recluse/Memory/Allocator.hpp"
 #include "Recluse/Memory/MemoryPool.hpp"
 #include "Recluse/Threading/ThreadPool.hpp"

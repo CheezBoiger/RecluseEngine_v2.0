@@ -1,6 +1,6 @@
 ﻿//
 #include "Recluse/Messaging.hpp"
-#include "Recluse/RealtimeTick.hpp"
+#include "Recluse/Time.hpp"
 
 #include "Recluse/Memory/MemoryCommon.hpp"
 #include "Recluse/Graphics/GraphicsInstance.hpp"

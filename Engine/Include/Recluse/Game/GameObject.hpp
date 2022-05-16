@@ -1,7 +1,7 @@
 //
 #pragma once
 
-#include "Recluse/RealtimeTick.hpp"
+#include "Recluse/Time.hpp"
 #include "Recluse/Types.hpp"
 
 #include "Recluse/Serialization/Serializable.hpp"

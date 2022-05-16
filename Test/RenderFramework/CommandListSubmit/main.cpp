@@ -5,7 +5,7 @@
 #include "Recluse/Graphics/CommandList.hpp"
 
 #include "Recluse/System/Window.hpp"
-#include "Recluse/RealtimeTick.hpp"
+#include "Recluse/Time.hpp"
 #include "Recluse/System/Input.hpp"
 
 using namespace Recluse;

@@ -2,11 +2,12 @@
 #include "Recluse/Logger.hpp"
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Memory/MemoryCommon.hpp"
-
+#include "Recluse/System/DateTime.hpp"
 #include "Logging/LogFramework.hpp"
 
 namespace Recluse {
 
+const char* DateFormatter::kDefaultFormat = "%Y-%M-%D %h:%m:%s";
 
 static LoggingQueue*    loggingQueue;
 static Thread           displayThread;
@@ -42,16 +43,34 @@ static void printLog(const LogMessage* log)
         default: break;
     }
 
-    printf
-        (
-            "%s " R_COLOR_RESET "[%s%s" R_COLOR_RESET  "] %s: %s%s" R_COLOR_RESET "\n", 
-            color,
-            color, 
-            logStr,
-            log->channel.c_str(),
-            color,
-            log->msg.c_str()
-        );
+    if (!log->time.empty())
+    {
+        printf
+            (
+                "%s " R_COLOR_RESET "[%s%s" R_COLOR_RESET  "][" "%s%s" R_COLOR_RESET "] %s: %s%s" R_COLOR_RESET "\n",
+                color,
+                color,
+                logStr,
+                color,
+                log->time.c_str(),
+                log->channel.c_str(),
+                color,
+                log->msg.c_str()
+            );
+    }
+    else
+    {
+        printf
+            (
+                "%s " R_COLOR_RESET "[%s%s" R_COLOR_RESET  "] %s: %s%s" R_COLOR_RESET "\n",
+                color,
+                color,
+                logStr,
+                log->channel.c_str(),
+                color,
+                log->msg.c_str()
+            );
+    }
 }
 
 
@@ -210,12 +229,12 @@ void LoggingQueue::cleanup()
 }
 
 
-void Log::initializeLoggingSystem()
+void Log::initializeLoggingSystem(U32 messageCacheCount)
 {
     if (!loggingQueue) 
     {
         loggingQueue = rlsMalloc<LoggingQueue>(sizeof(LoggingQueue));
-        loggingQueue->initialize();
+        loggingQueue->initialize(static_cast<U32>(messageCacheCount));
     }
 
     isLogging = true;
@@ -250,5 +269,32 @@ LogMessage* LoggingQueue::getHead() const
 
     pLog = (m_head) ? &m_head->logMessage : nullptr;
     return pLog;    
+}
+
+
+Log& Log::operator<<(const DateFormatter& formatter)
+{
+    data.time = formatter.getFormattedString();
+    return (*this);
+}
+
+
+Log& Log::operator<<(LogCommand command)
+{
+    if (command & rEND)
+    {
+        data.msg += "\n";
+    }
+
+    // We are given the command to flush out this message data.
+    // After flush, we must clear out the existing buffer.
+    if (command & rFLUSH)
+    {
+        loggingQueue->store(*this);
+        data.msg.clear();
+        data.time.clear();
+    }
+
+    return (*this);
 }
 } // Recluse

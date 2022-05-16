@@ -2,7 +2,7 @@
 #pragma once
 
 #include "Recluse/Types.hpp"
-#include "Recluse/RealtimeTick.hpp"
+#include "Recluse/Time.hpp"
 #include "Recluse/Serialization/Serializable.hpp"
 
 #include "Recluse/Game/GameSystem.hpp"

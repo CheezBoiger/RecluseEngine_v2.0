@@ -19,6 +19,7 @@ typedef short               I16;
 
 typedef unsigned            U32;
 typedef signed              I32;
+typedef unsigned int        Uint;
 
 typedef unsigned long long  U64;
 typedef signed long long    I64;
@@ -65,6 +66,50 @@ enum RecResult
     REC_RESULT_NEEDS_UPDATE,
     REC_RESULT_OUT_OF_MEMORY,
     REC_RESULT_NOT_FOUND
+};
+
+template<typename T>
+class RefCount
+{
+public:
+    RefCount()
+        : m_count(0)
+        , m_dat(T()) 
+    {
+        increment();
+    }
+
+    RefCount(const T& data) { m_count = 0; m_dat = data; }
+
+    RefCount(const RefCount& ref)
+    {
+        m_count = ref.getCount();
+        m_dat = ref.m_dat;
+        increment();
+    }
+
+    ~RefCount()
+    {
+    }
+
+    U32 getCount() const { return m_count;  }
+
+    T& getData() { return m_dat; }
+
+    T& operator()() { return getData(); }
+
+    void add() { increment(); }
+    void release() { decrement(); }
+
+    operator T () { return getData(); }
+    //RefCount<T> operator=(const T& data) { return RefCount<T>(); }
+
+private:
+    void increment() { ++m_count; }
+    void decrement() { --m_count; }
+
+    T m_dat;
+    U32 m_count;
 };
 
 } // Recluse

@@ -49,13 +49,19 @@ public:
 };
 } // Asserts
 } // Recluse 
-// Debugging macros and definitions. To be ignored on building release.
-#include <assert.h>
-#define R_ASSERT_LOG()
-#define R_ASSERT(expression) assert(expression)
-#define R_ASSERT_MSG(expression, msg) assert(expression && msg)
-#define R_DEBUG(chan, str, ...) R_LOG(chan, Recluse::LogDebug, str, __VA_ARGS__)
-#define R_DEBUG_WRAP(cond) cond
+
+    // Debugging macros and definitions. To be ignored on building release.
+    #include <assert.h>
+    #define R_ASSERT_LOG()
+    #if !defined(R_IGNORE_ASSERT)
+        #define R_ASSERT(expression) assert(expression)
+        #define R_ASSERT_MSG(expression, msg) assert(expression && msg)
+    #else
+        #define R_ASSERT(expression)
+        #define R_ASSERT_MSG(expression, msg)
+    #endif // !defined(R_IGNORE_ASSERT)
+    #define R_DEBUG(chan, str, ...) R_LOG(chan, Recluse::LogDebug, str, __VA_ARGS__)
+    #define R_DEBUG_WRAP(cond) cond
 #else
 #define R_ASSERT_LOG()
 #define R_ASSERT(expression)

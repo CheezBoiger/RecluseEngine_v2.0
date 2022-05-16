@@ -23,30 +23,28 @@ public:
         , m_isClamped(false)
         , m_isEnabled(false) { }
 
-    virtual R_PUBLIC_API ErrType integrateInput(const IInputFeedback& feedback) override;
+    virtual R_PUBLIC_API ErrType    integrateInput(const IInputFeedback& feedback) override;
+    virtual R_PUBLIC_API ErrType    initialize(const std::string& controllerName) override;
+    virtual R_PUBLIC_API ErrType    destroy() override;
+    virtual R_PUBLIC_API ErrType    getInput(IInputFeedback& feedback) override;
+    R_PUBLIC_API ErrType            setIconPath(const std::string& iconPath);
 
-    virtual R_PUBLIC_API ErrType initialize(const std::string& controllerName) override;
+    I32                             getXPos() const { return m_xPosition; }
+    I32                             getYPos() const { return m_yPosition; }
 
-    virtual R_PUBLIC_API ErrType destroy() override;
+    I32                             getLastXPos() const { return m_xLastPosition; }
+    I32                             getLastYPos() const { return m_yLastPosition; }
 
-    virtual R_PUBLIC_API ErrType getInput(IInputFeedback& feedback) override;
+    Bool                            getIsShowing() const { return m_isShowing; }
+    Bool                            getIsClamped() const { return m_isClamped; }
 
-    R_PUBLIC_API ErrType setIconPath(const std::string& iconPath);
+    Bool                            getIsEnabled() const { return m_isEnabled; }
 
-    I32 getXPos() const { return m_xPosition; }
-    I32 getYPos() const { return m_yPosition; }
+    void                            setEnable(Bool enable) { m_isEnabled = enable; }
+    void                            setShowing(Bool show) { m_isShowing = show; }
 
-    I32 getLastXPos() const { return m_xLastPosition; }
-    I32 getLastYPos() const { return m_yLastPosition; }
-
-    Bool getIsShowing() const { return m_isShowing; }
-    Bool getIsClamped() const { return m_isClamped; }
-
-    Bool getIsEnabled() const { return m_isEnabled; }
-
-    void setEnable(Bool enable) { m_isEnabled = enable; }
-    void setShowing(Bool show) { m_isShowing = show; }
-    void setClamped(Bool clamped) { m_isClamped = clamped; }
+    // Set the mouse to clamp to window.
+    void                            setClamped(Bool clamped) { m_isClamped = clamped; }
 
     // Updates the position of this mouse, which will also 
     // update the last known position.

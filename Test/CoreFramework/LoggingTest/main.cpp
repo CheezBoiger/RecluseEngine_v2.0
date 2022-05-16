@@ -1,10 +1,12 @@
 
 #include <iostream>
 
+#define R_IGNORE_ASSERT 1
 #include "Recluse/Logger.hpp"
 #include "Recluse/Messaging.hpp"
 
 #include "Recluse/Threading/Threading.hpp"
+#include "Recluse/System/DateTime.hpp"
 
 #include <vector>
 
@@ -13,6 +15,10 @@ using namespace Recluse;
 ErrType printHello(void* data)
 {
     I32 uid = *(I32*)data;
+
+    Log log(LogDebug);
+    
+    log << DateFormatter("%Y-%M-%D %h:%m:%s") << "Testing insta-Logging..." << rFLUSH;
 
     R_DEBUG("TestFramework", "Testing debugging system. uid=%d", uid);
 
@@ -36,12 +42,13 @@ ErrType printHello(void* data)
         count++;
     }
 
+    log << "Finished" << rFLUSH;
     return REC_RESULT_OK;
 }
 
 int main(int c, char* argv[])
 {
-    Log::initializeLoggingSystem();
+    Log::initializeLoggingSystem(2048u);
 
     std::vector<Thread> threads(5);
     std::vector<I32> uids(5);

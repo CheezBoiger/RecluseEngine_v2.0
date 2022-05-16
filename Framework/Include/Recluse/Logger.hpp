@@ -7,7 +7,9 @@
 #include <varargs.h>
 
 namespace Recluse {
+    
 
+class DateFormatter;
 
 enum LogType 
 {
@@ -27,7 +29,15 @@ struct LogMessage
 {
     std::string msg;
     std::string channel;
+    std::string time;       // Optional Time.
     LogType type;
+};
+
+
+enum LogCommand
+{
+    rEND     = (1 << 0),     // Insert an end line.
+    rFLUSH   = (1 << 1),     // Flush out the command.
 };
 
 // Logging message struct. Contains message strings to be stored.
@@ -38,7 +48,8 @@ struct Log
     LogMessage data;
 
     // One time initialize of the data structure for our logging system.
-    static R_PUBLIC_API void initializeLoggingSystem();
+    // Optional message cache size can be defined as well. Be sure to have enough memory if needed.
+    static R_PUBLIC_API void initializeLoggingSystem(U32 messageCacheCount = 1024u);
     
     // Final call once the process is completely finished. 
     static R_PUBLIC_API void destroyLoggingSystem();
@@ -54,7 +65,7 @@ struct Log
     template<typename Type>
     Log& operator<<(const Type& data) 
     {
-        msg += std::to_string(data);
+        this->data.msg += std::to_string(data);
         return (*this);
     }
 
@@ -64,6 +75,13 @@ struct Log
         this->data.msg += data;
         return (*this);
     }
+
+    Log& operator<<(const char* data)
+    {
+        this->data.msg += data;
+        return (*this);
+    }
+
 
     template<typename Type>
     void append(Type arg) 
@@ -76,6 +94,9 @@ struct Log
     {
         this->data.msg += data;
     }
+
+    R_PUBLIC_API Log& operator<<(const DateFormatter& formatter);
+    R_PUBLIC_API Log& operator<<(LogCommand command);
 
 };
 
