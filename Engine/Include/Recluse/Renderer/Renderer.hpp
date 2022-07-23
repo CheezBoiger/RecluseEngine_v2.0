@@ -96,6 +96,7 @@ struct RendererConfigs
     U32             renderWidth;
     U32             renderHeight;
     U32             buffering;
+    U32             maxFrameRate;       //< Adjusts to a certain framerate. 0 will have us present as fast as possible.
     GraphicsAPI     api;
     Bool            enableMotionBlur;
     Bool            enableHeatHaze;
@@ -127,7 +128,7 @@ public:
     void                        pushRenderCommand(const RenderCommand& renderCommand, RenderPassTypeFlags renderFlags);
 
     void                        render();
-    void                        present();
+    void                        present(Bool delayPresent = false);
 
     const RendererConfigs&      getConfigs() const { return m_rendererConfigs; }
 

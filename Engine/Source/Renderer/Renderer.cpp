@@ -113,9 +113,9 @@ void Renderer::cleanUp()
 }
 
 
-void Renderer::present()
+void Renderer::present(Bool delayPresent)
 {
-    ErrType result = m_pSwapchain->present();
+    ErrType result = m_pSwapchain->present(delayPresent ? GraphicsSwapchain::DELAY_PRESENT : GraphicsSwapchain::NORMAL_PRESENT);
 
     if (result != REC_RESULT_OK) 
     {
@@ -466,9 +466,11 @@ ErrType Renderer::destroyTexture2D(Texture2D* pTexture)
 
 static ErrType kRendererJob(void* pData)
 {
-    Renderer* pRenderer = Renderer::getMain();
-    Mutex renderMutex   = pRenderer->getMutex();
-    U64 threadId        = getCurrentThreadId();
+    Renderer* pRenderer                     = Renderer::getMain();
+    Mutex renderMutex                       = pRenderer->getMutex();
+    U64 threadId                            = getCurrentThreadId();
+    F32 counterFrameMs                      = 0.f;
+    const RendererConfigs& renderConfigs    = pRenderer->getConfigs();
 
         // Initialize the renderer watch.
     RealtimeTick::initializeWatch(threadId, JOB_TYPE_RENDERER);
@@ -486,7 +488,26 @@ static ErrType kRendererJob(void* pData)
         {
             pRenderer->update(tick.getCurrentTimeS(), tick.getDeltaTimeS());
             pRenderer->render();
-            pRenderer->present();
+
+            // Check if we need to limit our frame rate.
+            GraphicsSwapchain::PresentConfig presentConfig = GraphicsSwapchain::DELAY_PRESENT;
+
+            if (renderConfigs.maxFrameRate > 0)
+            {
+                const F32 desiredFramesMs = 1.0f / renderConfigs.maxFrameRate;
+                if (counterFrameMs >= desiredFramesMs)
+                {
+                    counterFrameMs = 0.f;
+                    presentConfig = GraphicsSwapchain::NORMAL_PRESENT;
+                }
+            }
+            else
+            {
+                // Not framerate limit, so we can present as fast as we can.
+                presentConfig = GraphicsSwapchain::NORMAL_PRESENT;
+            }
+
+            pRenderer->present(presentConfig);
         }
     }
 
@@ -503,6 +524,7 @@ ErrType Renderer::onInitializeModule(Application* pApp)
         configs.api = GRAPHICS_API_VULKAN;
         configs.renderWidth = 800;
         configs.renderHeight = 600;
+        configs.maxFrameRate = 60.0f;
 
         initialize(pWindow->getNativeHandle(), configs);
     }

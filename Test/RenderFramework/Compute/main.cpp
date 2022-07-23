@@ -276,6 +276,8 @@ int main(int c, char* argv[])
 
     pWindow->open();
 
+    F32 counterFps = 0.f;
+    F32 desiredFps = 1.f / 60.f;
     while (!pWindow->shouldClose()) 
     {
         RealtimeTick::updateWatch(1ull, 0);
@@ -291,7 +293,18 @@ int main(int c, char* argv[])
             pList->dispatch(pWindow->getWidth() / 8 + 1, pWindow->getHeight() / 8 + 1, 1);
         pList->end();
 
-        pSwapchain->present();
+        F32 deltaFrameRate = 1.0f / tick.getDeltaTimeS();
+        counterFps += tick.getDeltaTimeS();
+
+        GraphicsSwapchain::PresentConfig conf = GraphicsSwapchain::DELAY_PRESENT;
+        if (counterFps >= desiredFps)
+        {
+            R_VERBOSE("Test", "Frame Rate: %f fps", 1.0f / counterFps);
+            counterFps = 0.f;
+            conf = GraphicsSwapchain::NORMAL_PRESENT;
+        }
+
+        pSwapchain->present(conf);
 
         pollEvents();
     

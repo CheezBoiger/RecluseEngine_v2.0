@@ -183,9 +183,16 @@ ErrType VulkanSwapchain::destroy()
 }
 
 
-ErrType VulkanSwapchain::present()
+ErrType VulkanSwapchain::present(PresentConfig config)
 {
     R_ASSERT(m_pBackbufferQueue != NULL);
+
+    // Flush all copies down for this run.
+    m_pDevice->flushAllMappedRanges();
+    m_pDevice->invalidateAllMappedRanges();
+
+    if (config & DELAY_PRESENT)
+        return REC_RESULT_OK;
 
     submitCommandsForPresenting();
  
@@ -304,9 +311,6 @@ void VulkanSwapchain::buildFrameResources()
 
 void VulkanSwapchain::submitCommandsForPresenting()
 {
-    // Flush all copies down for this run.
-    m_pDevice->flushAllMappedRanges();
-    m_pDevice->invalidateAllMappedRanges();
 
     VulkanImage* frame              = m_frameResources[m_currentFrameIndex];
     VulkanCommandList* pCmdList     = static_cast<VulkanCommandList*>(m_pDevice->getCommandList());

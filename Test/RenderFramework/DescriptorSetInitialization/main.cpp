@@ -251,15 +251,17 @@ int main(int c, char* argv[])
     // Enter game loop.
     R_TRACE("TEST", "Entering game loop...");
 
-    U32 index = 200;
+    F32 index = 200;
+    F32 counterFps = 0.f;
+    F32 desiredFps = 1.f / 144.f;
     while (!pWindow->shouldClose()) {
         RealtimeTick::updateWatch(1ull, 0);
         RealtimeTick tick = RealtimeTick::getTick(0);
-        R_TRACE("TEST", "FPS: %f", 1.0f / tick.getDeltaTimeS());
+        //R_TRACE("TEST", "FPS: %f", 1.0f / tick.getDeltaTimeS());
         F32 color[] = { 0.0f, 1.0f, 0.0f, 1.0f };
         F32 color2[] = { 0.0f, 0.0f, 1.0f, 1.0f };
-        if (index != 0) index--;
-        Rect rect = { 200.f + index, 200.f, 1024.f/2.f, 1024.f/2.f };
+        if (index != 0) index -= 50.f * tick.getDeltaTimeS();
+        Rect rect = { 200.f + (F32)index, 200.f, 1024.f/2.f, 1024.f/2.f };
         Rect rect2 = { 0.f, 0.f, 1024.f, 1024.f };
         pList->begin();
             ResourceTransition trans = MAKE_RESOURCE_TRANSITION(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), RESOURCE_STATE_RENDER_TARGET, 0, 1, 0, 1);
@@ -275,7 +277,19 @@ int main(int c, char* argv[])
             pList->transition(&trans, 1);
             pList->transition(&trans, 1);
         pList->end();
-        pSwapchain->present();
+
+        F32 deltaFrameRate = 1.0f / tick.getDeltaTimeS();
+        counterFps += tick.getDeltaTimeS();
+
+        GraphicsSwapchain::PresentConfig conf = GraphicsSwapchain::DELAY_PRESENT;
+        if (counterFps >= desiredFps)
+        {
+            R_VERBOSE("Test", "Frame Rate: %f fps, time: %f", 1.0f / counterFps, tick.getCurrentTimeS());
+            counterFps = 0.f;
+            conf = GraphicsSwapchain::NORMAL_PRESENT;
+        }
+
+        pSwapchain->present(conf);
         pollEvents();
     }
 

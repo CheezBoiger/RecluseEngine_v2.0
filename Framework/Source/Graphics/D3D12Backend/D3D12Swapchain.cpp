@@ -119,7 +119,7 @@ GraphicsResourceView* D3D12Swapchain::getFrameView(U32 idx)
 }
 
 
-ErrType D3D12Swapchain::present()
+ErrType D3D12Swapchain::present(PresentConfig config)
 {
     ID3D12CommandQueue* pQueue  = m_pBackbufferQueue->get();
     HRESULT result              = S_OK;

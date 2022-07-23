@@ -136,6 +136,15 @@ private:
 class GraphicsSwapchain 
 {
 public:
+
+    enum PresentConfig
+    {
+        // Perform normal presentation.
+        NORMAL_PRESENT  = (0),
+        // Delay the presentation of the frame, which will not present the frame.
+        DELAY_PRESENT   = (1<<0)
+    };
+
     GraphicsSwapchain(const SwapchainCreateDescription& desc)
         : m_desc(desc) { }
 
@@ -150,7 +159,7 @@ public:
     }
 
     // Present the current image.
-    R_PUBLIC_API virtual ErrType present() { return REC_RESULT_NOT_IMPLEMENTED; }
+    R_PUBLIC_API virtual ErrType present(PresentConfig config = NORMAL_PRESENT) { return REC_RESULT_NOT_IMPLEMENTED; }
 
     // Get the current frame index, updates after every present call.
     R_PUBLIC_API virtual U32 getCurrentFrameIndex() { return REC_RESULT_NOT_IMPLEMENTED; }

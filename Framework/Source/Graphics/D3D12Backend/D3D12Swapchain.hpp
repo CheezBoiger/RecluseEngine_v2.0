@@ -28,7 +28,7 @@ public:
     void destroy();
 
     // Present to our window display.
-    ErrType present() override;
+    ErrType present(PresentConfig config = NORMAL_PRESENT) override;
 
     GraphicsResource*       getFrame(U32 idx) override;
     GraphicsResourceView*   getFrameView(U32 idx) override;
