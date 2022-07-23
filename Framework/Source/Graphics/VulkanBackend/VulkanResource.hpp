@@ -13,7 +13,7 @@ class VulkanCommandList;
 
 // Vulkan resource inherits from GraphicsResource, which is what will
 // be used by the engine API.
-class VulkanResource : public GraphicsResource 
+class VulkanResource : public GraphicsResource, public VulkanGraphicsObject
 {
 public:
     VulkanResource(GraphicsResourceDescription& desc)
@@ -41,6 +41,8 @@ public:
     // Get the vulkan device that was used to allocate this resource.
     //
     VulkanDevice* getDevice() const { return m_pDevice; }
+
+    //GraphicsAPI getApi() const override { return VulkanGraphicsObject::getApi(); }
 
 private:
     virtual ErrType onCreate(VulkanDevice* pDevice, GraphicsResourceDescription& desc, ResourceState initState)

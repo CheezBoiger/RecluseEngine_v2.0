@@ -15,29 +15,29 @@
 #define MAX_LIGHTS_IBL		(512)
 
 struct Light {
-	uint 	type;
+	uint 	Type;
 	
-	float3 	position;
-	float3 	direction;
+	float3 	Position;
+	float3 	Direction;
 	
 	// Shadow index.
-	uint   	shadowIndex;	// shadow index from direction of light.
-	uint 	goboIndex;		// Gobo texture index.
+	uint   	ShadowIndex;	// shadow index from direction of light.
+	uint 	GoboIndex;		// Gobo texture index.
 	
 	// Angle info
-	float 	angleOuter;
-	float	angleInner;
+	float 	AngleOuter;
+	float	AngleInner;
 	
 	float	radius;			// distance - radius max before light is no longer contributing.
 };
 
 
 struct Shadow {
-	float 		bias;
-	float 		occlusionScale;
-	uint 		textureIndex;		// texture index that this shadow pertains to.
-	float		pad0; 				// reserved.
-	float4x4 	lightMatrix;	
+	float 		Bias;
+	float 		OcclusionScale;
+	uint 		TextureIndex;		// texture index that this shadow pertains to.
+	float		Pad0; 				// reserved.
+	float4x4 	LightMatrix;	
 };
 
 #endif // LIGHT_DEFINITIONS_HLSLI

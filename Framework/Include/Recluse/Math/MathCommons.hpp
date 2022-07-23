@@ -25,5 +25,36 @@
 #define R_FLOOR(a)              floorf((a))
 #define R_CEIL(a)               ceilf((a))
 #define R_LOG2(a)               log2f((a))
+
+// Check if the value (a) is odd.
+#define R_IS_ODD(a)				((a) & 1)
+
+// Check if the value (a) is even.
+#define R_IS_EVEN(a)			(!R_IS_ODD(a))
+
+// Check if the value (a) is a power of 2.
+#define R_IS_POWER_OF_2(a)		(((a) & ((a) - 1)) == 0)
+
+
 namespace Recluse {
+
+template<typename T>
+static Bool isOdd(T d)
+{
+	return R_IS_ODD(d);
+}
+
+
+template<typename T>
+static Bool isEven(T d)
+{
+	return R_IS_EVEN(d);
+}
+
+
+template<typename T>
+static Bool isPowerOf2(T d)
+{
+	return R_IS_POWER_OF_2(d);
+}
 } // Recluse

@@ -5,7 +5,10 @@
 #include "Recluse/Filesystem/Filesystem.hpp"
 #include "Recluse/Filesystem/Archive.hpp"
 #include "Recluse/Messaging.hpp"
-
+#include "Recluse/Memory/MemoryCommon.hpp"
+#include "Recluse/Memory/MemoryPool.hpp"
+#include "Recluse/Memory/Allocator.hpp"
+#include "Recluse/Memory/LinearAllocator.hpp"
 #include "json.hpp"
 
 #include <string>
@@ -16,6 +19,9 @@
 using json = nlohmann::json;
 
 namespace Recluse {
+
+
+ShaderLang kDefaultShaderLanguage = SHADER_LANG_HLSL;
 
 // Serialize our enum types with the following for json configs.
 NLOHMANN_JSON_SERIALIZE_ENUM(Recluse::ShaderType,
@@ -74,10 +80,10 @@ static std::unordered_map<std::string, std::map<ShaderLang, std::string>> kShade
 
 struct ShaderMetaData 
 {
-    std::string configs;
-    std::string relativefilePath;
-    ShaderType shaderType;
-    std::map<std::string, void*> preprocess;
+    std::string                     configs;
+    std::string                     relativefilePath;
+    ShaderType                      shaderType;
+    std::map<std::string, void*>    preprocess;
 };
 
 
@@ -228,6 +234,32 @@ static std::string generateShaderSceneView(ShaderLang lang)
     return sceneViewBufferStr;
 }
 
+
+ShaderBuilder* createBuilder(Allocator* scratch, ShaderLang lang, ShaderIntermediateCode intermediateCode)
+{
+    ShaderBuilder* pBuilder = nullptr;
+    
+    switch (lang)
+    {
+        case SHADER_LANG_HLSL:
+        {
+            pBuilder = createDxcShaderBuilder(intermediateCode);
+            break;
+        }
+        case SHADER_LANG_GLSL:
+        {
+            pBuilder = createGlslangShaderBuilder(intermediateCode);
+            break;
+        }
+        default:
+        {
+            break;
+        }
+    }
+
+    return pBuilder;
+}
+
 ErrType compileShaders(ShaderLang lang)
 {
     R_ASSERT(gConfigs.pCompilerState != NULL);
@@ -239,7 +271,13 @@ ErrType compileShaders(ShaderLang lang)
 
     // Set up the shader builder. We possibly want to be able to switch this out 
     // if need be.
-    ShaderBuilder* pBuilder = createGlslangShaderBuilder(INTERMEDIATE_SPIRV);
+    ScratchMemory scratchPool = { 1024 };
+    LinearAllocator linearAllocation;
+    linearAllocation.initialize(scratchPool.getBaseAddress(), scratchPool.getTotalSizeBytes());
+
+    std::map<ShaderLang, ShaderBuilder*> shaderBuilders;
+
+    ShaderBuilder* pBuilder = createBuilder(&linearAllocation, lang, INTERMEDIATE_SPIRV);
 
     R_ASSERT(pBuilder != NULL);
 
@@ -348,6 +386,7 @@ ErrType compileShaders(ShaderLang lang)
 
     pBuilder->tearDown();
     freeShaderBuilder(pBuilder);
+    linearAllocation.cleanUp();
 
     return REC_RESULT_OK;
 }
@@ -535,5 +574,11 @@ ErrType setShaderFiles(const std::string& shadersPath)
     }
 
     return REC_RESULT_OK;
+}
+
+
+ShaderLang getDefaultShaderLanguage()
+{
+    return kDefaultShaderLanguage;
 }
 } //

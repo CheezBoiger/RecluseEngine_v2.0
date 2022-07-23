@@ -4,6 +4,7 @@
 #include "Recluse/Types.hpp"
 #include "Recluse/Application.hpp"
 #include "Recluse/Threading/Threading.hpp"
+#include "Recluse/Threading/ThreadPool.hpp"
 #include "Recluse/Memory/MemoryCommon.hpp"
 
 
@@ -47,6 +48,9 @@ public:
         return result;
     }
 
+protected:
+    EngineModule() { }
+
 private:
 
     //! On initialize.
@@ -75,7 +79,7 @@ private:
     }
 
 public:
-
+    // Check if the engine module is active.
     Bool isActive() const 
     {
         return m_isActive;
@@ -89,6 +93,9 @@ private:
     volatile Bool   m_isRunning = false;
     volatile Bool   m_isActive  = false;
     Mutex           m_sync;
+
+    // Thread pool which we can use to launch how many threads.
+    ThreadPool      m_threadPool;
 };
 } // Engine
 } // Recluse

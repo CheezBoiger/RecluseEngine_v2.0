@@ -59,11 +59,10 @@ int main(int c, char* argv[])
         createThread(&threads[i], printHello);
     
     }
-
-    for (U32 i = 0; i < threads.size(); ++i) {
     
+    for (U32 i = 0; i < threads.size(); ++i) 
+    {
         joinThread(&threads[i]);
-    
     }
     
     Log::destroyLoggingSystem();

@@ -95,8 +95,8 @@ F32 norm(const Quaternion& quat)
 
 Quaternion normalize(const Quaternion& quat)
 {
-    F32 n = norm(quat);
-    return quat / n;
+    F32 n = 1.0f / norm(quat);
+    return quat * n;
 }
 
 

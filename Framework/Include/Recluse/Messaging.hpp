@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Recluse/Logger.hpp"
+#include "Recluse/Arch.hpp"
 #include <stdio.h>
 
 #if defined(_DEBUG)
@@ -23,11 +24,12 @@
         snprintf((char*)r__log__.data.msg.data(), r__log__.data.msg.size(), format, __VA_ARGS__); \
     }
 
-#define R_INFO(chan, format, ...) R_LOG(chan, Recluse::LogInfo, format, __VA_ARGS__)
-#define R_WARN(chan, format, ...) R_LOG(chan, Recluse::LogWarn, format, __VA_ARGS__)
-#define R_VERBOSE(chan, format, ...) R_LOG(chan, Recluse::LogVerbose, format, __VA_ARGS__)
-#define R_TRACE(chan, format, ...) R_LOG(chan, Recluse::LogTrace, format, __VA_ARGS__)
-
+// Helper macros for logging messages.
+#define R_INFO(chan, format, ...)       R_LOG(chan, Recluse::LogInfo, format, __VA_ARGS__)
+#define R_WARN(chan, format, ...)       R_LOG(chan, Recluse::LogWarn, format, __VA_ARGS__)
+#define R_VERBOSE(chan, format, ...)    R_LOG(chan, Recluse::LogVerbose, format, __VA_ARGS__)
+#define R_TRACE(chan, format, ...)      R_LOG(chan, Recluse::LogTrace, format, __VA_ARGS__)
+ 
 #if defined(RECLUSE_DEBUG) || defined(RECLUSE_DEVELOPER)
 namespace Recluse {
 namespace Asserts {
@@ -57,6 +59,8 @@ public:
         #define R_ASSERT(expression) assert(expression)
         #define R_ASSERT_MSG(expression, msg) assert(expression && msg)
     #else
+        #undef R_DEBUG_BREAK()
+        #define R_DEBUG_BREAK()
         #define R_ASSERT(expression)
         #define R_ASSERT_MSG(expression, msg)
     #endif // !defined(R_IGNORE_ASSERT)
@@ -73,14 +77,23 @@ public:
 #if defined(RECLUSE_DEBUG) || defined(RECLUSE_DEVELOPER)
 #define R_ERR(chan, format, ...) \
     { \
-        R_ASSERT_MSG(false, "ERROR"); \
         R_LOG(chan, Recluse::LogError, format, __VA_ARGS__); \
+        R_DEBUG_BREAK(); \
     }
+
+// Call an interrupt to instruct a fatal error.
+#define R_FATAL_ERR(chan, format, ...) \
+    { \
+        R_LOG(chan, Recluse::LogError, format, __VA_ARGS__); \
+        R_DEBUG_BREAK(); \
+    }
+
 // NOTE(): We should always be implementing a function when needed, but for development purposes,
 // we can simply place a warning assert to let us know it is not written. Otherwise, to 
 // the user, this is entirely ignored.
 #define R_NO_IMPL() R_ASSERT_MSG(false, "No implementation for %s", __FUNCTION__)
 #else
 #define R_ERR(chan, format, ...) R_LOG(chan, Recluse::LogError, format, __VA_ARGS__)
+#define R_FATAL_ERR(chan, format, ...)
 #define R_NO_IMPL()
 #endif

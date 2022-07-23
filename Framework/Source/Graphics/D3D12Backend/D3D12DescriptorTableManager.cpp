@@ -40,8 +40,12 @@ ErrType D3D12DescriptorHeap::initialize(D3D12_DESCRIPTOR_HEAP_TYPE type, U32 ent
     // Create GPU descriptor heap ONLY if the descriptor heap is not rtv or dsv types.
     if (type != D3D12_DESCRIPTOR_HEAP_TYPE_DSV && type != D3D12_DESCRIPTOR_HEAP_TYPE_RTV) {
         heapDesc.Flags  = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;    
-        result          = pDevice->CreateDescriptorHeap(&heapDesc, __uuidof(ID3D12DescriptorHeap),
-                                            (void**)&m_pGPUDescriptorHeap);
+        result          = pDevice->CreateDescriptorHeap
+                                        (
+                                            &heapDesc, 
+                                            __uuidof(ID3D12DescriptorHeap),
+                                            (void**)&m_pGPUDescriptorHeap
+                                        );
 
         if (FAILED(result)) {
 

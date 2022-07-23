@@ -9,7 +9,7 @@ namespace Recluse {
 
 const char* DateFormatter::kDefaultFormat = "%Y-%M-%D %h:%m:%s";
 
-static LoggingQueue*    loggingQueue;
+static LoggingQueue*    loggingQueue = nullptr;
 static Thread           displayThread;
 static volatile B32     isLogging           = true;
 

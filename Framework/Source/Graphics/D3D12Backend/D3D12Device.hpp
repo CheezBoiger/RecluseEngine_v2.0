@@ -92,10 +92,15 @@ public:
 
     DescriptorHeapManager* getDescriptorHeapManager() { return &m_descHeapManager; }
 
+    D3D12Allocator* getBufferAllocator(ResourceMemoryUsage usage) const { return m_bufferPool[usage]; }
+    D3D12Allocator* getTextureAllocator() const { return m_texturePool; }
+
 private:
 
+    void initializeAllocators();
     void initializeBufferResources(U32 buffering);
     void destroyBufferResources();
+    void destroyAllocators();
 
     // Resource pools.
     D3D12Allocator*                 m_bufferPool[RESOURCE_MEMORY_USAGE_COUNT];

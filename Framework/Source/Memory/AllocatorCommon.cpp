@@ -1,15 +1,17 @@
 //
 #include "Recluse/Memory/Allocator.hpp"
+#include "Recluse/Memory/MemoryCommon.hpp"
 
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Namespace.hpp"
+#include "Recluse/Memory/MemoryPool.hpp"
 
 
 void* operator new (size_t sizeBytes, Recluse::Allocator* alloc, Recluse::Allocation* pOutput)
 {
     R_ASSERT(alloc != NULL);
 
-    Recluse::Allocation allocationOutput    = { };
+    Recluse::Allocation allocationOutput    = { 0ull, 0ull };
     Recluse::ErrType err                    = alloc->allocate(&allocationOutput, sizeBytes, ARCH_PTR_SZ_BYTES);
 
     if (pOutput)

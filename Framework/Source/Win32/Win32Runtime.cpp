@@ -11,6 +11,7 @@
 #include "Recluse/System/Window.hpp"
 #include "Recluse/System/Mouse.hpp"
 
+// Number of watch types available to the engine. This can vary, so be sure to update the cost needed.
 #define MAX_WATCH_TYPE_INDICES      (16)
 #define STOPWATCH_INDEX             (MAX_WATCH_TYPE_INDICES - 1)
 
@@ -30,13 +31,25 @@ static struct
     // NOTE(): We don't really need a hash table or a map for this, 
     // since we are only storing a few keys/watches. Simple arrays will do.
     Win32RuntimeTick    ticks[MAX_WATCH_TYPE_INDICES]   = { };
-    U64                 watchId[MAX_WATCH_TYPE_INDICES] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    U64                 watchId[MAX_WATCH_TYPE_INDICES] = { };
 
     U64                 gTicksPerSecond = initializeTicksPerSecond();   //< ticks in seconds.
     RAWINPUT            lpb;                                            //< raw input.
     const DWORD         mainThreadId    = GetCurrentThreadId();         //< this is the main thread id!
     Bool                isInitialized   = false;
 } gWin32Runtime;
+
+
+// Call this first time on initialization, to initialize all our watch slots.
+static void initializeWatchSlots()
+{
+    for (U32 i = 0; i < MAX_WATCH_TYPE_INDICES; ++i)
+    {
+        gWin32Runtime.watchId[i]    = 0;
+        gWin32Runtime.ticks[i]      = { };
+    }
+}
+
 
 #if defined(RECLUSE_DEBUG) || defined(RECLUSE_DEVELOPER)
 namespace Asserts {
@@ -191,6 +204,7 @@ void RealtimeTick::initializeWatch(U64 id, U32 watchType)
     if (!gWin32Runtime.isInitialized)
     {
         initializeTicksPerSecond();
+        initializeWatchSlots();
         gWin32Runtime.isInitialized             = true;
     }
 
@@ -271,17 +285,23 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
                     I32 prevX = pMouse->getLastXPos();
                     I32 prevY = pMouse->getLastYPos();
 
-                    dx = raw->data.mouse.lLastX - prevX; // get the delta from last mouse pos.
-                    dy = raw->data.mouse.lLastY - prevY; // get the delta from last mouse pos.
+                    dx = (raw->data.mouse.lLastX / 65535.0f) * pWindow->getWidth()  - prevX; // get the delta from last mouse pos.
+                    dy = (raw->data.mouse.lLastY / 65535.0f) * pWindow->getHeight() - prevY; // get the delta from last mouse pos.
                 } 
                 else 
                 {
                     dx = raw->data.mouse.lLastX;
                     dy = raw->data.mouse.lLastY;
                 }
-            }
 
-            feedback.state = INPUT_STATE_NONE;
+                if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_1_DOWN)
+                    feedback.buttonStateFlags &= INPUT_STATE_DOWN << 0;
+                if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_2_DOWN)
+                    feedback.buttonStateFlags &= INPUT_STATE_DOWN << 1;
+                if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_3_DOWN)
+                    feedback.buttonStateFlags &= INPUT_STATE_DOWN << 2;
+            } 
+
             feedback.xRate = dx;
             feedback.yRate = dy;
 
@@ -294,6 +314,13 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
         case WM_KEYUP:
         case WM_MOVE:
         case WM_SIZE:
+        {
+            // As a window is resized, we rely this back to the handler.
+            UINT width  = LOWORD(lParam);
+            UINT height = HIWORD(lParam);
+            pWindow->onWindowResize(pWindow->getPosX(), pWindow->getPosY(), width, height);
+            break;
+        }
         case WM_MOUSEMOVE:
         case WM_SYSCOMMAND:
         case WM_LBUTTONDOWN:
@@ -315,6 +342,23 @@ void pollEvents()
     {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
+    }
+    
+    // Poll controller information if needed.
+    DWORD dwResult;
+    for (DWORD i = 0; i < XUSER_MAX_COUNT; ++i)
+    {
+        XINPUT_STATE state;
+
+        ZeroMemory(&state, sizeof(XINPUT_STATE));
+
+        dwResult = XInputGetState(i, &state);
+
+        if (dwResult == ERROR_SUCCESS)
+        {
+            // Connected to a controller.
+            R_WARN(R_CHANNEL_WIN32, "We are connected to a controller!");
+        }
     }
 }
 

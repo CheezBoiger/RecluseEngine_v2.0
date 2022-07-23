@@ -115,6 +115,7 @@ typedef U32 EnableLayerFlags;
 
 enum GraphicsAPI 
 {
+    GRAPHICS_API_UNKNOWN,
     GRAPHICS_API_SOFTWARE_RASTERIZER,
     GRAPHICS_API_SOFTWARE_RAYTRACER,
     GRAPHICS_API_VULKAN,
@@ -242,4 +243,13 @@ enum GraphicsQueueType
 };
 
 typedef U32 GraphicsQueueTypeFlags;
+
+// Common Graphics Object manager.
+class IGraphicsObject
+{
+public:
+    virtual ~IGraphicsObject() { }
+
+    virtual GraphicsAPI getApi() const = 0;
+};
 } // Recluse

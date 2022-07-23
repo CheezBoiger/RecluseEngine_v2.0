@@ -16,7 +16,7 @@ struct MapRange
 
 // Graphics Resource description.
 //
-class R_PUBLIC_API GraphicsResource 
+class R_PUBLIC_API GraphicsResource : public virtual IGraphicsObject
 {
 public:
     GraphicsResource(GraphicsResourceDescription& desc)
@@ -31,7 +31,6 @@ public:
 
     // Unmap and invalidate the resource cache, which will flush if needed.
     virtual ErrType unmap(MapRange* pWriteRange) { return REC_RESULT_NOT_IMPLEMENTED; }
-
 
     ResourceState getCurrentResourceState() const { return m_currentState; }
 

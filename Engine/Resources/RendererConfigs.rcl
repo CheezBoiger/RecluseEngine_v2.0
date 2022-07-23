@@ -1,0 +1,13 @@
+
+
+class RendererConfigs
+{
+public:
+	Bool enableMotionBlur = false;
+	Bool enableHeatHaze = false;
+	Bool enableChromaticAberration = false;
+	Bool enableScreenSpaceShadows = false;
+	Bool enableSubsurfaceScattering = false;
+	Bool enableParticleMotion = false;
+	QualitySetting shadowQuality;
+};

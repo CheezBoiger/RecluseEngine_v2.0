@@ -15,15 +15,16 @@
 #include <list>
 #include <functional>
 
-#define R_RETAIL        (0)
-#define R_RELEASE       (0)
-#define R_DEBUG         (0)
-#define R_DEVELOPER     (0)
+#define R_RETAIL                (0)
+#define R_RELEASE               (0)
+#define R_DEBUG                 (0)
+#define R_DEVELOPER             (0)
 
-#define R_CLIENT        (2)
-#define R_SERVER        (3)
+#define R_CLIENT                (1 << 0)
+#define R_SERVER                (1 << 1)
+#define R_CLIENT_AND_SERVER     (R_CLIENT | R_SERVER)
 
-#define R_NET_TYPE      (R_CLIENT)
+#define R_NET_TYPE              (R_CLIENT)
 
 namespace Recluse {
 
@@ -38,7 +39,8 @@ enum JobType
     JOB_TYPE_PHYSICS,
     JOB_TYPE_AUDIO,
     JOB_TYPE_ANIMATION,
-    JOB_TYPE_AI
+    JOB_TYPE_AI,
+    JOB_TYPE_NETWORK
 };
 
 

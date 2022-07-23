@@ -2,6 +2,8 @@
 #include "Win32/Threading/Win32Thread.hpp"
 #include "Recluse/Messaging.hpp"
 
+#include <process.h>
+
 namespace Recluse {
 
 
@@ -20,9 +22,9 @@ ErrType createThread(Thread* pThread, ThreadFunction startRoutine)
     }
 
     R_DEBUG(R_CHANNEL_WIN32, "Creating thread");
-
-    handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)startRoutine, 
-                pThread->payload, 0, (LPDWORD)&pThread->uid);
+    //handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)fun, 
+    //            pThread->payload, 0, (LPDWORD)&pThread->uid);
+    handle = reinterpret_cast<HANDLE>(_beginthreadex(0, 0, startRoutine, pThread->payload, 0, (U32*)&pThread->uid));
 
     pThread->threadState    = THREAD_STATE_RUNNING;
     pThread->resultCode     = THREAD_RESULT_NOT_READY;
@@ -161,5 +163,30 @@ ErrType waitMutex(Mutex mutex, U64 waitTimeMs)
     }
     
     return REC_RESULT_FAILED;
+}
+
+ErrType tryLockMutex(Mutex mutex)
+{
+    // Wait 10 milliseconds, perhaps shorter?
+    ErrType result = waitMutex(mutex, 12ull);
+    return result;
+}
+
+Semaphore createSemaphore()
+{
+    HANDLE semaphoreHandle = CreateSemaphore(NULL, 0, 16, "RecluseSemaphore");
+    return semaphoreHandle;
+}
+
+
+U64 compareExchange(I64* dest, I64 ex, I64 comp)
+{
+    return InterlockedCompareExchange64((LONG64*)dest, ex, comp);
+}
+
+
+I16 compareExchange(I16* dest, I16 ex, I16 comp)
+{
+    return InterlockedCompareExchange16((SHORT*)dest, ex, comp);
 }
 } // Recluse

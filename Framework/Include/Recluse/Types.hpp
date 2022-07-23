@@ -27,6 +27,12 @@ typedef signed long long    I64;
 typedef float               F32;
 typedef double              F64;
 
+typedef struct
+{
+    U64 m0;
+    U64 m1;
+} U128;
+
 // Separate boolean datatypes.
 typedef U8                  B8;
 typedef U32                 B32;
@@ -34,7 +40,7 @@ typedef U64                 B64;
 typedef bool                Bool;
 
 // Error type to use for error checking.
-typedef I32                 ErrType;
+typedef U32                 ErrType;
 
 #if defined(RECLUSE_WINDOWS)
 #if defined(RECLUSE_64BIT)
@@ -68,6 +74,8 @@ enum RecResult
     REC_RESULT_NOT_FOUND
 };
 
+// Common Reference counter object. To handle references of a shared object.
+// 
 template<typename T>
 class RefCount
 {

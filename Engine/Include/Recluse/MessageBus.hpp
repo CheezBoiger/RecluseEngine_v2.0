@@ -27,10 +27,16 @@ class MessageBus
 public:
     friend class Recluse::AMessage;
 
-    MessageBus()
-        : m_pMessageAllocator(nullptr)
-        , m_messageMemPool(nullptr)
-    { }
+
+    // Helper function to cast a message from the bus. 
+    // Just a readable-friendly way to convert messages.
+    template<typename MessageType>
+    static MessageType* cast(AMessage* pMsg)
+    {
+        return static_cast<MessageType*>(pMsg);
+    }
+
+    R_PUBLIC_API MessageBus();
 
     ~MessageBus() {} 
 
@@ -77,10 +83,10 @@ public:
     }
 
 private:
-    Allocator* m_pMessageAllocator;
-    MemoryPool* m_messageMemPool;
-    std::queue<AMessage*> m_messages;
+    Allocator*                      m_pMessageAllocator;
+    MemoryPool                      m_messageMemPool;
+    std::queue<AMessage*>           m_messages;
     std::vector<MessageReceiveFunc> m_messageReceivers;
-    std::map<std::string, U32> m_receiverNodeNames;
+    std::map<std::string, U32>      m_receiverNodeNames;
 };
 } // Recluse

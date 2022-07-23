@@ -515,7 +515,7 @@ ErrType Renderer::onInitializeModule(Application* pApp)
                     if (ev.compare("Renderer") == 0) 
                     {
                         R_DEBUG("Renderer", "Received message!");
-                        RenderMessage* pJobMessage = static_cast<RenderMessage*>(pMsg);
+                        RenderMessage* pJobMessage = MessageBus::cast<RenderMessage>(pMsg);
                         if (isActive()) 
                         {
                             // Handle the message.

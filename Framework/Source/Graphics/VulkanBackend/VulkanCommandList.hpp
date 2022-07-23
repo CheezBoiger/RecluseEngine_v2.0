@@ -43,8 +43,8 @@ public:
                     U32 poolCount
                 );
 
-    //! Destroy the Vulkan handle of this command buffer.
-    void destroy(VulkanDevice* pDevice);
+    //! Release the Vulkan handle of this command buffer.
+    void release(VulkanDevice* pDevice);
 
     //! Get the native handle of this command buffer. Vulkan specific.
     VkCommandBuffer get() const;

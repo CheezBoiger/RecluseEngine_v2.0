@@ -1,6 +1,7 @@
 //
 #include "Recluse/Memory/BuddyAllocator.hpp"
 #include "Recluse/Memory/MemoryCommon.hpp"
+#include "Recluse/Math/MathCommons.hpp"
 #include "Recluse/Messaging.hpp"
 
 #include <math.h>
@@ -14,7 +15,7 @@ ErrType BuddyAllocator::onInitialize()
     PtrType baseAddr    = getBaseAddr();
 
     // Size must be power of 2.
-    R_ASSERT((totalSzBytes & (totalSzBytes - 1)) == 0);
+    R_ASSERT(isPowerOf2(totalSzBytes));
     
     U32 nthBit  = (U32)ceil(log2(totalSzBytes));  
 
@@ -86,10 +87,10 @@ ErrType BuddyAllocator::onAllocate(Allocation* pOutput, U64 requestSz, U16 align
                 BuddyBlock blockRight;
                 
                 blockLeft.offsetBytes   = block.offsetBytes;
-                blockLeft.memSzBytes    = block.memSzBytes / 2;
+                blockLeft.memSzBytes    = (block.memSzBytes >> 1ull);
                 
                 blockRight.offsetBytes  = blockLeft.offsetBytes + blockLeft.memSzBytes;
-                blockRight.memSzBytes   = block.memSzBytes / 2;
+                blockRight.memSzBytes   = (block.memSzBytes >> 1ull);
 
                 m_freeList[i].push_back(blockLeft);
                 m_freeList[i].push_back(blockRight);
@@ -141,7 +142,7 @@ ErrType BuddyAllocator::onFree(Allocation* pOutput)
         if (m_freeList[nthBit][i].offsetBytes == buddyAddr) 
         {
             // Check if even, merge with alloc offset. Otherwise, use buddyaddr
-            if (!(buddyNumber & 1)) 
+            if (isEven(buddyNumber)) 
             {
                 BuddyBlock newBlock     = { };
                 newBlock.offsetBytes    = allocOffset;

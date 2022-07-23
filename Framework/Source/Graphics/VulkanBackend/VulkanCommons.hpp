@@ -30,6 +30,17 @@ struct VulkanMemoryPool
     void*           basePtr;           
 };
 
+namespace Recluse {
+
+class VulkanGraphicsObject : public virtual IGraphicsObject
+{
+public:
+    virtual ~VulkanGraphicsObject() { }
+
+    GraphicsAPI getApi() const override { return GRAPHICS_API_VULKAN; }
+};
+} // Recluse
+
 namespace Vulkan {
 
 extern VkFormat getVulkanFormat(Recluse::ResourceFormat format);

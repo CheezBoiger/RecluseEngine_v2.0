@@ -26,8 +26,14 @@ public:
     virtual ErrType tearDown() { return REC_RESULT_NOT_IMPLEMENTED; }
 
     // compiler the shader and return the bytecode.
-    ErrType compile(Shader* pShader, const char* srcCode, 
-        U64 sourceCodeBytes, ShaderLang lang, ShaderType shaderType);
+    ErrType compile
+        (
+            Shader* pShader, 
+            const char* srcCode, 
+            U64 sourceCodeBytes, 
+            ShaderLang lang, 
+            ShaderType shaderType
+        );
 
     virtual ErrType disassemble(std::vector<char>& output) { return REC_RESULT_NOT_IMPLEMENTED; }
 
@@ -51,7 +57,9 @@ private:
 R_PUBLIC_API ShaderBuilder* createGlslangShaderBuilder(ShaderIntermediateCode imm);
 R_PUBLIC_API ShaderBuilder* createDxcShaderBuilder(ShaderIntermediateCode imm);
 
-static void freeShaderBuilder(ShaderBuilder* pBuilder) {
+// Must call when cleaning up our shader builders.
+static void freeShaderBuilder(ShaderBuilder* pBuilder) 
+{
     delete pBuilder;
 }
 }

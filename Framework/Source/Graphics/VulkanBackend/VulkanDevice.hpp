@@ -66,41 +66,23 @@ public:
         const SwapchainCreateDescription& pDesc);
 
     ErrType destroySwapchain(VulkanSwapchain* pSwapchain);
-
     ErrType createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc, ResourceState initState) override;
-
     ErrType createDescriptorSetLayout(DescriptorSetLayout** ppLayout, const DescriptorSetLayoutDesc& desc) override;
-
     ErrType createDescriptorSet(DescriptorSet** ppDescriptorSet, DescriptorSetLayout* pLayout) override;
-
     ErrType createGraphicsPipelineState(PipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) override;
-
     ErrType createRenderPass(RenderPass** ppRenderPass, const RenderPassDesc& desc) override;
-
     ErrType createSampler(GraphicsSampler** ppSampler, const SamplerCreateDesc& desc) override;
-
     ErrType destroySampler(GraphicsSampler* pSampler) override;
-
     ErrType destroyResource(GraphicsResource* pResource) override;
-
     ErrType createCommandList(VulkanCommandList** pList, VkQueueFlags flags);
-
     ErrType destroyCommandList(VulkanCommandList* pList);
-
     ErrType destroyDescriptorSetLayout(DescriptorSetLayout* pLayout) override;
-
     ErrType createResourceView(GraphicsResourceView** ppView, const ResourceViewDesc& desc) override;
-
     ErrType createComputePipelineState(PipelineState** ppPipelineState, const ComputePipelineStateDesc& desc) override;
-
-    void destroy(VkInstance instance);
-
+    void release(VkInstance instance);
     ErrType destroyPipelineState(PipelineState* pPipelineState) override;
-
     ErrType destroyResourceView(GraphicsResourceView* pResourceView) override;
-
     ErrType destroyDescriptorSet(DescriptorSet* pSet) override;
-
     ErrType destroyRenderPass(RenderPass* pRenderPass) override;
 
     VkDevice operator()() {

@@ -1,6 +1,8 @@
 //
 #include "D3D12CommandList.hpp"
 #include "D3D12Device.hpp"
+#include "D3D12Resource.hpp"
+#include "D3D12ResourceView.hpp"
 
 #include "Recluse/Messaging.hpp"
 
@@ -73,5 +75,17 @@ void D3D12CommandList::begin()
 void D3D12CommandList::end()
 {
     m_currentCmdList->Close();
+}
+
+
+void D3D12CommandList::bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* offsets)
+{
+
+}
+
+
+void D3D12CommandList::bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBytes, IndexType type)
+{
+
 }
 } // Recluse

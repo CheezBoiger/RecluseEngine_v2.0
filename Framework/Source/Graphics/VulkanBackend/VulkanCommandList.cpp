@@ -54,7 +54,7 @@ ErrType VulkanCommandList::initialize
 }
 
 
-void VulkanCommandList::destroy(VulkanDevice* pDevice)
+void VulkanCommandList::release(VulkanDevice* pDevice)
 {
     // Destroy all buffers, ensure they correspond to the proper 
     // command pool.

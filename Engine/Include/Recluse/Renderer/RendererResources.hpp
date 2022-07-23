@@ -81,8 +81,8 @@ public:
     U64 getTotalIndices() const { return m_totalIndices; }
 
 private:
-    U64 m_totalIndices;
-    IndexType m_indexType;
+    U64         m_totalIndices;
+    IndexType   m_indexType;
 };
 
 

@@ -108,7 +108,7 @@ ErrType MainThreadLoop::run()
     while (!k_pWindow->shouldClose()) 
     {
         RealtimeTick::updateWatch(getCurrentThreadId(), JOB_TYPE_MAIN);
-        RealtimeTick tick = RealtimeTick::getTick(0);
+        RealtimeTick tick = RealtimeTick::getTick(JOB_TYPE_MAIN);
         pollEvents();
         if (k_pApp) 
         {

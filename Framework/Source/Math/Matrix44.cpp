@@ -531,9 +531,9 @@ Matrix44 perspectiveRH(F32 w, F32 h, F32 ne, F32 fa)
 Float4 operator*(const Matrix44& lh, const Float4& rh)
 {
     Float4 res;
-    res[0] = lh[0] * rh[0] + lh[1] * rh[1] + lh[2] * rh[2] + lh[3] * rh[3];
-    res[1] = lh[4] * rh[0] + lh[5] * rh[1] + lh[6] * rh[2] + lh[7] * rh[3];
-    res[2] = lh[8] * rh[0] + lh[9] * rh[1] + lh[10] * rh[2] + lh[11] * rh[3];
+    res[0] = lh[0]  * rh[0] + lh[1]  * rh[1] + lh[2]  * rh[2] + lh[3]  * rh[3];
+    res[1] = lh[4]  * rh[0] + lh[5]  * rh[1] + lh[6]  * rh[2] + lh[7]  * rh[3];
+    res[2] = lh[8]  * rh[0] + lh[9]  * rh[1] + lh[10] * rh[2] + lh[11] * rh[3];
     res[3] = lh[12] * rh[0] + lh[13] * rh[1] + lh[14] * rh[2] + lh[15] * rh[3];
     return res;
 }

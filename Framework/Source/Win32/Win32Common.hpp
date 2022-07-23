@@ -9,5 +9,9 @@
 #endif 
 
 #include <Windows.h>
+#include <Xinput.h>
 
 #define R_CHANNEL_WIN32 "Win32"
+
+// We will comment the xinput library to be utilized for controller support.
+#pragma comment(lib, "XInput.lib")

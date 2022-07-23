@@ -18,6 +18,9 @@ public:
     void begin() override;
     void end() override;
 
+    void bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* offsets) override;
+    void bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBytes, IndexType type) override;
+
     ID3D12GraphicsCommandList* get() { return m_currentCmdList; }
 
 private:

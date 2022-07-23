@@ -9,7 +9,7 @@
 namespace Recluse {
 
 // Max number of buttons supported by this engine.
-#define MAX_MOUSE_BUTTONS 12
+#define R_MAX_MOUSE_BUTTONS 12
 
 class Mouse : public IInputController 
 {
@@ -40,6 +40,9 @@ public:
 
     Bool                            getIsEnabled() const { return m_isEnabled; }
 
+    void                            setButtonState(U32 buttonIx, InputState state) override { m_buttonStates[buttonIx] = state; }
+    InputState                      getButtonState(U32 buttonIx) override { return m_buttonStates[buttonIx]; }
+
     void                            setEnable(Bool enable) { m_isEnabled = enable; }
     void                            setShowing(Bool show) { m_isShowing = show; }
 
@@ -61,7 +64,7 @@ private:
     I32         m_yPosition;
     I32         m_xLastPosition;
     I32         m_yLastPosition;
-    InputState  m_buttonStates[MAX_MOUSE_BUTTONS];
+    InputState  m_buttonStates[R_MAX_MOUSE_BUTTONS];
     Bool        m_isShowing;
     Bool        m_isEnabled;
     Bool        m_isClamped;

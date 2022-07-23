@@ -16,6 +16,19 @@
 #define R_CHANNEL_D3D12 "D3D12"
 
 
+namespace Recluse {
+
+
+class D3D12GraphicsObject : public IGraphicsObject
+{
+public:
+	virtual ~D3D12GraphicsObject() { }
+
+	GraphicsAPI getApi() const override { return GRAPHICS_API_D3D12; }
+};
+} // Recluse
+
+
 namespace Dxgi {
 
 // Check format size, this uses DXGI format.

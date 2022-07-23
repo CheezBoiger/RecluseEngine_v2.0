@@ -3,21 +3,21 @@
 #define GBUFFER_DEFINITION_HLSLI
 
 struct GBuffer {
-	float3 albedo;
-	float  roughness;
-	float  metallic;
-	float  gloss;
-	float  ao;
-	float3 emission;
+	float3 Albedo;
+	float  Roughness;
+	float  Metallic;
+	float  Gloss;
+	float  Ao;
+	float3 Emission;
 };
 
 
-void unpackGBuffer(inout GBuffer data, in float4 rt0, in float4 rt1, in float4 rt2, in float4 rt3)
+void UnpackGBuffer(inout GBuffer Data, in float4 Rt0, in float4 Rt1, in float4 Rt2, in float4 Rt3)
 {
 }
 
 
-void packGBuffer(in GBuffer data, in float4 rt0, in float4 rt1, in float4 rt2, in float4 rt3)
+void PackGBuffer(in GBuffer Data, in float4 Rt0, in float4 Rt1, in float4 Rt2, in float4 Rt3)
 {
 }
 

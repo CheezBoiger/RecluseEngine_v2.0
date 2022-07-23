@@ -140,7 +140,7 @@ ErrType VulkanAdapter::destroyDevice(GraphicsDevice* pDevice)
         {
             R_DEBUG(R_CHANNEL_VULKAN, "Destroying device!");
 
-            (*iter)->destroy(pVc->get());
+            (*iter)->release(pVc->get());
 
             delete *iter;
             m_devices.erase(iter);
@@ -240,22 +240,21 @@ U32 VulkanAdapter::findMemoryType(U32 filter, ResourceMemoryUsage usage) const
 
     VkPhysicalDeviceMemoryProperties memoryProperties = getMemoryProperties();
 
-    for (U32 i = 0; i < memoryProperties.memoryTypeCount; ++i) {
-
+    for (U32 i = 0; i < memoryProperties.memoryTypeCount; ++i) 
+    {
         const VkMemoryPropertyFlags propFlags = memoryProperties.memoryTypes[i].propertyFlags;
 
-        if ((filter & (1 << i))) {
-
-            if ((propFlags & required) == required && ((propFlags & preferred) == preferred)) {
-
+        if ((filter & (1 << i))) 
+        {
+            if ((propFlags & required) == required && ((propFlags & preferred) == preferred)) 
+            {
                 index = i;
                 break;
-
-            } else if ((propFlags & required) == required) {
-
+            } 
+            else if ((propFlags & required) == required) 
+            {
                 index = i;
                 break;
-
             }
         }
     }

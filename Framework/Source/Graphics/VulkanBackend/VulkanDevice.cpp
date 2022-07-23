@@ -210,7 +210,7 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
 }
 
 
-void VulkanDevice::destroy(VkInstance instance)
+void VulkanDevice::release(VkInstance instance)
 {
     vkDeviceWaitIdle(m_device);
 
@@ -782,7 +782,7 @@ ErrType VulkanDevice::createCommandList(VulkanCommandList** pList, VkQueueFlags 
             {
                 R_ERR(R_CHANNEL_VULKAN, "Could not create CommandList...");
 
-                pVList->destroy(this);
+                pVList->release(this);
                 delete pVList;
 
                 return result;
@@ -804,7 +804,7 @@ ErrType VulkanDevice::destroyCommandList(VulkanCommandList* pList)
     {
         R_DEBUG(R_CHANNEL_VULKAN, "Destroying command list...");
 
-        pList->destroy(this);
+        pList->release(this);
         delete pList;
 
         return REC_RESULT_OK;

@@ -54,8 +54,18 @@ ErrType D3D12Resource::initialize
     } 
     else 
     {
+        if (d3d12desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
+        {
+            pAllocator = pDevice->getBufferAllocator(desc.memoryUsage);
+        }
+        else if (d3d12desc.Dimension != D3D12_RESOURCE_DIMENSION_UNKNOWN)
+        {
+            pAllocator = pDevice->getTextureAllocator();
+        }
 
-        R_ASSERT_MSG(pAllocator, "Allocator for d3d12 resources is NULL!");
+        R_ASSERT_MSG(pAllocator, "No allocator exists for the given dimension! Is the resource unknown?");
+
+        R_NO_IMPL();
 
         ErrType result  = pAllocator->allocate(device, &m_memObj, d3d12desc, state);
 

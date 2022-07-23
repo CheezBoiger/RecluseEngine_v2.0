@@ -17,7 +17,7 @@ class Mouse;
 
 typedef void(*WindowMouseFunction)();
 typedef void(*WindowKeyFunction)();
-typedef void(*OnWindowResizeFunction)();
+typedef void(*OnWindowResizeFunction)(U32, U32, U32, U32);
 typedef void(*OnWindowRelocateFunction)();
 
 // Monitor description information, usually handled when querying multiple monitors from 
@@ -59,7 +59,8 @@ public:
         , m_isMinimized(false)
         , m_isShowing(false)
         , m_pMouseHandle(nullptr)
-        , m_keyCallback(nullptr) { }
+        , m_keyCallback(nullptr)
+        , m_onWindowResizeCallback(nullptr) { }
 
     // Create the window.
     static R_PUBLIC_API Window* create(const std::string& title, U32 x, U32 y, U32 width, U32 height);
@@ -97,8 +98,11 @@ public:
     void                        setMouseHandle(Mouse* pMouse) { m_pMouseHandle = pMouse; }
     Mouse*                      getMouseHandle() { return m_pMouseHandle; }
 
+    // Calls on window resize function. Should probbaly not be called outside of the Engine module.
+    void                        onWindowResize(U32 x, U32 y, U32 width, U32 height) const { if (m_onWindowResizeCallback) m_onWindowResizeCallback(x, y, width, height); }
+
     // Grabs the display monitor that has the most area of intesection with the window.
-    MonitorDesc getCurrentActiveMonitor();
+    R_PUBLIC_API MonitorDesc getCurrentActiveMonitor();
 
 private:
     // The window width

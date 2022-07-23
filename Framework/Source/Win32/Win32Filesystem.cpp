@@ -5,6 +5,10 @@
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Filesystem/Filesystem.hpp"
 
+#include "Recluse/Threading/Threading.hpp"
+#include "Recluse/Memory/LinearAllocator.hpp"
+#include "Recluse/Memory/MemoryPool.hpp"
+
 #include <algorithm>
 
 namespace Recluse {
@@ -54,6 +58,78 @@ ErrType File::writeTo(FileBufferData* pFile, const std::string& filePath)
     }
 
     return result;
+}
+
+typedef struct
+{
+    FileBufferDataAsync*    pAsyncBuffer;
+    std::string             filePath;
+    ErrType                 (*taskFn)       (FileBufferData*, const std::string&);
+} FileBufferTemporary;
+
+
+static ErrType runFileAsyncTask(void* pData)
+{
+    R_ASSERT(pData != NULL);
+
+    FileBufferTemporary* pTemporary = reinterpret_cast<FileBufferTemporary*>(pData);
+    
+    ErrType result = pTemporary->taskFn(&pTemporary->pAsyncBuffer->data, pTemporary->filePath);
+
+    pTemporary->pAsyncBuffer->isFinished = true;
+    
+    // Handle the cleanup right after. Our thread upon creation, will pass the payload over, to which after
+    // will be destroyed. This means that this thread task will need to be responsible for cleaning up this payload,
+    // since it is an unsafe allocation, and memory leaks will suffice.
+    delete pTemporary;
+
+    return result;
+}
+ErrType File::readFromAsync(FileBufferDataAsync* pBuffer, const std::string& filePath
+)
+{
+    static MemoryPool memPool = MemoryPool(sizeof(Thread) * 64ull);
+    static LinearAllocator linAllocator;
+    R_ASSERT(pBuffer != NULL);
+
+    Thread thr          = { };
+    thr.payload         = new FileBufferTemporary();
+    
+    {
+        FileBufferTemporary* temp   = reinterpret_cast<FileBufferTemporary*>(thr.payload);
+        temp->filePath              = filePath;
+        temp->pAsyncBuffer          = pBuffer;
+        temp->taskFn                = File::readFrom;
+    }
+
+    pBuffer->isFinished = false;
+
+    ErrType error = createThread(&thr, runFileAsyncTask);
+
+    //return error;
+    return REC_RESULT_NOT_IMPLEMENTED;
+}
+
+
+ErrType File::writeToAsync(FileBufferDataAsync* pBuffer, const std::string& filePath)
+{
+    R_ASSERT(pBuffer != NULL);
+
+    Thread thr = { };
+    thr.payload = new FileBufferTemporary();
+
+    {
+        FileBufferTemporary* temp   = reinterpret_cast<FileBufferTemporary*>(thr.payload);
+        temp->filePath              = filePath;
+        temp->pAsyncBuffer          = pBuffer;
+        temp->taskFn                = File::writeTo;
+    }
+
+    pBuffer->isFinished = false;
+
+    ErrType error = createThread(&thr, runFileAsyncTask);
+
+    return REC_RESULT_NOT_IMPLEMENTED;
 }
 
 

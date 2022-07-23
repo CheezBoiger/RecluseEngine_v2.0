@@ -93,17 +93,17 @@ struct MaterialDescription
 
 struct RendererConfigs 
 {
-    U32 renderWidth;
-    U32 renderHeight;
-    U32 buffering;
-    GraphicsAPI api;
-    Bool enableMotionBlur;
-    Bool enableHeatHaze;
-    Bool enableChromaticAberration;
-    Bool enableScreenSpaceShadows;
-    Bool enableSubsurfaceScattering;
-    Bool enableParticleMotion;
-    QualitySetting shadowQuality;
+    U32             renderWidth;
+    U32             renderHeight;
+    U32             buffering;
+    GraphicsAPI     api;
+    Bool            enableMotionBlur;
+    Bool            enableHeatHaze;
+    Bool            enableChromaticAberration;
+    Bool            enableScreenSpaceShadows;
+    Bool            enableSubsurfaceScattering;
+    Bool            enableParticleMotion;
+    QualitySetting  shadowQuality;
 };
 
 
@@ -119,59 +119,59 @@ public:
     Renderer();
     ~Renderer();
 
-    void initialize(void* pWindowHandle, const RendererConfigs& configs);
-    void cleanUp();
+    void                        initialize(void* pWindowHandle, const RendererConfigs& configs);
+    void                        cleanUp();
 
-    void recreate(const RendererConfigs& newConfigs);
+    void                        recreate(const RendererConfigs& newConfigs);
 
-    void pushRenderCommand(const RenderCommand& renderCommand, RenderPassTypeFlags renderFlags);
+    void                        pushRenderCommand(const RenderCommand& renderCommand, RenderPassTypeFlags renderFlags);
 
-    void render();
-    void present();
+    void                        render();
+    void                        present();
 
-    const RendererConfigs& getConfigs() const { return m_rendererConfigs; }
+    const RendererConfigs&      getConfigs() const { return m_rendererConfigs; }
 
-    GraphicsDevice* getDevice() const { return m_pDevice; }
+    GraphicsDevice*             getDevice() const { return m_pDevice; }
 
-    VertexBuffer* createVertexBuffer(U64 perVertexSzBytes, U64 totalVertices);
-    IndexBuffer* createIndexBuffer(IndexType indexType, U64 totalIndices);
-    Texture2D*  createTexture2D(U32 width, U32 height, U32 mips, U32 layers, ResourceFormat format);
+    VertexBuffer*               createVertexBuffer(U64 perVertexSzBytes, U64 totalVertices);
+    IndexBuffer*                createIndexBuffer(IndexType indexType, U64 totalIndices);
+    Texture2D*                  createTexture2D(U32 width, U32 height, U32 mips, U32 layers, ResourceFormat format);
 
-    ErrType destroyTexture2D(Texture2D* pTexture);
+    ErrType                     destroyTexture2D(Texture2D* pTexture);
 
-    ErrType destroyGPUBuffer(GPUBuffer* pBuffer);
+    ErrType                     destroyGPUBuffer(GPUBuffer* pBuffer);
 
-    void update(F32 currentTime, F32 deltaTime);
+    void                        update(F32 currentTime, F32 deltaTime);
 
 private:
 
-    virtual ErrType onInitializeModule(Application* pApp) override;
-    virtual ErrType onCleanUpModule(Application* pApp) override;
+    virtual ErrType             onInitializeModule(Application* pApp) override;
+    virtual ErrType             onCleanUpModule(Application* pApp) override;
 
-    void determineAdapter(std::vector<GraphicsAdapter*>& adapters);
-    void setUpModules();
-    void cleanUpModules();
-    void createDevice(const RendererConfigs& configs);
-    void allocateSceneBuffers(const RendererConfigs& configs);
+    void                        determineAdapter(std::vector<GraphicsAdapter*>& adapters);
+    void                        setUpModules();
+    void                        cleanUpModules();
+    void                        createDevice(const RendererConfigs& configs);
+    void                        allocateSceneBuffers(const RendererConfigs& configs);
 
-    void interpolateTime();
+    void                        interpolateTime();
 
-    void destroyDevice();
-    void freeSceneBuffers();
+    void                        destroyDevice();
+    void                        freeSceneBuffers();
 
-    void resetCommandKeys();
-    void sortCommandKeys();
+    void                        resetCommandKeys();
+    void                        sortCommandKeys();
 
     // Graphics context and information.
-    GraphicsInstance*       m_pInstance;
-    GraphicsAdapter*        m_pAdapter;
-    GraphicsDevice*         m_pDevice;
-    GraphicsCommandList*    m_commandList;
-    GraphicsSwapchain*      m_pSwapchain;
+    GraphicsInstance*                   m_pInstance;
+    GraphicsAdapter*                    m_pAdapter;
+    GraphicsDevice*                     m_pDevice;
+    GraphicsCommandList*                m_commandList;
+    GraphicsSwapchain*                  m_pSwapchain;
 
     // Renderer configs.
-    RendererConfigs         m_rendererConfigs;
-    void*                   m_windowHandle;
+    RendererConfigs                     m_rendererConfigs;
+    void*                               m_windowHandle;
 
     // Scene buffer objects.
     SceneBufferDefinitions              m_sceneBuffers;
@@ -183,30 +183,28 @@ private:
     {
         union 
         {
-            U64 value;
+            U64     value;
         };
     };
 
     struct KeySorter 
     {
-        U64 start;
-        U64 end;
-
-        void pushKey(U64 value);
-
-        void sortKeys();
+        U64         start;
+        U64         end;
+        void                            pushKey(U64 value);
+        void                            sortKeys();
     };
 
     struct 
     {
-        F32 currentTick;
-        F32 currentTime;
-        F32 deltaTime;
+        F32     currentTick;
+        F32     currentTime;
+        F32     deltaTime;
 
-        F32 fixedTick;
-        F32 startTick;
-        F32 endTick;
-    } m_renderState;
+        F32     fixedTick;
+        F32     startTick;
+        F32     endTick;
+    }                                   m_renderState;
 
     // command keys identify the index within the render command, to begin rendering for.
     std::vector<std::unordered_map<U32, std::vector<U64>>>  m_commandKeys;

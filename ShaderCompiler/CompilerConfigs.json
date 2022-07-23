@@ -28,6 +28,12 @@
     "configs": {
         "os": "win32",
         "include_paths": [""],
+		"output_debug_info": true,
+		"output_reflection": false,
+		"__comment__": "TODO, need to support glsl and slang.",
+		"default_shader_lang": "hlsl",
+		"__comment__": "Can be specified individually if wanted.",
+		"default_shader_intermediate": "spirv",
         "shaders": {
             "graphics": {
                 "pixel": {
