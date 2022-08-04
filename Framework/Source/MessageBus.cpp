@@ -16,10 +16,10 @@ MessageBus::MessageBus()
 }
 
 
-void MessageBus::initialize()
+void MessageBus::initialize(SizeT eventCacheSzBytes)
 {
     // Pre-allocate a sizeable pool.
-    m_messageMemPool.preAllocate(R_1MB * 2ull);
+    m_messageMemPool.preAllocate(eventCacheSzBytes);
 
     // We will allocate our allocator into the pool too!
     m_pMessageAllocator = new (reinterpret_cast<void*>(m_messageMemPool.getBaseAddress())) LinearAllocator();

@@ -11,7 +11,7 @@ class Array
 public:
 
 private:
-    T* m_arr;
+    T*  m_arr;
     U64 m_size;
 };
 } // Recluse 

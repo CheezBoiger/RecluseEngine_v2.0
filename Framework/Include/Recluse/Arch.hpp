@@ -4,6 +4,7 @@
 #if defined(_WIN32)
     #include <vcruntime.h>
     #define RECLUSE_WINDOWS 1
+    // Called to allow exporting to public api. This will then expose to external modules.
     #define R_PUBLIC_API __declspec(dllexport)
     #define R_IMPORT __declspec(dllimport)
     #define R_FORCEINLINE __forceinline
@@ -36,4 +37,7 @@
     #endif
 #endif
 
+// Tags that help define what is Operating system specific, that must be implemented.
 #define R_OS_SPECIFIC
+// Tag used to indicate what is Operating system specific, that must be implemented.
+#define R_OS_CALL     R_OS_SPECIFIC

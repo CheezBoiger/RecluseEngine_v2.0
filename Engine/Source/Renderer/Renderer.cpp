@@ -38,7 +38,9 @@ Renderer::~Renderer()
 void Renderer::initialize(void* windowHandle, const RendererConfigs& configs)
 {
     R_ASSERT_MSG(configs.buffering >= 1, "Must at least be one buffer count!");
-    m_rendererConfigs = configs;
+    m_newRendererConfigs = m_currentRendererConfigs = configs;
+
+    m_configLock = createMutex();
 
     EnableLayerFlags flags  = 0;
     ApplicationInfo info    = { };
@@ -105,6 +107,8 @@ void Renderer::cleanUp()
 
     // Clean up all modules, as well as resources handled by them...
     cleanUpModules();
+
+    destroyMutex(m_configLock);
 
     if (m_pDevice) 
     {
@@ -241,8 +245,8 @@ void Renderer::setUpModules()
                                     (
                                         this, 
                                         RESOURCE_FORMAT_D32_FLOAT_S8_UINT, 
-                                        m_rendererConfigs.renderWidth, 
-                                        m_rendererConfigs.renderHeight, 
+                                        m_currentRendererConfigs.renderWidth, 
+                                        m_currentRendererConfigs.renderHeight, 
                                         1, 1
                                     );
 
@@ -470,7 +474,7 @@ static ErrType kRendererJob(void* pData)
     Mutex renderMutex                       = pRenderer->getMutex();
     U64 threadId                            = getCurrentThreadId();
     F32 counterFrameMs                      = 0.f;
-    const RendererConfigs& renderConfigs    = pRenderer->getConfigs();
+    const RendererConfigs& renderConfigs    = pRenderer->getCurrentConfigs();
 
         // Initialize the renderer watch.
     RealtimeTick::initializeWatch(threadId, JOB_TYPE_RENDERER);
@@ -531,45 +535,44 @@ ErrType Renderer::onInitializeModule(Application* pApp)
 
     MainThreadLoop::getMessageBus()->addReceiver
         (
-            "Renderer", [=] (AMessage* pMsg) -> void 
+            "Renderer", [=] (EventMessage* pMsg) -> void 
                 { 
-                    std::string ev = pMsg->getEvent();
-                    if (ev.compare("Renderer") == 0) 
+                    EventId ev = pMsg->getEvent();
+                    R_DEBUG("Renderer", "Received message!");
+                    if (isActive()) 
                     {
-                        R_DEBUG("Renderer", "Received message!");
-                        RenderMessage* pJobMessage = MessageBus::cast<RenderMessage>(pMsg);
-                        if (isActive()) 
+                        // Handle the message.
+                        switch (ev) 
                         {
-                            // Handle the message.
-                            switch (pJobMessage->req) 
+                            case RenderEvent_RESUME:
+                                enableRunning(true);
+                                break;
+
+                            case RenderEvent_PAUSE:
+                                enableRunning(false);
+                                break;
+
+                            case RenderEvent_SHUTDOWN: 
                             {
-                                case RenderMessage::RESUME:
-                                    enableRunning(true);
-                                    break;
-
-                                case RenderMessage::PAUSE:
-                                    enableRunning(false);
-                                    break;
-
-                                case RenderMessage::SHUTDOWN: 
-                                {
-                                    enableRunning(false);
-                                    cleanUpModule(pJobMessage->pApp);
-                                    break;
-                                }
-
-                                case RenderMessage::CHANGE_CONFIG:
-                                    break;
-
-                                case RenderMessage::SCENE_UPDATE:
-                                    break;
-
-                                default:
-                                    break;
+                                enableRunning(false);
+                                cleanUpModule(MainThreadLoop::getApp());
+                                break;
                             }
+
+                            case RenderEvent_CONFIGURE_RENDERER:
+                            {
+                                recreate();
+                                break;
+                            }
+
+                            case RenderEvent_SCENE_UPDATE:
+                                break;
+
+                            default:
+                                break;
                         }
                     }
-                }
+               }
         );
 
     return pApp->loadJobThread(JOB_TYPE_RENDERER, kRendererJob);
@@ -623,6 +626,14 @@ void Renderer::update(F32 currentTime, F32 deltaTime)
     }
 
     m_renderState.currentTick = interpTick;
+}
+
+
+void Renderer::recreate()
+{
+    ScopedLock lck(m_configLock);
+
+    R_NO_IMPL();
 }
 } // Engine
 } // Recluse

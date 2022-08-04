@@ -49,38 +49,38 @@ constexpr Mutex kNull = nullptr;
 
 } // MutexVal
 
-R_PUBLIC_API ErrType createThread(Thread* thread, ThreadFunction startRoutine);
-R_PUBLIC_API ErrType resumeThread(Thread* thread);
-R_PUBLIC_API ErrType stopThread(Thread* thread);
-R_PUBLIC_API ErrType detachThread(Thread* thread);
-R_PUBLIC_API ErrType joinThread(Thread* thread);
-R_PUBLIC_API ErrType killThread(Thread* thread);
+R_PUBLIC_API R_OS_CALL ErrType createThread(Thread* thread, ThreadFunction startRoutine);
+R_PUBLIC_API R_OS_CALL ErrType resumeThread(Thread* thread);
+R_PUBLIC_API R_OS_CALL ErrType stopThread(Thread* thread);
+R_PUBLIC_API R_OS_CALL ErrType detachThread(Thread* thread);
+R_PUBLIC_API R_OS_CALL ErrType joinThread(Thread* thread);
+R_PUBLIC_API R_OS_CALL ErrType killThread(Thread* thread);
 
-R_PUBLIC_API Mutex   createMutex(const char* name = nullptr);
-R_PUBLIC_API ErrType lockMutex(Mutex mutex);
-R_PUBLIC_API ErrType unlockMutex(Mutex mutex);
-R_PUBLIC_API ErrType waitMutex(Mutex mutex, U64 waitTimeMs);
-R_PUBLIC_API ErrType destroyMutex(Mutex mutex);
-R_PUBLIC_API ErrType tryLockMutex(Mutex mutex);
+R_PUBLIC_API R_OS_CALL Mutex   createMutex(const char* name = nullptr);
+R_PUBLIC_API R_OS_CALL ErrType lockMutex(Mutex mutex);
+R_PUBLIC_API R_OS_CALL ErrType unlockMutex(Mutex mutex);
+R_PUBLIC_API R_OS_CALL ErrType waitMutex(Mutex mutex, U64 waitTimeMs);
+R_PUBLIC_API R_OS_CALL ErrType destroyMutex(Mutex mutex);
+R_PUBLIC_API R_OS_CALL ErrType tryLockMutex(Mutex mutex);
 
-R_PUBLIC_API ErrType atomicAdd();
-R_PUBLIC_API ErrType atomicSub();
-R_PUBLIC_API U64     getMainThreadId();
-R_PUBLIC_API U64     getCurrentThreadId();
+R_PUBLIC_API R_OS_CALL ErrType atomicAdd();
+R_PUBLIC_API R_OS_CALL ErrType atomicSub();
+R_PUBLIC_API R_OS_CALL U64     getMainThreadId();
+R_PUBLIC_API R_OS_CALL U64     getCurrentThreadId();
 
-R_PUBLIC_API Semaphore  createSemaphore();
-R_PUBLIC_API ErrType    destroySemaphore(Semaphore sema);
-R_PUBLIC_API ErrType    signalSemaphore(Semaphore sema);
-R_PUBLIC_API ErrType    waitSemaphore(Semaphore sema);
+R_PUBLIC_API R_OS_CALL Semaphore  createSemaphore();
+R_PUBLIC_API R_OS_CALL ErrType    destroySemaphore(Semaphore sema);
+R_PUBLIC_API R_OS_CALL ErrType    signalSemaphore(Semaphore sema);
+R_PUBLIC_API R_OS_CALL ErrType    waitSemaphore(Semaphore sema);
 
-R_PUBLIC_API U64    compareExchange(I64* dest, I64 ex, I64 comp);
-R_PUBLIC_API I16    compareExchange(I16* dest, I16 ex, I16 comp);
-R_PUBLIC_API U128   compareExchange(U128* dest, U128 ex, U128 comp);
+R_PUBLIC_API R_OS_CALL U64    compareExchange(I64* dest, I64 ex, I64 comp);
+R_PUBLIC_API R_OS_CALL I16    compareExchange(I16* dest, I16 ex, I16 comp);
+R_PUBLIC_API R_OS_CALL U128   compareExchange(U128* dest, U128 ex, U128 comp);
 
-R_PUBLIC_API U32 testAndSet(U32* ptr);
+R_PUBLIC_API R_OS_CALL U32 testAndSet(U32* ptr);
 
 // Causes this thread to sleep for some milliseconds.
-R_PUBLIC_API ErrType    sleep(U64 milliseconds);
+R_PUBLIC_API R_OS_CALL ErrType    sleep(U64 milliseconds);
 
 // C++ RAII locking mechanism within a scope.
 class R_PUBLIC_API ScopedLock 

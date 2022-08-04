@@ -3,44 +3,52 @@
 
 #include "Recluse/Memory/Allocator.hpp"
 #include "Recluse/Memory/MemoryPool.hpp"
+#include "Recluse/Memory/MemoryCommon.hpp"
 #include "Recluse/Types.hpp"
+#include "Recluse/RGUID.hpp"
 #include <queue>
 #include <functional>
 #include <map>
 
 namespace Recluse {
 
+typedef U64 EventId;
+typedef U64 GroupId;
 
-class AMessage 
+class EventMessage 
 {
 public:
-    virtual ~AMessage() { }
+    static const EventId kBadEventId = ~0;
+    ~EventMessage() { }
+    EventMessage(EventId eventId = kBadEventId) : m_eventId(eventId) { }
 
-    virtual std::string getEvent() = 0;
+    EventId getEvent() { return m_eventId; }
+
+private:
+    EventId m_eventId;
 };
 
-typedef std::function<void(AMessage*)> MessageReceiveFunc;
+typedef std::function<void(EventMessage*)> MessageReceiveFunc;
 
-// Simple Message bus to be used for input messaging.
+// Simple Message bus to be used for input messaging. This is a simple bus design,
+// We might want something more efficient later on.
 class MessageBus 
 {
 public:
-    friend class Recluse::AMessage;
+    friend class Recluse::EventMessage;
 
-
-    // Helper function to cast a message from the bus. 
-    // Just a readable-friendly way to convert messages.
-    template<typename MessageType>
-    static MessageType* cast(AMessage* pMsg)
+    static void sendEvent(MessageBus* pBus, EventId id)
     {
-        return static_cast<MessageType*>(pMsg);
+        pBus->pushMessage(id);
     }
 
     R_PUBLIC_API MessageBus();
 
     ~MessageBus() {} 
 
-    R_PUBLIC_API void initialize();
+    // Initialize the messaging bus system.
+    R_PUBLIC_API void initialize(SizeT eventCacheSzBytes = R_MB(2ull));
+
     R_PUBLIC_API void cleanUp();
 
     R_PUBLIC_API void addReceiver
@@ -49,14 +57,9 @@ public:
                             MessageReceiveFunc receiver
                         );
 
-    template<typename MessageType>
-    void pushMessage(const MessageType& message) 
-    {
-        static_assert(std::is_base_of<AMessage, MessageType>::value, "Must be a base of AMessage!");
-        
-        MessageType* pMessage   = new (m_pMessageAllocator) MessageType();
-        *pMessage               = message;
-        
+    void pushMessage(EventId eventId) 
+    {   
+        EventMessage* pMessage   = new (m_pMessageAllocator) EventMessage(eventId);
         m_messages.push(pMessage);
     }
 
@@ -85,7 +88,7 @@ public:
 private:
     Allocator*                      m_pMessageAllocator;
     MemoryPool                      m_messageMemPool;
-    std::queue<AMessage*>           m_messages;
+    std::queue<EventMessage*>       m_messages;
     std::vector<MessageReceiveFunc> m_messageReceivers;
     std::map<std::string, U32>      m_receiverNodeNames;
 };

@@ -8,6 +8,7 @@
 namespace Recluse {
 
 
+// Float Vector data structure.
 struct R_PUBLIC_API Float3 
 {
     union 
@@ -122,4 +123,10 @@ R_PUBLIC_API F32     length(const Float3& v);
 R_PUBLIC_API F32     length2(const Float3& v);
 R_PUBLIC_API Float3  normalize(const Float3& v);
 R_PUBLIC_API Float3  lerp(const Float3& a, const Float3& b, F32 t);
+
+
+typedef Float3  FVector3;
+typedef Int3    IVector3;
+typedef UInt3   UVector3;
+typedef Short3  ShVector3;
 } // Reclue

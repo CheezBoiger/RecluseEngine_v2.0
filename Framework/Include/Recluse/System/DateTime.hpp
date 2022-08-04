@@ -28,7 +28,7 @@ struct LocalDateTimeDesc
 // Obtain the local time.
 //
 ///////////////////////////////////////////////////////////
-R_PUBLIC_API extern void getLocalDateTime(LocalDateTimeDesc& descOut);
+R_PUBLIC_API R_OS_CALL extern void getLocalDateTime(LocalDateTimeDesc& descOut);
 
 
 class DateFormatter

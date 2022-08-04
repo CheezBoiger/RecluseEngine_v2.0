@@ -47,10 +47,23 @@ public:
     switch (_) { case AssertoHandler::ASSERT_DEBUG: DebugBreak(); break; default: break; } \
     }
 
-struct InputMessage : public AMessage {
-  std::string getEvent() override { return "Noob"; }
-  U32 value;
+
+enum InputEvents
+{
+    InputEvents_NOOB
 };
+
+
+const char* getEventString(EventId eventid)
+{
+    switch (eventid)
+    {
+        case InputEvents_NOOB:
+            return "Noob";
+        default:
+            return "Error";
+    }
+}
 
 
 // Testing the game object behavior!
@@ -60,9 +73,9 @@ public:
 
     void onInitialize() override {
         m_name = "Super Test Object";
-      std::function<void(AMessage*)> fun = [&](AMessage* message) {
-          InputMessage* input = static_cast<InputMessage*>(message);
-          R_VERBOSE(m_name.c_str(), "Message: %s, value=%d", input->getEvent().c_str(), input->value);
+      std::function<void(EventMessage*)> fun = [&](EventMessage* message) {
+          
+          R_VERBOSE(m_name.c_str(), "Message: %s, value=%d", getEventString(message->getEvent()), m_value);
       }; 
       g_bus.addReceiver("TestObject", fun);
     }
@@ -70,6 +83,8 @@ public:
     void onUpdate(const RealtimeTick& tick) override {
         R_TRACE(m_name.c_str(), "Testing this game object. Hello game!!");
     }
+
+    I32 m_value;
 };
 
 
@@ -91,21 +106,29 @@ struct ChildObject : public ECS::GameObject {
 public:
     R_PUBLIC_DECLARE_GAME_OBJECT(ChildObject, "E8C5D1C7-9758-4BF8-A17D-D1DC14D59769")
 
+    ChildObject(TestObject* pObj = nullptr)
+        : pTestObject(pObj)
+    {
+    }
+
     void onInitialize() override {
         m_name = "Child Object";
     }
 
     void onUpdate(const RealtimeTick& tick) override {
         GameObject* parent = getParent();
-        InputMessage message = { };
-        message.value = 70;
-        g_bus.pushMessage(message);
+        R_ASSERT(pTestObject != NULL);
+        pTestObject->m_value = 70;
+
+        MessageBus::sendEvent(&g_bus, InputEvents_NOOB);
         if (parent) {
             R_WARN(m_name.c_str(), "I am a child object! My father is %s!", parent->getName().c_str());
         } else {
             R_ERR(m_name.c_str(), "I am a child object, but I don't have a parent!!");
         }
     }
+
+    TestObject* pTestObject;
 };
 
 int main(int c, char* argv[])
@@ -116,7 +139,7 @@ int main(int c, char* argv[])
 
     ECS::GameObject* obj = new TestObject();
     ECS::GameObject* obj1 = new TestObject1();
-    ECS::GameObject* child = new ChildObject();
+    ECS::GameObject* child = new ChildObject(static_cast<TestObject*>(obj));
     obj1->initialize();
     obj->initialize();  
     child->initialize();

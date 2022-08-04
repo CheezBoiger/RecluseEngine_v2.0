@@ -19,8 +19,8 @@
 #define R_L_SHIFT(m, s)         ((m) << (s))
 
 // Circular shifts. These require values to be [1 < s < bits]
-#define R_R_ROT(m, s, bits)     (((m) >> (s)) | ((m) << ((bits) - (s))))
-#define R_L_ROT(m, s, bits)     (((m) << (s)) | ((m) >> ((bits) - (s))))
+#define R_R_ROTATE(m, s, bits)     (((m) >> (s)) | ((m) << ((bits) - (s))))
+#define R_L_ROTATE(m, s, bits)     (((m) << (s)) | ((m) >> ((bits) - (s))))
 
 
 namespace Recluse {

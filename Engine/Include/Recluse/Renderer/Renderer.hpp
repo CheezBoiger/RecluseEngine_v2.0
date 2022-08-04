@@ -37,24 +37,13 @@ class Primitive;
 struct RenderCommand;
 class RenderCommandList;
 
-struct RenderMessage : public JobMessage 
+enum RenderEvent 
 {
-public:
-    RenderMessage()
-        : JobMessage("Renderer")
-    { }
-
-    enum Request 
-    {
-        PAUSE,
-        RESUME,
-        SHUTDOWN,
-        CHANGE_CONFIG,
-        SCENE_UPDATE,
-    };
-
-    Application* pApp;
-    Request req;
+    RenderEvent_PAUSE,
+    RenderEvent_RESUME,
+    RenderEvent_SHUTDOWN,
+    RenderEvent_CONFIGURE_RENDERER,
+    RenderEvent_SCENE_UPDATE
 };
 
 enum RenderPassType : U32 
@@ -123,14 +112,19 @@ public:
     void                        initialize(void* pWindowHandle, const RendererConfigs& configs);
     void                        cleanUp();
 
-    void                        recreate(const RendererConfigs& newConfigs);
+    // Recreate the renderer pipeline, with the new configurations.
+    void                        recreate();
 
     void                        pushRenderCommand(const RenderCommand& renderCommand, RenderPassTypeFlags renderFlags);
 
     void                        render();
     void                        present(Bool delayPresent = false);
 
-    const RendererConfigs&      getConfigs() const { return m_rendererConfigs; }
+    const RendererConfigs&      getCurrentConfigs() const { return m_currentRendererConfigs; }
+
+    // Set the new configurations for the renderer. This won't be used until we call recreate().
+    // Call will be blocked if we are in the middle of recreating.
+    void                        setNewConfigurations(const RendererConfigs& newConfigs) { ScopedLock lck(m_configLock); m_newRendererConfigs = newConfigs; }
 
     GraphicsDevice*             getDevice() const { return m_pDevice; }
 
@@ -171,7 +165,9 @@ private:
     GraphicsSwapchain*                  m_pSwapchain;
 
     // Renderer configs.
-    RendererConfigs                     m_rendererConfigs;
+    Mutex                               m_configLock;
+    RendererConfigs                     m_currentRendererConfigs;
+    RendererConfigs                     m_newRendererConfigs;
     void*                               m_windowHandle;
 
     // Scene buffer objects.

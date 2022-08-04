@@ -37,16 +37,16 @@ struct MonitorDesc
 // Monitor querying api calls, this is usually specific to each operating system.
 //
 //
-R_PUBLIC_API extern U32              getMonitorCount();
-R_PUBLIC_API extern Bool             queryMonitors(MonitorDesc* pDescsOut, U32 count);
-R_PUBLIC_API extern MonitorDesc      getActiveMonitor();
+R_PUBLIC_API R_OS_CALL extern U32              getMonitorCount();
+R_PUBLIC_API R_OS_CALL extern Bool             queryMonitors(MonitorDesc* pDescsOut, U32 count);
+R_PUBLIC_API R_OS_CALL extern MonitorDesc      getActiveMonitor();
 //
 //////////////////////////////////////////////////////////////////////////////////
 
 // Window objects, to be instantiated and destroyed by the application.
 // Rendering systems will need this in order to draw to the screen.
 // This is an operating system dependent implementation.
-class Window 
+class R_OS_CALL Window 
 {
 public:
     Window()
@@ -63,15 +63,15 @@ public:
         , m_onWindowResizeCallback(nullptr) { }
 
     // Create the window.
-    static R_PUBLIC_API Window* create(const std::string& title, U32 x, U32 y, U32 width, U32 height);
+    static R_OS_CALL R_PUBLIC_API Window* create(const std::string& title, U32 x, U32 y, U32 width, U32 height);
     // Destroy the window.
-    static R_PUBLIC_API ErrType destroy(Window* pWindow);
-    static R_PUBLIC_API Window* getActiveFocusedWindow();
+    static R_OS_CALL R_PUBLIC_API ErrType destroy(Window* pWindow);
+    static R_OS_CALL R_PUBLIC_API Window* getActiveFocusedWindow();
 
     // close the window.
-    R_PUBLIC_API void           close();
+    R_OS_CALL R_PUBLIC_API void           close();
     // Open the window,
-    R_PUBLIC_API void           open();
+    R_OS_CALL R_PUBLIC_API void           open();
     // obtain the native window handle.
     void*                       getNativeHandle() { return m_handle; }
     // Set the screen mode.

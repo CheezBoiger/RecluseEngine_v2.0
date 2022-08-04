@@ -25,13 +25,13 @@ void VulkanFrameResources::build(VulkanSwapchain* pSwapchain)
 
     vkGetSwapchainImagesKHR(device, swapchain, &swapchainImageCount, m_frames.data());
 
-    VkSemaphoreCreateInfo semaIf = { };
-    semaIf.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    semaIf.flags = 0;
+    VkSemaphoreCreateInfo semaIf    = { };
+    semaIf.sType                    = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    semaIf.flags                    = 0;
 
-    VkFenceCreateInfo fenceIf = { };
-    fenceIf.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    fenceIf.flags = 0;
+    VkFenceCreateInfo fenceIf       = { };
+    fenceIf.sType                   = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fenceIf.flags                   = 0;
 
     for (U32 i = 0; i < m_frameWaitSemaphores.size(); ++i) 
     {

@@ -46,23 +46,6 @@ enum JobType
 
 typedef U32 JobTypeFlags;
 
-struct JobMessage : public AMessage 
-{
-    JobMessage(const std::string& msg) 
-        : m_msg(msg) 
-    {
-        
-    }
-
-    virtual std::string getEvent() override 
-    {
-        return m_msg;    
-    }
-private:
-    std::string m_msg;
-};
-
-
 // Application interface for your application.
 // This should, and would be integrated into your game, in order to 
 // connect to the engine components, as well as the editor system.
