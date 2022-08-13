@@ -6,3 +6,4 @@ set ( RECLUSE_THIRDPARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty )
 
 # TODO: Disable for now, until we can figure out what we need to do to properly compile this, and not have to use an existing binary :D.
 #add_subdirectory ( ${RECLUSE_THIRDPARTY_DIR}/DirectXShaderCompiler )
+add_subdirectory ( ${RECLUSE_THIRDPARTY_DIR}/wxWidgets )

@@ -10,7 +10,7 @@ namespace Recluse {
 
 ErrType VulkanResourceView::initialize(VulkanDevice* pDevice)
 {
-    ErrType result          = REC_RESULT_OK;
+    ErrType result          = R_RESULT_OK;
     ResourceViewDesc desc   = getDesc();
 
     VkImageViewCreateInfo info = { };
@@ -70,7 +70,7 @@ ErrType VulkanResourceView::initialize(VulkanDevice* pDevice)
 
 ErrType VulkanResourceView::destroy(VulkanDevice* pDevice)
 {
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
 
     if (m_view) 
     {
@@ -157,10 +157,10 @@ ErrType VulkanSampler::initialize(VulkanDevice* pDevice, const SamplerCreateDesc
 
     if (result != VK_SUCCESS) 
     {
-        return REC_RESULT_FAILED;
+        return R_RESULT_FAILED;
     }
     
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -176,6 +176,6 @@ ErrType VulkanSampler::destroy(VulkanDevice* pDevice)
         m_sampler = VK_NULL_HANDLE;
     }
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 } // Recluse

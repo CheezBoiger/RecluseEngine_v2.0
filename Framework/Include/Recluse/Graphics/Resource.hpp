@@ -27,10 +27,10 @@ public:
     const GraphicsResourceDescription& getDesc() const { return m_desc; }
 
     // Map the resource based on range. If NULL range, maps the entire resource.
-    virtual ErrType map(void** pMappedMemory, MapRange* pReadRange) { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual ErrType map(void** pMappedMemory, MapRange* pReadRange) { return R_RESULT_NO_IMPL; }
 
     // Unmap and invalidate the resource cache, which will flush if needed.
-    virtual ErrType unmap(MapRange* pWriteRange) { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual ErrType unmap(MapRange* pWriteRange) { return R_RESULT_NO_IMPL; }
 
     ResourceState getCurrentResourceState() const { return m_currentState; }
 

@@ -68,7 +68,7 @@ public:
     ErrType cleanUp() 
     { 
         ErrType result = onCleanUp();
-        if (result == REC_RESULT_OK)
+        if (result == R_RESULT_OK)
         {
             // Do no destroy window, this should be handled externally.
             m_pWindowRef = nullptr;
@@ -82,7 +82,7 @@ public:
         m_pWindowRef        = pWindowHandle;
         m_pMessageBusRef    = pMessageBus;
         ErrType result = onInit();
-        if (result == REC_RESULT_OK)
+        if (result == R_RESULT_OK)
             markInitialized();
         return result;
     }

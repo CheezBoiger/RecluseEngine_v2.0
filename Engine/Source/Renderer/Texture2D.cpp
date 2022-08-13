@@ -45,7 +45,7 @@ ErrType Texture2D::initialize(Renderer* pRenderer, ResourceFormat format, U32 wi
 {
     GraphicsDevice* pDevice             = pRenderer->getDevice();
     GraphicsResourceDescription desc    = { };
-    ErrType result                      = REC_RESULT_OK;
+    ErrType result                      = R_RESULT_OK;
 
     desc.memoryUsage    = RESOURCE_MEMORY_USAGE_GPU_ONLY;
     desc.usage          = RESOURCE_USAGE_TRANSFER_DESTINATION | RESOURCE_USAGE_SHADER_RESOURCE;
@@ -69,7 +69,7 @@ ErrType Texture2D::initialize(Renderer* pRenderer, ResourceFormat format, U32 wi
 
     result = pDevice->createResource(&m_resource, desc, RESOURCE_STATE_SHADER_RESOURCE);
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR("Texture2D", "Failed to create texture2D resource.");
         return result;
@@ -100,7 +100,7 @@ void Texture2D::destroy(Renderer* pRenderer)
 
 void Texture2D::load(Renderer* pRenderer, void* pData, U64 szBytes)
 {
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
     
     result = pRenderer->getDevice()->copyResource(m_resource, nullptr);
 }
@@ -109,7 +109,7 @@ void Texture2D::load(Renderer* pRenderer, void* pData, U64 szBytes)
 ErrType TextureView::initialize(Renderer* pRenderer, Texture2D* pTexture, ResourceViewDesc& desc)
 {
     GraphicsDevice* pDevice = pRenderer->getDevice();
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
 
     desc.pResource = pTexture->getResource();
 
@@ -131,7 +131,7 @@ ErrType TextureView::destroy(Renderer* pRenderer)
         m_view = nullptr;
     }
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 

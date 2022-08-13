@@ -63,7 +63,7 @@ void RenderCommandList::destroy()
 #define COPY_COMMAND_TO_POOL(rClass, rcmd) \
     { \
         result = m_pAllocator->allocate(&allocation, sizeof(rClass), ARCH_PTR_SZ_BYTES); \
-        if (result == REC_RESULT_OUT_OF_MEMORY) { \
+        if (result == R_RESULT_OUT_OF_MEMORY) { \
             R_ERR("RenderCommandList", "Command list is out of memory! Can not push render command!"); \
             return result; \
         } \
@@ -76,7 +76,7 @@ ErrType RenderCommandList::push(const RenderCommand& renderCommand)
 
     switch (renderCommand.op) 
     {
-        case COMMAND_OP_DRAWABLE_INSTANCED:
+        case C_OP_DRAWABLE_INSTANCED:
         {
             //COPY_COMMAND_TO_POOL(DrawRenderCommand, renderCommand);
             DrawRenderCommand* pCommand = new (m_pAllocator, &allocation) DrawRenderCommand();
@@ -84,7 +84,7 @@ ErrType RenderCommandList::push(const RenderCommand& renderCommand)
             break;     
         }
 
-        case COMMAND_OP_DRAWABLE_INDEXED_INSTANCED:
+        case C_OP_DRAWABLE_INDEXED_INSTANCED:
         {
             //COPY_COMMAND_TO_POOL(DrawIndexedRenderCommand, renderCommand); 
             DrawIndexedRenderCommand* pCommand = new (m_pAllocator, &allocation) DrawIndexedRenderCommand();
@@ -96,12 +96,12 @@ ErrType RenderCommandList::push(const RenderCommand& renderCommand)
     PtrType p = allocation.baseAddress;
     ErrType result = m_pointerAllocator->allocate(&allocation, ARCH_PTR_SZ_BYTES, ARCH_PTR_SZ_BYTES);
 
-    if (result == REC_RESULT_OK) 
+    if (result == R_RESULT_OK) 
     {
         *(RenderCommand**)allocation.baseAddress = (RenderCommand*)p;
     }
     
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 

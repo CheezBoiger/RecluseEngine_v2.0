@@ -28,7 +28,7 @@ ErrType VulkanQueue::initialize(VulkanDevice* device, QueueFamily* pFamily, U32 
         
     vkCreateFence(m_pDevice->get(), &info, nullptr, &m_fence);
     
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -145,7 +145,7 @@ ErrType VulkanQueue::copyResource(GraphicsResource* dst, GraphicsResource* src)
     vkWaitForFences(device, 1, &m_fence, true, UINT64_MAX);
     vkResetFences(device, 1, &m_fence);
     
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -213,6 +213,6 @@ ErrType VulkanQueue::copyBufferRegions
     vkWaitForFences(device, 1, &m_fence, true, UINT64_MAX);
     vkResetFences(device, 1, &m_fence);
     
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 } // Recluse

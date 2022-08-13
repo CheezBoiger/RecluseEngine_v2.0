@@ -84,7 +84,7 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
         // Create surface
         ErrType builtSurface = createSurface(pVc->get(), info.winHandle);
 
-        if (builtSurface != REC_RESULT_OK) 
+        if (builtSurface != R_RESULT_OK) 
         {
             R_ERR(R_CHANNEL_VULKAN, "Surface failed to create! Aborting build");
             return builtSurface;
@@ -310,12 +310,12 @@ ErrType VulkanDevice::createSwapchain
 
 ErrType VulkanDevice::destroySwapchain(VulkanSwapchain* pSwapchain)
 {
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
 
     if (!pSwapchain) 
     {
         R_ERR(R_CHANNEL_VULKAN, "Null pointer exception with either pContext or pSwapchain.");   
-        return REC_RESULT_NULL_PTR_EXCEPTION;
+        return R_RESULT_NULL_PTR_EXCEPT;
     }
 
     VulkanQueue* pPq = pSwapchain->getPresentationQueue();
@@ -329,7 +329,7 @@ ErrType VulkanDevice::destroySwapchain(VulkanSwapchain* pSwapchain)
 
     result = pSwapchain->destroy();
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR(R_CHANNEL_VULKAN, "Failed to destroy vulkan swapchain!");
     } 
@@ -353,13 +353,13 @@ ErrType VulkanDevice::createSurface(VkInstance instance, void* handle)
     {
         R_DEBUG(R_CHANNEL_VULKAN, "Surface is already created for handle. Skipping surface create...");
         
-        return REC_RESULT_OK;    
+        return R_RESULT_OK;    
     }
 
     if (!handle) 
     {
         R_ERR(R_CHANNEL_VULKAN, "Null window handle for surface creation.");
-        return REC_RESULT_NULL_PTR_EXCEPTION;
+        return R_RESULT_NULL_PTR_EXCEPT;
     }
 
     if (m_surface) 
@@ -382,11 +382,11 @@ ErrType VulkanDevice::createSurface(VkInstance instance, void* handle)
     if (result != VK_SUCCESS) 
     {
         R_ERR(R_CHANNEL_VULKAN, "Failed to create win32 surface.")
-        return REC_RESULT_FAILED;
+        return R_RESULT_FAILED;
     }
 #endif
 
-    return REC_RESULT_OK;    
+    return R_RESULT_OK;    
 }
 
 
@@ -556,14 +556,14 @@ ErrType VulkanDevice::reserveMemory(const MemoryReserveDesc& desc)
             m_bufferCount
         );
 #endif
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
 ErrType VulkanDevice::createQueues()
 {
     // Lets create the primary queue.
-    ErrType result          = REC_RESULT_OK;
+    ErrType result          = R_RESULT_OK;
     VkQueueFlags flags      = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT;
     B32 isPresentSupported  = false;
 
@@ -574,7 +574,7 @@ ErrType VulkanDevice::createQueues()
 
     result = createQueue(&m_pGraphicsQueue, flags, isPresentSupported);
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     { 
         R_ERR(R_CHANNEL_VULKAN, "Failed to create main RHI queue!");
     }
@@ -619,14 +619,14 @@ ErrType VulkanDevice::createQueue(VulkanQueue** ppQueue, VkQueueFlags flags, B32
     {
         R_ERR(R_CHANNEL_VULKAN, "Could not find proper queue family! Can not create queue.");
 
-        return REC_RESULT_FAILED;
+        return R_RESULT_FAILED;
     }
 
     pQueue = new VulkanQueue(flags, isPresentable);
 
     ErrType err = pQueue->initialize(this, pFamily, queueFamilyIndex, queueIndex);
 
-    if (err == REC_RESULT_OK) 
+    if (err == R_RESULT_OK) 
     {
         *ppQueue = pQueue;
     }
@@ -643,13 +643,13 @@ ErrType VulkanDevice::destroyQueues()
         m_pGraphicsQueue = nullptr;
     }
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
 ErrType VulkanDevice::createResource(GraphicsResource** ppResource, GraphicsResourceDescription& desc, ResourceState initState)
 {
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
 
     if (desc.dimension == RESOURCE_DIMENSION_BUFFER) 
     {
@@ -657,7 +657,7 @@ ErrType VulkanDevice::createResource(GraphicsResource** ppResource, GraphicsReso
 
         result = pBuffer->initialize(this, desc, initState);
 
-        if (result != REC_RESULT_OK) 
+        if (result != R_RESULT_OK) 
         {
             delete pBuffer;
         } 
@@ -673,7 +673,7 @@ ErrType VulkanDevice::createResource(GraphicsResource** ppResource, GraphicsReso
 
         result = pImage->initialize(this, desc, initState);
 
-        if (result != REC_RESULT_OK) 
+        if (result != R_RESULT_OK) 
         {
             delete pImage;
         } 
@@ -695,10 +695,10 @@ ErrType VulkanDevice::destroyResource(GraphicsResource* pResource)
         pVr->destroy();
         
         delete pResource;
-        return REC_RESULT_OK;
+        return R_RESULT_OK;
     }
 
-    return REC_RESULT_FAILED;
+    return R_RESULT_FAILED;
 }
 
 
@@ -733,7 +733,7 @@ ErrType VulkanDevice::createCommandPools(U32 buffers)
         }
     }
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -757,7 +757,7 @@ void VulkanDevice::destroyCommandPools()
 
 ErrType VulkanDevice::createCommandList(VulkanCommandList** pList, VkQueueFlags flags)
 {
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
 
     R_DEBUG(R_CHANNEL_VULKAN, "Creating command list...");
 
@@ -778,7 +778,7 @@ ErrType VulkanDevice::createCommandList(VulkanCommandList** pList, VkQueueFlags 
                             (U32)m_queueFamilies[i].commandPools.size()
                         );
 
-            if (result != REC_RESULT_OK) 
+            if (result != R_RESULT_OK) 
             {
                 R_ERR(R_CHANNEL_VULKAN, "Could not create CommandList...");
 
@@ -807,10 +807,10 @@ ErrType VulkanDevice::destroyCommandList(VulkanCommandList* pList)
         pList->release(this);
         delete pList;
 
-        return REC_RESULT_OK;
+        return R_RESULT_OK;
     }
 
-    return REC_RESULT_FAILED;
+    return R_RESULT_FAILED;
 }
 
 
@@ -889,7 +889,7 @@ ErrType VulkanDevice::createResourceView(GraphicsResourceView** ppView, const Re
     VulkanResourceView* pView = new VulkanResourceView(desc);
     ErrType err               = pView->initialize(this);
 
-    if (err != REC_RESULT_OK) 
+    if (err != R_RESULT_OK) 
     {
         pView->destroy(this);
         delete pView;
@@ -903,17 +903,17 @@ ErrType VulkanDevice::createResourceView(GraphicsResourceView** ppView, const Re
 
 ErrType VulkanDevice::destroyResourceView(GraphicsResourceView* pView)
 {
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
 
     if (!pView) 
     {
-        return REC_RESULT_NULL_PTR_EXCEPTION;
+        return R_RESULT_NULL_PTR_EXCEPT;
     }
 
     VulkanResourceView* pVv = static_cast<VulkanResourceView*>(pView);
     result                  = pVv->destroy(this);
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR(R_CHANNEL_VULKAN, "Failed to destroy vulkan image view!");
 
@@ -953,7 +953,7 @@ ErrType VulkanDevice::createDescriptorSet(DescriptorSet** ppDescriptorSet, Descr
     VulkanDescriptorSet* pDescriptorSet = new VulkanDescriptorSet();
     ErrType result                      = pDescriptorSet->initialize(this, pVl);
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR(R_CHANNEL_VULKAN, "Device failed to create vulkan descriptor!");
         delete pVl;
@@ -971,7 +971,7 @@ ErrType VulkanDevice::destroyDescriptorSet(DescriptorSet* pDescriptorSet)
     VulkanDescriptorSet* pSet = static_cast<VulkanDescriptorSet*>(pDescriptorSet);
     pSet->destroy();
     delete pSet;
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -980,7 +980,7 @@ ErrType VulkanDevice::createDescriptorSetLayout(DescriptorSetLayout** ppLayout, 
     VulkanDescriptorSetLayout* pVl  = new VulkanDescriptorSetLayout();
     ErrType result                  = pVl->initialize(this, desc);
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR(R_CHANNEL_VULKAN, "Failed to create vulkan descriptor set layout!");
         pVl->destroy(this);
@@ -990,7 +990,7 @@ ErrType VulkanDevice::createDescriptorSetLayout(DescriptorSetLayout** ppLayout, 
 
     *ppLayout = pVl;
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -998,7 +998,7 @@ ErrType VulkanDevice::destroyDescriptorSetLayout(DescriptorSetLayout* pLayout)
 {
     if (!pLayout) 
     {
-        return REC_RESULT_NULL_PTR_EXCEPTION;
+        return R_RESULT_NULL_PTR_EXCEPT;
     }
 
     VulkanDescriptorSetLayout* pVl = static_cast<VulkanDescriptorSetLayout*>(pLayout);
@@ -1013,7 +1013,7 @@ ErrType VulkanDevice::createRenderPass(RenderPass** ppRenderPass, const RenderPa
     VulkanRenderPass* pVrp = new VulkanRenderPass();
     ErrType result = pVrp->initialize(this, desc);
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR(R_CHANNEL_VULKAN, "Failed to create vulkan render pass...");
     
@@ -1033,14 +1033,14 @@ ErrType VulkanDevice::destroyRenderPass(RenderPass* pRenderPass)
 {
     if (!pRenderPass) 
     {
-        return REC_RESULT_NULL_PTR_EXCEPTION;
+        return R_RESULT_NULL_PTR_EXCEPT;
     }
 
     VulkanRenderPass* pVrp = static_cast<VulkanRenderPass*>(pRenderPass);
     ErrType result = pVrp->destroy(this);
     delete pVrp;
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR(R_CHANNEL_VULKAN, "Failed to destroy render pass!");
     }
@@ -1052,11 +1052,11 @@ ErrType VulkanDevice::destroyRenderPass(RenderPass* pRenderPass)
 ErrType VulkanDevice::createGraphicsPipelineState(PipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc)
 {
     VulkanGraphicsPipelineState* pPipeline  = new VulkanGraphicsPipelineState();
-    ErrType result                          = REC_RESULT_OK;
+    ErrType result                          = R_RESULT_OK;
 
     result = pPipeline->initialize(this, desc);
     
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         pPipeline->destroy(this);
         delete pPipeline;
@@ -1074,7 +1074,7 @@ ErrType VulkanDevice::destroyPipelineState(PipelineState* pPipelineState)
 {
     R_ASSERT(pPipelineState != NULL);
 
-    ErrType result                  = REC_RESULT_OK;
+    ErrType result                  = R_RESULT_OK;
     VulkanPipelineState* pPipeline  = static_cast<VulkanPipelineState*>(pPipelineState);
     
     pPipeline->destroy(this);
@@ -1185,9 +1185,9 @@ void VulkanDevice::pushFlushMemoryRange(const VkMappedMemoryRange& mappedRange)
                                     ARCH_PTR_SZ_BYTES
                                 );
  
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
-        if (result == REC_RESULT_OUT_OF_MEMORY) 
+        if (result == R_RESULT_OUT_OF_MEMORY) 
         {
             R_ERR(R_CHANNEL_VULKAN, "Memory flush cache out of memory!");        
         } 
@@ -1219,9 +1219,9 @@ void VulkanDevice::pushInvalidateMemoryRange(const VkMappedMemoryRange& mappedRa
                                     ARCH_PTR_SZ_BYTES
                                 );
  
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
-        if (result == REC_RESULT_OUT_OF_MEMORY) 
+        if (result == R_RESULT_OUT_OF_MEMORY) 
         {
             R_ERR(R_CHANNEL_VULKAN, "Memory flush cache out of memory!");        
 
@@ -1246,11 +1246,11 @@ void VulkanDevice::pushInvalidateMemoryRange(const VkMappedMemoryRange& mappedRa
 ErrType VulkanDevice::createComputePipelineState(PipelineState** ppPipelineState, const ComputePipelineStateDesc& desc)
 {
     VulkanComputePipelineState* pPipeline = new VulkanComputePipelineState();
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
     
     result = pPipeline->initialize(this, desc);
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         pPipeline->destroy(this);
         delete pPipeline;
@@ -1296,18 +1296,18 @@ ErrType VulkanDevice::copyBufferRegions
 ErrType VulkanDevice::wait()
 {
     m_pGraphicsQueue->wait();
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
 ErrType VulkanDevice::createSampler(GraphicsSampler** ppSampler, const SamplerCreateDesc& desc)
 {
-    ErrType result              = REC_RESULT_OK;
+    ErrType result              = R_RESULT_OK;
     VulkanSampler* pVSampler    = new VulkanSampler();
     
     result = pVSampler->initialize(this, desc);
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         pVSampler->destroy(this);
         return result;
@@ -1315,14 +1315,14 @@ ErrType VulkanDevice::createSampler(GraphicsSampler** ppSampler, const SamplerCr
 
     *ppSampler = pVSampler;
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 ErrType VulkanDevice::destroySampler(GraphicsSampler* pSampler)
 {
-    if (!pSampler) return REC_RESULT_NULL_PTR_EXCEPTION;
+    if (!pSampler) return R_RESULT_NULL_PTR_EXCEPT;
 
-    ErrType result              = REC_RESULT_OK;
+    ErrType result              = R_RESULT_OK;
     VulkanSampler* pVSampler    = static_cast<VulkanSampler*>(pSampler);
 
     result = pVSampler->destroy(this);

@@ -13,12 +13,12 @@ class R_PUBLIC_API PoolAllocator : public Allocator
 public:
     ErrType onInitialize() override
     {
-        return REC_RESULT_NOT_IMPLEMENTED;
+        return R_RESULT_NO_IMPL;
     }
 
     ErrType onCleanUp() override
     {
-        return REC_RESULT_NOT_IMPLEMENTED;
+        return R_RESULT_NO_IMPL;
     }
 };
 } // Recluse

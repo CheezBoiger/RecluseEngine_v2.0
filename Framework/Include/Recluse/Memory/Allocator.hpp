@@ -41,7 +41,7 @@ public:
     ErrType allocate(Allocation* pOutput, U64 requestSz, U16 alignment) 
     {
         ErrType err = onAllocate(pOutput, requestSz, alignment);
-        if (err == REC_RESULT_OK) 
+        if (err == R_RESULT_OK) 
         {
             m_totalAllocations  += 1;
             m_usedSizeBytes     += pOutput->sizeBytes;
@@ -53,7 +53,7 @@ public:
     ErrType free(Allocation* pOutput) 
     {
         ErrType err = onFree(pOutput);
-        if (err == REC_RESULT_OK) 
+        if (err == R_RESULT_OK) 
         {
             m_usedSizeBytes     -= pOutput->sizeBytes;
             m_totalAllocations  -= 1;
@@ -120,12 +120,12 @@ public:
 
     virtual ErrType onInitialize() override 
     { 
-        return REC_RESULT_OK; 
+        return R_RESULT_OK; 
     }
 
     virtual ErrType onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override 
     {
-        return REC_RESULT_OK;
+        return R_RESULT_OK;
     }
 };
 } // Recluse
@@ -136,7 +136,8 @@ public:
 // ex. 
 //          Object* pObj = new (allocator) Object();
 //
-R_PUBLIC_API void*   operator new (size_t sizeBytes, Recluse::Allocator* alloc, Recluse::Allocation* pOutput = nullptr);
+R_PUBLIC_API void*   operator new (size_t sizeBytes, Recluse::Allocator* alloc, Recluse::Allocation* pOutput);
+R_PUBLIC_API void*   operator new (size_t sizeBytes, Recluse::Allocator* alloc);
 
 // Operator overload for deleting allocated pointers.
 // This is a helpful function, instead of having to all individually the object allocator, and performing a bunch of

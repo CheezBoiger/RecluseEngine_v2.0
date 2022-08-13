@@ -48,7 +48,7 @@ public:
         pArchive->write(&szName, sizeof(U64));
         pArchive->write(const_cast<char*>(m_name.c_str()), m_name.size());
         pArchive->write(&m_position, sizeof(Float2));
-        return REC_RESULT_OK;
+        return R_RESULT_OK;
     }
 
     virtual ErrType deserialize(Archive* pArchive) override {
@@ -59,7 +59,7 @@ public:
 
         pArchive->read(const_cast<char*>(m_name.data()), szName);
         pArchive->read(&m_position, sizeof(Float2));
-        return REC_RESULT_OK;
+        return R_RESULT_OK;
     }
 
     void setPosition(const Float2& pos) { m_position = pos; }
@@ -115,13 +115,13 @@ public:
             pObject->serialize(pArchive);
         }
 
-        return REC_RESULT_OK;
+        return R_RESULT_OK;
     }
 
     ErrType deserialize(Archive* pArchive) override {
 
-        ErrType result = REC_RESULT_OK;
-        while (result == REC_RESULT_OK) {
+        ErrType result = R_RESULT_OK;
+        while (result == R_RESULT_OK) {
             ECS::RGUID rguid;
             U32 numChilren  = 0;
             U32 nameSz      = 0;
@@ -132,7 +132,7 @@ public:
             result          = pArchive->read(name, nameSz);
             name[nameSz]    = '\0';
 
-            if (result == REC_RESULT_OK) {
+            if (result == R_RESULT_OK) {
                 R_TRACE(getName().c_str(), "Game Object: %s", name);
                 
                 if (rguid == TestObject::classGUID()) {
@@ -151,7 +151,7 @@ public:
             }
         }
 
-        return REC_RESULT_OK;
+        return R_RESULT_OK;
     }
 };
 

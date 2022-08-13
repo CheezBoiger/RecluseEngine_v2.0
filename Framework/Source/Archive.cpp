@@ -7,7 +7,7 @@ namespace Recluse {
 
 ErrType Archive::open(char* access)
 {
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
 
     result = m_file.open(m_filepath, access);
     
@@ -29,13 +29,13 @@ ErrType Archive::close()
         m_file.close();
     }
     
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
 ErrType Archive::write(void* ptr, U64 sz)
 {
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
 
     if (m_file.isOpen()) 
     {
@@ -43,7 +43,7 @@ ErrType Archive::write(void* ptr, U64 sz)
     } 
     else 
     {
-        result = REC_RESULT_NOT_FOUND;
+        result = R_RESULT_NOT_FOUND;
     }
     
     return result;
@@ -52,14 +52,14 @@ ErrType Archive::write(void* ptr, U64 sz)
 
 ErrType Archive::read(void* ptr, U64 sz)
 {
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
     if (m_file.isOpen()) 
     {
         result = m_file.read(ptr, sz);
     } 
     else 
     {
-        result = REC_RESULT_NOT_FOUND;
+        result = R_RESULT_NOT_FOUND;
     }
 
     return result;

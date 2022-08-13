@@ -412,7 +412,7 @@ ErrType VulkanGraphicsPipelineState::initialize(VulkanDevice* pDevice, const Gra
 
         destroy(pDevice);
 
-        return REC_RESULT_FAILED;
+        return R_RESULT_FAILED;
     }
 
     ci.sType                = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -458,10 +458,10 @@ ErrType VulkanGraphicsPipelineState::initialize(VulkanDevice* pDevice, const Gra
         
         destroy(pDevice);
         
-        return REC_RESULT_FAILED;
+        return R_RESULT_FAILED;
     }
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -480,7 +480,7 @@ ErrType VulkanComputePipelineState::initialize(VulkanDevice* pDevice, const Comp
         
         destroy(pDevice);
         
-        return REC_RESULT_FAILED;
+        return R_RESULT_FAILED;
     }
 
     createInfo.sType        = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
@@ -499,9 +499,9 @@ ErrType VulkanComputePipelineState::initialize(VulkanDevice* pDevice, const Comp
 
         destroy(pDevice);
 
-        return REC_RESULT_FAILED;
+        return R_RESULT_FAILED;
     }
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 } // Recluse

@@ -103,7 +103,7 @@ ErrType VulkanAdapter::getAdapterInfo(AdapterInfo* out) const
             out->vendorName = "Unknown"; break;
     }    
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -115,18 +115,18 @@ ErrType VulkanAdapter::createDevice(DeviceCreateInfo& info, GraphicsDevice** ppD
     VulkanDevice* pDevice = new VulkanDevice();
     ErrType err = pDevice->initialize(this, info);
     
-    if (err != REC_RESULT_OK) 
+    if (err != R_RESULT_OK) 
     {    
         R_ERR(R_CHANNEL_VULKAN, "Failed to initialize device!");
 
         delete pDevice;
-        return REC_RESULT_FAILED;
+        return R_RESULT_FAILED;
     }
 
     m_devices.push_back(pDevice);
     *ppDevice = pDevice;
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -145,13 +145,13 @@ ErrType VulkanAdapter::destroyDevice(GraphicsDevice* pDevice)
             delete *iter;
             m_devices.erase(iter);
 
-            return REC_RESULT_OK;
+            return R_RESULT_OK;
         }
     }
 
     R_ERR(R_CHANNEL_VULKAN, "Device does not belong to this adapter!");   
  
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 

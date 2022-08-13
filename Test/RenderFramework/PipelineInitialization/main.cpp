@@ -78,7 +78,7 @@ int main(int c, char* argv[])
     GraphicsCommandList* pList      = nullptr;
     Window* pWindow                 = Window::create("PipelineInitialization", 0, 0, 512, 512);
     Mouse* pMouse                   = new Mouse();
-    ErrType result                  = REC_RESULT_OK;
+    ErrType result                  = R_RESULT_OK;
 
     pMouse->initialize("Mouse1");
     pWindow->setMouseHandle(pMouse);
@@ -101,7 +101,7 @@ int main(int c, char* argv[])
         result = pInstance->initialize(app, flags);
     }
     
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR("TEST", "Failed to initialize context!");   
     }
@@ -121,7 +121,7 @@ int main(int c, char* argv[])
         result = pAdapter->createDevice(info, &pDevice);
     }
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR("TEST", "Failed to create device!");
     }
@@ -137,12 +137,12 @@ int main(int c, char* argv[])
         result = pDevice->reserveMemory(desc);
     }
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR("TEST", "Failed to reserve memory on device!");
     }
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR("TEST", "Failed to create swapchain!");
     }
@@ -162,7 +162,7 @@ int main(int c, char* argv[])
         result = pDevice->createDescriptorSetLayout(&pLayout, desc);
     }
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     { 
         R_ERR("TEST", "Failed to create descriptor set layout...");
     }
@@ -186,7 +186,7 @@ int main(int c, char* argv[])
             GraphicsResourceView* pView = pSwapchain->getFrameView(i);
             desc.ppRenderTargetViews[0] = pView;
             result = pDevice->createRenderPass(&passes[i], desc);      
-            if (result != REC_RESULT_OK) 
+            if (result != R_RESULT_OK) 
             {
                 R_ERR("TEST", "Failed to create render pass...");
             }
@@ -195,7 +195,7 @@ int main(int c, char* argv[])
 
     result = pDevice->createDescriptorSet(&pSet, pLayout); 
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR("TEST", "Failed to create descriptor set!");
     }
@@ -210,7 +210,7 @@ int main(int c, char* argv[])
         result = pDevice->createResource(&pData, desc, RESOURCE_STATE_VERTEX_AND_CONST_BUFFER);
     }
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR("TEST", "Failed to create data resource!");    
     } 
@@ -276,7 +276,7 @@ int main(int c, char* argv[])
         region.szBytes = sizeof(vertices);
         result = pDevice->copyBufferRegions(pVertexBuffer, pTemp, &region, 1);
 
-        if (result != REC_RESULT_OK) 
+        if (result != R_RESULT_OK) 
         {
             R_ERR("TEST", "Failed to stream vertex data to vertex buffer!");
         }    
@@ -297,14 +297,14 @@ int main(int c, char* argv[])
         std::string shaderSource = currDir + "/" + "test.vs.glsl";
         result = File::readFrom(&file, shaderSource);
 
-        if (result != REC_RESULT_OK) 
+        if (result != R_RESULT_OK) 
         {
             R_ERR("TEST", "Could not find %s", shaderSource.c_str());
         }
 
         result = pBuilder->compile(pVertShader, file.data(), file.size(), SHADER_LANG_GLSL, SHADER_TYPE_VERTEX);
 
-        if (result != REC_RESULT_OK) 
+        if (result != R_RESULT_OK) 
         {
             R_ERR("TEST", "Failed to compile glsl shader vert!");
         }
@@ -312,14 +312,14 @@ int main(int c, char* argv[])
         shaderSource = currDir + "/" + "test.fs.glsl";
         result = File::readFrom(&file, shaderSource);
             
-        if (result != REC_RESULT_OK) 
+        if (result != R_RESULT_OK) 
         {
             R_ERR("TEST", "Could not find %s", shaderSource.c_str());
         }
 
         result = pBuilder->compile(pFragShader, file.data(), file.size(), SHADER_LANG_GLSL, SHADER_TYPE_FRAGMENT);
         
-        if (result != REC_RESULT_OK) 
+        if (result != R_RESULT_OK) 
         {
             R_ERR("TEST", "Failed to compile glsl shader frag!");
         }

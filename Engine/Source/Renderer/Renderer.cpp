@@ -44,7 +44,7 @@ void Renderer::initialize(void* windowHandle, const RendererConfigs& configs)
 
     EnableLayerFlags flags  = 0;
     ApplicationInfo info    = { };
-    ErrType result          = REC_RESULT_OK;
+    ErrType result          = R_RESULT_OK;
     m_windowHandle          = windowHandle;
 
     m_pInstance = GraphicsInstance::createInstance(configs.api);
@@ -64,7 +64,7 @@ void Renderer::initialize(void* windowHandle, const RendererConfigs& configs)
 
     result = m_pInstance->initialize(info, flags);
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR("Renderer", "Failed to initialize instance!");        
     }
@@ -88,7 +88,7 @@ void Renderer::initialize(void* windowHandle, const RendererConfigs& configs)
         result = m_pDevice->reserveMemory(reserveDesc);
     }
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR("Renderer", "ReserveMemory call completed with result: %d", result);
     }
@@ -121,7 +121,7 @@ void Renderer::present(Bool delayPresent)
 {
     ErrType result = m_pSwapchain->present(delayPresent ? GraphicsSwapchain::DELAY_PRESENT : GraphicsSwapchain::NORMAL_PRESENT);
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_WARN("Renderer", "Swapchain present returns with err code: %d", result);
     }
@@ -198,11 +198,11 @@ void Renderer::determineAdapter(std::vector<GraphicsAdapter*>& adapters)
         AdapterInfo info            = { };
         AdapterLimits limits        = { };
         GraphicsAdapter* pAdapter   = adapters[i];
-        ErrType result              = REC_RESULT_OK;
+        ErrType result              = R_RESULT_OK;
 
         result = pAdapter->getAdapterInfo(&info);
     
-        if (result != REC_RESULT_OK) 
+        if (result != R_RESULT_OK) 
         {
             R_ERR("Renderer", "Failed to query adapter info.");
         }
@@ -227,11 +227,11 @@ void Renderer::createDevice(const RendererConfigs& configs)
     info.swapchainDescription.renderWidth   = configs.renderWidth;
     info.swapchainDescription.renderHeight  = configs.renderHeight;
 
-    ErrType result          = REC_RESULT_OK;
+    ErrType result          = R_RESULT_OK;
     
     result = m_pAdapter->createDevice(info, &m_pDevice);
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR("Renderer", "Failed to create device!");   
     }
@@ -262,12 +262,12 @@ void Renderer::cleanUpModules()
 
 VertexBuffer* Renderer::createVertexBuffer(U64 perVertexSzBytes, U64 totalVertices)
 {
-    ErrType result          = REC_RESULT_OK;
+    ErrType result          = R_RESULT_OK;
     VertexBuffer* pBuffer   = new VertexBuffer();
 
     result = pBuffer->initializeVertices(m_pDevice, perVertexSzBytes, totalVertices);
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         delete pBuffer;
         pBuffer = nullptr;
@@ -279,12 +279,12 @@ VertexBuffer* Renderer::createVertexBuffer(U64 perVertexSzBytes, U64 totalVertic
 
 IndexBuffer* Renderer::createIndexBuffer(IndexType indexType, U64 totalIndices)
 {
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
     IndexBuffer* pBuffer = new IndexBuffer();
     
     result = pBuffer->initializeIndices(m_pDevice, indexType, totalIndices);
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         delete pBuffer;
         pBuffer = nullptr;
@@ -296,11 +296,11 @@ IndexBuffer* Renderer::createIndexBuffer(IndexType indexType, U64 totalIndices)
 
 ErrType Renderer::destroyGPUBuffer(GPUBuffer* pBuffer)
 {
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
 
     if (!pBuffer) 
     {
-        return REC_RESULT_FAILED;
+        return R_RESULT_FAILED;
     }
 
     result = pBuffer->destroy();
@@ -443,11 +443,11 @@ void Renderer::freeSceneBuffers()
 Texture2D* Renderer::createTexture2D(U32 width, U32 height, U32 mips, U32 layers, ResourceFormat format)
 {
     Texture2D* pTexture = new Texture2D();
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
 
     result = pTexture->initialize(this, format, width, height, layers, mips);
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         pTexture->destroy(this);
         delete pTexture;
@@ -464,7 +464,7 @@ ErrType Renderer::destroyTexture2D(Texture2D* pTexture)
     pTexture->destroy(this);
     delete pTexture;
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -515,7 +515,7 @@ static ErrType kRendererJob(void* pData)
         }
     }
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -584,7 +584,7 @@ ErrType Renderer::onCleanUpModule(Application* pApp)
     ScopedLock lck(getMutex());
     cleanUp();
     enableRunning(false);
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 

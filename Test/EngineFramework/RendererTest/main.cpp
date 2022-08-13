@@ -25,7 +25,7 @@ public:
     virtual void update(const RealtimeTick& tick) override
     {
         DrawRenderCommand rcmd = {};
-        rcmd.op = COMMAND_OP_DRAWABLE_INSTANCED;
+        rcmd.op = C_OP_DRAWABLE_INSTANCED;
         rcmd.vertexTypeFlags = VERTEX_ATTRIB_POSITION | VERTEX_ATTRIB_NORMAL;
         rcmd.numSubMeshes = 0;
         //pRenderer->pushRenderCommand(rcmd, RENDER_PREZ);
@@ -39,7 +39,7 @@ public:
         Log::initializeLoggingSystem();
         Renderer::initializeModule(this);
         MessageBus::sendEvent(getMessageBus(), RenderEvent_RESUME);
-        return REC_RESULT_OK;
+        return R_RESULT_OK;
     }
 
     virtual ErrType onCleanUp() override
@@ -47,7 +47,7 @@ public:
         MessageBus::sendEvent(getMessageBus(), RenderEvent_SHUTDOWN);
         Renderer::cleanUpModule(this);
         Log::destroyLoggingSystem();     
-        return REC_RESULT_OK;
+        return R_RESULT_OK;
     }
 };
 

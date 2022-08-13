@@ -126,46 +126,68 @@ public:
 
     R_PUBLIC_API MaterialType getMatType() const { return m_matType; }
 
-    R_PUBLIC_API B32 addTex(Texture2D* pTexture, const std::string& attrib) {
-        m_matMap[attrib] = pTexture;
+    R_PUBLIC_API B32 addTex(Texture2D* pTexture, const std::string& attrib) 
+    {
+        U32 index = m_textures.size();
+        m_textures.push_back(pTexture);
+        m_matMap[attrib] = index;
         return true;
     }
 
-    R_PUBLIC_API B32 hasTex(const std::string& attrib) {
+    R_PUBLIC_API B32 hasTex(const std::string& attrib) const
+    {
         return m_matMap.find(attrib) != m_matMap.end();
     }
 
-    R_PUBLIC_API Texture2D* getTex(const std::string& attrib) {
-        return m_matMap[attrib];
+    R_PUBLIC_API Texture2D* getTex(const std::string& attrib) 
+    {
+        return m_textures[m_matMap[attrib]];
     }
 
-    R_PUBLIC_API B32 removeTex(const std::string& attrib) {
-        if (hasTex(attrib)) {
+    // Removes a texture with the attribute. This will only nullify the texture slot,
+    // in order to clean up, you must call restructure().
+    R_PUBLIC_API B32 removeTex(const std::string& attrib) 
+    {
+        if (hasTex(attrib)) 
+        {
+            m_textures[m_matMap[attrib]] = nullptr;
             m_matMap.erase(attrib);
         }
+
         return false;    
     }
 
-    R_PUBLIC_API void setSurfaceType(SurfaceTypeFlags flags) { m_flags = flags; }
+    R_PUBLIC_API void               setSurfaceType(SurfaceTypeFlags flags) { m_flags = flags; }
 
-    R_PUBLIC_API SurfaceTypeFlags getSurfaceTypeFlags() { return m_flags; }
+    R_PUBLIC_API SurfaceTypeFlags   getSurfaceTypeFlags() { return m_flags; }
 
-    const std::string& getName() const { return m_matName; }
+    const std::string&              getName() const { return m_matName; }
+
+    Texture2D* const*               getResources() { return m_textures.data(); }
+
+    // reorganizes the material structure. Any empty slots, will now be cleaned off and sorted.
+    // Be sure to update any dirty references that may be referencing a given texture.
+    R_PUBLIC_API void               restructure();
+
+    // Clear the whole material.
+    R_PUBLIC_API void               clear();
 
 protected:
-    SurfaceTypeFlags m_flags;
-    MaterialType m_matType;
-    std::unordered_map<std::string, Texture2D*> m_matMap;
-    std::string m_matName;
+
+    SurfaceTypeFlags                        m_flags;
+    MaterialType                            m_matType;
+    std::unordered_map<std::string, U32>    m_matMap;
+    std::vector<Texture2D*>                 m_textures;
+    std::string                             m_matName;
 };
 
 
 // Need to call these in order to properly create textures.
-R_PUBLIC_API void initializeTextureLUT();
-R_PUBLIC_API void cleanupTextureLUT();
+R_PUBLIC_API void           initializeTextureLUT();
+R_PUBLIC_API void           cleanupTextureLUT();
 
-R_PUBLIC_API TextureView* lookupTextureView(const TextureViewID& id);
-R_PUBLIC_API ErrType addTextureView(const TextureViewID& id);
-R_PUBLIC_API ErrType removeTextureView(const TextureViewID& id);
+R_PUBLIC_API TextureView*   lookupTextureView(const TextureViewID& id);
+R_PUBLIC_API ErrType        addTextureView(const TextureViewID& id);
+R_PUBLIC_API ErrType        removeTextureView(const TextureViewID& id);
 } // Engine
 } // Recluse

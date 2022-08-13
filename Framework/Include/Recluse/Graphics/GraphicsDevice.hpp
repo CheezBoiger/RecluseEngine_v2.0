@@ -69,54 +69,54 @@ class R_PUBLIC_API GraphicsDevice
 {
 public:
     // Reserve memory to be used for graphics resources.
-    virtual ErrType reserveMemory(const MemoryReserveDesc& desc) { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual ErrType reserveMemory(const MemoryReserveDesc& desc) { return R_RESULT_NO_IMPL; }
 
     //< Create graphics resource.
     //<
     virtual ErrType createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc, ResourceState initState) 
-        { return REC_RESULT_NOT_IMPLEMENTED; }
+        { return R_RESULT_NO_IMPL; }
 
     virtual ErrType createDescriptorSetLayout(DescriptorSetLayout** ppLayout, const DescriptorSetLayoutDesc& desc)
-        { return REC_RESULT_NOT_IMPLEMENTED; }
+        { return R_RESULT_NO_IMPL; }
 
     virtual ErrType createGraphicsPipelineState(PipelineState** pPipelineState, const GraphicsPipelineStateDesc& desc) 
-        { return REC_RESULT_NOT_IMPLEMENTED; }
+        { return R_RESULT_NO_IMPL; }
 
     virtual ErrType createComputePipelineState(PipelineState** ppPipelineState, const ComputePipelineStateDesc& desc) 
-        { return REC_RESULT_NOT_IMPLEMENTED; }
+        { return R_RESULT_NO_IMPL; }
 
-    virtual ErrType createRaytracingPipelineState() { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual ErrType createRaytracingPipelineState() { return R_RESULT_NO_IMPL; }
 
     virtual ErrType createResourceView(GraphicsResourceView** ppView, const ResourceViewDesc& desc) 
-        { return REC_RESULT_NOT_IMPLEMENTED; }
+        { return R_RESULT_NO_IMPL; }
 
     virtual ErrType createRenderPass(RenderPass** ppRenderPass, const RenderPassDesc& desc) 
-        { return REC_RESULT_NOT_IMPLEMENTED; }
+        { return R_RESULT_NO_IMPL; }
 
     virtual ErrType createDescriptorSet(DescriptorSet** ppLayout, DescriptorSetLayout* pSetLayout) 
-        { return REC_RESULT_NOT_IMPLEMENTED; }
+        { return R_RESULT_NO_IMPL; }
 
     virtual ErrType createSampler(GraphicsSampler** ppSampler, const SamplerCreateDesc& desc) 
-        { return REC_RESULT_NOT_IMPLEMENTED; }
+        { return R_RESULT_NO_IMPL; }
 
-    virtual ErrType destroySampler(GraphicsSampler* pSampler) { return REC_RESULT_NOT_IMPLEMENTED; }
-    virtual ErrType destroyResource(GraphicsResource* pResource) { return REC_RESULT_NOT_IMPLEMENTED; }
-    virtual ErrType destroyResourceView(GraphicsResourceView* pResourceView) { return REC_RESULT_NOT_IMPLEMENTED; }
-    virtual ErrType destroyRenderPass(RenderPass* pRenderPass) { return REC_RESULT_NOT_IMPLEMENTED; }
-    virtual ErrType destroyPipelineState(PipelineState* pPipelineState) { return REC_RESULT_NOT_IMPLEMENTED; }
-    virtual ErrType destroyDescriptorSet(DescriptorSet* pSet) { return REC_RESULT_NOT_IMPLEMENTED; }
-    virtual ErrType destroyDescriptorSetLayout(DescriptorSetLayout* pSetLayout) { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual ErrType destroySampler(GraphicsSampler* pSampler) { return R_RESULT_NO_IMPL; }
+    virtual ErrType destroyResource(GraphicsResource* pResource) { return R_RESULT_NO_IMPL; }
+    virtual ErrType destroyResourceView(GraphicsResourceView* pResourceView) { return R_RESULT_NO_IMPL; }
+    virtual ErrType destroyRenderPass(RenderPass* pRenderPass) { return R_RESULT_NO_IMPL; }
+    virtual ErrType destroyPipelineState(PipelineState* pPipelineState) { return R_RESULT_NO_IMPL; }
+    virtual ErrType destroyDescriptorSet(DescriptorSet* pSet) { return R_RESULT_NO_IMPL; }
+    virtual ErrType destroyDescriptorSetLayout(DescriptorSetLayout* pSetLayout) { return R_RESULT_NO_IMPL; }
 
     // Obtain the graphics command list created by the device.
     virtual GraphicsCommandList* getCommandList() { return nullptr; }
     
     virtual GraphicsSwapchain* getSwapchain() { return nullptr; }
     
-    virtual ErrType wait() { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual ErrType wait() { return R_RESULT_NO_IMPL; }
     // Not recommended, but submits a copy to this queue, and waits until the command has 
     // completed.
     virtual ErrType copyResource(GraphicsResource* dst, GraphicsResource* src) 
-        { return REC_RESULT_NOT_IMPLEMENTED; }
+        { return R_RESULT_NO_IMPL; }
 
     // Submits copy of regions from src resource to dst resource. Generally the caller thread will
     // be blocked until this function returns, so be sure to use when needed.
@@ -127,7 +127,20 @@ public:
                             CopyBufferRegion* pRegions, 
                             U32 numRegions
                         )
-        { return REC_RESULT_NOT_IMPLEMENTED; }
+        { return R_RESULT_NO_IMPL; }
+
+    // A more asyncronous alternative, which will utilize a separate, one time only command list
+    // and will ultimately need to be checked when finished. 
+    // This ONLY WORKS IF asyncronous queue is supported, otherwise, will return with fail.
+    virtual ErrType copyBufferRegionsAsync
+                        (
+                            GraphicsResource* dst,
+                            GraphicsResource* src,
+                            CopyBufferRegion* pRegions,
+                            U32 numRegions,
+                            Bool* isFinished
+                        ) 
+        { return R_RESULT_NO_IMPL; }
 
 private:
 };
@@ -159,10 +172,10 @@ public:
     }
 
     // Present the current image.
-    R_PUBLIC_API virtual ErrType present(PresentConfig config = NORMAL_PRESENT) { return REC_RESULT_NOT_IMPLEMENTED; }
+    R_PUBLIC_API virtual ErrType present(PresentConfig config = NORMAL_PRESENT) { return R_RESULT_NO_IMPL; }
 
     // Get the current frame index, updates after every present call.
-    R_PUBLIC_API virtual U32 getCurrentFrameIndex() { return REC_RESULT_NOT_IMPLEMENTED; }
+    R_PUBLIC_API virtual U32 getCurrentFrameIndex() { return R_RESULT_NO_IMPL; }
 
     virtual GraphicsResource* getFrame(U32 idx) = 0;
     virtual GraphicsResourceView* getFrameView(U32 idx) = 0;
@@ -171,7 +184,7 @@ public:
 
 private:
 
-    virtual ErrType onRebuild() { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual ErrType onRebuild() { return R_RESULT_NO_IMPL; }
 
     SwapchainCreateDescription m_desc;
 };

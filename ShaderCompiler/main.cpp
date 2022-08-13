@@ -46,13 +46,13 @@ int main(int c, char* argv[])
 
     Recluse::setConfigs(configPath, compilerIndex);
 
-    Recluse::ErrType result = Recluse::REC_RESULT_OK;
+    Recluse::ErrType result = Recluse::R_RESULT_OK;
 
     // Collect our arguments.
     Recluse::setShaderFiles(compilePath);
     result = Recluse::compileShaders(Recluse::SHADER_LANG_GLSL);
 
-    if (result != Recluse::REC_RESULT_OK) 
+    if (result != Recluse::R_RESULT_OK) 
     {
         R_ERR("ShaderCompiler", "Failed to compile some or all shaders!");
 

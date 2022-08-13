@@ -29,12 +29,12 @@ ErrType VulkanAllocator::allocate(VulkanMemory* pOut, VkMemoryRequirements& requ
     R_ASSERT(m_allocator != NULL);
     
     Allocation allocation   = { };
-    ErrType result          = REC_RESULT_OK;
+    ErrType result          = R_RESULT_OK;
     PtrType baseAddr        = m_allocator->getBaseAddr();
 
     result = m_allocator->allocate(&allocation, requirements.size, (U16)requirements.alignment);
     
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR(R_CHANNEL_VULKAN, "Failed to allocate memory!");
 
@@ -54,11 +54,11 @@ ErrType VulkanAllocator::free(VulkanMemory* pOut, Bool immediate)
 {
     R_ASSERT(m_allocator != NULL);
     
-    ErrType result = REC_RESULT_OK;    
+    ErrType result = R_RESULT_OK;    
 
     if (!pOut) 
     {
-        return REC_RESULT_NULL_PTR_EXCEPTION;
+        return R_RESULT_NULL_PTR_EXCEPT;
     }
 
     if (immediate) 
@@ -109,7 +109,7 @@ void VulkanAllocator::emptyGarbage(U32 index)
 
     for (U32 i = 0; i < garbage.size(); ++i) 
     {
-        result = REC_RESULT_OK;
+        result = R_RESULT_OK;
         
         VulkanMemory& mrange    = garbage[i];
         Allocation alloc        = { };
@@ -119,7 +119,7 @@ void VulkanAllocator::emptyGarbage(U32 index)
 
         result = m_allocator->free(&alloc);
 
-        if (result != REC_RESULT_OK) 
+        if (result != R_RESULT_OK) 
         {
             R_ERR
                 (

@@ -71,13 +71,13 @@ ErrType ShaderCache::cacheShader(VulkanDevice* pDevice, Shader* pShader)
         
         if (result != VK_SUCCESS) 
         {
-            return REC_RESULT_FAILED;
+            return R_RESULT_FAILED;
         }
         
         cache[pShader->getCrc()] = shaderModule;
     }
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 

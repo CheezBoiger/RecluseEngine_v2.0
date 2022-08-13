@@ -186,7 +186,7 @@ ErrType Window::destroy(Window* pWindow)
     {
         R_WARN(R_CHANNEL_WIN32, "Null window handle passed... Can not close. Ignoring...");
 
-        return REC_RESULT_NULL_PTR_EXCEPTION;
+        return R_RESULT_NULL_PTR_EXCEPT;
     }
 
     if (!pWindow->shouldClose()) 
@@ -199,7 +199,7 @@ ErrType Window::destroy(Window* pWindow)
 
     R_DEBUG(R_CHANNEL_WIN32, "Successfully destroyed window!");
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 

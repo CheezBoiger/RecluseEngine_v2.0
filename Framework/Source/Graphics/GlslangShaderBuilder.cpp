@@ -133,7 +133,7 @@ public:
     {
         glslang::InitializeProcess();
         m_isInitialized = true;
-        return REC_RESULT_OK;
+        return R_RESULT_OK;
     }
 
     ErrType tearDown() override
@@ -141,7 +141,7 @@ public:
         R_ASSERT(m_isInitialized == true);
         glslang::FinalizeProcess();
         m_isInitialized = false;
-        return REC_RESULT_OK;
+        return R_RESULT_OK;
     }
 
     ErrType onCompile(const std::vector<char>& srcCode, std::vector<char>& byteCode, ShaderLang lang, ShaderType shaderType) override
@@ -191,7 +191,7 @@ public:
         {
             R_ERR("GLSLANG", "Compile Error: %s", shader.getInfoLog());
 
-            return REC_RESULT_FAILED;
+            return R_RESULT_FAILED;
         }
 
         program.addShader(&shader);
@@ -200,14 +200,14 @@ public:
         {
             R_ERR("GLSLANG", "Failed to link shader program!");
 
-            return REC_RESULT_FAILED;
+            return R_RESULT_FAILED;
         }
 
         glslang::GlslangToSpv(*program.getIntermediate(stage), spirv, &logger);
         byteCode.resize(spirv.size() * sizeof(U32)); // Byte code is in uint32 format.
         memcpy(byteCode.data(), spirv.data(), byteCode.size());
         
-        return REC_RESULT_OK;
+        return R_RESULT_OK;
     }
 
 private:

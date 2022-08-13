@@ -65,6 +65,6 @@ class R_PUBLIC_API DescriptorSet
 {
 public:
 
-    virtual ErrType update(DescriptorSetBind* pBinds, U32 bindCount) { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual ErrType update(DescriptorSetBind* pBinds, U32 bindCount) { return R_RESULT_NO_IMPL; }
 };
 } // Recluse

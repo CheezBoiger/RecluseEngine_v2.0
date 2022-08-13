@@ -49,7 +49,7 @@ ErrType D3D12RenderPass::initialize(D3D12Device* pDevice, const RenderPassDesc& 
     }
     pDescriptorManager;
 
-    return REC_RESULT_NOT_IMPLEMENTED;
+    return R_RESULT_NO_IMPL;
 }
 
 
@@ -61,6 +61,6 @@ ErrType D3D12RenderPass::destroy(D3D12Device* pDevice)
 
     R_ASSERT(pDescriptorManager != NULL);
 
-    return REC_RESULT_NOT_IMPLEMENTED;
+    return R_RESULT_NO_IMPL;
 }
 } // Recluse

@@ -41,7 +41,7 @@ void initialize(GraphicsDevice* pDevice, Engine::SceneBufferDefinitions* pBuffer
     File::readFrom(&data, staticVertShader);
     pShader->load(data.data(), data.size(), INTERMEDIATE_SPIRV, SHADER_TYPE_VERTEX);
 
-    ErrType result                              = REC_RESULT_OK;
+    ErrType result                              = R_RESULT_OK;
     GraphicsPipelineStateDesc pipelineCi        = { };
     RenderPassDesc rpCi                         = { };
     const GraphicsResourceDescription& resDesc  = pBuffers->pSceneDepth->getResource()->getDesc();
@@ -54,7 +54,7 @@ void initialize(GraphicsDevice* pDevice, Engine::SceneBufferDefinitions* pBuffer
 
     result = pDevice->createRenderPass(&pPreZPass, rpCi);
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR("PreZRenderModule", "Failed to create render pass!");
 
@@ -110,8 +110,8 @@ void generate(GraphicsCommandList* pCommandList, Engine::RenderCommandList* pMes
 
         if 
             (
-                meshCmd->op != Engine::COMMAND_OP_DRAWABLE_INDEXED_INSTANCED 
-                || meshCmd->op != Engine::COMMAND_OP_DRAWABLE_INSTANCED
+                meshCmd->op != Engine::C_OP_DRAWABLE_INDEXED_INSTANCED 
+                || meshCmd->op != Engine::C_OP_DRAWABLE_INSTANCED
             ) 
         {
             continue;
@@ -128,7 +128,7 @@ void generate(GraphicsCommandList* pCommandList, Engine::RenderCommandList* pMes
 
         switch (meshCmd->op) 
         {
-            case Engine::COMMAND_OP_DRAWABLE_INDEXED_INSTANCED:
+            case Engine::C_OP_DRAWABLE_INDEXED_INSTANCED:
             {
                 Engine::DrawIndexedRenderCommand* pIndexedCmd = 
                     static_cast<Engine::DrawIndexedRenderCommand*>(meshCmd);
@@ -157,7 +157,7 @@ void generate(GraphicsCommandList* pCommandList, Engine::RenderCommandList* pMes
                 break;
             }
 
-            case Engine::COMMAND_OP_DRAWABLE_INSTANCED:
+            case Engine::C_OP_DRAWABLE_INSTANCED:
             {
                 Engine::DrawRenderCommand* pDrawCmd = static_cast<Engine::DrawRenderCommand*>(meshCmd);
 

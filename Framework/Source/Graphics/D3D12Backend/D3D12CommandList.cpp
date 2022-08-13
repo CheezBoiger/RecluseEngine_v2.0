@@ -48,13 +48,13 @@ ErrType D3D12CommandList::initialize(D3D12Device* pDevice, GraphicsQueueTypeFlag
 
     m_pDevice = pDevice;
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
 ErrType D3D12CommandList::destroy()
 {
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 

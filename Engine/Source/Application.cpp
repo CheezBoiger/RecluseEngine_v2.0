@@ -19,10 +19,10 @@ namespace Recluse {
 ErrType Application::loadJobThread(JobTypeFlags flags, ThreadFunction func)
 {
     Thread pThread;
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
     result = createThread(&pThread, func);
 
-    if (result == REC_RESULT_OK) 
+    if (result == R_RESULT_OK) 
     {
         m_threads.push_back(pThread);
 
@@ -67,12 +67,12 @@ ErrType loadApp(Application* pApp)
             "Main Loop must be initialized first before calling this function!"
         );
 
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
 
     if (!pApp->isInitialized())
         result = pApp->init(k_pWindow, k_pMessageBus);
 
-    if (result == REC_RESULT_OK)
+    if (result == R_RESULT_OK)
         k_pApp = pApp;
 
     return result;
@@ -95,7 +95,7 @@ ErrType initialize()
     // initialize the main watch.
     RealtimeTick::initializeWatch(getMainThreadId(), JOB_TYPE_MAIN);    
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -126,13 +126,13 @@ ErrType MainThreadLoop::run()
         k_pMessageBus->notifyAll();
     }
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
 ErrType cleanUp()
 {
-    ErrType result = REC_RESULT_OK; 
+    ErrType result = R_RESULT_OK; 
 
     if (k_pApp)
     {

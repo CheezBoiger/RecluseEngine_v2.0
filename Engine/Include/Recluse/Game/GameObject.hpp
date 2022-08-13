@@ -94,9 +94,9 @@ public:
         m_status = GAME_OBJECT_STATUS_DESTROYED;
     }
 
-    virtual R_PUBLIC_API ErrType serialize(Archive* pArchive) override { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual R_PUBLIC_API ErrType serialize(Archive* pArchive) override { return R_RESULT_NO_IMPL; }
 
-    virtual R_PUBLIC_API ErrType deserialize(Archive* pArchive) override { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual R_PUBLIC_API ErrType deserialize(Archive* pArchive) override { return R_RESULT_NO_IMPL; }
 
     // Get the game object name.
     R_PUBLIC_API const std::string& getName() const { return m_name; }

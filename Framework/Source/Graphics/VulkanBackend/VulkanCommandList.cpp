@@ -19,7 +19,7 @@ ErrType VulkanCommandList::initialize
                                     U32 poolCount
                                 )
 {
-    ErrType result                                  = REC_RESULT_OK;
+    ErrType result                                  = R_RESULT_OK;
     VkDevice device                                 = pDevice->get();
 
     m_buffers.resize(poolCount);

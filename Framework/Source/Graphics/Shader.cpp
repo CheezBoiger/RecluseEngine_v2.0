@@ -42,7 +42,7 @@ ErrType Shader::load(const char* pByteCode, U64 szBytes, ShaderIntermediateCode 
 
     genCrc();
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -55,7 +55,7 @@ ErrType ShaderBuilder::compile
         ShaderType shaderType
     )
 {
-    ErrType result              = REC_RESULT_OK;
+    ErrType result              = R_RESULT_OK;
 
     std::vector<char> srcCodeString;
     std::vector<char> byteCodeString;
@@ -66,7 +66,7 @@ ErrType ShaderBuilder::compile
 
     result = onCompile(srcCodeString, byteCodeString, lang, shaderType);
 
-    if (result == REC_RESULT_OK) 
+    if (result == R_RESULT_OK) 
     {
         pShader->load(byteCodeString.data(), byteCodeString.size(), getIntermediateCode(), shaderType);
     } 
@@ -87,7 +87,7 @@ Shader* Shader::convertTo(ShaderIntermediateCode intermediateCode)
 
 ErrType Shader::saveToFile(const char* filePath)
 {
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
     FileBufferData data = { };
     data.resize(m_byteCode.size());
     std::copy(m_byteCode.begin(), m_byteCode.end(), data.begin());

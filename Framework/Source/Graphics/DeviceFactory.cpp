@@ -53,12 +53,12 @@ ErrType GraphicsInstance::destroyInstance(GraphicsInstance* pInstance)
     if (!pInstance) 
     {
         R_ERR("Graphics", "Null pointer passed to %s", __FUNCTION__);
-        return REC_RESULT_NULL_PTR_EXCEPTION;
+        return R_RESULT_NULL_PTR_EXCEPT;
     }
 
     pInstance->destroy();
     rlsFree<GraphicsInstance>(pInstance);
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 } // Recluse

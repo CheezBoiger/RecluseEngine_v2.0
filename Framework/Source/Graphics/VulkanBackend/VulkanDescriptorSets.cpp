@@ -57,10 +57,10 @@ ErrType VulkanDescriptorSetLayout::initialize(VulkanDevice* pDevice, const Descr
     if (result != VK_SUCCESS) 
     {
         R_ERR(R_CHANNEL_VULKAN, "Failed to create Vulkan descriptor set layout!");
-        return REC_RESULT_FAILED;
+        return R_RESULT_FAILED;
     }
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -73,7 +73,7 @@ ErrType VulkanDescriptorSetLayout::destroy(VulkanDevice* pDevice)
         m_layout = VK_NULL_HANDLE;
     }
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -95,12 +95,12 @@ ErrType VulkanDescriptorSet::initialize(VulkanDevice* pDevice, VulkanDescriptorS
     if (result != VK_SUCCESS) 
     {
         R_ERR(R_CHANNEL_VULKAN, "Failed to allocate vulkan descriptor set!!");
-        return REC_RESULT_FAILED;
+        return R_RESULT_FAILED;
     }
 
     m_pDevice = pDevice;    
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -127,7 +127,7 @@ ErrType VulkanDescriptorSet::destroy()
 
     }
     
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -198,6 +198,6 @@ ErrType VulkanDescriptorSet::update(DescriptorSetBind* pBinds, U32 bindCount)
     
     vkUpdateDescriptorSets(device, writeCount, writeSet.data(), 0, nullptr);
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 } // Recluse

@@ -33,9 +33,9 @@ public:
 
     virtual ~Component() { }
 
-    virtual ErrType serialize(Archive* pArchive) override { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual ErrType serialize(Archive* pArchive) override { return R_RESULT_NO_IMPL; }
 
-    virtual ErrType deserialize(Archive* pArchive) override { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual ErrType deserialize(Archive* pArchive) override { return R_RESULT_NO_IMPL; }
 
     // Get the component owner.
     GameObject* getOwner() const { return m_pGameObject; }

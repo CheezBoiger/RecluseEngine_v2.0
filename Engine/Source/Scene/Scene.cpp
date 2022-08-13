@@ -35,7 +35,7 @@ void Scene::addGameObject(ECS::GameObject* obj)
 void Scene::update(const RealtimeTick& tick)
 {
     Allocation output           = { };
-    ErrType err                 = REC_RESULT_OK;
+    ErrType err                 = R_RESULT_OK;
     LinearAllocator* allocator   = static_cast<LinearAllocator*>(m_gameMemAllocator);
 
     // First allocation is the total number of objects in the root view.
@@ -126,7 +126,7 @@ void Scene::removeGameObject(U32 idx)
 
 ErrType Scene::save(Archive* pArchive)
 {
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
 
     // Save the scene header first!
     {
@@ -138,7 +138,7 @@ ErrType Scene::save(Archive* pArchive)
         result = pArchive->write(&header, sizeof(SceneHeaderInfo));
     }
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR(m_name.c_str(), "Failed to write scene header to archive!");
         return result;
@@ -150,13 +150,13 @@ ErrType Scene::save(Archive* pArchive)
 
 ErrType Scene::load(Archive* pArchive)
 {
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
 
     SceneHeaderInfo header = { };
     
     result = pArchive->read(&header, sizeof(SceneHeaderInfo));
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         return result;
     }
@@ -177,13 +177,13 @@ void Scene::setName(const std::string& name)
 
 ErrType Scene::serialize(Archive* pArchive) 
 {
-    return REC_RESULT_NOT_IMPLEMENTED;
+    return R_RESULT_NO_IMPL;
 }
 
 
 ErrType Scene::deserialize(Archive* pArchive)
 {
-    return REC_RESULT_NOT_IMPLEMENTED;
+    return R_RESULT_NO_IMPL;
 }
 } // Engine
 } // Recluse

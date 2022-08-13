@@ -22,7 +22,7 @@ ErrType D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo& i
 
     if (result != S_OK) 
     {
-        return REC_RESULT_FAILED;
+        return R_RESULT_FAILED;
     }
 
     m_pAdapter = adapter;
@@ -45,7 +45,7 @@ ErrType D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo& i
 
     m_bufferCount = info.buffering;
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -82,12 +82,12 @@ void D3D12Device::destroy()
 
 ErrType D3D12Device::createSwapchain(D3D12Swapchain** ppSwapchain, const SwapchainCreateDescription& desc)
 {
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
     D3D12Swapchain* pSwapchain = new D3D12Swapchain(desc, m_graphicsQueue);
 
     result = pSwapchain->initialize(this);
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR(R_CHANNEL_D3D12, "Failed to create d3d swapchain!");
 
@@ -104,7 +104,7 @@ ErrType D3D12Device::createSwapchain(D3D12Swapchain** ppSwapchain, const Swapcha
 
 ErrType D3D12Device::destroySwapchain(D3D12Swapchain* pSwapchain)
 {
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
 
     pSwapchain->destroy();
     delete pSwapchain;
@@ -116,11 +116,11 @@ ErrType D3D12Device::destroySwapchain(D3D12Swapchain* pSwapchain)
 ErrType D3D12Device::createCommandQueue(D3D12Queue** ppQueue, GraphicsQueueTypeFlags type)
 {
     D3D12Queue* pD3D12Queue = new D3D12Queue(type);
-    ErrType result          = REC_RESULT_OK;
+    ErrType result          = R_RESULT_OK;
 
     result = pD3D12Queue->initialize(this);
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR(R_CHANNEL_D3D12, "Failed to create d3d12 queue!");
 
@@ -140,7 +140,7 @@ ErrType D3D12Device::destroyCommandQueue(D3D12Queue* pQueue)
 {
     if (!pQueue) 
     {
-        return REC_RESULT_NULL_PTR_EXCEPTION;
+        return R_RESULT_NULL_PTR_EXCEPT;
     }
 
     D3D12Queue* pD3D12Queue = pQueue;
@@ -149,13 +149,13 @@ ErrType D3D12Device::destroyCommandQueue(D3D12Queue* pQueue)
 
     delete pD3D12Queue;
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
 ErrType D3D12Device::reserveMemory(const MemoryReserveDesc& desc)
 {
-    return REC_RESULT_NOT_IMPLEMENTED;
+    return R_RESULT_NO_IMPL;
 }
 
 
@@ -237,11 +237,11 @@ void D3D12Device::destroyBufferResources()
 ErrType D3D12Device::createCommandList(D3D12CommandList** ppList, GraphicsQueueTypeFlags flags)
 {
     D3D12CommandList* pList = new D3D12CommandList();
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
 
     result = pList->initialize(this, flags);
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR(R_CHANNEL_D3D12, "Failed to create command list!");
         pList->destroy();
@@ -259,7 +259,7 @@ ErrType D3D12Device::destroyCommandList(D3D12CommandList* pList)
 {
     R_ASSERT(pList != NULL);
     
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
     result = pList->destroy();
 
     delete pList;
@@ -271,7 +271,7 @@ ErrType D3D12Device::destroyCommandList(D3D12CommandList* pList)
 
 ErrType D3D12Device::copyResource(GraphicsResource* dst, GraphicsResource* src)
 {
-    return REC_RESULT_NOT_IMPLEMENTED;
+    return R_RESULT_NO_IMPL;
 }
 
 
@@ -285,7 +285,7 @@ ErrType D3D12Device::copyBufferRegions
         U32 numRegions
     )
 {
-    return REC_RESULT_NOT_IMPLEMENTED;
+    return R_RESULT_NO_IMPL;
 }
 
 

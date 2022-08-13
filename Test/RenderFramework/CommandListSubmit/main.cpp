@@ -40,7 +40,7 @@ int main(int c, char* argv[])
 
     ErrType result = pInstance->initialize(appInfo, flags);
 
-    if (result != REC_RESULT_OK) {
+    if (result != R_RESULT_OK) {
         R_ERR("Test", "Failed to create context!");
         goto Exit;
     }
@@ -66,7 +66,7 @@ int main(int c, char* argv[])
 
     result = adapters[0]->createDevice(deviceCreate, &pDevice);
 
-    if (result != REC_RESULT_OK) {
+    if (result != R_RESULT_OK) {
     
         R_ERR("Graphics", "Failed to create device!");
 

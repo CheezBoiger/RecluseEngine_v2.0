@@ -69,7 +69,7 @@ ErrType D3D12Resource::initialize
 
         ErrType result  = pAllocator->allocate(device, &m_memObj, d3d12desc, state);
 
-        if (result != REC_RESULT_OK)    
+        if (result != R_RESULT_OK)    
         {
             R_ERR(R_CHANNEL_D3D12, "Failed to allocate a D3D12 resource!");
         } 
@@ -83,13 +83,13 @@ ErrType D3D12Resource::initialize
     {
         R_ERR(R_CHANNEL_D3D12, "Failed to create resource!");
 
-        return REC_RESULT_FAILED;
+        return R_RESULT_FAILED;
     }
 
     m_isCommitted   = makeCommitted;
     m_currentState  = initialState;
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -105,7 +105,7 @@ ErrType D3D12Resource::destroy()
             
             ErrType result = pAllocator->free(&m_memObj);
 
-            if (result != REC_RESULT_OK) 
+            if (result != R_RESULT_OK) 
             {
                 R_ERR("D3D12Resource", "This placed resource failed to free prior to it's destruction!");
                 return result;
@@ -117,7 +117,7 @@ ErrType D3D12Resource::destroy()
 
     }
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 

@@ -3,6 +3,7 @@
 
 #include "Recluse/Math/MathCommons.hpp"
 #include "Recluse/Math/MathIntrinsics.hpp"
+#include "Recluse/Math/Matrix44.hpp"
 
 namespace Recluse {
 
@@ -20,5 +21,14 @@ public:
             __m128 row2;
         };
     };
+
+
+
+    operator Matrix44 () 
+    {
+        return Matrix44(
+
+        );
+    }
 };
 } // Recluse

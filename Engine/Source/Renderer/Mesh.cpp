@@ -2,6 +2,7 @@
 #include "Recluse/Renderer/Mesh.hpp"
 
 #include "Recluse/Graphics/GraphicsDevice.hpp"
+#include "Recluse/Graphics/CommandList.hpp"
 
 namespace Recluse {
 namespace Engine {
@@ -9,7 +10,7 @@ namespace Engine {
 
 ErrType GPUBuffer::initialize(GraphicsDevice* pDevice, U64 totalSzBytes, ResourceUsageFlags usage)
 {
-    ErrType result                      = REC_RESULT_OK;
+    ErrType result                      = R_RESULT_OK;
     GraphicsResourceDescription desc    = { };
     desc.usage                          = usage | RESOURCE_USAGE_TRANSFER_DESTINATION;
     desc.memoryUsage                    = RESOURCE_MEMORY_USAGE_GPU_ONLY;
@@ -20,7 +21,7 @@ ErrType GPUBuffer::initialize(GraphicsDevice* pDevice, U64 totalSzBytes, Resourc
     desc.depth                          = 1;
     desc.width                          = totalSzBytes;
     
-    result = pDevice->createResource(&m_pResource, desc, RESOURCE_STATE_COPY_SRC);
+    result = pDevice->createResource(&m_pResource, desc, RESOURCE_STATE_COPY_DST);
 
     m_pDevice       = pDevice;
     m_totalSzBytes  = totalSzBytes;
@@ -31,7 +32,7 @@ ErrType GPUBuffer::initialize(GraphicsDevice* pDevice, U64 totalSzBytes, Resourc
 
 ErrType GPUBuffer::stream(GraphicsDevice* pDevice, void* ptr, U64 offsetBytes, U64 szBytes)
 {
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
     GraphicsResource* pStaging = nullptr;
 
     GraphicsResourceDescription stageDesc = { };
@@ -43,9 +44,9 @@ ErrType GPUBuffer::stream(GraphicsDevice* pDevice, void* ptr, U64 offsetBytes, U
     stageDesc.mipLevels     = 1;
     stageDesc.height        = 1;
 
-    result = m_pDevice->createResource(&pStaging, stageDesc, RESOURCE_STATE_COPY_DST);
+    result = m_pDevice->createResource(&pStaging, stageDesc, RESOURCE_STATE_COPY_SRC);
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         return result;
     }
@@ -54,6 +55,13 @@ ErrType GPUBuffer::stream(GraphicsDevice* pDevice, void* ptr, U64 offsetBytes, U
     region.dstOffsetBytes   = offsetBytes;
     region.srcOffsetBytes   = 0;
     region.szBytes          = szBytes;
+
+    if (m_pResource->getCurrentResourceState() != RESOURCE_STATE_COPY_DST)
+    {
+        // TODO():
+        // We will need to transition the resource before hand. This will require some work...
+        return R_RESULT_NEEDS_UPDATE;
+    }
 
     result = pDevice->copyBufferRegions(m_pResource, pStaging, &region, 1);
 
@@ -71,13 +79,13 @@ ErrType GPUBuffer::destroy()
         m_pResource = nullptr;   
     }
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
 ErrType Mesh::initialize(VertexBuffer* pVertexBuffer, IndexBuffer* pIndexBuffer)
 {
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 } // Engine
 } // Recluse

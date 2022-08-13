@@ -37,7 +37,7 @@ public:
         if (FAILED(hr))
         {
             R_ERR("DXC", "Failed to create library for parsing!");
-            return REC_RESULT_FAILED;
+            return R_RESULT_FAILED;
         }
 
         hr = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&m_compiler));
@@ -45,10 +45,10 @@ public:
         if (FAILED(hr))
         {
             R_ERR("DXC", "Failed to create dxc compiler!");
-            return REC_RESULT_FAILED;
+            return R_RESULT_FAILED;
         }
 
-        return REC_RESULT_OK;
+        return R_RESULT_OK;
     }
 
     ErrType tearDown() override
@@ -57,7 +57,7 @@ public:
             m_compiler.Release();
         if (m_library)
             m_library.Release();
-        return REC_RESULT_OK;
+        return R_RESULT_OK;
     }
 
     ErrType onCompile(const std::vector<char>& srcCode, std::vector<char>& byteCode, 
@@ -110,7 +110,7 @@ public:
                 R_ERR("DXC", "Errors found: \n%s", (const char*)errorBlob->GetBufferPointer());   
             }   
         
-            return REC_RESULT_FAILED;
+            return R_RESULT_FAILED;
         }
 
         CComPtr<IDxcBlob> code;
@@ -119,7 +119,7 @@ public:
         byteCode.resize(code->GetBufferSize());
         memcpy(byteCode.data(), code->GetBufferPointer(), code->GetBufferSize());
 
-        return REC_RESULT_OK;
+        return R_RESULT_OK;
     }
 
 private:

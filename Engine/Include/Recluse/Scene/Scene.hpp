@@ -67,11 +67,11 @@ protected:
 
     // Set up the scene. Usually should be called if the scene is new, and 
     // needs setting up.
-    virtual R_PUBLIC_API ErrType setUp() { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual R_PUBLIC_API ErrType setUp() { return R_RESULT_NO_IMPL; }
 
     // Teardown the scene, for when any objects initialized, should be cleaned up 
     // by the scene.
-    virtual R_PUBLIC_API ErrType tearDown() { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual R_PUBLIC_API ErrType tearDown() { return R_RESULT_NO_IMPL; }
 
 private:
 

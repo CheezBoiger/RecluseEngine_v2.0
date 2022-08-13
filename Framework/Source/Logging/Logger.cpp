@@ -100,7 +100,7 @@ ErrType displayFunction(void* data)
         loggingQueue->dequeue();
     }
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 Log::~Log()
@@ -200,12 +200,13 @@ void LoggingQueue::initialize(U64 maxLogs)
     // TODO: Not sure if we want to allocate our logging queue on heap...
     m_pool              = new MemoryPool(szTotalBytes);
 
-    // Preinitialize the ring buffer full of logs.
+    // Preinitialize the ring buffer full of logs. This must be cleaned up due to separate string
+    // initialization.
     for (U64 i = 0; i < m_pool->getTotalSizeBytes(); i += szLogNode) 
     {
         U64 addr        = m_pool->getBaseAddress() + i;
         LogNode* node   = (LogNode*)addr;
-        new (node) LogNode;
+        new (node) LogNode();
     }
 
     m_cursor = m_pool->getBaseAddress();
@@ -223,6 +224,16 @@ void LoggingQueue::cleanup()
 
     if (m_pool) 
     {
+        // We need to individually delete all LogNodes, due to strings being allocated separately.
+        // Without this, we will have memory leaks.
+        const U64 szLogNode = R_ALLOC_MASK(sizeof(LogNode), ARCH_PTR_SZ_BYTES);
+        for (U64 i = 0; i < m_pool->getTotalSizeBytes(); i += szLogNode)
+        {
+            U64 addr = m_pool->getBaseAddress() + i;
+            LogNode* node = (LogNode*)addr;
+            node->~LogNode();
+        }
+
         delete m_pool;
         m_pool = nullptr;
     }

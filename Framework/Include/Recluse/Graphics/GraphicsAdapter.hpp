@@ -42,15 +42,15 @@ class R_PUBLIC_API GraphicsAdapter
 public:
     virtual ~GraphicsAdapter() { }
 
-    virtual ErrType getAdapterInfo(AdapterInfo* out) const { return REC_RESULT_NOT_IMPLEMENTED; }
-    virtual ErrType getAdapterLimits() const { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual ErrType getAdapterInfo(AdapterInfo* out) const { return R_RESULT_NO_IMPL; }
+    virtual ErrType getAdapterLimits() const { return R_RESULT_NO_IMPL; }
 
     // Creates a device from this adapter.
     virtual ErrType createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice) 
-        { return REC_RESULT_NOT_IMPLEMENTED; }
+        { return R_RESULT_NO_IMPL; }
 
     // Destroys the device associated with this adapter.
-    virtual ErrType destroyDevice(GraphicsDevice* pDevice) { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual ErrType destroyDevice(GraphicsDevice* pDevice) { return R_RESULT_NO_IMPL; }
 };
 
 

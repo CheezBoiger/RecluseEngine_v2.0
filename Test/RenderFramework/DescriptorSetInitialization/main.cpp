@@ -51,7 +51,7 @@ void updateResource(GraphicsResource* pResource)
     void* ptr           = nullptr;
     ErrType result      = pResource->map(&ptr, &mapRange);
     
-    if (result != REC_RESULT_OK) {
+    if (result != R_RESULT_OK) {
     
         R_ERR("TEST", "Failed to map to resource!");
     
@@ -77,7 +77,7 @@ int main(int c, char* argv[])
     DescriptorSet*  pSet            = nullptr;
     GraphicsSwapchain* pSwapchain   = nullptr;
     std::vector<RenderPass*> renderPasses;
-    ErrType result                  = REC_RESULT_OK;
+    ErrType result                  = R_RESULT_OK;
 
     pWindow = Window::create(u8"DescriptorSetInitialization", 0, 0, 1024, 1024);
 
@@ -104,7 +104,7 @@ int main(int c, char* argv[])
         result = pInstance->initialize(appInfo, flags);
     }
 
-    if (result != REC_RESULT_OK) {
+    if (result != R_RESULT_OK) {
     
         R_ERR("TEST", "Failed to initialize context!");    
 
@@ -124,7 +124,7 @@ int main(int c, char* argv[])
         result = pAdapter->createDevice(info, &pDevice);
     }
 
-    if (result != REC_RESULT_OK) {
+    if (result != R_RESULT_OK) {
     
         R_ERR("TEST", "Failed to create device from adapter!");
     
@@ -140,7 +140,7 @@ int main(int c, char* argv[])
         result = pDevice->reserveMemory(mem);
     }
 
-    if (result != REC_RESULT_OK) {
+    if (result != R_RESULT_OK) {
     
         R_ERR("TEST", "Failed to reserve memory!");
     
@@ -150,7 +150,7 @@ int main(int c, char* argv[])
         SwapchainCreateDescription info = { };
     }
 
-    if (result != REC_RESULT_OK) {
+    if (result != R_RESULT_OK) {
 
         R_ERR("TEST", "FAILED TO CREATE SWAPCHAIN!!");    
 
@@ -170,7 +170,7 @@ int main(int c, char* argv[])
         result = pDevice->createResource(&pData, desc, RESOURCE_STATE_VERTEX_AND_CONST_BUFFER);
     }
 
-    if (result != REC_RESULT_OK) {
+    if (result != R_RESULT_OK) {
     
         R_ERR("TEST", "Failed to create resource!");
     
@@ -193,7 +193,7 @@ int main(int c, char* argv[])
         
     }
     
-    if (result != REC_RESULT_OK) {
+    if (result != R_RESULT_OK) {
 
         R_ERR("TEST", "Failed to create descriptor set layout!");
     
@@ -201,7 +201,7 @@ int main(int c, char* argv[])
 
     result = pDevice->createDescriptorSet(&pSet, pLayout);
 
-    if (result != REC_RESULT_OK) {
+    if (result != R_RESULT_OK) {
     
         R_ERR("TEST", "Failed to create descriptor set!");
     
@@ -218,7 +218,7 @@ int main(int c, char* argv[])
         result = pSet->update(&bind, 1);
     }
     
-    if (result != REC_RESULT_OK) {
+    if (result != R_RESULT_OK) {
     
         R_ERR("TEST", "Failed to update descriptor set!");
     
@@ -236,7 +236,7 @@ int main(int c, char* argv[])
             desc.ppRenderTargetViews[0] = pSwapchain->getFrameView(i);
             result = pDevice->createRenderPass(&renderPasses[i], desc);
 
-            if (result != REC_RESULT_OK) {
+            if (result != R_RESULT_OK) {
         
                 R_ERR("TEST", "Failed to create render pass for frame view: %d", i);
                 

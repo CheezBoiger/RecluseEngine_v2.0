@@ -46,14 +46,14 @@ public:
 
 private:
     virtual ErrType onCreate(VulkanDevice* pDevice, GraphicsResourceDescription& desc, ResourceState initState)
-        { return REC_RESULT_NOT_IMPLEMENTED; }
+        { return R_RESULT_NO_IMPL; }
 
     virtual ErrType onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryRequirements& memRequirements) 
-        { return REC_RESULT_NOT_IMPLEMENTED; }
+        { return R_RESULT_NO_IMPL; }
     
-    virtual ErrType onBind(VulkanDevice* pDevice) { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual ErrType onBind(VulkanDevice* pDevice) { return R_RESULT_NO_IMPL; }
 
-    virtual ErrType onDestroy(VulkanDevice* pDevice) { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual ErrType onDestroy(VulkanDevice* pDevice) { return R_RESULT_NO_IMPL; }
 
     VulkanMemory m_memory;
 

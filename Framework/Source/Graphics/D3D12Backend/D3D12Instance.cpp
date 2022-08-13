@@ -58,10 +58,10 @@ ErrType D3D12Instance::onInitialize(const ApplicationInfo& appInfo, EnableLayerF
 
     if (result != S_OK) 
     {
-        return REC_RESULT_FAILED;
+        return R_RESULT_FAILED;
     }
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 

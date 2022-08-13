@@ -19,7 +19,7 @@ InstancedSubMesh submeshes[12];
 
 void fillList(RenderCommandList& list)
 {
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
     DrawRenderCommand rcmd = { };
     DrawIndexedRenderCommand icmd = { };
 
@@ -38,12 +38,12 @@ void fillList(RenderCommandList& list)
     
     }
 
-    rcmd.op = COMMAND_OP_DRAWABLE_INSTANCED;
+    rcmd.op = C_OP_DRAWABLE_INSTANCED;
     rcmd.numVertexBuffers = 2;
     rcmd.numSubMeshes = 12;
     rcmd.pSubMeshes = submeshes;
 
-    icmd.op = COMMAND_OP_DRAWABLE_INDEXED_INSTANCED;
+    icmd.op = C_OP_DRAWABLE_INDEXED_INSTANCED;
     icmd.numVertexBuffers = 1;
     icmd.indexType = INDEX_TYPE_UINT32;
     icmd.numSubMeshes = 8;
@@ -57,7 +57,7 @@ void fillList(RenderCommandList& list)
         result = list.push(icmd);
     }
 
-    if (result != REC_RESULT_OK) {
+    if (result != R_RESULT_OK) {
         R_ERR("TEST", "Failed to push some commands!");
     }
 }
@@ -84,14 +84,14 @@ int main(int c, char* argv[])
     RenderCommand** commands = list.getRenderCommands();
     U64 numRenderCommands = list.getNumberCommands();
 
-    CommandOp op = COMMAND_OP_DRAWABLE_INDEXED_INSTANCED;
+    CommandOp op = C_OP_DRAWABLE_INDEXED_INSTANCED;
 
     for (U64 i = 0; i < numRenderCommands; ++i) {
 
         RenderCommand* cmd = commands[i];
         switch (cmd->op) {
     
-            case COMMAND_OP_DRAWABLE_INSTANCED:
+            case C_OP_DRAWABLE_INSTANCED:
             {
                 //R_TRACE("TEST", "I am a draw command! %d", i);
                 DrawRenderCommand* rcmd = static_cast<DrawRenderCommand*>(cmd);
@@ -99,7 +99,7 @@ int main(int c, char* argv[])
                 //R_TRACE("TEST", "%d", rcmd)
                 break;
             }
-            case COMMAND_OP_DRAWABLE_INDEXED_INSTANCED:    
+            case C_OP_DRAWABLE_INDEXED_INSTANCED:    
             {
                 //R_TRACE("TEST", "I am a draw indexed command! %d", i);
                 DrawIndexedRenderCommand* icmd = static_cast<DrawIndexedRenderCommand*>(cmd);

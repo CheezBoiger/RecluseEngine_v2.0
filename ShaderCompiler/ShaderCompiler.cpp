@@ -126,7 +126,7 @@ void replaceLine(std::string& in, size_t currentPos, const std::string& from, co
 
 static std::string generateShaderSceneView(ShaderLang lang)
 {
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
     // Scene view buffer string to be passed.
     std::string sceneViewBufferStr  = "#ifndef _RECLUSE_SCENE_BUFFER_H_\n#define _RECLUSE_SCENE_BUFFER_H_\n";
     // Start at this file and navigate to the Engine scene view file.
@@ -140,7 +140,7 @@ static std::string generateShaderSceneView(ShaderLang lang)
 
     result = File::readFrom(&data, pathToSceneViewFile);
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {    
         R_ERR("ShaderCompiler", "Failed to read from file: %s", pathToSceneViewFile.c_str());
         return "";
@@ -304,7 +304,7 @@ ErrType compileShaders(ShaderLang lang)
 
         ErrType result = File::readFrom(&buffer, sourceFilePath);
 
-        if (result != REC_RESULT_OK) 
+        if (result != R_RESULT_OK) 
         {
             R_ERR("ShaderCompiler", "Failed to read shader %s...", shaderMetadata->relativefilePath.c_str());
             Shader::destroy(pShader);
@@ -365,7 +365,7 @@ ErrType compileShaders(ShaderLang lang)
                                             shaderMetadata->shaderType
                                         );
 
-                if (result == REC_RESULT_OK) 
+                if (result == R_RESULT_OK) 
                 {
                     //pShader->saveToFile()
                 } 
@@ -388,7 +388,7 @@ ErrType compileShaders(ShaderLang lang)
     freeShaderBuilder(pBuilder);
     linearAllocation.cleanUp();
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -401,7 +401,7 @@ ErrType addShaderToCompile(const std::string& filePath, const std::string& confi
 
     gConfigs.shadersToCompile.push_back(metadata);
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -412,7 +412,7 @@ ErrType setConfigs(const std::string& configPath, U32 compilerIndex)
         Recluse::FileBufferData dat;
         Recluse::ErrType result = Recluse::File::readFrom(&dat, configPath);
 
-        if (result != Recluse::REC_RESULT_OK) 
+        if (result != Recluse::R_RESULT_OK) 
         {
             R_ERR("ShaderCompiler", "Failed to find config file!");
             return result;
@@ -427,7 +427,7 @@ ErrType setConfigs(const std::string& configPath, U32 compilerIndex)
         catch (std::exception& e) 
         {
             R_ERR("ShaderCompiler", "%s", e.what());
-            return REC_RESULT_FAILED;
+            return R_RESULT_FAILED;
         }
     }
 
@@ -517,19 +517,19 @@ ErrType setConfigs(const std::string& configPath, U32 compilerIndex)
         R_ERR("ShaderCompiler", "No compilers defined in config file!!");
     }
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
 ErrType setShaderFiles(const std::string& shadersPath)
 {
     json jfile;
-    ErrType result = REC_RESULT_OK;
+    ErrType result = R_RESULT_OK;
     {
         FileBufferData bufferData = { };
         result = File::readFrom(&bufferData, shadersPath);
 
-        if (result != REC_RESULT_OK) 
+        if (result != R_RESULT_OK) 
         {
             R_ERR("ShaderCompiler", "Failed to open shaders path!");
             return result;        
@@ -543,7 +543,7 @@ ErrType setShaderFiles(const std::string& shadersPath)
         catch (const std::exception& e) 
         {
             R_ERR("ShaderCompiler", "%s", e.what());
-            return REC_RESULT_FAILED;
+            return R_RESULT_FAILED;
         }
     }
 
@@ -573,7 +573,7 @@ ErrType setShaderFiles(const std::string& shadersPath)
         }
     }
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 

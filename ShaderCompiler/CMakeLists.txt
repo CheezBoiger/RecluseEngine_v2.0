@@ -7,6 +7,7 @@ set ( RECLUSE_SC_VERSION_MINOR )
 set ( RECLUSE_SC_VERSION_MAJOR )
 set ( RECLUSE_SC_VERSION_PATCH )
 
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 set( RECLUSE_SC_FILES 
     main.cpp
@@ -21,3 +22,5 @@ add_executable(${RECLUSE_SC_NAME}
 target_include_directories(${RECLUSE_SC_NAME} PUBLIC ${RECLUSE_FRAMEWORK_INCLUDE_DIR})
 target_link_libraries(${RECLUSE_SC_NAME} RecluseFramework )
 add_dependencies(${RECLUSE_SC_NAME} RecluseFramework )
+
+set_target_properties( ${RECLUSE_SC_NAME} PROPERTIES FOLDER "RecluseShaderCompiler")

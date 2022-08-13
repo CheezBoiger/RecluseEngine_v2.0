@@ -36,7 +36,7 @@ int main(int c, char* argv[])
 
     ErrType result = pInstance->initialize(appInfo, flags);
 
-    if (result != REC_RESULT_OK) {
+    if (result != R_RESULT_OK) {
         R_ERR("Test", "Failed to create context!");
         goto Exit;
     }
@@ -58,7 +58,7 @@ int main(int c, char* argv[])
 
     result = adapters[0]->createDevice(deviceCreate, &pDevice);
 
-    if (result != REC_RESULT_OK) {
+    if (result != R_RESULT_OK) {
     
         R_ERR("Graphics", "Failed to create device!");
 
@@ -90,7 +90,7 @@ int main(int c, char* argv[])
 
     result = pDevice->createResource(&pTexture, desc, RESOURCE_STATE_SHADER_RESOURCE);
 
-    if (result != REC_RESULT_OK) {
+    if (result != R_RESULT_OK) {
     
         R_ERR("Graphics", "Failed to create texture!");
 
@@ -109,7 +109,7 @@ int main(int c, char* argv[])
        
         result = pDevice->createResourceView(&pView, viewDesc);
         
-        if (result != REC_RESULT_OK) {
+        if (result != R_RESULT_OK) {
         
             R_ERR("Graphics", "Failed to create view...");
         

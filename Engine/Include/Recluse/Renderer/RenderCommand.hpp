@@ -16,9 +16,21 @@ namespace Engine {
 
 enum CommandOp 
 {
-    COMMAND_OP_DRAWABLE_INSTANCED,
-    COMMAND_OP_DRAWABLE_INDEXED_INSTANCED,
-    COMMAND_OP_DISPATCH
+    C_OP_DRAWABLE_INSTANCED,
+    C_OP_DRAWABLE_INDEXED_INSTANCED,
+    C_OP_DISPATCH,
+    C_OP_BIND_RESOURCES,
+    C_OP_BIND_PIPE
+};
+
+
+
+enum ResourceBindOp
+{
+    R_BIND_RTV = (1 << 0),
+    R_BIND_SRV = (1 << 1),
+    R_BIND_UAV = (1 << 2),
+    R_BIND_CBV = (1 << 3)
 };
 
 
@@ -34,11 +46,26 @@ enum VertexAttribFlag
 
 typedef U32 VertexAttribFlags;
 typedef U32 RenderPassTypeFlags;
+typedef U32 ResourceBindOpFlags;
 
 struct RenderCommand 
 {
     CommandOp               op          : 24;   //
     U32                     stencilRef  : 8;    // 4 B
+};
+
+
+struct ResourceBindCommand : public RenderCommand
+{
+    ResourceBindOpFlags bindFlags;
+    GraphicsResource** pRtvs;
+    GraphicsResource** pCbvs;
+    GraphicsResource** pSrvs;
+    GraphicsResource** pUavs;
+    U16                 numRtvs;
+    U16                 numCbvs;
+    U16                 numUavs;
+    U16                 numSrvs;
 };
 
 

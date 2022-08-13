@@ -34,7 +34,7 @@ ErrType D3D12DescriptorHeap::initialize(D3D12_DESCRIPTOR_HEAP_TYPE type, U32 ent
 
         R_ERR(R_CHANNEL_D3D12, "Failed to create descriptor heap.");
 
-        return REC_RESULT_FAILED;
+        return R_RESULT_FAILED;
     }
 
     // Create GPU descriptor heap ONLY if the descriptor heap is not rtv or dsv types.
@@ -51,7 +51,7 @@ ErrType D3D12DescriptorHeap::initialize(D3D12_DESCRIPTOR_HEAP_TYPE type, U32 ent
 
             R_ERR(R_CHANNEL_D3D12, "Failed to create shader visible descriptor heap.");
 
-            return REC_RESULT_FAILED;
+            return R_RESULT_FAILED;
         }
     }
 
@@ -59,7 +59,7 @@ ErrType D3D12DescriptorHeap::initialize(D3D12_DESCRIPTOR_HEAP_TYPE type, U32 ent
     m_descIncSz     = pDevice->GetDescriptorHandleIncrementSize(type);
     m_maxEntries    = entries;
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -77,7 +77,7 @@ ErrType D3D12DescriptorHeap::destroy()
         m_pGPUDescriptorHeap = nullptr;
     }
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -102,7 +102,7 @@ ErrType D3D12DescriptorHeap::update(U32 startEntry, U32 endEntry)
     pDevice->CopyDescriptorsSimple(totalEntries,
             cpuSrcHandle, cpuDstHandle, m_descHeapType);
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 

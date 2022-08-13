@@ -31,7 +31,7 @@ ErrType BuddyAllocator::onInitialize()
     // Store big block as initialized to the whole memory region.
     m_freeList[nthBit].push_back(block);
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -68,7 +68,7 @@ ErrType BuddyAllocator::onAllocate(Allocation* pOutput, U64 requestSz, U16 align
 
         if (i == m_maxOrder) 
         {
-            return REC_RESULT_OUT_OF_MEMORY;   
+            return R_RESULT_OUT_OF_MEMORY;   
         } 
         else 
         {
@@ -105,7 +105,7 @@ ErrType BuddyAllocator::onAllocate(Allocation* pOutput, U64 requestSz, U16 align
         }
     }
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -113,7 +113,7 @@ ErrType BuddyAllocator::onFree(Allocation* pOutput)
 {
     if (m_allocatedBlocks.find(pOutput->baseAddress) == m_allocatedBlocks.end()) 
     {
-        return REC_RESULT_FAILED;
+        return R_RESULT_FAILED;
     
     }
 
@@ -169,13 +169,13 @@ ErrType BuddyAllocator::onFree(Allocation* pOutput)
     // Erase the block after.
     m_allocatedBlocks.erase(pOutput->baseAddress);
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
 ErrType BuddyAllocator::onReset()
 {
-    return REC_RESULT_NOT_IMPLEMENTED;
+    return R_RESULT_NO_IMPL;
 }
 
 
@@ -185,6 +185,6 @@ ErrType BuddyAllocator::onCleanUp()
     m_freeList.clear();
     m_allocatedBlocks.clear();
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 } // Recluse

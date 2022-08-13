@@ -18,7 +18,7 @@ ErrType createThread(Thread* pThread, ThreadFunction startRoutine)
     {
         R_ERR(R_CHANNEL_WIN32, "pThread input passed is null! This is not valid!");
 
-        return REC_RESULT_INVALID_ARGS;
+        return R_RESULT_INVALID_ARGS;
     }
 
     R_DEBUG(R_CHANNEL_WIN32, "Creating thread");
@@ -38,12 +38,12 @@ ErrType createThread(Thread* pThread, ThreadFunction startRoutine)
 
         pThread->threadState = THREAD_STATE_UNKNOWN;
 
-        return REC_RESULT_FAILED;
+        return R_RESULT_FAILED;
     }
 
     pThread->handle = handle;
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -57,7 +57,7 @@ ErrType joinThread(Thread* pThread)
     GetExitCodeThread(pThread->handle, (LPDWORD)&pThread->resultCode);
     pThread->threadState = THREAD_STATE_NOT_RUNNING;
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -71,7 +71,7 @@ ErrType killThread(Thread* pThread)
 
     pThread->threadState = THREAD_STATE_UNKNOWN;
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -84,7 +84,7 @@ ErrType stopThread(Thread* pThread)
     
     pThread->threadState = THREAD_STATE_SUSPENDED;
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -97,7 +97,7 @@ ErrType resumeThread(Thread* pThread)
 
     pThread->threadState = THREAD_STATE_RUNNING;    
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -113,12 +113,12 @@ ErrType destroyMutex(Mutex mutex)
 {
     if (!mutex) 
     {
-        return REC_RESULT_NULL_PTR_EXCEPTION;
+        return R_RESULT_NULL_PTR_EXCEPT;
     }
 
     CloseHandle(mutex);
     
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -129,20 +129,20 @@ ErrType lockMutex(Mutex mutex)
     switch (result) 
     {
         case WAIT_OBJECT_0:
-            return REC_RESULT_OK;
+            return R_RESULT_OK;
 
         default: 
-            return REC_RESULT_FAILED;
+            return R_RESULT_FAILED;
     }
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
 ErrType unlockMutex(Mutex mutex)
 {
     ReleaseMutex(mutex);
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -153,16 +153,16 @@ ErrType waitMutex(Mutex mutex, U64 waitTimeMs)
     switch (result) 
     {
         case WAIT_OBJECT_0:
-            return REC_RESULT_OK;
+            return R_RESULT_OK;
 
         case WAIT_TIMEOUT:
-            return REC_RESULT_TIMEOUT;
+            return R_RESULT_TIMEOUT;
 
         default:
-            return REC_RESULT_FAILED;
+            return R_RESULT_FAILED;
     }
     
-    return REC_RESULT_FAILED;
+    return R_RESULT_FAILED;
 }
 
 ErrType tryLockMutex(Mutex mutex)

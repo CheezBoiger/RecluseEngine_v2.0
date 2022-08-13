@@ -54,9 +54,9 @@ protected:
 private:
 
     //! On initialize.
-    virtual ErrType onInitializeModule(Application* pApp) { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual ErrType onInitializeModule(Application* pApp) { return R_RESULT_NO_IMPL; }
     //! On clean up.
-    virtual ErrType onCleanUpModule(Application* pApp) { return REC_RESULT_NOT_IMPLEMENTED; }
+    virtual ErrType onCleanUpModule(Application* pApp) { return R_RESULT_NO_IMPL; }
     
     //! Member function that is used to begin instantiating the object.
     ErrType initializeInstance(Application* pApp) 
@@ -69,7 +69,7 @@ private:
     ErrType cleanUpInstance(Application* pApp) 
     { 
         ErrType result = onCleanUpModule(pApp);
-        if (result == REC_RESULT_OK) 
+        if (result == R_RESULT_OK) 
         {
             m_isActive = false;
             destroyMutex(m_sync);

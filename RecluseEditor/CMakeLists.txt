@@ -20,8 +20,14 @@ set ( RECLUSE_EDITOR_LINK_BINARIES )
 include ( CMake/Main.cmake )
 
 add_executable( ${RECLUSE_EDITOR_NAME} ${RECLUSE_EDITOR_COMPILE_FILES} )
-target_include_directories(${RECLUSE_EDITOR_NAME} PUBLIC ${RECLUSE_ENGINE_INCLUDE_DIR} ${RECLUSE_FRAMEWORK_INCLUDE_DIR} ${RECLUSE_EDITOR_INCLUDE_FILES})
-target_link_libraries( ${RECLUSE_EDITOR_NAME} RecluseFramework RecluseEngine ${RECLUSE_EDITOR_LINK_BINARIES})
+target_include_directories( 
+	${RECLUSE_EDITOR_NAME} 
+	PUBLIC 
+	${RECLUSE_ENGINE_INCLUDE_DIR} ${RECLUSE_FRAMEWORK_INCLUDE_DIR} ${RECLUSE_EDITOR_INCLUDE_FILES} )
+
+target_link_libraries( ${RECLUSE_EDITOR_NAME} 
+	RecluseFramework RecluseEngine ${RECLUSE_EDITOR_LINK_BINARIES} wx::net wx::core wx::base)
+	
 add_dependencies(${RECLUSE_EDITOR_NAME} RecluseFramework RecluseEngine)
 
 # Doing some stuff for organization.

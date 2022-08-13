@@ -39,7 +39,7 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
     {
         R_ERR(R_CHANNEL_VULKAN, "Can not define a RenderWidth or Height less than 1!");
 
-        return REC_RESULT_INVALID_ARGS;    
+        return R_RESULT_INVALID_ARGS;    
     }
 
     {
@@ -100,7 +100,7 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
     {    
         R_ERR(R_CHANNEL_VULKAN, "Failed to create swapchain!");
 
-        return REC_RESULT_FAILED;
+        return R_RESULT_FAILED;
     }    
 
     R_DEBUG(R_CHANNEL_VULKAN, "Successfully created vulkan swapchain!");
@@ -127,10 +127,10 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
     {
         R_WARN(R_CHANNEL_VULKAN, "AcquireNextImage was not successful...");    
 
-        return REC_RESULT_FAILED;
+        return R_RESULT_FAILED;
     }
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -140,7 +140,7 @@ ErrType VulkanSwapchain::onRebuild()
     destroy();
     build(m_pDevice);
 
-    return REC_RESULT_NOT_IMPLEMENTED;
+    return R_RESULT_NO_IMPL;
 }
 
 
@@ -179,7 +179,7 @@ ErrType VulkanSwapchain::destroy()
             );   
     }
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -192,11 +192,11 @@ ErrType VulkanSwapchain::present(PresentConfig config)
     m_pDevice->invalidateAllMappedRanges();
 
     if (config & DELAY_PRESENT)
-        return REC_RESULT_OK;
+        return R_RESULT_OK;
 
     submitCommandsForPresenting();
  
-    ErrType err                     = REC_RESULT_OK;
+    ErrType err                     = R_RESULT_OK;
     VkSwapchainKHR swapchains[]     = { m_swapchain };
     VkPresentInfoKHR info           = { };
     VkSemaphore pWaitSemaphores[]   = { getSignalSemaphore(m_currentFrameIndex) };
@@ -216,7 +216,7 @@ ErrType VulkanSwapchain::present(PresentConfig config)
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) 
     {
-        err = REC_RESULT_NEEDS_UPDATE;
+        err = R_RESULT_NEEDS_UPDATE;
     }
 
     m_pDevice->incrementBufferIndex();
@@ -240,12 +240,12 @@ ErrType VulkanSwapchain::present(PresentConfig config)
     {
         R_WARN(R_CHANNEL_VULKAN, "AcquireNextImage was not successful...");    
 
-        err = REC_RESULT_FAILED;
+        err = R_RESULT_FAILED;
     }
 
     result = vkWaitForFences(device, 1, &frameFence, VK_TRUE, UINT64_MAX);
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_WARN(R_CHANNEL_VULKAN, "Fence wait failed...");
     }

@@ -19,7 +19,7 @@ ErrType D3D12Swapchain::initialize(D3D12Device* pDevice)
     {
         R_ERR(R_CHANNEL_D3D12, "Can not create swapchain without a window handle!");
 
-        return REC_RESULT_FAILED;
+        return R_RESULT_FAILED;
     }
 
     const SwapchainCreateDescription& desc  = getDesc();
@@ -67,7 +67,7 @@ ErrType D3D12Swapchain::initialize(D3D12Device* pDevice)
     {
         R_ERR(R_CHANNEL_D3D12, "Failed to create d3d12 swapchain!");
         
-        return REC_RESULT_FAILED;
+        return R_RESULT_FAILED;
     }
 
     result = swapchain1->QueryInterface<IDXGISwapChain3>(&m_pSwapchain);
@@ -79,7 +79,7 @@ ErrType D3D12Swapchain::initialize(D3D12Device* pDevice)
 
         destroy();
 
-        return REC_RESULT_FAILED;
+        return R_RESULT_FAILED;
     }
 
     m_maxFrames         = desc.desiredFrames;
@@ -89,7 +89,7 @@ ErrType D3D12Swapchain::initialize(D3D12Device* pDevice)
     // Initialize our frame resources, make sure to assign device and other values before calling this.
     initializeFrameResources();
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -162,7 +162,7 @@ ErrType D3D12Swapchain::present(PresentConfig config)
     //m_frameResources[m_currentFrameIndex].fenceValue = currentFenceValue + 1;
     m_pDevice->resetCurrentResources();
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -181,7 +181,7 @@ ErrType D3D12Swapchain::initializeFrameResources()
 
     m_currentFrameIndex = m_pSwapchain->GetCurrentBackBufferIndex();
     
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 
 
@@ -197,7 +197,7 @@ ErrType D3D12Swapchain::destroyFrameResources()
         m_frameResources.clear();
     }
 
-    return REC_RESULT_NOT_IMPLEMENTED;
+    return R_RESULT_NO_IMPL;
 }
 
 
@@ -212,6 +212,6 @@ ErrType D3D12Swapchain::flushFinishedCommandLists()
         pQueue->ExecuteCommandLists(1, pLists);
     }
 
-    return REC_RESULT_OK;
+    return R_RESULT_OK;
 }
 } // Recluse

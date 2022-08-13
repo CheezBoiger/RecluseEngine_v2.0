@@ -62,7 +62,7 @@ int main(int c, char* argv[])
     GraphicsSwapchain* pSwapchain   = nullptr;
     GraphicsCommandList* pList      = nullptr;
     Window* pWindow                 = Window::create("Compute", 0, 0, 1024, 1024);
-    ErrType result                  = REC_RESULT_OK;
+    ErrType result                  = R_RESULT_OK;
 
     std::vector<GraphicsResourceView*> views;
     std::vector<DescriptorSet*> sets;
@@ -83,7 +83,7 @@ int main(int c, char* argv[])
         result = pInstance->initialize(app, flags);
     }
     
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR("TEST", "Failed to initialize context!");   
     }
@@ -103,7 +103,7 @@ int main(int c, char* argv[])
         result = pAdapter->createDevice(info, &pDevice);
     }
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR("TEST", "Failed to create device!");
     }
@@ -119,7 +119,7 @@ int main(int c, char* argv[])
         result = pDevice->reserveMemory(desc);
     }
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR("TEST", "Failed to reserve memory on device!");
     }
@@ -144,7 +144,7 @@ int main(int c, char* argv[])
         result = pDevice->createDescriptorSetLayout(&pLayout, desc);
     }
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR("TEST", "Failed to create descriptor set layout...");
     }
@@ -157,7 +157,7 @@ int main(int c, char* argv[])
     for (U32 i = 0; i < sets.size(); ++i) 
     {
         result = pDevice->createDescriptorSet(&sets[i], pLayout); 
-        if (result != REC_RESULT_OK) 
+        if (result != R_RESULT_OK) 
         {
             R_ERR("TEST", "Failed to create descriptor set!");
         }
@@ -174,7 +174,7 @@ int main(int c, char* argv[])
         result = pDevice->createResource(&pData, desc, RESOURCE_STATE_VERTEX_AND_CONST_BUFFER);
     }
 
-    if (result != REC_RESULT_OK) 
+    if (result != R_RESULT_OK) 
     {
         R_ERR("TEST", "Failed to create data resource!");
     }
@@ -244,14 +244,14 @@ int main(int c, char* argv[])
         std::string shaderSource = currDir + "/" + "test.cs.hlsl";
         result = File::readFrom(&file, shaderSource);
 
-        if (result != REC_RESULT_OK) 
+        if (result != R_RESULT_OK) 
         {    
             R_ERR("TEST", "Could not find %s", shaderSource.c_str());
         }
 
         result = pBuilder->compile(pCompShader, file.data(), file.size(), SHADER_LANG_HLSL, SHADER_TYPE_COMPUTE);
 
-        if (result != REC_RESULT_OK) 
+        if (result != R_RESULT_OK) 
         {
             R_ERR("TEST", "Failed to compile compute shader!");
         }
@@ -264,7 +264,7 @@ int main(int c, char* argv[])
 
         result = pDevice->createComputePipelineState(&pPipeline, ci);
 
-        if (result != REC_RESULT_OK) 
+        if (result != R_RESULT_OK) 
         {
             R_ERR("TEST", "Failed to create compute pipeline!");
         }
