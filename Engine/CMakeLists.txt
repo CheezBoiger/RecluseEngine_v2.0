@@ -16,6 +16,12 @@ set ( RECLUSE_ENGINE_COMPILE_FILES )
 set ( RECLUSE_ENGINE_LINK_BINARIES )
 
 # include our build files here.
+
+# Editor SDK is enabled. This allows for Shim access to the engine.
+if ( EDITOR_SDK_ENABLE )
+include ( CMake/EditorSDK.cmake )
+endif()
+
 include ( CMake/Game.cmake )
 include ( CMake/Renderer.cmake )
 include ( CMake/Scene.cmake )
