@@ -4,6 +4,7 @@
 #include "D3D12Queue.hpp"
 #include "D3D12Swapchain.hpp"
 #include "D3D12CommandList.hpp"
+#include "D3D12Allocator.hpp"
 #include "Recluse/Types.hpp"
 #include "Recluse/Messaging.hpp"
 
@@ -153,9 +154,40 @@ ErrType D3D12Device::destroyCommandQueue(D3D12Queue* pQueue)
 }
 
 
+void D3D12Device::allocateMemoryPool(D3D12MemoryPool* pPool, ResourceMemoryUsage memUsage)
+{
+
+}
+
+
 ErrType D3D12Device::reserveMemory(const MemoryReserveDesc& desc)
 {
-    return R_RESULT_NO_IMPL;
+    for (U32 i = 0; i < RESOURCE_MEMORY_USAGE_COUNT; ++i)
+    {
+        HRESULT hresult = S_OK;
+        if (m_bufferPool[i])
+        {
+            if (m_bufferMemPools[i].pHeap->GetDesc().SizeInBytes < desc.bufferPools[i])
+            {
+                allocateMemoryPool(&m_bufferMemPools[i], (ResourceMemoryUsage)i);
+            }
+            m_bufferPool[i]->clear();
+            m_bufferPool[i]->setMemoryPool(&m_bufferMemPools[i]);
+        }
+        else
+        {
+            D3D12_HEAP_DESC hdesc = { };
+            hdesc.Properties.Type = D3D12_HEAP_TYPE_DEFAULT;
+            hdesc.SizeInBytes = desc.bufferPools[i];
+            ID3D12Heap* pHeap = nullptr;
+            hresult = m_device->CreateHeap(&hdesc, __uuidof(ID3D12Heap), (void**)&pHeap);
+            if (FAILED(hresult))
+            {
+                R_ERR(R_CHANNEL_D3D12, "Failed to create heap in %s", __FUNCTION__);
+            }
+        }
+    }
+    return R_RESULT_OK;
 }
 
 

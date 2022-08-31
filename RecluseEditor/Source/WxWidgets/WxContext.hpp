@@ -6,6 +6,7 @@
 
 #include "GUIContext.hpp"
 
+#define WXUSINGDLL 1
 #define wxUSE_MENUBAR 1
 #define wxUSE_MENUS 1
 #define wxUSE_STATUSBAR 1

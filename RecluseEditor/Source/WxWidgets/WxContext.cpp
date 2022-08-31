@@ -4,7 +4,7 @@
 
 namespace Recluse {
 
-
+#if 1
 
 class RecluseEditorFrame : public wxFrame
 {
@@ -87,7 +87,7 @@ int RecluseEditorApp::OnExit()
 }
 
 wxIMPLEMENT_APP_NO_MAIN(RecluseEditorApp);
-
+#endif
 ErrType WxGuiContext::onRun(int c, char* argv[])
 {
     I32 result = wxEntry(c, argv);

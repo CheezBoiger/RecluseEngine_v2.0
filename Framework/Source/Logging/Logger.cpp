@@ -5,6 +5,8 @@
 #include "Recluse/System/DateTime.hpp"
 #include "Logging/LogFramework.hpp"
 
+#include "Recluse/Filesystem/Archive.hpp"
+
 namespace Recluse {
 
 const char* DateFormatter::kDefaultFormat = "%Y-%M-%D %h:%m:%s";
@@ -39,6 +41,7 @@ static void printLog(const LogMessage* log)
         case LogError:      color = R_COLOR_RED;        logStr = "Error"; break;        
         case LogTrace:      color = R_COLOR_GREEN;      logStr = "Trace"; break;
         case LogInfo:                                   logStr = "Info"; break;
+        case LogFatal:      color = R_COLOR_RED;        logStr = "FATAL"; break;
         case LogMsg:
         default: break;
     }
@@ -74,7 +77,7 @@ static void printLog(const LogMessage* log)
 }
 
 
-ErrType displayFunction(void* data)
+static ErrType displayFunction(void* data)
 {
     (void)data;
 

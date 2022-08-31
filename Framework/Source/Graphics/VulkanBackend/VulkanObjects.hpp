@@ -19,7 +19,8 @@ public:
         : m_fbo(VK_NULL_HANDLE)
         , m_renderPass(VK_NULL_HANDLE)
         , m_renderArea({ })
-        , m_desc({ }) { }
+        , m_desc({ })
+        , m_fboId(0ull) { }
 
     ErrType initialize(VulkanDevice* pDevice, const RenderPassDesc& desc);
 
@@ -38,6 +39,7 @@ private:
     VkRenderPass    m_renderPass;
     VkFramebuffer   m_fbo;
     VkRect2D        m_renderArea;
+    Hash64          m_fboId;
 
     RenderPassDesc  m_desc;
 };

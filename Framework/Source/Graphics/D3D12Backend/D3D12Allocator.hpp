@@ -9,19 +9,6 @@
 namespace Recluse {
 
 
-struct D3D12MemoryPool {
-    ID3D12Heap*     pHeap;
-    U64             sizeInBytes;
-};
-
-
-struct D3D12MemoryObject {
-    ID3D12Resource*         pResource;
-    U64                     sizeInBytes;
-    PtrType                 basePtr;
-};
-
-
 // Allocator for D3D12 resources. This does not allocate the d3d12 memory heap itself,
 // only manages it, so be sure to handle the heap creation and destruction outside this
 // class!
@@ -34,6 +21,7 @@ public:
             D3D12MemoryPool* pPool = nullptr
         );
 
+    void    setMemoryPool(D3D12MemoryPool* pPool) { m_pPool = pPool; }
     ErrType initialize(U32 garbageBufferCount);
     ErrType destroy();
 

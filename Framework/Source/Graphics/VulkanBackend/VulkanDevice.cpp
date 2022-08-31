@@ -381,7 +381,7 @@ ErrType VulkanDevice::createSurface(VkInstance instance, void* handle)
     
     if (result != VK_SUCCESS) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to create win32 surface.")
+        R_ERR(R_CHANNEL_VULKAN, "Failed to create win32 surface.");
         return R_RESULT_FAILED;
     }
 #endif
@@ -460,7 +460,7 @@ ErrType VulkanDevice::reserveMemory(const MemoryReserveDesc& desc)
     
         if (result != VK_SUCCESS) 
         {
-            R_ERR(R_CHANNEL_VULKAN, "Failed to allocate device memory!")
+            R_ERR(R_CHANNEL_VULKAN, "Failed to allocate device memory!");
         }
 
         m_bufferPool[i].sizeBytes = allocInfo.allocationSize;
@@ -540,7 +540,7 @@ ErrType VulkanDevice::reserveMemory(const MemoryReserveDesc& desc)
     
     if (result != VK_SUCCESS) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to allocate device memory!")
+        R_ERR(R_CHANNEL_VULKAN, "Failed to allocate device memory!");
     }
 
     m_imagePool[RESOURCE_MEMORY_USAGE_GPU_ONLY].sizeBytes = allocInfo.allocationSize;

@@ -11,6 +11,8 @@
 
 #include "Recluse/Structures/HashMap.hpp"
 
+#include "Recluse/Generated/RendererConfigs.hpp"
+
 #include <vector>
 #include <unordered_map>
 
@@ -60,16 +62,6 @@ enum RenderPassType : U32
 
 typedef U32 RenderPassTypeFlags;
 
-
-enum QualitySetting
-{
-    QUALITY_NONE,
-    QUALITY_LOW,
-    QUALITY_MEDIUM,
-    QUALITY_HIGH,
-    QUALITY_BEST
-};
-
 struct MeshDescription 
 {
 };
@@ -78,22 +70,6 @@ struct MeshDescription
 struct MaterialDescription 
 {
 
-};
-
-struct RendererConfigs 
-{
-    U32             renderWidth;
-    U32             renderHeight;
-    U32             buffering;
-    U32             maxFrameRate;       //< Adjusts to a certain framerate. 0 will have us present as fast as possible.
-    GraphicsAPI     api;
-    Bool            enableMotionBlur;
-    Bool            enableHeatHaze;
-    Bool            enableChromaticAberration;
-    Bool            enableScreenSpaceShadows;
-    Bool            enableSubsurfaceScattering;
-    Bool            enableParticleMotion;
-    QualitySetting  shadowQuality;
 };
 
 

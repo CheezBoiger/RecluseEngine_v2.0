@@ -1,13 +1,31 @@
 
+#include "Recluse/Generated/Common/Common.hpp"
+
+namespace Recluse {
+
+enum QualitySetting
+{
+    QUALITY_NONE,
+    QUALITY_LOW,
+    QUALITY_MEDIUM,
+    QUALITY_HIGH,
+    QUALITY_BEST
+};
 
 class RendererConfigs
 {
 public:
-	Bool enableMotionBlur = false;
-	Bool enableHeatHaze = false;
-	Bool enableChromaticAberration = false;
-	Bool enableScreenSpaceShadows = false;
-	Bool enableSubsurfaceScattering = false;
-	Bool enableParticleMotion = false;
-	QualitySetting shadowQuality;
+    U32             renderWidth;
+    U32             renderHeight;
+    U32             buffering;
+    U32             maxFrameRate;       //< Adjusts to a certain framerate. 0 will have us present as fast as possible.
+    GraphicsAPI     api;
+    Bool            enableMotionBlur;
+    Bool            enableHeatHaze;
+    Bool            enableChromaticAberration;
+    Bool            enableScreenSpaceShadows;
+    Bool            enableSubsurfaceScattering;
+    Bool            enableParticleMotion;
 };
+
+} // Recluse

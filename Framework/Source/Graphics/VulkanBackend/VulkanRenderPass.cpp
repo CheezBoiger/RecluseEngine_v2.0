@@ -10,15 +10,15 @@
 
 namespace Recluse {
 
-std::unordered_map<Hash64, RefCount<VkFramebuffer>> m_fboCache;
-std::unordered_map<Hash64, VkRenderPass> m_rpCache;
+std::unordered_map<Hash64, RefCount<VkFramebuffer>> g_fboCache;
+std::unordered_map<Hash64, VkRenderPass> g_rpCache;
 
 static U64 serialize(const VkFramebufferCreateInfo& info)
 {
     Hash64 uniqueId = 0ull;
 
-    uniqueId = static_cast<U64>( info.attachmentCount + info.width + info.height );
-    uniqueId = static_cast<U64>( info.layers + info.flags );
+    uniqueId += static_cast<U64>( info.attachmentCount + info.width + info.height );
+    uniqueId += static_cast<U64>( info.layers + info.flags );
 
     for (U32 i = 0; i < info.attachmentCount; ++i)
     {
@@ -41,12 +41,10 @@ static U64 serialize(const VkRenderPassCreateInfo& info)
 
 static Bool inFboCache(Hash64 fboId)
 {
-    auto it = m_fboCache.find(fboId);
-    if (it == m_fboCache.end())
+    auto it = g_fboCache.find(fboId);
+    if (it == g_fboCache.end())
         return false;
-    if (it->second.getCount() == 0)
-        return false;
-    return true;
+    return it->second.hasRefs();
 }
 
 
@@ -58,14 +56,31 @@ static Bool cacheFbo(Hash64 fboId, const VkFramebuffer fbo)
         return false;
     }
 
-    m_fboCache[fboId] = fbo;
+    g_fboCache[fboId] = fbo;
+    g_fboCache[fboId].addRef();
 
     return true;
 }
 
+
+static void addFboRef(Hash64 fboId)
+{
+    g_fboCache[fboId].addRef();
+}
+
 static VkFramebuffer getCachedFbo(Hash64 fboId)
 {
-    return m_fboCache[fboId]();
+    return g_fboCache[fboId]();
+}
+
+
+static void destroyFbo(Hash64 fboId, VkDevice device)
+{
+    if (!g_fboCache[fboId].release())
+    {
+        VkFramebuffer fbo = g_fboCache[fboId].getData();
+        vkDestroyFramebuffer(device, fbo, nullptr);
+    }
 }
 
 
@@ -201,6 +216,8 @@ ErrType VulkanRenderPass::initialize(VulkanDevice* pDevice, const RenderPassDesc
     {
         R_VERBOSE(R_CHANNEL_VULKAN, "Fbo Cache hit!");
         m_fbo = getCachedFbo(fboId);
+
+        addFboRef(fboId);
     }
     else
     {
@@ -223,6 +240,7 @@ ErrType VulkanRenderPass::initialize(VulkanDevice* pDevice, const RenderPassDesc
     m_renderArea        = { };
     m_renderArea.extent = { desc.width, desc.height };
     m_renderArea.offset = { 0, 0 };
+    m_fboId             = fboId;
 
     return R_RESULT_OK;
 }
@@ -241,7 +259,7 @@ ErrType VulkanRenderPass::destroy(VulkanDevice* pDevice)
 
     if (m_fbo) 
     {
-        vkDestroyFramebuffer(pDevice->get(), m_fbo, nullptr);
+        destroyFbo(m_fboId, pDevice->get());
         m_fbo = VK_NULL_HANDLE;
     }
 

@@ -26,6 +26,21 @@ public:
 
 	GraphicsAPI getApi() const override { return GRAPHICS_API_D3D12; }
 };
+
+
+struct D3D12MemoryPool 
+{
+    ID3D12Heap* pHeap;
+    U64             sizeInBytes;
+};
+
+
+struct D3D12MemoryObject 
+{
+    ID3D12Resource* pResource;
+    U64                     sizeInBytes;
+    PtrType                 basePtr;
+};
 } // Recluse
 
 

@@ -1,6 +1,12 @@
 // Recluse 
 #pragma once
 
+#if defined(_DEBUG)
+#ifndef RECLUSE_DEBUG
+#define RECLUSE_DEBUG 1
+#endif
+#endif
+
 #if defined(_WIN32)
     #include <vcruntime.h>
     #define RECLUSE_WINDOWS 1
@@ -10,6 +16,7 @@
     #define R_FORCEINLINE __forceinline
     #define R_NOVTABLE __declspec(novtable)
     #define R_DEBUG_BREAK() __debugbreak();
+    #define R_FORCE_CRASH(c) ExitProcess(c);
     #if defined(_M_X64) || defined(_M_AMD64)
         #define RECLUSE_64BIT
     #else
@@ -23,6 +30,7 @@
     #define R_FORCEINLINE 
     #define R_NOVTABLE
     #define R_DEBUG_BREAK()
+    #define R_FORCE_CRASH(c)
 #else
     #error "Architecture not supported for Recluse!"
 #endif 

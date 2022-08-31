@@ -101,10 +101,13 @@ private:
     void initializeBufferResources(U32 buffering);
     void destroyBufferResources();
     void destroyAllocators();
+    void allocateMemoryPool(D3D12MemoryPool* pPool, ResourceMemoryUsage memUsage);
 
     // Resource pools.
+    D3D12MemoryPool                 m_bufferMemPools[RESOURCE_MEMORY_USAGE_COUNT];
     D3D12Allocator*                 m_bufferPool[RESOURCE_MEMORY_USAGE_COUNT];
     D3D12Allocator*                 m_texturePool;
+    D3D12MemoryPool                 m_textureMemPool;
 
     ID3D12Device*                   m_device;
     D3D12Adapter*                   m_pAdapter;

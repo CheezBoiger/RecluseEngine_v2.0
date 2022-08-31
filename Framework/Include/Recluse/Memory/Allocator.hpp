@@ -62,6 +62,8 @@ public:
         return err;
     }
 
+
+    // Reset the allocator. This is more colloquially known as Clear().
     void reset() 
     {
         onReset();

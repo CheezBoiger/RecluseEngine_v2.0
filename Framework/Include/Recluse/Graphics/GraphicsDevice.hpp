@@ -37,7 +37,9 @@ struct GraphicsResourceDescription
 
 struct MemoryReserveDesc 
 {
+    //< Memory resource amount, in bytes, per usage index.
     U64 bufferPools[RESOURCE_MEMORY_USAGE_COUNT];
+    //< Memory resoure amount, in bytes, for textures on the gpu.
     U64 texturePoolGPUOnly;
 };
 

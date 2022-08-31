@@ -5,12 +5,6 @@
 #include "Recluse/Arch.hpp"
 #include <stdio.h>
 
-#if defined(_DEBUG)
-#ifndef RECLUSE_DEBUG
-#define RECLUSE_DEBUG 1
-#endif
-#endif
-
 #if defined(R_DEVELOPER)
 #define RECLUSE_DEVELOPER 1
 #endif
@@ -25,10 +19,10 @@
     }
 
 // Helper macros for logging messages.
-#define R_INFO(chan, format, ...)       R_LOG(chan, Recluse::LogInfo, format, __VA_ARGS__)
-#define R_WARN(chan, format, ...)       R_LOG(chan, Recluse::LogWarn, format, __VA_ARGS__)
-#define R_VERBOSE(chan, format, ...)    R_LOG(chan, Recluse::LogVerbose, format, __VA_ARGS__)
-#define R_TRACE(chan, format, ...)      R_LOG(chan, Recluse::LogTrace, format, __VA_ARGS__)
+#define R_INFO(chan, format, ...)       do { R_LOG(chan, Recluse::LogInfo, format, __VA_ARGS__);    } while (false)
+#define R_WARN(chan, format, ...)       do { R_LOG(chan, Recluse::LogWarn, format, __VA_ARGS__);    } while (false)
+#define R_VERBOSE(chan, format, ...)    do { R_LOG(chan, Recluse::LogVerbose, format, __VA_ARGS__)  } while (false)
+#define R_TRACE(chan, format, ...)      do { R_LOG(chan, Recluse::LogTrace, format, __VA_ARGS__)    } while (false)
  
 #if defined(RECLUSE_DEBUG) || defined(RECLUSE_DEVELOPER)
 namespace Recluse {
@@ -76,17 +70,18 @@ public:
 
 #if defined(RECLUSE_DEBUG) || defined(RECLUSE_DEVELOPER)
 #define R_ERR(chan, format, ...) \
-    { \
+    do { \
         R_LOG(chan, Recluse::LogError, format, __VA_ARGS__); \
         R_DEBUG_BREAK(); \
-    }
+    } while (false)
 
 // Call an interrupt to instruct a fatal error.
 #define R_FATAL_ERR(chan, format, ...) \
-    { \
-        R_LOG(chan, Recluse::LogError, format, __VA_ARGS__); \
+    do { \
+        R_LOG(chan, Recluse::LogFatal, format, __VA_ARGS__); \
         R_DEBUG_BREAK(); \
-    }
+        R_FORCE_CRASH(-1); \
+    } while (false)
 
 // NOTE(): We should always be implementing a function when needed, but for development purposes,
 // we can simply place a warning assert to let us know it is not written. Otherwise, to 
@@ -95,5 +90,6 @@ public:
 #else
 #define R_ERR(chan, format, ...) R_LOG(chan, Recluse::LogError, format, __VA_ARGS__)
 #define R_FATAL_ERR(chan, format, ...)
+    
 #define R_NO_IMPL()
 #endif

@@ -1,5 +1,5 @@
 # CMake Entry point build.
-cmake_minimum_required ( VERSION 3.0 )
+cmake_minimum_required ( VERSION 3.16 )
 project ( "RecluseProject v2.0" )
 
 # Mostly configurations are set here.

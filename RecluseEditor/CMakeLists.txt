@@ -1,4 +1,4 @@
-cmake_minimum_required( VERSION 3.0 )
+cmake_minimum_required( VERSION 3.16 )
 project("RecluseEditor")
 
 set ( RECLUSE_EDITOR_NAME "RecluseEditor" )
@@ -60,3 +60,51 @@ install(TARGETS ${RECLUSE_EDITOR_NAME}
 install(TARGETS ${RECLUSE_EDITOR_NAME}
         CONFIGURATIONS Release
         ARCHIVE DESTINATION Release/Lib)
+		
+# Code to run after the compilation of our thirdparty libs AND our Editor executable.
+install(CODE [[
+#			file(GET_RUNTIME_DEPENDENCIES 
+#				EXECUTABLES $<TARGET_FILE:RecluseEditor>
+#				RESOLVED_DEPENDENCIES_VAR R_DEPS
+#				UNRESOLVED_DEPENDENCIES_VAR U_DEPS
+#				DIRECTORIES ${CMAKE_INSTALL_PREFIX}/lib/vc_x64_dll
+#			)
+#
+#			foreach(_FILE ${R_DEPS})
+#				message(WARNING "${_FILE}")
+#				file(INSTALL
+#					#CONFIGURATIONS Release
+#					DESTINATION ${CMAKE_INSTALL_PREFIX}/Release/Bin
+#					TYPE SHARED_LIBRARY
+#					FOLLOW_SYMLINK_CHAIN
+#					FILES "${_FILE}"
+#				)
+#			endforeach()
+#			
+#			foreach(_FILE ${R_DEPS})
+#				message(WARNING "${_FILE}")
+#					file(INSTALL
+#						CONFIGURATIONS Debug
+#						DESTINATION ${CMAKE_INSTALL_PREFIX}/Debug/Bin
+#						TYPE SHARED_LIBRARY
+#						FOLLOW_SYMLINK_CHAIN
+#						FILES "${_FILE}"
+#				)
+#			endforeach()
+#			
+#			foreach(_FILE ${U_DEPS})
+#				message(ERROR "Can not resolve ${_FILE}")
+#			endforeach()
+#				
+				file(GLOB_RECURSE WX_DLLS "${CMAKE_INSTALL_PREFIX}/lib/vc_x64_dll/*.dll")
+				foreach(_FILE ${WX_DLLS})
+					file(INSTALL
+						DESTINATION $<$<CONFIG:Debug>:${CMAKE_INSTALL_PREFIX}/Debug/Bin>
+									$<$<CONFIG:Release>:${CMAKE_INSTALL_PREFIX}/Release/Bin>
+						TYPE SHARED_LIBRARY
+						FOLLOW_SYMLINK_CHAIN
+						FILES "${_FILE}"
+					)
+				endforeach()
+#				#message(WARNING "${WX_DLLS}")
+		]])

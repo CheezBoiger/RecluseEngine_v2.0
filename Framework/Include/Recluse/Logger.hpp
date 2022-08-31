@@ -20,7 +20,8 @@ enum LogType
     LogVerbose      = (1 << 3),
     LogInfo         = (1 << 4),
     LogDontStore    = (1 << 5),
-    LogTrace        = (1 << 6)
+    LogTrace        = (1 << 6),
+    LogFatal        = (1 << 7)
 };
 
 typedef U32 LogTypeFlags;
@@ -101,10 +102,15 @@ struct Log
 };
 
 
-void    setLogMask(LogTypeFlags enableFlags);
-void    setLogChannel(const std::string& channel, B8 enable);
+R_PUBLIC_API extern void    setLogMask(LogTypeFlags enableFlags);
+R_PUBLIC_API extern void    setLogChannel(const std::string& channel, B8 enable);
 
 // Display logging info to standard output.
-void    enableStandardOutput(B32 enable);
-void    enableLog(const std::string& log, B32 enable);
+R_PUBLIC_API extern void    enableStandardOutput(B32 enable);
+
+// Log information into a file.
+R_PUBLIC_API extern void        enableLogFile(const std::string& logPath, B32 enable = false);
+R_PUBLIC_API extern void        setLogFileMaxCache(U64 maxCachedSizeBytes);
+R_PUBLIC_API extern void        setLogFileMaxSize(U64 maxSizeBytes);
+R_PUBLIC_API extern std::string getLogFilePath();
 } // Recluse

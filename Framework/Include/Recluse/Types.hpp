@@ -106,15 +106,20 @@ public:
 
     T& operator()() { return getData(); }
 
-    void add() { increment(); }
-    void release() { decrement(); }
+    void addRef() { increment(); }
+
+    // Release by decrementing the reference counter on this object. Returns the 
+    // result of the decrement.
+    U32  release() { decrement(); return m_count; }
+
+    Bool hasRefs() const { return (getCount() > 0); }
 
     operator T () { return getData(); }
     //RefCount<T> operator=(const T& data) { return RefCount<T>(); }
 
 private:
     void increment() { ++m_count; }
-    void decrement() { --m_count; }
+    void decrement() { if (m_count > 0) --m_count; }
 
     T m_dat;
     U32 m_count;

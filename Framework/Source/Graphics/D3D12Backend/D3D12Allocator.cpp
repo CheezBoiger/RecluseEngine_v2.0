@@ -80,7 +80,7 @@ ErrType D3D12Allocator::allocate
         
         if (FAILED(hresult)) 
         {
-            R_ERR("D3D12Allocator", "Failed to call CreatePlacedResource() on code=(%d)", hresult)
+            R_ERR("D3D12Allocator", "Failed to call CreatePlacedResource() on code=(%d)", hresult);
         } 
         else 
         {
@@ -96,5 +96,14 @@ ErrType D3D12Allocator::allocate
 ErrType D3D12Allocator::free(D3D12MemoryObject* pObject)
 {
     return R_RESULT_NO_IMPL;
+}
+
+
+void D3D12Allocator::clear()
+{
+    R_ASSERT(m_pPool != NULL);
+    R_ASSERT(m_pAllocator != NULL);
+
+    m_pAllocator->reset();
 }
 } // Recluse

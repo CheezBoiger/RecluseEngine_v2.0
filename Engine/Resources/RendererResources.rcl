@@ -1,4 +1,4 @@
-recluse {
+namespace recluse {
 
 
 	enum TextureRenderId {
