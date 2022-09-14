@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Recluse/Types.hpp"
+#include "Recluse/Memory/Allocator.hpp"
 #include "D3D12Commons.hpp"
 
 #include "Recluse/Graphics/DescriptorSet.hpp"
@@ -11,80 +12,123 @@ namespace Recluse {
 
 
 class D3D12Device;
+class DescriptorHeapAllocation;
 
-class D3D12DescriptorHeap 
+
+// Descriptor heap handle, which holds onto several descriptor heaps available for allocation/freeing.
+//
+class DescriptorHeap
 {
 public:
+    // Invalid GPU address handle.
+    static const D3D12_GPU_DESCRIPTOR_HANDLE invalidGpuAddress;
+    // Invalid CPU address handle.
+    static const D3D12_CPU_DESCRIPTOR_HANDLE invalidCpuAddress;
 
-    D3D12DescriptorHeap(D3D12Device* pDevice);
+    DescriptorHeap();
+    virtual ~DescriptorHeap() { }
 
-    ~D3D12DescriptorHeap() {
-    }
+    ErrType                             initialize(D3D12Device* pDevice, const D3D12_DESCRIPTOR_HEAP_DESC& desc);
+    ErrType                             destroy(D3D12Device* pDevice);
 
-    ErrType initialize(D3D12_DESCRIPTOR_HEAP_TYPE type, U32 entries);
-    ErrType destroy();
+    virtual DescriptorHeapAllocation    allocate(U32 numDescriptors) = 0;
+    virtual void                        free(const DescriptorHeapAllocation& allocation) = 0;
 
-    ErrType update(U32 startEntry, U32 endEntry);
+    // Get the descriptor heap description.
+    D3D12_DESCRIPTOR_HEAP_DESC          getDesc() const { return m_pHeap->GetDesc(); }
+    // Get the native descriptor heap handle.
+    ID3D12DescriptorHeap*               getHeap() { return m_pHeap; }
 
-    UINT getMaxEntries() const { return m_maxEntries; }
+    // Check if the descriptor heap is valid.
+    Bool                                isValid() const { return (m_pHeap != nullptr); }
 
-    D3D12_CPU_DESCRIPTOR_HANDLE createRenderTargetView
-                                    (
-                                        U32 entryOffset, 
-                                        const D3D12_RENDER_TARGET_VIEW_DESC& desc, 
-                                        ID3D12Resource* pResource
-                                    );
+    // Is there space in this descriptor heap?
+    Bool                                hasAvailableSpace() const { return (m_currentTotalEntries < m_heapDesc.NumDescriptors); }
 
-    D3D12_CPU_DESCRIPTOR_HANDLE createDepthStencilView
-                                    (
-                                        U32 entryOffset, 
-                                        const D3D12_DEPTH_STENCIL_VIEW_DESC& desc,
-                                        ID3D12Resource* pResource
-                                    );
+    Bool                                isShaderVisible() const { return (m_heapDesc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE); }
 
-    D3D12_CPU_DESCRIPTOR_HANDLE createShaderResourceView
-                                    (
-                                        U32 entryOffset, 
-                                        const D3D12_SHADER_RESOURCE_VIEW_DESC& desc,
-                                        ID3D12Resource* pResource
-                                    );
+    D3D12_CPU_DESCRIPTOR_HANDLE         getBaseCpuHandle() const { return m_baseCpuHandle; }
 
-    D3D12_CPU_DESCRIPTOR_HANDLE createUnorderedAccessView
-                                    (
-                                        U32 entryOffset, 
-                                        const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc,
-                                        ID3D12Resource* pResource
-                                    );
+    D3D12_GPU_DESCRIPTOR_HANDLE         getBaseGpuHandle() const { return m_baseGpuHandle; }
 
-    D3D12_CPU_DESCRIPTOR_HANDLE createConstantBufferView
-                                    (
-                                        U32 entryOffset, 
-                                        const D3D12_CONSTANT_BUFFER_VIEW_DESC& desc,
-                                        ID3D12Resource* pResource
-                                    );
-
-    D3D12_CPU_DESCRIPTOR_HANDLE createSampler
-                                    (
-                                        U32 entryOffset, 
-                                        const D3D12_SAMPLER_DESC& desc
-                                    );
-
-    D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandle(U32 entryOffset = 0u);
-
-private:
-    D3D12Device* m_pDevice;
-    ID3D12DescriptorHeap* m_pCPUDescriptorHeap;
-    ID3D12DescriptorHeap* m_pGPUDescriptorHeap;
-    D3D12_DESCRIPTOR_HEAP_TYPE m_descHeapType;
-    UINT                        m_descIncSz;
-    UINT                        m_maxEntries;
+protected:
+    ID3D12DescriptorHeap*                   m_pHeap;
+    std::vector<DescriptorHeapAllocation>   m_freeAllocations;
+    U32                                     m_currentTotalEntries;
+    U32                                     m_descriptorSize;
+    U32                                     m_heapId;
+    D3D12_DESCRIPTOR_HEAP_DESC              m_heapDesc;
+    Allocator*                              m_pDescriptorHeapAllocator;
+    D3D12_CPU_DESCRIPTOR_HANDLE             m_baseCpuHandle;
+    D3D12_GPU_DESCRIPTOR_HANDLE             m_baseGpuHandle;
 };
 
 
-struct DescriptorTable 
+class DescriptorHeapAllocation
 {
-    U64 offset;
-    U64 entries;
+public:
+
+    DescriptorHeapAllocation
+        (
+            DescriptorHeap* pDescriptorHeap = nullptr, 
+            D3D12_CPU_DESCRIPTOR_HANDLE baseCpuHandle = DescriptorHeap::invalidCpuAddress, 
+            D3D12_GPU_DESCRIPTOR_HANDLE baseGpuHandle = DescriptorHeap::invalidGpuAddress,
+            U32 totalHandles = 0,
+            U32 descriptorSize = 0,
+            U32 heapId = ~0
+        );
+
+    ~DescriptorHeapAllocation() {}
+
+    U32                         getTotalHandles() const { return m_totalHandles; }
+
+    // Get the gpu descriptor handle based on the entryOffset(index).
+    D3D12_GPU_DESCRIPTOR_HANDLE getGpuHandle(U32 entryOffset = 0u) const;
+
+    // Get the cpu descriptor handle based on the entryOffset(index).
+    D3D12_CPU_DESCRIPTOR_HANDLE getCpuHandle(U32 entryOffset = 0u) const;
+    
+    // Grab the native descriptor heap.
+    ID3D12DescriptorHeap*       getNativeDescriptorHeap() { return m_pDescriptorHeap->getHeap(); }
+
+    // Check if the descriptor heap is shader visible, can be visible to our shaders for binding and 
+    // using resources.
+    Bool                        isShaderVisible() const { return (m_baseGpuDescriptorHandle.ptr != 0); }
+
+    // Check if the descriptor heap is valid, meaning if it has been initialized.
+    Bool                        isValid() const { return m_baseCpuDescriptorHandle.ptr != 0; }
+
+    // The actual descriptor atom size provided by the device context (usually from the driver itself.)
+    U32                         getDescriptorSize() const { return m_descIncSz; }
+
+private:
+    // The descriptor heap.
+    DescriptorHeap*             m_pDescriptorHeap;
+    U32                         m_descIncSz;
+    U32                         m_totalHandles;
+    U32                         m_heapId;
+    D3D12_CPU_DESCRIPTOR_HANDLE m_baseCpuDescriptorHandle;
+    D3D12_GPU_DESCRIPTOR_HANDLE m_baseGpuDescriptorHandle;
+};
+
+
+// Multiple Cpu descriptor heaps can exist during the lifetime of the application.
+// This is because the rendering gpu has a limited set of descriptor heaps it may be able to bind per frame.
+class CpuDescriptorHeap : public DescriptorHeap
+{
+public:
+    virtual DescriptorHeapAllocation    allocate(U32 numDescriptors) override;
+    virtual void                        free(const DescriptorHeapAllocation& allocation) override { }
+};
+
+
+// Because the rendering gpu can only bind a limited set of descriptor heaps per frame, along with a limited number to create due to the 
+// memory size of about 96 MB, we should keep one set of gpu descriptor heaps. We don't need to create more.
+class GpuDescriptorHeap : public DescriptorHeap
+{
+public:
+    virtual DescriptorHeapAllocation    allocate(U32 numDescriptors) override;
+    virtual void                        free(const DescriptorHeapAllocation& allocation) override { }
 };
 
 
@@ -103,70 +147,62 @@ class D3D12DescriptorSet : public DescriptorSet
 {
 public:
 
+    DescriptorHeapAllocation*   getBaseAllocation() { return m_tables.data(); }
+
+    U32                         getTotalAllocations() const { return static_cast<U32>(m_tables.size()); }
+
+    virtual ErrType             update(DescriptorSetBind* pBinds, U32 bindCount) override;
+
 private:
-    D3D12DescriptorHeap*  m_pManagement;
-    std::vector<DescriptorTable>    m_tables;
+    DescriptorHeap*                         m_pManagement;
+    std::vector<DescriptorHeapAllocation>   m_tables;
 };
 
 
-class DescriptorHeapManager 
+// Descriptor heap manager handler. Essentially a helper.
+class CpuDescriptorHeapManager
 {
 public:
-
-    D3D12_CPU_DESCRIPTOR_HANDLE createSampler(const D3D12_SAMPLER_DESC& desc) 
-    {
-        const UINT maxEntries = m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER].pHeap->getMaxEntries();
-        const UINT currOffset = m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER].currentOffset;
-
-        m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER].currentOffset += 
-            (currOffset < maxEntries) ? 1 : 0;
-
-        return m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER].pHeap->createSampler
-                                                                    (
-                                                                        m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER].currentOffset, 
-                                                                        desc
-                                                                    );
-    }
-
-    D3D12_CPU_DESCRIPTOR_HANDLE createRtv(const D3D12_RENDER_TARGET_VIEW_DESC& desc, ID3D12Resource* pRtvResource)
-    {
-        const UINT maxEntries = m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_RTV].pHeap->getMaxEntries();
-        const UINT currOffset = m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_RTV].currentOffset;
-
-        m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_RTV].currentOffset +=
-            (currOffset < maxEntries) ? 1 : 0;
-
-        return m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_RTV].pHeap->createRenderTargetView
-                                                                (
-                                                                    m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_RTV].currentOffset,
-                                                                    desc, pRtvResource
-                                                                );
-    }
-
-    D3D12_CPU_DESCRIPTOR_HANDLE createDsv(const D3D12_DEPTH_STENCIL_VIEW_DESC& desc, ID3D12Resource* pDsvResource)
-    {
-        return {0};
-    }
-
-    D3D12_CPU_DESCRIPTOR_HANDLE createUav(const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc, ID3D12Resource* pUavResource)
-    {
-        return {0};
-    }
-
-    D3D12_CPU_DESCRIPTOR_HANDLE createSrv(const D3D12_SHADER_RESOURCE_VIEW_DESC& desc, ID3D12Resource* pSrvResource)
-    {
-        return {0};
-    }
-    
+    DescriptorHeapAllocation    allocate(U32 numberDescriptors);
+    void                        free(const DescriptorHeapAllocation& alloc);
 private:
+    std::vector<CpuDescriptorHeap> m_cpuHeaps;
+};
 
-    struct HeapMetaData 
+
+class DescriptorHeapAllocationManager 
+{
+public:
+    enum GpuHeapType
     {
-        D3D12DescriptorHeap*    pHeap;
-        UINT64                  currentOffset;
+        GPU_CBV_SRV_UAV,
+        GPU_SAMPLER,
+        GPU_DESCRIPTOR_HEAP_COUNTS,
+        GPU_UNKNOWN
     };
 
-    HeapMetaData m_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES];
-    
+    enum CpuHeapType
+    {
+        CPU_RTV,
+        CPU_DSV,
+        CPU_CBV_SRV_UAV,
+        CPU_SAMPLER,
+        CPU_DESCRIPTOR_HEAP_COUNTS,
+        CPU_UNKNOWN
+    };
+
+    ErrType                     initialize();
+    ErrType                     release();
+
+    DescriptorHeapAllocation    allocate(U32 numberDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
+    void                        free(const DescriptorHeapAllocation& alloc);
+
+    // Upload a section of cpu handles to the gpu descriptor heap.
+    void                        upload();
+
+private:
+
+    CpuDescriptorHeapManager        m_cpuDescriptorHeapManagers[CPU_DESCRIPTOR_HEAP_COUNTS];
+    GpuDescriptorHeap               m_gpuHeaps[GPU_DESCRIPTOR_HEAP_COUNTS];
 };
 } // Recluse 

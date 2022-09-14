@@ -21,21 +21,21 @@ ErrType D3D12GraphicsResourceView::initialize(D3D12Device* pDevice)
         case RESOURCE_VIEW_TYPE_RENDER_TARGET:
         {
             D3D12_RENDER_TARGET_VIEW_DESC desc = { };
-            pDevice->createRenderTargetView(desc);
+            m_rtvDesc = desc;
             break;
         }
 
         case RESOURCE_VIEW_TYPE_DEPTH_STENCIL:
         {
             D3D12_DEPTH_STENCIL_VIEW_DESC desc = { };
-            pDevice->createDepthStencilView(desc);
+            m_dsvDesc = desc;
             break;
         }
 
         case RESOURCE_VIEW_TYPE_SHADER_RESOURCE:
         {
             D3D12_SHADER_RESOURCE_VIEW_DESC desc = { };
-            pDevice->createShaderResourceView(desc);
+            m_srvDesc = desc;
             break;
         }
 
@@ -43,7 +43,7 @@ ErrType D3D12GraphicsResourceView::initialize(D3D12Device* pDevice)
         case RESOURCE_VIEW_TYPE_STORAGE_IMAGE:
         {
             D3D12_UNORDERED_ACCESS_VIEW_DESC desc = { };
-            pDevice->createUnorderedAccessView(desc);
+            m_uavDesc = desc;
             break;
         }
 
@@ -61,13 +61,7 @@ ErrType D3D12Sampler::initialize(D3D12Device* pDevice, const SamplerCreateDesc& 
 
     D3D12_SAMPLER_DESC samplerDesc = { };
 
-    m_samplerCPUAddr = pDevice->createSampler(samplerDesc);
-
-    if (m_samplerCPUAddr.ptr == 0) 
-    {
-        R_ERR(R_CHANNEL_D3D12, "Failed to alloc sampler from device!");
-        return R_RESULT_FAILED;
-    }
+    m_samplerDesc = samplerDesc;
 
     return R_RESULT_OK;
 }

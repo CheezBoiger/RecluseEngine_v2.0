@@ -11,10 +11,11 @@
 namespace Recluse {
 
 class D3D12Adapter;
-class D3D12Allocator;
+class D3D12ResourceAllocator;
 class D3D12Swapchain;
 class D3D12Queue;
 class D3D12CommandList;
+class D3D12Resource;
 
 struct BufferResources 
 {
@@ -82,18 +83,19 @@ public:
 
     BufferResources* getCurrentBufferResource() { return &m_bufferResources[m_currentBufferIndex]; }
 
-    D3D12_CPU_DESCRIPTOR_HANDLE createSampler(const D3D12_SAMPLER_DESC& desc);
-    D3D12_CPU_DESCRIPTOR_HANDLE createRenderTargetView(const D3D12_RENDER_TARGET_VIEW_DESC& desc);
-    D3D12_CPU_DESCRIPTOR_HANDLE createDepthStencilView(const D3D12_DEPTH_STENCIL_VIEW_DESC& desc);
-    D3D12_CPU_DESCRIPTOR_HANDLE createShaderResourceView(const D3D12_SHADER_RESOURCE_VIEW_DESC& desc);
-    D3D12_CPU_DESCRIPTOR_HANDLE createUnorderedAccessView(const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc);
+    // Helper descriptor creators for the device.
+    void createSampler(const D3D12_SAMPLER_DESC& desc);
+    void createRenderTargetView(D3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC& desc, D3D12_CPU_DESCRIPTOR_HANDLE destDescriptorHandle);
+    void createDepthStencilView(D3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& desc, D3D12_CPU_DESCRIPTOR_HANDLE destDescriptorHandle);
+    void createShaderResourceView(const D3D12_SHADER_RESOURCE_VIEW_DESC& desc);
+    void createUnorderedAccessView(const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc);
 
     D3D12_FEATURE_DATA_FORMAT_SUPPORT checkFormatSupport(ResourceFormat format);
 
-    DescriptorHeapManager* getDescriptorHeapManager() { return &m_descHeapManager; }
+    DescriptorHeapAllocationManager* getDescriptorHeapManager() { return &m_descHeapManager; }
 
-    D3D12Allocator* getBufferAllocator(ResourceMemoryUsage usage) const { return m_bufferPool[usage]; }
-    D3D12Allocator* getTextureAllocator() const { return m_texturePool; }
+    D3D12ResourceAllocator* getBufferAllocator(ResourceMemoryUsage usage) const { return m_bufferPool[usage]; }
+    D3D12ResourceAllocator* getTextureAllocator() const { return m_texturePool; }
 
 private:
 
@@ -105,8 +107,8 @@ private:
 
     // Resource pools.
     D3D12MemoryPool                 m_bufferMemPools[RESOURCE_MEMORY_USAGE_COUNT];
-    D3D12Allocator*                 m_bufferPool[RESOURCE_MEMORY_USAGE_COUNT];
-    D3D12Allocator*                 m_texturePool;
+    D3D12ResourceAllocator*                 m_bufferPool[RESOURCE_MEMORY_USAGE_COUNT];
+    D3D12ResourceAllocator*                 m_texturePool;
     D3D12MemoryPool                 m_textureMemPool;
 
     ID3D12Device*                   m_device;
@@ -115,7 +117,7 @@ private:
     D3D12CommandList*               m_pPrimaryCommandList;
     D3D12Swapchain*                 m_swapchain;
 
-    DescriptorHeapManager           m_descHeapManager;
+    DescriptorHeapAllocationManager m_descHeapManager;
 
     std::vector<BufferResources>    m_bufferResources;
     U32                             m_currentBufferIndex;

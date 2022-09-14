@@ -7,7 +7,7 @@
 namespace Recluse {
 
 
-D3D12Allocator::D3D12Allocator(Allocator* pAllocator,
+D3D12ResourceAllocator::D3D12ResourceAllocator(Allocator* pAllocator,
                                D3D12MemoryPool* pPool)
     : m_pAllocator(pAllocator)
     , m_pPool(pPool)
@@ -18,7 +18,7 @@ D3D12Allocator::D3D12Allocator(Allocator* pAllocator,
 
 
 
-ErrType D3D12Allocator::initialize(U32 garbageBufferCount)
+ErrType D3D12ResourceAllocator::initialize(U32 garbageBufferCount)
 {  
     R_ASSERT(m_pPool            != NULL);
     R_ASSERT(m_pAllocator       != NULL);
@@ -34,13 +34,13 @@ ErrType D3D12Allocator::initialize(U32 garbageBufferCount)
 }
 
 
-ErrType D3D12Allocator::destroy()
+ErrType D3D12ResourceAllocator::destroy()
 {
     return R_RESULT_NO_IMPL;
 }
 
 
-ErrType D3D12Allocator::allocate
+ErrType D3D12ResourceAllocator::allocate
                             (
                                 ID3D12Device* pDevice, 
                                 D3D12MemoryObject* pOut, 
@@ -93,13 +93,13 @@ ErrType D3D12Allocator::allocate
 }
 
 
-ErrType D3D12Allocator::free(D3D12MemoryObject* pObject)
+ErrType D3D12ResourceAllocator::free(D3D12MemoryObject* pObject)
 {
     return R_RESULT_NO_IMPL;
 }
 
 
-void D3D12Allocator::clear()
+void D3D12ResourceAllocator::clear()
 {
     R_ASSERT(m_pPool != NULL);
     R_ASSERT(m_pAllocator != NULL);

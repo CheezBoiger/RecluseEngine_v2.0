@@ -12,10 +12,10 @@ namespace Recluse {
 // Allocator for D3D12 resources. This does not allocate the d3d12 memory heap itself,
 // only manages it, so be sure to handle the heap creation and destruction outside this
 // class!
-class D3D12Allocator 
+class D3D12ResourceAllocator 
 {
 public:
-    D3D12Allocator
+    D3D12ResourceAllocator
         (
             Allocator* pAllocator = nullptr,
             D3D12MemoryPool* pPool = nullptr

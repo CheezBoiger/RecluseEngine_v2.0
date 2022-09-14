@@ -20,6 +20,8 @@ public:
     ResourceViewDesc getDesc() const { return m_desc; }
 
     GraphicsResource* getResource() const { return m_desc.pResource; }
+
+    Bool hasResource() const { return m_desc.pResource != nullptr; }
     
 private:
     ResourceViewDesc m_desc;

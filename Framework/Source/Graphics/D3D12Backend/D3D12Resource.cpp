@@ -33,7 +33,7 @@ ErrType D3D12Resource::initialize
     D3D12_RESOURCE_DESC d3d12desc           = { };
     D3D12_RESOURCE_STATES state             = Dxgi::getNativeResourceState(initialState, isPixelShader);
     D3D12_CLEAR_VALUE optimizedClearValue   = { };
-    D3D12Allocator* pAllocator              = nullptr;
+    D3D12ResourceAllocator* pAllocator              = nullptr;
     HRESULT sResult                         = S_OK;
 
     d3d12desc.Dimension         = getDimension(desc.dimension);
@@ -99,7 +99,7 @@ ErrType D3D12Resource::destroy()
     {
         if (!m_isCommitted) 
         {
-            D3D12Allocator* pAllocator = nullptr;
+            D3D12ResourceAllocator* pAllocator = nullptr;
             // Get the allocator from the device maybe?
             R_ASSERT(pAllocator != NULL);
             

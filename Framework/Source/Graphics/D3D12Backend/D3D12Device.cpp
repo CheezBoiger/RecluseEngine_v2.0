@@ -4,6 +4,7 @@
 #include "D3D12Queue.hpp"
 #include "D3D12Swapchain.hpp"
 #include "D3D12CommandList.hpp"
+#include "D3D12Resource.hpp"
 #include "D3D12Allocator.hpp"
 #include "Recluse/Types.hpp"
 #include "Recluse/Messaging.hpp"
@@ -333,38 +334,33 @@ GraphicsSwapchain* D3D12Device::getSwapchain()
 }
 
 
-D3D12_CPU_DESCRIPTOR_HANDLE D3D12Device::createSampler(const D3D12_SAMPLER_DESC& desc)
+void D3D12Device::createSampler(const D3D12_SAMPLER_DESC& desc)
 {
-    D3D12_CPU_DESCRIPTOR_HANDLE handle = m_descHeapManager.createSampler(desc);
-    return handle;
+    R_NO_IMPL();
 }
 
 
-D3D12_CPU_DESCRIPTOR_HANDLE D3D12Device::createRenderTargetView(const D3D12_RENDER_TARGET_VIEW_DESC& desc)
+void D3D12Device::createRenderTargetView(D3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC& desc, D3D12_CPU_DESCRIPTOR_HANDLE destDescriptor)
 {
-    R_NO_IMPL();
-    return {};
+    m_device->CreateRenderTargetView(pResource->get(), &desc, destDescriptor);
 }
 
 
-D3D12_CPU_DESCRIPTOR_HANDLE D3D12Device::createDepthStencilView(const D3D12_DEPTH_STENCIL_VIEW_DESC& desc)
+void D3D12Device::createDepthStencilView(D3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& desc, D3D12_CPU_DESCRIPTOR_HANDLE destDescriptor)
 {
-    R_NO_IMPL();
-    return {};
+    m_device->CreateDepthStencilView(pResource->get(), &desc, destDescriptor);
 }
 
 
-D3D12_CPU_DESCRIPTOR_HANDLE D3D12Device::createShaderResourceView(const D3D12_SHADER_RESOURCE_VIEW_DESC& desc)
+void D3D12Device::createShaderResourceView(const D3D12_SHADER_RESOURCE_VIEW_DESC& desc)
 {
     R_NO_IMPL();
-    return {};
 }
 
 
-D3D12_CPU_DESCRIPTOR_HANDLE D3D12Device::createUnorderedAccessView(const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc)
+void D3D12Device::createUnorderedAccessView(const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc)
 {
     R_NO_IMPL();
-    return {};
 }
 
 
