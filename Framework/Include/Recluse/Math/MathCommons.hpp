@@ -57,4 +57,18 @@ static Bool isPowerOf2(T d)
 {
 	return R_IS_POWER_OF_2(d);
 }
+
+
+template<typename T>
+static T minimum(T a, T b)
+{
+	return R_MIN(a, b);
+}
+
+
+template<typename T>
+static T maximum(T a, T b)
+{
+	return R_MAX(a, b);
+}
 } // Recluse
