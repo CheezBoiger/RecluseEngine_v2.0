@@ -96,7 +96,7 @@ public:
 
     inline Bool isInitialized() const { return m_initialized; }
 
-    Bool registerSystem(ECS::System* pSystem)
+    Bool registerSystem(ECS::AbstractSystem* pSystem)
     {
         m_systems.push(pSystem);
         return true;
@@ -122,10 +122,11 @@ private:
     std::list<Thread>           m_threads;
     std::map<JobType, Thread*>  m_jobThreads;
 
+    // Priority system queue.
     std::priority_queue
         <
-            ECS::System*,
-            std::vector<ECS::System*>,
+            ECS::AbstractSystem*,
+            std::vector<ECS::AbstractSystem*>,
             ECS::SystemPointerComparer
         >                       m_systems;
 

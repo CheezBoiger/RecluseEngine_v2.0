@@ -51,6 +51,8 @@ enum GameObjectStatus
 // Game object, which holds all our object logic and script behavior.
 // Kept as native C++, this class holds scripting behavior, which 
 // will be used by objects in the game world.
+// Essentially, this is our entity that contains the given 
+// general purpose info that identifies it in the world.
 class GameObject : public Serializable 
 {
 public:
@@ -167,6 +169,12 @@ public:
         return (iter != m_childrenNodes.end());
     }
 
+    template<typename Comp>
+    Comp* getComponent() { return nullptr; }
+
+    template<typename Comp>
+    void addComponent() { }
+
     virtual RGUID getClassGUID() const = 0;
 
     virtual const char* getClassName() const = 0;
@@ -208,6 +216,9 @@ private:
     // Keep in mind that any object children must also inherit the world transform from the 
     // game object parent.
     std::vector<GameObject*>    m_childrenNodes;
+
+    // All component handles associated with this entity.
+    std::vector<ECS::Component*> m_components;
 
     // Game Object uuid.
     GameUUID                    m_guuid;

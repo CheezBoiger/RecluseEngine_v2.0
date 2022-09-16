@@ -14,7 +14,7 @@ class GraphicsDevice;
 class GraphicsResource;
 class DescriptorSetLayout;
 class DescriptorSet;
-struct Bounds3D;
+struct Bounds3d;
 class Material;
 
 namespace Engine {

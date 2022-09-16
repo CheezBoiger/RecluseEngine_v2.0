@@ -17,26 +17,26 @@ namespace Engine {
 //< Buffer should be used as global scene information, in regards to multiple
 // uses in render scene.
 RECLUSE_DECLARE_SCENE_BUFFER(RecluseSceneView)
-    RECLUSE_SCENE_PARAMETER(view,               Matrix44);
-    RECLUSE_SCENE_PARAMETER(clip,               Matrix44);
-    RECLUSE_SCENE_PARAMETER(viewToClip,         Matrix44);
-    RECLUSE_SCENE_PARAMETER(clipToView,         Matrix44);
-    RECLUSE_SCENE_PARAMETER(engineTime,         F32);
-    RECLUSE_SCENE_PARAMETER(fixedTime,          F32);
-    RECLUSE_SCENE_PARAMETER(cameraJitter,       Float2);
-    RECLUSE_SCENE_PARAMETER(cameraPosition,     Float3);
-    RECLUSE_SCENE_PARAMETER(deltaTime,          F32);
-    RECLUSE_SCENE_PARAMETER(cameraDirection,    Float3);
-    RECLUSE_SCENE_PARAMETER(screenWidth,        F32);
-    RECLUSE_SCENE_PARAMETER(screenHeight,       F32);
-    RECLUSE_SCENE_PARAMETER(invScreenWidth,     F32);
-    RECLUSE_SCENE_PARAMETER(invScreenHeight,    F32);
-    RECLUSE_SCENE_PARAMETER(exposure,           F32);
-    RECLUSE_SCENE_PARAMETER(gamma,              F32);
-    RECLUSE_SCENE_PARAMETER(enableBump,         F32);
-    RECLUSE_SCENE_PARAMETER(near,               F32);
-    RECLUSE_SCENE_PARAMETER(far,                F32);
-    RECLUSE_SCENE_PARAMETER(sunPosition,        Float4);
+    RECLUSE_SCENE_PARAMETER(View,                   Matrix44);
+    RECLUSE_SCENE_PARAMETER(Clip,                   Matrix44);
+    RECLUSE_SCENE_PARAMETER(ViewToClip,             Matrix44);
+    RECLUSE_SCENE_PARAMETER(ClipToView,             Matrix44);
+    RECLUSE_SCENE_PARAMETER(EngineTime,             F32);
+    RECLUSE_SCENE_PARAMETER(FixedTime,              F32);
+    RECLUSE_SCENE_PARAMETER(CameraJitter,           Float2);
+    RECLUSE_SCENE_PARAMETER(CameraPosition,         Float3);
+    RECLUSE_SCENE_PARAMETER(DeltaTime,              F32);
+    RECLUSE_SCENE_PARAMETER(CameraDirection,        Float3);
+    RECLUSE_SCENE_PARAMETER(ScreenWidth,            F32);
+    RECLUSE_SCENE_PARAMETER(ScreenHeight,           F32);
+    RECLUSE_SCENE_PARAMETER(InverseScreenWidth,     F32);
+    RECLUSE_SCENE_PARAMETER(InverseScreenHeight,    F32);
+    RECLUSE_SCENE_PARAMETER(Exposure,               F32);
+    RECLUSE_SCENE_PARAMETER(Gamma,                  F32);
+    RECLUSE_SCENE_PARAMETER(EnableBump,             F32);
+    RECLUSE_SCENE_PARAMETER(Near,                   F32);
+    RECLUSE_SCENE_PARAMETER(Far,                    F32);
+    RECLUSE_SCENE_PARAMETER(SunPosition,            Float4);
 RECLUSE_END_SCENE_BUFFER();
 
 

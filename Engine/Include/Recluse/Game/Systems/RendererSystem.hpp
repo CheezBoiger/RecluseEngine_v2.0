@@ -9,7 +9,7 @@
 namespace Recluse {
 
 
-class RendererSystem : public ECS::SystemDefinition<RendererComponent>
+class RendererSystem : public ECS::System<RendererComponent>
 {
 public:
 

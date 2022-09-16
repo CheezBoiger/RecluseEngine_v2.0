@@ -21,8 +21,7 @@ class Scene : public Serializable
 {
 public:
     Scene() 
-        : m_currentCamera(nullptr)
-        , m_gameMemAllocator(nullptr)
+        : m_gameMemAllocator(nullptr)
         , m_gameMemPool(nullptr) { }
 
     virtual ~Scene() { }
@@ -51,10 +50,14 @@ public:
     // Update the scene using the tick. Can be overwritten 
     virtual R_PUBLIC_API void update(const RealtimeTick& tick);
 
-    // 
-    void setCamera(Camera* camera) { m_currentCamera = camera; }
+    // add a camera to the scene.
+    void addCamera(Camera* camera) { m_cameras.emplace_back(camera); }
 
-    Camera* getCurrentCamera() const { return m_currentCamera; }
+    // Get the main camera in the scene.
+    Camera* getMainCamera() const { return m_cameras[0]; }
+
+    Camera* getCamera(U32 index) { return m_cameras[index]; }
+
 protected:
 
     // Serialize the given scene. This should be used for 
@@ -79,8 +82,9 @@ private:
     std::vector<ECS::GameObject*>   m_gameObjects;
     std::string                     m_name;
 
-    // Current camera set in scene.
-    Camera*                         m_currentCamera;
+    // cameras set in scene.
+    // the index 0 is always the main camera.
+    std::vector<Camera*>            m_cameras;
 
     MemoryPool*                     m_gameMemPool;
     Allocator*                      m_gameMemAllocator;
