@@ -79,20 +79,13 @@ ErrType VulkanDescriptorSetLayout::destroy(VulkanDevice* pDevice)
 
 ErrType VulkanDescriptorSet::initialize(VulkanDevice* pDevice, VulkanDescriptorSetLayout* pLayout)
 {
-    VkDescriptorSetLayout layout    = pLayout->get();
-    VkResult result                 = VK_SUCCESS;
-    VkDevice device                 = pDevice->get();
-    VkDescriptorPool pool           = pDevice->getDescriptorHeap()->get();
+    VkDescriptorSetLayout layout        = pLayout->get();
+    VkDevice device                     = pDevice->get();
+    VulkanDescriptorManager* pManager   = pDevice->getDescriptorHeap();
 
-    VkDescriptorSetAllocateInfo allocIf = { };
-    allocIf.sType                       = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocIf.descriptorSetCount          = 1;
-    allocIf.pSetLayouts                 = &layout;
-    allocIf.descriptorPool              = pool;
+    m_allocation = pManager->allocate(&m_set, 1, &layout);
 
-    result = vkAllocateDescriptorSets(device, &allocIf, &m_set);
-
-    if (result != VK_SUCCESS) 
+    if (!m_allocation.isValid()) 
     {
         R_ERR(R_CHANNEL_VULKAN, "Failed to allocate vulkan descriptor set!!");
         return R_RESULT_FAILED;
@@ -106,28 +99,29 @@ ErrType VulkanDescriptorSet::initialize(VulkanDevice* pDevice, VulkanDescriptorS
 
 ErrType VulkanDescriptorSet::destroy()
 {
-    VkDevice device         = m_pDevice->get();
-    VkDescriptorPool pool   = m_pDevice->getDescriptorHeap()->get();
-    VkResult result         = VK_SUCCESS;
+    VkDevice device                     = m_pDevice->get();
+    VulkanDescriptorManager* pManager   = m_pDevice->getDescriptorHeap();
+    ErrType result                      = R_RESULT_OK;
 
     if (m_set) 
     {
         R_DEBUG(R_CHANNEL_VULKAN, "freeing vulkan descriptor set...");
     
-        result = vkFreeDescriptorSets(device, pool, 1, &m_set);
+        result = pManager->free(m_allocation, &m_set, 1);
         
-        if (result != VK_SUCCESS) 
+        if (result != R_RESULT_OK) 
         {
             R_ERR(R_CHANNEL_VULKAN, "Failed to free vulkan native descriptor set!");
         } 
         else 
         {
             m_set = VK_NULL_HANDLE;   
+            m_allocation.invalidate();
         }
 
     }
     
-    return R_RESULT_OK;
+    return result;
 }
 
 

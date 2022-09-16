@@ -2,6 +2,7 @@
 #pragma once
 
 #include "VulkanCommons.hpp"
+#include "VulkanDescriptorManager.hpp"
 
 #include "Recluse/Graphics/RenderPass.hpp"
 #include "Recluse/Graphics/DescriptorSet.hpp"
@@ -77,7 +78,8 @@ public:
     VkDescriptorSet get() const { return m_set; }
 
 private:
-    VkDescriptorSet m_set;
-    VulkanDevice*   m_pDevice;
+    VkDescriptorSet             m_set;
+    VulkanDescriptorAllocation  m_allocation;
+    VulkanDevice*               m_pDevice;
 };
 } // Recluse

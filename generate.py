@@ -21,6 +21,7 @@ def parse_arguments():
     parser.add_argument("-dx12", dest="dx12", action="store_true", help="Enable DX12", default=False)
     parser.add_argument("-glsl", dest="glsl", action="store_true", help="Enable GLSL compilation.", default=False)
     parser.add_argument("-dxil", dest="dxil", action="store_true", help="Enable DXIL compilation.", default=False)
+    parser.add_argument("-test", dest="test", action="store_true", help="Enable tests.", default=False)
     args = parser.parse_args()
     parsed_commands = args
     return
@@ -41,7 +42,7 @@ def add_additional_cmake_commands():
     if parsed_commands.glsl == True:
         cmds.append("-DRCL_GLSLANG=True")
     else:
-        cmds.append("-DRCL_GLSLNAG=False")
+        cmds.append("-DRCL_GLSLANG=False")
         
     if parsed_commands.dxil == True:
         cmds.append("-DRCL_DXC=True")
@@ -67,6 +68,14 @@ def main():
     cmake_commands.append("..")
     
     subprocess.call(cmake_commands)
+    
+    # Call test params.
+    if parsed_commands.test == True:
+        if not os.path.exists("../BuildTest"):
+            os.makedirs("../BuildTest")
+        os.chdir("../BuildTest")
+        subprocess.call(["cmake", "../Test" ])
+        
     print("Done!")
     os.chdir("..")
     return

@@ -8,7 +8,9 @@ namespace Recluse {
 
 class DualQuaternion
 {
-    Quaternion part;
-    Quaternion dual;
+    Quaternion Part;
+    Quaternion Dual;
+
+
 };
 } // Recluse

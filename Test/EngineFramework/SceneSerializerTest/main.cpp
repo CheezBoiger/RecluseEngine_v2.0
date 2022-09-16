@@ -136,7 +136,7 @@ public:
                 R_TRACE(getName().c_str(), "Game Object: %s", name);
                 
                 if (rguid == TestObject::classGUID()) {
-                    R_TRACE(__FUNCTION__, "This is a test object !")
+                    R_TRACE(__FUNCTION__, "This is a test object !");
                     TestObject* pTestObject = new TestObject();
                     pTestObject->deserialize(pArchive);
                     addGameObject(pTestObject);
