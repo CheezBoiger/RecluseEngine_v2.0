@@ -4,9 +4,9 @@
 #include "Recluse/Game/Component.hpp"
 
 #include "Recluse/Math/Matrix44.hpp"
+#include "Recluse/Math/Matrix43.hpp"
 #include "Recluse/Math/Vector3.hpp"
 #include "Recluse/Math/Quaternion.hpp"
-
 
 namespace Recluse {
 
@@ -16,6 +16,8 @@ namespace Recluse {
 class Transform : public ECS::Component 
 {
 public:
+    R_COMPONENT_DECLARE(Transform);
+
     virtual ~Transform() { }
 
     R_EDITOR_DECLARE("visible", "public", true)
@@ -29,14 +31,29 @@ public:
     Quaternion  localRotation;  // local rotation relative to the parent.
     R_EDITOR_DECLARE("visible", "public", true)
     Float3      eulerAngles;    // rotation represented in euler angles (roll, pitch, yaw.)
+    R_EDITOR_DECLARE("visible", "public", true)
+    Float3      forward;        // forward facing vector of the object.
+    R_EDITOR_DECLARE("visible", "public", true)
+    Float3      right;          // right facing vector of the object.
+    R_EDITOR_DECLARE("visible", "public", true)
+    Float3      up;             // up facing vector of the object.
 
     // Update the transform.
-    virtual void onUpdate(const RealtimeTick& tick) override;
+    // Calculation is usually done as such:
+    //      MVP = Projection * View * Model
+    // 
+    // This is the typical calculation.
+    virtual void                onUpdate(const RealtimeTick& tick) override { }
+
+    virtual void                onCleanUp() override;
+
+    Matrix44                    getLocalToWorld() const { return static_cast<Matrix44>(m_localToWorld); }
+    Matrix44                    getWorldToLocal() const { return m_worldToLocal; }
 
 private:
-    Matrix44 m_localToWorld;        // Local to World Matrix.
+    Matrix43 m_localToWorld;        // Local to World Matrix.
+    Matrix43 m_prevLocalToWorld;    // Previous Local To World.
+
     Matrix44 m_worldToLocal;        // World to Local Matrix.
-    Matrix44 m_prevLocalToWorld;    // Previous Local To World.
-    Matrix44 m_prevWorldToLocal;    // Previous World To Local.
 };
 } // Recluse

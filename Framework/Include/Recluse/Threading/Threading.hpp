@@ -10,20 +10,20 @@ typedef U32(*ThreadFunction)(void*);
 
 enum ThreadResultCode 
 {
-    THREAD_RESULT_UNKNOWN       = -999,
-    THREAD_RESULT_NOT_READY     = -2,
-    THREAD_RESULT_FAILED        = -1,
-    THREAD_RESULT_OK            = 0,
+    ThreadResultCode_Unknown       = -999,
+    ThreadResultCode_NotReady      = -2,
+    ThreadResultCode_Failed        = -1,
+    ThreadResultCode_Ok            =  0,
 };
 
 
 enum ThreadState 
 {
-    THREAD_STATE_NOT_RUNNING,
-    THREAD_STATE_RUNNING,
-    THREAD_STATE_SUSPENDED,
-    THREAD_STATE_IDLE,
-    THREAD_STATE_UNKNOWN
+    ThreadState_NotRunning,
+    ThreadState_Running,
+    ThreadState_Suspended,
+    ThreadState_Idle,
+    ThreadState_Unknown
 };
 
 

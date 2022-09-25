@@ -125,5 +125,31 @@ private:
     U32 m_count;
 };
 
+
+template<typename Class>
+class SmartPtr
+{
+public:
+    SmartPtr(Class* pData = nullptr)
+        : pData(pData)
+    {
+    }
+
+    ~SmartPtr()
+    {
+        if (pData) delete pData;
+        pData = nullptr;
+    }
+
+    Class* raw() { return pData; }
+
+    SmartPtr& operator=(Class* ptr)
+    {
+        pData = ptr;
+    }
+
+private:
+    Class* pData;
+};
 } // Recluse
 #endif // RECLUSE_TYPES_HPP

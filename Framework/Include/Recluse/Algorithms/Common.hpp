@@ -19,6 +19,37 @@ template <typename T>
 class GenericCompare 
 {
  public:
-    Bool operator() (const T& lh, const T& rh) const { return lh < rh; }
+    virtual ~GenericCompare() { }
+    virtual Bool operator() (const T& lh, const T& rh) const = 0;
+};
+
+
+template <typename T>
+class CompareLess : public GenericCompare<T>
+{
+public:
+    Bool operator() (const T& lh, const T& rh) const override { return lh < rh; }
+};
+
+template <typename T>
+class CompareLessEqual : public GenericCompare<T>
+{
+public:
+    Bool operator() (const T& lh, const T& rh) const override { return lh <= rh; }
+};
+
+
+template <typename T>
+class CompareGreater : public GenericCompare<T>
+{
+public:
+    Bool operator() (const T& lh, const T& rh) const override { return lh > rh; }
+};
+
+template <typename T>
+class CompareGreaterEqual : public GenericCompare<T>
+{
+public:
+    Bool operator() (const T& lh, const T& rh) const override { return lh >= rh; }
 };
 } // Recluse

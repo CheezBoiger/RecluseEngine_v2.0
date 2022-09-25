@@ -1,0 +1,36 @@
+//
+#pragma once
+
+#include "Recluse/Types.hpp"
+#include "Recluse/Math/MathCommons.hpp"
+#include "Recluse/Math/MathIntrinsics.hpp"
+
+namespace Recluse {
+
+struct Matrix44;
+
+struct R_PUBLIC_API Matrix43
+{
+public:
+    union 
+    {
+        F32 m[12];
+        struct 
+        {
+            __m128 row0;
+            __m128 row1;
+            __m128 row2;
+        };
+    };
+
+
+    Matrix43(F32 a00 = 0.0f, F32 a01 = 0.0f, F32 a02 = 0.0f,
+             F32 a10 = 0.0f, F32 a11 = 0.0f, F32 a12 = 0.0f,
+             F32 a20 = 0.0f, F32 a21 = 0.0f, F32 a22 = 0.0f,
+             F32 a30 = 0.0f, F32 a31 = 0.0f, F32 a32 = 0.0f);
+
+    // Convert to 4x4 square matrix.
+    operator Matrix44 ();
+    operator Matrix44 () const;
+};
+} // Recluse

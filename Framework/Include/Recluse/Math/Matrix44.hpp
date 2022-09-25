@@ -7,7 +7,9 @@
 
 namespace Recluse {
 
+struct Matrix43;
 
+// 4x4 square matrix.
 struct R_PUBLIC_API Matrix44 
 {
     union 
@@ -63,7 +65,12 @@ struct R_PUBLIC_API Matrix44
     inline void operator-=(F32 scalar);
     inline void operator/=(F32 scalar);
 
+    // Take the identity matrix.
     static Matrix44 identity();
+
+    // Convert to 4x3 matrix.
+    operator Matrix43();
+    operator Matrix43() const;
 };
 
 R_PUBLIC_API Matrix44 rotate(const Matrix44& init, const Float3& axis, F32 radius);
@@ -79,8 +86,16 @@ R_PUBLIC_API Matrix44 perspectiveLH(F32 w, F32 h, F32 ne, F32 fa);
 R_PUBLIC_API Matrix44 perspectiveRH_Aspect(F32 fov, F32 aspect, F32 ne, F32 fa);
 R_PUBLIC_API Matrix44 perspectiveRH(F32 w, F32 h, F32 ne, F32 fa);
 
+// top = top plane.
+// bottom = bottom plane.
+// left = left plane.
+// right = right plane.
+// ne = near plane.
+// fa = far plane.
 R_PUBLIC_API Matrix44 orthographicLH(F32 top, F32 bottom, F32 left, F32 right, F32 ne, F32 fa);
 R_PUBLIC_API Matrix44 orthographicRH(F32 top, F32 bottom, F32 left, F32 right, F32 ne, F32 fa);
+
+// 
 R_PUBLIC_API Matrix44 lookAtLH(const Float3& position, const Float3& target, const Float3& up);
 R_PUBLIC_API Matrix44 lookAtRH(const Float3& position, const Float3& target, const Float3& up);
 // [4 x 4] * [4 x 1] = [4 x 1]

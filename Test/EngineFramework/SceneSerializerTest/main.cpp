@@ -7,6 +7,7 @@
 
 #include "Recluse/Filesystem/Archive.hpp"
 #include "Recluse/Math/Vector2.hpp"
+#include "Recluse/Game/Components/Transform.hpp"
 #include "Recluse/Scene/Scene.hpp"
 #include "Recluse/Game/GameObject.hpp"
 
@@ -22,11 +23,16 @@ public:
     R_PUBLIC_DECLARE_GAME_OBJECT(TestObject, "7C56ED72-A8C3-4428-952C-9BC7D4DB42C6")
 
     void onInitialize() override {
+        addComponent<Transform>();
+        getComponent<Transform>()->position = Float3(1.0f, 0.0f, 0.0f);
         m_name = "Super Test Object";
     }
 
     void onUpdate(const RealtimeTick& tick) override {
         R_TRACE(m_name.c_str(), "Testing this game object. Hello game!!");
+        Transform* pTransform = getComponent<Transform>();
+        if (pTransform)
+            R_TRACE(m_name.c_str(), "position: (x=%f, y=%f, z=%f)", pTransform->position.x, pTransform->position.y, pTransform->position.z);
     }
 };
 

@@ -34,6 +34,12 @@ static std::string getBinaryShaderPath(const std::string& relativePath)
 }
 
 
+class GpuToCpuBuffer
+{
+    float* dataPtr;
+};
+
+
 class R_PUBLIC_API GPUBuffer 
 {
 public:
@@ -44,12 +50,15 @@ public:
 
     virtual ~GPUBuffer() { }
     
-    ErrType initialize(GraphicsDevice* pDevice, U64 totalSzBytes, ResourceUsageFlags usage);
-    ErrType destroy();
+    ErrType             initialize(GraphicsDevice* pDevice, U64 totalSzBytes, ResourceUsageFlags usage);
+    ErrType             destroy();
 
-    ErrType stream(GraphicsDevice* pDevice, void* ptr, U64 offsetBytes, U64 szBytes);
+    ErrType             stream(GraphicsDevice* pDevice, void* ptr, U64 offsetBytes, U64 szBytes);
 
-    GraphicsResource* get() const { return m_pResource; }
+    // Obtain a staging buffer based on the offset of this gpu resource, and the total size bytes to work with.
+    GpuToCpuBuffer      stage(U64 offsetBytes, U64 szBytes);
+
+    GraphicsResource*   get() const { return m_pResource; }
 private:
 
     GraphicsResource*   m_pResource;
@@ -72,13 +81,13 @@ public:
             case INDEX_TYPE_UINT32:
             default: szIndex = 4ull; break;
         }
-        m_indexType = type;
-        m_totalIndices = totalIndices;
+        m_indexType     = type;
+        m_totalIndices  = totalIndices;
         return initialize(pDevice, szIndex * totalIndices, RESOURCE_USAGE_INDEX_BUFFER);
     }
 
-    IndexType getIndexType() const { return m_indexType; }
-    U64 getTotalIndices() const { return m_totalIndices; }
+    IndexType   getIndexType() const { return m_indexType; }
+    U64         getTotalIndices() const { return m_totalIndices; }
 
 private:
     U64         m_totalIndices;
@@ -93,8 +102,8 @@ public:
 
     ErrType initializeVertices(GraphicsDevice* pDevice, U64 perVertexSzBytes, U64 totalVertices) 
     {
-        m_perVertexSzBytes = perVertexSzBytes;
-        m_totalVertices = totalVertices;
+        m_perVertexSzBytes  = perVertexSzBytes;
+        m_totalVertices     = totalVertices;
         return initialize(pDevice, perVertexSzBytes * totalVertices, RESOURCE_USAGE_VERTEX_BUFFER);
     }
 

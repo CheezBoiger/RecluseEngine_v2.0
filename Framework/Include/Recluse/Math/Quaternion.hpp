@@ -41,29 +41,6 @@ struct R_PUBLIC_API Quaternion
 };
 
 
-struct R_PUBLIC_API DualQuaternion
-{
-    Quaternion real;    // Real part.
-    Quaternion dual;    // Dual part.
-
-    DualQuaternion
-            (
-                const Quaternion& r = Quaternion(), 
-                const Quaternion& d = Quaternion()
-            )
-        : real(r)
-        , dual(d)
-    {
-    }
-
-    inline DualQuaternion operator+(const DualQuaternion& rh)
-    {
-        return DualQuaternion(real + rh.real, dual + rh.dual);
-    }
-    
-};
-
-
 R_PUBLIC_API Quaternion normalize(const Quaternion& quat);
 R_PUBLIC_API F32        norm(const Quaternion& quat);
 R_PUBLIC_API F32        norm2(const Quaternion& quat);

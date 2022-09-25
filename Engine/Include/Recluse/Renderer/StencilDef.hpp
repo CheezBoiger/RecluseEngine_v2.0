@@ -8,8 +8,8 @@ namespace Recluse {
 
 enum StencilFlag
 {
-    STENCIL_FLAG_BACKGROUND = (1 << 0),
-    STENCIL_FLAG_FOREGROUND = (1 << 1)
+    StencilFlag_Background = (1 << 0),
+    StencilFlag_Foreground = (1 << 1)
 };
 
 typedef U32 StencilFlags;

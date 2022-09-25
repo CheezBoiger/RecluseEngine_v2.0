@@ -17,6 +17,35 @@ typedef U64 ComponentUUID;
 // Declaration semantics used for editor.
 #define R_EDITOR_DECLARE(varType, varName, varValue)
 
+// Call this macro when declareing a component. This will be used by the engine to determine 
+// the proper calls to be made to the GameObject.
+#define R_COMPONENT_DECLARE(_class) \
+    private: \
+    static Recluse::ECS::System<_class>* k ## _class ## System; \
+    public: \
+    static Recluse::ECS::RGUID classGUID() { return recluseHash(#_class, sizeof(#_class)); } \
+    static R_PUBLIC_API _class* instantiate(); \
+    static R_PUBLIC_API ErrType free(_class* ); \
+    virtual Recluse::ECS::RGUID getClassGUID() const override { return _class::classGUID(); }
+
+// Call this macro to implement the declarations above! This is required to determine the right systems
+// that will be called to allocate/dealloce and update the given components related to this!
+// _game_system is the connecting piece to the given component implementation, it is the 
+// system that will manage all of the components for this.
+#define R_COMPONENT_IMPLEMENT(_class, _game_system) \
+    Recluse::ECS::System<_class>* _class :: k ## _class ## System = nullptr; \
+    _class* Recluse::_class::instantiate() { \
+        if (!k ## _class ## System) \
+            k ## _class ## System = _game_system::create(); \
+        _class* pAllocatedComp = nullptr; \
+        ErrType err = k ## _class ## System->allocateComponent(&pAllocatedComp); \
+        if (err != R_RESULT_OK) return nullptr; \
+        return pAllocatedComp; \
+    } \
+    ErrType Recluse::_class::free(_class* pComponent) { \
+        return k ## _class ## System->freeComponent(&pComponent); \
+    }
+
 // Component abstraction class.
 class R_PUBLIC_API Component : public Serializable 
 {
@@ -38,21 +67,21 @@ public:
     virtual ErrType deserialize(Archive* pArchive) override { return R_RESULT_NO_IMPL; }
 
     // Get the component owner.
-    GameObject* getOwner() const { return m_pGameObject; }
+    GameObject*     getOwner() const { return m_pGameObject; }
 
     // Get the component uuid.
-    ComponentUUID getUUID() const { return m_cuuid; }
+    ComponentUUID   getUUID() const { return m_cuuid; }
 
     // Check if the component is enabled.
     R_EDITOR_DECLARE("visible", "public", true)
-    Bool isEnabled() const { return m_enable; }
+    Bool            isEnabled() const { return m_enable; }
 
     // Enable the component.
     R_EDITOR_DECLARE("visible", "public", true)
-    void setEnable(Bool enable) { m_enable = enable; if (enable) onEnable(); }
+    void            setEnable(Bool enable) { m_enable = enable; if (enable) onEnable(); }
 
     // Initialize the component.
-    void initialize(GameObject* pGameObject) 
+    void            initialize(GameObject* pGameObject) 
     {
         if (!pGameObject) 
         {
@@ -66,42 +95,44 @@ public:
     }
 
     // clean up the component.
-    void cleanUp() 
+    void            cleanUp() 
     {
         m_enable = false;
         onCleanUp();
     }
 
     // update the component accordingly. This must be defined for all components.
-    void update(const RealtimeTick& tick)
+    void            update(const RealtimeTick& tick)
     {   
         onUpdate(tick);
         clearUpdateFlags();
     }
 
-    void setUpdateFlags(U32 updateFlags) { m_updateFlags = updateFlags; }
+    void            setUpdateFlags(U32 updateFlags) { m_updateFlags = updateFlags; }
 
-    U32 getUpdateFlags() const { return m_updateFlags; }
+    U32             getUpdateFlags() const { return m_updateFlags; }
 
-    void clearUpdateFlags() { m_updateFlags = kUpdateFlagZero; }
+    void            clearUpdateFlags() { m_updateFlags = kUpdateFlagZero; }
+
+    virtual ECS::RGUID getClassGUID() const { return 0; }
 
 private:
 
-    virtual void onUpdate(const RealtimeTick& tick) { }
-    virtual void onInitialize() { }
-    virtual void onCleanUp() { }
-    virtual void onEnable() { }
+    virtual void    onUpdate(const RealtimeTick& tick) { }
+    virtual void    onInitialize() { }
+    virtual void    onCleanUp() { }
+    virtual void    onEnable() { }
 
     // Game object owner of this component.
-    GameObject* m_pGameObject;
+    GameObject*     m_pGameObject;
 
     // The unique id of the component.
-    ComponentUUID m_cuuid;
+    ComponentUUID   m_cuuid;
 
     // Flag whether this component is enabled or not.
-    Bool m_enable;
+    Bool            m_enable;
 
-    U32 m_updateFlags;
+    U32             m_updateFlags;
 };
 } // ECS
 } // Recluse

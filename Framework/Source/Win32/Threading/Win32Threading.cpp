@@ -26,8 +26,8 @@ ErrType createThread(Thread* pThread, ThreadFunction startRoutine)
     //            pThread->payload, 0, (LPDWORD)&pThread->uid);
     handle = reinterpret_cast<HANDLE>(_beginthreadex(0, 0, startRoutine, pThread->payload, 0, (U32*)&pThread->uid));
 
-    pThread->threadState    = THREAD_STATE_RUNNING;
-    pThread->resultCode     = THREAD_RESULT_NOT_READY;
+    pThread->threadState    = ThreadState_Running;
+    pThread->resultCode     = ThreadResultCode_NotReady;
     
     exitCodeSuccess     = GetExitCodeThread(handle, &resultCode);
     pThread->resultCode = resultCode;
@@ -36,7 +36,7 @@ ErrType createThread(Thread* pThread, ThreadFunction startRoutine)
     {   
         R_ERR(R_CHANNEL_WIN32, "Failed to create thread! Result: %d", GetLastError());
 
-        pThread->threadState = THREAD_STATE_UNKNOWN;
+        pThread->threadState = ThreadState_Unknown;
 
         return R_RESULT_FAILED;
     }
@@ -55,7 +55,7 @@ ErrType joinThread(Thread* pThread)
     
     WaitForSingleObject(pThread->handle, INFINITE);
     GetExitCodeThread(pThread->handle, (LPDWORD)&pThread->resultCode);
-    pThread->threadState = THREAD_STATE_NOT_RUNNING;
+    pThread->threadState = ThreadState_NotRunning;
 
     return R_RESULT_OK;
 }
@@ -69,7 +69,7 @@ ErrType killThread(Thread* pThread)
 
     TerminateThread(pThread->handle, 0);
 
-    pThread->threadState = THREAD_STATE_UNKNOWN;
+    pThread->threadState = ThreadState_Unknown;
 
     return R_RESULT_OK;
 }
@@ -78,11 +78,11 @@ ErrType killThread(Thread* pThread)
 ErrType stopThread(Thread* pThread)
 {
     R_ASSERT(pThread != NULL);
-    R_ASSERT(pThread->threadState == THREAD_STATE_RUNNING); 
+    R_ASSERT(pThread->threadState == ThreadState_Running); 
 
     SuspendThread(pThread->handle);
     
-    pThread->threadState = THREAD_STATE_SUSPENDED;
+    pThread->threadState = ThreadState_Suspended;
 
     return R_RESULT_OK;
 }
@@ -91,11 +91,11 @@ ErrType stopThread(Thread* pThread)
 ErrType resumeThread(Thread* pThread)
 {
     R_ASSERT(pThread != NULL);
-    R_ASSERT(pThread->threadState == THREAD_STATE_SUSPENDED);
+    R_ASSERT(pThread->threadState == ThreadState_Suspended);
 
     ResumeThread(pThread->handle);
 
-    pThread->threadState = THREAD_STATE_RUNNING;    
+    pThread->threadState = ThreadState_Running;    
 
     return R_RESULT_OK;
 }

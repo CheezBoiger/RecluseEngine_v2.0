@@ -7,7 +7,7 @@
 namespace Recluse {
 
 template<typename T, 
-         class Compare = GenericCompare<T>>
+         class Compare = CompareLess<T>>
 static void selectionSort(T* pArr, U64 start, U64 sz)
 {
     Compare compare = { };
