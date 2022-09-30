@@ -13,6 +13,9 @@ namespace ECS {
 typedef U64     GameUUID;
 typedef Hash64  RGUID;
 
+// Forward declare game object.
+class GameObject;
+
 #define R_PUBLIC_DECLARE_GAME_ECS(_class, guuid) \
     public: \
     static Recluse::ECS::RGUID classGUID() { return recluseHash(guuid, sizeof(guuid)); } \
@@ -72,10 +75,14 @@ public:
 
     // Allocates a component from the system pool.
     // Returns R_RESULT_OK if the system successfully allocated the component instance.
-    ErrType allocateComponent(Comp** pOut)  
+    ErrType allocateComponent(Comp** pOut, GameObject* pOwner)  
     {
         ErrType err = onAllocateComponent(pOut);
-        if (err == R_RESULT_OK) m_numberOfComponentsAllocated += 1;
+        if (err == R_RESULT_OK) 
+        {
+            m_numberOfComponentsAllocated += 1;
+            (*pOut)->setOwner(pOwner);
+        }
         return err;
     }
 

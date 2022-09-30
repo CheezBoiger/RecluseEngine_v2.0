@@ -37,18 +37,24 @@ public:
     Float3      right;          // right facing vector of the object.
     R_EDITOR_DECLARE("visible", "public", true)
     Float3      up;             // up facing vector of the object.
+    Float3      scale;          // scale vector of the object.
 
     // Update the transform.
     // Calculation is usually done as such:
     //      MVP = Projection * View * Model
     // 
     // This is the typical calculation.
-    virtual void                onUpdate(const RealtimeTick& tick) override { }
+    virtual void                onUpdate(const RealtimeTick& tick) override;
 
     virtual void                onCleanUp() override;
+    virtual void                onRelease() override;
 
     Matrix44                    getLocalToWorld() const { return static_cast<Matrix44>(m_localToWorld); }
     Matrix44                    getWorldToLocal() const { return m_worldToLocal; }
+
+    virtual ErrType             serialize(Archive* pArchive) override;
+    virtual ErrType             deserialize(Archive* pArchive) override;
+
 
 private:
     Matrix43 m_localToWorld;        // Local to World Matrix.

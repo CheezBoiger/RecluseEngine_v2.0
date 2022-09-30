@@ -9,7 +9,7 @@ namespace Engine {
 
 struct GameObjectSerializer 
 {
-    GameObject* (*createGameObject)();    
+    ECS::GameObject* (*createGameObject)();    
 };
 
 

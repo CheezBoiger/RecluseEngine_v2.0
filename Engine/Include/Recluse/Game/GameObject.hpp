@@ -90,7 +90,7 @@ public:
         // we won't be able to access them anymore here.
         for (auto& comp : m_components)
         {
-            comp.second->cleanUp();
+            comp.second->release();
         }
 
         m_components.clear();
@@ -188,7 +188,7 @@ public:
         auto it = m_components.find(Comp::classGUID());
         if (it == m_components.end())
         {
-            m_components.insert(std::pair<ECS::RGUID, ECS::Component*>(Comp::classGUID(), Comp::instantiate()));
+            m_components.insert(std::pair<ECS::RGUID, ECS::Component*>(Comp::classGUID(), Comp::instantiate(this)));
             return true;
         }
         return false;
@@ -199,10 +199,11 @@ public:
     template<typename Comp>
     Bool removeComponent()
     {
-        static_assert(std::is_base_of(ECS::Component, Comp>(), "removeComponent: Not a base of component!"));
+        static_assert(std::is_base_of<ECS::Component, Comp>(), "removeComponent: Not a base of component!");
         auto it = m_components.find(Comp::classGUID());
         if (it == m_components.end())
             return false;
+        it->second->release();
         m_components.erase(it);
         return true;
     }

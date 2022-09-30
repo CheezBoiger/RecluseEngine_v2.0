@@ -24,7 +24,7 @@ typedef U64 ComponentUUID;
     static Recluse::ECS::System<_class>* k ## _class ## System; \
     public: \
     static Recluse::ECS::RGUID classGUID() { return recluseHash(#_class, sizeof(#_class)); } \
-    static R_PUBLIC_API _class* instantiate(); \
+    static R_PUBLIC_API _class* instantiate(Recluse::ECS::GameObject* pOwner); \
     static R_PUBLIC_API ErrType free(_class* ); \
     virtual Recluse::ECS::RGUID getClassGUID() const override { return _class::classGUID(); }
 
@@ -34,11 +34,11 @@ typedef U64 ComponentUUID;
 // system that will manage all of the components for this.
 #define R_COMPONENT_IMPLEMENT(_class, _game_system) \
     Recluse::ECS::System<_class>* _class :: k ## _class ## System = nullptr; \
-    _class* Recluse::_class::instantiate() { \
+    _class* Recluse::_class::instantiate(Recluse::ECS::GameObject* pOwner) { \
         if (!k ## _class ## System) \
             k ## _class ## System = _game_system::create(); \
         _class* pAllocatedComp = nullptr; \
-        ErrType err = k ## _class ## System->allocateComponent(&pAllocatedComp); \
+        ErrType err = k ## _class ## System->allocateComponent(&pAllocatedComp, pOwner); \
         if (err != R_RESULT_OK) return nullptr; \
         return pAllocatedComp; \
     } \
@@ -55,8 +55,8 @@ public:
     static const U64 unknownComponent = ~0u;
 
     // Default component construction.
-    Component()
-        : m_pGameObject(nullptr)
+    Component(GameObject* pOwner = nullptr)
+        : m_pGameObject(pOwner)
         , m_enable(false)
         , m_cuuid(0ull) { }
 
@@ -94,11 +94,19 @@ public:
         onInitialize();
     }
 
-    // clean up the component.
+    // clean up the component. Does not release it!
     void            cleanUp() 
     {
         m_enable = false;
         onCleanUp();
+    }
+
+    // An actual release of the component. This will require that this object be destroyed completely,
+    // and freed back to the system.
+    void            release()
+    {
+        cleanUp();
+        onRelease();
     }
 
     // update the component accordingly. This must be defined for all components.
@@ -116,12 +124,18 @@ public:
 
     virtual ECS::RGUID getClassGUID() const { return 0; }
 
+    void            setOwner(GameObject* pOwner) { m_pGameObject = pOwner; }
+
 private:
 
     virtual void    onUpdate(const RealtimeTick& tick) { }
     virtual void    onInitialize() { }
     virtual void    onCleanUp() { }
     virtual void    onEnable() { }
+
+    // MANDATORY! We need to be able to release the component back to system memory.
+    // By default you can call Component::free()
+    virtual void    onRelease() = 0;
 
     // Game object owner of this component.
     GameObject*     m_pGameObject;

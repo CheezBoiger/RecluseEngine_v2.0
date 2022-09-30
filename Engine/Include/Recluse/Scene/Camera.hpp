@@ -52,6 +52,18 @@ public:
         m_postProcessFlags = flags;
     }
 
+    // Check if we intersect the camera frustum.
+    Bool intersects(const Bounds3d& aabb)
+    {
+        return Recluse::intersects(m_frustum, aabb);
+    }
+
+    // Get the camera post process flags.
+    CameraPostProcessFlags getPostProcessFlags() const 
+    { 
+        return m_postProcessFlags; 
+    }
+
 private:
     RecluseSceneView        m_sceneView;
     Frustum                 m_frustum;

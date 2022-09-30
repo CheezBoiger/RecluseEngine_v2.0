@@ -33,6 +33,7 @@ public:
         Transform* pTransform = getComponent<Transform>();
         if (pTransform)
             R_TRACE(m_name.c_str(), "position: (x=%f, y=%f, z=%f)", pTransform->position.x, pTransform->position.y, pTransform->position.z);
+        removeComponent<Transform>();
     }
 };
 
@@ -43,10 +44,16 @@ public:
 
     void onInitialize() override {
         m_name = "Normal Boring Object";
+        addComponent<Transform>();
+        getComponent<Transform>()->position = Float3(-1, 1, 12.f);
     }
 
     void onUpdate(const RealtimeTick& tick) override {
         R_VERBOSE(m_name.c_str(), "I am just a boring object... :(");
+        Transform* pTransform = getComponent<Transform>();
+        if (pTransform)
+            R_TRACE(m_name.c_str(), "position: (x=%f, y=%f, z=%f)", pTransform->position.x, pTransform->position.y, pTransform->position.z);
+
     }
 
     virtual ErrType serialize(Archive* pArchive) override {
@@ -54,6 +61,7 @@ public:
         pArchive->write(&szName, sizeof(U64));
         pArchive->write(const_cast<char*>(m_name.c_str()), m_name.size());
         pArchive->write(&m_position, sizeof(Float2));
+        getComponent<Transform>()->serialize(pArchive);
         return R_RESULT_OK;
     }
 
@@ -65,6 +73,8 @@ public:
 
         pArchive->read(const_cast<char*>(m_name.data()), szName);
         pArchive->read(&m_position, sizeof(Float2));
+        addComponent<Transform>();
+        getComponent<Transform>()->deserialize(pArchive);
         return R_RESULT_OK;
     }
 
