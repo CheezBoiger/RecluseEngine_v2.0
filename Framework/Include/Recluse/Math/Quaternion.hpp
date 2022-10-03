@@ -9,7 +9,7 @@
 #include "Recluse/Math/Matrix44.hpp"
 
 namespace Recluse {
-
+namespace Math {
 
 struct R_PUBLIC_API Quaternion 
 {
@@ -53,4 +53,5 @@ R_PUBLIC_API Quaternion eulerToQuat(const Float3& euler);
 R_PUBLIC_API Float3     quatToEuler(const Quaternion& quat);
 R_PUBLIC_API Matrix44   quatToMat44(const Quaternion& quat);
 R_PUBLIC_API Quaternion slerp(const Quaternion& a, const Quaternion& b, F32 t);
+} // Math
 } // Recluse

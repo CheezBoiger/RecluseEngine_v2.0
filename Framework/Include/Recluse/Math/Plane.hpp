@@ -5,7 +5,7 @@
 #include "Recluse/Math/Vector4.hpp"
 
 namespace Recluse {
-
+namespace Math {
 
 // A plane consists of the equation:
 // Ax + By + Cz + d = 0
@@ -44,4 +44,5 @@ static Plane normalize(const Plane& plane)
 {
     return Plane(normalize(plane.N), plane.d);
 }
+} // Math
 } // Recluse

@@ -5,6 +5,7 @@
 #include "Recluse/Types.hpp"
 
 namespace Recluse {
+namespace Math {
 
 struct R_PUBLIC_API Float2 
 { 
@@ -134,4 +135,5 @@ Float2 R_PUBLIC_API normalize(const Float2& a);
 Int2 R_PUBLIC_API normalize(const Int2& a);
 UInt2 R_PUBLIC_API normalize(const UInt2& a);
 Float2 R_PUBLIC_API lerp(const Float2& a, const Float2& b, F32 t);
+} // Math
 } // Recluse

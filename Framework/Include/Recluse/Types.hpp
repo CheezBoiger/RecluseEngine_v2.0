@@ -113,6 +113,7 @@ public:
     U32  release() { decrement(); return m_count; }
 
     Bool hasRefs() const { return (getCount() > 0); }
+    Bool hasNoRefs() const { return !hasRefs(); }
 
     operator T () { return getData(); }
     //RefCount<T> operator=(const T& data) { return RefCount<T>(); }

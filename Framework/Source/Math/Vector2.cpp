@@ -2,7 +2,7 @@
 #include "Recluse/Math/Vector2.hpp"
 
 namespace Recluse {
-
+namespace Math {
 
 Float2 Float2::operator+(const Float2& rh) const
 {
@@ -175,4 +175,5 @@ Float2 lerp(const Float2& a, const Float2& b, F32 t)
 {
     return R_LERP(a, b, t);
 }
+} // Math
 } // Recluse

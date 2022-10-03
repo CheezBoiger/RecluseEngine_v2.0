@@ -87,7 +87,7 @@ int main(int c, char* argv[])
         while (!pWindow->shouldClose()) {
             RealtimeTick::updateWatch(1ull, 0);
             RealtimeTick tick = RealtimeTick::getTick(0);
-            R_TRACE("Graphics", "FPS: %f", 1.f / tick.getDeltaTimeS());
+            R_TRACE("Graphics", "FPS: %f", 1.f / tick.delta());
             pSwapchain->present();
 
             pollEvents();

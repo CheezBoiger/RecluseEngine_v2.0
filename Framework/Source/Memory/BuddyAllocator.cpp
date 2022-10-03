@@ -15,7 +15,7 @@ ErrType BuddyAllocator::onInitialize()
     PtrType baseAddr    = getBaseAddr();
 
     // Size must be power of 2.
-    R_ASSERT(isPowerOf2(totalSzBytes));
+    R_ASSERT(Math::isPowerOf2(totalSzBytes));
     
     U32 nthBit  = (U32)ceil(log2(totalSzBytes));  
 
@@ -142,7 +142,7 @@ ErrType BuddyAllocator::onFree(Allocation* pOutput)
         if (m_freeList[nthBit][i].offsetBytes == buddyAddr) 
         {
             // Check if even, merge with alloc offset. Otherwise, use buddyaddr
-            if (isEven(buddyNumber)) 
+            if (Math::isEven(buddyNumber)) 
             {
                 BuddyBlock newBlock     = { };
                 newBlock.offsetBytes    = allocOffset;

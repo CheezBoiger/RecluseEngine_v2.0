@@ -386,7 +386,7 @@ int main(int c, char* argv[])
     {
         RealtimeTick::updateWatch(1ull, 0);
         RealtimeTick tick = RealtimeTick::getTick(0);
-        R_VERBOSE("Game", "%f", tick.getDeltaTimeS());
+        R_VERBOSE("Game", "%f", tick.delta());
         updateConstData(pData, tick);
 
         pList->begin();

@@ -3,7 +3,7 @@
 #include "Recluse/Math/Matrix44.hpp"
 
 namespace Recluse {
-
+namespace Math {
 
 Float4 Float4::operator+(const Float4& rh) const
 {
@@ -207,4 +207,5 @@ Float4 lerp(const Float4& a, const Float4& b, F32 t)
 {
     return R_LERP(a, b, t);
 }
+} // Math
 } // Recluse

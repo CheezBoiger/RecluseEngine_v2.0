@@ -33,7 +33,7 @@ struct ConstData {
 void updateConstData(GraphicsResource* pData, RealtimeTick& tick)
 {
     static float iter = 0.005f;
-    iter += 0.001f * tick.getDeltaTimeS();
+    iter += 0.001f * tick.delta();
     ConstData dat = { };
     dat.color[0] = abs(sinf(tick.getCurrentTimeS() * 0.0000001f));
     dat.color[1] = 0.0f;
@@ -293,8 +293,8 @@ int main(int c, char* argv[])
             pList->dispatch(pWindow->getWidth() / 8 + 1, pWindow->getHeight() / 8 + 1, 1);
         pList->end();
 
-        F32 deltaFrameRate = 1.0f / tick.getDeltaTimeS();
-        counterFps += tick.getDeltaTimeS();
+        F32 deltaFrameRate = 1.0f / tick.delta();
+        counterFps += tick.delta();
 
         GraphicsSwapchain::PresentConfig conf = GraphicsSwapchain::DELAY_PRESENT;
         if (counterFps >= desiredFps)

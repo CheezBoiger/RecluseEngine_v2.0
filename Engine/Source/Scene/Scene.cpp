@@ -16,101 +16,54 @@ struct SceneHeaderInfo
     U64     numLights;
 };
 
-void Scene::addGameObject(ECS::GameObject* obj)
+void Scene::addEntity(ECS::GameEntity* obj)
 {
     if (!obj) return;
     
-    auto iter = std::find(m_gameObjects.begin(), m_gameObjects.end(), obj);
-    if (iter != m_gameObjects.end()) 
+    auto iter = std::find(m_entities.begin(), m_entities.end(), obj);
+    if (iter != m_entities.end()) 
     {
         R_WARN("Scene", "Game object already exists in scene! Ignoring %s", __FUNCTION__);
         return;
     }
     
     // Add in the object, otherwise.
-    m_gameObjects.push_back(obj);
+    m_entities.push_back(obj);
 }
 
 
 void Scene::update(const RealtimeTick& tick)
 {
-    Allocation output           = { };
-    ErrType err                 = R_RESULT_OK;
-    LinearAllocator* allocator   = static_cast<LinearAllocator*>(m_gameMemAllocator);
-
-    // First allocation is the total number of objects in the root view.
-    // Resize wwhen required.
-    err = allocator->allocate(&output, 8ull * m_gameObjects.size(), ARCH_PTR_SZ_BYTES);
-
-    PtrType currObjectPtr   = allocator->getBaseAddr();
-    PtrType top             = allocator->getTop();
-    memcpy((void*)output.baseAddress, m_gameObjects.data(), m_gameObjects.size() * 8ull);
-    
-    // Perform a breadth first look up for all of our game objects to update..
-    while (currObjectPtr < top) 
+    for (auto& system : m_systems)
     {
-        ECS::GameObject* pObject                    = *(ECS::GameObject**)currObjectPtr;
-        std::vector<ECS::GameObject*>& children     = pObject->getChildren();
-
-        if (!children.empty()) 
-        {
-            // We need to allocate some more.
-            err = allocator->allocate(&output, 8llu * children.size(), ARCH_PTR_SZ_BYTES);
-            memcpy((void*)output.baseAddress, children.data(), children.size() * 8ull);
-            // Update the top.
-            top = allocator->getTop();
-        }
-
-        // Update the game logic.
-        pObject->update(tick);
-        
-        currObjectPtr += R_ALLOC_MASK(8ull, ARCH_PTR_SZ_BYTES);
+        system->updateComponents(tick);
     }
-
-    // Reset the allocator when done...
-    allocator->reset();
 }
 
 
 void Scene::initialize()
 {
-    U64 szBytes = (1<<12) * ARCH_PTR_SZ_BYTES;    
-    m_gameMemPool = new MemoryPool(szBytes);
-    m_gameMemAllocator = new LinearAllocator();
-    m_gameMemAllocator->initialize(m_gameMemPool->getBaseAddress(), m_gameMemPool->getTotalSizeBytes());
 }
 
 
 void Scene::destroy()
 {
-    if (m_gameMemAllocator) 
-    {
-        m_gameMemAllocator->cleanUp();
-        delete m_gameMemAllocator;
-        m_gameMemAllocator = nullptr;
-    }
-
-    if (m_gameMemPool) 
-    {
-        delete m_gameMemPool;
-        m_gameMemPool = nullptr;
-    }
 }
 
 
-ECS::GameObject* Scene::getGameObject(U32 idx)
+ECS::GameEntity* Scene::getEntity(U32 idx)
 {
-    return m_gameObjects[idx];
+    return m_entities[idx];
 }
 
 
-ECS::GameObject* Scene::findGameObject(const std::string& name)
+ECS::GameEntity* Scene::findEntity(const std::string& name)
 {
-    for (auto* gameObject : m_gameObjects) 
+    for (auto* entity : m_entities) 
     {
-        if (gameObject->getName() == name) 
+        if (entity->getName() == name) 
         {
-            return gameObject;
+            return entity;
         }
     }
 
@@ -118,9 +71,9 @@ ECS::GameObject* Scene::findGameObject(const std::string& name)
 }
 
 
-void Scene::removeGameObject(U32 idx)
+void Scene::removeEntity(U32 idx)
 {
-    m_gameObjects.erase(m_gameObjects.begin() + idx);
+    m_entities.erase(m_entities.begin() + idx);
 }
 
 
@@ -131,7 +84,7 @@ ErrType Scene::save(Archive* pArchive)
     // Save the scene header first!
     {
         SceneHeaderInfo header  = { };
-        header.numGameObjects   = m_gameObjects.size();
+        header.numGameObjects   = m_entities.size();
         header.numLights        = 0ull;
         memcpy(header.sceneName, m_name.data(), 512);
 

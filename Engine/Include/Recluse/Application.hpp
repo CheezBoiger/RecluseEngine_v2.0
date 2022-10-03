@@ -63,7 +63,7 @@ public:
     virtual         ~Application() { }    
 
     // System update.
-    virtual void    update(const RealtimeTick& tick) { }
+    virtual void    update(const RealtimeTick& tick);
 
     ErrType cleanUp() 
     { 
@@ -96,6 +96,7 @@ public:
 
     inline Bool isInitialized() const { return m_initialized; }
 
+    // Registering systems can provide more priority for updating.
     Bool registerSystem(ECS::AbstractSystem* pSystem)
     {
         m_systems.push(pSystem);

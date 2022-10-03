@@ -37,7 +37,7 @@
 
 
 namespace Recluse {
-
+namespace Math {
 template<typename T>
 static Bool isOdd(T d)
 {
@@ -71,4 +71,5 @@ static T maximum(T a, T b)
 {
 	return R_MAX(a, b);
 }
+} // Math
 } // Recluse

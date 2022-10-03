@@ -2,7 +2,7 @@
 #include "Recluse/Math/Quaternion.hpp"
 
 namespace Recluse {
-
+namespace Math {
 
 Quaternion Quaternion::operator*(const Quaternion& rh) const
 {
@@ -159,4 +159,5 @@ Matrix44 quatToMat44(const Quaternion& quat)
         0.f,                    0.f,                    0.f,                    1.f
     );
 }
+} // Math
 } // Recluse

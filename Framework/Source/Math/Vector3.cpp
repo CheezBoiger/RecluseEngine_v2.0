@@ -2,7 +2,7 @@
 #include "Recluse/Math/Vector3.hpp"
 
 namespace Recluse {
-
+namespace Math {
 
 Float3 Float3::operator+(const Float3& rh) const
 {
@@ -170,4 +170,5 @@ Float3 lerp(const Float3& a, const Float3& b, F32 t)
 {
     return R_LERP(a, b, t);
 }
+} // Math
 } // Recluse

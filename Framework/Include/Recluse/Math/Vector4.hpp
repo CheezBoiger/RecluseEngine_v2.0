@@ -5,9 +5,10 @@
 #include "Recluse/Math/Vector3.hpp"
 
 namespace Recluse {
-
+namespace Math {
 struct Matrix44;
 
+// Float4 vector struct.
 struct R_PUBLIC_API Float4 
 {
     union 
@@ -101,4 +102,5 @@ R_PUBLIC_API F32 length2(const Float4& a);
 // [1 x 4] * [4 x 4} = [1 x 4]
 R_PUBLIC_API Float4 operator*(const Float4& lh, const Matrix44& rh);
 R_PUBLIC_API Float4 lerp(const Float4& a, const Float4& b, F32 t);
+} // Math
 } // Recluse

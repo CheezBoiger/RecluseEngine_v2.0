@@ -19,6 +19,7 @@ class Material;
 
 namespace Engine {
 
+using namespace Math;
 
 typedef Float3 MeshRotationData;
 typedef Float3 MeshTranslateData;

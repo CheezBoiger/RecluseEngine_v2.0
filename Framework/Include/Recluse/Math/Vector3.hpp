@@ -6,7 +6,7 @@
 
 
 namespace Recluse {
-
+namespace Math {
 
 // Float Vector data structure.
 struct R_PUBLIC_API Float3 
@@ -129,4 +129,5 @@ typedef Float3  FVector3;
 typedef Int3    IVector3;
 typedef UInt3   UVector3;
 typedef Short3  ShVector3;
-} // Reclue
+} // Math
+} // Recluse

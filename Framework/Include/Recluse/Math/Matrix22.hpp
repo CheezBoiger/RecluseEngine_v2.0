@@ -4,8 +4,10 @@
 #include "Recluse/Math/MathCommons.hpp"
 #include "Recluse/Types.hpp"
 
-namespace Recluse {
+#include "Recluse/Math/Vector2.hpp"
 
+namespace Recluse {
+namespace Math {
 
 struct R_PUBLIC_API Matrix22 
 {
@@ -19,5 +21,21 @@ struct R_PUBLIC_API Matrix22
             F32 a00 = 1.0f, F32 a01 = 0.0f,
             F32 a10 = 0.0f, F32 a11 = 1.0f
         );
+
+    Matrix22 operator+(const Matrix22& rh) const;
+    Matrix22 operator-(const Matrix22& rh) const;
+    Matrix22 operator*(const Matrix22& rh) const;
+    Matrix22 operator+(F32 scalar) const;
+    Matrix22 operator-(F32 scalar) const;
+    Matrix22 operator*(F32 scalar) const;
+    Matrix22 operator/(F32 scalar) const;
+    Matrix22 operator-() const;
 };
+
+
+R_PUBLIC_API Matrix22 translate(const Matrix22& base, const Float2& t);
+R_PUBLIC_API Matrix22 transpose(const Matrix22& m);
+R_PUBLIC_API F32      determinant(const Matrix22& m);
+R_PUBLIC_API Matrix22 inverse(const Matrix22& m);
+} // Math
 } // Recluse

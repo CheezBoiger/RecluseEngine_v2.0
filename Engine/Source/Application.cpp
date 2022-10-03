@@ -49,6 +49,11 @@ Thread* Application::getJobThread(JobType jobType)
     return m_jobThreads[jobType];
 }
 
+
+void Application::update(const RealtimeTick& tick)
+{
+}
+
 namespace MainThreadLoop {
 
 Application* k_pApp         = nullptr;

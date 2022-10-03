@@ -6,7 +6,7 @@
 #include "Recluse/Math/MathIntrinsics.hpp"
 
 namespace Recluse {
-
+namespace Math {
 struct Matrix44;
 
 struct R_PUBLIC_API Matrix43
@@ -33,4 +33,5 @@ public:
     operator Matrix44 ();
     operator Matrix44 () const;
 };
+} // Math
 } // Recluse

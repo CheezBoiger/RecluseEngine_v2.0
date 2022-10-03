@@ -12,7 +12,7 @@ inline void logTick()
 {
     RealtimeTick::updateWatch(1ull, 0);
     RealtimeTick tick = RealtimeTick::getTick(0);
-    R_DEBUG("Core", "Finished: %f secs", tick.getDeltaTimeS());
+    R_DEBUG("Core", "Finished: %f secs", tick.delta());
 }
 
 int main()

@@ -44,7 +44,7 @@ public:
     void            update(const Transform* transform);
 
     // Obtain the camera view frustum.
-    const Frustum&  getFrustum() const { return m_frustum; }
+    const Math::Frustum&  getFrustum() const { return m_frustum; }
 
     // Set the post process flags for this camera.
     void setPostProcessFlags(CameraPostProcessFlags flags)
@@ -53,9 +53,9 @@ public:
     }
 
     // Check if we intersect the camera frustum.
-    Bool intersects(const Bounds3d& aabb)
+    Bool intersects(const Math::Bounds3d& aabb)
     {
-        return Recluse::intersects(m_frustum, aabb);
+        return Math::intersects(m_frustum, aabb);
     }
 
     // Get the camera post process flags.
@@ -66,15 +66,15 @@ public:
 
 private:
     RecluseSceneView        m_sceneView;
-    Frustum                 m_frustum;
+    Math::Frustum           m_frustum;
 
     // View-Projection transform.
-    Matrix44                m_ViewProjection;
+    Math::Matrix44          m_ViewProjection;
     // Projection transform.
-    Matrix44                m_Projection;
+    Math::Matrix44          m_Projection;
 
-    Matrix44                m_InverseViewProjection;
-    Matrix44                m_InverseProjection;
+    Math::Matrix44          m_InverseViewProjection;
+    Math::Matrix44          m_InverseProjection;
 
     CameraPostProcessFlags  m_postProcessFlags;
 };

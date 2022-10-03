@@ -30,8 +30,8 @@ public:
         rcmd.numSubMeshes = 0;
         //pRenderer->pushRenderCommand(rcmd, RENDER_PREZ);
 
-        R_VERBOSE("GameLoop", "time=%f fps", 1.f / tick.getDeltaTimeS());
-        R_VERBOSE("GameLoop", "renderTime=%f fps", 1.f / RealtimeTick::getTick(JOB_TYPE_RENDERER).getDeltaTimeS());
+        R_VERBOSE("GameLoop", "time=%f fps", 1.f / tick.delta());
+        R_VERBOSE("GameLoop", "renderTime=%f fps", 1.f / RealtimeTick::getTick(JOB_TYPE_RENDERER).delta());
     }
 
     virtual ErrType onInit() override

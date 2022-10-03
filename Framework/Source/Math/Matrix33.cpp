@@ -2,7 +2,7 @@
 #include "Recluse/Math/Matrix33.hpp"
 
 namespace Recluse {
-
+namespace Math {
 
 Matrix33::Matrix33
                 (
@@ -76,4 +76,5 @@ Matrix33 Matrix33::operator-(const Matrix33& rh) const
 
     return ans;
 }
+} // Math
 } // Recluse

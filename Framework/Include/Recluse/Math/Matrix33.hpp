@@ -5,7 +5,7 @@
 #include "Recluse/Math/Vector3.hpp"
 
 namespace Recluse {
-
+namespace Math {
 
 struct R_PUBLIC_API Matrix33 
 { 
@@ -36,4 +36,5 @@ struct R_PUBLIC_API Matrix33
     inline Matrix33 operator-(F32 scalar) const;
     inline Matrix33 operator*(F32 scalar) const;
 };
+} // Math
 } // Recluse

@@ -5,28 +5,31 @@
 #include "Recluse/Memory/MemoryCommon.hpp"
 #include "Recluse/Types.hpp"
 #include "Recluse/Serialization/Hasher.hpp"
+#include "Recluse/Serialization/Serializable.hpp"
+#include "Recluse/RGUID.hpp"
+#include "Recluse/Time.hpp"
 
 namespace Recluse {
 namespace ECS {
 
 // Declaration types.
-typedef U64     GameUUID;
-typedef Hash64  RGUID;
+typedef Hash64 GameUUID;
 
 // Forward declare game object.
-class GameObject;
+class GameEntity;
 
-#define R_PUBLIC_DECLARE_GAME_ECS(_class, guuid) \
+#define R_PUBLIC_DECLARE_GAME_ECS(_class) \
     public: \
-    static Recluse::ECS::RGUID classGUID() { return recluseHash(guuid, sizeof(guuid)); } \
+    static Recluse::ECS::GameUUID classGUID() { return recluseHash(#_class, sizeof(#_class)); } \
     static const char* className() { return #_class; } \
-    virtual Recluse::ECS::RGUID getClassGUID() const override { return classGUID(); } \
+    virtual Recluse::ECS::GameUUID getClassGUID() const override { return classGUID(); } \
     virtual const char* getClassName() const override { return className(); }
 
 
 //! AbstractSystem is the high level provision that oversees all
 //! game components to their respect.
-class R_PUBLIC_API AbstractSystem
+//! Systems are what hold the game logic in the world scene.
+class R_PUBLIC_API AbstractSystem : public Serializable
 {
 public:
 
@@ -35,7 +38,10 @@ public:
     void setPriority(U32 priority) { m_priority = priority; }
     U32 getPriority() const { return m_priority; }
 
-    void    updateComponents(F32 deltaTime) { onUpdateComponents(deltaTime); }
+    // This system is required to update all components when necessary.
+    void    updateComponents(const RealtimeTick& tick) { onUpdateComponents(tick); }
+
+    // Clear all components in the game object.
     void   clearAll()                      { onClearAll(); }
 
     // Obtains the total number of allocated components in the 
@@ -47,17 +53,21 @@ public:
         return onInitialize();
     }
 
+    virtual ErrType serialize(Archive* archive) override { return R_RESULT_NO_IMPL; }
+    virtual ErrType deserialize(Archive* archive) override { return R_RESULT_NO_IMPL; }
+
 private:
     virtual ErrType onInitialize()                  { return R_RESULT_NO_IMPL; }
     virtual ErrType onCleanUp()                     { return R_RESULT_NO_IMPL; }
     virtual void onClearAll()                       { }
-    virtual void onUpdateComponents(F32 deltaTime)  { }
+    virtual void onUpdateComponents(const RealtimeTick& tick)  { }
 
     U32 m_priority;
 };
 
 // Required declare for the game system to be used. 
 // Use the constructor you feel is important.
+// A Default destructor is required in order to do final cleanups at the end of an application's life.
 #define R_DECLARE_GAME_SYSTEM(_constructor, _component) \
     public: \
     static ECS::System<_component>* create() { \
@@ -75,7 +85,7 @@ public:
 
     // Allocates a component from the system pool.
     // Returns R_RESULT_OK if the system successfully allocated the component instance.
-    ErrType allocateComponent(Comp** pOut, GameObject* pOwner)  
+    ErrType allocateComponent(Comp** pOut, GameEntity* pOwner)  
     {
         ErrType err = onAllocateComponent(pOut);
         if (err == R_RESULT_OK) 

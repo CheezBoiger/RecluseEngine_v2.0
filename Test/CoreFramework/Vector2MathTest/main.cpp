@@ -9,6 +9,7 @@
 #include <vector>
 
 using namespace Recluse;
+using namespace Recluse::Math;
 
 int main(int c, char* argv[])
 {

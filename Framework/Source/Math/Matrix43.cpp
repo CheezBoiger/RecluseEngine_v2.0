@@ -3,7 +3,7 @@
 #include "Recluse/Math/Matrix44.hpp"
 
 namespace Recluse {
-
+namespace Math {
 
 Matrix43::Matrix43
     (
@@ -20,7 +20,7 @@ Matrix43::Matrix43
 }
 
 
-Matrix43::operator Recluse::Matrix44 ()
+Matrix43::operator Matrix44 ()
 {
     return Matrix44
         (
@@ -32,7 +32,7 @@ Matrix43::operator Recluse::Matrix44 ()
 }
 
 
-Matrix43::operator Recluse::Matrix44 () const
+Matrix43::operator Matrix44 () const
 {
     return Matrix44
         (
@@ -42,4 +42,5 @@ Matrix43::operator Recluse::Matrix44 () const
             m[9], m[10], m[11], 1.0f
         );
 }
+} // Math
 } // Recluse

@@ -6,7 +6,7 @@
 #include "Recluse/Math/Vector4.hpp"
 
 namespace Recluse {
-
+namespace Math {
 struct Matrix43;
 
 // 4x4 square matrix.
@@ -100,4 +100,5 @@ R_PUBLIC_API Matrix44 lookAtLH(const Float3& position, const Float3& target, con
 R_PUBLIC_API Matrix44 lookAtRH(const Float3& position, const Float3& target, const Float3& up);
 // [4 x 4] * [4 x 1] = [4 x 1]
 R_PUBLIC_API Float4 operator*(const Matrix44& lh, const Float4& rh);
+} // Math
 } // Recluse

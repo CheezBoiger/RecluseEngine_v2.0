@@ -25,7 +25,7 @@ public:
     F32 getCurrentTimeS() const { return m_currentTimeS; }
 
     // Get the delta time in sec.
-    F32 getDeltaTimeS() const { return m_deltaTimeS; }
+    F32 delta() const { return m_deltaTimeS; }
     
     // Initialize the realtime tick manager. Should be 
     // called first, before calling getTick(). Requires an ID in order to 

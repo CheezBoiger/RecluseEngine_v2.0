@@ -79,7 +79,7 @@ int main(int c, char* argv[])
     RealtimeTick::updateWatch(1ull, 0);
     tick = RealtimeTick::getTick(0);
 
-    R_TRACE("TEST", "Took %f secs to fill commandlist.", tick.getDeltaTimeS());
+    R_TRACE("TEST", "Took %f secs to fill commandlist.", tick.delta());
 
     RenderCommand** commands = list.getRenderCommands();
     U64 numRenderCommands = list.getNumberCommands();
@@ -113,7 +113,7 @@ int main(int c, char* argv[])
 
     RealtimeTick::updateWatch(1ull, 0);
     tick = RealtimeTick::getTick(0);
-    R_VERBOSE("TEST", "Took %f secs to read list.", tick.getDeltaTimeS());
+    R_VERBOSE("TEST", "Took %f secs to read list.", tick.delta());
 
     list.reset();
     list.destroy();

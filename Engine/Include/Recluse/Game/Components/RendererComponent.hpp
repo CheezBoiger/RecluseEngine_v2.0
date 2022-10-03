@@ -24,8 +24,6 @@ class RendererComponent : public ECS::Component
 {
 public:
     virtual ~RendererComponent() { }
-    
-    virtual void onUpdate(const RealtimeTick& tick) override;
 
 private:
     

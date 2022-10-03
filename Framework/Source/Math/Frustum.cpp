@@ -3,7 +3,7 @@
 #include "Recluse/Math/Bounds3D.hpp"
 
 namespace Recluse {
-
+namespace Math {
 
 Bool intersects(const Frustum& frustum, const Bounds3d& bounds)
 {
@@ -16,4 +16,5 @@ Bool intersects(const Frustum& frustum, const Bounds3d& bounds)
            intersects(frustum.faces[Frustum::FACE_NEAR], bounds) &&
            intersects(frustum.faces[Frustum::FACE_FAR], bounds);
 }
+} // Math
 } // Recluse

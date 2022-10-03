@@ -4,7 +4,7 @@
 #include "Recluse/Math/Vector3.hpp"
 
 namespace Recluse {
-
+namespace Math { 
 
 struct R_PUBLIC_API Ray 
 {
@@ -14,4 +14,5 @@ struct R_PUBLIC_API Ray
 
 
 R_PUBLIC_API Float3 rayP(const Ray& ray, F32 t);
+} // Math
 } // Recluse

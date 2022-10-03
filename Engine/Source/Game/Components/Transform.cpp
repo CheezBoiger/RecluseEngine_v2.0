@@ -6,6 +6,8 @@
 
 namespace Recluse {
 
+using namespace Math;
+
 R_COMPONENT_IMPLEMENT(Transform, TransformSystem);
 
 
@@ -16,18 +18,6 @@ void Transform::onCleanUp()
 void Transform::onRelease()
 {
     Transform::free(this);
-}
-
-void Transform::onUpdate(const RealtimeTick& tick) 
-{
-    Matrix44 t = Recluse::translate(Matrix44::identity(), position);
-    Matrix44 s = Recluse::scale(t, scale);
-    Matrix44 r = Recluse::quatToMat44(rotation);
-
-    Matrix44 World = s * r * t;
-
-    m_localToWorld = World;
-    m_worldToLocal = Recluse::inverse(World);
 }
 
 ErrType Transform::serialize(Archive* pArchive)
@@ -54,5 +44,16 @@ ErrType Transform::deserialize(Archive* pArchive)
     pArchive->read(&right, sizeof(Float3));
     pArchive->read(&up, sizeof(Float3));
     return R_RESULT_NO_IMPL;
+}
+
+void Transform::updateMatrices()
+{
+    Matrix44 t      = Math::translate(Matrix44::identity(), position);
+    Matrix44 s      = Math::scale(t, scale);
+    Matrix44 r      = Math::quatToMat44(rotation);
+    Matrix44 World  = s * r * t;
+
+    m_localToWorld  = World;
+    m_worldToLocal = Math::inverse(World);
 }
 } // Recluse

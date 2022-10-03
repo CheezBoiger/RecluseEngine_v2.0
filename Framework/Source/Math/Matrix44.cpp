@@ -4,7 +4,7 @@
 #include "Recluse/Messaging.hpp"
 
 namespace Recluse {
-
+namespace Math {
 
 Matrix44::Matrix44
                 (
@@ -540,7 +540,7 @@ Float4 operator*(const Matrix44& lh, const Float4& rh)
 }
 
 
-Matrix44::operator Recluse::Matrix43 ()
+Matrix44::operator Matrix43 ()
 {
     return Matrix43
         (
@@ -552,7 +552,7 @@ Matrix44::operator Recluse::Matrix43 ()
 }
 
 
-Matrix44::operator Recluse::Matrix43 () const
+Matrix44::operator Matrix43 () const
 {
     return Matrix43
         (
@@ -562,4 +562,5 @@ Matrix44::operator Recluse::Matrix43 () const
             m[12], m[13], m[14]
         );
 }
+} // Math
 } // Recluse

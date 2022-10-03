@@ -490,7 +490,7 @@ static ErrType kRendererJob(void* pData)
         // Render interpolation is required.
         if (pRenderer->isRunning()) 
         {
-            pRenderer->update(tick.getCurrentTimeS(), tick.getDeltaTimeS());
+            pRenderer->update(tick.getCurrentTimeS(), tick.delta());
             pRenderer->render();
 
             // Check if we need to limit our frame rate.

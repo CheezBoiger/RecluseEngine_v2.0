@@ -4,7 +4,7 @@
 #include "Recluse/Math/Plane.hpp"
 
 namespace Recluse {
-
+namespace Math {
 
 Float3 extent(const Bounds3d& a)
 {
@@ -74,4 +74,5 @@ Bool intersects(const Plane& plane, const Bounds3d& bounds)
     F32 s       = dot(n, c);
     return (fabs(s) <= r);
 }
+} // Math
 } // Recluse

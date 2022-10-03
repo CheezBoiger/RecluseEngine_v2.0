@@ -183,11 +183,21 @@ static std::string generateShaderSceneView(ShaderLang lang)
             }
 
             std::string varDataType = line.substr(start, sz);
+
             varDataType.erase
                             (
                                 std::remove_if(varDataType.begin(), varDataType.end(), std::isspace),
                                 varDataType.end()
                             );
+
+            {
+                U64 ns = varDataType.find_last_of(':');
+                if (ns != std::string::npos)
+                {
+                    U64 diff = varDataType.size() - diff;
+                    varDataType = varDataType.substr(ns, diff);
+                }
+            }
             
             sceneViewBufferStr += "    " + GET(varDataType, lang) + " " + varName + ";\n";
         } 

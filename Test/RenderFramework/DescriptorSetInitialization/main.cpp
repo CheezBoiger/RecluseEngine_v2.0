@@ -260,7 +260,7 @@ int main(int c, char* argv[])
         //R_TRACE("TEST", "FPS: %f", 1.0f / tick.getDeltaTimeS());
         F32 color[] = { 0.0f, 1.0f, 0.0f, 1.0f };
         F32 color2[] = { 0.0f, 0.0f, 1.0f, 1.0f };
-        if (index != 0) index -= 50.f * tick.getDeltaTimeS();
+        if (index != 0) index -= 50.f * tick.delta();
         Rect rect = { 200.f + (F32)index, 200.f, 1024.f/2.f, 1024.f/2.f };
         Rect rect2 = { 0.f, 0.f, 1024.f, 1024.f };
         pList->begin();
@@ -278,8 +278,8 @@ int main(int c, char* argv[])
             pList->transition(&trans, 1);
         pList->end();
 
-        F32 deltaFrameRate = 1.0f / tick.getDeltaTimeS();
-        counterFps += tick.getDeltaTimeS();
+        F32 deltaFrameRate = 1.0f / tick.delta();
+        counterFps += tick.delta();
 
         GraphicsSwapchain::PresentConfig conf = GraphicsSwapchain::DELAY_PRESENT;
         if (counterFps >= desiredFps)

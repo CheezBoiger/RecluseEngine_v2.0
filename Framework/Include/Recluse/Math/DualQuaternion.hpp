@@ -4,7 +4,7 @@
 #include "Recluse/Math/Quaternion.hpp"
 
 namespace Recluse {
-
+namespace Math {
 struct R_PUBLIC_API DualQuaternion
 {
     Quaternion real;    // Real part.
@@ -26,4 +26,5 @@ struct R_PUBLIC_API DualQuaternion
     }
     
 };
+} // Math
 } // Recluse

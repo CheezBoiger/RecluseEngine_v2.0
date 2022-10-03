@@ -10,6 +10,7 @@
 
 namespace Recluse {
 
+using namespace Math;
 
 // Transform component that stores transformations
 // and positioning of a given entity.
@@ -19,6 +20,8 @@ public:
     R_COMPONENT_DECLARE(Transform);
 
     virtual ~Transform() { }
+    Transform()
+        : ECS::Component(generateRGUID()) { }
 
     R_EDITOR_DECLARE("visible", "public", true)
     R_EDITOR_DECLARE("visible", "default", Float3(0.f, 0.f, 0.f))
@@ -39,13 +42,6 @@ public:
     Float3      up;             // up facing vector of the object.
     Float3      scale;          // scale vector of the object.
 
-    // Update the transform.
-    // Calculation is usually done as such:
-    //      MVP = Projection * View * Model
-    // 
-    // This is the typical calculation.
-    virtual void                onUpdate(const RealtimeTick& tick) override;
-
     virtual void                onCleanUp() override;
     virtual void                onRelease() override;
 
@@ -55,11 +51,12 @@ public:
     virtual ErrType             serialize(Archive* pArchive) override;
     virtual ErrType             deserialize(Archive* pArchive) override;
 
+    void                        updateMatrices();
 
 private:
-    Matrix43 m_localToWorld;        // Local to World Matrix.
-    Matrix43 m_prevLocalToWorld;    // Previous Local To World.
+    Matrix43                    m_localToWorld;        // Local to World Matrix.
+    Matrix43                    m_prevLocalToWorld;    // Previous Local To World.
 
-    Matrix44 m_worldToLocal;        // World to Local Matrix.
+    Matrix44                    m_worldToLocal;        // World to Local Matrix.
 };
 } // Recluse

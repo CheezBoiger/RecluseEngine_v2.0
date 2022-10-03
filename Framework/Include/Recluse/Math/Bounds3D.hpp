@@ -4,7 +4,7 @@
 #include "Recluse/Math/Vector3.hpp"
 
 namespace Recluse {
-
+namespace Math {
 struct Ray;
 struct Plane;
 
@@ -21,4 +21,5 @@ R_PUBLIC_API Bool    intersects(const Plane& plane, const Bounds3d& bounds);
 R_PUBLIC_API F32     surfaceArea(const Bounds3d& a);
 R_PUBLIC_API Float3  center(const Bounds3d& a);
 R_PUBLIC_API Float3  extent(const Bounds3d& a);
+} // Math
 } // Recluse

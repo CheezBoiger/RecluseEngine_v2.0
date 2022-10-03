@@ -8,8 +8,9 @@
 #include "Recluse/Filesystem/Archive.hpp"
 #include "Recluse/Math/Vector2.hpp"
 #include "Recluse/Scene/Scene.hpp"
-#include "Recluse/Game/GameObject.hpp"
 #include "Recluse/MessageBus.hpp"
+#include "Recluse/Game/Components/Transform.hpp"
+#include "Recluse/Game/GameSystem.hpp"
 #include <Windows.h>
 #include <vector>
 
@@ -65,71 +66,52 @@ const char* getEventString(EventId eventid)
     }
 }
 
-
-// Testing the game object behavior!
-class TestObject : public ECS::GameObject {
+class MoverComponent : public ECS::Component
+{
 public:
-    R_PUBLIC_DECLARE_GAME_OBJECT(TestObject, "7C56ED72-A8C3-4428-952C-9BC7D4DB42C6")
+    R_COMPONENT_DECLARE(MoverComponent);
 
-    void onInitialize() override {
-        m_name = "Super Test Object";
-      std::function<void(EventMessage*)> fun = [&](EventMessage* message) {
-          
-          R_VERBOSE(m_name.c_str(), "Message: %s, value=%d", getEventString(message->getEvent()), m_value);
-      }; 
-      g_bus.addReceiver("TestObject", fun);
-    }
+    MoverComponent() : ECS::Component(generateRGUID()) { }
 
-    void onUpdate(const RealtimeTick& tick) override {
-        R_TRACE(m_name.c_str(), "Testing this game object. Hello game!!");
-    }
-
-    I32 m_value;
-};
-
-
-struct TestObject1 : public ECS::GameObject {
-public:
-    R_PUBLIC_DECLARE_GAME_OBJECT(TestObject1, "B8353C91-B1EC-4517-B7DC-0CBADB10A398")
-
-    void onInitialize() override {
-        m_name = "Normal Boring Object";
-    }
-
-    void onUpdate(const RealtimeTick& tick) override {
-        R_VERBOSE(m_name.c_str(), "I am just a boring object... :(");
-    }
-};
-
-
-struct ChildObject : public ECS::GameObject {
-public:
-    R_PUBLIC_DECLARE_GAME_OBJECT(ChildObject, "E8C5D1C7-9758-4BF8-A17D-D1DC14D59769")
-
-    ChildObject(TestObject* pObj = nullptr)
-        : pTestObject(pObj)
+    virtual void onRelease() override
     {
+        MoverComponent::free(this);
     }
+};
 
-    void onInitialize() override {
-        m_name = "Child Object";
-    }
+class SimpleUpdaterSystem : public ECS::System<MoverComponent>
+{
+public:
+    R_DECLARE_GAME_SYSTEM(SimpleUpdaterSystem(), MoverComponent);
 
-    void onUpdate(const RealtimeTick& tick) override {
-        GameObject* parent = getParent();
-        R_ASSERT(pTestObject != NULL);
-        pTestObject->m_value = 70;
+    virtual void onUpdateComponents(const RealtimeTick& tick) override 
+    {
+        R_VERBOSE("SimpleUpdaterSystem", "Updating components...");
+        for (auto& mover : m_movers)
+        {
+            Transform* t = mover->getOwner()->getComponent<Transform>();
+            t->position = t->position + Float3(1.0f, 0.f, 0.f) * tick.delta();
 
-        MessageBus::sendEvent(&g_bus, InputEvents_NOOB);
-        if (parent) {
-            R_WARN(m_name.c_str(), "I am a child object! My father is %s!", parent->getName().c_str());
-        } else {
-            R_ERR(m_name.c_str(), "I am a child object, but I don't have a parent!!");
+            R_VERBOSE("SimpleUpdaterSystem", "Moving entity=%s, Position=(%f, %f, %f)", mover->getOwner()->getName().c_str(), t->position.x, t->position.y, t->position.z);
         }
     }
 
-    TestObject* pTestObject;
+    virtual ErrType onAllocateComponent(MoverComponent** pOut) override 
+    {
+        *pOut = new MoverComponent();
+        m_movers.push_back(*pOut);
+        return R_RESULT_OK;
+    }
+
+    virtual ErrType onAllocateComponents(MoverComponent*** pOuts, U32 count) override { return R_RESULT_NO_IMPL; }
+    virtual ErrType onFreeComponent(MoverComponent** pIn) override { if (*pIn) delete *pIn; return R_RESULT_OK; }
+    virtual ErrType onFreeComponents(MoverComponent*** pIns, U32 count) override { return R_RESULT_NO_IMPL; }
+private:
+    std::vector<MoverComponent*> m_movers;
 };
+
+R_COMPONENT_IMPLEMENT(MoverComponent, SimpleUpdaterSystem);
+
 
 int main(int c, char* argv[])
 {
@@ -137,17 +119,18 @@ int main(int c, char* argv[])
     RealtimeTick::initializeWatch(1ull, 0);
     g_bus.initialize();
 
-    ECS::GameObject* obj = new TestObject();
-    ECS::GameObject* obj1 = new TestObject1();
-    ECS::GameObject* child = new ChildObject(static_cast<TestObject*>(obj));
-    obj1->initialize();
-    obj->initialize();  
-    child->initialize();
-    obj->addChild(child);
+    Transform::systemInit();
+    MoverComponent::systemInit();
+
+    ECS::GameEntity* entity = ECS::GameEntity::instantiate(sizeof(ECS::GameEntity));
+    entity->setName("Billy");
+    entity->addComponent<Transform>();
+    entity->addComponent<MoverComponent>();
     Scene* pScene = new Scene();
     pScene->initialize();
-    pScene->addGameObject(obj);
-    pScene->addGameObject(obj1);
+    pScene->addEntity(entity);
+    pScene->registerSystem(Transform::getSystem());
+    pScene->registerSystem(MoverComponent::getSystem());
 
     U64 counter = 0;
     while ((counter++) < 500) {
@@ -160,7 +143,6 @@ int main(int c, char* argv[])
     }
 
     pScene->destroy();
-    delete obj;  
     delete pScene;
     Log::destroyLoggingSystem();
     g_bus.cleanUp();

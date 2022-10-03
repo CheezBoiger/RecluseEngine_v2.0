@@ -5,7 +5,7 @@
 #include "Recluse/Math/Matrix44.hpp"
 
 namespace Recluse {
-
+namespace Math {
 
 struct Ray;
 struct Bounds3d;
@@ -48,4 +48,5 @@ struct Frustum
 
 // Check whether we intersect any of the faces of the frustum.
 Bool intersects(const Frustum& frustum, const Bounds3d& bounds);
+} // Math
 } // Recluse
