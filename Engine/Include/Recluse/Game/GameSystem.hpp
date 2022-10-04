@@ -105,7 +105,16 @@ public:
         return err;
     }
 
+    // Available functions to query from the given system.
     virtual U32     getTotalComponents() const override { return m_numberOfComponentsAllocated; }
+
+    // Get all components handled by the system. This is optional, so be sure to check if this is 
+    // actually implemented.
+    virtual Comp**  getAllComponents(U64& pOut) { return nullptr; }
+
+    // Get a component from the system. Return nullptr, if the component doesn't match the given 
+    // game entity key.
+    virtual Comp*   getComponent(const RGUID& entityKey) { return nullptr; }
 
 protected:
 
@@ -140,5 +149,12 @@ public:
 
 typedef void* SystemPtr;
 
+// Takes the global system for a given component, and casts it to System<>*
+// Returns null if the system fo the given components are not available.
+template<typename Comp>
+static System<Comp>* castToSystem()
+{
+    return dynamic_cast<System<Comp>*>(Comp::getSystem());
+}
 } // ECS
 } // Recluse

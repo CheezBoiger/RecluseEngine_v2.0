@@ -23,6 +23,9 @@ public:
     virtual ErrType onFreeComponent(Transform** pIn)        override;
     virtual ErrType onFreeComponents(Transform*** pOuts, U32 count) override { return R_RESULT_NO_IMPL; }
 
+    virtual Transform* getComponent(const RGUID& entityKey) override;
+    virtual Transform** getAllComponents(U64& pOut) override;
+
 private:
     std::vector<Transform*> m_transforms;
 };

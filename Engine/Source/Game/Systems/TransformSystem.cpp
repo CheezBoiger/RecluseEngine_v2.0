@@ -36,4 +36,16 @@ void TransformSystem::onUpdateComponents(const RealtimeTick& tick)
         transform->updateMatrices();
     }
 }
+
+
+Transform* TransformSystem::getComponent(const RGUID& entityKey)
+{
+    return nullptr;
+}
+
+
+Transform** TransformSystem::getAllComponents(U64& pOut)
+{
+    return m_transforms.data();
+}
 } // Recluse
