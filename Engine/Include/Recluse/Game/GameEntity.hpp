@@ -60,13 +60,20 @@ struct GameEntityAllocation
     GameEntityMemoryAllocationType  allocType;
 };
 
-typedef GameEntity* (*OnAllocationCallback)(U64, GameEntityMemoryAllocationType);
-typedef void (*OnFreeCallback)(GameEntity*);
+// Game entity manager calls that need to be overridden if you plan to override the manager!
+typedef GameEntity* (*OnAllocationCallback)         (U64, GameEntityMemoryAllocationType);
+typedef void        (*OnFreeCallback)               (GameEntity*);
+typedef GameEntity* (*OnGetEntityByRguidCallback)   (const Recluse::RGUID&);
+typedef void        (*OnCleanUpCallback)            ();
+typedef void        (*OnInitializeCallback)         ();
 
 struct GameEntityAllocationCall
 {
-    OnAllocationCallback onAllocationFn;
-    OnFreeCallback       onFreeFn;
+    OnCleanUpCallback           onCleanUpFn;
+    OnInitializeCallback        onInitializeFn;
+    OnAllocationCallback        onAllocationFn;
+    OnFreeCallback              onFreeFn;
+    OnGetEntityByRguidCallback  onGetEntityByRguidFn;
 };
 
 // Game entity, which holds all components associated with it.
@@ -101,8 +108,12 @@ public:
     // Frees a game object from the pool.
     static R_PUBLIC_API void        free(GameEntity* gameObject);
 
-    // Optional call to override the game object allocation pool.
+    // Optional call to override the game object allocation pool. If no custom allocations are desired,
+    // will use default allocating instead (mainly malloc.)
     static R_PUBLIC_API void        setOnAllocation(GameEntityAllocationCall allocCallback);
+
+    // Get an entity from the entity pool.
+    static R_PUBLIC_API GameEntity* getEntity(const RGUID& guid);
 
     // Initialize the game object.
     R_PUBLIC_API void                   initialize() 
@@ -205,11 +216,11 @@ public:
 
     // Get the reference to the scene.
     //
-    R_PUBLIC_API Engine::Scene* getScene() const { return m_pSceneRef; }
+    R_PUBLIC_API Engine::Scene*             getScene() const { return m_pSceneRef; }
 
-    R_PUBLIC_API std::vector<GameEntity*>& getChildren() { return m_childrenNodes; }
+    R_PUBLIC_API std::vector<GameEntity*>&  getChildren() { return m_childrenNodes; }
 
-    R_PUBLIC_API B32 isParent(GameEntity* pChild) const 
+    R_PUBLIC_API B32                        isParent(GameEntity* pChild) const 
     {
         auto iter = std::find(m_childrenNodes.begin(), m_childrenNodes.end(), pChild);
         return (iter != m_childrenNodes.end());
@@ -233,7 +244,7 @@ public:
         auto it = m_components.find(Comp::classGUID());
         if (it == m_components.end())
         {
-            m_components.insert(std::pair<ECS::ComponentUUID, ECS::Component*>(Comp::classGUID(), Comp::instantiate(this)));
+            m_components.insert(std::pair<ECS::ComponentUUID, ECS::Component*>(Comp::classGUID(), Comp::instantiate(getUUID())));
             return true;
         }
         return false;

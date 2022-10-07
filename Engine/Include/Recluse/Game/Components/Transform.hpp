@@ -7,6 +7,7 @@
 #include "Recluse/Math/Matrix43.hpp"
 #include "Recluse/Math/Vector3.hpp"
 #include "Recluse/Math/Quaternion.hpp"
+#include "Recluse/RGUID.hpp"
 
 namespace Recluse {
 

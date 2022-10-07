@@ -53,15 +53,27 @@ public:
         return onInitialize();
     }
 
+    // Serialize the system and its components.
     virtual ErrType serialize(Archive* archive) override { return R_RESULT_NO_IMPL; }
+
+    // Deserialize the system and its components.
     virtual ErrType deserialize(Archive* archive) override { return R_RESULT_NO_IMPL; }
 
 private:
+    // Allows initializing the system before on intialize().
     virtual ErrType onInitialize()                  { return R_RESULT_NO_IMPL; }
+
+    // Allows cleaning up the system before releasing.
     virtual ErrType onCleanUp()                     { return R_RESULT_NO_IMPL; }
+
+    // Intended to clear all components from the game world.
     virtual void onClearAll()                       { }
+
+    // To update all components in the world.
     virtual void onUpdateComponents(const RealtimeTick& tick)  { }
 
+    // Priority value of this abstract system. This will be used to determine the 
+    // order of which this system will operate.
     U32 m_priority;
 };
 
@@ -85,7 +97,7 @@ public:
 
     // Allocates a component from the system pool.
     // Returns R_RESULT_OK if the system successfully allocated the component instance.
-    ErrType allocateComponent(Comp** pOut, GameEntity* pOwner)  
+    ErrType allocateComponent(Comp** pOut, const RGUID& pOwner)  
     {
         ErrType err = onAllocateComponent(pOut);
         if (err == R_RESULT_OK) 
@@ -117,11 +129,18 @@ public:
     virtual Comp*   getComponent(const RGUID& entityKey) { return nullptr; }
 
 protected:
-
+    // Allocation calls. These must be overridden, as they will be called by external systems,
+    // when required. 
     virtual ErrType onAllocateComponent(Comp** pOut) = 0;
+
+    // Allocate a bulk of components. Must be overridden.
     virtual ErrType onAllocateComponents(Comp*** pOuts, U32 count) = 0;
 
+    // Free calls. These must be overridden, as they will be called by external systems when
+    // required.
     virtual ErrType onFreeComponent(Comp** pIn) = 0;
+
+    // Free a bulk of components. Must be overridden.
     virtual ErrType onFreeComponents(Comp*** pOuts, U32 count) = 0;
 
     U32     m_numberOfComponentsAllocated;
@@ -150,10 +169,11 @@ public:
 typedef void* SystemPtr;
 
 // Takes the global system for a given component, and casts it to System<>*
-// Returns null if the system fo the given components are not available.
+// Returns null if the system of the given components are not available.
 template<typename Comp>
 static System<Comp>* castToSystem()
 {
+    // TODO: This might be slow, we should develop our own dynamic casting call.
     return dynamic_cast<System<Comp>*>(Comp::getSystem());
 }
 } // ECS

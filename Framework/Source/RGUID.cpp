@@ -6,7 +6,6 @@
 
 namespace Recluse {
 
-
 RGUID generateRGUID(U64 seed)
 {
     std::random_device dev;
@@ -18,4 +17,4 @@ RGUID generateRGUID(U64 seed)
 
     return nRGUID;
 }
-} //
+} // Recluse

@@ -48,6 +48,12 @@ void Scene::initialize()
 
 void Scene::destroy()
 {
+    for (U32 i = 0; i < m_entities.size(); ++i)
+    {
+        ECS::GameEntity::free(m_entities[i]);
+    }
+
+    m_entities.clear();
 }
 
 
@@ -97,7 +103,9 @@ ErrType Scene::save(Archive* pArchive)
         return result;
     }
 
-    result = serialize(pArchive);    
+    result = serialize(pArchive);
+
+    return result;
 }
 
 
