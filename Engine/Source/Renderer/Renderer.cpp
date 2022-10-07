@@ -240,8 +240,8 @@ void Renderer::createDevice(const RendererConfigs& configs)
 
 void Renderer::setUpModules()
 {
-    m_sceneBuffers.pSceneDepth = new Texture2D();
-    m_sceneBuffers.pSceneDepth->initialize
+    m_sceneBuffers.gbuffer[Engine::GBuffer_Depth] = new Texture2D();
+    m_sceneBuffers.gbuffer[Engine::GBuffer_Depth]->initialize
                                     (
                                         this, 
                                         RESOURCE_FORMAT_D32_FLOAT_S8_UINT, 
@@ -384,7 +384,7 @@ void Renderer::allocateSceneBuffers(const RendererConfigs& configs)
 {
     U32 width = configs.renderWidth;
     U32 height = configs.renderHeight;
-    m_sceneBuffers.pSceneDepth = createTexture2D(width, height, 1, 1, RESOURCE_FORMAT_D24_UNORM_S8_UINT);
+    m_sceneBuffers.gbuffer[Engine::GBuffer_Depth] = createTexture2D(width, height, 1, 1, RESOURCE_FORMAT_D24_UNORM_S8_UINT);
 
     ResourceViewDesc viewDesc = { };
     viewDesc.dimension = RESOURCE_VIEW_DIMENSION_2D;
@@ -395,8 +395,8 @@ void Renderer::allocateSceneBuffers(const RendererConfigs& configs)
     viewDesc.baseMipLevel = 0;
     viewDesc.type = RESOURCE_VIEW_TYPE_DEPTH_STENCIL;
 
-    m_sceneBuffers.pDepthStencilView = new TextureView();
-    m_sceneBuffers.pDepthStencilView->initialize(this, m_sceneBuffers.pSceneDepth, viewDesc);
+    m_sceneBuffers.gbufferViews[Engine::GBuffer_Depth] = new TextureView();
+    m_sceneBuffers.gbufferViews[Engine::GBuffer_Depth]->initialize(this, m_sceneBuffers.gbuffer[Engine::GBuffer_Depth], viewDesc);
 
     m_renderCommands.resize(configs.buffering);
     m_maxBufferCount = configs.buffering;
@@ -416,18 +416,18 @@ void Renderer::allocateSceneBuffers(const RendererConfigs& configs)
 void Renderer::freeSceneBuffers()
 {
 
-    if (m_sceneBuffers.pDepthStencilView) 
+    if (m_sceneBuffers.gbufferViews[Engine::GBuffer_Depth]) 
     {
-        m_sceneBuffers.pDepthStencilView->destroy(this);
-        delete m_sceneBuffers.pDepthStencilView;
-        m_sceneBuffers.pDepthStencilView = nullptr;
+        m_sceneBuffers.gbufferViews[Engine::GBuffer_Depth]->destroy(this);
+        delete m_sceneBuffers.gbufferViews[Engine::GBuffer_Depth];
+        m_sceneBuffers.gbufferViews[Engine::GBuffer_Depth] = nullptr;
     }
 
-    if (m_sceneBuffers.pSceneDepth) 
+    if (m_sceneBuffers.gbuffer[Engine::GBuffer_Depth]) 
     {
     
-        destroyTexture2D(m_sceneBuffers.pSceneDepth);
-        m_sceneBuffers.pSceneDepth = nullptr;
+        destroyTexture2D(m_sceneBuffers.gbuffer[Engine::GBuffer_Depth]);
+        m_sceneBuffers.gbuffer[Engine::GBuffer_Depth] = nullptr;
 
     }
 

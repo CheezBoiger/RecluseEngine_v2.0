@@ -28,17 +28,17 @@ namespace ECS {
 
 class Component;
 
-enum GameObjectStatus 
+enum GameEntityStatus 
 {
-    GameObjectStatus_Unused,
-    GameObjectStatus_Initializing,
-    GameObjectStatus_Initialized,
-    GameObjectStatus_Awake,
-    GameObjectStatus_Active,
-    GameObjectStatus_Sleeping,
-    GameObjectStatus_Asleep,
-    GAmeObjectStatus_Waking,
-    GameObjectStatus_Destroyed
+    GameEntityStatus_Unused,
+    GameEntityStatus_Initializing,
+    GameEntityStatus_Initialized,
+    GameEntityStatus_Awake,
+    GameEntityStatus_Active,
+    GameEntityStatus_Sleeping,
+    GameEntityStatus_Asleep,
+    GameEntityStatus_Waking,
+    GameEntityStatus_Destroyed
 };
 
 
@@ -88,14 +88,14 @@ public:
     R_PUBLIC_API GameEntity
             (
                 const GameEntityAllocation& allocation,
-                RGUID uuid,
+                const RGUID& uuid,
                 const std::string& tag = std::string(), 
                 const std::string& name = std::string(), 
                 GameEntity* pParent = nullptr
             )
         : m_allocation(allocation)
         , m_guuid(uuid)
-        , m_status(GameObjectStatus_Unused)
+        , m_status(GameEntityStatus_Unused)
         , m_pParentNode(pParent)
         , m_pSceneRef(nullptr)
         , m_name(name)
@@ -118,20 +118,20 @@ public:
     // Initialize the game object.
     R_PUBLIC_API void                   initialize() 
     {
-        m_status = GameObjectStatus_Initialized;
+        m_status = GameEntityStatus_Initialized;
     }
     
     // Wake the game object, this should be called when
     // game object is asleep, or first time initialized.
     R_PUBLIC_API void                   wake() 
     { 
-        m_status = GameObjectStatus_Awake;
+        m_status = GameEntityStatus_Awake;
     }
 
     // Put game object to sleep.
     R_PUBLIC_API void                   sleep() 
     {
-        m_status = GameObjectStatus_Asleep;
+        m_status = GameEntityStatus_Asleep;
     }
 
     R_PUBLIC_API void                   destroy() 
@@ -145,11 +145,11 @@ public:
 
         m_components.clear();
 
-        m_status = GameObjectStatus_Destroyed;
+        m_status = GameEntityStatus_Destroyed;
     }
 
-    virtual R_PUBLIC_API ErrType        serialize(Archive* pArchive) override { return R_RESULT_NO_IMPL; }
-    virtual R_PUBLIC_API ErrType        deserialize(Archive* pArchive) override { return R_RESULT_NO_IMPL; }
+    virtual R_PUBLIC_API ErrType        serialize(Archive* pArchive) override;
+    virtual R_PUBLIC_API ErrType        deserialize(Archive* pArchive) override;
 
     // Get the game object name.
     R_PUBLIC_API const std::string&     getName() const { return m_name; }
@@ -158,7 +158,10 @@ public:
     R_PUBLIC_API const std::string&     getTag() const { return m_tag; }
 
     // Grab the game object status.
-    R_PUBLIC_API GameObjectStatus       getStatus() const { return m_status; }
+    R_PUBLIC_API GameEntityStatus       getStatus() const { return m_status; }
+
+    // Check if the game entity is ready or active.
+    R_PUBLIC_API Bool                   isReady() const { return (m_status == GameEntityStatus_Initialized) || (m_status == GameEntityStatus_Active); }
 
     // Get the game object parent.
     R_PUBLIC_API GameEntity*            getParent() const { return m_pParentNode; }
@@ -283,7 +286,7 @@ private:
     };
 
 
-    GameObjectStatus            m_status;
+    GameEntityStatus            m_status;
 
     // The Parent node that this game object may be associated to.
     GameEntity*                 m_pParentNode;

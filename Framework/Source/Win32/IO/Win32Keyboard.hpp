@@ -7,7 +7,9 @@
 #include "Recluse/Types.hpp"
 
 namespace Recluse {
+namespace Win32 {
 
-extern DWORD kWin32InputKeyCodes[256];
+void registerKeyCall(DWORD keycode, DWORD status);
 
+} // Win32
 } // Recluse

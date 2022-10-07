@@ -207,5 +207,13 @@ Float4 lerp(const Float4& a, const Float4& b, F32 t)
 {
     return R_LERP(a, b, t);
 }
+
+
+Float4 normalize(const Float4& lh)
+{
+    F32 magnitude = length(lh);
+    F32 denom = 1.0f / magnitude;
+    return lh * denom;
+}
 } // Math
 } // Recluse

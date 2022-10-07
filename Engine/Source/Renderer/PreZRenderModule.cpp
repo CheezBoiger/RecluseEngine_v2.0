@@ -27,9 +27,9 @@ static void createPipelines(GraphicsPipelineStateDesc& pipelineCi)
 
 void initialize(GraphicsDevice* pDevice, Engine::SceneBufferDefinitions* pBuffers)
 {
-    R_ASSERT(pBuffers->pSceneDepth                  != NULL);
-    R_ASSERT(pBuffers->pSceneDepth->getResource()   != NULL);
-    R_ASSERT(pBuffers->pDepthStencilView->getView() != NULL);
+    R_ASSERT(pBuffers->gbuffer[Engine::GBuffer_Depth]                   != NULL);
+    R_ASSERT(pBuffers->gbuffer[Engine::GBuffer_Depth]->getResource()    != NULL);
+    R_ASSERT(pBuffers->gbufferViews[Engine::GBuffer_Depth]->getView()   != NULL);
 
     R_DEBUG("PreZ", "Initializing preZ render pass...");
 
@@ -44,13 +44,13 @@ void initialize(GraphicsDevice* pDevice, Engine::SceneBufferDefinitions* pBuffer
     ErrType result                              = R_RESULT_OK;
     GraphicsPipelineStateDesc pipelineCi        = { };
     RenderPassDesc rpCi                         = { };
-    const GraphicsResourceDescription& resDesc  = pBuffers->pSceneDepth->getResource()->getDesc();
+    const GraphicsResourceDescription& resDesc  = pBuffers->gbuffer[Engine::GBuffer_Depth]->getResource()->getDesc();
     
     rpCi.width                  = resDesc.width;
     rpCi.height                 = resDesc.height;
     rpCi.numRenderTargets       = 0;
-    rpCi.pDepthStencil          = pBuffers->pDepthStencilView->getView();
-    pSceneDepthView = pBuffers->pDepthStencilView->getView();
+    rpCi.pDepthStencil          = pBuffers->gbufferViews[Engine::GBuffer_Depth]->getView();
+    pSceneDepthView = pBuffers->gbufferViews[Engine::GBuffer_Depth]->getView();
 
     result = pDevice->createRenderPass(&pPreZPass, rpCi);
 

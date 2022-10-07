@@ -9,8 +9,8 @@ namespace Recluse {
 // It is intended to be a bit flip type, so that it is quicker to process.
 enum InputState 
 {
-    INPUT_STATE_UP,     // Must always be 0.
-    INPUT_STATE_DOWN    // Must always be 1.
+    InputState_Up,     // Must always be 0.
+    InputState_Down    // Must always be 1.
 };
 
 

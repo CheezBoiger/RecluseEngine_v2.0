@@ -175,5 +175,25 @@ Float2 lerp(const Float2& a, const Float2& b, F32 t)
 {
     return R_LERP(a, b, t);
 }
+
+
+F32 dot(const Float2& a, const Float2& b)
+{
+    return (a[0] * b[0]) + (a[1] * b[1]); 
+}
+
+
+F32 length(const Float2& a)
+{
+    return sqrt(dot(a, a));
+}
+
+
+Float2 normalize(const Float2& v)
+{
+    F32 magnitude = length(v);
+    F32 denom = 1.0f / magnitude;
+    return v * denom;
+}
 } // Math
 } // Recluse

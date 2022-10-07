@@ -2,6 +2,7 @@
 #include "Win32/Win32Common.hpp"
 #include "Win32/Win32Runtime.hpp"
 #include "Win32/IO/Win32Window.hpp"
+#include "Win32//IO/Win32Keyboard.hpp"
 
 #include "Logging/LogFramework.hpp"
 
@@ -230,6 +231,15 @@ RealtimeTick RealtimeTick::getTick(U32 watchType)
     return RealtimeTick(watchType);
 }
 
+#define CHECK_KEY_STATE_DOWN(keyCode, registerFn) { \
+    SHORT s = GetKeyState(keyCode); \
+    if (s & 0x8000) registerFn(I32(keyCode), WM_KEYDOWN); \
+  }
+
+#define CHECK_KEY_STATE_UP(keyCode, registerFn) { \
+    SHORT s = GetKeyState(keyCode); \
+    if (~(s & 0x8000)) registerFn(I32(keyCode), WM_KEYUP); \
+  }
 
 LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -295,11 +305,11 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
                 }
 
                 if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_1_DOWN)
-                    feedback.buttonStateFlags &= INPUT_STATE_DOWN << 0;
+                    feedback.buttonStateFlags &= InputState_Down << 0;
                 if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_2_DOWN)
-                    feedback.buttonStateFlags &= INPUT_STATE_DOWN << 1;
+                    feedback.buttonStateFlags &= InputState_Down << 1;
                 if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_3_DOWN)
-                    feedback.buttonStateFlags &= INPUT_STATE_DOWN << 2;
+                    feedback.buttonStateFlags &= InputState_Down << 2;
             } 
 
             feedback.xRate = dx;
@@ -310,8 +320,38 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
 
             break;
         }
+        case WM_SYSKEYDOWN:
         case WM_KEYDOWN:
+        {
+            Win32::registerKeyCall(I32(wParam), WM_KEYDOWN);
+            if (wParam == VK_SHIFT)
+            {
+                CHECK_KEY_STATE_DOWN(VK_LSHIFT, Win32::registerKeyCall);
+                CHECK_KEY_STATE_DOWN(VK_RSHIFT, Win32::registerKeyCall);
+            }
+            else if (wParam == VK_CONTROL)
+            {
+                CHECK_KEY_STATE_DOWN(VK_LCONTROL, Win32::registerKeyCall);
+                CHECK_KEY_STATE_DOWN(VK_RCONTROL, Win32::registerKeyCall);
+            }
+            break;
+        }
+        case WM_SYSKEYUP:
         case WM_KEYUP:
+        {
+            Win32::registerKeyCall(I32(wParam), WM_KEYUP);
+            if (wParam == VK_SHIFT)
+            {
+                CHECK_KEY_STATE_UP(VK_LSHIFT, Win32::registerKeyCall);
+                CHECK_KEY_STATE_UP(VK_RSHIFT, Win32::registerKeyCall);
+            }
+            else if (wParam == VK_CONTROL)
+            {
+                CHECK_KEY_STATE_UP(VK_LCONTROL, Win32::registerKeyCall);
+                CHECK_KEY_STATE_UP(VK_RCONTROL, Win32::registerKeyCall);
+            }
+            break;
+        }
         case WM_MOVE:
         case WM_SIZE:
         {

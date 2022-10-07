@@ -53,6 +53,7 @@ public:
     ErrType             initialize(GraphicsDevice* pDevice, U64 totalSzBytes, ResourceUsageFlags usage);
     ErrType             destroy();
 
+    // Stream a staging resource back to the gpu.
     ErrType             stream(GraphicsDevice* pDevice, void* ptr, U64 offsetBytes, U64 szBytes);
 
     // Obtain a staging buffer based on the offset of this gpu resource, and the total size bytes to work with.
@@ -60,7 +61,7 @@ public:
 
     GraphicsResource*   get() const { return m_pResource; }
 private:
-
+    RefCount<U32>       m_stagingCount;
     GraphicsResource*   m_pResource;
     GraphicsDevice*     m_pDevice;
     U64                 m_totalSzBytes;
@@ -113,17 +114,20 @@ private:
 };
 
 
+enum GBuffer
+{
+    GBuffer_Albedo,
+    GBuffer_Normal,
+    GBuffer_Materials,
+    GBuffer_Depth,
+    GBuffer_MaxBufferCount
+};
+
+
 struct SceneBufferDefinitions 
 {
-    std::vector<GPUBuffer*> pSceneViewBuffers;
-    Texture2D* pSceneAlbedo;
-    Texture2D* pSceneAo;
-    Texture2D* pSceneMat;
-    Texture2D* pSceneNormal;
-    Texture2D* pSceneBrightness;
-    Texture2D* pSceneHDRTexture;
-    Texture2D* pSceneDepth;
-    TextureView* pDepthStencilView;
+    Texture2D*              gbuffer[GBuffer_MaxBufferCount];
+    TextureView*            gbufferViews[GBuffer_MaxBufferCount];
 };
 
 namespace RenderDB {

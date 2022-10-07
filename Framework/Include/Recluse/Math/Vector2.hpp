@@ -123,17 +123,16 @@ struct R_PUBLIC_API UShort2
     };
 };
 
-F32 R_PUBLIC_API dot(const Float2& a, const Float2& b);
-F32 R_PUBLIC_API dot(const Int2& a, const Int2& b);
-F32 R_PUBLIC_API dot(const UInt2& a, const UInt2& b);
+R_PUBLIC_API F32        dot(const Float2& a, const Float2& b);
+R_PUBLIC_API F32        dot(const Int2& a, const Int2& b);
+R_PUBLIC_API F32        dot(const UInt2& a, const UInt2& b);
 
-F32 R_PUBLIC_API sqrt(const Float2& a);
-F32 R_PUBLIC_API length(const Float2& a);
-F32 R_PUBLIC_API length2(const Float2& a);
+R_PUBLIC_API F32        length(const Float2& a);
+R_PUBLIC_API F32        length2(const Float2& a);
 
-Float2 R_PUBLIC_API normalize(const Float2& a);
-Int2 R_PUBLIC_API normalize(const Int2& a);
-UInt2 R_PUBLIC_API normalize(const UInt2& a);
-Float2 R_PUBLIC_API lerp(const Float2& a, const Float2& b, F32 t);
+R_PUBLIC_API Float2     normalize(const Float2& a);
+R_PUBLIC_API Int2       normalize(const Int2& a);
+R_PUBLIC_API UInt2      normalize(const UInt2& a);
+R_PUBLIC_API Float2     lerp(const Float2& a, const Float2& b, F32 t);
 } // Math
 } // Recluse

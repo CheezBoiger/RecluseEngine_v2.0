@@ -22,27 +22,27 @@ void Transform::onRelease()
 
 ErrType Transform::serialize(Archive* pArchive)
 {
-    pArchive->write(&position, sizeof(Float3));
+    pArchive->write(&position,      sizeof(Float3));
     pArchive->write(&localPosition, sizeof(Float3));
-    pArchive->write(&rotation, sizeof(Quaternion));
+    pArchive->write(&rotation,      sizeof(Quaternion));
     pArchive->write(&localRotation, sizeof(Quaternion));
-    pArchive->write(&eulerAngles, sizeof(Float3));
-    pArchive->write(&forward, sizeof(Float3));
-    pArchive->write(&right, sizeof(Float3));
-    pArchive->write(&up, sizeof(Float3));
+    pArchive->write(&eulerAngles,   sizeof(Float3));
+    pArchive->write(&forward,       sizeof(Float3));
+    pArchive->write(&right,         sizeof(Float3));
+    pArchive->write(&up,            sizeof(Float3));
     return R_RESULT_NO_IMPL;
 }
 
 ErrType Transform::deserialize(Archive* pArchive)
 {
-    pArchive->read(&position, sizeof(Float3));
-    pArchive->read(&localPosition, sizeof(Float3));
-    pArchive->read(&rotation, sizeof(Quaternion));
-    pArchive->read(&localRotation, sizeof(Quaternion));
-    pArchive->read(&eulerAngles, sizeof(Quaternion));
-    pArchive->read(&forward, sizeof(Float3));
-    pArchive->read(&right, sizeof(Float3));
-    pArchive->read(&up, sizeof(Float3));
+    pArchive->read(&position,       sizeof(Float3));
+    pArchive->read(&localPosition,  sizeof(Float3));
+    pArchive->read(&rotation,       sizeof(Quaternion));
+    pArchive->read(&localRotation,  sizeof(Quaternion));
+    pArchive->read(&eulerAngles,    sizeof(Quaternion));
+    pArchive->read(&forward,        sizeof(Float3));
+    pArchive->read(&right,          sizeof(Float3));
+    pArchive->read(&up,             sizeof(Float3));
     return R_RESULT_NO_IMPL;
 }
 
@@ -54,6 +54,6 @@ void Transform::updateMatrices()
     Matrix44 World  = s * r * t;
 
     m_localToWorld  = World;
-    m_worldToLocal = Math::inverse(World);
+    m_worldToLocal  = Math::inverse(World);
 }
 } // Recluse

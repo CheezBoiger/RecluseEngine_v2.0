@@ -1,6 +1,7 @@
 //
 #include "Recluse/Game/GameEntity.hpp"
 #include "Recluse/Messaging.hpp"
+#include "Recluse/Filesystem/Archive.hpp"
 
 namespace Recluse {
 namespace ECS {
@@ -68,6 +69,34 @@ void GameEntity::setOnAllocation(GameEntityAllocationCall callback)
 GameEntity* GameEntity::getEntity(const RGUID& guid)
 {
     return gameEntityAllocator.onGetEntityByRguidFn(guid);
+}
+
+
+ErrType GameEntity::serialize(Archive* pArchive)
+{
+    // TODO: Need to figure out how to obtain a proper rguid.
+    //       Parent needs to also be included as well!
+    RGUID guid = getUUID();
+    pArchive->write(&guid, sizeof(RGUID));
+
+    const std::string& s    = getName();
+    U64 szBytes             = s.size();
+    const char* str         = s.c_str();
+
+    pArchive->write((void*)str, szBytes);
+
+    const std::string tag   = getTag();
+    szBytes                 = tag.size();
+    str                     = tag.c_str();
+
+    pArchive->write((void*)str, szBytes);
+
+    return R_RESULT_OK;
+}
+
+ErrType GameEntity::deserialize(Archive* pArchive)
+{
+    return R_RESULT_NO_IMPL;
 }
 } // ECS
 } // Recluse 

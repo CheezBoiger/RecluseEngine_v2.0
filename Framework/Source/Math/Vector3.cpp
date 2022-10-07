@@ -152,7 +152,8 @@ F32 length2(const Float3& v)
 Float3 normalize(const Float3& v)
 {
     F32 magnitude = length(v);
-    return v / magnitude;
+    F32 denom = 1.0f / magnitude;
+    return v * denom;
 }
 
 
