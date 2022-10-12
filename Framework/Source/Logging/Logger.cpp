@@ -2,14 +2,11 @@
 #include "Recluse/Logger.hpp"
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Memory/MemoryCommon.hpp"
-#include "Recluse/System/DateTime.hpp"
 #include "Logging/LogFramework.hpp"
 
 #include "Recluse/Filesystem/Archive.hpp"
 
 namespace Recluse {
-
-const char* DateFormatter::kDefaultFormat = "%Y-%M-%D %h:%m:%s";
 
 static LoggingQueue*    loggingQueue = nullptr;
 static Thread           displayThread;
@@ -283,13 +280,6 @@ LogMessage* LoggingQueue::getHead() const
 
     pLog = (m_head) ? &m_head->logMessage : nullptr;
     return pLog;    
-}
-
-
-Log& Log::operator<<(const DateFormatter& formatter)
-{
-    data.time = formatter.getFormattedString();
-    return (*this);
 }
 
 

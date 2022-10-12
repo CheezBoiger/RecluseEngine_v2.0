@@ -65,6 +65,9 @@ struct R_PUBLIC_API Matrix44
     inline void operator-=(F32 scalar);
     inline void operator/=(F32 scalar);
 
+    F32 operator()(U32 row, U32 col) const { return get(row, col); }
+    F32& operator()(U32 row, U32 col) { return get(row, col); }
+
     // Take the identity matrix.
     static Matrix44 identity();
 

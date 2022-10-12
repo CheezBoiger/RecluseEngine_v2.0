@@ -46,21 +46,19 @@ if (WIN32)
     FOLDER ${RECLUSE_EDITOR_NAME})
 endif()
 
-set( CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/Recluse CACHE PATH "..." FORCE)
+install(TARGETS ${RECLUSE_EDITOR_NAME}
+        CONFIGURATIONS Debug
+        RUNTIME DESTINATION Bin)
+install(TARGETS ${RECLUSE_EDITOR_NAME}
+        CONFIGURATIONS Release
+        RUNTIME DESTINATION Bin)
+install(TARGETS ${RECLUSE_EDITOR_NAME}
+        CONFIGURATIONS Debug
+        ARCHIVE DESTINATION Lib)
+install(TARGETS ${RECLUSE_EDITOR_NAME}
+        CONFIGURATIONS Release
+        ARCHIVE DESTINATION Lib)
 
-install(TARGETS ${RECLUSE_EDITOR_NAME}
-        CONFIGURATIONS Debug
-        RUNTIME DESTINATION Debug/Bin)
-install(TARGETS ${RECLUSE_EDITOR_NAME}
-        CONFIGURATIONS Release
-        RUNTIME DESTINATION Release/Bin)
-install(TARGETS ${RECLUSE_EDITOR_NAME}
-        CONFIGURATIONS Debug
-        ARCHIVE DESTINATION Debug/Lib)
-install(TARGETS ${RECLUSE_EDITOR_NAME}
-        CONFIGURATIONS Release
-        ARCHIVE DESTINATION Release/Lib)
-		
 # Code to run after the compilation of our thirdparty libs AND our Editor executable.
 install(CODE [[
 #			file(GET_RUNTIME_DEPENDENCIES 
@@ -99,8 +97,7 @@ install(CODE [[
 				file(GLOB_RECURSE WX_DLLS "${CMAKE_INSTALL_PREFIX}/lib/vc_x64_dll/*.dll")
 				foreach(_FILE ${WX_DLLS})
 					file(INSTALL
-						DESTINATION $<$<CONFIG:Debug>:${CMAKE_INSTALL_PREFIX}/Debug/Bin>
-									$<$<CONFIG:Release>:${CMAKE_INSTALL_PREFIX}/Release/Bin>
+						DESTINATION ${CMAKE_INSTALL_PREFIX}/Bin
 						TYPE SHARED_LIBRARY
 						FOLLOW_SYMLINK_CHAIN
 						FILES "${_FILE}"

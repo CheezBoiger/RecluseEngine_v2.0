@@ -324,6 +324,8 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
         case WM_KEYDOWN:
         {
             Win32::registerKeyCall(I32(wParam), WM_KEYDOWN);
+            // Shift/ctrl key is registered, but we also need to check which shift/ctrl key (left, right)
+            // was also pressed. We check both. 
             if (wParam == VK_SHIFT)
             {
                 CHECK_KEY_STATE_DOWN(VK_LSHIFT, Win32::registerKeyCall);
@@ -340,6 +342,7 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
         case WM_KEYUP:
         {
             Win32::registerKeyCall(I32(wParam), WM_KEYUP);
+            // The same applies as above key_down call.
             if (wParam == VK_SHIFT)
             {
                 CHECK_KEY_STATE_UP(VK_LSHIFT, Win32::registerKeyCall);
@@ -356,6 +359,8 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
         case WM_SIZE:
         {
             // As a window is resized, we rely this back to the handler.
+            // Keep in mind that this needs to be rely'ed back to the renderer. 
+            // Which shouldn't be problematic. We can signal this inside our onWindowResize callback.
             UINT width  = LOWORD(lParam);
             UINT height = HIWORD(lParam);
             pWindow->onWindowResize(pWindow->getPosX(), pWindow->getPosY(), width, height);
@@ -378,6 +383,7 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
 void pollEvents()
 {
     MSG msg;
+    // Poll win32 information (keyboard, mouse, etc...)
     while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) 
     {
         TranslateMessage(&msg);

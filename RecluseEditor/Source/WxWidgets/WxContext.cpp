@@ -2,11 +2,15 @@
 #include "WxContext.hpp"
 #include "Recluse/Messaging.hpp"
 
+#include "MainEditorFrame.hpp"
+
+#include "Recluse/Renderer/Renderer.hpp"
+
 namespace Recluse {
 
 #if 1
 
-class RecluseEditorFrame : public wxFrame
+class RecluseEditorFrame : public wxFrame, public Editor::MainEditorFrame
 {
 public:
 
@@ -20,6 +24,8 @@ public:
     void onHello(wxCommandEvent& ev) { }
     void onExit(wxCommandEvent& ev)
     {
+        m_panel->Close(true);
+        delete m_panel;
         Close(true);
     }
     void onAbout(wxCommandEvent& ev) { }
@@ -28,6 +34,7 @@ private:
     wxMenu* m_menu;
     wxMenu* m_menuHelp;
     wxMenuBar* m_menuBar;
+    wxPanel* m_panel;
 };
 
 RecluseEditorFrame::RecluseEditorFrame()
@@ -46,9 +53,12 @@ RecluseEditorFrame::RecluseEditorFrame()
     m_menuBar->Append(m_menu, "File");
     m_menuBar->Append(m_menuHelp, "Help");
 
+    m_panel = new wxPanel(this);
+
     SetMenuBar(m_menuBar);
     
     CreateStatusBar();
+
     SetStatusText("Welcome to wxWidgets!");
     
     Bind(wxEVT_MENU, &RecluseEditorFrame::onHello, this, ID_HELLO);

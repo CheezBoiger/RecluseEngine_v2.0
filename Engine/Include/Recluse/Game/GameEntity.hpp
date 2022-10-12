@@ -44,10 +44,10 @@ enum GameEntityStatus
 
 enum GameEntityMemoryAllocationType
 {
-    GameEntityMemoryAllocationType_Dynamic,
-    GameEntityMemoryAllocationType_Persistant,
-    GameEntityMemoryAllocationType_Static,
-    GameEntityMemoryAllocationType_Fast
+    GameEntityMemoryAllocationType_Dynamic,                                             // 
+    GameEntityMemoryAllocationType_Persistant,                                          // 
+    GameEntityMemoryAllocationType_Static = GameEntityMemoryAllocationType_Persistant,  // 
+    GameEntityMemoryAllocationType_Volatile                                             // Volatile/Transient memory type.
 };
 
 class GameEntity;
@@ -114,6 +114,19 @@ public:
 
     // Get an entity from the entity pool.
     static R_PUBLIC_API GameEntity* getEntity(const RGUID& guid);
+
+    Bool isActive() const 
+    {
+        return (m_status == GameEntityStatus_Active);
+    }
+
+    // Activate the object.
+    void activate()
+    {
+        initialize();
+        wake();
+        m_status = GameEntityStatus_Active;
+    }
 
     // Initialize the game object.
     R_PUBLIC_API void                   initialize() 

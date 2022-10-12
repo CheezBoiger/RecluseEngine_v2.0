@@ -1,6 +1,8 @@
 //
 #include "Recluse/Math/Matrix33.hpp"
 
+#include "Recluse/Messaging.hpp"
+
 namespace Recluse {
 namespace Math {
 
@@ -75,6 +77,20 @@ Matrix33 Matrix33::operator-(const Matrix33& rh) const
     ans[8] = m[8] - rh[8];
 
     return ans;
+}
+
+
+F32 Matrix33::get(U32 row, U32 col) const
+{
+    R_ASSERT(row < 3 && col < 3);
+    return m[3u * row + col];
+}
+
+
+F32& Matrix33::get(U32 row, U32 col) 
+{   
+    R_ASSERT(row < 3 && col < 3);
+    return m[3u * row + col];
 }
 } // Math
 } // Recluse

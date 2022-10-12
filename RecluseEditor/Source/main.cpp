@@ -13,15 +13,15 @@ int main(int c, char* argv[])
     Recluse::Log::initializeLoggingSystem();
     Recluse::RealtimeTick::initializeWatch(0, 0);
 
-    Recluse::ErrType result = Recluse::GUIFactory::createContext(Recluse::GUIFactory::Context_WxWidgets);
+    Recluse::ErrType result = Recluse::Editor::GUIFactory::createContext(Recluse::Editor::GUIFactory::Context_WxWidgets);
 
     if (result == Recluse::R_RESULT_OK)
     {
-        Recluse::IGUIContext* guiCtx = Recluse::GUIContext::get();
+        Recluse::Editor::IGUIContext* guiCtx = Recluse::Editor::GUIContext::get();
         guiCtx->setUp();
         guiCtx->run(c, argv);
         guiCtx->tearDown();
-        Recluse::GUIFactory::destroyContext(guiCtx);
+        Recluse::Editor::GUIFactory::destroyContext(guiCtx);
     }
     else
     {

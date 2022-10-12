@@ -32,6 +32,12 @@ public:
     // Convert to 4x4 square matrix.
     operator Matrix44 ();
     operator Matrix44 () const;
+
+    F32 get(U32 row, U32 col) const;
+    F32& get(U32 row, U32 col);
+
+    F32 operator()(U32 row, U32 col) const { return get(row, col); }
+    F32& operator()(U32 row, U32 col) { return get(row, col); }
 };
 } // Math
 } // Recluse

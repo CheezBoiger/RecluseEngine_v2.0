@@ -7,6 +7,7 @@
 
 
 namespace Recluse {
+namespace Editor {
 namespace GUIFactory {
 
 enum GUIContext
@@ -15,7 +16,11 @@ enum GUIContext
     Context_Null
 };
 
+// Create a GUI context.
 R_PUBLIC_API ErrType         createContext(GUIContext ctx);
+
+// Destroy the GUI context.
 R_PUBLIC_API void            destroyContext(IGUIContext* pCtx);
+} // Editor
 } // GUIFactory
 } // Recluse

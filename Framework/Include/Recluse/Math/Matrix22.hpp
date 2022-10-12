@@ -30,6 +30,12 @@ struct R_PUBLIC_API Matrix22
     Matrix22 operator*(F32 scalar) const;
     Matrix22 operator/(F32 scalar) const;
     Matrix22 operator-() const;
+
+    F32 get(U32 row, U32 col) const;
+    F32& get(U32 row, U32 col);
+
+    F32 operator()(U32 row, U32 col) const { return get(row, col); }
+    F32& operator()(U32 row, U32 col) { return get(row, col); }
 };
 
 

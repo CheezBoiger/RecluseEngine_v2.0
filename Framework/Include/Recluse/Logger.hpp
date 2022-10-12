@@ -11,6 +11,16 @@ namespace Recluse {
 
 class DateFormatter;
 
+namespace Math {
+struct Float3;
+struct Matrix22;
+struct Matrix33;
+struct Matrix44;
+struct Matrix43;
+struct Float2;
+struct Float4;
+} // Math
+
 enum LogType 
 {
     LogMsg          = 0,
@@ -45,6 +55,15 @@ enum LogCommand
 // Recommended to keep this off unless there is a need to debug.
 struct Log 
 {
+private:
+    R_PUBLIC_API void stringify(const Math::Float2& f2);
+    R_PUBLIC_API void stringify(const Math::Float3& f3);
+    R_PUBLIC_API void stringify(const Math::Float4& f4);
+    R_PUBLIC_API void stringify(const Math::Matrix22& m22);
+    R_PUBLIC_API void stringify(const Math::Matrix33& m33);
+    R_PUBLIC_API void stringify(const Math::Matrix44& m44);
+    R_PUBLIC_API void stringify(const Math::Matrix43& m43);
+public:
     // Data message.
     LogMessage data;
 
@@ -96,9 +115,57 @@ struct Log
         this->data.msg += data;
     }
 
+    template<>
+    Log& operator<<(const Math::Float2& f2)
+    {
+        stringify(f2);
+        return (*this);
+    }
+
+    template<>
+    Log& operator<<(const Math::Float3& f3)
+    {
+        stringify(f3);
+        return (*this);
+    }
+
+    template<>
+    Log& operator<<(const Math::Float4& f4)
+    {
+        stringify(f4);
+        return (*this);
+    }
+
+    template<>
+    Log& operator<<(const Math::Matrix22& m22)
+    {
+        stringify(m22);
+        return (*this);
+    }
+
+    template<>
+    Log& operator<<(const Math::Matrix33& m33)
+    {
+        stringify(m33);
+        return (*this);
+    }
+
+    template<>
+    Log& operator<<(const Math::Matrix44& m44)
+    {
+        stringify(m44);
+        return (*this);
+    }
+
+    template<>
+    Log& operator<<(const Math::Matrix43& m43)
+    {
+        stringify(m43);
+        return (*this);
+    }
+
     R_PUBLIC_API Log& operator<<(const DateFormatter& formatter);
     R_PUBLIC_API Log& operator<<(LogCommand command);
-
 };
 
 

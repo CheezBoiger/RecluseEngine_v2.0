@@ -15,8 +15,8 @@
     #define R_IMPORT __declspec(dllimport)
     #define R_FORCEINLINE __forceinline
     #define R_NOVTABLE __declspec(novtable)
-    #define R_DEBUG_BREAK() __debugbreak();
-    #define R_FORCE_CRASH(c) ExitProcess(c);
+    #define R_DEBUG_BREAK() do { __debugbreak(); } while(0)
+    #define R_FORCE_CRASH(c) do { ExitProcess(c); } while(0)
     #if defined(_M_X64) || defined(_M_AMD64)
         #define RECLUSE_64BIT
     #else

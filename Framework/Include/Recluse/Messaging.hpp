@@ -3,6 +3,7 @@
 
 #include "Recluse/Logger.hpp"
 #include "Recluse/Arch.hpp"
+#include "Recluse/System/DateTime.hpp"
 #include <stdio.h>
 
 #if defined(R_DEVELOPER)
@@ -16,6 +17,7 @@
         Recluse::SizeT r__sz__ = snprintf(nullptr, 0, format, __VA_ARGS__); \
         r__log__.data.msg.resize(r__sz__ + 1u); \
         snprintf((char*)r__log__.data.msg.data(), r__log__.data.msg.size(), format, __VA_ARGS__); \
+        r__log__ << Recluse::DateFormatter("%Y-%M-%D %h:%m:%s"); \
     }
 
 // Helper macros for logging messages.

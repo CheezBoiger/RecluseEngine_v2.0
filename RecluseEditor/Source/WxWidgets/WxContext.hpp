@@ -22,7 +22,7 @@
 namespace Recluse {
 
 
-class WxGuiContext : public IGUIContext
+class WxGuiContext : public Editor::IGUIContext
 {
 public:
     virtual ErrType onRun(int c, char* argv[]) override;

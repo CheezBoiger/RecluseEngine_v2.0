@@ -5,7 +5,7 @@
 #include "Recluse/Messaging.hpp"
 
 #include "Recluse/Math/Vector2.hpp"
-
+#include "Recluse/Math/Matrix22.hpp"
 #include <vector>
 
 using namespace Recluse;
@@ -26,6 +26,10 @@ int main(int c, char* argv[])
     R_TRACE("TEST", "a + b = (%f, %f)", e.x, e.y);
     Float2 f = a - b;
     R_TRACE("TEST", "a - b = (%f, %f)", f.x, f.y);
+
+    Matrix22 m = { 1, 0, 0, 1 };
+
+    Log(LogError, "Test") << m;
 
     Log::destroyLoggingSystem();
 

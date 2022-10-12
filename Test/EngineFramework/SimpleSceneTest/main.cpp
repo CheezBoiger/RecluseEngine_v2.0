@@ -89,12 +89,18 @@ public:
         R_VERBOSE("SimpleUpdaterSystem", "Updating components...");
         for (auto& mover : m_movers)
         {
-            ECS::GameEntity* pEntity = ECS::GameEntity::getEntity(mover->getOwner());
-            Transform* t = pEntity->getComponent<Transform>();
-            ECS::System<Transform>* pSystemT = ECS::castToSystem<Transform>();
-            t->position = t->position + Float3(1.0f, 0.f, 0.f) * tick.delta();
+            if (mover->isEnabled())
+            {
+                ECS::GameEntity* pEntity            = ECS::GameEntity::getEntity(mover->getOwner());
+                if (pEntity->isActive())
+                {       
+                    Transform* t                        = pEntity->getComponent<Transform>();
+                    ECS::System<Transform>* pSystemT    = ECS::castToSystem<Transform>();
+                    t->position                         = t->position + Float3(1.0f, 0.f, 0.f) * tick.delta();
 
-            R_VERBOSE("SimpleUpdaterSystem", "Moving entity=%s, Position=(%f, %f, %f)", pEntity->getName().c_str(), t->position.x, t->position.y, t->position.z);
+                    R_VERBOSE("SimpleUpdaterSystem", "Moving entity=%s, Position=(%f, %f, %f)", pEntity->getName().c_str(), t->position.x, t->position.y, t->position.z);
+                }
+            }
         }
     }
 
@@ -102,6 +108,8 @@ public:
     {
         *pOut = new MoverComponent();
         m_movers.push_back(*pOut);
+        // Just enable automatically.
+        m_movers.back()->setEnable(true);
         return R_RESULT_OK;
     }
 
@@ -126,6 +134,7 @@ int main(int c, char* argv[])
 
     ECS::GameEntity* entity = ECS::GameEntity::instantiate(sizeof(ECS::GameEntity));
     entity->setName("Billy");
+    entity->activate();
     entity->addComponent<Transform>();
     entity->addComponent<MoverComponent>();
     Scene* pScene = new Scene();

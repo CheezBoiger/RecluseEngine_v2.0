@@ -2,6 +2,8 @@
 #include "Recluse/Math/Matrix43.hpp"
 #include "Recluse/Math/Matrix44.hpp"
 
+#include "Recluse/Messaging.hpp"
+
 namespace Recluse {
 namespace Math {
 
@@ -41,6 +43,20 @@ Matrix43::operator Matrix44 () const
             m[6], m[7],  m[8],  0.0f,
             m[9], m[10], m[11], 1.0f
         );
+}
+
+
+F32 Matrix43::get(U32 row, U32 col) const
+{
+    R_ASSERT(row < 4 && col < 3);
+    return m[3u * row + col];
+}
+
+
+F32& Matrix43::get(U32 row, U32 col)
+{
+    R_ASSERT(row < 4 && col < 3);
+    return m[3u * row + col];
 }
 } // Math
 } // Recluse

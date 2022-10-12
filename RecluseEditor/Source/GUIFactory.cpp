@@ -5,6 +5,7 @@
 #include "Recluse/Messaging.hpp"
 
 namespace Recluse {
+namespace Editor {
 namespace GUIContext {
 
 IGUIDriver* gDriver = nullptr;
@@ -28,7 +29,7 @@ namespace GUIFactory {
 
 ErrType createContext(GUIContext ctx)
 {
-    using namespace Recluse::GUIContext;
+    using namespace Recluse::Editor::GUIContext;
 
     if (!gGlobalContext && !gDriver)
     {
@@ -52,7 +53,7 @@ ErrType createContext(GUIContext ctx)
 
 void destroyContext(IGUIContext* pCtx)
 {
-    using namespace Recluse::GUIContext;
+    using namespace Recluse::Editor::GUIContext;
 
     if (pCtx) delete pCtx;
     if (gDriver) delete gDriver;
@@ -60,5 +61,6 @@ void destroyContext(IGUIContext* pCtx)
     gGlobalContext  = nullptr;
     gDriver         = nullptr;
 }
+} // Editor
 } // GUIFactory
 } // Recluse

@@ -11,18 +11,30 @@ static GameEntity* defaultAlloc(U64 szBytes, GameEntityMemoryAllocationType type
 {
     GameEntityAllocation allocation = { };
 
-    allocation.offsetAddress    = (SizeT)malloc(szBytes);
-    allocation.szBytes          = szBytes;
-    allocation.allocType        = type;
+    R_ASSERT(szBytes == sizeof(GameEntity));
 
-    // A probably not so good way of keeping the allocation, but it is indeed default.
-    RGUID guid      = { };
-    guid.ss.hash0   = (U32)((allocation.offsetAddress & 0x00000000FFFFFFFF)      );
-    guid.ss.hash1   = (U32)((allocation.offsetAddress & 0xFFFFFFFF00000000) >> 32);
+    if (type == GameEntityMemoryAllocationType_Dynamic)
+    {
+        allocation.offsetAddress    = (SizeT)malloc(szBytes);
+        allocation.szBytes          = szBytes;
+        allocation.allocType        = type;
+
+        // A probably not so good way of keeping the allocation, but it is indeed default.
+        RGUID guid      = { };
+        guid.ss.hash0   = (U32)((allocation.offsetAddress & 0x00000000FFFFFFFF)      );
+        guid.ss.hash1   = (U32)((allocation.offsetAddress & 0xFFFFFFFF00000000) >> 32);
     
-    void* ptr       = reinterpret_cast<void*>(allocation.offsetAddress);
+        void* ptr       = reinterpret_cast<void*>(allocation.offsetAddress);
 
-    return new (ptr) GameEntity(allocation, guid);
+        return new (ptr) GameEntity(allocation, guid);
+    }
+    else
+    {
+        R_ERR("GameEntity", "Only Dynamic allocation is supported for default allocations!");
+    }
+
+    // Return null if we can't allocate the specified allocation type.
+    return nullptr;
 }
 
 static void defaultFree(GameEntity* pEntity)
@@ -77,7 +89,7 @@ ErrType GameEntity::serialize(Archive* pArchive)
     // TODO: Need to figure out how to obtain a proper rguid.
     //       Parent needs to also be included as well!
     RGUID guid = getUUID();
-    pArchive->write(&guid, sizeof(RGUID));
+    pArchive->write((void*)&guid, sizeof(RGUID));
 
     const std::string& s    = getName();
     U64 szBytes             = s.size();
