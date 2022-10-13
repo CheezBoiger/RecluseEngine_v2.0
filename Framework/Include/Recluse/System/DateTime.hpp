@@ -77,10 +77,10 @@ private:
 
 	std::string parseFormat(const char* cFormat, const LocalDateTimeDesc& desc) 
 	{
-		std::string fmt = cFormat;
-		std::string formattedString = "";
-		U32 fmtSize = fmt.size();
-		U32 i = 0;
+		std::string fmt				= cFormat;
+		std::string formattedString	= "";
+		U32 fmtSize					= fmt.size();
+		U32 i						= 0;
 		for (; i < fmtSize; ++i)
 		{
 			if (fmt[i] == kDateTimeRegex && ((i+1) < fmtSize))

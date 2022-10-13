@@ -22,20 +22,26 @@ struct R_PUBLIC_API Matrix22
             F32 a10 = 0.0f, F32 a11 = 1.0f
         );
 
-    Matrix22 operator+(const Matrix22& rh) const;
-    Matrix22 operator-(const Matrix22& rh) const;
-    Matrix22 operator*(const Matrix22& rh) const;
-    Matrix22 operator+(F32 scalar) const;
-    Matrix22 operator-(F32 scalar) const;
-    Matrix22 operator*(F32 scalar) const;
-    Matrix22 operator/(F32 scalar) const;
-    Matrix22 operator-() const;
+    Matrix22
+        (
+            const Float2& row0,
+            const Float2& row1
+        );
 
-    F32 get(U32 row, U32 col) const;
-    F32& get(U32 row, U32 col);
+    inline Matrix22 operator+(const Matrix22& rh) const;
+    inline Matrix22 operator-(const Matrix22& rh) const;
+    inline Matrix22 operator*(const Matrix22& rh) const;
+    inline Matrix22 operator+(F32 scalar) const;
+    inline Matrix22 operator-(F32 scalar) const;
+    inline Matrix22 operator*(F32 scalar) const;
+    inline Matrix22 operator/(F32 scalar) const;
+    inline Matrix22 operator-() const;
 
-    F32 operator()(U32 row, U32 col) const { return get(row, col); }
-    F32& operator()(U32 row, U32 col) { return get(row, col); }
+    F32             get(U32 row, U32 col) const;
+    F32&            get(U32 row, U32 col);
+
+    F32             operator()(U32 row, U32 col) const { return get(row, col); }
+    F32&            operator()(U32 row, U32 col) { return get(row, col); }
 };
 
 

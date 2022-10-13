@@ -131,6 +131,36 @@ Float3 operator/(F32 scalar, const Float3& rh)
 }
 
 
+Float3 Float3::operator==(F32 scalar) const
+{
+    return Float3(x == scalar, y == scalar, z == scalar);
+}
+
+
+Float3 Float3::operator<(F32 scalar) const
+{
+    return Float3(x < scalar, y < scalar, z < scalar);
+}
+
+
+Float3 Float3::operator>(F32 scalar) const
+{
+    return Float3(x > scalar, y > scalar, z > scalar);
+}
+
+
+Float3 Float3::operator<=(F32 scalar) const
+{
+    return Float3(x <= scalar, y <= scalar, z <= scalar);
+}
+
+
+Float3 Float3::operator>=(F32 scalar) const
+{
+    return Float3(x >= scalar, y >= scalar, z >= scalar);
+}
+
+
 F32 dot(const Float3& lh, const Float3& rh)
 {
     return ((lh[0] * rh[0]) + (lh[1] * rh[1]) + (lh[2] * rh[2]));
@@ -156,6 +186,11 @@ Float3 normalize(const Float3& v)
     return v * denom;
 }
 
+Bool any(const Float3& a)
+{
+    return (a[0] != 0.f) || (a[1] != 0.f) || (a[2] != 0.f);
+}
+
 
 Float3 cross(const Float3& lh, const Float3& rh)
 {
@@ -164,12 +199,6 @@ Float3 cross(const Float3& lh, const Float3& rh)
             lh.z * rh.x - lh.x * rh.z,
             lh.x * rh.y - lh.y * rh.x
     };
-}
-
-
-Float3 lerp(const Float3& a, const Float3& b, F32 t)
-{
-    return R_LERP(a, b, t);
 }
 } // Math
 } // Recluse

@@ -43,10 +43,17 @@ struct R_PUBLIC_API Float3
     inline Float3 operator>=(const Float3& rh) const;
     inline Float3 operator<=(const Float3& rh) const;
 
+    inline Float3 operator==(F32 scalar) const;
+    inline Float3 operator<(F32 scalar) const;
+    inline Float3 operator>(F32 scalar) const;
+    inline Float3 operator<=(F32 scalar) const;
+    inline Float3 operator>=(F32 scalar) const;
+
     inline R_PUBLIC_API friend Float3 operator*(F32 scalar, const Float3& rh);
     inline R_PUBLIC_API friend Float3 operator+(F32 scalar, const Float3& rh);
     inline R_PUBLIC_API friend Float3 operator-(F32 scalar, const Float3& rh);
     inline R_PUBLIC_API friend Float3 operator/(F32 scalar, const Float3& rh);
+
 };
 
 
@@ -122,7 +129,9 @@ R_PUBLIC_API F32     dot(const Float3& lh, const Float3& rh);
 R_PUBLIC_API F32     length(const Float3& v);
 R_PUBLIC_API F32     length2(const Float3& v);
 R_PUBLIC_API Float3  normalize(const Float3& v);
-R_PUBLIC_API Float3  lerp(const Float3& a, const Float3& b, F32 t);
+
+// check if any component in the vector is nonzero.
+R_PUBLIC_API Bool   any(const Float3& a);
 
 
 typedef Float3  FVector3;

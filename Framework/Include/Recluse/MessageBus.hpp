@@ -6,13 +6,15 @@
 #include "Recluse/Memory/MemoryCommon.hpp"
 #include "Recluse/Types.hpp"
 #include "Recluse/RGUID.hpp"
+#include "Recluse/Serialization/Hasher.hpp"
 #include <queue>
 #include <functional>
 #include <map>
 
 namespace Recluse {
 
-typedef U64 EventId;
+// EventId is in the form of hash values.
+typedef Hash64 EventId;
 typedef U64 GroupId;
 
 class EventMessage 
@@ -37,9 +39,10 @@ class MessageBus
 public:
     friend class Recluse::EventMessage;
 
-    static void sendEvent(MessageBus* pBus, EventId id)
+    // Helper to fire an event.
+    static void fireEvent(MessageBus* pBus, EventId id)
     {
-        pBus->pushMessage(id);
+        pBus->pushEvent(id);
     }
 
     R_PUBLIC_API MessageBus();
@@ -57,12 +60,14 @@ public:
                             MessageReceiveFunc receiver
                         );
 
-    void pushMessage(EventId eventId) 
+    // Push an event
+    void pushEvent(EventId eventId) 
     {   
         EventMessage* pMessage   = new (m_pMessageAllocator) EventMessage(eventId);
         m_messages.push(pMessage);
     }
 
+    // Notify all message receivers of the given fired events.
     void notifyAll() 
     {
         // Notify all message receivers.
@@ -77,8 +82,11 @@ public:
         }
     }
 
+    // Only notify one message receiver of the fired events.
     R_PUBLIC_API void notifyOne(const std::string& nodeName);
 
+    // Clears the event queue. This is required after notifying, as the 
+    // queue will still contain all allocated events.
     void clearQueue() 
     {
         if (m_messages.empty())

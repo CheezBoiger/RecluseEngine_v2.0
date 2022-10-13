@@ -71,5 +71,33 @@ static T maximum(T a, T b)
 {
 	return R_MAX(a, b);
 }
+
+
+template<typename T>
+static T toRadians(T deg)
+{
+	return R_RADIANS(deg);
+}
+
+
+template<typename T>
+static T toDegrees(T rads)
+{
+	return R_DEGREES(rads);
+}
+
+
+template<typename Class, typename Type>
+static Class clamp(const Class& c, Type mmin, Type mmax)
+{
+	return R_CLAMP(c, mmin, mmax);
+}
+
+
+template<typename Class, typename Type>
+static Class lerp(const Class& a, const Class& b, Type t)
+{
+	return R_LERP(a, b, t);
+}
 } // Math
 } // Recluse

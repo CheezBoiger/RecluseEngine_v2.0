@@ -136,6 +136,36 @@ Float4 operator/(F32 scalar, const Float4& rh)
 }
 
 
+Float4 Float4::operator==(F32 scalar) const
+{
+    return Float4(x == scalar, y == scalar, z == scalar, w == scalar);
+}
+
+
+Float4 Float4::operator<(F32 scalar) const
+{
+    return Float4(x < scalar, y < scalar, z < scalar, w < scalar);
+}
+
+
+Float4 Float4::operator>(F32 scalar) const
+{
+    return Float4(x > scalar, y > scalar, z > scalar, w > scalar);
+}
+
+
+Float4 Float4::operator<=(F32 scalar) const
+{
+    return Float4(x <= scalar, y <= scalar, z <= scalar, w <= scalar);
+}
+
+
+Float4 Float4::operator>=(F32 scalar) const
+{
+    return Float4(x >= scalar, y >= scalar, z >= scalar, w >= scalar);
+}
+
+
 UInt4 UInt4::operator+(const UInt4& rh) const
 {
     return UInt4(x + rh.x, y + rh.y, z + rh.z, w + rh.w);
@@ -203,17 +233,17 @@ Float4 operator*(const Float4& lh, const Matrix44& rh)
 }
 
 
-Float4 lerp(const Float4& a, const Float4& b, F32 t)
-{
-    return R_LERP(a, b, t);
-}
-
-
 Float4 normalize(const Float4& lh)
 {
     F32 magnitude = length(lh);
     F32 denom = 1.0f / magnitude;
     return lh * denom;
+}
+
+
+Bool any(const Float4& a)
+{
+    return (a[0] != 0.f) || (a[1] != 0.f) || (a[2] != 0.f) || (a[3] != 0.f);
 }
 } // Math
 } // Recluse

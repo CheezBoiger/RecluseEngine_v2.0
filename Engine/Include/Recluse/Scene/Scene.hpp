@@ -57,7 +57,12 @@ public:
     Camera* getCamera(U32 index) { return m_cameras[index]; }
 
     // Register a system into the scene.
-    void registerSystem(ECS::AbstractSystem* pSystem) { m_systems.push_back(pSystem); }
+    void registerSystem(ECS::AbstractSystem* pSystem) 
+    {
+        // Registering any system must Initialize first.
+        pSystem->initialize(); 
+        m_systems.push_back(pSystem); 
+    }
 
 protected:
 

@@ -11,6 +11,8 @@
 #include "Recluse/Renderer/Renderer.hpp"
 #include "Recluse/Renderer/RenderCommand.hpp"
 
+#include "Recluse/Generated/RendererResources.hpp"
+
 #include <vector>
 #include <queue>
 
@@ -38,13 +40,13 @@ public:
     {
         Log::initializeLoggingSystem();
         Renderer::initializeModule(this);
-        MessageBus::sendEvent(getMessageBus(), RenderEvent_RESUME);
+        MessageBus::fireEvent(getMessageBus(), RenderEvent_Resume);
         return R_RESULT_OK;
     }
 
     virtual ErrType onCleanUp() override
     {
-        MessageBus::sendEvent(getMessageBus(), RenderEvent_SHUTDOWN);
+        MessageBus::fireEvent(getMessageBus(), RenderEvent_Shutdown);
         Renderer::cleanUpModule(this);
         Log::destroyLoggingSystem();     
         return R_RESULT_OK;

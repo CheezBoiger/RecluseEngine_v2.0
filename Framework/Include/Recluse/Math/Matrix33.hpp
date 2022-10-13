@@ -35,6 +35,7 @@ struct R_PUBLIC_API Matrix33
     inline Matrix33 operator+(F32 scalar) const;
     inline Matrix33 operator-(F32 scalar) const;
     inline Matrix33 operator*(F32 scalar) const;
+    inline Matrix33 operator/(F32 scalar) const;
 
     F32 get(U32 row, U32 col) const;
     F32& get(U32 row, U32 col);

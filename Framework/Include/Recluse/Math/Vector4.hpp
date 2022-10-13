@@ -30,27 +30,32 @@ struct R_PUBLIC_API Float4
     F32& operator[](U32 i) { return (&x)[i]; }
     F32 operator[](U32 i) const { return (&x)[i]; }
 
-    inline Float4 operator+(const Float4& rh) const;
-    inline Float4 operator-(const Float4& rh) const;
-    inline Float4 operator*(const Float4& rh) const;
-    inline Float4 operator/(const Float4& rh) const;
-    inline Float4 operator+(F32 scalar) const;
-    inline Float4 operator-(F32 scalar) const;
-    inline Float4 operator*(F32 scalar) const;
-    inline Float4 operator/(F32 scalar) const;
-    inline Float4 operator-() const;
-    inline Float4 operator==(const Float4& rh) const;
-    inline Float4 operator&&(const Float4& rh) const;
-    inline Float4 operator||(const Float4& rh) const;
-    inline Float4 operator<(const Float4& rh) const;
-    inline Float4 operator>(const Float4& rh) const;
-    inline Float4 operator>=(const Float4& rh) const;
-    inline Float4 operator<=(const Float4& rh) const;
+    inline Float4           operator+(const Float4& rh) const;
+    inline Float4           operator-(const Float4& rh) const;
+    inline Float4           operator*(const Float4& rh) const;
+    inline Float4           operator/(const Float4& rh) const;
+    inline Float4           operator+(F32 scalar) const;
+    inline Float4           operator-(F32 scalar) const;
+    inline Float4           operator*(F32 scalar) const;
+    inline Float4           operator/(F32 scalar) const;
+    inline Float4           operator-() const;
+    inline Float4           operator==(const Float4& rh) const;
+    inline Float4           operator&&(const Float4& rh) const;
+    inline Float4           operator||(const Float4& rh) const;
+    inline Float4           operator<(const Float4& rh) const;
+    inline Float4           operator>(const Float4& rh) const;
+    inline Float4           operator>=(const Float4& rh) const;
+    inline Float4           operator<=(const Float4& rh) const;
+    inline Float4           operator==(F32 scalar) const;
+    inline Float4           operator<(F32 scalar) const;
+    inline Float4           operator>(F32 scalar) const;
+    inline Float4           operator<=(F32 scalar) const;
+    inline Float4           operator>=(F32 scalar) const;
 
-    inline friend Float4 operator+(F32 scalar, const Float4& rh);
-    inline friend Float4 operator-(F32 scalar, const Float4& rh);
-    inline friend Float4 operator*(F32 scalar, const Float4& rh);
-    inline friend Float4 operator/(F32 scalar, const Float4& rh);
+    inline friend Float4    operator+(F32 scalar, const Float4& rh);
+    inline friend Float4    operator-(F32 scalar, const Float4& rh);
+    inline friend Float4    operator*(F32 scalar, const Float4& rh);
+    inline friend Float4    operator/(F32 scalar, const Float4& rh);
     
 };
 
@@ -101,7 +106,9 @@ R_PUBLIC_API F32 length(const Float4& a);
 R_PUBLIC_API F32 length2(const Float4& a);
 // [1 x 4] * [4 x 4} = [1 x 4]
 R_PUBLIC_API Float4 operator*(const Float4& lh, const Matrix44& rh);
-R_PUBLIC_API Float4 lerp(const Float4& a, const Float4& b, F32 t);
 R_PUBLIC_API Float4 normalize(const Float4& lh);
+
+// See if any component in the vector is a nonzero number.
+R_PUBLIC_API Bool any(const Float4& a);
 } // Math
 } // Recluse

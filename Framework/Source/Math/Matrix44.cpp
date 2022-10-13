@@ -229,19 +229,19 @@ Matrix44 adjugate(const Matrix44& lh)
 
 F32 determinant(const Matrix44& lh)
 {
-    return lh[0] * (lh[5] * (lh[10] * lh[15] - lh[11] * lh[14]) -
+    return lh[0] * (    lh[5] * (lh[10] * lh[15] - lh[11] * lh[14]) -
                         lh[6] * (lh[9] * lh[15] - lh[11] * lh[13]) +
                         lh[7] * (lh[9] * lh[14] - lh[10] * lh[13])
                     ) -
-          lh[1] * (lh[4] * (lh[10] * lh[15] - lh[11] * lh[14]) -
+          lh[1] * (     lh[4] * (lh[10] * lh[15] - lh[11] * lh[14]) -
                         lh[6] * (lh[8] * lh[15] - lh[11] * lh[12]) +
                         lh[7] * (lh[8] * lh[14] - lh[10] * lh[12])
                     ) +
-          lh[2] * (lh[4] * (lh[9] * lh[15] - lh[11] * lh[13]) -
+          lh[2] * (     lh[4] * (lh[9] * lh[15] - lh[11] * lh[13]) -
                         lh[5] * (lh[8] * lh[15] - lh[11] * lh[12]) +
                         lh[7] * (lh[8] * lh[13] - lh[9] * lh[12])
                     ) -
-          lh[3] * (lh[4] * (lh[9] * lh[14] - lh[10] * lh[13]) -
+          lh[3] * (     lh[4] * (lh[9] * lh[14] - lh[10] * lh[13]) -
                         lh[5] * (lh[8] * lh[14] - lh[10] * lh[12]) +
                         lh[6] * (lh[8] * lh[13] - lh[9] * lh[12]) );
 }
@@ -473,11 +473,11 @@ Matrix44 perspectiveLH_Aspect(F32 fov, F32 aspect, F32 ne, F32 fa)
     F32 yS      = 1.0f / tanFoV;
     F32 xS      = yS / aspect;
     
-    persp[0] = xS;
-    persp[5] = yS;
-    persp[10] = fa / (fa - ne);
-    persp[11] = 1.0f;
-    persp[14] = -ne * fa / (fa - ne);
+    persp[0]    = xS;
+    persp[5]    = yS;
+    persp[10]   = fa / (fa - ne);
+    persp[11]   = 1.0f;
+    persp[14]   = -ne * fa / (fa - ne);
 
     return persp;
 }
@@ -487,15 +487,15 @@ Matrix44 perspectiveRH_Aspect(F32 fov, F32 aspect, F32 ne, F32 fa)
 {
     Matrix44 persp;
 
-    F32 tanFoV = tanf(fov * 0.5f);
-    F32 yS = 1.0f / tanFoV;
-    F32 xS = yS / aspect;
+    F32 tanFoV  = tanf(fov * 0.5f);
+    F32 yS      = 1.0f / tanFoV;
+    F32 xS      = yS / aspect;
 
-    persp[0] = xS;
-    persp[5] = yS;
-    persp[10] = fa / (ne - fa);
-    persp[11] = -1.0f;
-    persp[14] = ne * fa / (ne - fa);
+    persp[0]    = xS;
+    persp[5]    = yS;
+    persp[10]   = fa / (ne - fa);
+    persp[11]   = -1.0f;
+    persp[14]   = ne * fa / (ne - fa);
 
     return persp;
 }
@@ -505,11 +505,11 @@ Matrix44 perspectiveLH(F32 w, F32 h, F32 ne, F32 fa)
 {
     Matrix44 persp;
 
-    persp[0] = 2 * ne / w;
-    persp[5] = 2 * ne / h;
-    persp[10] = fa / (fa - ne);
-    persp[11] = 1.0f;
-    persp[14] = ne * fa / (ne - fa);
+    persp[0]    = 2 * ne / w;
+    persp[5]    = 2 * ne / h;
+    persp[10]   = fa / (fa - ne);
+    persp[11]   = 1.0f;
+    persp[14]   = ne * fa / (ne - fa);
 
     return persp;
 }
@@ -519,11 +519,11 @@ Matrix44 perspectiveRH(F32 w, F32 h, F32 ne, F32 fa)
 {
     Matrix44 persp;
 
-    persp[0] = 2 * ne / w;
-    persp[5] = 2 * ne / h;
-    persp[10] = fa / (ne - fa);
-    persp[11] = -1.0f;
-    persp[14] = ne * fa / (ne - fa);
+    persp[0]    = 2 * ne / w;
+    persp[5]    = 2 * ne / h;
+    persp[10]   = fa / (ne - fa);
+    persp[11]   = -1.0f;
+    persp[14]   = ne * fa / (ne - fa);
 
     return persp;
 }
@@ -560,6 +560,38 @@ Matrix44::operator Matrix43 () const
             m[4],  m[5],  m[6],
             m[8],  m[9],  m[10],
             m[12], m[13], m[14]
+        );
+}
+
+
+Matrix44 lookAtLH(const Float3& pos, const Float3& target, const Float3& up)
+{
+    Float3 z = normalize(target - pos);
+    Float3 x = normalize(cross(up, z));
+    Float3 y = cross(z, x);
+
+    return Matrix44
+        (
+            x[0],           y[0],           z[0],           0.f,
+            x[1],           y[1],           z[1],           0.f,
+            x[2],           y[2],           z[2],           0.f,
+            -dot(x, pos),   -dot(y, pos),   -dot(z, pos),   1.f
+        );
+}
+
+
+Matrix44 lookAtRH(const Float3& pos, const Float3& target, const Float3& up)
+{
+    Float3 z = normalize(pos - target);
+    Float3 x = normalize(cross(up, z));
+    Float3 y = cross(z, x);
+
+    return Matrix44
+        (
+            x[0],           y[0],           z[0],           0.f,
+            x[1],           y[1],           z[1],           0.f,
+            x[2],           y[2],           z[2],           0.f,
+            -dot(x, pos),   -dot(y, pos),   -dot(z, pos),   1.f
         );
 }
 } // Math

@@ -39,14 +39,6 @@ class Primitive;
 struct RenderCommand;
 class RenderCommandList;
 
-enum RenderEvent 
-{
-    RenderEvent_PAUSE,
-    RenderEvent_RESUME,
-    RenderEvent_SHUTDOWN,
-    RenderEvent_CONFIGURE_RENDERER,
-    RenderEvent_SCENE_UPDATE
-};
 
 enum RenderPassType : U32 
 {

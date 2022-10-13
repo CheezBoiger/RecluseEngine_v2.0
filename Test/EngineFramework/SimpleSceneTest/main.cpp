@@ -79,29 +79,52 @@ public:
     }
 };
 
+
+enum UpdaterEvent : U64
+{
+    UpdaterEvent_Update = 1232523423
+};
+
 class SimpleUpdaterSystem : public ECS::System<MoverComponent>
 {
 public:
     R_DECLARE_GAME_SYSTEM(SimpleUpdaterSystem(), MoverComponent);
 
+    virtual ErrType onInitialize() override
+    {
+        g_bus.addReceiver("SimpleUpdaterSystem", [&](EventMessage* message) 
+        {
+             if (message->getEvent() == UpdaterEvent_Update)
+                m_shouldUpdate = true;
+        });
+        return R_RESULT_OK;
+    }
+
     virtual void onUpdateComponents(const RealtimeTick& tick) override 
     {
-        R_VERBOSE("SimpleUpdaterSystem", "Updating components...");
-        for (auto& mover : m_movers)
+        if (m_shouldUpdate)
         {
-            if (mover->isEnabled())
+            R_VERBOSE("SimpleUpdaterSystem", "Updating components...");
+            for (auto& mover : m_movers)
             {
-                ECS::GameEntity* pEntity            = ECS::GameEntity::getEntity(mover->getOwner());
-                if (pEntity->isActive())
-                {       
-                    Transform* t                        = pEntity->getComponent<Transform>();
-                    ECS::System<Transform>* pSystemT    = ECS::castToSystem<Transform>();
-                    t->position                         = t->position + Float3(1.0f, 0.f, 0.f) * tick.delta();
+                if (mover->isEnabled())
+                {
+                    ECS::GameEntity* pEntity            = ECS::GameEntity::getEntity(mover->getOwner());
+                    if (pEntity->isActive())
+                    {       
+                        Transform* t                        = pEntity->getComponent<Transform>();
+                        ECS::System<Transform>* pSystemT    = ECS::castToSystem<Transform>();
+                        t->position                         = t->position + Float3(1.0f, 0.f, 0.f) * tick.delta();
 
-                    R_VERBOSE("SimpleUpdaterSystem", "Moving entity=%s, Position=(%f, %f, %f)", pEntity->getName().c_str(), t->position.x, t->position.y, t->position.z);
+                        R_VERBOSE("SimpleUpdaterSystem", "Moving entity=%s, Position=(%f, %f, %f)", pEntity->getName().c_str(), t->position.x, t->position.y, t->position.z);
+                    }
                 }
             }
         }
+        m_shouldUpdate = false;
+
+        // Just testing fire events.
+        MessageBus::fireEvent(&g_bus, UpdaterEvent_Update);
     }
 
     virtual ErrType onAllocateComponent(MoverComponent** pOut) override 
@@ -118,6 +141,7 @@ public:
     virtual ErrType onFreeComponents(MoverComponent*** pIns, U32 count) override { return R_RESULT_NO_IMPL; }
 private:
     std::vector<MoverComponent*> m_movers;
+    Bool m_shouldUpdate = true;
 };
 
 R_COMPONENT_IMPLEMENT(MoverComponent, SimpleUpdaterSystem);
@@ -145,6 +169,7 @@ int main(int c, char* argv[])
 
     U64 counter = 0;
     while ((counter++) < 500) {
+
         RealtimeTick::updateWatch(1ull, 0);
         RealtimeTick tick = RealtimeTick::getTick(0);
         pScene->update(tick);

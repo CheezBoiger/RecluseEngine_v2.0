@@ -37,6 +37,12 @@ struct R_PUBLIC_API Float2
     inline Float2 operator>(const Float2& rh) const;
     inline Float2 operator>=(const Float2& rh) const;
     inline Float2 operator<=(const Float2& rh) const;
+
+    inline Float2 operator==(F32 scalar) const;
+    inline Float2 operator<(F32 scalar) const;
+    inline Float2 operator>(F32 scalar) const;
+    inline Float2 operator<=(F32 scalar) const;
+    inline Float2 operator>=(F32 scalar) const;
 };
 
 
@@ -133,6 +139,8 @@ R_PUBLIC_API F32        length2(const Float2& a);
 R_PUBLIC_API Float2     normalize(const Float2& a);
 R_PUBLIC_API Int2       normalize(const Int2& a);
 R_PUBLIC_API UInt2      normalize(const UInt2& a);
-R_PUBLIC_API Float2     lerp(const Float2& a, const Float2& b, F32 t);
+
+// Check if any component of the vector is nonzero.
+R_PUBLIC_API Bool       any(const Float2& a);
 } // Math
 } // Recluse

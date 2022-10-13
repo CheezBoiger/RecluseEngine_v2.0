@@ -159,5 +159,67 @@ Matrix44 quatToMat44(const Quaternion& quat)
         0.f,                    0.f,                    0.f,                    1.f
     );
 }
+
+
+Quaternion angleAxis(const Float3& axis, F32 radians)
+{
+    F32 r2  = radians * 0.5f;
+    F32 s   = sinf(r2);
+    F32 c   = cosf(r2);
+
+    return Quaternion
+        (
+            axis[0] * s,
+            axis[1] * s,
+            axis[2] * s,
+            c
+        ); 
+}
+
+
+Quaternion eulerToQuat(const Float3& euler)
+{
+    Quaternion q;
+
+    F32 t0 = cosf(euler[2] * 0.5f);
+    F32 t1 = sinf(euler[2] * 0.5f);
+    F32 t2 = cosf(euler[0] * 0.5f);
+    F32 t3 = sinf(euler[0] * 0.5f);
+    F32 t4 = cosf(euler[1] * 0.5f);
+    F32 t5 = sinf(euler[1] * 0.5f);
+
+    q[0] = t0 * t3 * t4 - t1 * t2 * t5;
+    q[1] = t0 * t2 * t5 + t1 * t3 * t4;
+    q[2] = t1 * t2 * t4 - t0 * t3 * t5; 
+    q[3] = t0 * t2 * t4 + t1 * t3 * t5;
+
+    return q;
+}
+
+
+Float3 quatToEuler(const Quaternion& quat)
+{
+    Float3 euler;
+
+    F32 y2      = quat[1] * quat[1];
+    
+    // Roll
+    F32 t0      = 2.0f * (quat[3] * quat[0] - quat[1] * quat[2]);
+    F32 t1      = 1.0f - 2.0f * (quat[0] * quat[0] + y2);
+    
+    // Pitch
+    F32 t2      = 2.0f * (quat[3] * quat[1] - quat[0] * quat[2]);
+    t2          = Math::clamp(t2, -1.0f, 1.0f);
+    
+    // Yaw
+    F32 t3      = 2.0f * (quat[3] * quat[2] + quat[0] * quat[1]);
+    F32 t4      = 1.0f - 2.0f * (y2 + quat[2] * quat[2]);
+    
+    euler[0]    = atan2f(t0, t1);
+    euler[1]    = asinf(t2);
+    euler[2]    = atan2f(t3, t4);
+
+    return euler;
+}
 } // Math
 } // Recluse

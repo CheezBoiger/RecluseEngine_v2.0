@@ -15,6 +15,8 @@
 
 #include "Recluse/Renderer/RenderCommand.hpp"
 
+#include "Recluse/Generated/RendererResources.hpp"
+
 #include <algorithm>
 
 #define R_NULLIFY_RENDER 1
@@ -544,28 +546,28 @@ ErrType Renderer::onInitializeModule(Application* pApp)
                         // Handle the message.
                         switch (ev) 
                         {
-                            case RenderEvent_RESUME:
+                            case RenderEvent_Resume:
                                 enableRunning(true);
                                 break;
 
-                            case RenderEvent_PAUSE:
+                            case RenderEvent_Pause:
                                 enableRunning(false);
                                 break;
 
-                            case RenderEvent_SHUTDOWN: 
+                            case RenderEvent_Shutdown: 
                             {
                                 enableRunning(false);
                                 cleanUpModule(MainThreadLoop::getApp());
                                 break;
                             }
 
-                            case RenderEvent_CONFIGURE_RENDERER:
+                            case RenderEvent_ConfigureRenderer:
                             {
                                 recreate();
                                 break;
                             }
 
-                            case RenderEvent_SCENE_UPDATE:
+                            case RenderEvent_SceneUpdate:
                                 break;
 
                             default:

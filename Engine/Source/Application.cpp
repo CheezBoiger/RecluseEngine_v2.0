@@ -129,6 +129,8 @@ ErrType MainThreadLoop::run()
         // Notify all message receivers.
         ScopedLock lck(k_pMessageMutex);
         k_pMessageBus->notifyAll();
+        // Be sure to clear up the bus memory when we finish processing our messages.
+        k_pMessageBus->clearQueue();
     }
 
     return R_RESULT_OK;

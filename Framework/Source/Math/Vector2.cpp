@@ -100,6 +100,36 @@ Float2 Float2::operator>=(const Float2& rh) const
 }
 
 
+Float2 Float2::operator==(F32 scalar) const
+{
+    return Float2(x == scalar, y == scalar);
+}
+
+
+Float2 Float2::operator<(F32 scalar) const
+{
+    return Float2(x < scalar, y < scalar);
+}
+
+
+Float2 Float2::operator>(F32 scalar) const
+{
+    return Float2(x > scalar, y > scalar);
+}
+
+
+Float2 Float2::operator>=(F32 scalar) const
+{
+    return Float2(x >= scalar, y >= scalar);
+}
+
+
+Float2 Float2::operator<=(F32 scalar) const
+{
+    return Float2(x <= scalar, y <= scalar);
+}
+
+
 Int2 Int2::operator-() const
 {
     return Int2(-x, -y);
@@ -171,12 +201,6 @@ Int2 Int2::operator>>(U32 shft) const
 }
 
 
-Float2 lerp(const Float2& a, const Float2& b, F32 t)
-{
-    return R_LERP(a, b, t);
-}
-
-
 F32 dot(const Float2& a, const Float2& b)
 {
     return (a[0] * b[0]) + (a[1] * b[1]); 
@@ -194,6 +218,12 @@ Float2 normalize(const Float2& v)
     F32 magnitude = length(v);
     F32 denom = 1.0f / magnitude;
     return v * denom;
+}
+
+
+Bool any(const Float2& a)
+{
+    return (a[0] != 0.f) || (a[1] != 0.f);
 }
 } // Math
 } // Recluse

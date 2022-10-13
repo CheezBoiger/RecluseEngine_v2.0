@@ -1,5 +1,13 @@
-namespace recluse {
+namespace Recluse {
 
+	event RenderEvent
+	{
+		RenderEvent_Pause,
+		RenderEvent_Resume,
+		RenderEvent_Shutdown,
+		RenderEvent_ConfigureRenderer,
+		RenderEvent_SceneUpdate
+	};
 
 	enum TextureRenderId {
 		RENDER_ID_SCENE_DEPTH,
