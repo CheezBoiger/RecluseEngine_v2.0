@@ -19,7 +19,7 @@ InstancedSubMesh submeshes[12];
 
 void fillList(RenderCommandList& list)
 {
-    ErrType result = R_RESULT_OK;
+    ErrType result = RecluseResult_Ok;
     DrawRenderCommand rcmd = { };
     DrawIndexedRenderCommand icmd = { };
 
@@ -45,7 +45,7 @@ void fillList(RenderCommandList& list)
 
     icmd.op = C_OP_DRAWABLE_INDEXED_INSTANCED;
     icmd.numVertexBuffers = 1;
-    icmd.indexType = INDEX_TYPE_UINT32;
+    icmd.indexType = IndexType_Unsigned32;
     icmd.numSubMeshes = 8;
     icmd.pSubMeshes = indexedSubmeshes;
 
@@ -57,7 +57,7 @@ void fillList(RenderCommandList& list)
         result = list.push(icmd);
     }
 
-    if (result != R_RESULT_OK) {
+    if (result != RecluseResult_Ok) {
         R_ERR("TEST", "Failed to push some commands!");
     }
 }

@@ -24,7 +24,7 @@ class D3D12GraphicsObject : public IGraphicsObject
 public:
 	virtual ~D3D12GraphicsObject() { }
 
-	GraphicsAPI getApi() const override { return GRAPHICS_API_D3D12; }
+	GraphicsAPI getApi() const override { return GraphicsApi_Direct3D12; }
 };
 
 
@@ -53,5 +53,5 @@ extern SIZE_T getNativeFormatSize(DXGI_FORMAT format);
 extern DXGI_FORMAT getNativeFormat(Recluse::ResourceFormat format);
 
 // Get the native resource state.
-extern D3D12_RESOURCE_STATES getNativeResourceState(Recluse::ResourceState state, bool isPixelShader);
+extern D3D12_RESOURCE_STATES getNativeResourceState(Recluse::ResourceState state);
 } // Dxgi

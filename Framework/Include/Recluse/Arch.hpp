@@ -13,7 +13,7 @@
     // Called to allow exporting to public api. This will then expose to external modules.
     #define R_PUBLIC_API __declspec(dllexport)
     #define R_IMPORT __declspec(dllimport)
-    #define R_FORCEINLINE __forceinline
+    #define R_FORCE_INLINE __forceinline
     #define R_NOVTABLE __declspec(novtable)
     #define R_DEBUG_BREAK() do { __debugbreak(); } while(0)
     #define R_FORCE_CRASH(c) do { ExitProcess(c); } while(0)
@@ -27,7 +27,7 @@
     #define RECLUSE_LINUX
     #define R_PUBLIC_API
     #define R_IMPORT
-    #define R_FORCEINLINE 
+    #define R_FORCE_INLINE 
     #define R_NOVTABLE
     #define R_DEBUG_BREAK()
     #define R_FORCE_CRASH(c)

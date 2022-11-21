@@ -15,9 +15,9 @@ wchar_t* getShaderProfile(ShaderType type)
 {
     switch (type) 
     {
-        case SHADER_TYPE_VERTEX: return L"vs_6_0";
-        case SHADER_TYPE_PIXEL: return L"ps_6_0";
-        case SHADER_TYPE_COMPUTE: return L"cs_6_0"; 
+        case ShaderType_Vertex: return L"vs_6_0";
+        case ShaderType_Pixel: return L"ps_6_0";
+        case ShaderType_Compute: return L"cs_6_0"; 
         default: return L"unknown";
     }
 }
@@ -37,7 +37,7 @@ public:
         if (FAILED(hr))
         {
             R_ERR("DXC", "Failed to create library for parsing!");
-            return R_RESULT_FAILED;
+            return RecluseResult_Failed;
         }
 
         hr = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&m_compiler));
@@ -45,10 +45,10 @@ public:
         if (FAILED(hr))
         {
             R_ERR("DXC", "Failed to create dxc compiler!");
-            return R_RESULT_FAILED;
+            return RecluseResult_Failed;
         }
 
-        return R_RESULT_OK;
+        return RecluseResult_Ok;
     }
 
     ErrType tearDown() override
@@ -57,7 +57,7 @@ public:
             m_compiler.Release();
         if (m_library)
             m_library.Release();
-        return R_RESULT_OK;
+        return RecluseResult_Ok;
     }
 
     ErrType onCompile(const std::vector<char>& srcCode, std::vector<char>& byteCode, 
@@ -84,7 +84,7 @@ public:
             R_ERR("DXC", "Failed to create a blob!!");
         }
 
-        if (getIntermediateCode() == INTERMEDIATE_SPIRV) 
+        if (getIntermediateCode() == ShaderIntermediateCode_Spirv) 
         {
             arguments[argCount++] = L"-spirv";
         }
@@ -110,7 +110,7 @@ public:
                 R_ERR("DXC", "Errors found: \n%s", (const char*)errorBlob->GetBufferPointer());   
             }   
         
-            return R_RESULT_FAILED;
+            return RecluseResult_Failed;
         }
 
         CComPtr<IDxcBlob> code;
@@ -119,7 +119,7 @@ public:
         byteCode.resize(code->GetBufferSize());
         memcpy(byteCode.data(), code->GetBufferPointer(), code->GetBufferSize());
 
-        return R_RESULT_OK;
+        return RecluseResult_Ok;
     }
 
 private:

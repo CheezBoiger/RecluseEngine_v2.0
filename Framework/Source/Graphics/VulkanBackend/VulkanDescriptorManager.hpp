@@ -47,7 +47,8 @@ private:
     DescriptorPoolSizeFactors m_maxResources;
 };
 
-
+// Meta information about the allocation done on Vulkan. This is used to store the 
+// allocations that are done, along with find the pool that this allocation was done on.
 class VulkanDescriptorAllocation
 {
 public:
@@ -72,6 +73,7 @@ private:
 };
 
 
+// 
 class VulkanDescriptorManager 
 {
 public:
@@ -94,6 +96,7 @@ public:
     // destroy(), or reset(), will automatically clean up our allocations.
     ErrType                     free(const VulkanDescriptorAllocation& allocation, VkDescriptorSet* pSets, U32 numberSetsToFree);
 
+    // Reset the pools once we finish using.
     void                        resetPools();
 
 private:

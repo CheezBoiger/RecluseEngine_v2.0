@@ -17,7 +17,7 @@ int main(int c, char* argv[])
 
     GraphicsSwapchain* pSwapchain   = nullptr;
     GraphicsDevice* pDevice         = nullptr;
-    GraphicsInstance* pInstance       = GraphicsInstance::createInstance(GRAPHICS_API_D3D12);
+    GraphicsInstance* pInstance       = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
 
     Window* pWindow = Window::create(u8"SwapchainInitialization", 0, 0, 128, 128);
 
@@ -36,11 +36,11 @@ int main(int c, char* argv[])
     appInfo.engineName  = "None";
     appInfo.enginePatch = 0;
 
-    EnableLayerFlags flags = LAYER_FEATURE_DEBUG_VALIDATION_BIT;
+    EnableLayerFlags flags = LayerFeature_DebugValidationBit;
 
     ErrType result = pInstance->initialize(appInfo, flags);
 
-    if (result != R_RESULT_OK) {
+    if (result != RecluseResult_Ok) {
         R_ERR("Test", "Failed to create context!");
         goto Exit;
     }
@@ -59,15 +59,15 @@ int main(int c, char* argv[])
     DeviceCreateInfo deviceCreate   = { };
     deviceCreate.winHandle = pWindow->getNativeHandle();
     deviceCreate.buffering = 2;
-    deviceCreate.swapchainDescription.buffering                    = FRAME_BUFFERING_TRIPLE;
+    deviceCreate.swapchainDescription.buffering                    = FrameBuffering_Triple;
     deviceCreate.swapchainDescription.desiredFrames                = 3;
     deviceCreate.swapchainDescription.renderHeight                 = 128;
     deviceCreate.swapchainDescription.renderWidth                  = 128;
-    deviceCreate.swapchainDescription.format                       = RESOURCE_FORMAT_B8G8R8A8_UNORM;
+    deviceCreate.swapchainDescription.format                       = ResourceFormat_B8G8R8A8_Unorm;
 
     result = adapters[0]->createDevice(deviceCreate, &pDevice);
 
-    if (result != R_RESULT_OK) {
+    if (result != RecluseResult_Ok) {
     
         R_ERR("Graphics", "Failed to create device!");
 

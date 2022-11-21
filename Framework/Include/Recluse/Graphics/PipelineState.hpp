@@ -29,55 +29,55 @@ struct ShaderModule
 
 enum InputRate 
 {
-    INPUT_RATE_PER_VERTEX,
-    INPUT_RATE_PER_INSTANCE
+    InputRate_PerVertex,
+    InputRate_PerInstance
 };
 
 
 enum PrimitiveTopology 
 {
-    PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-    PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
-    PRIMITIVE_TOPOLOGY_POINT_LIST,
-    PRIMITIVE_TOPOLOGY_LINE_LIST,
-    PRIMITIVE_TOPOLOGY_LINE_STRIP
+    PrimitiveTopology_TriangleList,
+    PrimitiveTopology_TriangleStrip,
+    PrimitiveTopology_PointList,
+    PrimitiveTopology_LineList,
+    PrimitiveTopology_LineStrip
 };
 
 
 enum FrontFace 
 {
-    FRONT_FACE_COUNTER_CLOCKWISE,
-    FRONT_FACE_CLOCKWISE
+    FrontFace_CounterClockwise,
+    FrontFace_Clockwise
 };
 
 
 enum StencilOp 
 {
-    STENCIL_OP_KEEP,
-    STENCIL_OP_ZERO,
-    STENCIL_OP_REPLACE,
-    STENCIL_OP_INCREMENT_AND_CLAMP,
-    STENCIL_OP_DECREMENT_AND_CLAMP,
-    STENCIL_OP_INVERT,
-    STENCIL_OP_INCREMENT_AND_WRAP,
-    STENCIL_OP_DECREMENT_AND_WRAP
+    StencilOp_Keep,
+    StencilOp_Zero,
+    StencilOp_Replace,
+    StencilOp_IncrementAndClamp,
+    StencilOp_DecrementAndClamp,
+    StencilOp_Invert,
+    StencilOp_IncrementAndWrap,
+    StencilOp_DecrementAndWrap
 };
 
 
 enum PolygonMode 
 {
-    POLYGON_MODE_FILL,
-    POLYGON_MODE_LINE,
-    POLYGON_MODE_POINT
+    PolygonMode_Fill,
+    PolygonMode_Line,
+    PolygonMode_Point
 };
 
 
 enum CullMode 
 {
-    CULL_MODE_NONE,
-    CULL_MODE_FRONT,
-    CULL_MODE_BACK,
-    CULL_MODE_FRONT_AND_BACK
+    CullMode_None,
+    CullMode_Front,
+    CullMode_Back,
+    CullMode_FrontAndBack
 };
 
 
@@ -103,65 +103,65 @@ struct VertexBinding
 
 enum LogicOp 
 {
-    LOGIC_OP_CLEAR,
-    LOGIC_OP_AND,
-    LOGIC_OP_AND_REVERSE,
-    LOGIC_OP_COPY,
-    LOGIC_OP_AND_INVERTED,
-    LOGIC_OP_NO_OP,
-    LOGIC_OP_XOR,
-    LOGIC_OP_OR,
-    LOGIC_OP_NOR,
-    LOGIC_OP_EQUIVALENT,
-    LOGIC_OP_INVERT,
-    LOGIC_OP_OR_REVERSE,
-    LOGIC_OP_COPY_INVERTED,
-    LOGIC_OP_OR_INVERTED,
-    LOGIC_OP_NAND,
-    LOGIC_OP_SET
+    LogicOp_Clear,
+    LogicOp_And,
+    LogicOp_AndReverse,
+    LogicOp_Copy,
+    LogicOp_AndInverted,
+    LogicOp_NoOp,
+    LogicOp_Xor,
+    LogicOp_Or,
+    LogicOp_Nor,
+    LogicOp_Equivalent,
+    LogicOp_Invert,
+    LogicOp_OrReverse,
+    LogicOp_CopyInverted,
+    LogicOp_OrInverted,
+    LogicOp_Nand,
+    LogicOp_Set
 };
 
 enum BlendFactor 
 {
-    BLEND_FACTOR_ZERO,
-    BLEND_FACTOR_ONE,
-    BLEND_FACTOR_SRC_COLOR,
-    BLEND_FACTOR_ONE_MINUS_SRC_COLOR,
-    BLEND_FACTOR_DST_COLOR,
-    BLEND_FACTOR_ONE_MINUS_DST_COLOR,
-    BLEND_FACTOR_SRC_ALHPA,
-    BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-    BLEND_FACTOR_DST_ALHPA,
-    BLEND_FACTOR_ONE_MINUS_DST_ALPHA,
-    BLEND_FACTOR_CONSTANT_COLOR,
-    BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR,
-    BLEND_FACTOR_CONSTANT_ALPHA,
-    BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA,
-    BLEND_FACTOR_SRC_ALPHA_SATURATE,
-    BLEND_FACTOR_SRC1_COLOR,
-    BLEND_FACTOR_ONE_MINUS_SRC1_COLOR,
-    BLEND_FACTOR_SRC1_ALPHA,
-    BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA
+    BlendFactor_Zero,
+    BlendFactor_One,
+    BlendFactor_SourceColor,
+    BlendFactor_OneMinusSourceColor,
+    BlendFactor_DestinationColor,
+    BlendFactor_OneMinusDestinationColor,
+    BlendFactor_SourceAlpha,
+    BlendFactor_OneMinusSourceAlpha,
+    BlendFactor_DestinationAlpha,
+    BlendFactor_OneMinusDestinationAlpha,
+    BlendFactor_ConstantColor,
+    BlendFactor_OneMinusConstantColor,
+    BlendFactor_ConstantAlpha,
+    BlendFactor_OneMinusConstantAlpha,
+    BlendFactor_SourceAlphaSaturate,
+    BlendFactor_SourceOneColor,
+    BlendFactor_OneMinusSourceOneColor,
+    BlendFactor_SourceOneAlpha,
+    BlendFactor_OneMinusSourceOneAlpha
 };
 
 
 enum BlendOp 
 {
-    BLEND_OP_ADD,
-    BLEND_OP_SUBTRACT,
-    BLEND_OP_REVERSE_SUBTRACT,
-    BLEND_OP_MIN,
-    BLEND_OP_MAX    
+    BlendOp_Add,
+    BlendOp_Subtract,
+    BlendOp_ReverseSubtract,
+    BlendOp_Min,
+    BlendOp_Max    
 };
 
 
 enum ColorComponent 
 {
-    COLOR_R = 0x1,
-    COLOR_G = 0x2, 
-    COLOR_B = 0x4,
-    COLOR_A = 0x8,
-    COLOR_RGBA = (COLOR_R | COLOR_G | COLOR_B | COLOR_A)
+    Color_R = 0x1,
+    Color_G = 0x2, 
+    Color_B = 0x4,
+    Color_A = 0x8,
+    Color_Rgba = (Color_R | Color_G | Color_B | Color_A)
 };
 
 typedef U32 ColorComponentMaskFlags;

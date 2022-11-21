@@ -14,8 +14,9 @@ class D3D12Adapter;
 class D3D12ResourceAllocator;
 class D3D12Swapchain;
 class D3D12Queue;
-class D3D12CommandList;
+class D3D12PrimaryCommandList;
 class D3D12Resource;
+class D3D12Device;
 
 struct BufferResources 
 {
@@ -25,6 +26,62 @@ struct BufferResources
     U64                     fenceValue;
 };
 
+
+class D3D12Context : public GraphicsContext
+{
+public:
+    D3D12Context(D3D12Device* pDevice, U32 bufferCount)
+        : m_pDevice(pDevice)
+        , m_currentBufferIndex(0)
+        , m_pPrimaryCommandList(nullptr)
+        , m_bufferCount(bufferCount)
+    {
+
+    }
+
+    void initialize();
+    void release();
+
+    virtual void begin() override;
+    virtual void end() override;
+
+    inline void incrementBufferIndex() 
+    { 
+        m_currentBufferIndex = (m_currentBufferIndex + 1) % m_bufferCount; 
+    }
+
+    // Not recommended, but submits a copy to this queue, and waits until the command has 
+    // completed.
+    ErrType copyResource(GraphicsResource* dst, GraphicsResource* src) override;
+
+    // Submits copy of regions from src resource to dst resource. Generally the caller thread will
+    // be blocked until this function returns, so be sure to use when needed.
+    ErrType copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, 
+        CopyBufferRegion* pRegions, U32 numRegions) override;
+
+    GraphicsCommandList* getCommandList() override;
+
+    BufferResources* getCurrentBufferResource() { return &m_bufferResources[m_currentBufferIndex]; }
+    U32 getCurrentBufferIndex() const { return m_currentBufferIndex; }
+
+    const std::vector<BufferResources>& getBufferResources() const { return m_bufferResources; }
+    void resetCurrentResources();
+
+private:
+
+    void initializeBufferResources(U32 buffering);
+    void destroyBufferResources();
+
+    ErrType createCommandList(D3D12PrimaryCommandList** ppList, GraphicsQueueTypeFlags flags);
+    ErrType destroyCommandList(D3D12PrimaryCommandList* pList);
+
+    D3D12Device*                    m_pDevice;
+    std::vector<BufferResources>    m_bufferResources;
+    U32                             m_currentBufferIndex;
+    U32                             m_bufferCount;
+    D3D12PrimaryCommandList*        m_pPrimaryCommandList;
+};
+
 class D3D12Device : public GraphicsDevice 
 {
 public:
@@ -32,10 +89,7 @@ public:
         : m_windowHandle(nullptr)
         , m_device(nullptr)
         , m_pAdapter(nullptr)
-        , m_currentBufferIndex(0)
-        , m_bufferCount(0)
         , m_graphicsQueue(nullptr)
-        , m_pPrimaryCommandList(nullptr)
         , m_swapchain(nullptr) { }
 
     ErrType initialize(D3D12Adapter* adapter, const DeviceCreateInfo& info);
@@ -51,37 +105,13 @@ public:
     ErrType createCommandQueue(D3D12Queue** ppQueue, GraphicsQueueTypeFlags type);
     ErrType destroyCommandQueue(D3D12Queue* pQueue);
 
-    ErrType createCommandList(D3D12CommandList** ppList, GraphicsQueueTypeFlags flags);
-    ErrType destroyCommandList(D3D12CommandList* pList);
-
+    GraphicsContext* getContext() override { return m_context; }
     HWND getWindowHandle() const { return m_windowHandle; }
 
     ErrType reserveMemory(const MemoryReserveDesc& desc) override;
 
-    U32 getCurrentBufferIndex() const { return m_currentBufferIndex; }
-
-    const std::vector<BufferResources>& getBufferResources() const { return m_bufferResources; }
-
-    void resetCurrentResources();
-    
-    inline void incrementBufferIndex() 
-        { m_currentBufferIndex = (m_currentBufferIndex + 1) % m_bufferCount; }
-
     D3D12Queue* getBackbufferQueue() const { return m_graphicsQueue; }
-
-    // Not recommended, but submits a copy to this queue, and waits until the command has 
-    // completed.
-    ErrType copyResource(GraphicsResource* dst, GraphicsResource* src) override;
-
-    // Submits copy of regions from src resource to dst resource. Generally the caller thread will
-    // be blocked until this function returns, so be sure to use when needed.
-    ErrType copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, 
-        CopyBufferRegion* pRegions, U32 numRegions) override;
-
-    GraphicsCommandList* getCommandList() override;
     GraphicsSwapchain* getSwapchain() override;
-
-    BufferResources* getCurrentBufferResource() { return &m_bufferResources[m_currentBufferIndex]; }
 
     // Helper descriptor creators for the device.
     void createSampler(const D3D12_SAMPLER_DESC& desc);
@@ -100,28 +130,22 @@ public:
 private:
 
     void initializeAllocators();
-    void initializeBufferResources(U32 buffering);
-    void destroyBufferResources();
     void destroyAllocators();
     void allocateMemoryPool(D3D12MemoryPool* pPool, ResourceMemoryUsage memUsage);
 
     // Resource pools.
-    D3D12MemoryPool                 m_bufferMemPools[RESOURCE_MEMORY_USAGE_COUNT];
-    D3D12ResourceAllocator*                 m_bufferPool[RESOURCE_MEMORY_USAGE_COUNT];
-    D3D12ResourceAllocator*                 m_texturePool;
+    D3D12MemoryPool                 m_bufferMemPools[ResourceMemoryUsage_Count];
+    D3D12ResourceAllocator*         m_bufferPool[ResourceMemoryUsage_Count];
+    D3D12ResourceAllocator*         m_texturePool;
     D3D12MemoryPool                 m_textureMemPool;
 
     ID3D12Device*                   m_device;
     D3D12Adapter*                   m_pAdapter;
     D3D12Queue*                     m_graphicsQueue;
-    D3D12CommandList*               m_pPrimaryCommandList;
     D3D12Swapchain*                 m_swapchain;
 
     DescriptorHeapAllocationManager m_descHeapManager;
-
-    std::vector<BufferResources>    m_bufferResources;
-    U32                             m_currentBufferIndex;
-    U32                             m_bufferCount;
+    D3D12Context*                   m_context;
 
     HWND m_windowHandle;
 };

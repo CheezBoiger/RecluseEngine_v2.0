@@ -30,13 +30,13 @@ ErrType D3D12ResourceAllocator::initialize(U32 garbageBufferCount)
 
     m_garbageIndex = 0u;
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
 ErrType D3D12ResourceAllocator::destroy()
 {
-    return R_RESULT_NO_IMPL;
+    return RecluseResult_NoImpl;
 }
 
 
@@ -49,7 +49,7 @@ ErrType D3D12ResourceAllocator::allocate
                             ) 
 {
     U64 sizeInBytesRequired = 0ull;
-    ErrType result          = R_RESULT_OK;
+    ErrType result          = RecluseResult_Ok;
     SIZE_T formatSizeBytes  = Dxgi::getNativeFormatSize(desc.Format);
     U64 alignment           = desc.Alignment;
     U32 width               = desc.Width;
@@ -66,7 +66,7 @@ ErrType D3D12ResourceAllocator::allocate
     Allocation allocOut     = { };
     result = m_pAllocator->allocate(&allocOut, sizeInBytesRequired, alignment);
 
-    if (result != R_RESULT_OK) 
+    if (result != RecluseResult_Ok) 
     {
         R_ERR("D3D12Allocator", "Failed to allocate d3d12 resource!");
     } 
@@ -95,7 +95,7 @@ ErrType D3D12ResourceAllocator::allocate
 
 ErrType D3D12ResourceAllocator::free(D3D12MemoryObject* pObject)
 {
-    return R_RESULT_NO_IMPL;
+    return RecluseResult_NoImpl;
 }
 
 

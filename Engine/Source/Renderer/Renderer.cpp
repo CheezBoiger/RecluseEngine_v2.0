@@ -37,19 +37,18 @@ Renderer::~Renderer()
 }
 
 
-void Renderer::initialize(void* windowHandle, const RendererConfigs& configs)
+void Renderer::initialize()
 {
-    R_ASSERT_MSG(configs.buffering >= 1, "Must at least be one buffer count!");
-    m_newRendererConfigs = m_currentRendererConfigs = configs;
-
-    m_configLock = createMutex();
+    R_ASSERT_MSG(m_newRendererConfigs.buffering >= 1, "Must at least be one buffer count!");
+    // Immediately initialize the render configs to the current.
+    m_currentRendererConfigs = m_newRendererConfigs;
 
     EnableLayerFlags flags  = 0;
     ApplicationInfo info    = { };
-    ErrType result          = R_RESULT_OK;
-    m_windowHandle          = windowHandle;
+    ErrType result          = RecluseResult_Ok;
+    m_windowHandle          = m_currentRendererConfigs.windowHandle;
 
-    m_pInstance = GraphicsInstance::createInstance(configs.api);
+    m_pInstance = GraphicsInstance::createInstance(m_currentRendererConfigs.api);
     
     if (!m_pInstance) 
     {
@@ -66,7 +65,7 @@ void Renderer::initialize(void* windowHandle, const RendererConfigs& configs)
 
     result = m_pInstance->initialize(info, flags);
 
-    if (result != R_RESULT_OK) 
+    if (result != RecluseResult_Ok) 
     {
         R_ERR("Renderer", "Failed to initialize instance!");        
     }
@@ -75,29 +74,29 @@ void Renderer::initialize(void* windowHandle, const RendererConfigs& configs)
     
     determineAdapter(adapters);
 
-    createDevice(configs);
+    createDevice(m_currentRendererConfigs);
     m_pSwapchain = m_pDevice->getSwapchain();
 
     {
         MemoryReserveDesc reserveDesc = { };
-        reserveDesc.bufferPools[RESOURCE_MEMORY_USAGE_CPU_ONLY]     = R_1MB * 32ull;
-        reserveDesc.bufferPools[RESOURCE_MEMORY_USAGE_CPU_TO_GPU]   = R_1MB * 16ull;
-        reserveDesc.bufferPools[RESOURCE_MEMORY_USAGE_GPU_TO_CPU]   = R_1MB * 16ull;
-        reserveDesc.bufferPools[RESOURCE_MEMORY_USAGE_GPU_ONLY]     = R_1MB * 512ull;
+        reserveDesc.bufferPools[ResourceMemoryUsage_CpuOnly]     = R_1MB * 32ull;
+        reserveDesc.bufferPools[ResourceMemoryUsage_CpuToGpu]   = R_1MB * 16ull;
+        reserveDesc.bufferPools[ResourceMemoryUsage_GpuToCpu]   = R_1MB * 16ull;
+        reserveDesc.bufferPools[ResourceMemoryUsage_GpuOnly]     = R_1MB * 512ull;
         reserveDesc.texturePoolGPUOnly                              = R_1GB * 1ull;
 
         // Memory reserves for engine.
         result = m_pDevice->reserveMemory(reserveDesc);
     }
 
-    if (result != R_RESULT_OK) 
+    if (result != RecluseResult_Ok) 
     {
         R_ERR("Renderer", "ReserveMemory call completed with result: %d", result);
     }
 
-    m_commandList = m_pDevice->getCommandList();
+    m_commandList = m_pDevice->getContext()->getCommandList();
 
-    allocateSceneBuffers(configs);
+    allocateSceneBuffers(m_currentRendererConfigs);
 
     setUpModules();
 }
@@ -110,8 +109,6 @@ void Renderer::cleanUp()
     // Clean up all modules, as well as resources handled by them...
     cleanUpModules();
 
-    destroyMutex(m_configLock);
-
     if (m_pDevice) 
     {
         m_pAdapter->destroyDevice(m_pDevice);
@@ -121,9 +118,9 @@ void Renderer::cleanUp()
 
 void Renderer::present(Bool delayPresent)
 {
-    ErrType result = m_pSwapchain->present(delayPresent ? GraphicsSwapchain::DELAY_PRESENT : GraphicsSwapchain::NORMAL_PRESENT);
+    ErrType result = m_pSwapchain->present(delayPresent ? GraphicsSwapchain::PresentConfig_SkipPresent : GraphicsSwapchain::PresentConfig_Present);
 
-    if (result != R_RESULT_OK) 
+    if (result != RecluseResult_Ok) 
     {
         R_WARN("Renderer", "Swapchain present returns with err code: %d", result);
     }
@@ -133,7 +130,7 @@ void Renderer::present(Bool delayPresent)
 void Renderer::render()
 {
     sortCommandKeys();
-    m_commandList->begin();
+    m_pDevice->getContext()->begin();
 #if (!R_NULLIFY_RENDER)
         // TODO: Would make more sense to manually transition the resource itself, 
         //       and not the resource view...
@@ -185,7 +182,7 @@ void Renderer::render()
                             m_currentCommandKeys[RENDER_FORWARD_OPAQUE].size()
                         );
 #endif
-    m_commandList->end();
+    m_pDevice->getContext()->end();
     // Present.
     m_pSwapchain->present();
     
@@ -200,11 +197,11 @@ void Renderer::determineAdapter(std::vector<GraphicsAdapter*>& adapters)
         AdapterInfo info            = { };
         AdapterLimits limits        = { };
         GraphicsAdapter* pAdapter   = adapters[i];
-        ErrType result              = R_RESULT_OK;
+        ErrType result              = RecluseResult_Ok;
 
         result = pAdapter->getAdapterInfo(&info);
     
-        if (result != R_RESULT_OK) 
+        if (result != RecluseResult_Ok) 
         {
             R_ERR("Renderer", "Failed to query adapter info.");
         }
@@ -223,17 +220,17 @@ void Renderer::createDevice(const RendererConfigs& configs)
     DeviceCreateInfo info                   = { };
     info.buffering                          = configs.buffering;
     info.winHandle                          = m_windowHandle;
-    info.swapchainDescription.buffering     = FRAME_BUFFERING_SINGLE;
+    info.swapchainDescription.buffering     = FrameBuffering_Single;
     info.swapchainDescription.desiredFrames = 3;
-    info.swapchainDescription.format        = RESOURCE_FORMAT_R8G8B8A8_UNORM;
+    info.swapchainDescription.format        = ResourceFormat_R8G8B8A8_Unorm;
     info.swapchainDescription.renderWidth   = configs.renderWidth;
     info.swapchainDescription.renderHeight  = configs.renderHeight;
 
-    ErrType result          = R_RESULT_OK;
+    ErrType result          = RecluseResult_Ok;
     
     result = m_pAdapter->createDevice(info, &m_pDevice);
 
-    if (result != R_RESULT_OK) 
+    if (result != RecluseResult_Ok) 
     {
         R_ERR("Renderer", "Failed to create device!");   
     }
@@ -246,7 +243,7 @@ void Renderer::setUpModules()
     m_sceneBuffers.gbuffer[Engine::GBuffer_Depth]->initialize
                                     (
                                         this, 
-                                        RESOURCE_FORMAT_D32_FLOAT_S8_UINT, 
+                                        ResourceFormat_D32_Float_S8_Uint, 
                                         m_currentRendererConfigs.renderWidth, 
                                         m_currentRendererConfigs.renderHeight, 
                                         1, 1
@@ -264,12 +261,12 @@ void Renderer::cleanUpModules()
 
 VertexBuffer* Renderer::createVertexBuffer(U64 perVertexSzBytes, U64 totalVertices)
 {
-    ErrType result          = R_RESULT_OK;
+    ErrType result          = RecluseResult_Ok;
     VertexBuffer* pBuffer   = new VertexBuffer();
 
     result = pBuffer->initializeVertices(m_pDevice, perVertexSzBytes, totalVertices);
 
-    if (result != R_RESULT_OK) 
+    if (result != RecluseResult_Ok) 
     {
         delete pBuffer;
         pBuffer = nullptr;
@@ -281,12 +278,12 @@ VertexBuffer* Renderer::createVertexBuffer(U64 perVertexSzBytes, U64 totalVertic
 
 IndexBuffer* Renderer::createIndexBuffer(IndexType indexType, U64 totalIndices)
 {
-    ErrType result = R_RESULT_OK;
+    ErrType result = RecluseResult_Ok;
     IndexBuffer* pBuffer = new IndexBuffer();
     
     result = pBuffer->initializeIndices(m_pDevice, indexType, totalIndices);
 
-    if (result != R_RESULT_OK) 
+    if (result != RecluseResult_Ok) 
     {
         delete pBuffer;
         pBuffer = nullptr;
@@ -298,11 +295,11 @@ IndexBuffer* Renderer::createIndexBuffer(IndexType indexType, U64 totalIndices)
 
 ErrType Renderer::destroyGPUBuffer(GPUBuffer* pBuffer)
 {
-    ErrType result = R_RESULT_OK;
+    ErrType result = RecluseResult_Ok;
 
     if (!pBuffer) 
     {
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }
 
     result = pBuffer->destroy();
@@ -386,16 +383,16 @@ void Renderer::allocateSceneBuffers(const RendererConfigs& configs)
 {
     U32 width = configs.renderWidth;
     U32 height = configs.renderHeight;
-    m_sceneBuffers.gbuffer[Engine::GBuffer_Depth] = createTexture2D(width, height, 1, 1, RESOURCE_FORMAT_D24_UNORM_S8_UINT);
+    m_sceneBuffers.gbuffer[Engine::GBuffer_Depth] = createTexture2D(width, height, 1, 1, ResourceFormat_D24_Unorm_S8_Uint);
 
     ResourceViewDesc viewDesc = { };
-    viewDesc.dimension = RESOURCE_VIEW_DIMENSION_2D;
-    viewDesc.format = RESOURCE_FORMAT_D24_UNORM_S8_UINT;
+    viewDesc.dimension = ResourceViewDimension_2d;
+    viewDesc.format = ResourceFormat_D24_Unorm_S8_Uint;
     viewDesc.layerCount = 1;
     viewDesc.mipLevelCount = 1;
     viewDesc.baseArrayLayer = 0;
     viewDesc.baseMipLevel = 0;
-    viewDesc.type = RESOURCE_VIEW_TYPE_DEPTH_STENCIL;
+    viewDesc.type = ResourceViewType_DepthStencil;
 
     m_sceneBuffers.gbufferViews[Engine::GBuffer_Depth] = new TextureView();
     m_sceneBuffers.gbufferViews[Engine::GBuffer_Depth]->initialize(this, m_sceneBuffers.gbuffer[Engine::GBuffer_Depth], viewDesc);
@@ -445,11 +442,11 @@ void Renderer::freeSceneBuffers()
 Texture2D* Renderer::createTexture2D(U32 width, U32 height, U32 mips, U32 layers, ResourceFormat format)
 {
     Texture2D* pTexture = new Texture2D();
-    ErrType result = R_RESULT_OK;
+    ErrType result = RecluseResult_Ok;
 
     result = pTexture->initialize(this, format, width, height, layers, mips);
 
-    if (result != R_RESULT_OK) 
+    if (result != RecluseResult_Ok) 
     {
         pTexture->destroy(this);
         delete pTexture;
@@ -466,7 +463,7 @@ ErrType Renderer::destroyTexture2D(Texture2D* pTexture)
     pTexture->destroy(this);
     delete pTexture;
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -476,7 +473,6 @@ static ErrType kRendererJob(void* pData)
     Mutex renderMutex                       = pRenderer->getMutex();
     U64 threadId                            = getCurrentThreadId();
     F32 counterFrameMs                      = 0.f;
-    const RendererConfigs& renderConfigs    = pRenderer->getCurrentConfigs();
 
         // Initialize the renderer watch.
     RealtimeTick::initializeWatch(threadId, JOB_TYPE_RENDERER);
@@ -492,11 +488,12 @@ static ErrType kRendererJob(void* pData)
         // Render interpolation is required.
         if (pRenderer->isRunning()) 
         {
+            const RendererConfigs& renderConfigs    = pRenderer->getCurrentConfigs();
             pRenderer->update(tick.getCurrentTimeS(), tick.delta());
             pRenderer->render();
 
             // Check if we need to limit our frame rate.
-            GraphicsSwapchain::PresentConfig presentConfig = GraphicsSwapchain::DELAY_PRESENT;
+            GraphicsSwapchain::PresentConfig presentConfig = GraphicsSwapchain::PresentConfig_SkipPresent;
 
             if (renderConfigs.maxFrameRate > 0)
             {
@@ -504,36 +501,26 @@ static ErrType kRendererJob(void* pData)
                 if (counterFrameMs >= desiredFramesMs)
                 {
                     counterFrameMs = 0.f;
-                    presentConfig = GraphicsSwapchain::NORMAL_PRESENT;
+                    presentConfig = GraphicsSwapchain::PresentConfig_Present;
                 }
             }
             else
             {
                 // Not framerate limit, so we can present as fast as we can.
-                presentConfig = GraphicsSwapchain::NORMAL_PRESENT;
+                presentConfig = GraphicsSwapchain::PresentConfig_Present;
             }
 
             pRenderer->present(presentConfig);
         }
     }
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
 ErrType Renderer::onInitializeModule(Application* pApp)
 {
-    {
-        Window* pWindow = pApp->getWindow();
-        RendererConfigs configs = { };
-        configs.buffering = 1;
-        configs.api = GRAPHICS_API_VULKAN;
-        configs.renderWidth = 800;
-        configs.renderHeight = 600;
-        configs.maxFrameRate = 60.0f;
-
-        initialize(pWindow->getNativeHandle(), configs);
-    }
+    m_configLock = createMutex();
 
     MainThreadLoop::getMessageBus()->addReceiver
         (
@@ -570,6 +557,11 @@ ErrType Renderer::onInitializeModule(Application* pApp)
                             case RenderEvent_SceneUpdate:
                                 break;
 
+                            case RenderEvent_Initialize:
+                            {
+                                initialize();
+                            }
+
                             default:
                                 break;
                         }
@@ -586,7 +578,9 @@ ErrType Renderer::onCleanUpModule(Application* pApp)
     ScopedLock lck(getMutex());
     cleanUp();
     enableRunning(false);
-    return R_RESULT_OK;
+    // be sure to destroy the final config lock.
+    destroyMutex(m_configLock);
+    return RecluseResult_Ok;
 }
 
 

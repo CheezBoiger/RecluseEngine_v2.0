@@ -39,7 +39,7 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
     {
         R_ERR(R_CHANNEL_VULKAN, "Can not define a RenderWidth or Height less than 1!");
 
-        return R_RESULT_INVALID_ARGS;    
+        return RecluseResult_InvalidArgs;    
     }
 
     {
@@ -89,9 +89,9 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
     switch (pDesc.buffering) 
     {
         default:
-        case FRAME_BUFFERING_SINGLE: createInfo.presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR; break;
-        case FRAME_BUFFERING_DOUBLE: createInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR; break;
-        case FRAME_BUFFERING_TRIPLE: createInfo.presentMode = VK_PRESENT_MODE_MAILBOX_KHR; break;
+        case FrameBuffering_Single: createInfo.presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR; break;
+        case FrameBuffering_Double: createInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR; break;
+        case FrameBuffering_Triple: createInfo.presentMode = VK_PRESENT_MODE_MAILBOX_KHR; break;
     }
     
     result = vkCreateSwapchainKHR(pDevice->get(), &createInfo, nullptr, &m_swapchain);
@@ -100,7 +100,7 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
     {    
         R_ERR(R_CHANNEL_VULKAN, "Failed to create swapchain!");
 
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }    
 
     R_DEBUG(R_CHANNEL_VULKAN, "Successfully created vulkan swapchain!");
@@ -127,10 +127,10 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
     {
         R_WARN(R_CHANNEL_VULKAN, "AcquireNextImage was not successful...");    
 
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -140,7 +140,7 @@ ErrType VulkanSwapchain::onRebuild()
     destroy();
     build(m_pDevice);
 
-    return R_RESULT_NO_IMPL;
+    return RecluseResult_NoImpl;
 }
 
 
@@ -179,49 +179,54 @@ ErrType VulkanSwapchain::destroy()
             );   
     }
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
 ErrType VulkanSwapchain::present(PresentConfig config)
 {
     R_ASSERT(m_pBackbufferQueue != NULL);
+    VkResult result = VK_SUCCESS;
+    ErrType err = RecluseResult_Ok;
 
     // Flush all copies down for this run.
     m_pDevice->flushAllMappedRanges();
     m_pDevice->invalidateAllMappedRanges();
 
-    if (config & DELAY_PRESENT)
-        return R_RESULT_OK;
-
-    submitCommandsForPresenting();
- 
-    ErrType err                     = R_RESULT_OK;
-    VkSwapchainKHR swapchains[]     = { m_swapchain };
-    VkPresentInfoKHR info           = { };
-    VkSemaphore pWaitSemaphores[]   = { getSignalSemaphore(m_currentFrameIndex) };
-    VkDevice device                 = m_pDevice->get();
-    VkFence frameFence              = VK_NULL_HANDLE;
-    VkSemaphore imageAvailableSema  = VK_NULL_HANDLE;
-    
-    info.swapchainCount         = 1;
-    info.pSwapchains            = swapchains;
-    info.sType                  = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    info.pWaitSemaphores        = pWaitSemaphores;
-    info.waitSemaphoreCount     = 1;
-    info.pResults               = nullptr;
-    info.pImageIndices          = &m_currentImageIndex;
-    
-    VkResult result = vkQueuePresentKHR(m_pBackbufferQueue->get(), &info);
-
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) 
+    if (config & PresentConfig_DelayPresent)
     {
-        err = R_RESULT_NEEDS_UPDATE;
+        VulkanContext* pContext = static_cast<VulkanContext*>(m_pDevice->getContext());
+        VkSubmitInfo info       = { };
+        info.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        vkQueueSubmit(m_pBackbufferQueue->get(), 1, &info, pContext->getCurrentFence());
+        return RecluseResult_Ok;
     }
 
-    m_pDevice->incrementBufferIndex();
+    submitCommandsForPresenting();
 
-    frameFence = m_pDevice->getCurrentFence();
+    VkSwapchainKHR swapchains[]     = { m_swapchain };
+    VkSemaphore pWaitSemaphores[]   = { getSignalSemaphore(m_currentFrameIndex) };
+    VkDevice device                 = m_pDevice->get();
+    VkSemaphore imageAvailableSema  = VK_NULL_HANDLE;
+    
+    if (!(config & PresentConfig_SkipPresent))
+    {
+        VkPresentInfoKHR info       = { };
+        info.swapchainCount         = 1;
+        info.pSwapchains            = swapchains;
+        info.sType                  = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        info.pWaitSemaphores        = pWaitSemaphores;
+        info.waitSemaphoreCount     = 1;
+        info.pResults               = nullptr;
+        info.pImageIndices          = &m_currentImageIndex;
+    
+        result = vkQueuePresentKHR(m_pBackbufferQueue->get(), &info);
+
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) 
+        {
+            err = RecluseResult_NeedsUpdate;
+        }
+    }
 
     incrementFrameIndex();
     imageAvailableSema = getWaitSemaphore(m_currentFrameIndex);
@@ -240,21 +245,8 @@ ErrType VulkanSwapchain::present(PresentConfig config)
     {
         R_WARN(R_CHANNEL_VULKAN, "AcquireNextImage was not successful...");    
 
-        err = R_RESULT_FAILED;
+        err = RecluseResult_Failed;
     }
-
-    result = vkWaitForFences(device, 1, &frameFence, VK_TRUE, UINT64_MAX);
-
-    if (result != R_RESULT_OK) 
-    {
-        R_WARN(R_CHANNEL_VULKAN, "Fence wait failed...");
-    }
-
-    vkResetFences(device, 1, &frameFence);
-
-    R_ASSERT(m_pDevice->getBufferCount() > 0);
-
-    m_pDevice->prepare();
 
     return err;
 }
@@ -282,26 +274,26 @@ void VulkanSwapchain::buildFrameResources()
         GraphicsResourceDescription desc = { };
         desc.width          = swapchainDesc.renderWidth;
         desc.height         = swapchainDesc.renderHeight;
-        desc.dimension      = RESOURCE_DIMENSION_2D;
+        desc.dimension      = ResourceDimension_2d;
         desc.depth          = 1;
-        desc.format         = RESOURCE_FORMAT_R8G8B8A8_UNORM;
-        desc.memoryUsage    = RESOURCE_MEMORY_USAGE_GPU_ONLY;
+        desc.format         = ResourceFormat_R8G8B8A8_Unorm;
+        desc.memoryUsage    = ResourceMemoryUsage_GpuOnly;
         desc.mipLevels      = 1;
-        desc.usage          = RESOURCE_USAGE_RENDER_TARGET;
+        desc.usage          = ResourceUsage_RenderTarget;
         desc.samples        = 1;
         desc.arrayLevels    = 1;
 
         m_frameResources[i] = new VulkanImage(desc, frame, VK_IMAGE_LAYOUT_UNDEFINED);
 
         ResourceViewDesc viewDesc = { };
-        viewDesc.format         = RESOURCE_FORMAT_R8G8B8A8_UNORM;
+        viewDesc.format         = ResourceFormat_R8G8B8A8_Unorm;
         viewDesc.pResource      = m_frameResources[i];
         viewDesc.mipLevelCount  = 1;
         viewDesc.layerCount     = 1;
         viewDesc.baseArrayLayer = 0;
         viewDesc.baseMipLevel   = 0;
-        viewDesc.dimension      = RESOURCE_VIEW_DIMENSION_2D;
-        viewDesc.type           = RESOURCE_VIEW_TYPE_RENDER_TARGET;
+        viewDesc.dimension      = ResourceViewDimension_2d;
+        viewDesc.type           = ResourceViewType_RenderTarget;
         
         m_frameViews[i] = new VulkanResourceView(viewDesc);
         m_frameViews[i]->initialize(m_pDevice);
@@ -311,22 +303,22 @@ void VulkanSwapchain::buildFrameResources()
 
 void VulkanSwapchain::submitCommandsForPresenting()
 {
-
-    VulkanImage* frame              = m_frameResources[m_currentFrameIndex];
-    VulkanCommandList* pCmdList     = static_cast<VulkanCommandList*>(m_pDevice->getCommandList());
-    VkDevice device                 = m_pDevice->get();
-    U32 bufferIdx                   = m_pDevice->getCurrentBufferIndex();
-    VkImageMemoryBarrier imgBarrier = { };
-    VkImageSubresourceRange range   = { };
-    VkCommandBuffer primaryCmdBuf   = pCmdList->get();
-    VkCommandBuffer singleUseCmdBuf = m_commandbuffers[bufferIdx];
-    VkFence fence                   = m_pDevice->getCurrentFence();
-    VkSemaphore signalSemaphore     = m_rawFrames.getSignalSemaphore(m_currentFrameIndex);
-    VkSemaphore waitSemaphore       = m_rawFrames.getWaitSemaphore(m_currentFrameIndex);
+    VulkanContext* pContext             = static_cast<VulkanContext*>(m_pDevice->getContext());
+    VulkanImage* frame                  = m_frameResources[m_currentFrameIndex];
+    VulkanPrimaryCommandList* pCmdList  = static_cast<VulkanPrimaryCommandList*>(pContext->getCommandList());
+    VkDevice device                     = m_pDevice->get();
+    U32 bufferIdx                       = pContext->getCurrentBufferIndex();
+    VkImageMemoryBarrier imgBarrier     = { };
+    VkImageSubresourceRange range       = { };
+    VkCommandBuffer primaryCmdBuf       = pCmdList->get();
+    VkCommandBuffer singleUseCmdBuf     = m_commandbuffers[bufferIdx];
+    VkFence fence                       = pContext->getCurrentFence();
+    VkSemaphore signalSemaphore         = m_rawFrames.getSignalSemaphore(m_currentFrameIndex);
+    VkSemaphore waitSemaphore           = m_rawFrames.getWaitSemaphore(m_currentFrameIndex);
 
     R_ASSERT(primaryCmdBuf != NULL);
 
-    if (pCmdList->getStatus() != COMMAND_LIST_READY) 
+    if (pCmdList->getStatus() != CommandList_Ready) 
     {
         pCmdList->begin();
         pCmdList->end();
@@ -357,7 +349,7 @@ void VulkanSwapchain::submitCommandsForPresenting()
     range.layerCount        = 1;
     range.levelCount        = 1;
 
-    imgBarrier = frame->transition(RESOURCE_STATE_PRESENT, range);    
+    imgBarrier = frame->transition(ResourceState_Present, range);    
 
     {
         VkCommandBufferBeginInfo begin = { };

@@ -38,7 +38,7 @@ public:
 
     virtual ~GraphicsInstance() { }
     
-    static R_PUBLIC_API GraphicsInstance* createInstance(enum GraphicsAPI api = GRAPHICS_API_VULKAN);
+    static R_PUBLIC_API GraphicsInstance* createInstance(enum GraphicsAPI api = GraphicsApi_Vulkan);
     static R_PUBLIC_API ErrType destroyInstance(GraphicsInstance* pInstance);
 
     R_PUBLIC_API ErrType initialize(const ApplicationInfo& appInfo, EnableLayerFlags flags) 

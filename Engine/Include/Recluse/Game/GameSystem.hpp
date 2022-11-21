@@ -54,17 +54,17 @@ public:
     }
 
     // Serialize the system and its components.
-    virtual ErrType serialize(Archive* archive) override { return R_RESULT_NO_IMPL; }
+    virtual ErrType serialize(Archive* archive) override { return RecluseResult_NoImpl; }
 
     // Deserialize the system and its components.
-    virtual ErrType deserialize(Archive* archive) override { return R_RESULT_NO_IMPL; }
+    virtual ErrType deserialize(Archive* archive) override { return RecluseResult_NoImpl; }
 
 private:
     // Allows initializing the system before on intialize().
-    virtual ErrType onInitialize()                  { return R_RESULT_NO_IMPL; }
+    virtual ErrType onInitialize()                  { return RecluseResult_NoImpl; }
 
     // Allows cleaning up the system before releasing.
-    virtual ErrType onCleanUp()                     { return R_RESULT_NO_IMPL; }
+    virtual ErrType onCleanUp()                     { return RecluseResult_NoImpl; }
 
     // Intended to clear all components from the game world.
     virtual void onClearAll()                       { }
@@ -100,7 +100,7 @@ public:
     ErrType allocateComponent(Comp** pOut, const RGUID& pOwner)  
     {
         ErrType err = onAllocateComponent(pOut);
-        if (err == R_RESULT_OK) 
+        if (err == RecluseResult_Ok) 
         {
             m_numberOfComponentsAllocated += 1;
             (*pOut)->setOwner(pOwner);
@@ -113,7 +113,7 @@ public:
     ErrType freeComponent(Comp** pIn)
     {
         ErrType err = onFreeComponent(pIn);
-        if (err == R_RESULT_OK) m_numberOfComponentsAllocated -= 1;
+        if (err == RecluseResult_Ok) m_numberOfComponentsAllocated -= 1;
         return err;
     }
 

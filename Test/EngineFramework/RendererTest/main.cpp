@@ -40,8 +40,18 @@ public:
     {
         Log::initializeLoggingSystem();
         Renderer::initializeModule(this);
+
+        RendererConfigs config = { };
+        config.api = GraphicsApi_Vulkan;
+        config.buffering = 3;
+        config.windowHandle = getWindow()->getNativeHandle();
+        config.renderWidth = getWindow()->getWidth();
+        config.renderHeight = getWindow()->getHeight();
+        Renderer::getMain()->setNewConfigurations(config);
+
+        MessageBus::fireEvent(getMessageBus(), RenderEvent_Initialize);
         MessageBus::fireEvent(getMessageBus(), RenderEvent_Resume);
-        return R_RESULT_OK;
+        return RecluseResult_Ok;
     }
 
     virtual ErrType onCleanUp() override
@@ -49,7 +59,7 @@ public:
         MessageBus::fireEvent(getMessageBus(), RenderEvent_Shutdown);
         Renderer::cleanUpModule(this);
         Log::destroyLoggingSystem();     
-        return R_RESULT_OK;
+        return RecluseResult_Ok;
     }
 };
 

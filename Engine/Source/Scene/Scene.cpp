@@ -85,7 +85,7 @@ void Scene::removeEntity(U32 idx)
 
 ErrType Scene::save(Archive* pArchive)
 {
-    ErrType result = R_RESULT_OK;
+    ErrType result = RecluseResult_Ok;
 
     // Save the scene header first!
     {
@@ -97,7 +97,7 @@ ErrType Scene::save(Archive* pArchive)
         result = pArchive->write(&header, sizeof(SceneHeaderInfo));
     }
 
-    if (result != R_RESULT_OK) 
+    if (result != RecluseResult_Ok) 
     {
         R_ERR(m_name.c_str(), "Failed to write scene header to archive!");
         return result;
@@ -111,13 +111,13 @@ ErrType Scene::save(Archive* pArchive)
 
 ErrType Scene::load(Archive* pArchive)
 {
-    ErrType result = R_RESULT_OK;
+    ErrType result = RecluseResult_Ok;
 
     SceneHeaderInfo header = { };
     
     result = pArchive->read(&header, sizeof(SceneHeaderInfo));
 
-    if (result != R_RESULT_OK) 
+    if (result != RecluseResult_Ok) 
     {
         return result;
     }
@@ -138,13 +138,21 @@ void Scene::setName(const std::string& name)
 
 ErrType Scene::serialize(Archive* pArchive) 
 {
-    return R_RESULT_NO_IMPL;
+    return RecluseResult_NoImpl;
 }
 
 
 ErrType Scene::deserialize(Archive* pArchive)
 {
-    return R_RESULT_NO_IMPL;
+    return RecluseResult_NoImpl;
+}
+
+
+void Scene::registerSystem(ECS::AbstractSystem* pSystem)
+{
+    // Registering any system must Initialize first.
+    pSystem->initialize(); 
+    m_systems.push_back(pSystem); 
 }
 } // Engine
 } // Recluse

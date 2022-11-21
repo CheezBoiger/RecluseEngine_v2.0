@@ -17,11 +17,11 @@ static VkDescriptorType getDescriptorType(DescriptorBindType bindType)
 
     switch (bindType) 
     {
-        case DESCRIPTOR_CONSTANT_BUFFER:        type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER; break;
-        case DESCRIPTOR_SAMPLER:                type = VK_DESCRIPTOR_TYPE_SAMPLER; break;
-        case DESCRIPTOR_SHADER_RESOURCE_VIEW:   type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE; break;
-        case DESCRIPTOR_STORAGE_BUFFER:         type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER; break;
-        case DESCRIPTOR_STORAGE_IMAGE:          type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE; break;
+        case DescriptorBindType_ConstantBuffer:        type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER; break;
+        case DescriptorBindType_Sampler:                type = VK_DESCRIPTOR_TYPE_SAMPLER; break;
+        case DescriptorBindType_ShaderResourceView:   type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE; break;
+        case DescriptorBindType_StorageBuffer:         type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER; break;
+        case DescriptorBindType_StorageImage:          type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE; break;
         default: break;
     }
 
@@ -57,10 +57,10 @@ ErrType VulkanDescriptorSetLayout::initialize(VulkanDevice* pDevice, const Descr
     if (result != VK_SUCCESS) 
     {
         R_ERR(R_CHANNEL_VULKAN, "Failed to create Vulkan descriptor set layout!");
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -73,7 +73,7 @@ ErrType VulkanDescriptorSetLayout::destroy(VulkanDevice* pDevice)
         m_layout = VK_NULL_HANDLE;
     }
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -88,12 +88,12 @@ ErrType VulkanDescriptorSet::initialize(VulkanDevice* pDevice, VulkanDescriptorS
     if (!m_allocation.isValid()) 
     {
         R_ERR(R_CHANNEL_VULKAN, "Failed to allocate vulkan descriptor set!!");
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }
 
     m_pDevice = pDevice;    
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -101,7 +101,7 @@ ErrType VulkanDescriptorSet::destroy()
 {
     VkDevice device                     = m_pDevice->get();
     VulkanDescriptorManager* pManager   = m_pDevice->getDescriptorHeap();
-    ErrType result                      = R_RESULT_OK;
+    ErrType result                      = RecluseResult_Ok;
 
     if (m_set) 
     {
@@ -109,7 +109,7 @@ ErrType VulkanDescriptorSet::destroy()
     
         result = pManager->free(m_allocation, &m_set, 1);
         
-        if (result != R_RESULT_OK) 
+        if (result != RecluseResult_Ok) 
         {
             R_ERR(R_CHANNEL_VULKAN, "Failed to free vulkan native descriptor set!");
         } 
@@ -192,6 +192,6 @@ ErrType VulkanDescriptorSet::update(DescriptorSetBind* pBinds, U32 bindCount)
     
     vkUpdateDescriptorSets(device, writeCount, writeSet.data(), 0, nullptr);
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 } // Recluse

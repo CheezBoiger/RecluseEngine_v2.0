@@ -17,13 +17,13 @@ public:
 
     virtual             ~TransformSystem() { onCleanUp(); }
 
-    virtual ErrType     onInitialize()                          override { return R_RESULT_NO_IMPL; }
-    virtual ErrType     onCleanUp()                             override { return R_RESULT_NO_IMPL; }
+    virtual ErrType     onInitialize()                          override { return RecluseResult_NoImpl; }
+    virtual ErrType     onCleanUp()                             override { return RecluseResult_NoImpl; }
     virtual void        onUpdateComponents(const RealtimeTick& tick)         override;
     virtual ErrType     onAllocateComponent(Transform** pOut)   override;
-    virtual ErrType     onAllocateComponents(Transform*** pOuts, U32 count) override { return R_RESULT_NO_IMPL; }
+    virtual ErrType     onAllocateComponents(Transform*** pOuts, U32 count) override { return RecluseResult_NoImpl; }
     virtual ErrType     onFreeComponent(Transform** pIn)        override;
-    virtual ErrType     onFreeComponents(Transform*** pOuts, U32 count) override { return R_RESULT_NO_IMPL; }
+    virtual ErrType     onFreeComponents(Transform*** pOuts, U32 count) override { return RecluseResult_NoImpl; }
 
     virtual Transform*  getComponent(const RGUID& entityKey) override;
     virtual Transform** getAllComponents(U64& pOut) override;

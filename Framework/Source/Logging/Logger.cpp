@@ -100,7 +100,7 @@ static ErrType displayFunction(void* data)
         loggingQueue->dequeue();
     }
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 Log::~Log()
@@ -115,7 +115,7 @@ Log::~Log()
 void LoggingQueue::store(const Log& log)
 {
     SizeT alignedSzBytes    = sizeof(LogNode);
-    alignedSzBytes          = R_ALLOC_MASK(alignedSzBytes, ARCH_PTR_SZ_BYTES);
+    alignedSzBytes          = align(alignedSzBytes, pointerSize());
     SizeT poolSzBytes       = m_pool->getTotalSizeBytes();
 
     ScopedLock lck(m_mutex);

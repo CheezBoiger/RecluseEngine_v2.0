@@ -21,35 +21,35 @@ using json = nlohmann::json;
 namespace Recluse {
 
 
-ShaderLang kDefaultShaderLanguage = SHADER_LANG_HLSL;
+ShaderLang kDefaultShaderLanguage = ShaderLang_Hlsl;
 
 // Serialize our enum types with the following for json configs.
 NLOHMANN_JSON_SERIALIZE_ENUM(Recluse::ShaderType,
     {
-        { Recluse::SHADER_TYPE_VERTEX,          "vertex" },
-        { Recluse::SHADER_TYPE_PIXEL,           "pixel" },
-        { Recluse::SHADER_TYPE_FRAGMENT,        "frag" },
-        { Recluse::SHADER_TYPE_HULL,            "hull" },
-        { Recluse::SHADER_TYPE_DOMAIN,          "domain" },
-        { Recluse::SHADER_TYPE_COMPUTE,         "compute" },
-        { Recluse::SHADER_TYPE_TESS_CONTROL,    "tessc"},
-        { Recluse::SHADER_TYPE_TESS_EVAL,       "tesse" },
-        { Recluse::SHADER_TYPE_GEOMETRY,        "geometry"},
-        { Recluse::SHADER_TYPE_RAY_ANYHIT,      "anyhit" },
-        { Recluse::SHADER_TYPE_RAY_CLOSESTHIT,  "closesthit" },
-        { Recluse::SHADER_TYPE_RAY_GEN,         "raygen" },
-        { Recluse::SHADER_TYPE_RAY_INTERSECT,   "intersect" },
-        { Recluse::SHADER_TYPE_RAY_MISS,        "raymiss" },
-        { Recluse::SHADER_TYPE_AMPLIFICATION,   "amp" },
-        { Recluse::SHADER_TYPE_MESH,            "mesh" }
+        { Recluse::ShaderType_Vertex,          "vertex" },
+        { Recluse::ShaderType_Pixel,           "pixel" },
+        { Recluse::ShaderType_Fragment,        "frag" },
+        { Recluse::ShaderType_Hull,            "hull" },
+        { Recluse::ShaderType_Domain,          "domain" },
+        { Recluse::ShaderType_Compute,         "compute" },
+        { Recluse::ShaderType_TessellationControl,    "tessc"},
+        { Recluse::ShaderType_TessellationEvaluation,       "tesse" },
+        { Recluse::ShaderType_Geometry,        "geometry"},
+        { Recluse::ShaderType_RayAnyHit,      "anyhit" },
+        { Recluse::ShaderType_RayClosestHit,  "closesthit" },
+        { Recluse::ShaderType_RayGeneration,         "raygen" },
+        { Recluse::ShaderType_RayIntersect,   "intersect" },
+        { Recluse::ShaderType_RayMiss,        "raymiss" },
+        { Recluse::ShaderType_Amplification,   "amp" },
+        { Recluse::ShaderType_Mesh,            "mesh" }
     }
 )
 
 
 NLOHMANN_JSON_SERIALIZE_ENUM(Recluse::ShaderLang,
     {
-        { Recluse::SHADER_LANG_GLSL, "glsl" },
-        { Recluse::SHADER_LANG_HLSL, "hlsl" }
+        { Recluse::ShaderLang_Glsl, "glsl" },
+        { Recluse::ShaderLang_Hlsl, "hlsl" }
     }
 )
 
@@ -60,7 +60,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(Recluse::ShaderLang,
 
 #define SCENE_BUFFER_INCLUDE "RecluseSceneBuffer.h"
 
-#define MAP_SHADER_KEYWORD(keyword, glslKeyword, hlslKeyword) { keyword, { { SHADER_LANG_GLSL, glslKeyword }, { SHADER_LANG_HLSL, hlslKeyword } } }
+#define MAP_SHADER_KEYWORD(keyword, glslKeyword, hlslKeyword) { keyword, { { ShaderLang_Glsl, glslKeyword }, { ShaderLang_Hlsl, hlslKeyword } } }
 
 static std::unordered_map<std::string, std::map<ShaderLang, std::string>> kShaderKeywordMap = 
 {
@@ -126,7 +126,7 @@ void replaceLine(std::string& in, size_t currentPos, const std::string& from, co
 
 static std::string generateShaderSceneView(ShaderLang lang)
 {
-    ErrType result = R_RESULT_OK;
+    ErrType result = RecluseResult_Ok;
     // Scene view buffer string to be passed.
     std::string sceneViewBufferStr  = "#ifndef _RECLUSE_SCENE_BUFFER_H_\n#define _RECLUSE_SCENE_BUFFER_H_\n";
     // Start at this file and navigate to the Engine scene view file.
@@ -140,7 +140,7 @@ static std::string generateShaderSceneView(ShaderLang lang)
 
     result = File::readFrom(&data, pathToSceneViewFile);
 
-    if (result != R_RESULT_OK) 
+    if (result != RecluseResult_Ok) 
     {    
         R_ERR("ShaderCompiler", "Failed to read from file: %s", pathToSceneViewFile.c_str());
         return "";
@@ -251,12 +251,12 @@ ShaderBuilder* createBuilder(Allocator* scratch, ShaderLang lang, ShaderIntermed
     
     switch (lang)
     {
-        case SHADER_LANG_HLSL:
+        case ShaderLang_Hlsl:
         {
             pBuilder = createDxcShaderBuilder(intermediateCode);
             break;
         }
-        case SHADER_LANG_GLSL:
+        case ShaderLang_Glsl:
         {
             pBuilder = createGlslangShaderBuilder(intermediateCode);
             break;
@@ -287,7 +287,7 @@ ErrType compileShaders(ShaderLang lang)
 
     std::map<ShaderLang, ShaderBuilder*> shaderBuilders;
 
-    ShaderBuilder* pBuilder = createBuilder(&linearAllocation, lang, INTERMEDIATE_SPIRV);
+    ShaderBuilder* pBuilder = createBuilder(&linearAllocation, lang, ShaderIntermediateCode_Spirv);
 
     R_ASSERT(pBuilder != NULL);
 
@@ -314,7 +314,7 @@ ErrType compileShaders(ShaderLang lang)
 
         ErrType result = File::readFrom(&buffer, sourceFilePath);
 
-        if (result != R_RESULT_OK) 
+        if (result != RecluseResult_Ok) 
         {
             R_ERR("ShaderCompiler", "Failed to read shader %s...", shaderMetadata->relativefilePath.c_str());
             Shader::destroy(pShader);
@@ -375,7 +375,7 @@ ErrType compileShaders(ShaderLang lang)
                                             shaderMetadata->shaderType
                                         );
 
-                if (result == R_RESULT_OK) 
+                if (result == RecluseResult_Ok) 
                 {
                     //pShader->saveToFile()
                 } 
@@ -398,7 +398,7 @@ ErrType compileShaders(ShaderLang lang)
     freeShaderBuilder(pBuilder);
     linearAllocation.cleanUp();
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -411,7 +411,7 @@ ErrType addShaderToCompile(const std::string& filePath, const std::string& confi
 
     gConfigs.shadersToCompile.push_back(metadata);
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -422,7 +422,7 @@ ErrType setConfigs(const std::string& configPath, U32 compilerIndex)
         Recluse::FileBufferData dat;
         Recluse::ErrType result = Recluse::File::readFrom(&dat, configPath);
 
-        if (result != Recluse::R_RESULT_OK) 
+        if (result != Recluse::RecluseResult_Ok) 
         {
             R_ERR("ShaderCompiler", "Failed to find config file!");
             return result;
@@ -437,7 +437,7 @@ ErrType setConfigs(const std::string& configPath, U32 compilerIndex)
         catch (std::exception& e) 
         {
             R_ERR("ShaderCompiler", "%s", e.what());
-            return R_RESULT_FAILED;
+            return RecluseResult_Failed;
         }
     }
 
@@ -457,8 +457,8 @@ ErrType setConfigs(const std::string& configPath, U32 compilerIndex)
             compilerState.language      = lang;
             const char* langName        = "";
 
-            if      (lang == SHADER_LANG_GLSL)  langName = "glsl";
-            else if (lang == SHADER_LANG_HLSL)  langName = "hlsl";
+            if      (lang == ShaderLang_Glsl)  langName = "glsl";
+            else if (lang == ShaderLang_Hlsl)  langName = "hlsl";
 
             if (compiler.find("output") != compiler.end()) 
             {
@@ -504,17 +504,17 @@ ErrType setConfigs(const std::string& configPath, U32 compilerIndex)
         for (auto& compiler : gConfigs.compilers) 
         {
             auto shader = graphics["pixel"];
-            compiler.input.shaderTypeExt[SHADER_TYPE_PIXEL]     = shader["ext"].get<std::string>();
+            compiler.input.shaderTypeExt[ShaderType_Pixel]     = shader["ext"].get<std::string>();
             shader = graphics["vertex"];
-            compiler.input.shaderTypeExt[SHADER_TYPE_VERTEX]    = shader["ext"].get<std::string>();
+            compiler.input.shaderTypeExt[ShaderType_Vertex]    = shader["ext"].get<std::string>();
             shader = graphics["hull"];
-            compiler.input.shaderTypeExt[SHADER_TYPE_HULL]      = shader["ext"].get<std::string>();
+            compiler.input.shaderTypeExt[ShaderType_Hull]      = shader["ext"].get<std::string>();
             shader = graphics["domain"];
-            compiler.input.shaderTypeExt[SHADER_TYPE_DOMAIN]    = shader["ext"].get<std::string>();
+            compiler.input.shaderTypeExt[ShaderType_Domain]    = shader["ext"].get<std::string>();
             shader = graphics["geometry"];
-            compiler.input.shaderTypeExt[SHADER_TYPE_GEOMETRY]  = shader["ext"].get<std::string>();
+            compiler.input.shaderTypeExt[ShaderType_Geometry]  = shader["ext"].get<std::string>();
             shader = general["compute"];
-            compiler.input.shaderTypeExt[SHADER_TYPE_COMPUTE]   = shader["ext"].get<std::string>();
+            compiler.input.shaderTypeExt[ShaderType_Compute]   = shader["ext"].get<std::string>();
         }
     }
 
@@ -527,19 +527,19 @@ ErrType setConfigs(const std::string& configPath, U32 compilerIndex)
         R_ERR("ShaderCompiler", "No compilers defined in config file!!");
     }
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
 ErrType setShaderFiles(const std::string& shadersPath)
 {
     json jfile;
-    ErrType result = R_RESULT_OK;
+    ErrType result = RecluseResult_Ok;
     {
         FileBufferData bufferData = { };
         result = File::readFrom(&bufferData, shadersPath);
 
-        if (result != R_RESULT_OK) 
+        if (result != RecluseResult_Ok) 
         {
             R_ERR("ShaderCompiler", "Failed to open shaders path!");
             return result;        
@@ -553,7 +553,7 @@ ErrType setShaderFiles(const std::string& shadersPath)
         catch (const std::exception& e) 
         {
             R_ERR("ShaderCompiler", "%s", e.what());
-            return R_RESULT_FAILED;
+            return RecluseResult_Failed;
         }
     }
 
@@ -583,7 +583,7 @@ ErrType setShaderFiles(const std::string& shadersPath)
         }
     }
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 

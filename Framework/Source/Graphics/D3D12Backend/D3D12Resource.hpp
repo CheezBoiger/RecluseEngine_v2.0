@@ -8,6 +8,7 @@
 namespace Recluse {
 
 class D3D12Device;
+typedef U32 ResourceTransitionFlags;
 
 class D3D12Resource : public GraphicsResource 
 {
@@ -27,9 +28,6 @@ public:
                                     const GraphicsResourceDescription& desc, 
                                     // the initial state of the resource.
                                     ResourceState initialState, 
-                                    // This is an interesting specific for resource creation...
-                                    // But I suppose is meant to determine if we can access in pixel shader.
-                                    Bool isPixelShader, 
                                     // Making this resource committed, we will not be sub allocating from a fixed
                                     // memory heap. Instead, we will allocate a separate gpu heap, and allocate there.
                                     Bool makeCommitted = false
@@ -45,10 +43,13 @@ public:
     Bool                    isCommitted() const { return m_isCommitted; }
 
     // Obtain struct that is used to make the actual transition on the GPU.
-    D3D12_RESOURCE_BARRIER  transition(ResourceState newState, Bool isPixelShaderTransition);
+    D3D12_RESOURCE_BARRIER  transition(ResourceState newState);
 
 private:
-    D3D12MemoryObject   m_memObj;
-    Bool                m_isCommitted;
+    Bool isSupportedTransitionState(ResourceState state);
+
+    D3D12MemoryObject       m_memObj;
+    Bool                    m_isCommitted;
+    ResourceTransitionFlags m_allowedTransitionStates;
 };
 } // Recluse

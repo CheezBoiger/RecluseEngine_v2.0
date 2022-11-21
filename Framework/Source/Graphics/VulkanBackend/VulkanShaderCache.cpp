@@ -48,7 +48,7 @@ VkResult createShaderModule(VulkanDevice* pDevice, Shader* pShader, VkShaderModu
 
 VkShaderModule ShaderCache::getCachedShaderModule(VulkanDevice* pDevice, Shader* pShader)
 {
-    Hash64 hash = pShader->getCrc();
+    Hash64 hash = pShader->getHashId();
 
     if (isShaderCached(pShader)) 
     {
@@ -71,19 +71,19 @@ ErrType ShaderCache::cacheShader(VulkanDevice* pDevice, Shader* pShader)
         
         if (result != VK_SUCCESS) 
         {
-            return R_RESULT_FAILED;
+            return RecluseResult_Failed;
         }
         
-        cache[pShader->getCrc()] = shaderModule;
+        cache[pShader->getHashId()] = shaderModule;
     }
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
 B32 ShaderCache::isShaderCached(Shader* pShader)
 {
-    return (cache.find(pShader->getCrc()) != cache.end());
+    return (cache.find(pShader->getHashId()) != cache.end());
 }
 
 

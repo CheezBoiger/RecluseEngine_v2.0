@@ -103,7 +103,7 @@ ErrType VulkanAdapter::getAdapterInfo(AdapterInfo* out) const
             out->vendorName = "Unknown"; break;
     }    
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -115,18 +115,18 @@ ErrType VulkanAdapter::createDevice(DeviceCreateInfo& info, GraphicsDevice** ppD
     VulkanDevice* pDevice = new VulkanDevice();
     ErrType err = pDevice->initialize(this, info);
     
-    if (err != R_RESULT_OK) 
+    if (err != RecluseResult_Ok) 
     {    
         R_ERR(R_CHANNEL_VULKAN, "Failed to initialize device!");
 
         delete pDevice;
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }
 
     m_devices.push_back(pDevice);
     *ppDevice = pDevice;
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -145,13 +145,13 @@ ErrType VulkanAdapter::destroyDevice(GraphicsDevice* pDevice)
             delete *iter;
             m_devices.erase(iter);
 
-            return R_RESULT_OK;
+            return RecluseResult_Ok;
         }
     }
 
     R_ERR(R_CHANNEL_VULKAN, "Device does not belong to this adapter!");   
  
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -211,24 +211,24 @@ U32 VulkanAdapter::findMemoryType(U32 filter, ResourceMemoryUsage usage) const
     U32 index = 0xffffffff;
 
     switch (usage) {
-        case RESOURCE_MEMORY_USAGE_CPU_ONLY:
+        case ResourceMemoryUsage_CpuOnly:
         {
             required |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
             preferred |= VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
         } break;
 
-        case RESOURCE_MEMORY_USAGE_GPU_ONLY:
+        case ResourceMemoryUsage_GpuOnly:
         {
             required |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
         } break;
 
-        case RESOURCE_MEMORY_USAGE_CPU_TO_GPU:
+        case ResourceMemoryUsage_CpuToGpu:
         {
             required |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
             preferred |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
         } break;
 
-        case RESOURCE_MEMORY_USAGE_GPU_TO_CPU:
+        case ResourceMemoryUsage_GpuToCpu:
         {
             required |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
             preferred |= VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;

@@ -97,7 +97,7 @@ public:
              if (message->getEvent() == UpdaterEvent_Update)
                 m_shouldUpdate = true;
         });
-        return R_RESULT_OK;
+        return RecluseResult_Ok;
     }
 
     virtual void onUpdateComponents(const RealtimeTick& tick) override 
@@ -133,12 +133,12 @@ public:
         m_movers.push_back(*pOut);
         // Just enable automatically.
         m_movers.back()->setEnable(true);
-        return R_RESULT_OK;
+        return RecluseResult_Ok;
     }
 
-    virtual ErrType onAllocateComponents(MoverComponent*** pOuts, U32 count) override { return R_RESULT_NO_IMPL; }
-    virtual ErrType onFreeComponent(MoverComponent** pIn) override { if (*pIn) delete *pIn; return R_RESULT_OK; }
-    virtual ErrType onFreeComponents(MoverComponent*** pIns, U32 count) override { return R_RESULT_NO_IMPL; }
+    virtual ErrType onAllocateComponents(MoverComponent*** pOuts, U32 count) override { return RecluseResult_NoImpl; }
+    virtual ErrType onFreeComponent(MoverComponent** pIn) override { if (*pIn) delete *pIn; return RecluseResult_Ok; }
+    virtual ErrType onFreeComponents(MoverComponent*** pIns, U32 count) override { return RecluseResult_NoImpl; }
 private:
     std::vector<MoverComponent*> m_movers;
     Bool m_shouldUpdate = true;
@@ -164,8 +164,8 @@ int main(int c, char* argv[])
     Scene* pScene = new Scene();
     pScene->initialize();
     pScene->addEntity(entity);
-    pScene->registerSystem(Transform::getSystem());
-    pScene->registerSystem(MoverComponent::getSystem());
+    pScene->addSystemFor<Transform>();
+    pScene->addSystemFor<MoverComponent>();
 
     U64 counter = 0;
     while ((counter++) < 500) {

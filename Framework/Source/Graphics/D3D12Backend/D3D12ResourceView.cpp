@@ -18,29 +18,28 @@ ErrType D3D12GraphicsResourceView::initialize(D3D12Device* pDevice)
 
     switch (getDesc().type) 
     {   
-        case RESOURCE_VIEW_TYPE_RENDER_TARGET:
+        case ResourceViewType_RenderTarget:
         {
             D3D12_RENDER_TARGET_VIEW_DESC desc = { };
             m_rtvDesc = desc;
             break;
         }
 
-        case RESOURCE_VIEW_TYPE_DEPTH_STENCIL:
+        case ResourceViewType_DepthStencil:
         {
             D3D12_DEPTH_STENCIL_VIEW_DESC desc = { };
             m_dsvDesc = desc;
             break;
         }
 
-        case RESOURCE_VIEW_TYPE_SHADER_RESOURCE:
+        case ResourceViewType_ShaderResource:
         {
             D3D12_SHADER_RESOURCE_VIEW_DESC desc = { };
             m_srvDesc = desc;
             break;
         }
 
-        case RESOURCE_VIEW_TYPE_STORAGE_BUFFER:
-        case RESOURCE_VIEW_TYPE_STORAGE_IMAGE:
+        case ResourceViewType_UnorderedAccess:
         {
             D3D12_UNORDERED_ACCESS_VIEW_DESC desc = { };
             m_uavDesc = desc;
@@ -51,7 +50,7 @@ ErrType D3D12GraphicsResourceView::initialize(D3D12Device* pDevice)
             break;
     }
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -63,7 +62,7 @@ ErrType D3D12Sampler::initialize(D3D12Device* pDevice, const SamplerCreateDesc& 
 
     m_samplerDesc = samplerDesc;
 
-    return R_RESULT_OK;
+    return RecluseResult_NoImpl;
 }
 
 
@@ -71,6 +70,6 @@ ErrType D3D12Sampler::destroy(D3D12Device* pDevice)
 {
     R_ASSERT(pDevice != NULL);
     ID3D12Device* device = pDevice->get();
-    return R_RESULT_NO_IMPL;
+    return RecluseResult_NoImpl;
 }
 } // Recluse

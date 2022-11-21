@@ -16,7 +16,7 @@ namespace Engine {
 void RenderCommandList::initialize()
 {
     // 2 MB for our render command list.
-    U64 szBytes = R_ALLOC_MASK(2 * R_1MB, ARCH_PTR_SZ_BYTES);
+    U64 szBytes = align(2 * R_1MB, pointerSize());
     if (!m_pool) 
     {
         m_pool = new MemoryPool(szBytes);
@@ -27,7 +27,7 @@ void RenderCommandList::initialize()
 
     if (!m_pointerPool) 
     {
-        szBytes = R_ALLOC_MASK(64 * R_1KB, ARCH_PTR_SZ_BYTES);
+        szBytes = align(64 * R_1KB, pointerSize());
         m_pointerPool = new MemoryPool(szBytes);
         m_pointerAllocator = new LinearAllocator();
     
@@ -62,8 +62,8 @@ void RenderCommandList::destroy()
 
 #define COPY_COMMAND_TO_POOL(rClass, rcmd) \
     { \
-        result = m_pAllocator->allocate(&allocation, sizeof(rClass), ARCH_PTR_SZ_BYTES); \
-        if (result == R_RESULT_OUT_OF_MEMORY) { \
+        result = m_pAllocator->allocate(&allocation, sizeof(rClass), pointerSize()); \
+        if (result == RecluseResult_OutOfMemory) { \
             R_ERR("RenderCommandList", "Command list is out of memory! Can not push render command!"); \
             return result; \
         } \
@@ -94,14 +94,14 @@ ErrType RenderCommandList::push(const RenderCommand& renderCommand)
     }
 
     PtrType p = allocation.baseAddress;
-    ErrType result = m_pointerAllocator->allocate(&allocation, ARCH_PTR_SZ_BYTES, ARCH_PTR_SZ_BYTES);
+    ErrType result = m_pointerAllocator->allocate(&allocation, pointerSize(), pointerSize());
 
-    if (result == R_RESULT_OK) 
+    if (result == RecluseResult_Ok) 
     {
         *(RenderCommand**)allocation.baseAddress = (RenderCommand*)p;
     }
     
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 

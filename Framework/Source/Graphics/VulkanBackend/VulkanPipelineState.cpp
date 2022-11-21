@@ -16,11 +16,11 @@ static VkPrimitiveTopology getNativeTopology(PrimitiveTopology topology)
 {
     switch ( topology ) 
     {
-        case PRIMITIVE_TOPOLOGY_LINE_STRIP: return VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
-        case PRIMITIVE_TOPOLOGY_LINE_LIST: return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-        case PRIMITIVE_TOPOLOGY_POINT_LIST: return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
-        case PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
-        case PRIMITIVE_TOPOLOGY_TRIANGLE_LIST: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        case PrimitiveTopology_LineStrip: return VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+        case PrimitiveTopology_LineList: return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+        case PrimitiveTopology_PointList: return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+        case PrimitiveTopology_TriangleStrip: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+        case PrimitiveTopology_TriangleList: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         default: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     }
 }
@@ -30,8 +30,8 @@ static VkVertexInputRate getNativeVertexInputRate(InputRate rate)
 {
     switch (rate) 
     {
-        case INPUT_RATE_PER_INSTANCE: return VK_VERTEX_INPUT_RATE_INSTANCE;
-        case INPUT_RATE_PER_VERTEX: 
+        case InputRate_PerInstance: return VK_VERTEX_INPUT_RATE_INSTANCE;
+        case InputRate_PerVertex: 
         default: return VK_VERTEX_INPUT_RATE_VERTEX;
     }
 }
@@ -41,10 +41,10 @@ static VkCullModeFlags getNativeCullMode(CullMode mode)
 {
     switch (mode) 
     {
-        case CULL_MODE_BACK: return VK_CULL_MODE_BACK_BIT;
-        case CULL_MODE_FRONT: return VK_CULL_MODE_FRONT_BIT;
-        case CULL_MODE_FRONT_AND_BACK: return VK_CULL_MODE_FRONT_AND_BACK;
-        case CULL_MODE_NONE:
+        case CullMode_Back: return VK_CULL_MODE_BACK_BIT;
+        case CullMode_Front: return VK_CULL_MODE_FRONT_BIT;
+        case CullMode_FrontAndBack: return VK_CULL_MODE_FRONT_AND_BACK;
+        case CullMode_None:
         default: return VK_CULL_MODE_NONE;
     }
 }
@@ -54,9 +54,9 @@ static VkPolygonMode getNativePolygonMode(PolygonMode polygonMode)
 {
     switch (polygonMode) 
     {
-        case POLYGON_MODE_LINE: return VK_POLYGON_MODE_LINE;
-        case POLYGON_MODE_POINT: return VK_POLYGON_MODE_POINT;
-        case POLYGON_MODE_FILL:
+        case PolygonMode_Line: return VK_POLYGON_MODE_LINE;
+        case PolygonMode_Point: return VK_POLYGON_MODE_POINT;
+        case PolygonMode_Fill:
         default: return VK_POLYGON_MODE_FILL;
     }
 }
@@ -66,14 +66,14 @@ static VkStencilOp getNativeStencilOp(StencilOp op)
 {
     switch (op) 
     {
-        case STENCIL_OP_DECREMENT_AND_CLAMP: return VK_STENCIL_OP_DECREMENT_AND_CLAMP;
-        case STENCIL_OP_DECREMENT_AND_WRAP: return VK_STENCIL_OP_DECREMENT_AND_WRAP;
-        case STENCIL_OP_INCREMENT_AND_CLAMP: return VK_STENCIL_OP_INCREMENT_AND_CLAMP;
-        case STENCIL_OP_INCREMENT_AND_WRAP: return VK_STENCIL_OP_INCREMENT_AND_WRAP;
-        case STENCIL_OP_INVERT: return VK_STENCIL_OP_INVERT;
-        case STENCIL_OP_KEEP: return VK_STENCIL_OP_KEEP;
-        case STENCIL_OP_REPLACE: return VK_STENCIL_OP_REPLACE;
-        case STENCIL_OP_ZERO:
+        case StencilOp_DecrementAndClamp: return VK_STENCIL_OP_DECREMENT_AND_CLAMP;
+        case StencilOp_DecrementAndWrap: return VK_STENCIL_OP_DECREMENT_AND_WRAP;
+        case StencilOp_IncrementAndClamp: return VK_STENCIL_OP_INCREMENT_AND_CLAMP;
+        case StencilOp_IncrementAndWrap: return VK_STENCIL_OP_INCREMENT_AND_WRAP;
+        case StencilOp_Invert: return VK_STENCIL_OP_INVERT;
+        case StencilOp_Keep: return VK_STENCIL_OP_KEEP;
+        case StencilOp_Replace: return VK_STENCIL_OP_REPLACE;
+        case StencilOp_Zero:
         default: return VK_STENCIL_OP_ZERO;
     }
 }
@@ -83,8 +83,8 @@ static VkFrontFace getNativeFrontFace(FrontFace face)
 {
     switch (face) 
     {
-        case FRONT_FACE_CLOCKWISE: return VK_FRONT_FACE_CLOCKWISE;
-        case FRONT_FACE_COUNTER_CLOCKWISE:
+        case FrontFace_Clockwise: return VK_FRONT_FACE_CLOCKWISE;
+        case FrontFace_CounterClockwise:
         default: return VK_FRONT_FACE_COUNTER_CLOCKWISE;
     }
 }
@@ -94,22 +94,22 @@ static VkLogicOp getLogicOp(LogicOp op)
 {
     switch (op) 
     {
-        case LOGIC_OP_CLEAR: return VK_LOGIC_OP_CLEAR;
-        case LOGIC_OP_AND: return VK_LOGIC_OP_AND;
-        case LOGIC_OP_AND_REVERSE: return VK_LOGIC_OP_AND_REVERSE;
-        case LOGIC_OP_COPY: return VK_LOGIC_OP_COPY;
-        case LOGIC_OP_AND_INVERTED: return VK_LOGIC_OP_AND_INVERTED;
-        case LOGIC_OP_NO_OP: return VK_LOGIC_OP_NO_OP;
-        case LOGIC_OP_XOR: return VK_LOGIC_OP_XOR;
-        case LOGIC_OP_OR: return VK_LOGIC_OP_OR;
-        case LOGIC_OP_NOR: return VK_LOGIC_OP_NOR;
-        case LOGIC_OP_EQUIVALENT: return VK_LOGIC_OP_EQUIVALENT;
-        case LOGIC_OP_INVERT: return VK_LOGIC_OP_INVERT;
-        case LOGIC_OP_OR_REVERSE: return VK_LOGIC_OP_OR_REVERSE;
-        case LOGIC_OP_COPY_INVERTED: return VK_LOGIC_OP_COPY_INVERTED;
-        case LOGIC_OP_OR_INVERTED: return VK_LOGIC_OP_OR_INVERTED;
-        case LOGIC_OP_NAND: return VK_LOGIC_OP_NAND;
-        case LOGIC_OP_SET: return VK_LOGIC_OP_SET;
+        case LogicOp_Clear: return VK_LOGIC_OP_CLEAR;
+        case LogicOp_And: return VK_LOGIC_OP_AND;
+        case LogicOp_AndReverse: return VK_LOGIC_OP_AND_REVERSE;
+        case LogicOp_Copy: return VK_LOGIC_OP_COPY;
+        case LogicOp_AndInverted: return VK_LOGIC_OP_AND_INVERTED;
+        case LogicOp_NoOp: return VK_LOGIC_OP_NO_OP;
+        case LogicOp_Xor: return VK_LOGIC_OP_XOR;
+        case LogicOp_Or: return VK_LOGIC_OP_OR;
+        case LogicOp_Nor: return VK_LOGIC_OP_NOR;
+        case LogicOp_Equivalent: return VK_LOGIC_OP_EQUIVALENT;
+        case LogicOp_Invert: return VK_LOGIC_OP_INVERT;
+        case LogicOp_OrReverse: return VK_LOGIC_OP_OR_REVERSE;
+        case LogicOp_CopyInverted: return VK_LOGIC_OP_COPY_INVERTED;
+        case LogicOp_OrInverted: return VK_LOGIC_OP_OR_INVERTED;
+        case LogicOp_Nand: return VK_LOGIC_OP_NAND;
+        case LogicOp_Set: return VK_LOGIC_OP_SET;
         default: return VK_LOGIC_OP_NO_OP;
     }
 }
@@ -119,25 +119,25 @@ static VkBlendFactor getBlendFactor(BlendFactor op)
 {
     switch (op) 
     {
-        case BLEND_FACTOR_ZERO: return VK_BLEND_FACTOR_ZERO;
-        case BLEND_FACTOR_ONE: return VK_BLEND_FACTOR_ONE;
-        case BLEND_FACTOR_SRC_COLOR: return VK_BLEND_FACTOR_SRC_COLOR;
-        case BLEND_FACTOR_ONE_MINUS_SRC_COLOR: return VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
-        case BLEND_FACTOR_DST_COLOR: return VK_BLEND_FACTOR_DST_COLOR;
-        case BLEND_FACTOR_ONE_MINUS_DST_COLOR: return VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR;
-        case BLEND_FACTOR_SRC_ALHPA: return VK_BLEND_FACTOR_SRC_ALPHA;
-        case BLEND_FACTOR_ONE_MINUS_SRC_ALPHA: return VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-        case BLEND_FACTOR_DST_ALHPA: return VK_BLEND_FACTOR_DST_ALPHA;
-        case BLEND_FACTOR_ONE_MINUS_DST_ALPHA: return VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
-        case BLEND_FACTOR_CONSTANT_COLOR: return VK_BLEND_FACTOR_CONSTANT_COLOR;
-        case BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR: return VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR;
-        case BLEND_FACTOR_CONSTANT_ALPHA: return VK_BLEND_FACTOR_CONSTANT_ALPHA;
-        case BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA: return VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA;
-        case BLEND_FACTOR_SRC_ALPHA_SATURATE: return VK_BLEND_FACTOR_SRC_ALPHA_SATURATE;
-        case BLEND_FACTOR_SRC1_COLOR: return VK_BLEND_FACTOR_SRC1_COLOR;
-        case BLEND_FACTOR_ONE_MINUS_SRC1_COLOR: return VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR;
-        case BLEND_FACTOR_SRC1_ALPHA: return VK_BLEND_FACTOR_SRC1_ALPHA;
-        case BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA: return VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA;
+        case BlendFactor_Zero: return VK_BLEND_FACTOR_ZERO;
+        case BlendFactor_One: return VK_BLEND_FACTOR_ONE;
+        case BlendFactor_SourceColor: return VK_BLEND_FACTOR_SRC_COLOR;
+        case BlendFactor_OneMinusSourceColor: return VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+        case BlendFactor_DestinationColor: return VK_BLEND_FACTOR_DST_COLOR;
+        case BlendFactor_OneMinusDestinationColor: return VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR;
+        case BlendFactor_SourceAlpha: return VK_BLEND_FACTOR_SRC_ALPHA;
+        case BlendFactor_OneMinusSourceAlpha: return VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        case BlendFactor_DestinationAlpha: return VK_BLEND_FACTOR_DST_ALPHA;
+        case BlendFactor_OneMinusDestinationAlpha: return VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
+        case BlendFactor_ConstantColor: return VK_BLEND_FACTOR_CONSTANT_COLOR;
+        case BlendFactor_OneMinusConstantColor: return VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR;
+        case BlendFactor_ConstantAlpha: return VK_BLEND_FACTOR_CONSTANT_ALPHA;
+        case BlendFactor_OneMinusConstantAlpha: return VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA;
+        case BlendFactor_SourceAlphaSaturate: return VK_BLEND_FACTOR_SRC_ALPHA_SATURATE;
+        case BlendFactor_SourceOneColor: return VK_BLEND_FACTOR_SRC1_COLOR;
+        case BlendFactor_OneMinusSourceOneColor: return VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR;
+        case BlendFactor_SourceOneAlpha: return VK_BLEND_FACTOR_SRC1_ALPHA;
+        case BlendFactor_OneMinusSourceOneAlpha: return VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA;
         default: return VK_BLEND_FACTOR_ZERO;
     }
 }
@@ -146,11 +146,11 @@ static VkBlendOp getBlendOp(BlendOp op)
 {
     switch (op) 
     {
-        case BLEND_OP_ADD: return VK_BLEND_OP_ADD;
-        case BLEND_OP_SUBTRACT: return VK_BLEND_OP_SUBTRACT;
-        case BLEND_OP_REVERSE_SUBTRACT: return VK_BLEND_OP_REVERSE_SUBTRACT;
-        case BLEND_OP_MIN: return VK_BLEND_OP_MIN;
-        case BLEND_OP_MAX: return VK_BLEND_OP_MAX;
+        case BlendOp_Add: return VK_BLEND_OP_ADD;
+        case BlendOp_Subtract: return VK_BLEND_OP_SUBTRACT;
+        case BlendOp_ReverseSubtract: return VK_BLEND_OP_REVERSE_SUBTRACT;
+        case BlendOp_Min: return VK_BLEND_OP_MIN;
+        case BlendOp_Max: return VK_BLEND_OP_MAX;
         default: return VK_BLEND_OP_ADD;
     }
 }
@@ -159,10 +159,10 @@ static VkBlendOp getBlendOp(BlendOp op)
 static VkColorComponentFlags getColorComponents(ColorComponentMaskFlags flags)
 {
     VkColorComponentFlags components = 0;
-    if (flags & COLOR_R) components |= VK_COLOR_COMPONENT_R_BIT;
-    if (flags & COLOR_G) components |= VK_COLOR_COMPONENT_G_BIT;
-    if (flags & COLOR_B) components |= VK_COLOR_COMPONENT_B_BIT;
-    if (flags & COLOR_A) components |= VK_COLOR_COMPONENT_A_BIT;
+    if (flags & Color_R) components |= VK_COLOR_COMPONENT_R_BIT;
+    if (flags & Color_G) components |= VK_COLOR_COMPONENT_G_BIT;
+    if (flags & Color_B) components |= VK_COLOR_COMPONENT_B_BIT;
+    if (flags & Color_A) components |= VK_COLOR_COMPONENT_A_BIT;
     return components;
 }
 
@@ -412,7 +412,7 @@ ErrType VulkanGraphicsPipelineState::initialize(VulkanDevice* pDevice, const Gra
 
         destroy(pDevice);
 
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }
 
     ci.sType                = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -458,10 +458,10 @@ ErrType VulkanGraphicsPipelineState::initialize(VulkanDevice* pDevice, const Gra
         
         destroy(pDevice);
         
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -480,7 +480,7 @@ ErrType VulkanComputePipelineState::initialize(VulkanDevice* pDevice, const Comp
         
         destroy(pDevice);
         
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }
 
     createInfo.sType        = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
@@ -499,9 +499,9 @@ ErrType VulkanComputePipelineState::initialize(VulkanDevice* pDevice, const Comp
 
         destroy(pDevice);
 
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 } // Recluse

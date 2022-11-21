@@ -9,7 +9,7 @@ int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
 
-    GraphicsInstance* pInstance = GraphicsInstance::createInstance(GRAPHICS_API_VULKAN);
+    GraphicsInstance* pInstance = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
 
     if (!pInstance) {
         goto Exit;
@@ -26,11 +26,11 @@ int main(int c, char* argv[])
     appInfo.engineName  = "None";
     appInfo.enginePatch = 0;
 
-    EnableLayerFlags flags = LAYER_FEATURE_DEBUG_VALIDATION_BIT;
+    EnableLayerFlags flags = LayerFeature_DebugValidationBit;
 
     ErrType result = pInstance->initialize(appInfo, flags);
 
-    if (result != R_RESULT_OK) {
+    if (result != RecluseResult_Ok) {
         R_ERR("Test", "Failed to create instance!");
         goto Exit;
     }
@@ -52,7 +52,7 @@ int main(int c, char* argv[])
 
     result = adapters[0]->createDevice(deviceCreate, &pDevice);
 
-    if (result != R_RESULT_OK) {
+    if (result != RecluseResult_Ok) {
     
         R_ERR("Graphics", "Failed to create device!");
 

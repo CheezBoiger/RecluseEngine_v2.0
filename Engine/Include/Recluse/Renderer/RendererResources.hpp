@@ -15,15 +15,15 @@ class TextureView;
 
 
 const std::string shaderDir                    = Filesystem::getCurrentDir() + "/" + "Shaders";
-const ShaderIntermediateCode intermediateCode  = INTERMEDIATE_SPIRV;
+const ShaderIntermediateCode intermediateCode  = ShaderIntermediateCode_Spirv;
 
 static const char* getBinaryShaderExtension()
 {
     switch (intermediateCode) 
     {
-        case INTERMEDIATE_DXBC: return "dxbc";
-        case INTERMEDIATE_DXIL: return "dxil";
-        case INTERMEDIATE_SPIRV: return "spv";
+        case ShaderIntermediateCode_Dxbc: return "dxbc";
+        case ShaderIntermediateCode_Dxil: return "dxil";
+        case ShaderIntermediateCode_Spirv: return "spv";
         default: return "unknown";
     }
 }
@@ -78,13 +78,13 @@ public:
         U64 szIndex = 0;
         switch (type) 
         {
-            case INDEX_TYPE_UINT16: szIndex = 2ull; break;
-            case INDEX_TYPE_UINT32:
+            case IndexType_Unsigned16: szIndex = 2ull; break;
+            case IndexType_Unsigned32:
             default: szIndex = 4ull; break;
         }
         m_indexType     = type;
         m_totalIndices  = totalIndices;
-        return initialize(pDevice, szIndex * totalIndices, RESOURCE_USAGE_INDEX_BUFFER);
+        return initialize(pDevice, szIndex * totalIndices, ResourceUsage_IndexBuffer);
     }
 
     IndexType   getIndexType() const { return m_indexType; }
@@ -105,7 +105,7 @@ public:
     {
         m_perVertexSzBytes  = perVertexSzBytes;
         m_totalVertices     = totalVertices;
-        return initialize(pDevice, perVertexSzBytes * totalVertices, RESOURCE_USAGE_VERTEX_BUFFER);
+        return initialize(pDevice, perVertexSzBytes * totalVertices, ResourceUsage_VertexBuffer);
     }
 
 private:

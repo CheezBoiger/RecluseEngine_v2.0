@@ -77,7 +77,7 @@ public:
     Renderer();
     ~Renderer();
 
-    void                        initialize(void* pWindowHandle, const RendererConfigs& configs);
+    void                        initialize();
     void                        cleanUp();
 
     // Recreate the renderer pipeline, with the new configurations.
@@ -92,7 +92,11 @@ public:
 
     // Set the new configurations for the renderer. This won't be used until we call recreate().
     // Call will be blocked if we are in the middle of recreating.
-    void                        setNewConfigurations(const RendererConfigs& newConfigs) { ScopedLock lck(m_configLock); m_newRendererConfigs = newConfigs; }
+    void                        setNewConfigurations(const RendererConfigs& newConfigs) 
+    { 
+        ScopedLock lck(m_configLock); 
+        m_newRendererConfigs = newConfigs; 
+    }
 
     GraphicsDevice*             getDevice() const { return m_pDevice; }
 

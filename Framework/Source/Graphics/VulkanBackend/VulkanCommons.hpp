@@ -17,9 +17,9 @@
 
 #define SETBIND(bindType, var) switch (bindType) \
     { \
-        case BIND_TYPE_COMPUTE: var = VK_PIPELINE_BIND_POINT_COMPUTE; break; \
-        case BIND_TYPE_RAY_TRACE: var = VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR; break; \
-        case BIND_TYPE_GRAPHICS: \
+        case BindType_Compute: var = VK_PIPELINE_BIND_POINT_COMPUTE; break; \
+        case BindType_RayTrace: var = VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR; break; \
+        case BindType_Graphics: \
         default: var = VK_PIPELINE_BIND_POINT_GRAPHICS; break; \
     }
 
@@ -37,7 +37,7 @@ class VulkanGraphicsObject : public virtual IGraphicsObject
 public:
     virtual ~VulkanGraphicsObject() { }
 
-    GraphicsAPI getApi() const override { return GRAPHICS_API_VULKAN; }
+    GraphicsAPI getApi() const override { return GraphicsApi_Vulkan; }
 };
 } // Recluse
 
@@ -69,23 +69,78 @@ static VkCompareOp getNativeCompareOp(Recluse::CompareOp op)
 {
     switch (op) 
     {
-        case Recluse::COMPARE_OP_ALWAYS:
+        case Recluse::CompareOp_Always:
             return VK_COMPARE_OP_ALWAYS;
-        case Recluse::COMPARE_OP_EQUAL:
+        case Recluse::CompareOp_Equal:
             return VK_COMPARE_OP_EQUAL;
-        case Recluse::COMPARE_OP_GREATER:
+        case Recluse::CompareOp_Greater:
             return VK_COMPARE_OP_GREATER;
-        case Recluse::COMPARE_OP_GREATER_OR_EQUAL:
+        case Recluse::CompareOp_GreaterOrEqual:
             return VK_COMPARE_OP_GREATER_OR_EQUAL;
-        case Recluse::COMPARE_OP_LESS:
+        case Recluse::CompareOp_Less:
             return VK_COMPARE_OP_LESS;
-        case Recluse::COMPARE_OP_LESS_OR_EQUAL:
+        case Recluse::CompareOp_LessOrEqual:
             return VK_COMPARE_OP_LESS_OR_EQUAL;
-        case Recluse::COMPARE_OP_NOT_EQUAL:
+        case Recluse::CompareOp_NotEqual:
             return VK_COMPARE_OP_NOT_EQUAL;
-        case Recluse::COMPARE_OP_NEVER:
+        case Recluse::CompareOp_Never:
         default:
             return VK_COMPARE_OP_NEVER;
     }
+}
+
+
+static VkImageLayout getVulkanImageLayout(Recluse::ResourceState state)
+{
+    switch (state) 
+    {
+        case Recluse::ResourceState_Common:                 return VK_IMAGE_LAYOUT_GENERAL;
+        case Recluse::ResourceState_UnorderedAccess:        return VK_IMAGE_LAYOUT_GENERAL;
+        case Recluse::ResourceState_ShaderResource:         return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        case Recluse::ResourceState_CopyDestination:        return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case Recluse::ResourceState_CopySource:             return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        case Recluse::ResourceState_RenderTarget:           return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        case Recluse::ResourceState_DepthStencilReadOnly:   return VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL;
+        case Recluse::ResourceState_DepthStencilWrite:      return VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+        case Recluse::ResourceState_Present:                return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        default: return VK_IMAGE_LAYOUT_UNDEFINED;
+    }
+}
+
+
+static VkAccessFlags getDesiredResourceStateAccessMask(Recluse::ResourceState state)
+{
+    switch (state)
+    {
+        case Recluse::ResourceState_CopyDestination:         return VK_ACCESS_TRANSFER_WRITE_BIT;
+        case Recluse::ResourceState_CopySource:              return VK_ACCESS_TRANSFER_READ_BIT | VK_ACCESS_HOST_WRITE_BIT;
+        case Recluse::ResourceState_ConstantBuffer:          return VK_ACCESS_UNIFORM_READ_BIT;
+        case Recluse::ResourceState_IndexBuffer:             return VK_ACCESS_INDEX_READ_BIT;
+        case Recluse::ResourceState_DepthStencilWrite:       return VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        case Recluse::ResourceState_IndirectArgs:            return VK_ACCESS_INDIRECT_COMMAND_READ_BIT;
+        case Recluse::ResourceState_RenderTarget:            return VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+        case Recluse::ResourceState_UnorderedAccess:         return VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_SHADER_READ_BIT;
+        case Recluse::ResourceState_VertexBuffer:            return VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+        case Recluse::ResourceState_Common:                  return VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT;
+        case Recluse::ResourceState_ShaderResource:          return VK_ACCESS_SHADER_READ_BIT;
+        case Recluse::ResourceState_DepthStencilReadOnly:    return VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+        case Recluse::ResourceState_Present:                 return VK_ACCESS_MEMORY_READ_BIT;
+    }
+
+    return VK_ACCESS_MEMORY_READ_BIT;
+}
+
+
+static VkAccessFlags getDesiredHostMemoryUsageAccess(Recluse::ResourceMemoryUsage usage)
+{
+    switch (usage)
+    {
+        case Recluse::ResourceMemoryUsage_CpuOnly:      return VK_ACCESS_HOST_WRITE_BIT|VK_ACCESS_HOST_READ_BIT;
+        case Recluse::ResourceMemoryUsage_CpuToGpu:     return VK_ACCESS_HOST_WRITE_BIT;
+        case Recluse::ResourceMemoryUsage_GpuOnly:      return 0;
+        case Recluse::ResourceMemoryUsage_GpuToCpu:     return VK_ACCESS_HOST_READ_BIT;
+    }
+
+    return 0;
 }
 } // Vulkan

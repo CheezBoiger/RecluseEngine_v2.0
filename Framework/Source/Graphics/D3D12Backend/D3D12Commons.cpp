@@ -8,11 +8,11 @@ DXGI_FORMAT getNativeFormat(Recluse::ResourceFormat format)
 {
     switch (format) 
     {
-        case Recluse::RESOURCE_FORMAT_R8G8B8A8_UNORM:
+        case Recluse::ResourceFormat_R8G8B8A8_Unorm:
             return DXGI_FORMAT_R8G8B8A8_UNORM;
-        case Recluse::RESOURCE_FORMAT_B8G8R8A8_UNORM:
+        case Recluse::ResourceFormat_B8G8R8A8_Unorm:
             return DXGI_FORMAT_B8G8R8A8_UNORM;
-        case Recluse::RESOURCE_FORMAT_B8G8R8A8_SRGB:
+        case Recluse::ResourceFormat_B8G8R8A8_Srgb:
             return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
         default:
             break;
@@ -38,35 +38,33 @@ SIZE_T getNativeFormatSize(DXGI_FORMAT format)
 }
 
 
-D3D12_RESOURCE_STATES getNativeResourceState(Recluse::ResourceState state, bool isPixelShader)
+D3D12_RESOURCE_STATES getNativeResourceState(Recluse::ResourceState state)
 {
     switch (state) 
     {
-        case Recluse::RESOURCE_STATE_GENERAL:
+        case Recluse::ResourceState_Common:
         default:
             return D3D12_RESOURCE_STATE_COMMON;
-        case Recluse::RESOURCE_STATE_COPY_DST:
+        case Recluse::ResourceState_CopyDestination:
             return D3D12_RESOURCE_STATE_COPY_DEST;
-        case Recluse::RESOURCE_STATE_COPY_SRC:
+        case Recluse::ResourceState_CopySource:
             return D3D12_RESOURCE_STATE_COPY_SOURCE;
-        case Recluse::RESOURCE_STATE_DEPTH_STENCIL_READONLY:
+        case Recluse::ResourceState_DepthStencilReadOnly:
             return D3D12_RESOURCE_STATE_DEPTH_READ;
-        case Recluse::RESOURCE_STATE_DEPTH_STENCIL_WRITE:
+        case Recluse::ResourceState_DepthStencilWrite:
             return D3D12_RESOURCE_STATE_DEPTH_WRITE;
-        case Recluse::RESOURCE_STATE_INDEX_BUFFER:
+        case Recluse::ResourceState_IndexBuffer:
             return D3D12_RESOURCE_STATE_INDEX_BUFFER;
-        case Recluse::RESOURCE_STATE_PRESENT:
+        case Recluse::ResourceState_Present:
             return D3D12_RESOURCE_STATE_PRESENT;
-        case Recluse::RESOURCE_STATE_RENDER_TARGET:
+        case Recluse::ResourceState_RenderTarget:
             return D3D12_RESOURCE_STATE_RENDER_TARGET;
-        case Recluse::RESOURCE_STATE_SHADER_RESOURCE:
-            if (isPixelShader)
-                return D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-            else 
-                return D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-        case Recluse::RESOURCE_STATE_STORAGE:
+        case Recluse::ResourceState_ShaderResource:
+                return (D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        case Recluse::ResourceState_UnorderedAccess:
             return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-        case Recluse::RESOURCE_STATE_VERTEX_AND_CONST_BUFFER:
+        case Recluse::ResourceState_VertexBuffer:
+        case Recluse::ResourceState_ConstantBuffer:
             return D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
     }
 

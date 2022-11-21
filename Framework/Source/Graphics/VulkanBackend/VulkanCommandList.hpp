@@ -13,38 +13,41 @@ namespace Recluse {
 class VulkanDevice;
 class VulkanRenderPass;
 class VulkanPipelineState;
+class VulkanContext;
 
 enum CommandListStatus 
 {
-    COMMAND_LIST_RESET,
-    COMMAND_LIST_RECORDING,
-    COMMAND_LIST_READY
+    CommandList_Reset,
+    CommandList_Recording,
+    CommandList_Ready
 };
 
-class VulkanCommandList : public GraphicsCommandList 
+class VulkanPrimaryCommandList : public GraphicsCommandList 
 {
 public:
-    VulkanCommandList()
+    VulkanPrimaryCommandList()
         : m_boundRenderPass(VK_NULL_HANDLE)
         , m_boundPipelineState(VK_NULL_HANDLE)
-        , m_pDevice(nullptr)
+        , m_contextRef(nullptr)
         , m_currentCmdBuffer(VK_NULL_HANDLE)
         , m_currentIdx(0)
-        , m_status(COMMAND_LIST_RESET) { }
+        , m_status(CommandList_Reset) { }
 
 
     //! Initialize the command buffer, using queue family and the command pools 
     //!
     ErrType initialize
                 (
-                    VulkanDevice* pDevice, 
+                    VulkanContext* pContext, 
                     U32 queueFamilyIndex, 
-                    VkCommandPool* pools, 
+                    const VkCommandPool* pools, 
                     U32 poolCount
                 );
 
     //! Release the Vulkan handle of this command buffer.
-    void release(VulkanDevice* pDevice);
+    void release(VulkanContext* pContext);
+
+    void reset() override;
 
     //! Get the native handle of this command buffer. Vulkan specific.
     VkCommandBuffer get() const;
@@ -69,12 +72,16 @@ public:
     void bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBytes, IndexType type) override;
     void drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 firstIndex, U32 vertexOffset, U32 firstInstance) override;
 
+    void drawInstancedIndirect(GraphicsResource* pParams, U32 offset, U32 drawCount, U32 stride) override;
+    void drawIndexedInstancedIndirect(GraphicsResource* pParams, U32 offset, U32 drawCount, U32 stride) override;
+    void dispatchIndirect(GraphicsResource* pParams, U64 offset) override;
+
     void copyResource(GraphicsResource* dst, GraphicsResource* src) override;
     void setViewports(U32 numViewports, Viewport* pViewports) override;
     void setScissors(U32 numScissors, Rect* pRects) override;
     void dispatch(U32 x, U32 y, U32 z) override;
     
-    void transition(ResourceTransition* pTargets, U32 targetCounts) override;
+    void transition(GraphicsResource* pResource, ResourceState dstState) override;
 
     CommandListStatus getStatus() const { return m_status; }
 
@@ -88,14 +95,20 @@ private:
     void beginCommandList(U32 idx);
     void endCommandList(U32 idx);
 
-    VulkanRenderPass*            m_boundRenderPass;
-    VulkanPipelineState*         m_boundPipelineState;
-    std::vector<VkCommandBuffer> m_buffers; 
-    std::vector<VkCommandPool>   m_pools;
-    VulkanDevice*                m_pDevice;
-    VkCommandBuffer              m_currentCmdBuffer;
-    U32                          m_currentIdx;
-    CommandListStatus            m_status;
+    // Flushes barrier transitions if we need to. This must be called on any resources that will be accessed by 
+    // specific api calls that require the state of the resource to be the desired target at the time.
+    void flushBarrierTransitions(VkCommandBuffer cmdBuffer);
+
+    VulkanRenderPass*                   m_boundRenderPass;
+    VulkanPipelineState*                m_boundPipelineState;
+    std::vector<VkCommandBuffer>        m_buffers; 
+    std::vector<VkCommandPool>          m_pools;
+    std::vector<VkBufferMemoryBarrier>  m_bufferMemoryBarriers;
+    std::vector<VkImageMemoryBarrier>   m_imageMemoryBarriers;
+    VulkanContext*                      m_contextRef;
+    VkCommandBuffer                     m_currentCmdBuffer;
+    U32                                 m_currentIdx;
+    CommandListStatus                   m_status;
     
 };
 } // Recluse

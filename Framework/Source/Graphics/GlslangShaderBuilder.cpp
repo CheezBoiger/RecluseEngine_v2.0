@@ -133,7 +133,7 @@ public:
     {
         glslang::InitializeProcess();
         m_isInitialized = true;
-        return R_RESULT_OK;
+        return RecluseResult_Ok;
     }
 
     ErrType tearDown() override
@@ -141,7 +141,7 @@ public:
         R_ASSERT(m_isInitialized == true);
         glslang::FinalizeProcess();
         m_isInitialized = false;
-        return R_RESULT_OK;
+        return RecluseResult_Ok;
     }
 
     ErrType onCompile(const std::vector<char>& srcCode, std::vector<char>& byteCode, ShaderLang lang, ShaderType shaderType) override
@@ -153,11 +153,11 @@ public:
 
         switch (shaderType) 
         {
-            case SHADER_TYPE_VERTEX:        stage = EShLangVertex; break;
-            case SHADER_TYPE_FRAGMENT:      stage = EShLangFragment; break;
-            case SHADER_TYPE_COMPUTE:       stage = EShLangCompute; break;
-            case SHADER_TYPE_TESS_CONTROL:  stage = EShLangTessControl; break;
-            case SHADER_TYPE_TESS_EVAL:     stage = EShLangTessEvaluation; break;
+            case ShaderType_Vertex:        stage = EShLangVertex; break;
+            case ShaderType_Fragment:      stage = EShLangFragment; break;
+            case ShaderType_Compute:       stage = EShLangCompute; break;
+            case ShaderType_TessellationControl:  stage = EShLangTessControl; break;
+            case ShaderType_TessellationEvaluation:     stage = EShLangTessEvaluation; break;
             // TODO: Support more shaders!
         }
 
@@ -172,7 +172,7 @@ public:
         const char* str                     = srcCode.data();
         EShMessages messages                = (EShMessages)((int)EShMsgSpvRules | (int)EShMsgVulkanRules);
 
-        if (lang == SHADER_LANG_HLSL) 
+        if (lang == ShaderLang_Hlsl) 
         {
             R_DEBUG("GLSLANG", "HLSL used, compiling to SPIRV...");
 
@@ -191,7 +191,7 @@ public:
         {
             R_ERR("GLSLANG", "Compile Error: %s", shader.getInfoLog());
 
-            return R_RESULT_FAILED;
+            return RecluseResult_Failed;
         }
 
         program.addShader(&shader);
@@ -200,14 +200,14 @@ public:
         {
             R_ERR("GLSLANG", "Failed to link shader program!");
 
-            return R_RESULT_FAILED;
+            return RecluseResult_Failed;
         }
 
         glslang::GlslangToSpv(*program.getIntermediate(stage), spirv, &logger);
         byteCode.resize(spirv.size() * sizeof(U32)); // Byte code is in uint32 format.
         memcpy(byteCode.data(), spirv.data(), byteCode.size());
         
-        return R_RESULT_OK;
+        return RecluseResult_Ok;
     }
 
 private:

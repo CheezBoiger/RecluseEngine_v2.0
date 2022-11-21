@@ -15,7 +15,7 @@ int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
 
-    GraphicsInstance* pInstance = GraphicsInstance::createInstance(GRAPHICS_API_VULKAN);
+    GraphicsInstance* pInstance = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
 
     if (!pInstance) {
         goto Exit;
@@ -32,11 +32,11 @@ int main(int c, char* argv[])
     appInfo.engineName  = "None";
     appInfo.enginePatch = 0;
 
-    EnableLayerFlags flags = LAYER_FEATURE_DEBUG_VALIDATION_BIT;
+    EnableLayerFlags flags = LayerFeature_DebugValidationBit;
 
     ErrType result = pInstance->initialize(appInfo, flags);
 
-    if (result != R_RESULT_OK) {
+    if (result != RecluseResult_Ok) {
         R_ERR("Test", "Failed to create context!");
         goto Exit;
     }
@@ -58,18 +58,18 @@ int main(int c, char* argv[])
 
     result = adapters[0]->createDevice(deviceCreate, &pDevice);
 
-    if (result != R_RESULT_OK) {
+    if (result != RecluseResult_Ok) {
     
         R_ERR("Graphics", "Failed to create device!");
 
     }
     
     MemoryReserveDesc memReserves = { };
-    memReserves.bufferPools[RESOURCE_MEMORY_USAGE_CPU_TO_GPU] = 32ull * R_1KB;
-    memReserves.bufferPools[RESOURCE_MEMORY_USAGE_GPU_TO_CPU] = 32ull * R_1KB;
-    memReserves.bufferPools[RESOURCE_MEMORY_USAGE_CPU_ONLY] = 256 * R_1MB;
+    memReserves.bufferPools[ResourceMemoryUsage_CpuToGpu] = 32ull * R_1KB;
+    memReserves.bufferPools[ResourceMemoryUsage_GpuToCpu] = 32ull * R_1KB;
+    memReserves.bufferPools[ResourceMemoryUsage_CpuOnly] = 256 * R_1MB;
     memReserves.texturePoolGPUOnly = 512 * R_1MB; // half a GB.
-    memReserves.bufferPools[RESOURCE_MEMORY_USAGE_GPU_ONLY] = 512 * R_1MB; // half a GB.
+    memReserves.bufferPools[ResourceMemoryUsage_GpuOnly] = 512 * R_1MB; // half a GB.
     
     pDevice->reserveMemory(memReserves);
 
@@ -77,20 +77,20 @@ int main(int c, char* argv[])
     GraphicsResourceView* pView         = nullptr;
     GraphicsResourceDescription desc    = { };
 
-    desc.usage          = RESOURCE_USAGE_RENDER_TARGET | RESOURCE_USAGE_SHADER_RESOURCE;
-    desc.memoryUsage    = RESOURCE_MEMORY_USAGE_GPU_ONLY;
+    desc.usage          = ResourceUsage_RenderTarget | ResourceUsage_ShaderResource;
+    desc.memoryUsage    = ResourceMemoryUsage_GpuOnly;
     desc.width          = 128;
     desc.height         = 128;
     desc.depth          = 1;
     desc.arrayLevels    = 1;
     desc.mipLevels      = 8;
-    desc.dimension      = RESOURCE_DIMENSION_2D;
+    desc.dimension      = ResourceDimension_2d;
     desc.samples        = 1;
-    desc.format         = RESOURCE_FORMAT_R8G8B8A8_UNORM;
+    desc.format         = ResourceFormat_R8G8B8A8_Unorm;
 
-    result = pDevice->createResource(&pTexture, desc, RESOURCE_STATE_SHADER_RESOURCE);
+    result = pDevice->createResource(&pTexture, desc, ResourceState_ShaderResource);
 
-    if (result != R_RESULT_OK) {
+    if (result != RecluseResult_Ok) {
     
         R_ERR("Graphics", "Failed to create texture!");
 
@@ -100,16 +100,16 @@ int main(int c, char* argv[])
         ResourceViewDesc viewDesc   = { };
         viewDesc.baseArrayLayer     = 0;
         viewDesc.baseMipLevel       = 0;
-        viewDesc.dimension          = RESOURCE_VIEW_DIMENSION_2D;
-        viewDesc.format             = RESOURCE_FORMAT_R8G8B8A8_UNORM;
+        viewDesc.dimension          = ResourceViewDimension_2d;
+        viewDesc.format             = ResourceFormat_R8G8B8A8_Unorm;
         viewDesc.layerCount         = 1;
         viewDesc.mipLevelCount      = 1;
         viewDesc.pResource          = pTexture;
-        viewDesc.type               = RESOURCE_VIEW_TYPE_RENDER_TARGET;
+        viewDesc.type               = ResourceViewType_RenderTarget;
        
         result = pDevice->createResourceView(&pView, viewDesc);
         
-        if (result != R_RESULT_OK) {
+        if (result != RecluseResult_Ok) {
         
             R_ERR("Graphics", "Failed to create view...");
         

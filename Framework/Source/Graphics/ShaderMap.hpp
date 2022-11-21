@@ -12,7 +12,9 @@ class Shader;
 namespace ShaderMap {
 
 
+typedef U32 ShaderPermutation;
 
-B32 storeShader(Hash64 hash, Shader* pShader);
+B32 storeShader(Hash64 nameHash, Shader* pShader, ShaderPermutation permutation);
+Shader* getShader(Hash64 nameHash, ShaderPermutation permutation);
 } // ShaderMap
 } // Recluse

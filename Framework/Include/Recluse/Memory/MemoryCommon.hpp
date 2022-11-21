@@ -37,4 +37,23 @@ static PtrType offsetOf(PtrType baseAddr, PtrType offsetBytes)
 {
     return baseAddr + offsetBytes;
 }
+
+// Returns the aligned address of the base address.
+static R_FORCE_INLINE PtrType align(PtrType baseAddress, U64 alignment)
+{
+    return R_ALLOC_MASK(baseAddress, alignment);
+}
+
+template<typename Type>
+static constexpr R_FORCE_INLINE Type rightShift(Type value, Type bits)
+{
+    return R_R_SHIFT(value, bits);
+}
+
+
+template<typename Type>
+static constexpr R_FORCE_INLINE Type leftShift(Type value, Type bits)
+{
+    return R_L_SHIFT(value, bits);
+}
 } // Recluse

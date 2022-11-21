@@ -11,10 +11,10 @@ D3D12_RESOURCE_DIMENSION getDimension(ResourceDimension dim)
 {
     switch (dim) 
     {
-        case RESOURCE_DIMENSION_BUFFER: return D3D12_RESOURCE_DIMENSION_BUFFER;
-        case RESOURCE_DIMENSION_1D: return D3D12_RESOURCE_DIMENSION_TEXTURE1D;
-        case RESOURCE_DIMENSION_2D: return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        case RESOURCE_DIMENSION_3D: return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
+        case ResourceDimension_Buffer: return D3D12_RESOURCE_DIMENSION_BUFFER;
+        case ResourceDimension_1d: return D3D12_RESOURCE_DIMENSION_TEXTURE1D;
+        case ResourceDimension_2d: return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+        case ResourceDimension_3d: return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
         default: return D3D12_RESOURCE_DIMENSION_UNKNOWN;
     }
 }
@@ -24,14 +24,13 @@ ErrType D3D12Resource::initialize
                             (
                                 D3D12Device* pDevice, 
                                 const GraphicsResourceDescription& desc, 
-                                ResourceState initialState, 
-                                Bool isPixelShader, 
+                                ResourceState initialState,
                                 Bool makeCommitted
                             )
 {
     ID3D12Device* device                    = pDevice->get();
     D3D12_RESOURCE_DESC d3d12desc           = { };
-    D3D12_RESOURCE_STATES state             = Dxgi::getNativeResourceState(initialState, isPixelShader);
+    D3D12_RESOURCE_STATES state             = Dxgi::getNativeResourceState(initialState);
     D3D12_CLEAR_VALUE optimizedClearValue   = { };
     D3D12ResourceAllocator* pAllocator              = nullptr;
     HRESULT sResult                         = S_OK;
@@ -69,7 +68,7 @@ ErrType D3D12Resource::initialize
 
         ErrType result  = pAllocator->allocate(device, &m_memObj, d3d12desc, state);
 
-        if (result != R_RESULT_OK)    
+        if (result != RecluseResult_Ok)    
         {
             R_ERR(R_CHANNEL_D3D12, "Failed to allocate a D3D12 resource!");
         } 
@@ -83,13 +82,15 @@ ErrType D3D12Resource::initialize
     {
         R_ERR(R_CHANNEL_D3D12, "Failed to create resource!");
 
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }
 
-    m_isCommitted   = makeCommitted;
-    m_currentState  = initialState;
+    m_isCommitted               = makeCommitted;
+    m_allowedTransitionStates   = desc.usage;
 
-    return R_RESULT_OK;
+    setCurrentResourceState(initialState);
+
+    return RecluseResult_Ok;
 }
 
 
@@ -105,7 +106,7 @@ ErrType D3D12Resource::destroy()
             
             ErrType result = pAllocator->free(&m_memObj);
 
-            if (result != R_RESULT_OK) 
+            if (result != RecluseResult_Ok) 
             {
                 R_ERR("D3D12Resource", "This placed resource failed to free prior to it's destruction!");
                 return result;
@@ -117,20 +118,48 @@ ErrType D3D12Resource::destroy()
 
     }
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
-D3D12_RESOURCE_BARRIER D3D12Resource::transition(ResourceState newState, Bool isPixelShaderTransition)
+D3D12_RESOURCE_BARRIER D3D12Resource::transition(ResourceState newState)
 {
     D3D12_RESOURCE_BARRIER barrier = { };
 
     barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
     barrier.Transition.pResource    = m_memObj.pResource;
-    barrier.Transition.StateBefore  = Dxgi::getNativeResourceState(m_currentState, isPixelShaderTransition);
-    barrier.Transition.StateAfter   = Dxgi::getNativeResourceState(newState, isPixelShaderTransition);
+    barrier.Transition.StateBefore  = Dxgi::getNativeResourceState(getCurrentResourceState());
+    barrier.Transition.StateAfter   = Dxgi::getNativeResourceState(newState);
     barrier.Transition.Subresource  = 0u;
 
     return barrier;
+}
+
+Bool D3D12Resource::isSupportedTransitionState(ResourceState state)
+{
+    switch (state)
+    {
+    case ResourceState_ConstantBuffer:
+        return (m_allowedTransitionStates & ResourceUsage_ConstantBuffer);
+    case ResourceState_CopyDestination:
+        return (m_allowedTransitionStates & ResourceUsage_CopyDestination);
+    case ResourceState_CopySource:
+        return (m_allowedTransitionStates & ResourceUsage_CopySource);
+    case ResourceState_DepthStencilReadOnly:
+    case ResourceState_DepthStencilWrite:
+        return (m_allowedTransitionStates & ResourceUsage_DepthStencil);
+    case ResourceState_UnorderedAccess:
+        return (m_allowedTransitionStates & ResourceUsage_UnorderedAccess);
+    case ResourceState_VertexBuffer:
+        return (m_allowedTransitionStates & ResourceUsage_ConstantBuffer);
+    case ResourceState_IndexBuffer:
+        return (m_allowedTransitionStates & ResourceUsage_IndexBuffer);
+    case ResourceState_IndirectArgs:
+        return (m_allowedTransitionStates & ResourceUsage_IndirectBuffer);
+    case ResourceState_ShaderResource:
+        return (m_allowedTransitionStates & ResourceUsage_ShaderResource);
+    }
+
+    return 0;
 }
 } // Recluse

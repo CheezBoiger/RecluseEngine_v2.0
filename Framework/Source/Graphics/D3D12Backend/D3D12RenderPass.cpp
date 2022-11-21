@@ -42,7 +42,7 @@ ErrType D3D12RenderPass::initialize(D3D12Device* pDevice, const RenderPassDesc& 
 
     if (!dhAllocation.isValid())
     {
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }
 
     for (U32 i = 0; i < desc.numRenderTargets; ++i)
@@ -71,7 +71,7 @@ ErrType D3D12RenderPass::initialize(D3D12Device* pDevice, const RenderPassDesc& 
         }
     }
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -93,6 +93,6 @@ ErrType D3D12RenderPass::destroy(D3D12Device* pDevice)
         pDescriptorManager->free(m_dsvDhAllocation);
     }
 
-    return R_RESULT_NO_IMPL;
+    return RecluseResult_NoImpl;
 }
 } // Recluse

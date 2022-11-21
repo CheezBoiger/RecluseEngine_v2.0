@@ -6,6 +6,7 @@
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Graphics/GraphicsCommon.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
+#include "Recluse/Graphics/Resource.hpp"
 
 namespace Recluse {
 
@@ -18,12 +19,12 @@ class DescriptorSet;
 
 struct ResourceTransition 
 {
-    GraphicsResource*   pResource;
-    ResourceState       dstState;
-    U32                 layers;
-    U32                 baseLayer;
-    U32                 mips;
-    U32                 baseMip;
+    GraphicsResource*           pResource;
+    ResourceState               dstState;
+    U32                         layers;
+    U32                         baseLayer;
+    U32                         mips;
+    U32                         baseMip;
 };
 
 #define MAKE_RESOURCE_TRANSITION(pResource, dstState, baseMip, mips, baseLayer, layers) { pResource, dstState, layers, baseLayer, mips, baseMip }
@@ -34,7 +35,14 @@ class R_PUBLIC_API GraphicsCommandList
 public:
     virtual ~GraphicsCommandList() { }
 
+    virtual void reset() { }
+    //! Begin the command list. This will usually query the 
+    //! current buffer available to the device on CPU.
     virtual void begin() { }
+    
+    //! Ends recording of this command buffer. Be sure to 
+    //! call this function after begin(), and after all commands 
+    //! you wish to record.
     virtual void end() { }
 
     virtual void bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* pOffsets) { }
@@ -43,8 +51,8 @@ public:
     virtual void drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 firstIndex, U32 vertexOffset, U32 firstInstance) { }
     virtual void drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstVertex, U32 firstInstance) { }
 
-    virtual void drawInstancedIndirect(GraphicsResource* pParams) { }
-    virtual void drawIndexedInstancedIndirect(GraphicsResource* pParams) { }
+    virtual void drawInstancedIndirect(GraphicsResource* pParams, U32 offset, U32 drawCount, U32 stride) { }
+    virtual void drawIndexedInstancedIndirect(GraphicsResource* pParams, U32 offset, U32 drawCount, U32 stride) { }
 
     virtual void setScissors(U32 numScissors, Rect* pRects) { }
     virtual void setViewports(U32 numViewports, Viewport* pViewports) { }
@@ -67,13 +75,13 @@ public:
     // Transitiion a resource to a given state. This is a modern API specific feature,
     // which is handled by managed drivers for older APIs, yet we reinforce this for older 
     // API anyways, in order to ensure newer APIs will still conform!
-    virtual void transition(ResourceTransition* pTargets, U32 targetCounts) { }
+    virtual void transition(GraphicsResource* pResource, ResourceState) { }
 
     virtual Bool supportsAsyncCompute() { return false; }
 
     virtual void dispatchAsync(U32 x, U32 y, U32 z) { R_ASSERT(supportsAsyncCompute()); }
 
-    virtual void dispatchIndirect(GraphicsResource* pParams) { R_ASSERT(supportsAsyncCompute()); }
+    virtual void dispatchIndirect(GraphicsResource* pParams, U64 offset) { R_ASSERT(supportsAsyncCompute()); }
 
 private:
     

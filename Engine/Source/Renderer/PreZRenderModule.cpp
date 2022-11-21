@@ -39,9 +39,9 @@ void initialize(GraphicsDevice* pDevice, Engine::SceneBufferDefinitions* pBuffer
     FileBufferData data = { };
 
     File::readFrom(&data, staticVertShader);
-    pShader->load(data.data(), data.size(), INTERMEDIATE_SPIRV, SHADER_TYPE_VERTEX);
+    pShader->load(data.data(), data.size(), ShaderIntermediateCode_Spirv, ShaderType_Vertex);
 
-    ErrType result                              = R_RESULT_OK;
+    ErrType result                              = RecluseResult_Ok;
     GraphicsPipelineStateDesc pipelineCi        = { };
     RenderPassDesc rpCi                         = { };
     const GraphicsResourceDescription& resDesc  = pBuffers->gbuffer[Engine::GBuffer_Depth]->getResource()->getDesc();
@@ -54,17 +54,17 @@ void initialize(GraphicsDevice* pDevice, Engine::SceneBufferDefinitions* pBuffer
 
     result = pDevice->createRenderPass(&pPreZPass, rpCi);
 
-    if (result != R_RESULT_OK) 
+    if (result != RecluseResult_Ok) 
     {
         R_ERR("PreZRenderModule", "Failed to create render pass!");
 
         return;
     }
 
-    pipelineCi.raster.cullMode          = CULL_MODE_BACK;
-    pipelineCi.raster.frontFace         = FRONT_FACE_CLOCKWISE;
+    pipelineCi.raster.cullMode          = CullMode_Back;
+    pipelineCi.raster.frontFace         = FrontFace_Clockwise;
     pipelineCi.raster.lineWidth         = 1.0f;
-    pipelineCi.raster.polygonMode       = POLYGON_MODE_FILL;
+    pipelineCi.raster.polygonMode       = PolygonMode_Fill;
     pipelineCi.raster.depthBiasEnable   = true;
 
     pipelineCi.pVS                  = nullptr;
@@ -74,9 +74,9 @@ void initialize(GraphicsDevice* pDevice, Engine::SceneBufferDefinitions* pBuffer
     pipelineCi.ds.minDepthBounds    = 1.0f; // Reverse for preZ
     pipelineCi.ds.maxDepthBounds    = 0.0f;
     pipelineCi.ds.stencilTestEnable = false;
-    pipelineCi.ds.depthCompareOp    = COMPARE_OP_GREATER;
+    pipelineCi.ds.depthCompareOp    = CompareOp_Greater;
 
-    pipelineCi.primitiveTopology = PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    pipelineCi.primitiveTopology = PrimitiveTopology_TriangleList;
     
     createPipelines(pipelineCi);
 }
@@ -124,7 +124,7 @@ void generate(GraphicsCommandList* pCommandList, Engine::RenderCommandList* pMes
         R_ASSERT_MSG(pipeline != NULL, "No pipeline exists for this mesh!");
 
         pCommandList->bindVertexBuffers(meshCmd->numVertexBuffers, meshCmd->ppVertexBuffers, meshCmd->pOffsets);
-        pCommandList->setPipelineState(pipeline, BIND_TYPE_GRAPHICS);
+        pCommandList->setPipelineState(pipeline, BindType_Graphics);
 
         switch (meshCmd->op) 
         {

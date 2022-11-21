@@ -17,7 +17,7 @@ int main(int c, char* argv[])
 
     GraphicsSwapchain* pSwapchain   = nullptr;
     GraphicsDevice* pDevice         = nullptr;
-    GraphicsInstance* pInstance      = GraphicsInstance::createInstance(GRAPHICS_API_VULKAN);
+    GraphicsInstance* pInstance      = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
 
     Window* pWindow = Window::create(u8"CommandListSubmit", 0, 0, 128, 128);
 
@@ -36,11 +36,11 @@ int main(int c, char* argv[])
     appInfo.engineName  = "None";
     appInfo.enginePatch = 0;
 
-    EnableLayerFlags flags = LAYER_FEATURE_DEBUG_VALIDATION_BIT;
+    EnableLayerFlags flags = LayerFeature_DebugValidationBit;
 
     ErrType result = pInstance->initialize(appInfo, flags);
 
-    if (result != R_RESULT_OK) {
+    if (result != RecluseResult_Ok) {
         R_ERR("Test", "Failed to create context!");
         goto Exit;
     }
@@ -58,7 +58,7 @@ int main(int c, char* argv[])
 
     DeviceCreateInfo deviceCreate   = { };
     deviceCreate.winHandle = pWindow->getNativeHandle();
-    deviceCreate.swapchainDescription.buffering                    = FRAME_BUFFERING_TRIPLE;
+    deviceCreate.swapchainDescription.buffering                    = FrameBuffering_Triple;
     deviceCreate.swapchainDescription.desiredFrames                = 3;
     deviceCreate.swapchainDescription.renderHeight                 = 128;
     deviceCreate.swapchainDescription.renderWidth                  = 128;
@@ -66,7 +66,7 @@ int main(int c, char* argv[])
 
     result = adapters[0]->createDevice(deviceCreate, &pDevice);
 
-    if (result != R_RESULT_OK) {
+    if (result != RecluseResult_Ok) {
     
         R_ERR("Graphics", "Failed to create device!");
 
@@ -87,22 +87,22 @@ int main(int c, char* argv[])
         GraphicsCommandList* pList = nullptr;
         GraphicsCommandList* pList2 = nullptr;
         
-        pList = pDevice->getCommandList();
-
         while (!pWindow->shouldClose()) {
             RealtimeTick::updateWatch(1ull, 0);
             RealtimeTick tick = RealtimeTick::getTick(0);
             R_TRACE("Graphics", "FPS: %f", 1.f / tick.delta());
-
-            pList->begin();
-            pList->end();
+            pDevice->getContext()->begin(); 
+                pList = pDevice->getContext()->getCommandList();
+                pList->begin();
+                pList->end();
+            pDevice->getContext()->end();
             pSwapchain->present();
             pollEvents();
                     
         }
 
         // Wait until all command lists have been executed.
-        pDevice->wait();
+        pDevice->getContext()->wait();
     }
 
     adapters[0]->destroyDevice(pDevice);

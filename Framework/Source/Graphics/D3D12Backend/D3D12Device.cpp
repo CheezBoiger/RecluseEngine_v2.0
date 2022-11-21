@@ -12,6 +12,53 @@
 namespace Recluse {
 
 
+void D3D12Context::initialize()
+{
+    initializeBufferResources(m_bufferCount);
+    createCommandList(&m_pPrimaryCommandList, QUEUE_TYPE_PRESENT | QUEUE_TYPE_GRAPHICS);
+}
+
+
+void D3D12Context::release()
+{
+    if (m_pPrimaryCommandList)
+    {
+        destroyCommandList(m_pPrimaryCommandList);
+        m_pPrimaryCommandList = nullptr;
+    }
+
+    destroyBufferResources();
+}
+
+
+void D3D12Context::begin()
+{
+
+    incrementBufferIndex();
+
+    BufferResources* pBufferResources   = getCurrentBufferResource();
+    ID3D12Fence* pFence                 = pBufferResources->pFence;
+    HANDLE eventHandle                  = pBufferResources->pEvent;
+    U64 currentValue                    = pBufferResources->fenceValue;
+
+    if (pFence->GetCompletedValue() < currentValue)
+    {
+        pFence->SetEventOnCompletion(currentValue, eventHandle);
+        WaitForSingleObjectEx(eventHandle, INFINITE, false);
+    }
+
+    resetCurrentResources();
+
+    m_pPrimaryCommandList->reset();
+}
+
+
+void D3D12Context::end()
+{
+    m_pPrimaryCommandList->end();
+}
+
+
 ErrType D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo& info)
 {
     R_DEBUG(R_CHANNEL_D3D12, "Creating D3D12 device...");
@@ -24,7 +71,7 @@ ErrType D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo& i
 
     if (result != S_OK) 
     {
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }
 
     m_pAdapter = adapter;
@@ -37,27 +84,24 @@ ErrType D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo& i
 
     R_DEBUG(R_CHANNEL_D3D12, "Successfully created D3D12 device!");
 
-    initializeBufferResources(info.buffering);
-    createCommandList(&m_pPrimaryCommandList, QUEUE_TYPE_PRESENT | QUEUE_TYPE_GRAPHICS);
-
     if (m_windowHandle) 
     {
         createSwapchain(&m_swapchain, info.swapchainDescription);
     }
 
-    m_bufferCount = info.buffering;
 
-    return R_RESULT_OK;
+    m_context = new D3D12Context(this, info.buffering);
+    m_context->initialize();
+
+    return RecluseResult_Ok;
 }
 
 
 void D3D12Device::destroy()
 {
-    if (m_pPrimaryCommandList) 
-    {
-        destroyCommandList(m_pPrimaryCommandList);
-        m_pPrimaryCommandList = nullptr;
-    }
+    m_context->release();
+    delete m_context;
+    m_context = nullptr;
 
     if (m_swapchain) 
     {
@@ -71,8 +115,6 @@ void D3D12Device::destroy()
         m_graphicsQueue = nullptr;
     }
 
-    destroyBufferResources();
-
     if (m_device) 
     {
         R_DEBUG(R_CHANNEL_D3D12, "Destroying D3D12 device...");
@@ -84,12 +126,12 @@ void D3D12Device::destroy()
 
 ErrType D3D12Device::createSwapchain(D3D12Swapchain** ppSwapchain, const SwapchainCreateDescription& desc)
 {
-    ErrType result = R_RESULT_OK;
+    ErrType result = RecluseResult_Ok;
     D3D12Swapchain* pSwapchain = new D3D12Swapchain(desc, m_graphicsQueue);
 
     result = pSwapchain->initialize(this);
 
-    if (result != R_RESULT_OK) 
+    if (result != RecluseResult_Ok) 
     {
         R_ERR(R_CHANNEL_D3D12, "Failed to create d3d swapchain!");
 
@@ -106,7 +148,7 @@ ErrType D3D12Device::createSwapchain(D3D12Swapchain** ppSwapchain, const Swapcha
 
 ErrType D3D12Device::destroySwapchain(D3D12Swapchain* pSwapchain)
 {
-    ErrType result = R_RESULT_OK;
+    ErrType result = RecluseResult_Ok;
 
     pSwapchain->destroy();
     delete pSwapchain;
@@ -118,11 +160,11 @@ ErrType D3D12Device::destroySwapchain(D3D12Swapchain* pSwapchain)
 ErrType D3D12Device::createCommandQueue(D3D12Queue** ppQueue, GraphicsQueueTypeFlags type)
 {
     D3D12Queue* pD3D12Queue = new D3D12Queue(type);
-    ErrType result          = R_RESULT_OK;
+    ErrType result          = RecluseResult_Ok;
 
     result = pD3D12Queue->initialize(this);
 
-    if (result != R_RESULT_OK) 
+    if (result != RecluseResult_Ok) 
     {
         R_ERR(R_CHANNEL_D3D12, "Failed to create d3d12 queue!");
 
@@ -142,7 +184,7 @@ ErrType D3D12Device::destroyCommandQueue(D3D12Queue* pQueue)
 {
     if (!pQueue) 
     {
-        return R_RESULT_NULL_PTR_EXCEPT;
+        return RecluseResult_NullPtrExcept;
     }
 
     D3D12Queue* pD3D12Queue = pQueue;
@@ -151,7 +193,7 @@ ErrType D3D12Device::destroyCommandQueue(D3D12Queue* pQueue)
 
     delete pD3D12Queue;
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -163,7 +205,7 @@ void D3D12Device::allocateMemoryPool(D3D12MemoryPool* pPool, ResourceMemoryUsage
 
 ErrType D3D12Device::reserveMemory(const MemoryReserveDesc& desc)
 {
-    for (U32 i = 0; i < RESOURCE_MEMORY_USAGE_COUNT; ++i)
+    for (U32 i = 0; i < ResourceMemoryUsage_Count; ++i)
     {
         HRESULT hresult = S_OK;
         if (m_bufferPool[i])
@@ -188,11 +230,12 @@ ErrType D3D12Device::reserveMemory(const MemoryReserveDesc& desc)
             }
         }
     }
-    return R_RESULT_OK;
+
+    return RecluseResult_Ok;
 }
 
 
-void D3D12Device::resetCurrentResources()
+void D3D12Context::resetCurrentResources()
 {
     HRESULT result = S_OK;
     BufferResources& buffer = m_bufferResources[m_currentBufferIndex];
@@ -207,7 +250,7 @@ void D3D12Device::resetCurrentResources()
 }
 
 
-void D3D12Device::initializeBufferResources(U32 buffering)
+void D3D12Context::initializeBufferResources(U32 buffering)
 {
     HRESULT result      = S_OK;
     m_bufferResources.resize(buffering);
@@ -216,7 +259,7 @@ void D3D12Device::initializeBufferResources(U32 buffering)
 
     for (U32 i = 0; i < m_bufferResources.size(); ++i) 
     {    
-        result = m_device->CreateCommandAllocator
+        result = m_pDevice->get()->CreateCommandAllocator
                                 (
                                     D3D12_COMMAND_LIST_TYPE_DIRECT, 
                                     __uuidof(ID3D12CommandAllocator), 
@@ -228,7 +271,7 @@ void D3D12Device::initializeBufferResources(U32 buffering)
         m_bufferResources[i].fenceValue = 0;
         m_bufferResources[i].pEvent     = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-        result = m_device->CreateFence
+        result = m_pDevice->get()->CreateFence
                                 (
                                     0, 
                                     D3D12_FENCE_FLAG_NONE, 
@@ -244,7 +287,7 @@ void D3D12Device::initializeBufferResources(U32 buffering)
 }
 
 
-void D3D12Device::destroyBufferResources()
+void D3D12Context::destroyBufferResources()
 {
     R_DEBUG(R_CHANNEL_D3D12, "Destroying buffer resources.");
 
@@ -267,14 +310,14 @@ void D3D12Device::destroyBufferResources()
 }
 
 
-ErrType D3D12Device::createCommandList(D3D12CommandList** ppList, GraphicsQueueTypeFlags flags)
+ErrType D3D12Context::createCommandList(D3D12PrimaryCommandList** ppList, GraphicsQueueTypeFlags flags)
 {
-    D3D12CommandList* pList = new D3D12CommandList();
-    ErrType result = R_RESULT_OK;
+    D3D12PrimaryCommandList* pList = new D3D12PrimaryCommandList();
+    ErrType result = RecluseResult_Ok;
 
     result = pList->initialize(this, flags);
 
-    if (result != R_RESULT_OK) 
+    if (result != RecluseResult_Ok) 
     {
         R_ERR(R_CHANNEL_D3D12, "Failed to create command list!");
         pList->destroy();
@@ -288,11 +331,11 @@ ErrType D3D12Device::createCommandList(D3D12CommandList** ppList, GraphicsQueueT
 }
 
 
-ErrType D3D12Device::destroyCommandList(D3D12CommandList* pList)
+ErrType D3D12Context::destroyCommandList(D3D12PrimaryCommandList* pList)
 {
     R_ASSERT(pList != NULL);
     
-    ErrType result = R_RESULT_OK;
+    ErrType result = RecluseResult_Ok;
     result = pList->destroy();
 
     delete pList;
@@ -302,15 +345,15 @@ ErrType D3D12Device::destroyCommandList(D3D12CommandList* pList)
 }
 
 
-ErrType D3D12Device::copyResource(GraphicsResource* dst, GraphicsResource* src)
+ErrType D3D12Context::copyResource(GraphicsResource* dst, GraphicsResource* src)
 {
-    return R_RESULT_NO_IMPL;
+    return RecluseResult_NoImpl;
 }
 
 
 // Submits copy of regions from src resource to dst resource. Generally the caller thread will
 // be blocked until this function returns, so be sure to use when needed.
-ErrType D3D12Device::copyBufferRegions
+ErrType D3D12Context::copyBufferRegions
     (
         GraphicsResource* dst, 
         GraphicsResource* src, 
@@ -318,11 +361,11 @@ ErrType D3D12Device::copyBufferRegions
         U32 numRegions
     )
 {
-    return R_RESULT_NO_IMPL;
+    return RecluseResult_NoImpl;
 }
 
 
-GraphicsCommandList* D3D12Device::getCommandList()
+GraphicsCommandList* D3D12Context::getCommandList()
 {
     return m_pPrimaryCommandList;
 }

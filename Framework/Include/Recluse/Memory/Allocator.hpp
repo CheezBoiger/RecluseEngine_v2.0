@@ -41,7 +41,7 @@ public:
     ErrType allocate(Allocation* pOutput, U64 requestSz, U16 alignment) 
     {
         ErrType err = onAllocate(pOutput, requestSz, alignment);
-        if (err == R_RESULT_OK) 
+        if (err == RecluseResult_Ok) 
         {
             m_totalAllocations  += 1;
             m_usedSizeBytes     += pOutput->sizeBytes;
@@ -53,7 +53,7 @@ public:
     ErrType free(Allocation* pOutput) 
     {
         ErrType err = onFree(pOutput);
-        if (err == R_RESULT_OK) 
+        if (err == RecluseResult_Ok) 
         {
             m_usedSizeBytes     -= pOutput->sizeBytes;
             m_totalAllocations  -= 1;
@@ -122,12 +122,12 @@ public:
 
     virtual ErrType onInitialize() override 
     { 
-        return R_RESULT_OK; 
+        return RecluseResult_Ok; 
     }
 
     virtual ErrType onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override 
     {
-        return R_RESULT_OK;
+        return RecluseResult_Ok;
     }
 };
 } // Recluse

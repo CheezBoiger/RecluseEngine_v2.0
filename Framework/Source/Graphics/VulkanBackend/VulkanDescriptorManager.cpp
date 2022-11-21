@@ -142,7 +142,7 @@ VkDescriptorPool VulkanDescriptorManager::getPool()
     else
     {
         DescriptorPoolSizeFactors sizes;
-        VkDescriptorPool newPool = createDescriptorPool(sizes, kMaxSetsPerPool, 0);
+        VkDescriptorPool newPool = createDescriptorPool(sizes, kMaxSetsPerPool, VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
         m_usedPools.push_back(newPool);
         return m_usedPools.back();
     }
@@ -160,10 +160,10 @@ ErrType VulkanDescriptorManager::free(const VulkanDescriptorAllocation& allocati
     }
     else
     {
-        return R_RESULT_INVALID_ARGS;
+        return RecluseResult_InvalidArgs;
     }
 
-    return (result == VK_SUCCESS) ? R_RESULT_OK : R_RESULT_FAILED;
+    return (result == VK_SUCCESS) ? RecluseResult_Ok : RecluseResult_Failed;
 }
 
 

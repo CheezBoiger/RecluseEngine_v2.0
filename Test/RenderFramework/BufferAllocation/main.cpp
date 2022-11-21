@@ -13,7 +13,7 @@ int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
 
-    GraphicsInstance* pInstance = GraphicsInstance::createInstance(GRAPHICS_API_VULKAN);
+    GraphicsInstance* pInstance = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
 
     if (!pInstance) {
         goto Exit;
@@ -30,11 +30,11 @@ int main(int c, char* argv[])
     appInfo.engineName  = "None";
     appInfo.enginePatch = 0;
 
-    EnableLayerFlags flags = LAYER_FEATURE_DEBUG_VALIDATION_BIT;
+    EnableLayerFlags flags = LayerFeature_DebugValidationBit;
 
     ErrType result = pInstance->initialize(appInfo, flags);
 
-    if (result != R_RESULT_OK) {
+    if (result != RecluseResult_Ok) {
         R_ERR("Test", "Failed to create instance!");
         goto Exit;
     }
@@ -56,18 +56,18 @@ int main(int c, char* argv[])
 
     result = adapters[0]->createDevice(deviceCreate, &pDevice);
 
-    if (result != R_RESULT_OK) {
+    if (result != RecluseResult_Ok) {
     
         R_ERR("Graphics", "Failed to create device!");
 
     }
     
     MemoryReserveDesc memReserves = { };
-    memReserves.bufferPools[RESOURCE_MEMORY_USAGE_CPU_TO_GPU] = 32ull * R_1KB;
-    memReserves.bufferPools[RESOURCE_MEMORY_USAGE_GPU_TO_CPU] = 32ull * R_1KB;
-    memReserves.bufferPools[RESOURCE_MEMORY_USAGE_CPU_ONLY] = 256 * R_1MB;
+    memReserves.bufferPools[ResourceMemoryUsage_CpuToGpu] = 32ull * R_1KB;
+    memReserves.bufferPools[ResourceMemoryUsage_GpuToCpu] = 32ull * R_1KB;
+    memReserves.bufferPools[ResourceMemoryUsage_CpuOnly] = 256 * R_1MB;
     memReserves.texturePoolGPUOnly = 512 * R_1MB; // half a GB.
-    memReserves.bufferPools[RESOURCE_MEMORY_USAGE_GPU_ONLY] = 512 * R_1MB; // half a GB.
+    memReserves.bufferPools[ResourceMemoryUsage_GpuOnly] = 512 * R_1MB; // half a GB.
     
     pDevice->reserveMemory(memReserves);
 
@@ -75,14 +75,14 @@ int main(int c, char* argv[])
     GraphicsResource* pBuffer2 = nullptr;
     
     GraphicsResourceDescription bufferDesc = { };
-    bufferDesc.usage        = RESOURCE_USAGE_CONSTANT_BUFFER;
-    bufferDesc.dimension    = RESOURCE_DIMENSION_BUFFER;
-    bufferDesc.memoryUsage  = RESOURCE_MEMORY_USAGE_GPU_ONLY;
+    bufferDesc.usage        = ResourceUsage_ConstantBuffer;
+    bufferDesc.dimension    = ResourceDimension_Buffer;
+    bufferDesc.memoryUsage  = ResourceMemoryUsage_GpuOnly;
     bufferDesc.width        = R_1KB * 1024ull;
 
-    result = pDevice->createResource(&pBuffer, bufferDesc, RESOURCE_STATE_VERTEX_AND_CONST_BUFFER);
+    result = pDevice->createResource(&pBuffer, bufferDesc, ResourceState_VertexAndConstantBuffer);
 
-    if (result != R_RESULT_OK) {
+    if (result != RecluseResult_Ok) {
     
         R_ERR("Graphics", "Failed to create buffer!");
     
@@ -90,9 +90,9 @@ int main(int c, char* argv[])
         
         R_TRACE("Graphics", "Successfully create buffer!");
         
-        result = pDevice->createResource(&pBuffer2, bufferDesc, RESOURCE_STATE_VERTEX_AND_CONST_BUFFER);
+        result = pDevice->createResource(&pBuffer2, bufferDesc, ResourceState_VertexAndConstantBuffer);
 
-        if (result != R_RESULT_OK) {
+        if (result != RecluseResult_Ok) {
         
             R_ERR("Graphics", "Failed to create second buffer!!");
         

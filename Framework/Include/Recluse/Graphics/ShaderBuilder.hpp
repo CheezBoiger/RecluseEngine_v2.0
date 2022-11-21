@@ -19,11 +19,11 @@ public:
     virtual ~ShaderBuilder() { }
     
     // Set up the shader builder. Should be the warm up setup.
-    virtual ErrType setUp() { return R_RESULT_NO_IMPL; }
+    virtual ErrType setUp() { return RecluseResult_NoImpl; }
 
     // Tear down the shader builder, that was initialized. Everything 
     // that is initialized by the shaderbuilder should be cleaned up.
-    virtual ErrType tearDown() { return R_RESULT_NO_IMPL; }
+    virtual ErrType tearDown() { return RecluseResult_NoImpl; }
 
     // compiler the shader and return the bytecode.
     ErrType compile
@@ -35,7 +35,7 @@ public:
             ShaderType shaderType
         );
 
-    virtual ErrType disassemble(std::vector<char>& output) { return R_RESULT_NO_IMPL; }
+    virtual ErrType disassemble(std::vector<char>& output) { return RecluseResult_NoImpl; }
 
     ShaderIntermediateCode getIntermediateCode() const { return m_imm; }
 
@@ -48,7 +48,7 @@ private:
                             ShaderLang lang, 
                             ShaderType shaderType
                         ) 
-        { return R_RESULT_NO_IMPL; }
+        { return RecluseResult_NoImpl; }
 
     ShaderIntermediateCode m_imm;
 };

@@ -56,12 +56,10 @@ public:
 
     Camera* getCamera(U32 index) { return m_cameras[index]; }
 
-    // Register a system into the scene.
-    void registerSystem(ECS::AbstractSystem* pSystem) 
+    template<typename Sys>
+    void addSystemFor()
     {
-        // Registering any system must Initialize first.
-        pSystem->initialize(); 
-        m_systems.push_back(pSystem); 
+        registerSystem(Sys::getSystem());
     }
 
 protected:
@@ -76,13 +74,16 @@ protected:
 
     // Set up the scene. Usually should be called if the scene is new, and 
     // needs setting up.
-    virtual R_PUBLIC_API ErrType setUp() { return R_RESULT_NO_IMPL; }
+    virtual R_PUBLIC_API ErrType setUp() { return RecluseResult_NoImpl; }
 
     // Teardown the scene, for when any objects initialized, should be cleaned up 
     // by the scene.
-    virtual R_PUBLIC_API ErrType tearDown() { return R_RESULT_NO_IMPL; }
+    virtual R_PUBLIC_API ErrType tearDown() { return RecluseResult_NoImpl; }
 
 private:
+
+    // Register a system into the scene.
+    R_PUBLIC_API void registerSystem(ECS::AbstractSystem* pSystem);
 
     // Game objects in the scene.
     std::vector<ECS::GameEntity*>       m_entities;

@@ -44,13 +44,13 @@ public:
             pObject->serialize(pArchive);
         }
 
-        return R_RESULT_OK;
+        return RecluseResult_Ok;
     }
 
     ErrType deserialize(Archive* pArchive) override {
 
-        ErrType result = R_RESULT_OK;
-        while (result == R_RESULT_OK) {
+        ErrType result = RecluseResult_Ok;
+        while (result == RecluseResult_Ok) {
             RGUID rguid;
             U32 numChilren  = 0;
             U32 nameSz      = 0;
@@ -61,11 +61,11 @@ public:
             result          = pArchive->read(name, nameSz);
             name[nameSz]    = '\0';
 
-            if (result == R_RESULT_OK) {
+            if (result == RecluseResult_Ok) {
             }
         }
 
-        return R_RESULT_OK;
+        return RecluseResult_Ok;
     }
 };
 

@@ -25,10 +25,10 @@ void Shader::destroy(Shader* pShader)
 }
 
 
-void Shader::genCrc()
+void Shader::genHashId()
 {
     Hash64 hash = recluseHash(m_byteCode.data(), m_byteCode.size());
-    m_crc = hash;
+    m_hashId = hash;
 }
 
 
@@ -40,9 +40,9 @@ ErrType Shader::load(const char* pByteCode, U64 szBytes, ShaderIntermediateCode 
     m_intermediateCode  = imm;
     m_shaderType        = shaderType;
 
-    genCrc();
+    genHashId();
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -55,7 +55,7 @@ ErrType ShaderBuilder::compile
         ShaderType shaderType
     )
 {
-    ErrType result              = R_RESULT_OK;
+    ErrType result              = RecluseResult_Ok;
 
     std::vector<char> srcCodeString;
     std::vector<char> byteCodeString;
@@ -66,7 +66,7 @@ ErrType ShaderBuilder::compile
 
     result = onCompile(srcCodeString, byteCodeString, lang, shaderType);
 
-    if (result == R_RESULT_OK) 
+    if (result == RecluseResult_Ok) 
     {
         pShader->load(byteCodeString.data(), byteCodeString.size(), getIntermediateCode(), shaderType);
     } 
@@ -87,7 +87,7 @@ Shader* Shader::convertTo(ShaderIntermediateCode intermediateCode)
 
 ErrType Shader::saveToFile(const char* filePath)
 {
-    ErrType result = R_RESULT_OK;
+    ErrType result = RecluseResult_Ok;
     FileBufferData data = { };
     data.resize(m_byteCode.size());
     std::copy(m_byteCode.begin(), m_byteCode.end(), data.begin());

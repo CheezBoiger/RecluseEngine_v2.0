@@ -21,30 +21,30 @@ ErrType Mouse::integrateInput(const IInputFeedback& feedback)
 
     updatePosition(xPosition, yPosition);
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
 ErrType Mouse::initialize(const std::string& controllerName)
 {
-    return R_RESULT_NO_IMPL;
+    return RecluseResult_NoImpl;
 }
 
 
 ErrType Mouse::destroy()
 {
-    return R_RESULT_NO_IMPL;
+    return RecluseResult_NoImpl;
 }
 
 
 ErrType Mouse::getInput(IInputFeedback& feedback)
 {
-    return R_RESULT_NO_IMPL;
+    return RecluseResult_NoImpl;
 }
 
 
 ErrType Mouse::setIconPath(const std::string& iconPath)
 {
-    return R_RESULT_NO_IMPL;
+    return RecluseResult_NoImpl;
 }
 } // Recluse

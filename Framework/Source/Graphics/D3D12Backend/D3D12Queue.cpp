@@ -33,10 +33,10 @@ ErrType D3D12Queue::initialize(D3D12Device* pDevice)
     {
         R_ERR(R_CHANNEL_D3D12, "Failed to create command queue!");
 
-        return R_RESULT_FAILED;        
+        return RecluseResult_Failed;        
     }    
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 

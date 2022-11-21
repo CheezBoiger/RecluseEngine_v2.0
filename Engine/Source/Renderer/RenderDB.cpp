@@ -40,23 +40,23 @@ ErrType cacheGPUBuffer(RenderID id, GPUBuffer* pBuffer)
 {
     if (isCachedGPUBuffer(id) && k_gpuBufferMap[id] != nullptr) 
     {
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }
 
     k_gpuBufferMap[id] = pBuffer;
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
 ErrType cacheTexture2D(RenderID id, Texture2D* pTexture)
 {
     if (isCachedTexture2D(id) && k_textureMap[id] != nullptr)
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
 
     k_textureMap[id] = pTexture;
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 

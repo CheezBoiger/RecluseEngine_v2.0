@@ -187,7 +187,8 @@ RealtimeTick::RealtimeTick(U32 watchType)
 
     if (gWin32Runtime.watchId[watchType] == 0)
     {
-        R_ERR("RealtimeTick", "Can't query uninitialized watch=%d!", watchType);
+        R_WARN("RealtimeTick", "Can't query uninitialized watch=%d! Likely not initialized yet.", watchType);
+        return;
     }
     
     const Win32RuntimeTick& nativeTick = gWin32Runtime.ticks[watchType];

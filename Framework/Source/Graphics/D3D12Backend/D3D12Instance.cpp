@@ -49,7 +49,7 @@ ErrType D3D12Instance::onInitialize(const ApplicationInfo& appInfo, EnableLayerF
     R_DEBUG(R_CHANNEL_D3D12, "Initializing D3D12 context...");
     HRESULT result = S_OK;
 
-    if (flags & LAYER_FEATURE_DEBUG_VALIDATION_BIT) 
+    if (flags & LayerFeature_DebugValidationBit) 
     {
         enableDebugValidation();
     }    
@@ -58,10 +58,10 @@ ErrType D3D12Instance::onInitialize(const ApplicationInfo& appInfo, EnableLayerF
 
     if (result != S_OK) 
     {
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 

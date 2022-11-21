@@ -18,7 +18,7 @@ public:
     ErrType onInitialize() override 
     {
         m_top = (PtrType)getBaseAddr();
-        return R_RESULT_OK;
+        return RecluseResult_Ok;
     }
 
     ErrType onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override 
@@ -30,14 +30,14 @@ public:
     
         if (endAddr >= szAddr) 
         {
-            return R_RESULT_OUT_OF_MEMORY;
+            return RecluseResult_OutOfMemory;
         }
 
         pOutput->baseAddress        = m_top;
         pOutput->sizeBytes          = neededSzBytes;
         m_top                       = endAddr;
 
-        return R_RESULT_OK;
+        return RecluseResult_Ok;
     }
 
     PtrType getTop() const 
@@ -48,17 +48,17 @@ public:
     ErrType onReset() override 
     { 
         m_top = (PtrType)getBaseAddr();
-        return R_RESULT_OK;
+        return RecluseResult_Ok;
     }
 
     ErrType onCleanUp() override 
     {
-        return R_RESULT_OK;
+        return RecluseResult_Ok;
     }
 
     ErrType onFree(Allocation* pOutput) override
     {
-        return R_RESULT_OK;
+        return RecluseResult_Ok;
     }
 
 private:

@@ -62,7 +62,7 @@ public:
     {
         m_allocator = pAllocator; 
         m_pool = poolRef;
-        if (!m_allocator) return R_RESULT_NULL_PTR_EXCEPT;
+        if (!m_allocator) return RecluseResult_NullPtrExcept;
 
         // Since we only need to work with offsets relative to the address,
         // We don't need the real address.
@@ -70,7 +70,7 @@ public:
 
         m_frameGarbage.resize(garbageBufferCount);
 
-        return R_RESULT_OK; 
+        return RecluseResult_Ok; 
     }
 
     // Allocate memory from program managed heap. This will require 

@@ -62,7 +62,7 @@ static std::vector<const char*> loadExtensions(EnableLayerFlags flags)
             , "VK_KHR_get_physical_device_properties2"
         };
 
-    if (flags & LAYER_FEATURE_DEBUG_VALIDATION_BIT) 
+    if (flags & LayerFeature_DebugValidationBit) 
     {
         extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);    
     }
@@ -124,12 +124,12 @@ static std::vector<const char*> loadLayers(EnableLayerFlags flags)
 {
     std::vector<const char*> desiredLayers = { };
 
-    if (flags & LAYER_FEATURE_DEBUG_VALIDATION_BIT) 
+    if (flags & LayerFeature_DebugValidationBit) 
     {
         desiredLayers.push_back("VK_LAYER_KHRONOS_validation");
     }
 
-    if (flags & LAYER_FEATURE_API_DUMP_BIT) 
+    if (flags & LayerFeature_ApiDumpBit) 
     {
         desiredLayers.push_back("VK_LAYER_LUNARG_api_dump");
     }
@@ -214,7 +214,7 @@ ErrType VulkanInstance::onInitialize(const ApplicationInfo& appInfo, EnableLayer
 
     R_DEBUG(R_CHANNEL_VULKAN, "Application: %s\nEngine: %s", m_appName.c_str(), m_engineName.c_str());
 
-    if (flags & LAYER_FEATURE_DEBUG_VALIDATION_BIT) 
+    if (flags & LayerFeature_DebugValidationBit) 
     {
         setDebugCallback();
     }

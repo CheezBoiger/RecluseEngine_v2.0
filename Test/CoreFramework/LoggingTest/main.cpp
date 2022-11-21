@@ -43,7 +43,7 @@ ErrType printHello(void* data)
     }
 
     log << "Finished" << rFLUSH;
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 int main(int c, char* argv[])

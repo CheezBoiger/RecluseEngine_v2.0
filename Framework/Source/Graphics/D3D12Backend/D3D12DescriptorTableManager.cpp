@@ -258,12 +258,12 @@ ErrType DescriptorHeap::initialize(D3D12Device* pDevice, const D3D12_DESCRIPTOR_
 
     if (FAILED(result))
     {
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }
 
     m_heapDesc = desc;
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -275,7 +275,7 @@ ErrType DescriptorHeap::destroy(D3D12Device* pDevice)
         m_pHeap = nullptr;
     }
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -286,11 +286,11 @@ DescriptorHeapAllocation CpuDescriptorHeap::allocate(U32 numberDescriptors)
     R_ASSERT((m_currentTotalEntries + numberDescriptors) < m_heapDesc.NumDescriptors);
 
     Allocation alloc    = { };
-    ErrType err         = R_RESULT_OK;
+    ErrType err         = RecluseResult_Ok;
 
     err = m_pDescriptorHeapAllocator->allocate(&alloc, numberDescriptors * m_descriptorSize, m_descriptorSize);
 
-    if (err == R_RESULT_OK)
+    if (err == RecluseResult_Ok)
     {
         allocation = DescriptorHeapAllocation
                         (
@@ -313,11 +313,11 @@ DescriptorHeapAllocation GpuDescriptorHeap::allocate(U32 numberDescriptors)
     R_ASSERT((m_currentTotalEntries + numberDescriptors) < m_heapDesc.NumDescriptors);
 
     Allocation alloc    = { };
-    ErrType err         = R_RESULT_OK;
+    ErrType err         = RecluseResult_Ok;
 
     err = m_pDescriptorHeapAllocator->allocate(&alloc, numberDescriptors * m_descriptorSize, m_descriptorSize);
     
-    if (err == R_RESULT_OK)
+    if (err == RecluseResult_Ok)
     {
         allocation = DescriptorHeapAllocation
                         (

@@ -20,7 +20,7 @@ GraphicsInstance* GraphicsInstance::createInstance(enum GraphicsAPI api)
     switch (api) 
     {
 #if defined RCL_DX12
-        case GRAPHICS_API_D3D12:
+        case GraphicsApi_Direct3D12:
         {
             R_DEBUG("Graphics", "Creating D3D12 instance...");
             D3D12Instance* ins = rlsMalloc<D3D12Instance>();
@@ -28,7 +28,7 @@ GraphicsInstance* GraphicsInstance::createInstance(enum GraphicsAPI api)
         } 
 #endif
 #if defined RCL_VULKAN
-        case GRAPHICS_API_VULKAN:
+        case GraphicsApi_Vulkan:
 
         { 
             R_DEBUG("Graphics", "Creating Vulkan instance...");
@@ -36,10 +36,10 @@ GraphicsInstance* GraphicsInstance::createInstance(enum GraphicsAPI api)
             return ins;
         }
 #endif
-        case GRAPHICS_API_OPENGL:
-        case GRAPHICS_API_D3D11:
-        case GRAPHICS_API_SOFTWARE_RASTERIZER:
-        case GRAPHICS_API_SOFTWARE_RAYTRACER:
+        case GraphicsApi_OpenGL:
+        case GraphicsApi_Direct3D11:
+        case GraphicsApi_SoftwareRasterizer:
+        case GraphicsApi_SoftwareRaytracer:
         default:
             R_ERR("Graphics", "Unsupported graphics api. Can not create instance!");
 
@@ -53,12 +53,12 @@ ErrType GraphicsInstance::destroyInstance(GraphicsInstance* pInstance)
     if (!pInstance) 
     {
         R_ERR("Graphics", "Null pointer passed to %s", __FUNCTION__);
-        return R_RESULT_NULL_PTR_EXCEPT;
+        return RecluseResult_NullPtrExcept;
     }
 
     pInstance->destroy();
     rlsFree<GraphicsInstance>(pInstance);
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 } // Recluse

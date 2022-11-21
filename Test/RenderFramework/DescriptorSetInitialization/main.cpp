@@ -51,7 +51,7 @@ void updateResource(GraphicsResource* pResource)
     void* ptr           = nullptr;
     ErrType result      = pResource->map(&ptr, &mapRange);
     
-    if (result != R_RESULT_OK) {
+    if (result != RecluseResult_Ok) {
     
         R_ERR("TEST", "Failed to map to resource!");
     
@@ -77,11 +77,11 @@ int main(int c, char* argv[])
     DescriptorSet*  pSet            = nullptr;
     GraphicsSwapchain* pSwapchain   = nullptr;
     std::vector<RenderPass*> renderPasses;
-    ErrType result                  = R_RESULT_OK;
+    ErrType result                  = RecluseResult_Ok;
 
     pWindow = Window::create(u8"DescriptorSetInitialization", 0, 0, 1024, 1024);
 
-    pInstance = GraphicsInstance::createInstance(GRAPHICS_API_VULKAN);
+    pInstance = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
 
     if (!pInstance) {
 
@@ -99,12 +99,12 @@ int main(int c, char* argv[])
         appInfo.engineMinor = 0;
         appInfo.engineName = "DescriptorSetInitialization";
 
-        EnableLayerFlags flags = LAYER_FEATURE_DEBUG_VALIDATION_BIT;
+        EnableLayerFlags flags = LayerFeature_DebugValidationBit;
 
         result = pInstance->initialize(appInfo, flags);
     }
 
-    if (result != R_RESULT_OK) {
+    if (result != RecluseResult_Ok) {
     
         R_ERR("TEST", "Failed to initialize context!");    
 
@@ -117,14 +117,14 @@ int main(int c, char* argv[])
         DeviceCreateInfo info = { };
         info.buffering = 2;
         info.winHandle = pWindow->getNativeHandle();
-        info.swapchainDescription.buffering = FRAME_BUFFERING_TRIPLE;
+        info.swapchainDescription.buffering = FrameBuffering_Double;
         info.swapchainDescription.desiredFrames = 2;
         info.swapchainDescription.renderWidth = 1024;
         info.swapchainDescription.renderHeight = 1024;
         result = pAdapter->createDevice(info, &pDevice);
     }
 
-    if (result != R_RESULT_OK) {
+    if (result != RecluseResult_Ok) {
     
         R_ERR("TEST", "Failed to create device from adapter!");
     
@@ -132,15 +132,15 @@ int main(int c, char* argv[])
 
     {
         MemoryReserveDesc mem = { };
-        mem.bufferPools[RESOURCE_MEMORY_USAGE_CPU_ONLY] = 1 * R_1MB;
-        mem.bufferPools[RESOURCE_MEMORY_USAGE_GPU_ONLY] = 1 * R_1MB;
-        mem.bufferPools[RESOURCE_MEMORY_USAGE_CPU_TO_GPU] = 1 * R_1KB;
-        mem.bufferPools[RESOURCE_MEMORY_USAGE_GPU_TO_CPU] = 1 * R_1KB;
+        mem.bufferPools[ResourceMemoryUsage_CpuOnly] = 1 * R_1MB;
+        mem.bufferPools[ResourceMemoryUsage_GpuOnly] = 1 * R_1MB;
+        mem.bufferPools[ResourceMemoryUsage_CpuToGpu] = 1 * R_1KB;
+        mem.bufferPools[ResourceMemoryUsage_GpuToCpu] = 1 * R_1KB;
         mem.texturePoolGPUOnly = 1 * R_1MB;
         result = pDevice->reserveMemory(mem);
     }
 
-    if (result != R_RESULT_OK) {
+    if (result != RecluseResult_Ok) {
     
         R_ERR("TEST", "Failed to reserve memory!");
     
@@ -150,27 +150,25 @@ int main(int c, char* argv[])
         SwapchainCreateDescription info = { };
     }
 
-    if (result != R_RESULT_OK) {
+    if (result != RecluseResult_Ok) {
 
         R_ERR("TEST", "FAILED TO CREATE SWAPCHAIN!!");    
 
     }
 
-    pList = pDevice->getCommandList();
-
     {
         GraphicsResourceDescription desc = { };
-        desc.usage = RESOURCE_USAGE_CONSTANT_BUFFER;
-        desc.dimension = RESOURCE_DIMENSION_BUFFER;
+        desc.usage = ResourceUsage_ConstantBuffer;
+        desc.dimension = ResourceDimension_Buffer;
         desc.width = sizeof(VertexData);
         desc.depth = 1;
         desc.height = 1;
-        desc.memoryUsage = RESOURCE_MEMORY_USAGE_CPU_ONLY;
+        desc.memoryUsage = ResourceMemoryUsage_CpuOnly;
         desc.samples = 1;
-        result = pDevice->createResource(&pData, desc, RESOURCE_STATE_VERTEX_AND_CONST_BUFFER);
+        result = pDevice->createResource(&pData, desc, ResourceState_VertexAndConstantBuffer);
     }
 
-    if (result != R_RESULT_OK) {
+    if (result != RecluseResult_Ok) {
     
         R_ERR("TEST", "Failed to create resource!");
     
@@ -185,15 +183,15 @@ int main(int c, char* argv[])
         desc.numDescriptorBinds = 1;
 
         bindLayout.binding = 0;
-        bindLayout.bindType = DESCRIPTOR_CONSTANT_BUFFER;
+        bindLayout.bindType = DescriptorBindType_ConstantBuffer;
         bindLayout.numDescriptors = 1;
-        bindLayout.shaderStages = SHADER_TYPE_FRAGMENT | SHADER_TYPE_VERTEX;
+        bindLayout.shaderStages = ShaderType_Fragment | ShaderType_Vertex;
 
         result = pDevice->createDescriptorSetLayout(&pLayout, desc);
         
     }
     
-    if (result != R_RESULT_OK) {
+    if (result != RecluseResult_Ok) {
 
         R_ERR("TEST", "Failed to create descriptor set layout!");
     
@@ -201,7 +199,7 @@ int main(int c, char* argv[])
 
     result = pDevice->createDescriptorSet(&pSet, pLayout);
 
-    if (result != R_RESULT_OK) {
+    if (result != RecluseResult_Ok) {
     
         R_ERR("TEST", "Failed to create descriptor set!");
     
@@ -210,7 +208,7 @@ int main(int c, char* argv[])
     {
         DescriptorSetBind bind = { };
         bind.binding = 0;
-        bind.bindType = DESCRIPTOR_CONSTANT_BUFFER;
+        bind.bindType = DescriptorBindType_ConstantBuffer;
         bind.descriptorCount = 1;
         bind.cb.buffer = pData;
         bind.cb.offset = 0;
@@ -218,7 +216,7 @@ int main(int c, char* argv[])
         result = pSet->update(&bind, 1);
     }
     
-    if (result != R_RESULT_OK) {
+    if (result != RecluseResult_Ok) {
     
         R_ERR("TEST", "Failed to update descriptor set!");
     
@@ -236,7 +234,7 @@ int main(int c, char* argv[])
             desc.ppRenderTargetViews[0] = pSwapchain->getFrameView(i);
             result = pDevice->createRenderPass(&renderPasses[i], desc);
 
-            if (result != R_RESULT_OK) {
+            if (result != RecluseResult_Ok) {
         
                 R_ERR("TEST", "Failed to create render pass for frame view: %d", i);
                 
@@ -263,30 +261,32 @@ int main(int c, char* argv[])
         if (index != 0) index -= 50.f * tick.delta();
         Rect rect = { 200.f + (F32)index, 200.f, 1024.f/2.f, 1024.f/2.f };
         Rect rect2 = { 0.f, 0.f, 1024.f, 1024.f };
-        pList->begin();
-            ResourceTransition trans = MAKE_RESOURCE_TRANSITION(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), RESOURCE_STATE_RENDER_TARGET, 0, 1, 0, 1);
-            pList->transition(&trans, 1);
-            pList->setRenderPass(renderPasses[pSwapchain->getCurrentFrameIndex()]);
-            pList->clearRenderTarget(0, color2, rect2);
-            pList->clearRenderTarget(0, color, rect);
-            pList->setRenderPass(renderPasses[pSwapchain->getCurrentFrameIndex()]);
-            pList->clearRenderTarget(0, color2, rect2);
-            pList->clearRenderTarget(0, color, rect);
 
-            GraphicsResourceView* pView = pSwapchain->getFrameView(pSwapchain->getCurrentFrameIndex());
-            pList->transition(&trans, 1);
-            pList->transition(&trans, 1);
-        pList->end();
+        pDevice->getContext()->begin();
+            pList = pDevice->getContext()->getCommandList();
+            //pList->begin();
+                pList->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
+                pList->setRenderPass(renderPasses[pSwapchain->getCurrentFrameIndex()]);
+                pList->clearRenderTarget(0, color2, rect2);
+                pList->clearRenderTarget(0, color, rect);
+                pList->setRenderPass(renderPasses[pSwapchain->getCurrentFrameIndex()]);
+                pList->clearRenderTarget(0, color2, rect2);
+                pList->clearRenderTarget(0, color, rect);
 
+                GraphicsResourceView* pView = pSwapchain->getFrameView(pSwapchain->getCurrentFrameIndex());
+                pList->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
+                pList->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
+            //pList->end();
+        pDevice->getContext()->end();
         F32 deltaFrameRate = 1.0f / tick.delta();
         counterFps += tick.delta();
 
-        GraphicsSwapchain::PresentConfig conf = GraphicsSwapchain::DELAY_PRESENT;
+        GraphicsSwapchain::PresentConfig conf = GraphicsSwapchain::PresentConfig_DelayPresent;
         if (counterFps >= desiredFps)
         {
             R_VERBOSE("Test", "Frame Rate: %f fps, time: %f", 1.0f / counterFps, tick.getCurrentTimeS());
             counterFps = 0.f;
-            conf = GraphicsSwapchain::NORMAL_PRESENT;
+            conf = GraphicsSwapchain::PresentConfig_Present;
         }
 
         pSwapchain->present(conf);
@@ -294,7 +294,7 @@ int main(int c, char* argv[])
     }
 
     R_TRACE("TEST", "Exited game loop...");
-    pDevice->wait();    
+    pDevice->getContext()->wait();    
 
     for (U32 i = 0; i < pSwapchain->getDesc().desiredFrames; ++i) {
         pDevice->destroyRenderPass(renderPasses[i]);

@@ -15,6 +15,7 @@ enum QualitySetting
 class RendererConfigs
 {
 public:
+	void*			windowHandle;
     U32             renderWidth;
     U32             renderHeight;
     U32             buffering;

@@ -7,12 +7,13 @@
 namespace Recluse {
 
 class D3D12Device;
+class D3D12Context;
 
-class D3D12CommandList : public GraphicsCommandList 
+class D3D12PrimaryCommandList : public GraphicsCommandList 
 {
 public:
     
-    ErrType initialize(D3D12Device* pDevice, GraphicsQueueTypeFlags flags);
+    ErrType initialize(D3D12Context* pDevice, GraphicsQueueTypeFlags flags);
     ErrType destroy();
 
     void begin() override;
@@ -28,6 +29,6 @@ private:
     std::vector<ID3D12CommandAllocator*>        m_allocators;
     ID3D12GraphicsCommandList4*                 m_currentCmdList;
     ID3D12CommandAllocator*                     m_currentAllocator;
-    D3D12Device* m_pDevice;
+    D3D12Context*                               m_pDeviceContext;
 };
 } // Recluse

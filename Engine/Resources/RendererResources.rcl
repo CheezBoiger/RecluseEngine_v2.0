@@ -6,7 +6,8 @@ namespace Recluse {
 		RenderEvent_Resume,
 		RenderEvent_Shutdown,
 		RenderEvent_ConfigureRenderer,
-		RenderEvent_SceneUpdate
+		RenderEvent_SceneUpdate,
+		RenderEvent_Initialize
 	};
 
 	enum TextureRenderId {

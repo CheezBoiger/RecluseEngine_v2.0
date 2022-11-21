@@ -19,7 +19,7 @@ ErrType D3D12Swapchain::initialize(D3D12Device* pDevice)
     {
         R_ERR(R_CHANNEL_D3D12, "Can not create swapchain without a window handle!");
 
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }
 
     const SwapchainCreateDescription& desc  = getDesc();
@@ -67,7 +67,7 @@ ErrType D3D12Swapchain::initialize(D3D12Device* pDevice)
     {
         R_ERR(R_CHANNEL_D3D12, "Failed to create d3d12 swapchain!");
         
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }
 
     result = swapchain1->QueryInterface<IDXGISwapChain3>(&m_pSwapchain);
@@ -79,7 +79,7 @@ ErrType D3D12Swapchain::initialize(D3D12Device* pDevice)
 
         destroy();
 
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }
 
     m_maxFrames         = desc.desiredFrames;
@@ -89,7 +89,7 @@ ErrType D3D12Swapchain::initialize(D3D12Device* pDevice)
     // Initialize our frame resources, make sure to assign device and other values before calling this.
     initializeFrameResources();
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -121,9 +121,10 @@ GraphicsResourceView* D3D12Swapchain::getFrameView(U32 idx)
 
 ErrType D3D12Swapchain::present(PresentConfig config)
 {
+    D3D12Context* pContext      = staticCast<D3D12Context*>(m_pDevice->getContext());
     ID3D12CommandQueue* pQueue  = m_pBackbufferQueue->get();
     HRESULT result              = S_OK;
-    BufferResources* pBR        = m_pDevice->getCurrentBufferResource();
+    BufferResources* pBR        = pContext->getCurrentBufferResource();
     HANDLE pEvent               = nullptr;
     ID3D12Fence* pFence         = nullptr;
     U64 currentValue            = 0;
@@ -146,23 +147,7 @@ ErrType D3D12Swapchain::present(PresentConfig config)
 
     m_currentFrameIndex = m_pSwapchain->GetCurrentBackBufferIndex();
 
-    m_pDevice->incrementBufferIndex();
-
-    pBR             = m_pDevice->getCurrentBufferResource();
-    pFence          = pBR->pFence;
-    pEvent          = pBR->pEvent;
-    currentValue    = pBR->fenceValue;
-
-    if (pFence->GetCompletedValue() < currentValue) 
-    {
-        pFence->SetEventOnCompletion(currentValue, pEvent);
-        WaitForSingleObjectEx(pEvent, INFINITE, false);
-    }
-
-    //m_frameResources[m_currentFrameIndex].fenceValue = currentFenceValue + 1;
-    m_pDevice->resetCurrentResources();
-
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -181,7 +166,7 @@ ErrType D3D12Swapchain::initializeFrameResources()
 
     m_currentFrameIndex = m_pSwapchain->GetCurrentBackBufferIndex();
     
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -197,14 +182,15 @@ ErrType D3D12Swapchain::destroyFrameResources()
         m_frameResources.clear();
     }
 
-    return R_RESULT_NO_IMPL;
+    return RecluseResult_NoImpl;
 }
 
 
 ErrType D3D12Swapchain::flushFinishedCommandLists()
 {
+    D3D12Context* pContext              = staticCast<D3D12Context*>(m_pDevice->getContext());
     ID3D12CommandQueue* pQueue          = m_pBackbufferQueue->get();
-    ID3D12GraphicsCommandList* pCmdList = static_cast<D3D12CommandList*>(m_pDevice->getCommandList())->get();
+    ID3D12GraphicsCommandList* pCmdList = staticCast<D3D12PrimaryCommandList*>(pContext->getCommandList())->get();
 
     if (pCmdList) 
     {
@@ -212,6 +198,6 @@ ErrType D3D12Swapchain::flushFinishedCommandLists()
         pQueue->ExecuteCommandLists(1, pLists);
     }
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 } // Recluse

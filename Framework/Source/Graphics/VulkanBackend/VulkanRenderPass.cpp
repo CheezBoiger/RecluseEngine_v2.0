@@ -199,7 +199,7 @@ ErrType VulkanRenderPass::initialize(VulkanDevice* pDevice, const RenderPassDesc
 
         destroy(pDevice);
 
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }
 
     fboIf.sType             = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -230,7 +230,7 @@ ErrType VulkanRenderPass::initialize(VulkanDevice* pDevice, const RenderPassDesc
 
             destroy(pDevice);
 
-            return R_RESULT_FAILED;
+            return RecluseResult_Failed;
         }
 
         cacheFbo(fboId, m_fbo);
@@ -242,7 +242,7 @@ ErrType VulkanRenderPass::initialize(VulkanDevice* pDevice, const RenderPassDesc
     m_renderArea.offset = { 0, 0 };
     m_fboId             = fboId;
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -263,7 +263,7 @@ ErrType VulkanRenderPass::destroy(VulkanDevice* pDevice)
         m_fbo = VK_NULL_HANDLE;
     }
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 

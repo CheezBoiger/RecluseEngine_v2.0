@@ -20,7 +20,7 @@ void* operator new (size_t sizeBytes, Recluse::Allocator* alloc, Recluse::Alloca
         pOutput->sizeBytes      = allocationOutput.sizeBytes;
     }
 
-    R_ASSERT(err == Recluse::R_RESULT_OK);
+    R_ASSERT(err == Recluse::RecluseResult_Ok);
 
     return (void*)allocationOutput.baseAddress;
 }
@@ -33,7 +33,7 @@ void* operator new (size_t sizeBytes, Recluse::Allocator* alloc)
     Recluse::Allocation allocationOutput    = { 0ull, 0ull };
     Recluse::ErrType err                    = alloc->allocate(&allocationOutput, sizeBytes, ARCH_PTR_SZ_BYTES);
 
-    R_ASSERT(err == Recluse::R_RESULT_OK);
+    R_ASSERT(err == Recluse::RecluseResult_Ok);
 
     return (void*)allocationOutput.baseAddress;
 }
@@ -51,5 +51,5 @@ void operator delete(void* ptr, Recluse::Allocator* alloc)
 
     Recluse::ErrType err = alloc->free(&allocation);
 
-    R_ASSERT(err == Recluse::R_RESULT_OK);
+    R_ASSERT(err == Recluse::RecluseResult_Ok);
 }

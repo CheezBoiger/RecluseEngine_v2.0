@@ -48,7 +48,7 @@ private:
     {
         while (!m_allWorkersFinished)
         {
-            if (tryLockMutex(m_mutex) == R_RESULT_OK)
+            if (tryLockMutex(m_mutex) == RecluseResult_Ok)
             {
                 TaskJob taskJob = m_jobTasks.back();
                 

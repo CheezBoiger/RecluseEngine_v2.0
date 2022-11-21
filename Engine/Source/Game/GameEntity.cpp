@@ -103,12 +103,12 @@ ErrType GameEntity::serialize(Archive* pArchive)
 
     pArchive->write((void*)str, szBytes);
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 ErrType GameEntity::deserialize(Archive* pArchive)
 {
-    return R_RESULT_NO_IMPL;
+    return RecluseResult_NoImpl;
 }
 } // ECS
 } // Recluse 

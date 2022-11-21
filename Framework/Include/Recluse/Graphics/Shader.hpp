@@ -12,46 +12,47 @@ namespace Recluse {
 
 enum ShaderIntermediateCode 
 {
-    INTERMEDIATE_UNKNOWN,
-    INTERMEDIATE_DXIL,
-    INTERMEDIATE_DXBC,
-    INTERMEDIATE_SPIRV
+    ShaderIntermediateCode_Unknown,
+    ShaderIntermediateCode_Dxil,
+    ShaderIntermediateCode_Dxbc,
+    ShaderIntermediateCode_Spirv
 };
 
 
 enum ShaderLang 
 {
-    SHADER_LANG_GLSL,
-    SHADER_LANG_HLSL,
-    SHADER_LANG_COUNT
+    ShaderLang_Glsl,
+    ShaderLang_Hlsl,
+    ShaderLang_Count
 };
 
 
 enum ShaderType 
 {
-    SHADER_TYPE_NONE            = (0),
-    SHADER_TYPE_VERTEX          = (1<<0),
-    SHADER_TYPE_HULL            = (1<<1),
-    SHADER_TYPE_TESS_CONTROL    = SHADER_TYPE_HULL,
-    SHADER_TYPE_DOMAIN          = (1<<2),
-    SHADER_TYPE_TESS_EVAL       = SHADER_TYPE_DOMAIN,
-    SHADER_TYPE_GEOMETRY        = (1<<3),
-    SHADER_TYPE_PIXEL           = (1<<4),
-    SHADER_TYPE_FRAGMENT        = SHADER_TYPE_PIXEL,
-    SHADER_TYPE_RAY_GEN         = (1<<5),
-    SHADER_TYPE_RAY_CLOSESTHIT  = (1<<6),
-    SHADER_TYPE_RAY_ANYHIT      = (1<<7),
-    SHADER_TYPE_RAY_INTERSECT   = (1<<8),
-    SHADER_TYPE_RAY_MISS        = (1<<9),
-    SHADER_TYPE_AMPLIFICATION   = (1<<10),
-    SHADER_TYPE_MESH            = (1<<11),
-    SHADER_TYPE_COMPUTE         = (1<<12),
-    SHADER_TYPE_ALL             = (0xFFFFFFFF)
+    ShaderType_None                     = (0),
+    ShaderType_Vertex                   = (1<<0),
+    ShaderType_Hull                     = (1<<1),
+    ShaderType_TessellationControl      = ShaderType_Hull,
+    ShaderType_Domain                   = (1<<2),
+    ShaderType_TessellationEvaluation   = ShaderType_Domain,
+    ShaderType_Geometry                 = (1<<3),
+    ShaderType_Pixel                    = (1<<4),
+    ShaderType_Fragment                 = ShaderType_Pixel,
+    ShaderType_RayGeneration            = (1<<5),
+    ShaderType_RayClosestHit            = (1<<6),
+    ShaderType_RayAnyHit                = (1<<7),
+    ShaderType_RayIntersect             = (1<<8),
+    ShaderType_RayMiss                  = (1<<9),
+    ShaderType_Amplification            = (1<<10),
+    ShaderType_Mesh                     = (1<<11),
+    ShaderType_Compute                  = (1<<12),
+    ShaderType_All                      = (0xFFFFFFFF)
 };
 
 typedef U32 ShaderTypeFlags;
 
 
+// Shader is a container that uses the crc
 class Shader final 
 {
 public:
@@ -63,14 +64,15 @@ public:
 private:
 
     Shader()
-        : m_intermediateCode(INTERMEDIATE_UNKNOWN)
-        , m_shaderType(SHADER_TYPE_NONE)
-        , m_crc(0ull) { }
+        : m_intermediateCode(ShaderIntermediateCode_Unknown)
+        , m_shaderType(ShaderType_None)
+        , m_hashId(0ull) { }
 
 public:
 
     ShaderIntermediateCode getIntermediateCodeType() const { return m_intermediateCode; }
 
+    // Load the bytecode data to the shader. This requires that the data be in bytecode, not source!
     R_PUBLIC_API ErrType load(const char* byteCode, U64 szBytes, ShaderIntermediateCode imm, ShaderType shaderType);
 
     // Save the compilation to a file.
@@ -84,17 +86,17 @@ public:
     
     U64 getSzBytes() const { return m_byteCode.size(); }
 
-    Hash64 getCrc() const { return m_crc; }
+    Hash64 getHashId() const { return m_hashId; }
 
 private:
 
-    // Generate CrC from bytecode value.
-    void genCrc();
+    // Generate id from bytecode value.
+    void genHashId();
 
     ShaderIntermediateCode  m_intermediateCode;
     ShaderType              m_shaderType;
     std::vector<char>       m_byteCode;
-    Hash64                  m_crc;
+    Hash64                  m_hashId;
     
 };
 } // Recluse

@@ -10,57 +10,58 @@ class GraphicsResource;
 
 enum BindType 
 {
-    BIND_TYPE_GRAPHICS,
-    BIND_TYPE_COMPUTE,
-    BIND_TYPE_RAY_TRACE,
+    BindType_Graphics,
+    BindType_Compute,
+    BindType_RayTrace,
 };
 
 
 enum ResourceDimension 
 {
-    RESOURCE_DIMENSION_BUFFER,
-    RESOURCE_DIMENSION_1D,
-    RESOURCE_DIMENSION_2D,
-    RESOURCE_DIMENSION_3D
+    ResourceDimension_Buffer,
+    ResourceDimension_1d,
+    ResourceDimension_2d,
+    ResourceDimension_3d
 };
 
 enum ResourceViewDimension 
 {
-    RESOURCE_VIEW_DIMENSION_BUFFER,
-    RESOURCE_VIEW_DIMENSION_1D,
-    RESOURCE_VIEW_DIMENSION_1D_ARRAY,
-    RESOURCE_VIEW_DIMENSION_2D,
-    RESOURCE_VIEW_DIMENSION_2D_MS,
-    RESOURCE_VIEW_DIMENSION_2D_ARRAY,
-    RESOURCE_VIEW_DIMENSION_3D,
-    RESOURCE_VIEW_DIMENSION_CUBE,
-    RESOURCE_VIEW_DIMENSION_CUBE_ARRAY
+    ResourceViewDimension_Buffer,
+    ResourceViewDimension_1d,
+    ResourceViewDimension_1dArray,
+    ResourceViewDimension_2d,
+    ResourceViewDimension_2dMultisample,
+    ResourceViewDimension_2dArray,
+    ResourceViewDimension_3d,
+    ResourceViewDimension_Cube,
+    ResourceViewDimension_CubeArray
 };
 
 
 enum ResourceMemoryUsage 
 {
-    RESOURCE_MEMORY_USAGE_CPU_ONLY,
-    RESOURCE_MEMORY_USAGE_GPU_ONLY,
-    RESOURCE_MEMORY_USAGE_CPU_TO_GPU,
-    RESOURCE_MEMORY_USAGE_GPU_TO_CPU,
-    RESOURCE_MEMORY_USAGE_COUNT = (RESOURCE_MEMORY_USAGE_GPU_TO_CPU + 1)
+    ResourceMemoryUsage_CpuOnly,
+    ResourceMemoryUsage_GpuOnly,
+    ResourceMemoryUsage_CpuToGpu,
+    ResourceMemoryUsage_GpuToCpu,
+    ResourceMemoryUsage_Count = (ResourceMemoryUsage_GpuToCpu + 1)
 };
 
 
 enum ResourceUsage 
 {
-    RESOURCE_USAGE_VERTEX_BUFFER            = (1 << 0),
-    RESOURCE_USAGE_INDEX_BUFFER             = (1 << 1),
-    RESOURCE_USAGE_STORAGE_BUFFER           = (1 << 2),
-    RESOURCE_USAGE_RENDER_TARGET            = (1 << 3),
-    RESOURCE_USAGE_SHADER_RESOURCE          = (1 << 4),
-    RESOURCE_USAGE_CONSTANT_BUFFER          = (1 << 5),
-    RESOURCE_USAGE_TRANSFER_DESTINATION     = (1 << 6),
-    RESOURCE_USAGE_TRANSFER_SOURCE          = (1 << 7),
-    RESOURCE_USAGE_INDIRECT                 = (1 << 8),
-    RESOURCE_USAGE_DEPTH_STENCIL            = (1 << 9),
-    RESOURCE_USAGE_STORAGE_IMAGE            = (1 << 10)
+    ResourceUsage_VertexBuffer            = (1 << 0),
+    ResourceUsage_IndexBuffer             = (1 << 1),
+    ResourceUsage_RenderTarget            = (1 << 2),
+    ResourceUsage_ShaderResource          = (1 << 3),
+    ResourceUsage_ConstantBuffer          = (1 << 4),
+    ResourceUsage_TransferDestination     = (1 << 5),
+    ResourceUsage_CopyDestination         = ResourceUsage_TransferDestination,
+    ResourceUsage_TransferSource          = (1 << 6),
+    ResourceUsage_CopySource              = ResourceUsage_TransferSource,
+    ResourceUsage_IndirectBuffer          = (1 << 7),
+    ResourceUsage_DepthStencil            = (1 << 8),
+    ResourceUsage_UnorderedAccess         = (1 << 9)
 };
 
 
@@ -69,44 +70,50 @@ typedef U32 ResourceUsageFlags;
 
 enum ResourceViewType 
 {
-    RESOURCE_VIEW_TYPE_RENDER_TARGET,
-    RESOURCE_VIEW_TYPE_SHADER_RESOURCE,
-    RESOURCE_VIEW_TYPE_STORAGE_BUFFER,
-    RESOURCE_VIEW_TYPE_STORAGE_IMAGE,
-    RESOURCE_VIEW_TYPE_DEPTH_STENCIL
+    ResourceViewType_RenderTarget,
+    ResourceViewType_ShaderResource,
+    ResourceViewType_UnorderedAccess,
+    ResourceViewType_DepthStencil
 };
 
 
 enum ResourceState 
 {
-    RESOURCE_STATE_RENDER_TARGET,
-    RESOURCE_STATE_SHADER_RESOURCE,
-    RESOURCE_STATE_COPY_DST,
-    RESOURCE_STATE_COPY_SRC,
-    RESOURCE_STATE_VERTEX_AND_CONST_BUFFER,
-    RESOURCE_STATE_INDEX_BUFFER,
-    RESOURCE_STATE_STORAGE,
-    RESOURCE_STATE_DEPTH_STENCIL_READONLY,
-    RESOURCE_STATE_DEPTH_STENCIL_WRITE,
-    RESOURCE_STATE_PRESENT,
-    RESOURCE_STATE_GENERAL
+    ResourceState_Common,
+    // Render Target resource state.
+    ResourceState_RenderTarget,
+    // Shader Resource State.
+    ResourceState_ShaderResource,
+    // Copy Destination state.
+    ResourceState_CopyDestination,
+    
+    ResourceState_CopySource,
+    ResourceState_VertexBuffer,
+    ResourceState_ConstantBuffer,
+    ResourceState_IndexBuffer,
+    // Unordered Access View State.
+    ResourceState_UnorderedAccess,
+    ResourceState_DepthStencilReadOnly,
+    ResourceState_DepthStencilWrite,
+    ResourceState_Present,
+    ResourceState_IndirectArgs
 };
 
 
 enum FrameBuffering 
 {
-    FRAME_BUFFERING_SINGLE, // Single immediate run.
-    FRAME_BUFFERING_DOUBLE, // VSync
-    FRAME_BUFFERING_TRIPLE // Triple buffering.
+    FrameBuffering_Single, // Single immediate run.
+    FrameBuffering_Double, // VSync
+    FrameBuffering_Triple // Triple buffering.
 };
 
 
 enum R_PUBLIC_API LayerFeatures 
 {
-    LAYER_FEATURE_RAY_TRACING_BIT   = (1 << 0),
-    LAYER_FEATURE_MESH_SHADING_BIT  = (1 << 1),
-    LAYER_FEATURE_DEBUG_VALIDATION_BIT         = (1 << 2),
-    LAYER_FEATURE_API_DUMP_BIT      = (1 << 3)
+    LayerFeature_RaytracingBit       = (1 << 0),
+    LayerFeature_MeshShadingBit      = (1 << 1),
+    LayerFeature_DebugValidationBit  = (1 << 2),
+    LayerFeature_ApiDumpBit          = (1 << 3)
 };
 
 
@@ -115,30 +122,31 @@ typedef U32 EnableLayerFlags;
 
 enum GraphicsAPI 
 {
-    GRAPHICS_API_UNKNOWN,
-    GRAPHICS_API_SOFTWARE_RASTERIZER,
-    GRAPHICS_API_SOFTWARE_RAYTRACER,
-    GRAPHICS_API_VULKAN,
-    GRAPHICS_API_OPENGL,
-    GRAPHICS_API_D3D11,
-    GRAPHICS_API_D3D12
+    GraphicsApi_Unknown,
+    GraphicsApi_SoftwareRasterizer,
+    GraphicsApi_SoftwareRaytracer,
+    GraphicsApi_Vulkan,
+    GraphicsApi_OpenGL,
+    GraphicsApi_Direct3D11,
+    GraphicsApi_Direct3D12
 };
 
 
 enum DescriptorBindType 
 {
-    DESCRIPTOR_SHADER_RESOURCE_VIEW,
-    DESCRIPTOR_STORAGE_BUFFER,
-    DESCRIPTOR_STORAGE_IMAGE,
-    DESCRIPTOR_CONSTANT_BUFFER,
-    DESCRIPTOR_SAMPLER
+    DescriptorBindType_ShaderResourceView,
+    DescriptorBindType_StorageBuffer,
+    DescriptorBindType_StorageImage,
+    DescriptorBindType_ConstantBuffer,
+    DescriptorBindType_UnorderedAccessView,
+    DescriptorBindType_Sampler
 };
 
 
 enum IndexType 
 {
-    INDEX_TYPE_UINT16,
-    INDEX_TYPE_UINT32
+    IndexType_Unsigned16,
+    IndexType_Unsigned32
 };
 
 
@@ -182,39 +190,39 @@ struct SwapchainCreateDescription
 
 enum SamplerAddressMode 
 {
-    SAMPLER_ADDRESS_MODE_REPEAT,
-    SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT,
-    SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-    SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER,
-    SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE
+    SamplerAddressMode_Repeat,
+    SamplerAddressMode_MirroredRepeat,
+    SamplerAddressMode_ClampToEdge,
+    SamplerAddressMode_ClampToBorder,
+    SamplerAddressMode_MirrorClampToEdge
 };
 
 
 enum Filter 
 {
-    FILTER_LINEAR,
-    FILTER_NEAREST,
-    FILTER_CUBIC_IMG
+    Filter_Linear,
+    Filter_Nearest,
+    Filter_Cubic
 };
 
 
 enum SamplerMipMapMode 
 {
-    SAMPLER_MIP_MAP_MODE_NEAREST,
-    SAMPLER_MIP_MAP_MODE_LINEAR
+    SamplerMipMapMode_Nearest,
+    SamplerMipMapMode_Linear
 };
 
 
 enum CompareOp 
 {
-    COMPARE_OP_NEVER,
-    COMPARE_OP_LESS,
-    COMPARE_OP_EQUAL,
-    COMPARE_OP_LESS_OR_EQUAL,
-    COMPARE_OP_GREATER,
-    COMPARE_OP_NOT_EQUAL,
-    COMPARE_OP_GREATER_OR_EQUAL,
-    COMPARE_OP_ALWAYS
+    CompareOp_Never,
+    CompareOp_Less,
+    CompareOp_Equal,
+    CompareOp_LessOrEqual,
+    CompareOp_Greater,
+    CompareOp_NotEqual,
+    CompareOp_GreaterOrEqual,
+    CompareOp_Always
 };
 
 

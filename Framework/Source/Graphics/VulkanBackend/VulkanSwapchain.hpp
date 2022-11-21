@@ -33,7 +33,7 @@ public:
 
     ErrType                 onRebuild() override;
     
-    ErrType                 present(PresentConfig config = NORMAL_PRESENT) override; 
+    ErrType                 present(PresentConfig config = PresentConfig_Present) override; 
 
     U32                     getCurrentFrameIndex() override { return m_currentImageIndex; }
 

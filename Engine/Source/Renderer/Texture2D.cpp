@@ -45,31 +45,31 @@ ErrType Texture2D::initialize(Renderer* pRenderer, ResourceFormat format, U32 wi
 {
     GraphicsDevice* pDevice             = pRenderer->getDevice();
     GraphicsResourceDescription desc    = { };
-    ErrType result                      = R_RESULT_OK;
+    ErrType result                      = RecluseResult_Ok;
 
-    desc.memoryUsage    = RESOURCE_MEMORY_USAGE_GPU_ONLY;
-    desc.usage          = RESOURCE_USAGE_TRANSFER_DESTINATION | RESOURCE_USAGE_SHADER_RESOURCE;
+    desc.memoryUsage    = ResourceMemoryUsage_GpuOnly;
+    desc.usage          = ResourceUsage_TransferDestination | ResourceUsage_ShaderResource;
     desc.arrayLevels    = arrayLevel;
     desc.mipLevels      = mips;
     desc.depth          = 1;
     desc.width          = width;
     desc.height         = height;
-    desc.dimension      = RESOURCE_DIMENSION_2D;
+    desc.dimension      = ResourceDimension_2d;
     desc.samples        = 1;
     desc.format         = format;
 
     switch (desc.format) 
     {
-        case RESOURCE_FORMAT_D24_UNORM_S8_UINT:
-        case RESOURCE_FORMAT_D32_FLOAT:
-        case RESOURCE_FORMAT_D32_FLOAT_S8_UINT:
-            desc.usage |= RESOURCE_USAGE_DEPTH_STENCIL;
+        case ResourceFormat_D24_Unorm_S8_Uint:
+        case ResourceFormat_D32_Float:
+        case ResourceFormat_D32_Float_S8_Uint:
+            desc.usage |= ResourceUsage_DepthStencil;
             break;
     }
 
-    result = pDevice->createResource(&m_resource, desc, RESOURCE_STATE_SHADER_RESOURCE);
+    result = pDevice->createResource(&m_resource, desc, ResourceState_ShaderResource);
 
-    if (result != R_RESULT_OK) 
+    if (result != RecluseResult_Ok) 
     {
         R_ERR("Texture2D", "Failed to create texture2D resource.");
         return result;
@@ -100,16 +100,16 @@ void Texture2D::destroy(Renderer* pRenderer)
 
 void Texture2D::load(Renderer* pRenderer, void* pData, U64 szBytes)
 {
-    ErrType result = R_RESULT_OK;
+    ErrType result = RecluseResult_Ok;
     
-    result = pRenderer->getDevice()->copyResource(m_resource, nullptr);
+    result = pRenderer->getDevice()->getContext()->copyResource(m_resource, nullptr);
 }
 
 
 ErrType TextureView::initialize(Renderer* pRenderer, Texture2D* pTexture, ResourceViewDesc& desc)
 {
     GraphicsDevice* pDevice = pRenderer->getDevice();
-    ErrType result = R_RESULT_OK;
+    ErrType result = RecluseResult_Ok;
 
     desc.pResource = pTexture->getResource();
 
@@ -131,7 +131,7 @@ ErrType TextureView::destroy(Renderer* pRenderer)
         m_view = nullptr;
     }
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 

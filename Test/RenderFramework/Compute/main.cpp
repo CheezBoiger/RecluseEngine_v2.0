@@ -53,7 +53,7 @@ int main(int c, char* argv[])
     Log::initializeLoggingSystem();
     RealtimeTick::initializeWatch(1ull, 0);
 
-    GraphicsInstance* pInstance       = GraphicsInstance::createInstance(GRAPHICS_API_VULKAN);
+    GraphicsInstance* pInstance       = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
     GraphicsAdapter* pAdapter       = nullptr;
     GraphicsDevice* pDevice         = nullptr;
     GraphicsResource* pData         = nullptr;
@@ -61,8 +61,9 @@ int main(int c, char* argv[])
     PipelineState* pPipeline        = nullptr;
     GraphicsSwapchain* pSwapchain   = nullptr;
     GraphicsCommandList* pList      = nullptr;
+    GraphicsContext* pContext       = nullptr;
     Window* pWindow                 = Window::create("Compute", 0, 0, 1024, 1024);
-    ErrType result                  = R_RESULT_OK;
+    ErrType result                  = RecluseResult_Ok;
 
     std::vector<GraphicsResourceView*> views;
     std::vector<DescriptorSet*> sets;
@@ -78,12 +79,12 @@ int main(int c, char* argv[])
         app.engineName = "Cat";
         app.appName = "Compute";
 
-        EnableLayerFlags flags = LAYER_FEATURE_DEBUG_VALIDATION_BIT;
+        EnableLayerFlags flags = LayerFeature_DebugValidationBit;
 
         result = pInstance->initialize(app, flags);
     }
     
-    if (result != R_RESULT_OK) 
+    if (result != RecluseResult_Ok) 
     {
         R_ERR("TEST", "Failed to initialize context!");   
     }
@@ -95,7 +96,7 @@ int main(int c, char* argv[])
         info.buffering = 3;
         info.winHandle = pWindow->getNativeHandle();
         info.swapchainDescription = { };
-        info.swapchainDescription.buffering = FRAME_BUFFERING_DOUBLE;
+        info.swapchainDescription.buffering = FrameBuffering_Double;
         info.swapchainDescription.desiredFrames = 3;
         info.swapchainDescription.renderWidth = pWindow->getWidth();
         info.swapchainDescription.renderHeight = pWindow->getHeight();
@@ -103,23 +104,23 @@ int main(int c, char* argv[])
         result = pAdapter->createDevice(info, &pDevice);
     }
 
-    if (result != R_RESULT_OK) 
+    if (result != RecluseResult_Ok) 
     {
         R_ERR("TEST", "Failed to create device!");
     }
 
     {
         MemoryReserveDesc desc = { };
-        desc.bufferPools[RESOURCE_MEMORY_USAGE_CPU_ONLY] = 1 * R_1MB;
-        desc.bufferPools[RESOURCE_MEMORY_USAGE_CPU_TO_GPU] = 1 * R_1MB;
-        desc.bufferPools[RESOURCE_MEMORY_USAGE_GPU_ONLY] = 1 * R_1MB;
-        desc.bufferPools[RESOURCE_MEMORY_USAGE_GPU_TO_CPU] = 1 * R_1MB;
+        desc.bufferPools[ResourceMemoryUsage_CpuOnly] = 1 * R_1MB;
+        desc.bufferPools[ResourceMemoryUsage_CpuToGpu] = 1 * R_1MB;
+        desc.bufferPools[ResourceMemoryUsage_GpuOnly] = 1 * R_1MB;
+        desc.bufferPools[ResourceMemoryUsage_GpuToCpu] = 1 * R_1MB;
         desc.texturePoolGPUOnly = 1 * R_1MB;
 
         result = pDevice->reserveMemory(desc);
     }
 
-    if (result != R_RESULT_OK) 
+    if (result != RecluseResult_Ok) 
     {
         R_ERR("TEST", "Failed to reserve memory on device!");
     }
@@ -130,34 +131,32 @@ int main(int c, char* argv[])
 
         DescriptorBindDesc bind[2] = { };
         bind[0].binding = 0;
-        bind[0].bindType = DESCRIPTOR_CONSTANT_BUFFER;
+        bind[0].bindType = DescriptorBindType_ConstantBuffer;
         bind[0].numDescriptors = 1;
-        bind[0].shaderStages = SHADER_TYPE_COMPUTE;
+        bind[0].shaderStages = ShaderType_Compute;
     
         bind[1].binding = 1;
-        bind[1].bindType = DESCRIPTOR_STORAGE_IMAGE;
+        bind[1].bindType = DescriptorBindType_StorageImage;
         bind[1].numDescriptors = 1;
-        bind[1].shaderStages = SHADER_TYPE_COMPUTE;
+        bind[1].shaderStages = ShaderType_Compute;
 
         desc.pDescriptorBinds = bind;
         
         result = pDevice->createDescriptorSetLayout(&pLayout, desc);
     }
 
-    if (result != R_RESULT_OK) 
+    if (result != RecluseResult_Ok) 
     {
         R_ERR("TEST", "Failed to create descriptor set layout...");
     }
-    
-    
-    pList = pDevice->getCommandList();
+
     pSwapchain = pDevice->getSwapchain();
 
     sets.resize(pSwapchain->getDesc().desiredFrames);
     for (U32 i = 0; i < sets.size(); ++i) 
     {
         result = pDevice->createDescriptorSet(&sets[i], pLayout); 
-        if (result != R_RESULT_OK) 
+        if (result != RecluseResult_Ok) 
         {
             R_ERR("TEST", "Failed to create descriptor set!");
         }
@@ -166,24 +165,24 @@ int main(int c, char* argv[])
 
     {
         GraphicsResourceDescription desc = { };
-        desc.dimension = RESOURCE_DIMENSION_BUFFER;
+        desc.dimension = ResourceDimension_Buffer;
         desc.width = sizeof(ConstData);
-        desc.memoryUsage = RESOURCE_MEMORY_USAGE_CPU_TO_GPU;
-        desc.usage = RESOURCE_USAGE_CONSTANT_BUFFER;
+        desc.memoryUsage = ResourceMemoryUsage_CpuToGpu;
+        desc.usage = ResourceUsage_ConstantBuffer;
         
-        result = pDevice->createResource(&pData, desc, RESOURCE_STATE_VERTEX_AND_CONST_BUFFER);
+        result = pDevice->createResource(&pData, desc, ResourceState_VertexAndConstantBuffer);
     }
 
-    if (result != R_RESULT_OK) 
+    if (result != RecluseResult_Ok) 
     {
         R_ERR("TEST", "Failed to create data resource!");
     }
 
     {
         ResourceViewDesc desc   = { };
-        desc.type               = RESOURCE_VIEW_TYPE_STORAGE_IMAGE;
-        desc.dimension          = RESOURCE_VIEW_DIMENSION_2D;
-        desc.format             = RESOURCE_FORMAT_R8G8B8A8_UNORM;
+        desc.type               = ResourceViewType_StorageImage;
+        desc.dimension          = ResourceViewDimension_2d;
+        desc.format             = ResourceFormat_R8G8B8A8_Unorm;
         desc.layerCount         = 1;
         desc.mipLevelCount      = 1;
         desc.baseArrayLayer     = 0;
@@ -220,14 +219,14 @@ int main(int c, char* argv[])
         {
             DescriptorSetBind bind[2] = { };
             bind[0].binding = 0;
-            bind[0].bindType = DESCRIPTOR_CONSTANT_BUFFER;
+            bind[0].bindType = DescriptorBindType_ConstantBuffer;
             bind[0].descriptorCount = 1;
             bind[0].cb.buffer = pData;
             bind[0].cb.offset = 0;
             bind[0].cb.sizeBytes = sizeof(ConstData);
 
             bind[1].binding = 1;
-            bind[1].bindType = DESCRIPTOR_STORAGE_IMAGE;
+            bind[1].bindType = DescriptorBindType_StorageImage;
             bind[1].descriptorCount = 1;
             bind[1].srv.pView = views[i];
 
@@ -236,7 +235,7 @@ int main(int c, char* argv[])
     }
 
     {
-        ShaderBuilder* pBuilder = createGlslangShaderBuilder(INTERMEDIATE_SPIRV);
+        ShaderBuilder* pBuilder = createGlslangShaderBuilder(ShaderIntermediateCode_Spirv);
         pBuilder->setUp();
         Shader* pCompShader = Shader::create();
         std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
@@ -244,14 +243,14 @@ int main(int c, char* argv[])
         std::string shaderSource = currDir + "/" + "test.cs.hlsl";
         result = File::readFrom(&file, shaderSource);
 
-        if (result != R_RESULT_OK) 
+        if (result != RecluseResult_Ok) 
         {    
             R_ERR("TEST", "Could not find %s", shaderSource.c_str());
         }
 
-        result = pBuilder->compile(pCompShader, file.data(), file.size(), SHADER_LANG_HLSL, SHADER_TYPE_COMPUTE);
+        result = pBuilder->compile(pCompShader, file.data(), file.size(), ShaderLang_Hlsl, ShaderType_Compute);
 
-        if (result != R_RESULT_OK) 
+        if (result != RecluseResult_Ok) 
         {
             R_ERR("TEST", "Failed to compile compute shader!");
         }
@@ -264,7 +263,7 @@ int main(int c, char* argv[])
 
         result = pDevice->createComputePipelineState(&pPipeline, ci);
 
-        if (result != R_RESULT_OK) 
+        if (result != RecluseResult_Ok) 
         {
             R_ERR("TEST", "Failed to create compute pipeline!");
         }
@@ -278,30 +277,32 @@ int main(int c, char* argv[])
 
     F32 counterFps = 0.f;
     F32 desiredFps = 1.f / 60.f;
+    pContext = pDevice->getContext();
+
     while (!pWindow->shouldClose()) 
     {
         RealtimeTick::updateWatch(1ull, 0);
         RealtimeTick tick = RealtimeTick::getTick(0);
         updateConstData(pData, tick);
-
+        pDevice->getContext()->begin();
+        pList = pDevice->getContext()->getCommandList();
         pList->begin();
             GraphicsResource* pResource = views[pSwapchain->getCurrentFrameIndex()]->getResource();
-            ResourceTransition tran = MAKE_RESOURCE_TRANSITION(pResource, RESOURCE_STATE_STORAGE, 0, 1, 0, 1);
-            pList->transition(&tran, 1);
-            pList->setPipelineState(pPipeline, BIND_TYPE_COMPUTE);
-            pList->bindDescriptorSets(1, &sets[pSwapchain->getCurrentFrameIndex()], BIND_TYPE_COMPUTE);
+            pList->transition(pResource, ResourceState_Storage);
+            pList->setPipelineState(pPipeline, BindType_Compute);
+            pList->bindDescriptorSets(1, &sets[pSwapchain->getCurrentFrameIndex()], BindType_Compute);
             pList->dispatch(pWindow->getWidth() / 8 + 1, pWindow->getHeight() / 8 + 1, 1);
         pList->end();
-
+        pDevice->getContext()->end();
         F32 deltaFrameRate = 1.0f / tick.delta();
         counterFps += tick.delta();
 
-        GraphicsSwapchain::PresentConfig conf = GraphicsSwapchain::DELAY_PRESENT;
+        GraphicsSwapchain::PresentConfig conf = GraphicsSwapchain::PresentConfig_SkipPresent;
         if (counterFps >= desiredFps)
         {
             R_VERBOSE("Test", "Frame Rate: %f fps", 1.0f / counterFps);
             counterFps = 0.f;
-            conf = GraphicsSwapchain::NORMAL_PRESENT;
+            conf = GraphicsSwapchain::PresentConfig_Present;
         }
 
         pSwapchain->present(conf);
@@ -310,7 +311,7 @@ int main(int c, char* argv[])
     
     }
     
-    pDevice->wait();
+    pDevice->getContext()->wait();
 
     pDevice->destroyResource(pData);
 

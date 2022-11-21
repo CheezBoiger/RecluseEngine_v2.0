@@ -9,13 +9,13 @@
 namespace Recluse {
 
 
-ErrType D3D12CommandList::initialize(D3D12Device* pDevice, GraphicsQueueTypeFlags flags)
+ErrType D3D12PrimaryCommandList::initialize(D3D12Context* pDeviceContext, GraphicsQueueTypeFlags flags)
 {
     flags;
 
     HRESULT result                                      = S_OK;
-    const std::vector<BufferResources>& bufferResources = pDevice->getBufferResources();
-    ID3D12Device* device                                = pDevice->get();
+    const std::vector<BufferResources>& bufferResources = pDeviceContext->getBufferResources();
+    ID3D12Device* device                                = staticCast<D3D12Device*>(pDeviceContext->getDevice())->get();
 
     m_allocators.resize(bufferResources.size());
     m_graphicsCommandLists.resize(m_allocators.size());
@@ -46,25 +46,25 @@ ErrType D3D12CommandList::initialize(D3D12Device* pDevice, GraphicsQueueTypeFlag
 
     }
 
-    m_pDevice = pDevice;
+    m_pDeviceContext = pDeviceContext;
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
-ErrType D3D12CommandList::destroy()
+ErrType D3D12PrimaryCommandList::destroy()
 {
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
-void D3D12CommandList::begin()
+void D3D12PrimaryCommandList::begin()
 {
-    R_ASSERT(m_pDevice != NULL);
+    R_ASSERT(m_pDeviceContext != NULL);
     R_ASSERT(!m_graphicsCommandLists.empty());
     R_ASSERT(!m_allocators.empty());
 
-    U32 currentBufferInd    = m_pDevice->getCurrentBufferIndex();
+    U32 currentBufferInd    = m_pDeviceContext->getCurrentBufferIndex();
     m_currentCmdList        = m_graphicsCommandLists[currentBufferInd];
     m_currentAllocator      = m_allocators[currentBufferInd];
 
@@ -72,19 +72,19 @@ void D3D12CommandList::begin()
 }
 
 
-void D3D12CommandList::end()
+void D3D12PrimaryCommandList::end()
 {
     m_currentCmdList->Close();
 }
 
 
-void D3D12CommandList::bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* offsets)
+void D3D12PrimaryCommandList::bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* offsets)
 {
 
 }
 
 
-void D3D12CommandList::bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBytes, IndexType type)
+void D3D12PrimaryCommandList::bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBytes, IndexType type)
 {
 
 }

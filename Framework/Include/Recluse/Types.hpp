@@ -60,19 +60,32 @@ typedef U32 SizeT;
 
 #define R_STRINGIFY(s) (#s)
 
-enum RResult 
+// Function representation of defining the recluse engine pointer size.
+static R_FORCE_INLINE PtrType pointerSize()
 {
-    R_RESULT_OK,
-    R_RESULT_FAILED = -999,
-    R_RESULT_INVALID_ARGS,
-    R_RESULT_NULL_PTR_EXCEPT,
-    R_RESULT_CORRUPT_MEMORY,
-    R_RESULT_NO_IMPL,
-    R_RESULT_TIMEOUT,
-    R_RESULT_NEEDS_UPDATE,
-    R_RESULT_OUT_OF_MEMORY,
-    R_RESULT_NOT_FOUND
+    return ARCH_PTR_SZ_BYTES;
+}
+
+enum RecluseResult 
+{
+    RecluseResult_Ok,
+    RecluseResult_Failed = -999,
+    RecluseResult_InvalidArgs,
+    RecluseResult_NullPtrExcept,
+    RecluseResult_CorruptMemory,
+    RecluseResult_NoImpl,
+    RecluseResult_Timeout,
+    RecluseResult_NeedsUpdate,
+    RecluseResult_OutOfMemory,
+    RecluseResult_NotFound
 };
+
+
+template<typename ToCast, typename Class>
+static R_FORCE_INLINE ToCast staticCast(Class obj)
+{
+    return static_cast<ToCast>(obj);
+}
 
 // Common Reference counter object. To handle references of a shared object.
 // 
@@ -151,6 +164,17 @@ public:
 
 private:
     Class* pData;
+};
+
+
+class ICastableObject
+{
+public:
+    template<typename Type>
+    R_FORCE_INLINE Type* castTo()
+    {
+        return static_cast<Type*>(this);
+    }
 };
 } // Recluse
 #endif // RECLUSE_TYPES_HPP

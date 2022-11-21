@@ -76,6 +76,6 @@ class R_PUBLIC_API DescriptorSet
 public:
     // Update the DescriptorSet. This will bind all resources provided, to the DescriptorSet.
     // In order to let shaders and the rendering pipeline see the resources, you must call this update function.
-    virtual ErrType update(DescriptorSetBind* pBinds, U32 bindCount) { return R_RESULT_NO_IMPL; }
+    virtual ErrType update(DescriptorSetBind* pBinds, U32 bindCount) { return RecluseResult_NoImpl; }
 };
 } // Recluse

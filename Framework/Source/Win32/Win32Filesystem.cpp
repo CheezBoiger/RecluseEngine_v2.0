@@ -23,7 +23,7 @@ U64 File::getFileSz() const
 ErrType File::readFrom(FileBufferData* pFile, const std::string& filePath)
 {
     File file;
-    ErrType result = R_RESULT_OK;
+    ErrType result = RecluseResult_Ok;
 
     result = file.open(filePath, "r");
 
@@ -44,7 +44,7 @@ ErrType File::readFrom(FileBufferData* pFile, const std::string& filePath)
 
 ErrType File::writeTo(FileBufferData* pFile, const std::string& filePath)
 {
-    ErrType result = R_RESULT_OK;
+    ErrType result = RecluseResult_Ok;
     File file;
     
     result = file.open(filePath, "w");
@@ -107,7 +107,7 @@ ErrType File::readFromAsync(FileBufferDataAsync* pBuffer, const std::string& fil
     ErrType error = createThread(&thr, runFileAsyncTask);
 
     //return error;
-    return R_RESULT_NO_IMPL;
+    return RecluseResult_NoImpl;
 }
 
 
@@ -129,7 +129,7 @@ ErrType File::writeToAsync(FileBufferDataAsync* pBuffer, const std::string& file
 
     ErrType error = createThread(&thr, runFileAsyncTask);
 
-    return R_RESULT_NO_IMPL;
+    return RecluseResult_NoImpl;
 }
 
 
@@ -139,7 +139,7 @@ ErrType File::open(const std::string& filePath, char* access)
     {
         R_ERR(R_CHANNEL_WIN32, "This File is already open...");
 
-        return R_RESULT_OK;
+        return RecluseResult_Ok;
     }
 
     DWORD acc = 0;
@@ -182,13 +182,13 @@ ErrType File::open(const std::string& filePath, char* access)
     if (handle == INVALID_HANDLE_VALUE) 
     {
         R_ERR(R_CHANNEL_WIN32, "Failed to open file: %s", filePath.c_str());
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }
 
     m_fileHandle    = (void*)handle;
     m_isOpen        = true;
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -219,10 +219,10 @@ ErrType File::write(void* ptr, U64 szBytes)
     {
         R_ERR(R_CHANNEL_WIN32, "Failed to write to file...");
 
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -231,7 +231,7 @@ ErrType File::read(void* ptr, U64 szBytes)
     // Return invalid if we are requesting to read nothing...
     if (szBytes == 0) 
     {
-        return R_RESULT_INVALID_ARGS;
+        return RecluseResult_InvalidArgs;
     }
 
     DWORD bytesRead = 0;
@@ -241,16 +241,16 @@ ErrType File::read(void* ptr, U64 szBytes)
     {
         R_ERR(R_CHANNEL_WIN32, "Failed to read to file!");
 
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }
 
     // zero bytes read means we probably reached end of file...
     if (bytesRead == 0) 
     {
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 

@@ -10,7 +10,7 @@ namespace Recluse {
 
 ErrType VulkanResourceView::initialize(VulkanDevice* pDevice)
 {
-    ErrType result          = R_RESULT_OK;
+    ErrType result          = RecluseResult_Ok;
     ResourceViewDesc desc   = getDesc();
 
     VkImageViewCreateInfo info = { };
@@ -30,18 +30,18 @@ ErrType VulkanResourceView::initialize(VulkanDevice* pDevice)
 
     switch (desc.dimension) 
     {
-        case RESOURCE_VIEW_DIMENSION_1D: info.viewType = VK_IMAGE_VIEW_TYPE_1D; break;
-        case RESOURCE_VIEW_DIMENSION_1D_ARRAY: info.viewType = VK_IMAGE_VIEW_TYPE_1D_ARRAY; break;
-        case RESOURCE_VIEW_DIMENSION_2D: info.viewType = VK_IMAGE_VIEW_TYPE_2D; break;
-        case RESOURCE_VIEW_DIMENSION_2D_ARRAY: info.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY; break;
-        case RESOURCE_VIEW_DIMENSION_2D_MS: info.viewType = VK_IMAGE_VIEW_TYPE_2D; break;
-        case RESOURCE_VIEW_DIMENSION_3D: info.viewType = VK_IMAGE_VIEW_TYPE_3D; break;
-        case RESOURCE_VIEW_DIMENSION_CUBE: info.viewType = VK_IMAGE_VIEW_TYPE_CUBE; break;
-        case RESOURCE_VIEW_DIMENSION_CUBE_ARRAY: info.viewType = VK_IMAGE_VIEW_TYPE_CUBE_ARRAY; break;
+        case ResourceViewDimension_1d: info.viewType = VK_IMAGE_VIEW_TYPE_1D; break;
+        case ResourceViewDimension_1dArray: info.viewType = VK_IMAGE_VIEW_TYPE_1D_ARRAY; break;
+        case ResourceViewDimension_2d: info.viewType = VK_IMAGE_VIEW_TYPE_2D; break;
+        case ResourceViewDimension_2dArray: info.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY; break;
+        case ResourceViewDimension_2dMultisample: info.viewType = VK_IMAGE_VIEW_TYPE_2D; break;
+        case ResourceViewDimension_3d: info.viewType = VK_IMAGE_VIEW_TYPE_3D; break;
+        case ResourceViewDimension_Cube: info.viewType = VK_IMAGE_VIEW_TYPE_CUBE; break;
+        case ResourceViewDimension_CubeArray: info.viewType = VK_IMAGE_VIEW_TYPE_CUBE_ARRAY; break;
         default: break;
     }
 
-    if (desc.type == RESOURCE_VIEW_TYPE_DEPTH_STENCIL) 
+    if (desc.type == ResourceViewType_DepthStencil) 
     {
         info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
     } 
@@ -54,11 +54,10 @@ ErrType VulkanResourceView::initialize(VulkanDevice* pDevice)
 
     switch (desc.type) 
     {
-        case RESOURCE_VIEW_TYPE_DEPTH_STENCIL: m_expectedLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL; break;
-        case RESOURCE_VIEW_TYPE_RENDER_TARGET: m_expectedLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; break;
-        case RESOURCE_VIEW_TYPE_SHADER_RESOURCE: m_expectedLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL; break;
-        case RESOURCE_VIEW_TYPE_STORAGE_IMAGE:
-        case RESOURCE_VIEW_TYPE_STORAGE_BUFFER: m_expectedLayout = VK_IMAGE_LAYOUT_GENERAL; break;
+        case ResourceViewType_DepthStencil: m_expectedLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL; break;
+        case ResourceViewType_RenderTarget: m_expectedLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; break;
+        case ResourceViewType_ShaderResource: m_expectedLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL; break;
+        case ResourceViewType_UnorderedAccess: m_expectedLayout = VK_IMAGE_LAYOUT_GENERAL; break;
         default: break;
     }
 
@@ -70,7 +69,7 @@ ErrType VulkanResourceView::initialize(VulkanDevice* pDevice)
 
 ErrType VulkanResourceView::destroy(VulkanDevice* pDevice)
 {
-    ErrType result = R_RESULT_OK;
+    ErrType result = RecluseResult_Ok;
 
     if (m_view) 
     {
@@ -89,15 +88,15 @@ static VkSamplerAddressMode getAddressMode(SamplerAddressMode mode)
 {
     switch (mode) 
     {
-        case SAMPLER_ADDRESS_MODE_REPEAT:
+        case SamplerAddressMode_Repeat:
         default: return VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        case SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE:
+        case SamplerAddressMode_MirrorClampToEdge:
             return VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
-        case SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER:
+        case SamplerAddressMode_ClampToBorder:
             return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-        case SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE:
+        case SamplerAddressMode_ClampToEdge:
             return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-        case SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT:
+        case SamplerAddressMode_MirroredRepeat:
             return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
     }
 }
@@ -107,12 +106,12 @@ static VkFilter getFilter(Filter filter)
 {
     switch (filter) 
     {
-        case FILTER_LINEAR:
+        case Filter_Linear:
         default:
             return VK_FILTER_LINEAR;
-        case FILTER_NEAREST:
+        case Filter_Nearest:
             return VK_FILTER_NEAREST;
-        case FILTER_CUBIC_IMG:
+        case Filter_Cubic:
             return VK_FILTER_CUBIC_IMG;
     }
 }
@@ -122,10 +121,10 @@ static VkSamplerMipmapMode getMipMapMode(SamplerMipMapMode mode)
 {
     switch (mode) 
     {
-        case SAMPLER_MIP_MAP_MODE_LINEAR:
+        case SamplerMipMapMode_Linear:
         default:
             return VK_SAMPLER_MIPMAP_MODE_LINEAR;
-        case SAMPLER_MIP_MAP_MODE_NEAREST:
+        case SamplerMipMapMode_Nearest:
             return VK_SAMPLER_MIPMAP_MODE_NEAREST;
     }
 }
@@ -157,10 +156,10 @@ ErrType VulkanSampler::initialize(VulkanDevice* pDevice, const SamplerCreateDesc
 
     if (result != VK_SUCCESS) 
     {
-        return R_RESULT_FAILED;
+        return RecluseResult_Failed;
     }
     
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -176,6 +175,6 @@ ErrType VulkanSampler::destroy(VulkanDevice* pDevice)
         m_sampler = VK_NULL_HANDLE;
     }
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 } // Recluse

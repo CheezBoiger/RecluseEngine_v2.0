@@ -8,7 +8,7 @@ ErrType TransformSystem::onAllocateComponent(Transform** pOut)
     // TODO: We are just testing it out. We would need to hold onto this handle!
     *pOut = new Transform();
     m_transforms.push_back(*pOut);
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -22,10 +22,10 @@ ErrType TransformSystem::onFreeComponent(Transform** pIn)
             m_transforms.erase(it);
             delete* pIn;
             *pIn = nullptr;
-            return R_RESULT_OK;
+            return RecluseResult_Ok;
         }
     }
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 

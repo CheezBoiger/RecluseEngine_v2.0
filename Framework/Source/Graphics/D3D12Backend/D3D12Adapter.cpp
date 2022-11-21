@@ -68,18 +68,18 @@ ErrType D3D12Adapter::getAdapterInfo(AdapterInfo* out) const
 
     WideCharToMultiByte(CP_UTF8, 0, desc.Description, 128, out->deviceName, 256, 0, 0);
 
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
 ErrType D3D12Adapter::createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice)
 {
     D3D12Device* pDevice    = new D3D12Device();
-    ErrType result          = R_RESULT_OK;
+    ErrType result          = RecluseResult_Ok;
     
     result = pDevice->initialize(this, info);
     
-    if (result != R_RESULT_OK) 
+    if (result != RecluseResult_Ok) 
     {
         R_ERR(R_CHANNEL_D3D12, "Failed to create a d3d12 device!");
 
@@ -99,7 +99,7 @@ ErrType D3D12Adapter::createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDe
 
 ErrType D3D12Adapter::destroyDevice(GraphicsDevice* pDevice)
 {
-    if (!pDevice) return R_RESULT_NULL_PTR_EXCEPT;
+    if (!pDevice) return RecluseResult_NullPtrExcept;
 
     for (auto& iter = m_devices.begin(); iter != m_devices.end(); ++iter) 
     {
@@ -109,10 +109,10 @@ ErrType D3D12Adapter::destroyDevice(GraphicsDevice* pDevice)
             delete *iter;
             m_devices.erase(iter);
             
-            return R_RESULT_OK;
+            return RecluseResult_Ok;
         }
     }
 
-    return R_RESULT_FAILED;
+    return RecluseResult_Failed;
 }
 } // Recluse

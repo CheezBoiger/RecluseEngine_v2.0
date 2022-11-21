@@ -30,7 +30,7 @@ ErrType Transform::serialize(Archive* pArchive)
     pArchive->write(&forward,       sizeof(Float3));
     pArchive->write(&right,         sizeof(Float3));
     pArchive->write(&up,            sizeof(Float3));
-    return R_RESULT_NO_IMPL;
+    return RecluseResult_NoImpl;
 }
 
 ErrType Transform::deserialize(Archive* pArchive)
@@ -43,7 +43,7 @@ ErrType Transform::deserialize(Archive* pArchive)
     pArchive->read(&forward,        sizeof(Float3));
     pArchive->read(&right,          sizeof(Float3));
     pArchive->read(&up,             sizeof(Float3));
-    return R_RESULT_NO_IMPL;
+    return RecluseResult_NoImpl;
 }
 
 void Transform::updateMatrices()

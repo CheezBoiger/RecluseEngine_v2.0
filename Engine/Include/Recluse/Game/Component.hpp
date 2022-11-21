@@ -44,7 +44,7 @@ enum ComponentUpdateFlag
     _class* _class::instantiate(const Recluse::RGUID& owner) { \
         _class* pAllocatedComp = nullptr; \
         ErrType err = k ## _class ## System->allocateComponent(&pAllocatedComp, owner); \
-        if (err != R_RESULT_OK) return nullptr; \
+        if (err != RecluseResult_Ok) return nullptr; \
         return pAllocatedComp; \
     } \
     ErrType _class::free(_class* pComponent) { \
@@ -68,9 +68,9 @@ public:
 
     virtual ~Component() { }
 
-    virtual ErrType serialize(Archive* pArchive) override { return R_RESULT_NO_IMPL; }
+    virtual ErrType serialize(Archive* pArchive) override { return RecluseResult_NoImpl; }
 
-    virtual ErrType deserialize(Archive* pArchive) override { return R_RESULT_NO_IMPL; }
+    virtual ErrType deserialize(Archive* pArchive) override { return RecluseResult_NoImpl; }
 
     // Get the component owner.
     RGUID     getOwner() const { return m_ownerGuid; }

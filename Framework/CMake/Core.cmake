@@ -45,6 +45,7 @@ if (WIN32)
         ${RECLUSE_WIN32_IO}/Win32Window.cpp
         ${RECLUSE_WIN32_THREADING}/Win32Thread.hpp
         ${RECLUSE_WIN32_THREADING}/Win32Threading.cpp
+		${RECLUSE_WIN32_THREADING}/Win32Process.cpp
         ${RECLUSE_WIN32}/Win32Filesystem.cpp
     )
 endif()
@@ -77,6 +78,7 @@ set ( RECLUSE_CORE_BUILD
     ${RECLUSE_CORE_INCLUDE_SYSTEM}/Mouse.hpp
     ${RECLUSE_CORE_INCLUDE_SYSTEM}/Window.hpp
 	${RECLUSE_CORE_INCLUDE_SYSTEM}/DateTime.hpp
+	${RECLUSE_CORE_INCLUDE_SYSTEM}/Process.hpp
     ${RECLUSE_CORE_SOURCE_LOGGING}/LogFramework.hpp
     ${RECLUSE_CORE_SOURCE_LOGGING}/Logger.cpp
 	${RECLUSE_CORE_SOURCE_LOGGING}/LogOverloads.cpp

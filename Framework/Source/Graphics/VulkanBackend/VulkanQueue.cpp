@@ -28,7 +28,7 @@ ErrType VulkanQueue::initialize(VulkanDevice* device, QueueFamily* pFamily, U32 
         
     vkCreateFence(m_pDevice->get(), &info, nullptr, &m_fence);
     
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
@@ -102,11 +102,11 @@ ErrType VulkanQueue::copyResource(GraphicsResource* dst, GraphicsResource* src)
     VkDevice device             = m_pDevice->get();
     VkCommandBuffer cmdBuffer   = beginOneTimeCommandBuffer();
 
-    if (dstDim == RESOURCE_DIMENSION_BUFFER) 
+    if (dstDim == ResourceDimension_Buffer) 
     { 
         VulkanBuffer* dstBuffer = static_cast<VulkanBuffer*>(dst);
 
-        if (srcDim == RESOURCE_DIMENSION_BUFFER) 
+        if (srcDim == ResourceDimension_Buffer) 
         {
             VulkanBuffer* srcBuffer = static_cast<VulkanBuffer*>(src);
             VkBufferCopy region     = { };
@@ -145,20 +145,21 @@ ErrType VulkanQueue::copyResource(GraphicsResource* dst, GraphicsResource* src)
     vkWaitForFences(device, 1, &m_fence, true, UINT64_MAX);
     vkResetFences(device, 1, &m_fence);
     
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 
 
 VkCommandBuffer VulkanQueue::beginOneTimeCommandBuffer()
 {
     // Create a one time only command list.
+    VulkanContext* pContext     = staticCast<VulkanContext*>(m_pDevice->getContext());
     VkDevice device             = m_pDevice->get();
     VkCommandBuffer cmdBuffer   = VK_NULL_HANDLE;
     VkResult result             = VK_SUCCESS;
 
     VkCommandBufferAllocateInfo allocInfo   = { };
     allocInfo.commandBufferCount            = 1;
-    allocInfo.commandPool                   = m_pFamilyRef->commandPools[m_pDevice->getCurrentBufferIndex()];
+    allocInfo.commandPool                   = m_pFamilyRef->commandPools[pContext->getCurrentBufferIndex()];
     allocInfo.sType                         = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.level                         = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     result = vkAllocateCommandBuffers(device, &allocInfo, &cmdBuffer);
@@ -213,6 +214,6 @@ ErrType VulkanQueue::copyBufferRegions
     vkWaitForFences(device, 1, &m_fence, true, UINT64_MAX);
     vkResetFences(device, 1, &m_fence);
     
-    return R_RESULT_OK;
+    return RecluseResult_Ok;
 }
 } // Recluse
