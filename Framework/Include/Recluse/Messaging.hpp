@@ -52,8 +52,13 @@ public:
     #include <assert.h>
     #define R_ASSERT_LOG()
     #if !defined(R_IGNORE_ASSERT)
-        #define R_ASSERT(expression) assert(expression)
-        #define R_ASSERT_MSG(expression, msg) assert(expression && msg)
+        #if defined(RECLUSE_WINDOWS)
+            #define R_ASSERT(expression) do { _set_error_mode(_OUT_TO_MSGBOX); assert(expression); } while (0)
+            #define R_ASSERT_MSG(expression, msg) do { _set_error_mode(_OUT_TO_MSGBOX); (void)((!!(expression)) || (_wassert(_CRT_WIDE(#expression ## ", " ## #msg), _CRT_WIDE(__FILE__), (unsigned)(__LINE__)), 0)); } while (0)
+        #else
+            #define R_ASSERT(expression) assert(expression)
+            #define R_ASSERT_MSG(expression, msg) assert(expression && msg)
+        #endif
     #else
         #undef R_DEBUG_BREAK()
         #define R_DEBUG_BREAK()

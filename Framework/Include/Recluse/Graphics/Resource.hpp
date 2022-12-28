@@ -14,12 +14,14 @@ struct MapRange
     U64 sizeBytes;
 };
 
+typedef Hash64 ResourceId;
+
 // Graphics Resource description.
 //
 class R_PUBLIC_API GraphicsResource : public virtual IGraphicsObject, public ICastableObject
 {
 public:
-    GraphicsResource(GraphicsResourceDescription& desc)
+    GraphicsResource(const GraphicsResourceDescription& desc)
         : m_desc(desc) { }
 
     virtual ~GraphicsResource() { }
@@ -42,5 +44,6 @@ protected:
 private:
     GraphicsResourceDescription m_desc;
     ResourceState m_currentState;
+    ResourceId m_id;
 };
 } // Recluse

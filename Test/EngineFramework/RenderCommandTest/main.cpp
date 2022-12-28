@@ -38,12 +38,12 @@ void fillList(RenderCommandList& list)
     
     }
 
-    rcmd.op = C_OP_DRAWABLE_INSTANCED;
+    rcmd.op = CommandOp_DrawableInstanced;
     rcmd.numVertexBuffers = 2;
     rcmd.numSubMeshes = 12;
     rcmd.pSubMeshes = submeshes;
 
-    icmd.op = C_OP_DRAWABLE_INDEXED_INSTANCED;
+    icmd.op = CommandOp_DrawableIndexedInstanced;
     icmd.numVertexBuffers = 1;
     icmd.indexType = IndexType_Unsigned32;
     icmd.numSubMeshes = 8;
@@ -84,14 +84,14 @@ int main(int c, char* argv[])
     RenderCommand** commands = list.getRenderCommands();
     U64 numRenderCommands = list.getNumberCommands();
 
-    CommandOp op = C_OP_DRAWABLE_INDEXED_INSTANCED;
+    CommandOp op = CommandOp_DrawableIndexedInstanced;
 
     for (U64 i = 0; i < numRenderCommands; ++i) {
 
         RenderCommand* cmd = commands[i];
         switch (cmd->op) {
     
-            case C_OP_DRAWABLE_INSTANCED:
+            case CommandOp_DrawableInstanced:
             {
                 //R_TRACE("TEST", "I am a draw command! %d", i);
                 DrawRenderCommand* rcmd = static_cast<DrawRenderCommand*>(cmd);
@@ -99,7 +99,7 @@ int main(int c, char* argv[])
                 //R_TRACE("TEST", "%d", rcmd)
                 break;
             }
-            case C_OP_DRAWABLE_INDEXED_INSTANCED:    
+            case CommandOp_DrawableIndexedInstanced:    
             {
                 //R_TRACE("TEST", "I am a draw indexed command! %d", i);
                 DrawIndexedRenderCommand* icmd = static_cast<DrawIndexedRenderCommand*>(cmd);

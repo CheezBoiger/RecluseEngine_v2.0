@@ -8,7 +8,8 @@
 #include "Recluse/Renderer/RendererResources.hpp"
 
 #include "Recluse/Filesystem/Filesystem.hpp"
-
+#include "Recluse/Graphics/ShaderProgramBuilder.hpp"
+#include "Recluse/Generated/RendererPrograms.hpp"
 #include "Recluse/Messaging.hpp"
 
 #include <unordered_map>
@@ -21,10 +22,6 @@ GraphicsResourceView* pSceneDepthView = nullptr;
 std::unordered_map<Engine::VertexAttribFlags, PipelineState*> pipelines;
 RenderPass* pPreZPass = nullptr;
 
-static void createPipelines(GraphicsPipelineStateDesc& pipelineCi)
-{
-}
-
 void initialize(GraphicsDevice* pDevice, Engine::SceneBufferDefinitions* pBuffers)
 {
     R_ASSERT(pBuffers->gbuffer[Engine::GBuffer_Depth]                   != NULL);
@@ -33,52 +30,17 @@ void initialize(GraphicsDevice* pDevice, Engine::SceneBufferDefinitions* pBuffer
 
     R_DEBUG("PreZ", "Initializing preZ render pass...");
 
-    std::string staticVertShader = Engine::getBinaryShaderPath("Geometry/VertFactoryStatic");
-    
-    Shader* pShader = Shader::create();
-    FileBufferData data = { };
+    Builder::ShaderProgramDescription description = { };
+    description.pipelineType = BindType_Graphics;
+    description.language = ShaderLang_Hlsl;
+    description.graphics.vs = Engine::getBinaryShaderPath("Geometry/VertFactoryStatic").c_str();
+    description.graphics.vsName = "main";
+    Builder::buildShaderProgramDefinitions(description, ShaderProgram_PreZDepth, ShaderIntermediateCode_Spirv);
+    Builder::Runtime::buildShaderProgram(pDevice, ShaderProgram_PreZDepth);
+    Builder::releaseShaderProgramDefinition(ShaderProgram_PreZDepth);
 
-    File::readFrom(&data, staticVertShader);
-    pShader->load(data.data(), data.size(), ShaderIntermediateCode_Spirv, ShaderType_Vertex);
-
-    ErrType result                              = RecluseResult_Ok;
-    GraphicsPipelineStateDesc pipelineCi        = { };
-    RenderPassDesc rpCi                         = { };
-    const GraphicsResourceDescription& resDesc  = pBuffers->gbuffer[Engine::GBuffer_Depth]->getResource()->getDesc();
-    
-    rpCi.width                  = resDesc.width;
-    rpCi.height                 = resDesc.height;
-    rpCi.numRenderTargets       = 0;
-    rpCi.pDepthStencil          = pBuffers->gbufferViews[Engine::GBuffer_Depth]->getView();
-    pSceneDepthView = pBuffers->gbufferViews[Engine::GBuffer_Depth]->getView();
-
-    result = pDevice->createRenderPass(&pPreZPass, rpCi);
-
-    if (result != RecluseResult_Ok) 
-    {
-        R_ERR("PreZRenderModule", "Failed to create render pass!");
-
-        return;
-    }
-
-    pipelineCi.raster.cullMode          = CullMode_Back;
-    pipelineCi.raster.frontFace         = FrontFace_Clockwise;
-    pipelineCi.raster.lineWidth         = 1.0f;
-    pipelineCi.raster.polygonMode       = PolygonMode_Fill;
-    pipelineCi.raster.depthBiasEnable   = true;
-
-    pipelineCi.pVS                  = nullptr;
-
-    pipelineCi.ds.depthTestEnable   = true;
-    pipelineCi.ds.depthWriteEnable  = true;
-    pipelineCi.ds.minDepthBounds    = 1.0f; // Reverse for preZ
-    pipelineCi.ds.maxDepthBounds    = 0.0f;
-    pipelineCi.ds.stencilTestEnable = false;
-    pipelineCi.ds.depthCompareOp    = CompareOp_Greater;
-
-    pipelineCi.primitiveTopology = PrimitiveTopology_TriangleList;
-    
-    createPipelines(pipelineCi);
+    VertexInputLayout layout = { };
+    Builder::Runtime::buildVertexInputLayout(pDevice, layout, VertexLayout_PositionOnly);
 }
 
 
@@ -87,7 +49,7 @@ void destroy(GraphicsDevice* pDevice)
 }
 
 
-void generate(GraphicsCommandList* pCommandList, Engine::RenderCommandList* pMeshCommandList, U64* keys, U64 sz)
+void generate(GraphicsContext* context, Engine::RenderCommandList* pMeshCommandList, U64* keys, U64 sz)
 {
     Engine::RenderCommand** pRenderCommands     = pMeshCommandList->getRenderCommands();
     const GraphicsResourceDescription& depth    = pSceneDepthView->getResource()->getDesc();
@@ -98,8 +60,11 @@ void generate(GraphicsCommandList* pCommandList, Engine::RenderCommandList* pMes
     depthRect.height    = depth.height;
 
     // Set the PreZ pass.
-    pCommandList->setRenderPass(pPreZPass);
-    pCommandList->clearDepthStencil(1.0f, 0, depthRect);
+    context->setShaderProgram(ShaderProgram_PreZDepth);
+    context->clearDepthStencil(1.0f, 0, depthRect);
+    context->setCullMode(CullMode_Back);
+    context->setFrontFace(FrontFace_Clockwise);
+    context->setPolygonMode(PolygonMode_Fill);
 
     for (U64 i = 0; i < sz; ++i) 
     {
@@ -110,8 +75,8 @@ void generate(GraphicsCommandList* pCommandList, Engine::RenderCommandList* pMes
 
         if 
             (
-                meshCmd->op != Engine::C_OP_DRAWABLE_INDEXED_INSTANCED 
-                || meshCmd->op != Engine::C_OP_DRAWABLE_INSTANCED
+                meshCmd->op != Engine::CommandOp_DrawableIndexedInstanced 
+                || meshCmd->op != Engine::CommandOp_DrawableInstanced
             ) 
         {
             continue;
@@ -123,17 +88,18 @@ void generate(GraphicsCommandList* pCommandList, Engine::RenderCommandList* pMes
 
         R_ASSERT_MSG(pipeline != NULL, "No pipeline exists for this mesh!");
 
-        pCommandList->bindVertexBuffers(meshCmd->numVertexBuffers, meshCmd->ppVertexBuffers, meshCmd->pOffsets);
-        pCommandList->setPipelineState(pipeline, BindType_Graphics);
+        context->setInputVertexLayout(VertexLayout_PositionOnly);
+        context->bindVertexBuffers(meshCmd->numVertexBuffers, meshCmd->ppVertexBuffers, meshCmd->pOffsets);
+        context->setTopology(PrimitiveTopology_TriangleList);
 
         switch (meshCmd->op) 
         {
-            case Engine::C_OP_DRAWABLE_INDEXED_INSTANCED:
+            case Engine::CommandOp_DrawableIndexedInstanced:
             {
                 Engine::DrawIndexedRenderCommand* pIndexedCmd = 
                     static_cast<Engine::DrawIndexedRenderCommand*>(meshCmd);
 
-                pCommandList->bindIndexBuffer
+                context->bindIndexBuffer
                                 (
                                     pIndexedCmd->pIndexBuffer, 
                                     pIndexedCmd->indexType, 
@@ -144,7 +110,7 @@ void generate(GraphicsCommandList* pCommandList, Engine::RenderCommandList* pMes
                 {
                     Engine::IndexedInstancedSubMesh& submesh = pIndexedCmd->pSubMeshes[submeshIdx];
                     
-                    pCommandList->drawIndexedInstanced
+                    context->drawIndexedInstanced
                                         (
                                             submesh.indexCount,
                                             submesh.instanceCount,
@@ -157,7 +123,7 @@ void generate(GraphicsCommandList* pCommandList, Engine::RenderCommandList* pMes
                 break;
             }
 
-            case Engine::C_OP_DRAWABLE_INSTANCED:
+            case Engine::CommandOp_DrawableInstanced:
             {
                 Engine::DrawRenderCommand* pDrawCmd = static_cast<Engine::DrawRenderCommand*>(meshCmd);
 
@@ -165,7 +131,7 @@ void generate(GraphicsCommandList* pCommandList, Engine::RenderCommandList* pMes
                 {
                     Engine::InstancedSubMesh& submesh = pDrawCmd->pSubMeshes[submeshIdx];
 
-                    pCommandList->drawInstanced
+                    context->drawInstanced
                                         (
                                             submesh.vertexCount,
                                             submesh.instanceCount,

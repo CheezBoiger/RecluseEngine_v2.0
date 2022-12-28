@@ -132,33 +132,6 @@ public:
 };
 
 
-class D3D12DescriptorSetLayout : public DescriptorSetLayout 
-{
-public:
-    
-    ID3D12RootSignature* get() { return m_pRootSignature; }
-
-private:
-    ID3D12RootSignature* m_pRootSignature;
-};
-
-
-class D3D12DescriptorSet : public DescriptorSet 
-{
-public:
-
-    DescriptorHeapAllocation*   getBaseAllocation() { return m_tables.data(); }
-
-    U32                         getTotalAllocations() const { return static_cast<U32>(m_tables.size()); }
-
-    virtual ErrType             update(DescriptorSetBind* pBinds, U32 bindCount) override;
-
-private:
-    DescriptorHeap*                         m_pManagement;
-    std::vector<DescriptorHeapAllocation>   m_tables;
-};
-
-
 // Descriptor heap manager handler. Essentially a helper.
 class CpuDescriptorHeapManager
 {
@@ -205,4 +178,11 @@ private:
     CpuDescriptorHeapManager        m_cpuDescriptorHeapManagers[CPU_DESCRIPTOR_HEAP_COUNTS];
     GpuDescriptorHeap               m_gpuHeaps[GPU_DESCRIPTOR_HEAP_COUNTS];
 };
+
+
+namespace Binder {
+
+
+ID3D12RootSignature* makeRootSignature();
+} // Descriptors
 } // Recluse 

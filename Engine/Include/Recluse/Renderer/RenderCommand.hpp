@@ -16,11 +16,11 @@ namespace Engine {
 
 enum CommandOp 
 {
-    C_OP_DRAWABLE_INSTANCED,
-    C_OP_DRAWABLE_INDEXED_INSTANCED,
-    C_OP_DISPATCH,
-    C_OP_BIND_RESOURCES,
-    C_OP_BIND_PIPE
+    CommandOp_DrawableInstanced,
+    CommandOp_DrawableIndexedInstanced,
+    CommandOp_Dispatch,
+    CommandOp_Resources,
+    CommandOp_BindPipe
 };
 
 

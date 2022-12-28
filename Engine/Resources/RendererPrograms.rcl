@@ -1,0 +1,17 @@
+// Rendering shader programs.
+namespace Recluse {
+
+event ShaderProgram
+{
+	ShaderProgram_PreZDepth,
+	ShaderProgram_GBuffer,
+	ShaderProgram_PostProcess
+};
+
+event VertexLayout
+{
+	VertexLayout_PositionOnly,
+	VertexLayout_PositionNormalTexCoord,
+	VertexLayout_SkinningVertex,
+};
+};

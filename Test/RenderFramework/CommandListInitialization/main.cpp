@@ -61,7 +61,7 @@ int main(int c, char* argv[])
 
     }
 
-    GraphicsCommandList* pList = nullptr;
+    GraphicsContext* context = nullptr;
     
     if (result != RecluseResult_Ok) {
     
@@ -71,9 +71,9 @@ int main(int c, char* argv[])
     
         R_TRACE("Graphics", "Successfully created command list!");
         pDevice->getContext()->begin();
-        pList = pDevice->getContext()->getCommandList();
-        pList->begin();
-        pList->end();
+        context = pDevice->getContext();
+        context->begin();
+        context->end();
         pDevice->getContext()->end();
 
     }

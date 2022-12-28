@@ -1,4 +1,5 @@
 //
+#include "Recluse/Serialization/Hasher.hpp"
 #include "VulkanPipelineState.hpp"
 #include "VulkanDevice.hpp"
 #include "VulkanObjects.hpp"
@@ -10,7 +11,10 @@
 #include "VulkanShaderCache.hpp"
 
 namespace Recluse {
+namespace Pipelines {
 
+std::unordered_map<PipelineId, PipelineState> g_pipelineMap;
+std::unordered_map<VkDescriptorSetLayout, VkPipelineLayout> g_pipelineLayoutMap;
 
 static VkPrimitiveTopology getNativeTopology(PrimitiveTopology topology)
 {
@@ -167,7 +171,7 @@ static VkColorComponentFlags getColorComponents(ColorComponentMaskFlags flags)
 }
 
 
-static VkPipelineRasterizationStateCreateInfo getRasterInfo(const GraphicsPipelineStateDesc::RasterState& rs)
+static VkPipelineRasterizationStateCreateInfo getRasterInfo(const RasterState& rs)
 {
     VkPipelineRasterizationStateCreateInfo info = { };
     info.sType                      = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -195,51 +199,7 @@ static VkPipelineInputAssemblyStateCreateInfo getAssemblyInfo(PrimitiveTopology 
 }
 
 
-static VkPipelineVertexInputStateCreateInfo getVertexInputInfo
-    (
-        const GraphicsPipelineStateDesc::VertexInput& vi,
-        std::vector<VkVertexInputAttributeDescription>& attributes, 
-        std::vector<VkVertexInputBindingDescription>& bindings
-    )
-{
-    VkPipelineVertexInputStateCreateInfo info = { };
-    info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-
-    for (U32 i = 0; i < vi.numVertexBindings; ++i) 
-    {
-        VertexBinding& vertexBind   = vi.pVertexBindings[i];
-        U32 binding                 = vertexBind.binding;
-        {
-            U32 elementStride                                   = vertexBind.stride;
-            VkVertexInputBindingDescription bindingDescription  = { };
-            bindingDescription.binding                          = binding;
-            bindingDescription.stride                           = elementStride;
-            bindingDescription.inputRate                        = getNativeVertexInputRate(vertexBind.inputRate);
-            bindings.push_back(bindingDescription);
-        }
-
-        for (U32 attribIdx = 0; attribIdx < vertexBind.numVertexAttributes; ++attribIdx) 
-        {
-            VertexAttribute& attrib                     = vertexBind.pVertexAttributes[attribIdx];
-            VkVertexInputAttributeDescription attribute = { };
-            attribute.binding                           = binding;
-            attribute.format                            = Vulkan::getVulkanFormat(attrib.format);
-            attribute.location                          = attrib.loc;
-            attribute.offset                            = attrib.offset;
-            attributes.push_back(attribute);   
-        }
-    }
-
-    info.vertexAttributeDescriptionCount    = (U32)attributes.size();
-    info.vertexBindingDescriptionCount      = (U32)bindings.size();
-    info.pVertexAttributeDescriptions       = attributes.data();
-    info.pVertexBindingDescriptions         = bindings.data();
-
-    return info;
-}
-
-
-static VkPipelineDepthStencilStateCreateInfo getDepthStencilInfo(const GraphicsPipelineStateDesc::DepthStencil& ds)
+static VkPipelineDepthStencilStateCreateInfo getDepthStencilInfo(const DepthStencil& ds)
 {
     VkPipelineDepthStencilStateCreateInfo info  = { };
     info.sType                                  = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -268,7 +228,7 @@ static VkPipelineDynamicStateCreateInfo getDynamicStates()
 }
 
 
-static VkPipelineColorBlendStateCreateInfo getBlendInfo(const GraphicsPipelineStateDesc::BlendState& state,
+static VkPipelineColorBlendStateCreateInfo getBlendInfo(const BlendState& state,
     std::vector<VkPipelineColorBlendAttachmentState>& blendAttachments)
 {
     VkPipelineColorBlendStateCreateInfo info = { };
@@ -285,7 +245,7 @@ static VkPipelineColorBlendStateCreateInfo getBlendInfo(const GraphicsPipelineSt
 
     for (U32 i = 0; i < state.numAttachments; ++i) 
     {
-        RenderTargetBlendState& blendState      = state.attachments[i];
+        const RenderTargetBlendState& blendState      = state.attachments[i];
 
         blendAttachments[i].blendEnable         = blendState.blendEnable;
         blendAttachments[i].alphaBlendOp        = getBlendOp(blendState.alphaBlendOp);
@@ -304,7 +264,7 @@ static VkPipelineColorBlendStateCreateInfo getBlendInfo(const GraphicsPipelineSt
 }
 
 
-static VkPipelineTessellationStateCreateInfo getTessellationStateInfo(const GraphicsPipelineStateDesc::TessellationState& tess)
+static VkPipelineTessellationStateCreateInfo getTessellationStateInfo(const TessellationState& tess)
 {
     VkPipelineTessellationStateCreateInfo info = { };
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
@@ -342,81 +302,169 @@ static VkPipelineMultisampleStateCreateInfo getMultisampleStateInfo()
 }
 
 
-VkResult VulkanPipelineState::createLayout(VulkanDevice* pDevice, const PipelineStateDesc& desc)
+VkPipelineLayout createPipelineLayout(VulkanDevice* pDevice, const VkDescriptorSetLayout* layouts, U32 layoutCount)
 {
     VkDevice device                 = pDevice->get();
     VkPipelineLayoutCreateInfo pli  = { };
-    std::vector<VkDescriptorSetLayout> descriptorSetLayouts(desc.numDescriptorSetLayouts);
-
-    for (U32 i = 0; i < desc.numDescriptorSetLayouts; ++i) 
-    {
-        VulkanDescriptorSetLayout* pSetLayout = static_cast<VulkanDescriptorSetLayout*>(desc.ppDescriptorLayouts[i]);
-        descriptorSetLayouts[i] = pSetLayout->get();
-    }
+    VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
 
     // TODO: Maybe we can cache the pipeline layout?
     pli.sType           = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pli.setLayoutCount  = desc.numDescriptorSetLayouts;
-    pli.pSetLayouts     = descriptorSetLayouts.data();
+    pli.setLayoutCount  = layoutCount;
+    pli.pSetLayouts     = layouts;
 
-    return vkCreatePipelineLayout(device, &pli, nullptr, &m_pipelineLayout);
+    VkResult result = vkCreatePipelineLayout(device, &pli, nullptr, &pipelineLayout);
+
+    return pipelineLayout;
 }
 
 
-void VulkanPipelineState::destroy(VulkanDevice* pDevice)
+void destroyPipeline(VulkanDevice* pDevice, VkPipeline pipeline)
 {   
     R_DEBUG(R_CHANNEL_VULKAN, "Destroying vulkan pipeline state...");
-
-    if (m_pipelineLayout) 
-    {
-        vkDestroyPipelineLayout(pDevice->get(), m_pipelineLayout, nullptr);
-        m_pipelineLayout = nullptr;
-    }
     
-    if (m_pipeline) 
+    if (pipeline) 
     {
-        vkDestroyPipeline(pDevice->get(), m_pipeline, nullptr);
-        m_pipeline = nullptr;    
+        vkDestroyPipeline(pDevice->get(), pipeline, nullptr);
     }
 }
 
-
-ErrType VulkanGraphicsPipelineState::initialize(VulkanDevice* pDevice, const GraphicsPipelineStateDesc& desc)
+void destroyPipelineLayout(VulkanDevice* pDevice, VkPipelineLayout layout)
 {
-    VkDevice device                 = pDevice->get();
-    VkGraphicsPipelineCreateInfo ci = { };
-    VulkanRenderPass* pVr           = static_cast<VulkanRenderPass*>(desc.pRenderPass);
-    VkResult result                 = VK_SUCCESS;
-    ShaderCache* pShaderCache       = pDevice->getShaderCache();
+    R_DEBUG(R_CHANNEL_VULKAN, "Destroying vulkan pipeline layout...");
+    if (layout)
+    {
+        vkDestroyPipelineLayout(pDevice->get(), layout, nullptr);
+    }
+}
+
+namespace VertexLayout {
+
+std::unordered_map<VertexInputLayoutId, VulkanVertexLayout> g_vertexLayoutMap;
+
+static VulkanVertexLayout createVertexInput(const VertexInputLayout& vi)
+{
+    VulkanVertexLayout layout = { };
+    
+    for (U32 i = 0; i < vi.numVertexBindings; ++i) 
+    {
+        const VertexBinding& vertexBind     = vi.vertexBindings[i];
+        U32 binding                         = vertexBind.binding;
+        {
+            U32 elementStride                                   = vertexBind.stride;
+            VkVertexInputBindingDescription bindingDescription  = { };
+            bindingDescription.binding                          = binding;
+            bindingDescription.stride                           = elementStride;
+            bindingDescription.inputRate                        = getNativeVertexInputRate(vertexBind.inputRate);
+            layout.bindings.push_back(bindingDescription);
+        }
+
+        for (U32 attribIdx = 0; attribIdx < vertexBind.numVertexAttributes; ++attribIdx) 
+        {
+            VertexAttribute& attrib                     = vertexBind.pVertexAttributes[attribIdx];
+            VkVertexInputAttributeDescription attribute = { };
+            attribute.binding                           = binding;
+            attribute.format                            = Vulkan::getVulkanFormat(attrib.format);
+            attribute.location                          = attrib.loc;
+            attribute.offset                            = attrib.offset;
+            layout.descriptions.push_back(attribute);   
+        }
+    }
+
+    return layout;
+}
+
+Bool make(VertexInputLayoutId id, const VertexInputLayout& vl)
+{
+    auto iter = g_vertexLayoutMap.find(id);
+    if (iter != g_vertexLayoutMap.end())
+        return true;
+    VulkanVertexLayout layout = createVertexInput(vl);
+    g_vertexLayoutMap[id] = layout;
+    return true;
+}
+
+
+const VulkanVertexLayout* obtain(VertexInputLayoutId inputLayoutId)
+{
+    auto iter = g_vertexLayoutMap.find(inputLayoutId);
+    if (iter != g_vertexLayoutMap.end())
+        return &iter->second;
+    return nullptr;
+}
+} // VertexLayout
+
+VkPipelineLayout makeLayout(VulkanDevice* pDevice, VkDescriptorSetLayout descriptorLayout)
+{
+    VkPipelineLayout layout = VK_NULL_HANDLE;
+    auto iter = g_pipelineLayoutMap.find(descriptorLayout);
+    if (iter == g_pipelineLayoutMap.end())
+    {
+        if (layout = createPipelineLayout(pDevice, &descriptorLayout, 1))
+        {
+            g_pipelineLayoutMap.insert(std::make_pair(descriptorLayout, layout));
+        }
+    }
+    else
+    {
+        layout = iter->second;
+    }
+    return layout;
+}
+
+VkPipeline createGraphicsPipeline(VulkanDevice* pDevice, const Structure& structure, const ShaderPrograms::VulkanShaderProgram* program)
+{
+    VkPipeline pipeline                             = VK_NULL_HANDLE;
+    VkDevice device                                 = pDevice->get();
+    VkGraphicsPipelineCreateInfo ci                 = { };
+    const VkRenderPass renderPass                   = structure.state.graphics.renderPass;
+    VkResult result                                 = VK_SUCCESS;
     VkPipelineShaderStageCreateInfo shaderStages[16];
+
+    if (!program)
+    {
+        R_FATAL_ERR(R_CHANNEL_VULKAN, "Failed to obtain native vulkan program. ShaderProgramId=%llu, Permutation=%llu", structure.state.shaderProgramId, structure.state.shaderPermutation);
+        return VK_NULL_HANDLE;
+    }
 
     std::vector<VkVertexInputAttributeDescription> attributes;
     std::vector<VkVertexInputBindingDescription> bindings;
     std::vector<VkPipelineColorBlendAttachmentState> blendAttachments;
 
-    VkPipelineRasterizationStateCreateInfo rasterState          = getRasterInfo(desc.raster);
-    VkPipelineDepthStencilStateCreateInfo depthStencilState     = getDepthStencilInfo(desc.ds);
+    VkPipelineRasterizationStateCreateInfo rasterState          = getRasterInfo(structure.state.graphics.raster);
+    VkPipelineDepthStencilStateCreateInfo depthStencilState     = getDepthStencilInfo(structure.state.graphics.depthStencil);
     VkPipelineViewportStateCreateInfo viewportState             = getViewportInfo();
-    VkPipelineColorBlendStateCreateInfo blendState              = getBlendInfo(desc.blend, blendAttachments);
-    VkPipelineVertexInputStateCreateInfo vertInputState         = getVertexInputInfo(desc.vi, attributes, bindings);
-    VkPipelineInputAssemblyStateCreateInfo inputAssemblyState   = getAssemblyInfo(desc.primitiveTopology);
+    VkPipelineColorBlendStateCreateInfo blendState              = getBlendInfo(structure.state.graphics.blendState, blendAttachments);
+    VkPipelineVertexInputStateCreateInfo vertInputState         = { };
+    VkPipelineInputAssemblyStateCreateInfo inputAssemblyState   = getAssemblyInfo(structure.state.graphics.primitiveTopology);
     VkPipelineDynamicStateCreateInfo dynamicState               = getDynamicStates();
-    VkPipelineTessellationStateCreateInfo tessState             = getTessellationStateInfo(desc.tess);
+    VkPipelineTessellationStateCreateInfo tessState             = getTessellationStateInfo(structure.state.graphics.tess);
     VkPipelineMultisampleStateCreateInfo multisampleState       = getMultisampleStateInfo();
 
-    result = createLayout(pDevice, desc);
+    const VertexLayout::VulkanVertexLayout* pLayout = VertexLayout::obtain(structure.state.graphics.ia);
+
+    if (pLayout)
+    {
+        vertInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+        vertInputState.vertexBindingDescriptionCount = pLayout->bindings.size();
+        vertInputState.vertexAttributeDescriptionCount = pLayout->descriptions.size();
+        vertInputState.pVertexAttributeDescriptions = pLayout->descriptions.data();
+        vertInputState.pVertexBindingDescriptions = pLayout->bindings.data();
+    }
+
+    VkPipelineLayout pipelineLayout = makeLayout(pDevice, structure.state.descriptorLayout);
     
     if (result != VK_SUCCESS) 
     {
         R_ERR(R_CHANNEL_VULKAN, "Failed to create pipeline state layout.");
 
-        destroy(pDevice);
+        destroyPipelineLayout(pDevice, pipelineLayout);
 
-        return RecluseResult_Failed;
+        return VK_NULL_HANDLE;
     }
 
     ci.sType                = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    ci.renderPass           = pVr->get();
+    ci.renderPass           = renderPass;
     ci.pRasterizationState  = &rasterState;
     ci.pColorBlendState     = &blendState;
     ci.pDepthStencilState   = &depthStencilState;
@@ -427,81 +475,148 @@ ErrType VulkanGraphicsPipelineState::initialize(VulkanDevice* pDevice, const Gra
     ci.pMultisampleState    = &multisampleState;
     ci.stageCount           = 0;
     
-    if (desc.pVS) 
+    if (program->graphics.vs) 
     {
         shaderStages[ci.stageCount]         = { };
-        shaderStages[ci.stageCount].module  = pShaderCache->getCachedShaderModule(pDevice, desc.pVS);
+        shaderStages[ci.stageCount].module  = program->graphics.vs;
         shaderStages[ci.stageCount].stage   = VK_SHADER_STAGE_VERTEX_BIT;
-        shaderStages[ci.stageCount].pName   = "main";
+        shaderStages[ci.stageCount].pName   = program->graphics.vsEntry;
         shaderStages[ci.stageCount].sType   = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         ci.stageCount += 1;
     }
 
-    if (desc.pPS) 
+    if (program->graphics.ps) 
     {
         shaderStages[ci.stageCount]         = { };
-        shaderStages[ci.stageCount].module  = pShaderCache->getCachedShaderModule(pDevice, desc.pPS);
+        shaderStages[ci.stageCount].module  = program->graphics.ps;
         shaderStages[ci.stageCount].stage   = VK_SHADER_STAGE_FRAGMENT_BIT;
-        shaderStages[ci.stageCount].pName   = "main";
+        shaderStages[ci.stageCount].pName   = program->graphics.psEntry;
         shaderStages[ci.stageCount].sType   = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         ci.stageCount += 1;
     }
 
-    ci.layout               = m_pipelineLayout;
+    if (program->graphics.ds)
+    {
+        shaderStages[ci.stageCount] = { };
+        shaderStages[ci.stageCount].module = program->graphics.ds;
+        shaderStages[ci.stageCount].stage = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+        shaderStages[ci.stageCount].pName = program->graphics.dsEntry;
+        shaderStages[ci.stageCount].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        ci.stageCount += 1;
+    }
+
+    if (program->graphics.hs)
+    {
+        shaderStages[ci.stageCount] = { };
+        shaderStages[ci.stageCount].module = program->graphics.hs;
+        shaderStages[ci.stageCount].stage = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+        shaderStages[ci.stageCount].pName = program->graphics.hsEntry;
+        shaderStages[ci.stageCount].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        ci.stageCount += 1;
+    }
+
+    ci.layout               = pipelineLayout;
     ci.pStages              = shaderStages;
 
-    result = vkCreateGraphicsPipelines(device, nullptr, 1, &ci, nullptr, &m_pipeline);
+    result = vkCreateGraphicsPipelines(device, nullptr, 1, &ci, nullptr, &pipeline);
    
     if (result != VK_SUCCESS) 
     {
         R_ERR(R_CHANNEL_VULKAN, "Failed to create vulkan pipeline state.");
         
-        destroy(pDevice);
+        destroyPipeline(pDevice, pipeline);
         
-        return RecluseResult_Failed;
+        return VK_NULL_HANDLE;
     }
 
-    return RecluseResult_Ok;
+    return pipeline;
 }
 
 
-ErrType VulkanComputePipelineState::initialize(VulkanDevice* pDevice, const ComputePipelineStateDesc& desc)
+VkPipeline createComputePipeline(VulkanDevice* pDevice, const Structure& structure, const ShaderPrograms::VulkanShaderProgram* program)
 {
     VkComputePipelineCreateInfo createInfo  = { };
     VkDevice device                         = pDevice->get();
     VkResult result                         = VK_SUCCESS;
-    ShaderCache* pShaderCache               = pDevice->getShaderCache();
-    
-    result = createLayout(pDevice, desc);
+    VkPipeline pipeline = VK_NULL_HANDLE;
+    VkPipelineLayout pipelineLayout         = makeLayout(pDevice, structure.state.descriptorLayout);
 
     if (result != VK_SUCCESS) 
     {
         R_ERR(R_CHANNEL_VULKAN, "Failed to create pipeline layout for Compute pipelinestate...");
         
-        destroy(pDevice);
+        destroyPipelineLayout(pDevice, pipelineLayout);
         
-        return RecluseResult_Failed;
+        return VK_NULL_HANDLE;
     }
 
     createInfo.sType        = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-    createInfo.layout       = m_pipelineLayout;
+    createInfo.layout       = pipelineLayout;
     
     createInfo.stage.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    createInfo.stage.module = pShaderCache->getCachedShaderModule(pDevice, desc.pCS);
-    createInfo.stage.pName  = "main";
+    createInfo.stage.module = program->compute.cs;
+    createInfo.stage.pName  = program->compute.csEntry;
     createInfo.stage.stage  = VK_SHADER_STAGE_COMPUTE_BIT;
 
-    result = vkCreateComputePipelines(device, nullptr, 1, &createInfo, nullptr, &m_pipeline);
+    result = vkCreateComputePipelines(device, nullptr, 1, &createInfo, nullptr, &pipeline);
 
     if (result != VK_SUCCESS) 
     {
         R_ERR(R_CHANNEL_VULKAN, "Failed to create compute pipeline state!");
 
-        destroy(pDevice);
+        destroyPipeline(pDevice, pipeline);
 
-        return RecluseResult_Failed;
+        return nullptr;
     }
 
-    return RecluseResult_Ok;
+    return pipeline;
 }
+
+
+PipelineId makePipelineId(const Structure& structure)
+{
+    return recluseHash((void*)&structure, sizeof(Structure));
+}
+
+
+PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure)
+{
+    PipelineId id = makePipelineId(structure);
+    return makePipeline(pDevice, structure, makePipelineId(structure));
+}
+
+
+PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure, PipelineId id)
+{
+    PipelineState pipeline = { };
+    auto iter = g_pipelineMap.find(id);
+    if (iter == g_pipelineMap.end())
+    {
+        ShaderPrograms::VulkanShaderProgram* program = ShaderPrograms::obtainShaderProgram(structure.state.shaderProgramId, structure.state.shaderPermutation);
+        pipeline.bindPoint = program->bindPoint;
+        switch (program->bindPoint)
+        {
+        case VK_PIPELINE_BIND_POINT_GRAPHICS:
+            pipeline.pipeline = createGraphicsPipeline(pDevice, structure, program);
+            break;
+        case VK_PIPELINE_BIND_POINT_COMPUTE:
+            pipeline.pipeline = createComputePipeline(pDevice, structure, program);
+            break;
+        case VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR:
+            R_ERR(R_CHANNEL_VULKAN, "Ray tracing pipelines are not supported currently!");
+            break;
+        }
+
+        if (pipeline.pipeline)
+        {
+            g_pipelineMap.insert(std::make_pair(id, pipeline));
+        }
+    }
+    else
+    {
+        pipeline = iter->second;
+    }
+    return pipeline;
+}
+} // Pipelines
 } // Recluse

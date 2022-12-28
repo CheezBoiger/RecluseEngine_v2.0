@@ -3,52 +3,74 @@
 
 #include "VulkanCommons.hpp"
 #include "Recluse/Graphics/PipelineState.hpp"
+#include "VulkanObjects.hpp"
+
+#include "Graphics/ShaderProgram.hpp"
 
 namespace Recluse {
 
-
 class VulkanDevice;
 
+typedef Hash64 PipelineId;
 
-class VulkanPipelineState : public PipelineState 
+namespace Pipelines {
+namespace VertexLayout {
+
+struct VulkanVertexLayout
 {
-public:
-    VulkanPipelineState()
-        : m_pipeline(VK_NULL_HANDLE)
-        , m_pipelineLayout(VK_NULL_HANDLE) { }
-
-    virtual ~VulkanPipelineState() { }
-
-    void destroy(VulkanDevice* pDevice);
-
-    VkPipeline get() const { return m_pipeline; }
-    VkPipelineLayout getLayout() const { return m_pipelineLayout; }
-
-protected:
-
-    VkResult createLayout(VulkanDevice* pDevice, const PipelineStateDesc& desc);
-
-    VkPipeline          m_pipeline;
-    VkPipelineLayout    m_pipelineLayout;
+    std::vector<VkVertexInputAttributeDescription> descriptions;
+    std::vector<VkVertexInputBindingDescription> bindings;
 };
 
 
-class VulkanGraphicsPipelineState : public VulkanPipelineState 
+Bool make(VertexInputLayoutId id, const VertexInputLayout& layout);
+} // VertexLayout
+
+struct Structure
 {
-public:
-    virtual ~VulkanGraphicsPipelineState() { }
-
-    ErrType initialize(VulkanDevice* pDevice, const GraphicsPipelineStateDesc& desc);
-
+    struct 
+    {
+        union 
+        {
+            struct 
+            {
+                U32                         numRenderTargets;
+                RasterState                 raster;
+                BlendState                  blendState;
+                DepthStencil                depthStencil;
+                VertexInputLayoutId         ia;
+                TessellationState           tess;
+                PrimitiveTopology           primitiveTopology;
+                VkRenderPass                renderPass;
+            } graphics;
+            struct
+            {
+                U32 unused0;
+            } raytrace;
+        };
+        VkDescriptorSetLayout       descriptorLayout;
+        ShaderProgramPermutation    shaderPermutation;
+        ShaderProgramId             shaderProgramId;
+    } state;
 };
 
 
-class VulkanComputePipelineState : public VulkanPipelineState 
+struct PipelineState
 {
-public:
-    virtual ~VulkanComputePipelineState() { }
-    
-    ErrType initialize(VulkanDevice* pDevice, const ComputePipelineStateDesc& desc);
-
+    VkPipelineBindPoint bindPoint;
+    VkPipeline pipeline;
 };
+
+PipelineId  makePipelineId(const Structure& pipelineStructure);
+
+// Creates a pipeline if one does not exist. Otherwise, returns an existing pipeline.
+PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure);
+PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure, PipelineId pipelineId);
+
+// Clears the whole pipeline cache.
+ErrType clearPipelineCache();
+
+// Creates a pipeline layout if one does not exist. Otherwise, returns an existing pipeline layout.
+VkPipelineLayout makeLayout(VulkanDevice* pDevice, VkDescriptorSetLayout layout);
+} // PipelineManager
 } // Recluse

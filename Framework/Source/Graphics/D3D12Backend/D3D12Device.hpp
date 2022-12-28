@@ -8,6 +8,8 @@
 #include "Recluse/Graphics/GraphicsAdapter.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 
+#include "D3D12PipelineState.hpp"
+
 namespace Recluse {
 
 class D3D12Adapter;
@@ -52,34 +54,38 @@ public:
 
     // Not recommended, but submits a copy to this queue, and waits until the command has 
     // completed.
-    ErrType copyResource(GraphicsResource* dst, GraphicsResource* src) override;
+    void copyResource(GraphicsResource* dst, GraphicsResource* src) override;
 
     // Submits copy of regions from src resource to dst resource. Generally the caller thread will
     // be blocked until this function returns, so be sure to use when needed.
-    ErrType copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, 
-        CopyBufferRegion* pRegions, U32 numRegions) override;
+    void                copyBufferRegions
+                            (
+                                GraphicsResource* dst, 
+                                GraphicsResource* src, 
+                                CopyBufferRegion* pRegions, 
+                                U32 numRegions
+                            ) override;
 
-    GraphicsCommandList* getCommandList() override;
-
-    BufferResources* getCurrentBufferResource() { return &m_bufferResources[m_currentBufferIndex]; }
-    U32 getCurrentBufferIndex() const { return m_currentBufferIndex; }
+    BufferResources*    getCurrentBufferResource() { return &m_bufferResources[m_currentBufferIndex]; }
+    U32                 getCurrentBufferIndex() const { return m_currentBufferIndex; }
 
     const std::vector<BufferResources>& getBufferResources() const { return m_bufferResources; }
-    void resetCurrentResources();
+    void        resetCurrentResources();
 
 private:
 
-    void initializeBufferResources(U32 buffering);
-    void destroyBufferResources();
+    void        initializeBufferResources(U32 buffering);
+    void        destroyBufferResources();
 
-    ErrType createCommandList(D3D12PrimaryCommandList** ppList, GraphicsQueueTypeFlags flags);
-    ErrType destroyCommandList(D3D12PrimaryCommandList* pList);
+    ErrType     createCommandList(D3D12PrimaryCommandList** ppList, GraphicsQueueTypeFlags flags);
+    ErrType     destroyCommandList(D3D12PrimaryCommandList* pList);
 
-    D3D12Device*                    m_pDevice;
-    std::vector<BufferResources>    m_bufferResources;
-    U32                             m_currentBufferIndex;
-    U32                             m_bufferCount;
-    D3D12PrimaryCommandList*        m_pPrimaryCommandList;
+    D3D12Device*                        m_pDevice;
+    std::vector<BufferResources>        m_bufferResources;
+    U32                                 m_currentBufferIndex;
+    U32                                 m_bufferCount;
+    D3D12PrimaryCommandList*            m_pPrimaryCommandList;
+    PipelineState::PipelineStateObject  m_pipelineStateObject;
 };
 
 class D3D12Device : public GraphicsDevice 
@@ -123,6 +129,13 @@ public:
     D3D12_FEATURE_DATA_FORMAT_SUPPORT checkFormatSupport(ResourceFormat format);
 
     DescriptorHeapAllocationManager* getDescriptorHeapManager() { return &m_descHeapManager; }
+
+    ErrType loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition) override;
+    ErrType unloadShaderProgram(ShaderProgramId program) override;
+    void unloadAllShaderPrograms() override;
+
+    Bool makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout) override;
+    Bool destroyVertexLayout(VertexInputLayoutId id) override;
 
     D3D12ResourceAllocator* getBufferAllocator(ResourceMemoryUsage usage) const { return m_bufferPool[usage]; }
     D3D12ResourceAllocator* getTextureAllocator() const { return m_texturePool; }

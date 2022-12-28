@@ -6,13 +6,12 @@ struct TestData {
 };
 
 
-ConstantBuffer<TestData> Test : register(b0);
-
 // TODO: Going to have to figure out this case for GLSlang, seems
 // that all resources are treated as part of one descriptor set, as well
 // as all resources (uav), (srv), (cbv), contain a base binding starting at 0,
 // which can potentially overlap with other resources. 
-RWTexture2D<float4> ResultImg : register(u1);
+RWTexture2D<float4> ResultImg : register(u0);
+ConstantBuffer<TestData> Test : register(b1);
 
 [numthreads(8, 8, 1)]
 void main(uint3 UTid : SV_DispatchThreadID)

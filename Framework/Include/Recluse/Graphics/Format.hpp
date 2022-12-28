@@ -2,11 +2,13 @@
 #pragma once
 
 #include "Recluse/Types.hpp"
+#include "Recluse/Serialization/Hasher.hpp"
 
 namespace Recluse {
 
 enum ResourceFormat 
 {
+    ResourceFormat_Unknown,
     ResourceFormat_R8G8B8A8_Unorm,
     ResourceFormat_R16G16B16A16_Float,
     ResourceFormat_R11G11B10_Float,
@@ -25,4 +27,9 @@ enum ResourceFormat
     ResourceFormat_R16_Float,
     ResourceFormat_B8G8R8A8_Unorm,
 };
+
+
+extern const char* getResourceFormatString(ResourceFormat format);
+
+typedef Hash64 GraphicsId;
 } // Recluse

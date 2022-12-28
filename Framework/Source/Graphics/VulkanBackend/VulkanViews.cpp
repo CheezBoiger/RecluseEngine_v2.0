@@ -6,12 +6,82 @@
 #include "Recluse/Messaging.hpp"
 
 namespace Recluse {
+namespace ResourceViews {
 
+std::unordered_map<ResourceViewId, VulkanResourceView*> g_resourceViewMap;
+std::unordered_map<SamplerId, VulkanSampler*> g_samplerMap;
+
+
+VulkanResourceView* makeResourceView(VulkanDevice* pDevice, const ResourceViewDescription& desc)
+{
+    VulkanResourceView* pView = new VulkanResourceView(desc);
+    pView->initialize(pDevice);
+    g_resourceViewMap[pView->getId()] = pView;
+    return pView;
+}
+
+
+VulkanSampler* makeSampler(VulkanDevice* pDevice, const SamplerCreateDesc& desc)
+{
+    VulkanSampler* pSampler         = new VulkanSampler();
+    pSampler->initialize(pDevice, desc);
+
+    g_samplerMap[pSampler->getId()] = pSampler;
+    
+    return pSampler;
+}
+
+
+ErrType releaseResourceView(VulkanDevice* pDevice, ResourceViewId id)
+{
+    auto& iter = g_resourceViewMap.find(id);
+    if (iter == g_resourceViewMap.end())
+        return RecluseResult_NotFound;
+    iter->second->release(pDevice);
+    g_resourceViewMap.erase(iter);
+    return RecluseResult_Ok;
+}
+
+
+ErrType releaseSampler(VulkanDevice* pDevice, SamplerId id)
+{
+    auto& iter = g_samplerMap.find(id);
+    if (iter == g_samplerMap.end())
+        return RecluseResult_NotFound;
+    iter->second->release(pDevice);
+    g_samplerMap.erase(iter);
+    return RecluseResult_Ok;
+}
+
+
+VulkanResourceView* obtainResourceView(ResourceViewId id)
+{
+    auto& iter = g_resourceViewMap.find(id);
+    if (iter == g_resourceViewMap.end())
+        return nullptr;
+    return iter->second;
+}
+
+
+VulkanSampler* obtainSampler(SamplerId id)
+{
+    auto& iter = g_samplerMap.find(id);
+    if (iter == g_samplerMap.end())
+        return nullptr;
+    return iter->second;
+}
+} // ResourceViews
+
+ResourceViewId VulkanResourceView::kResourceViewCreationCounter = 0;
+SamplerId VulkanSampler::kSamplerCreationCounter                = 0;
+
+Mutex VulkanResourceView::kResourceViewCreationMutex    = createMutex("VulkanResourceViewCreationMutex");
+Mutex VulkanSampler::kSamplerCreationMutex              = createMutex("VulkanSamplerCreationMutex");
 
 ErrType VulkanResourceView::initialize(VulkanDevice* pDevice)
 {
     ErrType result          = RecluseResult_Ok;
-    ResourceViewDesc desc   = getDesc();
+    ResourceViewDescription desc   = getDesc();
 
     VkImageViewCreateInfo info = { };
     info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -30,14 +100,14 @@ ErrType VulkanResourceView::initialize(VulkanDevice* pDevice)
 
     switch (desc.dimension) 
     {
-        case ResourceViewDimension_1d: info.viewType = VK_IMAGE_VIEW_TYPE_1D; break;
-        case ResourceViewDimension_1dArray: info.viewType = VK_IMAGE_VIEW_TYPE_1D_ARRAY; break;
-        case ResourceViewDimension_2d: info.viewType = VK_IMAGE_VIEW_TYPE_2D; break;
-        case ResourceViewDimension_2dArray: info.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY; break;
-        case ResourceViewDimension_2dMultisample: info.viewType = VK_IMAGE_VIEW_TYPE_2D; break;
-        case ResourceViewDimension_3d: info.viewType = VK_IMAGE_VIEW_TYPE_3D; break;
-        case ResourceViewDimension_Cube: info.viewType = VK_IMAGE_VIEW_TYPE_CUBE; break;
-        case ResourceViewDimension_CubeArray: info.viewType = VK_IMAGE_VIEW_TYPE_CUBE_ARRAY; break;
+        case ResourceViewDimension_1d:              info.viewType = VK_IMAGE_VIEW_TYPE_1D; break;
+        case ResourceViewDimension_1dArray:         info.viewType = VK_IMAGE_VIEW_TYPE_1D_ARRAY; break;
+        case ResourceViewDimension_2d:              info.viewType = VK_IMAGE_VIEW_TYPE_2D; break;
+        case ResourceViewDimension_2dArray:         info.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY; break;
+        case ResourceViewDimension_2dMultisample:   info.viewType = VK_IMAGE_VIEW_TYPE_2D; break;
+        case ResourceViewDimension_3d:              info.viewType = VK_IMAGE_VIEW_TYPE_3D; break;
+        case ResourceViewDimension_Cube:            info.viewType = VK_IMAGE_VIEW_TYPE_CUBE; break;
+        case ResourceViewDimension_CubeArray:       info.viewType = VK_IMAGE_VIEW_TYPE_CUBE_ARRAY; break;
         default: break;
     }
 
@@ -54,10 +124,10 @@ ErrType VulkanResourceView::initialize(VulkanDevice* pDevice)
 
     switch (desc.type) 
     {
-        case ResourceViewType_DepthStencil: m_expectedLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL; break;
-        case ResourceViewType_RenderTarget: m_expectedLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; break;
-        case ResourceViewType_ShaderResource: m_expectedLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL; break;
-        case ResourceViewType_UnorderedAccess: m_expectedLayout = VK_IMAGE_LAYOUT_GENERAL; break;
+        case ResourceViewType_DepthStencil:     m_expectedLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL; break;
+        case ResourceViewType_RenderTarget:     m_expectedLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; break;
+        case ResourceViewType_ShaderResource:   m_expectedLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL; break;
+        case ResourceViewType_UnorderedAccess:  m_expectedLayout = VK_IMAGE_LAYOUT_GENERAL; break;
         default: break;
     }
 
@@ -67,7 +137,7 @@ ErrType VulkanResourceView::initialize(VulkanDevice* pDevice)
 }
 
 
-ErrType VulkanResourceView::destroy(VulkanDevice* pDevice)
+ErrType VulkanResourceView::release(VulkanDevice* pDevice)
 {
     ErrType result = RecluseResult_Ok;
 
@@ -163,7 +233,7 @@ ErrType VulkanSampler::initialize(VulkanDevice* pDevice, const SamplerCreateDesc
 }
 
 
-ErrType VulkanSampler::destroy(VulkanDevice* pDevice)
+ErrType VulkanSampler::release(VulkanDevice* pDevice)
 {
     R_ASSERT(pDevice != NULL);
 

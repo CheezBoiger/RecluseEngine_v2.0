@@ -72,9 +72,7 @@ int main(int c, char* argv[])
     GraphicsDevice* pDevice         = nullptr;
     Window* pWindow                 = nullptr;
     GraphicsCommandList* pList      = nullptr;
-    DescriptorSetLayout* pLayout    = nullptr;
     GraphicsResource* pData         = nullptr;
-    DescriptorSet*  pSet            = nullptr;
     GraphicsSwapchain* pSwapchain   = nullptr;
     std::vector<RenderPass*> renderPasses;
     ErrType result                  = RecluseResult_Ok;
@@ -165,7 +163,7 @@ int main(int c, char* argv[])
         desc.height = 1;
         desc.memoryUsage = ResourceMemoryUsage_CpuOnly;
         desc.samples = 1;
-        result = pDevice->createResource(&pData, desc, ResourceState_VertexAndConstantBuffer);
+        result = pDevice->createResource(&pData, desc, ResourceState_ConstantBuffer);
     }
 
     if (result != RecluseResult_Ok) {

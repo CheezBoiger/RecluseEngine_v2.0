@@ -1,5 +1,6 @@
 #
 import os, sys, shutil, re
+import xxhash
 
 common_rcl_dir                  = os.path.dirname(os.path.realpath(__file__)) + "/../Engine/Resources"
 common_header_generation_dir    = os.path.dirname(os.path.realpath(__file__)) + "/../Recluse/include/Recluse/Generated"
@@ -58,7 +59,7 @@ def main():
                             for word in words:
                                 x = re.search('[A-Za-z]', word)
                                 if x:
-                                    word = word.rstrip() + " = " + str(hash(word)) + "ull"
+                                    word = word.rstrip() + " = " + str(xxhash.xxh64(word).intdigest()) + "ull"
                                     break
                             new_line = word
                             if ("," in line):

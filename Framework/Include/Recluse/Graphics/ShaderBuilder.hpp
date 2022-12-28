@@ -9,6 +9,12 @@
 namespace Recluse {
 
 
+struct PreprocessDefine
+{
+    std::string variable;
+    std::string value;
+};
+
 // ShaderBuilder, handles high level shading languages, and transforms them into
 // bytecode to be read to the gpu.
 class R_PUBLIC_API ShaderBuilder 
@@ -28,11 +34,13 @@ public:
     // compiler the shader and return the bytecode.
     ErrType compile
         (
-            Shader* pShader, 
+            Shader* pShader,
+            const char* entryPoint,
             const char* srcCode, 
             U64 sourceCodeBytes, 
             ShaderLang lang, 
-            ShaderType shaderType
+            ShaderType shaderType,
+            const std::vector<PreprocessDefine>& defines = std::vector<PreprocessDefine>()
         );
 
     virtual ErrType disassemble(std::vector<char>& output) { return RecluseResult_NoImpl; }
@@ -43,10 +51,12 @@ private:
 
     virtual ErrType onCompile
                         (
-                            const std::vector<char>& srcCode, 
+                            const std::vector<char>& srcCode,
                             std::vector<char>& byteCode, 
+                            const char* entryPoint,
                             ShaderLang lang, 
-                            ShaderType shaderType
+                            ShaderType shaderType,
+                            const std::vector<PreprocessDefine>& defines = std::vector<PreprocessDefine>()
                         ) 
         { return RecluseResult_NoImpl; }
 

@@ -3,22 +3,23 @@
 #ifndef RECLUSE_STRING_HPP
 #define RECLUSE_STRING_HPP
 
+#pragma once
 #include "Recluse/Types.hpp"
 
 // Defines the recluse text string that would be ideal for handling unicode formats.
-#define R_TEXT(s) u8##s
+#define R_TEXT(s) (u8##s)
 
 namespace Recluse {
-
-//! String class object. Defines the standard type for string objects in Recluse engine.
-//! Note:   This does not absolutely need to be used for applications, but would be desirable
-//!         in order to manually handle string types in C++.
-class String 
+//
+////! String class object. Defines the standard type for string objects in Recluse engine.
+////! Note:   This does not absolutely need to be used for applications, but would be desirable
+////!         in order to manually handle string types in C++.
+class R_PUBLIC_API String 
 {
 public:
     String() : m_size(0), m_cStr(nullptr) { }
     String(String&& other);
-    String(const String& other = String());
+    String(const String& other);
     String(const U8* other);
 
     ~String();
@@ -52,6 +53,10 @@ private:
     //! Size, in characters.
     U32 m_size;
 }; // String
-} // Recluse
 
+
+R_PUBLIC_API std::string toLowerCase(const std::string& str);
+R_PUBLIC_API std::string toUpperCase(const std::string& str);
+
+} // Recluse
 #endif // RECLUSE_STRING_HPP

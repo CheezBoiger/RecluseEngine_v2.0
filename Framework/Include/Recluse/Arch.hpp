@@ -49,3 +49,6 @@
 #define R_OS_SPECIFIC
 // Tag used to indicate what is Operating system specific, that must be implemented.
 #define R_OS_CALL     R_OS_SPECIFIC
+
+#define R_INTERNAL static
+#define R_GLOBAL static

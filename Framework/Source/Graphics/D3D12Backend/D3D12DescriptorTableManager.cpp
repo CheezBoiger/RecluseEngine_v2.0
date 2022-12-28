@@ -402,4 +402,14 @@ void DescriptorHeapAllocationManager::free(const DescriptorHeapAllocation& alloc
 {
     R_NO_IMPL();
 }
+
+
+namespace Binder {
+
+
+ID3D12RootSignature* makeRootSignature()
+{
+
+}
+} // Binder
 } // Recluse

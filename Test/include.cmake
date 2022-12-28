@@ -7,6 +7,8 @@ set ( RECLUSE_ENGINE_INCLUDE ${CMAKE_SOURCE_DIR}/../Engine/Include )
 set( RECLUSE_ENGINE_DEBUG_LIB ${CMAKE_SOURCE_DIR}/../Recluse/Lib/RecluseEngine.lib )
 set( RECLUSE_ENGINE_RELEASE_LIB ${CMAKE_SOURCE_DIR}/../Recluse/Lib/RecluseEngine.lib )
 
+set ( RECLUSE_THIRDPARTY_DIR ${CMAKE_SOURCE_DIR}/Thirdparty )
+
 function(initialize_recluse_framework TARGET_NAME )
     message(STATUS "Recluse: Linking ${TARGET_NAME} with Recluse Framework")
     include_directories(${RECLUSE_FRAMEWORK_INCLUDE} ${RECLUSE_GENERATED_INCLUDES})
@@ -19,6 +21,11 @@ function( initialize_recluse_engine TARGET_NAME )
     target_include_directories(${TARGET_NAME} PUBLIC ${RECLUSE_ENGINE_INCLUDE})
     target_link_libraries(${TARGET_NAME} debug ${RECLUSE_ENGINE_DEBUG_LIB})
     target_link_libraries(${TARGET_NAME} optimized ${RECLUSE_ENGINE_RELEASE_LIB})
+endfunction()
+
+function(initialize_gtest_framework TARGET_NAME )
+	enable_testing()
+	target_link_libraries(${TARGET_NAME} gtest gmock)
 endfunction()
 
 # Adds the Recluse Framework DLL to the given app directory.

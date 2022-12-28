@@ -3,6 +3,7 @@
 
 #include "Recluse/Types.hpp"
 #include "Recluse/Graphics/Format.hpp"
+#include "Recluse/Threading/Threading.hpp"
 
 namespace Recluse {
 
@@ -26,6 +27,7 @@ enum ResourceDimension
 
 enum ResourceViewDimension 
 {
+    ResourceViewDimension_None,
     ResourceViewDimension_Buffer,
     ResourceViewDimension_1d,
     ResourceViewDimension_1dArray,
@@ -134,11 +136,9 @@ enum GraphicsAPI
 
 enum DescriptorBindType 
 {
-    DescriptorBindType_ShaderResourceView,
-    DescriptorBindType_StorageBuffer,
-    DescriptorBindType_StorageImage,
+    DescriptorBindType_ShaderResource,
     DescriptorBindType_ConstantBuffer,
-    DescriptorBindType_UnorderedAccessView,
+    DescriptorBindType_UnorderedAccess,
     DescriptorBindType_Sampler
 };
 
@@ -256,8 +256,18 @@ typedef U32 GraphicsQueueTypeFlags;
 class IGraphicsObject
 {
 public:
+    IGraphicsObject()
+    { generateId(); }
+
     virtual ~IGraphicsObject() { }
 
     virtual GraphicsAPI getApi() const = 0;
+
+    // Get the unique id of this graphics object.
+    virtual GraphicsId getId() const = 0;
+
+    // This function is called for everytime an object is created. Ensure this 
+    // assigns a unique id to it!
+    virtual void generateId() { }
 };
 } // Recluse

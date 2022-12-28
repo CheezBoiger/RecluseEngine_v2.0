@@ -61,8 +61,14 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
         if (vkFormat == VK_FORMAT_UNDEFINED) 
         {
             // Use the default first.
-            R_WARN(R_CHANNEL_VULKAN, "Using default supported surface format, as could either not find specified, or auotmatic.");
-            R_ASSERT_MSG(supportedFormats.empty() == false, "No supported formats were found for this physical device!");
+            R_WARN
+                (
+                    R_CHANNEL_VULKAN, 
+                    "Can not find the requested format (%s), Using default supported surface format (%s).", 
+                    getResourceFormatString(pDesc.format), 
+                    getResourceFormatString(Vulkan::getResourceFormat(supportedFormats[0].format))
+                );
+            R_ASSERT_MSG(!supportedFormats.empty(), "No supported formats were found for this physical device!");
             vkFormat    = supportedFormats[0].format;
             colorSpace  = supportedFormats[0].colorSpace;
         }
@@ -108,7 +114,7 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
     m_pBackbufferQueue  = pDevice->getBackbufferQueue();
     m_pDevice           = pDevice;
 
-    buildFrameResources();
+    buildFrameResources(Vulkan::getResourceFormat(vkFormat));
     queryCommandPools();
 
     VkSemaphore imageAvailableSema = getWaitSemaphore(m_currentFrameIndex);
@@ -155,7 +161,7 @@ ErrType VulkanSwapchain::destroy()
 
         for (U32 i = 0; i < m_frameResources.size(); ++i) 
         {   
-            m_frameViews[i]->destroy(m_pDevice);
+            m_frameViews[i]->release(m_pDevice);
             // Do not call m_frameResources[i]->destroy(), images are originally handled
             // by the swapchain.
             delete m_frameViews[i];
@@ -252,7 +258,7 @@ ErrType VulkanSwapchain::present(PresentConfig config)
 }
 
 
-void VulkanSwapchain::buildFrameResources()
+void VulkanSwapchain::buildFrameResources(ResourceFormat resourceFormat)
 {
     m_rawFrames.build(this);
 
@@ -276,7 +282,7 @@ void VulkanSwapchain::buildFrameResources()
         desc.height         = swapchainDesc.renderHeight;
         desc.dimension      = ResourceDimension_2d;
         desc.depth          = 1;
-        desc.format         = ResourceFormat_R8G8B8A8_Unorm;
+        desc.format         = resourceFormat;
         desc.memoryUsage    = ResourceMemoryUsage_GpuOnly;
         desc.mipLevels      = 1;
         desc.usage          = ResourceUsage_RenderTarget;
@@ -285,8 +291,8 @@ void VulkanSwapchain::buildFrameResources()
 
         m_frameResources[i] = new VulkanImage(desc, frame, VK_IMAGE_LAYOUT_UNDEFINED);
 
-        ResourceViewDesc viewDesc = { };
-        viewDesc.format         = ResourceFormat_R8G8B8A8_Unorm;
+        ResourceViewDescription viewDesc = { };
+        viewDesc.format         = resourceFormat;
         viewDesc.pResource      = m_frameResources[i];
         viewDesc.mipLevelCount  = 1;
         viewDesc.layerCount     = 1;
@@ -303,9 +309,9 @@ void VulkanSwapchain::buildFrameResources()
 
 void VulkanSwapchain::submitCommandsForPresenting()
 {
-    VulkanContext* pContext             = static_cast<VulkanContext*>(m_pDevice->getContext());
+    VulkanContext* pContext             = m_pDevice->getContext()->castTo<VulkanContext>();
     VulkanImage* frame                  = m_frameResources[m_currentFrameIndex];
-    VulkanPrimaryCommandList* pCmdList  = static_cast<VulkanPrimaryCommandList*>(pContext->getCommandList());
+    VulkanPrimaryCommandList* pCmdList  = pContext->getPrimaryCommandList();
     VkDevice device                     = m_pDevice->get();
     U32 bufferIdx                       = pContext->getCurrentBufferIndex();
     VkImageMemoryBarrier imgBarrier     = { };

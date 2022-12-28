@@ -139,7 +139,7 @@ void VulkanAllocator::update(const UpdateConfig& config)
 {
     if 
         (
-            (config.flags & VULKAN_ALLOC_GARBAGE_RESIZE) 
+            (config.flags & VulkanAllocUpdateFlag_GarbageResize) 
             && (config.garbageBufferCount != (U32)m_frameGarbage.size())
         ) 
     {
@@ -157,7 +157,7 @@ void VulkanAllocator::update(const UpdateConfig& config)
 
     U32 garbageSize = (U32)m_frameGarbage.size();
         
-    if (config.flags & VULKAN_ALLOC_SET_FRAME_INDEX) 
+    if (config.flags & VulkanAllocUpdateFlag_SetFrameIndex) 
     {
         if (config.frameIndex >= garbageSize) 
         {
@@ -175,12 +175,12 @@ void VulkanAllocator::update(const UpdateConfig& config)
             m_garbageIndex = config.frameIndex;
         }
     } 
-    else if (config.flags & VULKAN_ALLOC_INCREMENT_FRAME_INDEX) 
+    else if (config.flags & VulkanAllocUpdateFlag_IncrementFrameIndex) 
     {
         m_garbageIndex = (m_garbageIndex + 1) % garbageSize;
     }
 
-    if (config.flags & VULKAN_ALLOC_UPDATE_FLAG)
+    if (config.flags & VulkanAllocUpdateFlag_Update)
     {
         emptyGarbage(m_garbageIndex);
     }

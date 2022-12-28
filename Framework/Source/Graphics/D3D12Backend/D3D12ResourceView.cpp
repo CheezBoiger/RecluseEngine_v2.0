@@ -14,7 +14,7 @@ ErrType D3D12GraphicsResourceView::initialize(D3D12Device* pDevice)
     R_ASSERT(pDevice != NULL);
     ID3D12Device* pNative = pDevice->get();
     R_ASSERT(pNative != NULL);
-    ResourceViewDesc resourceDesc = getDesc();
+    ResourceViewDescription resourceDesc = getDesc();
 
     switch (getDesc().type) 
     {   

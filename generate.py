@@ -5,6 +5,7 @@
 import subprocess, os
 
 import argparse
+import sys
 
 build_systems_dir = os.path.dirname(os.path.realpath(__file__)) + "/BuildSystems"
 
@@ -22,6 +23,7 @@ def parse_arguments():
     parser.add_argument("-glsl", dest="glsl", action="store_true", help="Enable GLSL compilation.", default=False)
     parser.add_argument("-dxil", dest="dxil", action="store_true", help="Enable DXIL compilation.", default=False)
     parser.add_argument("-test", dest="test", action="store_true", help="Enable tests.", default=False)
+    parser.add_argument("-xxhash", dest="xxhash", action="store_true", help="Use XXhashing instead of the default Meow Hash.", default=False)
     args = parser.parse_args()
     parsed_commands = args
     return
@@ -49,11 +51,21 @@ def add_additional_cmake_commands():
     else:
         cmds.append("-DRCL_DXC=False")
         
+    if parsed_commands.xxhash == True:
+        cmds.append("-DR_USE_XXHASH=True")
+    else:
+        cmds.append("-DR_USE_XXHASH=False")
+        
     return cmds
+
+def check_install_package(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
 def main():
     parse_arguments()
-
+    
+    check_install_package("xxhash")
+    
     #subprocess.call(["git", "submodule", "update"])
     subprocess.call(["py", f"{generate_engine_resources}"])
     if not os.path.exists("Build64"):

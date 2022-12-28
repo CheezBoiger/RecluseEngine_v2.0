@@ -80,7 +80,7 @@ int main(int c, char* argv[])
     bufferDesc.memoryUsage  = ResourceMemoryUsage_GpuOnly;
     bufferDesc.width        = R_1KB * 1024ull;
 
-    result = pDevice->createResource(&pBuffer, bufferDesc, ResourceState_VertexAndConstantBuffer);
+    result = pDevice->createResource(&pBuffer, bufferDesc, ResourceState_ConstantBuffer);
 
     if (result != RecluseResult_Ok) {
     
@@ -90,7 +90,7 @@ int main(int c, char* argv[])
         
         R_TRACE("Graphics", "Successfully create buffer!");
         
-        result = pDevice->createResource(&pBuffer2, bufferDesc, ResourceState_VertexAndConstantBuffer);
+        result = pDevice->createResource(&pBuffer2, bufferDesc, ResourceState_ConstantBuffer);
 
         if (result != RecluseResult_Ok) {
         

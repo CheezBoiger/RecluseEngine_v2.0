@@ -42,14 +42,14 @@ class RenderCommandList;
 
 enum RenderPassType : U32 
 {
-    RENDER_PREZ = 0x0001,
-    RENDER_SHADOW = 0x0002,
-    RENDER_PARTICLE = 0x0004,
-    RENDER_GBUFFER = 0x0008,
-    RENDER_HAS_MATERIAL = 0x0010,
-    RENDER_FORWARD_OPAQUE = 0x0020,
-    RENDER_FORWARD_TRANSPARENT = 0x0040,
-    RENDER_HAZE = 0x0080
+    Render_PreZ = 0x0001,
+    Render_Shadow = 0x0002,
+    Render_Particles = 0x0004,
+    Render_Gbuffer = 0x0008,
+    Render_Material = 0x0010,
+    Render_ForwardOpaque = 0x0020,
+    Render_ForwardTransparent = 0x0040,
+    Render_Haze = 0x0080
 };
 
 typedef U32 RenderPassTypeFlags;
@@ -83,6 +83,7 @@ public:
     // Recreate the renderer pipeline, with the new configurations.
     void                        recreate();
 
+    // Push the render command to the rendering engine. This will store the command for the drawing frame.
     void                        pushRenderCommand(const RenderCommand& renderCommand, RenderPassTypeFlags renderFlags);
 
     void                        render();
@@ -133,7 +134,6 @@ private:
     GraphicsInstance*                   m_pInstance;
     GraphicsAdapter*                    m_pAdapter;
     GraphicsDevice*                     m_pDevice;
-    GraphicsCommandList*                m_commandList;
     GraphicsSwapchain*                  m_pSwapchain;
 
     // Renderer configs.

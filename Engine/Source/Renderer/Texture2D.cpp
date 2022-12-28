@@ -100,13 +100,11 @@ void Texture2D::destroy(Renderer* pRenderer)
 
 void Texture2D::load(Renderer* pRenderer, void* pData, U64 szBytes)
 {
-    ErrType result = RecluseResult_Ok;
-    
-    result = pRenderer->getDevice()->getContext()->copyResource(m_resource, nullptr);
+    pRenderer->getDevice()->getContext()->copyResource(m_resource, nullptr);
 }
 
 
-ErrType TextureView::initialize(Renderer* pRenderer, Texture2D* pTexture, ResourceViewDesc& desc)
+ErrType TextureView::initialize(Renderer* pRenderer, Texture2D* pTexture, ResourceViewDescription& desc)
 {
     GraphicsDevice* pDevice = pRenderer->getDevice();
     ErrType result = RecluseResult_Ok;

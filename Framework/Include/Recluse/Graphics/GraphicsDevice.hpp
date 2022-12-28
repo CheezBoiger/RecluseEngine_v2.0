@@ -2,10 +2,12 @@
 #pragma once
 
 #include "Recluse/Types.hpp"
+#include "Recluse/Messaging.hpp"
 #include "Recluse/Graphics/Format.hpp"
 #include "Recluse/Graphics/DescriptorSet.hpp"
 #include "Recluse/Graphics/GraphicsCommon.hpp"
 #include "Recluse/Graphics/PipelineState.hpp"
+#include "Recluse/Graphics/ShaderProgramBuilder.hpp"
 
 namespace Recluse {
 
@@ -19,7 +21,6 @@ class GraphicsContext;
 class GraphicsDevice;
 class GraphicsSampler;
 class RenderPass;
-
 
 struct GraphicsResourceDescription 
 {
@@ -45,7 +46,7 @@ struct MemoryReserveDesc
 };
 
 
-struct ResourceViewDesc 
+struct ResourceViewDescription 
 {
     ResourceViewType        type;
     ResourceFormat          format;
@@ -58,16 +59,6 @@ struct ResourceViewDesc
 };
 
 
-struct RenderPassDesc 
-{
-    GraphicsResourceView* ppRenderTargetViews[8];
-    U32                   numRenderTargets;
-    U32                   width;
-    U32                   height;
-    GraphicsResourceView* pDepthStencil;
-};
-
-
 class R_PUBLIC_API GraphicsContext : public ICastableObject
 {
 public:
@@ -76,30 +67,28 @@ public:
     virtual void begin() { }
     virtual void end() { }
 
-    // Obtain the graphics command list for the context.
-    virtual GraphicsCommandList* getCommandList() { return nullptr; }
     virtual GraphicsDevice* getDevice() { return nullptr; }
 
         // Not recommended, but submits a copy to this queue, and waits until the command has 
     // completed.
-    virtual ErrType copyResource(GraphicsResource* dst, GraphicsResource* src) 
-        { return RecluseResult_NoImpl; }
+    virtual void copyResource(GraphicsResource* dst, GraphicsResource* src) 
+        { }
 
     // Submits copy of regions from src resource to dst resource. Generally the caller thread will
     // be blocked until this function returns, so be sure to use when needed.
-    virtual ErrType copyBufferRegions
+    virtual void  copyBufferRegions
                         (
                             GraphicsResource* dst, 
                             GraphicsResource* src, 
                             CopyBufferRegion* pRegions, 
                             U32 numRegions
                         )
-        { return RecluseResult_NoImpl; }
+        { }
 
     // A more asyncronous alternative, which will utilize a separate, one time only command list
     // and will ultimately need to be checked when finished. 
     // This ONLY WORKS IF asyncronous queue is supported, otherwise, will return with fail.
-    virtual ErrType copyBufferRegionsAsync
+    virtual void copyBufferRegionsAsync
                         (
                             GraphicsResource* dst,
                             GraphicsResource* src,
@@ -107,15 +96,66 @@ public:
                             U32 numRegions,
                             Bool* isFinished
                         ) 
-        { return RecluseResult_NoImpl; }
+        { }
 
     virtual ErrType wait() { return RecluseResult_NoImpl; }
+
+    virtual void bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* pOffsets) { }
+    virtual void bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBytes, IndexType type) { }
+
+    virtual void drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 firstIndex, U32 vertexOffset, U32 firstInstance) { }
+    virtual void drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstVertex, U32 firstInstance) { }
+
+    virtual void drawInstancedIndirect(GraphicsResource* pParams, U32 offset, U32 drawCount, U32 stride) { }
+    virtual void drawIndexedInstancedIndirect(GraphicsResource* pParams, U32 offset, U32 drawCount, U32 stride) { }
+
+    virtual void setScissors(U32 numScissors, Rect* pRects) { }
+    virtual void setViewports(U32 numViewports, Viewport* pViewports) { }
+
+    virtual void dispatch(U32 x, U32 y, U32 z) { }
+    virtual void dispatchRays(U32 x, U32 y, U32 z) { }
+
+    virtual void clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) { }
+    virtual void clearDepthStencil(F32 clearDepth, U8 clearStencil, const Rect& rect) { }
+
+    virtual void copyBufferRegions(CopyBufferRegion* pRegions, U32 numRegions) { }
+
+    // Transitiion a resource to a given state. This is a modern API specific feature,
+    // which is handled by managed drivers for older APIs, yet we reinforce this for older 
+    // API anyways, in order to ensure newer APIs will still conform!
+    virtual void transition(GraphicsResource* pResource, ResourceState) { }
+
+    virtual Bool supportsAsyncCompute() { return false; }
+
+    virtual void dispatchAsync(U32 x, U32 y, U32 z) { R_ASSERT(supportsAsyncCompute()); }
+
+    virtual void dispatchIndirect(GraphicsResource* pParams, U64 offset) { R_ASSERT(supportsAsyncCompute()); }
+
+    virtual void setCullMode(CullMode cullmode) { }
+    virtual void setFrontFace(FrontFace frontFace) { }
+    virtual void setDepthCompareOp(CompareOp compareOp) { }
+    virtual void setPolygonMode(PolygonMode polygonMode) { }
+    virtual void bindShaderResources(ShaderType type, U32 offset, U32 count, GraphicsResourceView** ppResources) { }
+    virtual void bindUnorderedAccessViews(ShaderType type, U32 offset, U32 count, GraphicsResourceView** ppResources) { }
+    virtual void bindConstantBuffers(ShaderType type, U32 offset, U32 count, GraphicsResource** ppResources) { }
+    virtual void bindRenderTargets(U32 count, GraphicsResourceView** ppResources, GraphicsResourceView* pDepthStencil) { }
+    virtual void bindSamplers(ShaderType type, U32 count, GraphicsSampler** ppSampler) { }
+    virtual void bindRasterizerState(const RasterState& state) { }
+    virtual void bindBlendState(const BlendState& state) { }
+    virtual void releaseBindingResources() { }
+    virtual void setTopology(PrimitiveTopology topology) { }
+    virtual void setShaderProgram(ShaderProgramId program, U32 permutation = 0u) { }
+    virtual void enableDepth(Bool enable) { }
+    virtual void enableStencil(Bool enable) { }
+    virtual void setInputVertexLayout(VertexInputLayoutId inputLayout) { }
 };
 
 
 class R_PUBLIC_API GraphicsDevice : public ICastableObject
 {
 public:
+    virtual ~GraphicsDevice() { }
+
     // Reserve memory to be used for graphics resources.
     virtual ErrType reserveMemory(const MemoryReserveDesc& desc) { return RecluseResult_NoImpl; }
 
@@ -124,24 +164,7 @@ public:
     virtual ErrType createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc, ResourceState initState) 
         { return RecluseResult_NoImpl; }
 
-    virtual ErrType createDescriptorSetLayout(DescriptorSetLayout** ppLayout, const DescriptorSetLayoutDesc& desc)
-        { return RecluseResult_NoImpl; }
-
-    virtual ErrType createGraphicsPipelineState(PipelineState** pPipelineState, const GraphicsPipelineStateDesc& desc) 
-        { return RecluseResult_NoImpl; }
-
-    virtual ErrType createComputePipelineState(PipelineState** ppPipelineState, const ComputePipelineStateDesc& desc) 
-        { return RecluseResult_NoImpl; }
-
-    virtual ErrType createRaytracingPipelineState() { return RecluseResult_NoImpl; }
-
-    virtual ErrType createResourceView(GraphicsResourceView** ppView, const ResourceViewDesc& desc) 
-        { return RecluseResult_NoImpl; }
-
-    virtual ErrType createRenderPass(RenderPass** ppRenderPass, const RenderPassDesc& desc) 
-        { return RecluseResult_NoImpl; }
-
-    virtual ErrType createDescriptorSet(DescriptorSet** ppLayout, DescriptorSetLayout* pSetLayout) 
+    virtual ErrType createResourceView(GraphicsResourceView** ppView, const ResourceViewDescription& desc) 
         { return RecluseResult_NoImpl; }
 
     virtual ErrType createSampler(GraphicsSampler** ppSampler, const SamplerCreateDesc& desc) 
@@ -150,15 +173,22 @@ public:
     virtual ErrType destroySampler(GraphicsSampler* pSampler) { return RecluseResult_NoImpl; }
     virtual ErrType destroyResource(GraphicsResource* pResource) { return RecluseResult_NoImpl; }
     virtual ErrType destroyResourceView(GraphicsResourceView* pResourceView) { return RecluseResult_NoImpl; }
-    virtual ErrType destroyRenderPass(RenderPass* pRenderPass) { return RecluseResult_NoImpl; }
-    virtual ErrType destroyPipelineState(PipelineState* pPipelineState) { return RecluseResult_NoImpl; }
-    virtual ErrType destroyDescriptorSet(DescriptorSet* pSet) { return RecluseResult_NoImpl; }
-    virtual ErrType destroyDescriptorSetLayout(DescriptorSetLayout* pSetLayout) { return RecluseResult_NoImpl; }
+
+    // Makes a vertex layout, will return a layout id if one already exists.
+    virtual Bool makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout) { return false; }
+    virtual Bool destroyVertexLayout(VertexInputLayoutId id) { return false; }
 
     virtual GraphicsContext* getContext() { return nullptr; }
     
     virtual GraphicsSwapchain* getSwapchain() { return nullptr; }
 
+    // Load up shader programs to be created on the native api.
+    virtual ErrType loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition) { return RecluseResult_NoImpl; }
+    
+    // Unload a shader program, as well as it's permutations, created by this device.
+    virtual ErrType unloadShaderProgram(ShaderProgramId program) { return RecluseResult_NoImpl; }
+    // Unload all shader programs, as well as their permutations.
+    virtual void unloadAllShaderPrograms() { return; }
 private:
 };
 

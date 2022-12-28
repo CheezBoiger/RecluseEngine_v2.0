@@ -60,8 +60,8 @@ public:
         return RecluseResult_Ok;
     }
 
-    ErrType onCompile(const std::vector<char>& srcCode, std::vector<char>& byteCode, 
-        ShaderLang lang, ShaderType shaderType) override 
+    ErrType onCompile(const std::vector<char>& srcCode, std::vector<char>& byteCode,  const char* entryPoint,
+        ShaderLang lang, ShaderType shaderType, const std::vector<PreprocessDefine>& defines) override 
     {
         R_ASSERT(m_library != NULL);
         R_ASSERT(m_compiler != NULL);
@@ -88,17 +88,23 @@ public:
         {
             arguments[argCount++] = L"-spirv";
         }
+
+        int count = MultiByteToWideChar(CP_UTF8, 0, entryPoint, sizeof(entryPoint), nullptr, 0);
+        WCHAR* wideEntryPoint = new WCHAR[count];
+        MultiByteToWideChar(CP_UTF8, 0, entryPoint, sizeof(entryPoint), wideEntryPoint, count);
         
         hr = m_compiler->Compile
             (
                 sourceBlob, 
                 NULL, 
-                L"main", 
+                wideEntryPoint, 
                 targetProfile, 
                 arguments, argCount, 
                 NULL, 0, 
                 NULL, &result
             );
+
+        delete wideEntryPoint;
 
         if (FAILED(hr)) 
         {

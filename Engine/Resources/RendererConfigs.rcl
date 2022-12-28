@@ -5,11 +5,11 @@ namespace Recluse {
 
 enum QualitySetting
 {
-    QUALITY_NONE,
-    QUALITY_LOW,
-    QUALITY_MEDIUM,
-    QUALITY_HIGH,
-    QUALITY_BEST
+    QualitySetting_None,
+    QualitySetting_Low,
+    QualitySetting_Medium,
+    QualitySetting_High,
+    QualitySetting_Best
 };
 
 class RendererConfigs
@@ -27,6 +27,9 @@ public:
     Bool            enableScreenSpaceShadows;
     Bool            enableSubsurfaceScattering;
     Bool            enableParticleMotion;
+	//[Description("Quality of Shadows.")]
+	QualitySetting  shadowQuality;
+	QualitySetting 	lightingQuality;
+	QualitySetting 	textureQuality;
 };
-
 } // Recluse

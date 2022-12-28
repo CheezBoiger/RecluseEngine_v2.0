@@ -9,6 +9,7 @@
 #include "Recluse/Graphics/ResourceView.hpp"
 #include "Recluse/Graphics/RenderPass.hpp"
 #include "Recluse/Graphics/ShaderBuilder.hpp"
+#include "Recluse/Graphics/ShaderProgramBuilder.hpp"
 
 #include "Recluse/Memory/MemoryCommon.hpp"
 #include "Recluse/System/Window.hpp"
@@ -71,11 +72,8 @@ int main(int c, char* argv[])
     GraphicsResource* pData         = nullptr;
     GraphicsResource* pVertexBuffer = nullptr;
     GraphicsResourceView* pView     = nullptr;
-    DescriptorSetLayout* pLayout    = nullptr;
-    DescriptorSet* pSet             = nullptr;
     PipelineState* pPipeline        = nullptr;
     GraphicsSwapchain* pSwapchain   = nullptr;
-    GraphicsCommandList* pList      = nullptr;
     Window* pWindow                 = Window::create("PipelineInitialization", 0, 0, 512, 512);
     Mouse* pMouse                   = new Mouse();
     ErrType result                  = RecluseResult_Ok;
@@ -147,56 +145,13 @@ int main(int c, char* argv[])
         R_ERR("TEST", "Failed to create swapchain!");
     }
 
-    {
-        DescriptorSetLayoutDesc desc = { };
-        desc.numDescriptorBinds = 1;
-
-        DescriptorBindDesc bind = { };
-        bind.binding = 0;
-        bind.bindType = DescriptorBindType_ConstantBuffer;
-        bind.numDescriptors = 1;
-        bind.shaderStages = ShaderType_Vertex | ShaderType_Fragment;
-
-        desc.pDescriptorBinds = &bind;
-        
-        result = pDevice->createDescriptorSetLayout(&pLayout, desc);
-    }
-
     if (result != RecluseResult_Ok) 
     { 
         R_ERR("TEST", "Failed to create descriptor set layout...");
     }
     
     pSwapchain = pDevice->getSwapchain();
-    
-    {
-        RenderPassDesc desc = { };
-        desc.width = pWindow->getWidth();
-        desc.height = pWindow->getHeight();
-        desc.numRenderTargets = 1;
-        desc.pDepthStencil = nullptr;
-
-        passes.resize(pSwapchain->getDesc().desiredFrames);
-
-        for (U32 i = 0; i < passes.size(); ++i) 
-        {
-            GraphicsResourceView* pView = pSwapchain->getFrameView(i);
-            desc.ppRenderTargetViews[0] = pView;
-            result = pDevice->createRenderPass(&passes[i], desc);      
-            if (result != RecluseResult_Ok) 
-            {
-                R_ERR("TEST", "Failed to create render pass...");
-            }
-        }
-    }
-
-    result = pDevice->createDescriptorSet(&pSet, pLayout); 
-
-    if (result != RecluseResult_Ok) 
-    {
-        R_ERR("TEST", "Failed to create descriptor set!");
-    }
-
+   
     {
         GraphicsResourceDescription desc = { };
         desc.dimension = ResourceDimension_Buffer;
@@ -230,16 +185,6 @@ int main(int c, char* argv[])
         pData->map(&ptr, &range);
         memcpy(ptr, &dat, sizeof(ConstData));
         pData->unmap(&range);
-
-        DescriptorSetBind bind = { };
-        bind.binding = 0;
-        bind.bindType = DescriptorBindType_ConstantBuffer;
-        bind.descriptorCount = 1;
-        bind.cb.buffer = pData;
-        bind.cb.offset = 0;
-        bind.cb.sizeBytes = sizeof(ConstData);    
-
-        pSet->update(&bind, 1);
     }
 
     {
@@ -250,7 +195,7 @@ int main(int c, char* argv[])
         desc.dimension = ResourceDimension_Buffer;
         desc.memoryUsage = ResourceMemoryUsage_GpuOnly;
         desc.depth = 1;
-        pDevice->createResource(&pVertexBuffer, desc, ResourceState_VertexAndConstantBuffer);
+        pDevice->createResource(&pVertexBuffer, desc, ResourceState_VertexBuffer);
     
         desc.memoryUsage = ResourceMemoryUsage_CpuOnly;
         desc.usage = ResourceUsage_TransferSource;
@@ -271,99 +216,43 @@ int main(int c, char* argv[])
         region.srcOffsetBytes = 0;
         region.dstOffsetBytes = 0;
         region.szBytes = sizeof(vertices);
-        result = pDevice->getContext()->copyBufferRegions(pVertexBuffer, pTemp, &region, 1);
-
-        if (result != RecluseResult_Ok) 
-        {
-            R_ERR("TEST", "Failed to stream vertex data to vertex buffer!");
-        }    
+        pDevice->getContext()->copyBufferRegions(pVertexBuffer, pTemp, &region, 1);
 
         pDevice->destroyResource(pTemp);
     }
 
     {
-        ShaderBuilder* pBuilder = createGlslangShaderBuilder(ShaderIntermediateCode_Spirv);
-        pBuilder->setUp();
-
-        Shader* pVertShader = Shader::create();
-        Shader* pFragShader = Shader::create();
-
         std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
+        std::string vsSource = currDir + "/" + "test.vs.glsl";
+        std::string fsSource = currDir + "/" + "test.fs.glsl";
 
-        FileBufferData file;
-        std::string shaderSource = currDir + "/" + "test.vs.glsl";
-        result = File::readFrom(&file, shaderSource);
-
-        if (result != RecluseResult_Ok) 
-        {
-            R_ERR("TEST", "Could not find %s", shaderSource.c_str());
-        }
-
-        result = pBuilder->compile(pVertShader, file.data(), file.size(), ShaderLang_Glsl, ShaderType_Vertex);
-
-        if (result != RecluseResult_Ok) 
-        {
-            R_ERR("TEST", "Failed to compile glsl shader vert!");
-        }
-
-        shaderSource = currDir + "/" + "test.fs.glsl";
-        result = File::readFrom(&file, shaderSource);
-            
-        if (result != RecluseResult_Ok) 
-        {
-            R_ERR("TEST", "Could not find %s", shaderSource.c_str());
-        }
-
-        result = pBuilder->compile(pFragShader, file.data(), file.size(), ShaderLang_Glsl, ShaderType_Fragment);
+        Builder::ShaderProgramDescription description = { };
+        description.pipelineType = BindType_Graphics;
+        description.graphics.vs = vsSource.c_str();
+        description.graphics.vsName = "main";
         
-        if (result != RecluseResult_Ok) 
-        {
-            R_ERR("TEST", "Failed to compile glsl shader frag!");
-        }
-        
-        GraphicsPipelineStateDesc desc = { };
-        desc.pVS = pVertShader;
-        desc.pPS = pFragShader;
-        
+        description.graphics.ps = fsSource.c_str();
+        description.graphics.psName = "main";
+
+        Builder::buildShaderProgramDefinitions(description, 0, ShaderIntermediateCode_Spirv);
+        Builder::Runtime::buildShaderProgram(pDevice, 0);
+        Builder::releaseShaderProgramDefinition(0);
+
+
+        VertexInputLayout layout = { };
         VertexAttribute attrib = { };
         attrib.format = ResourceFormat_R32G32_Float;
         attrib.loc = 0;
         attrib.offset = 0;
         attrib.semantic = "POSITION";
 
-        VertexBinding binding = { };
-        binding.binding = 0;
-        binding.inputRate = InputRate_PerVertex;
-        binding.numVertexAttributes = 1;
-        binding.pVertexAttributes = &attrib;
-        binding.stride = 8; // 1 float == 4 bytes.
+        layout.vertexBindings[0].binding = 0;
+        layout.vertexBindings[0].inputRate = InputRate_PerVertex;
+        layout.vertexBindings[0].numVertexAttributes = 1;
+        layout.vertexBindings[0].pVertexAttributes = &attrib;
+        layout.vertexBindings[0].stride = 8; // 1 float == 4 bytes.
 
-        RenderTargetBlendState blendTarget = { };
-        blendTarget.blendEnable = false;
-        blendTarget.colorWriteMask = Color_Rgba;
-
-        desc.raster.cullMode = CullMode_None;
-        desc.raster.frontFace = FrontFace_CounterClockwise;
-        desc.raster.polygonMode = PolygonMode_Fill;
-        desc.raster.depthClampEnable = false;
-        desc.raster.lineWidth  = 1.0f;
-        desc.primitiveTopology = PrimitiveTopology_TriangleList;
-        desc.vi.numVertexBindings = 1;
-        desc.vi.pVertexBindings = &binding;
-        desc.numDescriptorSetLayouts = 1;
-        desc.ppDescriptorLayouts = &pLayout;
-        desc.blend.logicOp = LogicOp_NoOp;
-        desc.blend.logicOpEnable = false;
-        desc.blend.numAttachments = 1;
-        desc.blend.attachments = &blendTarget;
-        desc.pRenderPass = passes[0];
-
-        result = pDevice->createGraphicsPipelineState(&pPipeline, desc);
-
-        Shader::destroy(pVertShader);
-        Shader::destroy(pFragShader);
-        pBuilder->tearDown();
-        freeShaderBuilder(pBuilder);
+        Builder::Runtime::buildVertexInputLayout(pDevice, layout, 0);
     }
     
     pWindow->open();
@@ -379,25 +268,26 @@ int main(int c, char* argv[])
 
     U64 offset = 0;
 
+    GraphicsContext* context = pDevice->getContext();
     while (!pWindow->shouldClose()) 
     {
         RealtimeTick::updateWatch(1ull, 0);
         RealtimeTick tick = RealtimeTick::getTick(0);
         R_VERBOSE("Game", "%f", tick.delta());
         updateConstData(pData, tick);
-        pDevice->getContext()->begin();    
-        pList = pDevice->getContext()->getCommandList();
-        pList->begin();
-            pList->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
-            pList->setRenderPass(passes[pSwapchain->getCurrentFrameIndex()]);
-            pList->setPipelineState(pPipeline, BindType_Graphics);
-            pList->setViewports(1, &viewport);
-            pList->setScissors(1, &scissor);
-            pList->bindDescriptorSets(1, &pSet, BindType_Graphics);
-            pList->bindVertexBuffers(1, &pVertexBuffer, &offset);
-            pList->drawInstanced(3, 1, 0, 0);
-        pList->end();
-        pDevice->getContext()->end();
+        context->begin();
+            context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
+            context->setCullMode(CullMode_None);
+            context->setFrontFace(FrontFace_CounterClockwise);
+            context->setPolygonMode(PolygonMode_Fill);
+            context->setTopology(PrimitiveTopology_TriangleList);
+            context->setViewports(1, &viewport);
+            context->setScissors(1, &scissor);
+            context->setInputVertexLayout(0);
+            context->setShaderProgram(0);
+            context->bindVertexBuffers(1, &pVertexBuffer, &offset);
+            context->drawInstanced(3, 1, 0, 0);
+        context->end();
         pSwapchain->present();
 
         pollEvents();
@@ -406,14 +296,8 @@ int main(int c, char* argv[])
 
     pDevice->getContext()->wait();
 
-    for (U32 i = 0; i < passes.size(); ++i)
-        pDevice->destroyRenderPass(passes[i]);
-
     pDevice->destroyResource(pVertexBuffer);
     pDevice->destroyResource(pData);
-    pDevice->destroyDescriptorSet(pSet);
-    pDevice->destroyPipelineState(pPipeline);
-    pDevice->destroyDescriptorSetLayout(pLayout);
     pAdapter->destroyDevice(pDevice);
     GraphicsInstance::destroyInstance(pInstance);
     Window::destroy(pWindow);

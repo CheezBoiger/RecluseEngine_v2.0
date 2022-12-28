@@ -56,14 +56,8 @@ ErrType GPUBuffer::stream(GraphicsDevice* pDevice, void* ptr, U64 offsetBytes, U
     region.srcOffsetBytes   = 0;
     region.szBytes          = szBytes;
 
-    if (m_pResource->getCurrentResourceState() != ResourceState_CopyDestination)
-    {
-        // TODO():
-        // We will need to transition the resource before hand. This will require some work...
-        return RecluseResult_NeedsUpdate;
-    }
-
-    result = pDevice->getContext()->copyBufferRegions(m_pResource, pStaging, &region, 1);
+    pDevice->getContext()->transition(m_pResource, ResourceState_CopyDestination);
+    pDevice->getContext()->copyBufferRegions(m_pResource, pStaging, &region, 1);
 
     m_pDevice->destroyResource(pStaging);
 

@@ -1,6 +1,12 @@
 //
-#include "meow_hash_x64_aesni.h"
 
+#if R_USE_XXHASH
+#define XXH_IMPLEMENTATION 1
+#define XXH_STATIC_LINKING_ONLY 1
+#include "xxHash/xxhash.h"
+#else
+#include "meow_hash_x64_aesni.h"
+#endif
 #include "Recluse/Types.hpp"
 #include "Recluse/Serialization/Hasher.hpp"
 

@@ -94,8 +94,6 @@ void Renderer::initialize()
         R_ERR("Renderer", "ReserveMemory call completed with result: %d", result);
     }
 
-    m_commandList = m_pDevice->getContext()->getCommandList();
-
     allocateSceneBuffers(m_currentRendererConfigs);
 
     setUpModules();
@@ -130,7 +128,9 @@ void Renderer::present(Bool delayPresent)
 void Renderer::render()
 {
     sortCommandKeys();
-    m_pDevice->getContext()->begin();
+    GraphicsContext* context = m_pDevice->getContext();
+
+    context->begin();
 #if (!R_NULLIFY_RENDER)
         // TODO: Would make more sense to manually transition the resource itself, 
         //       and not the resource view...
@@ -182,7 +182,7 @@ void Renderer::render()
                             m_currentCommandKeys[RENDER_FORWARD_OPAQUE].size()
                         );
 #endif
-    m_pDevice->getContext()->end();
+    context->end();
     // Present.
     m_pSwapchain->present();
     
@@ -352,25 +352,25 @@ void Renderer::pushRenderCommand(const RenderCommand& renderCommand, RenderPassT
     // Store mesh commands to be referenced for each draw pass.
     CommandKey key                  = { m_currentRenderCommands->getNumberCommands() };
 
-    if (renderFlags & RENDER_PREZ) 
+    if (renderFlags & Render_PreZ) 
     {
-        m_currentCommandKeys[RENDER_PREZ].push_back(key.value);
+        m_currentCommandKeys[Render_PreZ].push_back(key.value);
     }
 
-    if (renderFlags & RENDER_GBUFFER) 
+    if (renderFlags & Render_Gbuffer) 
     {
-        m_currentCommandKeys[RENDER_GBUFFER].push_back(key.value);
+        m_currentCommandKeys[Render_Gbuffer].push_back(key.value);
     }
 
-    if (renderFlags & RENDER_SHADOW) 
+    if (renderFlags & Render_Shadow) 
     {
-        m_currentCommandKeys[RENDER_SHADOW].push_back(key.value);
+        m_currentCommandKeys[Render_Shadow].push_back(key.value);
     }
 
     // Mesh is treated as particles.
-    if (renderFlags & RENDER_PARTICLE) 
+    if (renderFlags & Render_Particles) 
     {
-        m_currentCommandKeys[RENDER_PARTICLE].push_back(key.value);
+        m_currentCommandKeys[Render_Particles].push_back(key.value);
     }
 
     // Push the render command to the last, this will serve as our reference to render in
@@ -385,7 +385,7 @@ void Renderer::allocateSceneBuffers(const RendererConfigs& configs)
     U32 height = configs.renderHeight;
     m_sceneBuffers.gbuffer[Engine::GBuffer_Depth] = createTexture2D(width, height, 1, 1, ResourceFormat_D24_Unorm_S8_Uint);
 
-    ResourceViewDesc viewDesc = { };
+    ResourceViewDescription viewDesc = { };
     viewDesc.dimension = ResourceViewDimension_2d;
     viewDesc.format = ResourceFormat_D24_Unorm_S8_Uint;
     viewDesc.layerCount = 1;

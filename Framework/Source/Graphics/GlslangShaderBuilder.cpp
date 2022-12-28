@@ -144,7 +144,15 @@ public:
         return RecluseResult_Ok;
     }
 
-    ErrType onCompile(const std::vector<char>& srcCode, std::vector<char>& byteCode, ShaderLang lang, ShaderType shaderType) override
+    ErrType onCompile
+        (
+            const std::vector<char>& srcCode, 
+            std::vector<char>& byteCode, 
+            const char* entryPoint,
+            ShaderLang lang, 
+            ShaderType shaderType, 
+            const std::vector<PreprocessDefine>& defines = std::vector<PreprocessDefine>()
+        ) override
     {
         R_DEBUG("GLSLANG", "Compiling shader...");
         R_ASSERT(m_isInitialized == true);
@@ -153,11 +161,11 @@ public:
 
         switch (shaderType) 
         {
-            case ShaderType_Vertex:        stage = EShLangVertex; break;
-            case ShaderType_Fragment:      stage = EShLangFragment; break;
-            case ShaderType_Compute:       stage = EShLangCompute; break;
-            case ShaderType_TessellationControl:  stage = EShLangTessControl; break;
-            case ShaderType_TessellationEvaluation:     stage = EShLangTessEvaluation; break;
+            case ShaderType_Vertex:                 stage = EShLangVertex; break;
+            case ShaderType_Fragment:               stage = EShLangFragment; break;
+            case ShaderType_Compute:                stage = EShLangCompute; break;
+            case ShaderType_TessellationControl:    stage = EShLangTessControl; break;
+            case ShaderType_TessellationEvaluation: stage = EShLangTessEvaluation; break;
             // TODO: Support more shaders!
         }
 
@@ -166,7 +174,6 @@ public:
         std::vector<U32> spirv;
         spv::SpvBuildLogger logger;
         std::string compileLog;
-
         glslang::EShClient client           = glslang::EShClientVulkan;
         I32 clientVersion                   = 100;
         const char* str                     = srcCode.data();
@@ -183,7 +190,7 @@ public:
 
         shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_3);
         shader.setStrings(&str, 1);
-        shader.setEntryPoint("main");
+        shader.setEntryPoint(entryPoint);
         shader.setAutoMapLocations(true);   // --aml, which will allow for implicit location mapping 
                                             // for builtin blocks.
     

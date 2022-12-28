@@ -8,16 +8,7 @@
 
 namespace Recluse {
 
-
-class RenderPass;
 class Shader;
-
-struct PipelineStateDesc 
-{
-    RenderPass*     pRenderPass;
-    DescriptorSetLayout** ppDescriptorLayouts;
-    U32                   numDescriptorSetLayouts;
-};
 
 
 struct ShaderModule 
@@ -179,89 +170,61 @@ struct RenderTargetBlendState
    ColorComponentMaskFlags  colorWriteMask;
 };
 
-
-struct GraphicsPipelineStateDesc : public PipelineStateDesc 
+struct VertexInputLayout 
 {
-    Shader* pVS;
-    Shader* pHS;
-    Shader* pDS;
-    Shader* pGS;
-    Shader* pPS;
-    
-    struct VertexInput 
-    {
-        VertexBinding* pVertexBindings;
-        U32             numVertexBindings;
-    } vi;
+    VertexBinding   vertexBindings[16];
+    U32             numVertexBindings;
+};
 
-    struct DepthStencil 
-    {
-        B8  depthBoundsTestEnable;
-        B8  depthTestEnable;
-        B8  stencilTestEnable;
-        B8  depthWriteEnable;
-        F32 minDepthBounds;
-        F32 maxDepthBounds;
-        CompareOp depthCompareOp;
-    } ds;
+typedef Hash64 VertexInputLayoutId;
 
-    struct RasterState 
-    {
-        CullMode cullMode;
-        FrontFace frontFace;
-        PolygonMode polygonMode;
-        F32 lineWidth;
-        F32 depthBiasClamp;
-        F32 depthBiasConstantFactor;
-        F32 depthBiasSlopFactor;
-        B32 depthClampEnable : 1, 
-            depthBiasEnable : 1;
-    } raster;
+struct DepthStencil 
+{
+    B8  depthBoundsTestEnable;
+    B8  depthTestEnable;
+    B8  stencilTestEnable;
+    B8  depthWriteEnable;
+    F32 minDepthBounds;
+    F32 maxDepthBounds;
+    CompareOp depthCompareOp;
+};
 
-    struct BlendState 
-    {
-        B32     logicOpEnable;
-        LogicOp logicOp;
-        F32     blendConstants[4];
-        U32     numAttachments;
-        RenderTargetBlendState* attachments;
-    } blend;
+struct RasterState 
+{
+    CullMode    cullMode;
+    FrontFace   frontFace;
+    PolygonMode polygonMode;
+    F32         lineWidth;
+    F32         depthBiasClamp;
+    F32         depthBiasConstantFactor;
+    F32         depthBiasSlopFactor;
+    B32         depthClampEnable : 1, 
+                depthBiasEnable : 1;
+};
 
-    struct TessellationState 
-    {
-        U32 numControlPoints;
-    } tess;
+struct BlendState 
+{
+    B32     logicOpEnable;
+    LogicOp logicOp;
+    F32     blendConstants[4];
+    U32     numAttachments;
+    RenderTargetBlendState attachments[8];
+};
 
-    PrimitiveTopology primitiveTopology;
-
-    
+struct TessellationState 
+{
+    U32 numControlPoints;
 };
 
 
-struct ComputePipelineStateDesc : public PipelineStateDesc 
-{
-    Shader* pCS;
-};
+namespace Pipeline {
 
+typedef Hash64 PipelineId;
+typedef Hash64 RasterId;
+typedef Hash64 BlendId;
+typedef Hash64 TessellationId;
+typedef Hash64 DepthStencilId;
+typedef Hash64 InputAssemblyId;
 
-struct RayTracingPipelineStateDesc : public PipelineStateDesc 
-{
-    Shader* pClosestHit;
-    Shader* pAnyHit;
-    Shader* pMiss;
-    Shader* pRayGen;
-    Shader* pIntersect;
-
-    struct AccelerationStructure 
-    {
-        GraphicsResource* pScratch;
-    } acceleration;
-};
-
-
-class PipelineState 
-{
-public:
-    virtual ~PipelineState() { }
-};
+} // Pipeline
 } // Recluse

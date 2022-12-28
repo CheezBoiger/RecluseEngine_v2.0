@@ -59,7 +59,7 @@ public:
 
 private:
 
-    void        buildFrameResources();
+    void        buildFrameResources(ResourceFormat resourceFormat);
     void        queryCommandPools();
     void        submitCommandsForPresenting();
     inline void incrementFrameIndex() 

@@ -15,14 +15,6 @@
 
 #define R_CHANNEL_VULKAN "Vulkan"
 
-#define SETBIND(bindType, var) switch (bindType) \
-    { \
-        case BindType_Compute: var = VK_PIPELINE_BIND_POINT_COMPUTE; break; \
-        case BindType_RayTrace: var = VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR; break; \
-        case BindType_Graphics: \
-        default: var = VK_PIPELINE_BIND_POINT_GRAPHICS; break; \
-    }
-
 struct VulkanMemoryPool 
 {
     VkDeviceMemory  memory;
@@ -44,7 +36,7 @@ public:
 namespace Vulkan {
 
 extern VkFormat getVulkanFormat(Recluse::ResourceFormat format);
-
+extern Recluse::ResourceFormat getResourceFormat(VkFormat format);
 
 static VkSampleCountFlagBits getSamples(Recluse::U32 count)
 {
@@ -62,7 +54,7 @@ static VkSampleCountFlagBits getSamples(Recluse::U32 count)
 }
 
 
-extern VkShaderStageFlags getShaderStages(Recluse::ShaderTypeFlags flags);
+extern VkShaderStageFlags getShaderStages(Recluse::ShaderStageFlags flags);
 
 
 static VkCompareOp getNativeCompareOp(Recluse::CompareOp op) 

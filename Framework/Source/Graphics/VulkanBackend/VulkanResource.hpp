@@ -17,21 +17,22 @@ class VulkanResource : public GraphicsResource, public VulkanGraphicsObject
 {
 public:
 
-    VulkanResource(GraphicsResourceDescription& desc, Bool isBuffer, VkAccessFlags currentAccessMask = VK_ACCESS_MEMORY_READ_BIT)
+    VulkanResource(const GraphicsResourceDescription& desc, Bool isBuffer, VkAccessFlags currentAccessMask = VK_ACCESS_MEMORY_READ_BIT)
         : GraphicsResource(desc) 
         , m_memory({})
         , m_isBuffer(isBuffer)
         , m_currentAccessMask(currentAccessMask)
-        , m_pDevice(nullptr) { m_memory.deviceMemory = VK_NULL_HANDLE; }
+        , m_pDevice(nullptr)
+        , m_id(~0) { m_memory.deviceMemory = VK_NULL_HANDLE; }
 
     virtual ~VulkanResource() { }
     
-    ErrType initialize(VulkanDevice* pDevice, GraphicsResourceDescription& desc, ResourceState initState);
+    ErrType initialize(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState);
 
     // Destroy native handle that is managed by this resource object.
     // Must be called before deleting this object.
     //
-    void destroy();
+    void release();
 
     // Vulkan memory handle, normally assigned by the Vulkan Allocator.
     //
@@ -48,13 +49,24 @@ public:
     // Check if the vulkan resource is a buffer. Otherwise, will be an image.
     inline Bool isBuffer() const { return m_isBuffer; }
 
+    ResourceId getId() const override { return m_id; }
+
     //GraphicsAPI getApi() const override { return VulkanGraphicsObject::getApi(); }
 protected:
     void setCurrentAccessMask(VkAccessFlags flags) { m_currentAccessMask = flags; }
     VkAccessFlags getCurrentAccessMask() const { return m_currentAccessMask; }
 
 private:
-    virtual ErrType onCreate(VulkanDevice* pDevice, GraphicsResourceDescription& desc, ResourceState initState)
+    static ResourceId   kResourceCreationCounter;
+    static Mutex        kResourceCreationMutex;
+
+    void generateId() override 
+    {
+        ScopedLock _(kResourceCreationMutex);
+        m_id = kResourceCreationCounter++;
+    }
+
+    virtual ErrType onCreate(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState)
         { return RecluseResult_NoImpl; }
 
     virtual ErrType onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryRequirements& memRequirements) 
@@ -62,7 +74,7 @@ private:
     
     virtual ErrType onBind(VulkanDevice* pDevice) { return RecluseResult_NoImpl; }
 
-    virtual ErrType onDestroy(VulkanDevice* pDevice) { return RecluseResult_NoImpl; }
+    virtual ErrType onRelease(VulkanDevice* pDevice) { return RecluseResult_NoImpl; }
 
     VulkanMemory m_memory;
 
@@ -70,6 +82,7 @@ private:
 
     VkAccessFlags       m_currentAccessMask;
     Bool m_isBuffer;
+    ResourceId m_id;
 };
 
 
@@ -77,7 +90,7 @@ class VulkanBuffer : public VulkanResource
 {
 public:
 
-    VulkanBuffer(GraphicsResourceDescription& desc) 
+    VulkanBuffer(const GraphicsResourceDescription& desc) 
         : VulkanResource(desc, true)
         , m_buffer(VK_NULL_HANDLE) { }
 
@@ -86,13 +99,13 @@ public:
     VkBufferMemoryBarrier transition(ResourceState dstState);
 
 private:
-    ErrType onCreate(VulkanDevice* pDevice, GraphicsResourceDescription& desc, ResourceState initState) override; 
+    ErrType onCreate(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState) override; 
 
     ErrType onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryRequirements& memRequirements) override;
 
     ErrType onBind(VulkanDevice* pDevice) override;
     
-    ErrType onDestroy(VulkanDevice* pDevice) override;    
+    ErrType onRelease(VulkanDevice* pDevice) override;    
 
     VkBuffer        m_buffer;
 };
@@ -102,7 +115,7 @@ class VulkanImage : public VulkanResource
 {
 public:
 
-    VulkanImage(GraphicsResourceDescription& desc, 
+    VulkanImage(const GraphicsResourceDescription& desc, 
             VkImage image = VK_NULL_HANDLE, 
             VkImageLayout currentLayout = VK_IMAGE_LAYOUT_UNDEFINED)
         : VulkanResource(desc, false)
@@ -125,17 +138,25 @@ public:
     VkImageMemoryBarrier transition(ResourceState dstState, VkImageSubresourceRange& range);
 
 private:
-    ErrType             onCreate(VulkanDevice* pDevice, GraphicsResourceDescription& desc, ResourceState initState) override; 
+    ErrType             onCreate(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState) override; 
 
     ErrType             onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryRequirements& memRequirements) override;
 
     ErrType             onBind(VulkanDevice* pDevice) override;
     
-    ErrType             onDestroy(VulkanDevice* pDevice) override;   
+    ErrType             onRelease(VulkanDevice* pDevice) override;   
 
     VkFormatFeatureFlags loadFormatFeatures(VkImageCreateInfo& info, ResourceUsageFlags usage) const;
 
     VkImage             m_image;
     VkImageLayout       m_currentLayout;
 };
+
+
+namespace Resources {
+
+VulkanResource* makeResource(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState);
+ErrType         releaseResource(VulkanDevice* pDevice, ResourceId id);
+VulkanResource* obtainResource(ResourceId id);
+} // Resources
 } // Recluse

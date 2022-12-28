@@ -15,17 +15,9 @@ public:
     ErrType initialize(D3D12Device* pDevice);
     ErrType cleanUp(D3D12Device* pDevice);
 
-    D3D12_RENDER_TARGET_VIEW_DESC getRtvDesc() const { return m_rtvDesc; }
-    D3D12_DEPTH_STENCIL_VIEW_DESC getDsvDesc() const { return m_dsvDesc; }
-
+    U64 getDescId() const { return m_descId; }
 private:
-    union {
-        D3D12_RENDER_TARGET_VIEW_DESC m_rtvDesc;
-        D3D12_DEPTH_STENCIL_VIEW_DESC m_dsvDesc;
-        D3D12_UNORDERED_ACCESS_VIEW_DESC m_uavDesc;
-        D3D12_SHADER_RESOURCE_VIEW_DESC m_srvDesc;
-        D3D12_CONSTANT_BUFFER_VIEW_DESC m_cbvDesc;
-    };
+    U64 m_descId;
 };
 
 
@@ -43,4 +35,11 @@ public:
 private:
     D3D12_SAMPLER_DESC m_samplerDesc;
 };
+
+
+namespace DescriptorViews {
+
+D3D12GraphicsResourceView*  makeResourceView();
+ErrType                     destroyResourceView();
+} // DescriptorViews
 } // Recluse

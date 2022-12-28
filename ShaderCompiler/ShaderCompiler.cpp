@@ -24,24 +24,24 @@ namespace Recluse {
 ShaderLang kDefaultShaderLanguage = ShaderLang_Hlsl;
 
 // Serialize our enum types with the following for json configs.
-NLOHMANN_JSON_SERIALIZE_ENUM(Recluse::ShaderType,
+NLOHMANN_JSON_SERIALIZE_ENUM(Recluse::ShaderStage,
     {
-        { Recluse::ShaderType_Vertex,          "vertex" },
-        { Recluse::ShaderType_Pixel,           "pixel" },
-        { Recluse::ShaderType_Fragment,        "frag" },
-        { Recluse::ShaderType_Hull,            "hull" },
-        { Recluse::ShaderType_Domain,          "domain" },
-        { Recluse::ShaderType_Compute,         "compute" },
-        { Recluse::ShaderType_TessellationControl,    "tessc"},
-        { Recluse::ShaderType_TessellationEvaluation,       "tesse" },
-        { Recluse::ShaderType_Geometry,        "geometry"},
-        { Recluse::ShaderType_RayAnyHit,      "anyhit" },
-        { Recluse::ShaderType_RayClosestHit,  "closesthit" },
-        { Recluse::ShaderType_RayGeneration,         "raygen" },
-        { Recluse::ShaderType_RayIntersect,   "intersect" },
-        { Recluse::ShaderType_RayMiss,        "raymiss" },
-        { Recluse::ShaderType_Amplification,   "amp" },
-        { Recluse::ShaderType_Mesh,            "mesh" }
+        { Recluse::ShaderStage_Vertex,          "vertex" },
+        { Recluse::ShaderStage_Pixel,           "pixel" },
+        { Recluse::ShaderStage_Fragment,        "frag" },
+        { Recluse::ShaderStage_Hull,            "hull" },
+        { Recluse::ShaderStage_Domain,          "domain" },
+        { Recluse::ShaderStage_Compute,         "compute" },
+        { Recluse::ShaderStage_TessellationControl,    "tessc"},
+        { Recluse::ShaderStage_TessellationEvaluation,       "tesse" },
+        { Recluse::ShaderStage_Geometry,        "geometry"},
+        { Recluse::ShaderStage_RayAnyHit,      "anyhit" },
+        { Recluse::ShaderStage_RayClosestHit,  "closesthit" },
+        { Recluse::ShaderStage_RayGeneration,         "raygen" },
+        { Recluse::ShaderStage_RayIntersect,   "intersect" },
+        { Recluse::ShaderStage_RayMiss,        "raymiss" },
+        { Recluse::ShaderStage_Amplification,   "amp" },
+        { Recluse::ShaderStage_Mesh,            "mesh" }
     }
 )
 
@@ -83,6 +83,7 @@ struct ShaderMetaData
     std::string                     configs;
     std::string                     relativefilePath;
     ShaderType                      shaderType;
+    const char*                     entryPoint;
     std::map<std::string, void*>    preprocess;
 };
 
@@ -369,6 +370,7 @@ ErrType compileShaders(ShaderLang lang)
                 result = pBuilder->compile
                                         (
                                             pShader, 
+                                            shaderMetadata->entryPoint,
                                             str.c_str(), 
                                             str.size(), 
                                             lang, 
@@ -402,12 +404,13 @@ ErrType compileShaders(ShaderLang lang)
 }
 
 
-ErrType addShaderToCompile(const std::string& filePath, const std::string& config, ShaderType shaderType)
+ErrType addShaderToCompile(const std::string& filePath, const char* entryPoint, const std::string& config, ShaderType shaderType)
 {
     ShaderMetaData metadata     = { };
     metadata.configs            = config;
     metadata.relativefilePath   = filePath;
     metadata.shaderType         = shaderType;
+    metadata.entryPoint         = entryPoint;
 
     gConfigs.shadersToCompile.push_back(metadata);
 

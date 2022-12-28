@@ -10,8 +10,8 @@
 
 namespace Recluse {
 
-std::unordered_map<Hash64, RefCount<VkFramebuffer>> g_fboCache;
-std::unordered_map<Hash64, VkRenderPass> g_rpCache;
+std::unordered_map<Hash64, ReferenceObject<VkFramebuffer>> g_fboCache;
+std::unordered_map<Hash64, VulkanRenderPass> g_rpCache;
 
 static U64 serialize(const VkFramebufferCreateInfo& info)
 {
@@ -26,8 +26,6 @@ static U64 serialize(const VkFramebufferCreateInfo& info)
         uniqueId += reinterpret_cast<Hash64>(ref);
     }
 
-    // twice hash.
-    uniqueId = recluseHash(&uniqueId, sizeof(Hash64));
     uniqueId = recluseHash(&uniqueId, sizeof(Hash64));
     return uniqueId;
 }
@@ -44,11 +42,11 @@ static Bool inFboCache(Hash64 fboId)
     auto it = g_fboCache.find(fboId);
     if (it == g_fboCache.end())
         return false;
-    return it->second.hasRefs();
+    return it->second.hasReferences();
 }
 
 
-static Bool cacheFbo(Hash64 fboId, const VkFramebuffer fbo)
+static Bool cacheFbo(Hash64 fboId, VkFramebuffer fbo)
 {
     if (inFboCache(fboId))
     {
@@ -56,8 +54,7 @@ static Bool cacheFbo(Hash64 fboId, const VkFramebuffer fbo)
         return false;
     }
 
-    g_fboCache[fboId] = fbo;
-    g_fboCache[fboId].addRef();
+    g_fboCache[fboId] = makeReference(fbo);
 
     return true;
 }
@@ -65,7 +62,7 @@ static Bool cacheFbo(Hash64 fboId, const VkFramebuffer fbo)
 
 static void addFboRef(Hash64 fboId)
 {
-    g_fboCache[fboId].addRef();
+    g_fboCache[fboId].add();
 }
 
 static VkFramebuffer getCachedFbo(Hash64 fboId)
@@ -78,13 +75,13 @@ static void destroyFbo(Hash64 fboId, VkDevice device)
 {
     if (!g_fboCache[fboId].release())
     {
-        VkFramebuffer fbo = g_fboCache[fboId].getData();
+        VkFramebuffer fbo = g_fboCache[fboId]();
         vkDestroyFramebuffer(device, fbo, nullptr);
     }
 }
 
 
-ErrType VulkanRenderPass::initialize(VulkanDevice* pDevice, const RenderPassDesc& desc)
+ErrType VulkanRenderPass::initialize(VulkanDevice* pDevice, const VulkanRenderPassDesc& desc)
 {
     R_DEBUG(R_CHANNEL_VULKAN, "Creating vulkan render pass...");
 
@@ -101,8 +98,8 @@ ErrType VulkanRenderPass::initialize(VulkanDevice* pDevice, const RenderPassDesc
 
     auto storeColorDescription = [&] (U32 i) -> void 
     {
-        VulkanResourceView* pView   = static_cast<VulkanResourceView*>(desc.ppRenderTargetViews[i]);
-        ResourceViewDesc viewDesc   = pView->getDesc();
+        VulkanResourceView* pView   = desc.ppRenderTargetViews[i]->castTo<VulkanResourceView>();
+        ResourceViewDescription viewDesc   = pView->getDesc();
 
         descriptions[i].samples         = VK_SAMPLE_COUNT_1_BIT;
         descriptions[i].format          = Vulkan::getVulkanFormat(viewDesc.format);
@@ -122,8 +119,8 @@ ErrType VulkanRenderPass::initialize(VulkanDevice* pDevice, const RenderPassDesc
 
     auto storeDepthStencilDescription = [&] (U32 i) -> void 
     {
-        VulkanResourceView* pView   = static_cast<VulkanResourceView*>(desc.pDepthStencil);
-        ResourceViewDesc viewDesc   = pView->getDesc();
+        VulkanResourceView* pView   = desc.pDepthStencil->castTo<VulkanResourceView>();
+        ResourceViewDescription viewDesc   = pView->getDesc();
 
         descriptions[i].samples         = VK_SAMPLE_COUNT_1_BIT;
         descriptions[i].format          = Vulkan::getVulkanFormat(viewDesc.format);
@@ -236,7 +233,6 @@ ErrType VulkanRenderPass::initialize(VulkanDevice* pDevice, const RenderPassDesc
         cacheFbo(fboId, m_fbo);
     }
 
-    m_desc              = desc;
     m_renderArea        = { };
     m_renderArea.extent = { desc.width, desc.height };
     m_renderArea.offset = { 0, 0 };
@@ -267,14 +263,48 @@ ErrType VulkanRenderPass::destroy(VulkanDevice* pDevice)
 }
 
 
-GraphicsResourceView* VulkanRenderPass::getRenderTarget(U32 idx)
-{
-    return m_desc.ppRenderTargetViews[idx];
-}
+namespace RenderPasses {
 
-
-GraphicsResourceView* VulkanRenderPass::getDepthStencil()
+VulkanRenderPass* makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, GraphicsResourceView** ppRenderTargetViews, GraphicsResourceView* pDepthStencil)
 {
-    return m_desc.pDepthStencil;
+    R_ASSERT(numRenderTargets < 9);
+    VulkanRenderPass* pPass = nullptr;
+    Hash64 accumulate = 0;
+
+    U32 count = 0;
+    ResourceViewId ids[9];
+
+    for (U32 i = 0; i < numRenderTargets; ++i)
+    {
+        ids[count++] = ppRenderTargetViews[i]->getId();
+    }
+
+    if (pDepthStencil)
+    {
+        ids[count++] = pDepthStencil->getId();
+    }
+
+    RenderPassId id = recluseHash(ids, sizeof(ResourceViewId) * count);
+
+    auto& iter = g_rpCache.find(id);
+    // Failed to find a suitable render pass, make a new one.
+    if (iter == g_rpCache.end())
+    {
+        g_rpCache.insert(std::make_pair(id, VulkanRenderPass()));
+        VulkanRenderPass& pass      = g_rpCache[id];
+        VulkanRenderPassDesc desc   = { };
+        desc.numRenderTargets       = numRenderTargets;
+        desc.pDepthStencil          = pDepthStencil;
+        desc.ppRenderTargetViews    = ppRenderTargetViews;
+        pass.initialize(pDevice, desc);
+    }
+    else
+    {
+        // We have one, let's return this one.
+        return &iter->second;
+    }
+
+    return pPass;
 }
+} // RenderPass
 } // Recluse

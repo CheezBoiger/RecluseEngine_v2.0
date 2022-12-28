@@ -38,16 +38,16 @@ ErrType createContext(GUIContext ctx)
         case Context_WxWidgets:
             gGlobalContext = new WxGuiContext();
             gDriver = nullptr;
-            return R_RESULT_OK;
+            return RecluseResult_Ok;
         case Context_Null:
         default:
-            return R_RESULT_FAILED;
+            return RecluseResult_Failed;
         }
     }
 
 
     R_ERR("Editor", "Contact and/or driver are already initialized!! Ignoring this call, passing null...");
-    return R_RESULT_FAILED;
+    return RecluseResult_Failed;
 }
 
 

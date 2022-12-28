@@ -84,17 +84,11 @@ int main(int c, char* argv[])
 
         pWindow->open();
         
-        GraphicsCommandList* pList = nullptr;
-        GraphicsCommandList* pList2 = nullptr;
-        
         while (!pWindow->shouldClose()) {
             RealtimeTick::updateWatch(1ull, 0);
             RealtimeTick tick = RealtimeTick::getTick(0);
             R_TRACE("Graphics", "FPS: %f", 1.f / tick.delta());
             pDevice->getContext()->begin(); 
-                pList = pDevice->getContext()->getCommandList();
-                pList->begin();
-                pList->end();
             pDevice->getContext()->end();
             pSwapchain->present();
             pollEvents();

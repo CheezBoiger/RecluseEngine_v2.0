@@ -65,7 +65,7 @@ public:
         , m_view(nullptr) { }
 
     // initializes and stores the texture view into the texture database.
-    ErrType initialize(Renderer* pRenderer, Texture2D* pTexture, ResourceViewDesc& desc);
+    ErrType initialize(Renderer* pRenderer, Texture2D* pTexture, ResourceViewDescription& desc);
 
     // destroys this texture view, along with the lookup from the texture database.
     ErrType destroy(Renderer* pRenderer);

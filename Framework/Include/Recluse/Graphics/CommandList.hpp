@@ -14,20 +14,6 @@ class GraphicsResource;
 class GraphicsResourceView;
 class RenderPass;
 class PipelineState;
-class DescriptorSet;
-
-
-struct ResourceTransition 
-{
-    GraphicsResource*           pResource;
-    ResourceState               dstState;
-    U32                         layers;
-    U32                         baseLayer;
-    U32                         mips;
-    U32                         baseMip;
-};
-
-#define MAKE_RESOURCE_TRANSITION(pResource, dstState, baseMip, mips, baseLayer, layers) { pResource, dstState, layers, baseLayer, mips, baseMip }
 
 
 class R_PUBLIC_API GraphicsCommandList 
@@ -60,12 +46,6 @@ public:
     virtual void dispatch(U32 x, U32 y, U32 z) { }
     virtual void dispatchRays(U32 x, U32 y, U32 z) { }
     
-    virtual void setPipelineState(PipelineState* pPipelineState, BindType bindType) { }
-
-    virtual void setRenderPass(RenderPass* pRenderPass) { }
-
-    virtual void bindDescriptorSets(U32 count, DescriptorSet** pSets, BindType bindType) { }
-    
     virtual void clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) { }
     virtual void clearDepthStencil(F32 clearDepth, U8 clearStencil, const Rect& rect) { }
 
@@ -83,6 +63,16 @@ public:
 
     virtual void dispatchIndirect(GraphicsResource* pParams, U64 offset) { R_ASSERT(supportsAsyncCompute()); }
 
+    virtual void bindShaderResources(U32 offset, U32 count, GraphicsResourceView** ppResources) { }
+    virtual void bindUnorderedAccessViews(U32 offset, U32 count, GraphicsResourceView** ppResources) { }
+    virtual void bindConstantBuffers(U32 offset, U32 count, GraphicsResourceView** ppResources) { }
+    virtual void bindRenderTargets(U32 count, GraphicsResourceView** ppResources, GraphicsResourceView* pDepthStencil) { }
+    virtual void bindSamplers(U32 count, GraphicsSampler** ppSampler) { }
+    virtual void bindRasterizerState(const RasterState& state) { }
+    virtual void bindBlendState(const BlendState& state) { }
+    virtual void setTopology(PrimitiveTopology topology) { }
+    virtual void setShader(ShaderStage type, Hash64 shader, U32 permutation) { }
+    virtual void setPipelineType(BindType type) { }
 private:
     
 };

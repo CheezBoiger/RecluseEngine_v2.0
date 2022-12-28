@@ -97,7 +97,7 @@ int main(int c, char* argv[])
     } else {
     
         R_TRACE("Graphics", "Successfully created texture!");
-        ResourceViewDesc viewDesc   = { };
+        ResourceViewDescription viewDesc   = { };
         viewDesc.baseArrayLayer     = 0;
         viewDesc.baseMipLevel       = 0;
         viewDesc.dimension          = ResourceViewDimension_2d;

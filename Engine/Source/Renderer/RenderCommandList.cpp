@@ -76,7 +76,7 @@ ErrType RenderCommandList::push(const RenderCommand& renderCommand)
 
     switch (renderCommand.op) 
     {
-        case C_OP_DRAWABLE_INSTANCED:
+        case CommandOp_DrawableInstanced:
         {
             //COPY_COMMAND_TO_POOL(DrawRenderCommand, renderCommand);
             DrawRenderCommand* pCommand = new (m_pAllocator, &allocation) DrawRenderCommand();
@@ -84,7 +84,7 @@ ErrType RenderCommandList::push(const RenderCommand& renderCommand)
             break;     
         }
 
-        case C_OP_DRAWABLE_INDEXED_INSTANCED:
+        case CommandOp_DrawableIndexedInstanced:
         {
             //COPY_COMMAND_TO_POOL(DrawIndexedRenderCommand, renderCommand); 
             DrawIndexedRenderCommand* pCommand = new (m_pAllocator, &allocation) DrawIndexedRenderCommand();

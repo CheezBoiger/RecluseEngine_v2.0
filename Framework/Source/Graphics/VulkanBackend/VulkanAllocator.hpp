@@ -28,12 +28,12 @@ public:
 
     enum VulkanAllocUpdateFlag 
     {
-        VULKAN_ALLOC_NONE_FLAG              = 0,
-        VULKAN_ALLOC_UPDATE_FLAG            = ( 1 << 0 ),
-        VULKAN_ALLOC_SET_FRAME_INDEX        = ( 1 << 1 ),
-        VULKAN_ALLOC_INCREMENT_FRAME_INDEX  = ( 1 << 2 ),
-        VULKAN_ALLOC_GARBAGE_RESIZE         = ( 1 << 3 ),
-        VULKAN_ALLOC_CLEAR                  = ( 1 << 4 )
+        VulkanAllocUpdateFlag_None              = 0,
+        VulkanAllocUpdateFlag_Update            = ( 1 << 0 ),
+        VulkanAllocUpdateFlag_SetFrameIndex        = ( 1 << 1 ),
+        VulkanAllocUpdateFlag_IncrementFrameIndex  = ( 1 << 2 ),
+        VulkanAllocUpdateFlag_GarbageResize         = ( 1 << 3 ),
+        VulkanAllocUpdateFlag_Clear                  = ( 1 << 4 )
     };
 
     typedef U32 VulkanAllocUpdateFlags;
@@ -89,7 +89,7 @@ public:
     void destroy();
 
     // Update allocator every new frame.
-    void update(const UpdateConfig& config = { VULKAN_ALLOC_NONE_FLAG });
+    void update(const UpdateConfig& config = { VulkanAllocUpdateFlag_None });
 
     // clear out the whole memory heap.
     void clear();
@@ -101,7 +101,7 @@ private:
 
     // Frame garbage holds copies of vulkan memory that needs to be cleaned up when
     // ready.
-    std::vector<std::vector<VulkanMemory>>  m_frameGarbage;
+    ::std::vector<::std::vector<VulkanMemory>>  m_frameGarbage;
 
     VulkanMemoryPool*                       m_pool;
     Allocator*                              m_allocator;

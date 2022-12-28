@@ -18,7 +18,7 @@ public:
     D3D12RenderPass()
     { }
 
-    ErrType                         initialize(D3D12Device* pDevice, const RenderPassDesc& desc);
+    ErrType                         initialize(D3D12Device* pDevice);
     ErrType                         destroy(D3D12Device* pDevice);
     
     virtual U32                     getNumRenderTargets() const override;
@@ -29,7 +29,6 @@ public:
     D3D12_CPU_DESCRIPTOR_HANDLE     getDsvHandle() const { return m_dsvDhAllocation.getCpuHandle(); }
 
 private:
-    RenderPassDesc              m_renderPassDesc;
     DescriptorHeapAllocation    m_rtvDhAllocation;
     DescriptorHeapAllocation    m_dsvDhAllocation;
 };

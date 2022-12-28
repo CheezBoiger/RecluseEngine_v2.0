@@ -79,12 +79,13 @@ VkDescriptorPool VulkanDescriptorManager::createDescriptorPool(const DescriptorP
 }
 
 
-VulkanDescriptorAllocation VulkanDescriptorManager::allocate(VkDescriptorSet* pSets, U32 numberSetsToAlloc, VkDescriptorSetLayout* layouts)
+VulkanDescriptorAllocation VulkanDescriptorManager::allocate(U32 numberSetsToAlloc, VkDescriptorSetLayout* layouts)
 {
     VkResult result                             = VK_SUCCESS;
     VkDescriptorSetAllocateInfo allocateInfo    = { };
     VulkanDescriptorAllocation allocation       = { };
     Bool needReallocate                         = false;
+    std::vector<VkDescriptorSet> sets;
 
     if (m_currentPool == VK_NULL_HANDLE)
     {
@@ -96,7 +97,9 @@ VulkanDescriptorAllocation VulkanDescriptorManager::allocate(VkDescriptorSet* pS
     allocateInfo.pSetLayouts                    = layouts;
     allocateInfo.sType                          = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 
-    result = vkAllocateDescriptorSets(m_device, &allocateInfo, pSets);
+    sets.resize(numberSetsToAlloc);
+
+    result = vkAllocateDescriptorSets(m_device, &allocateInfo, sets.data());
 
     switch (result)
     {
@@ -119,13 +122,13 @@ VulkanDescriptorAllocation VulkanDescriptorManager::allocate(VkDescriptorSet* pS
         m_currentPool               = getPool();
         allocateInfo.descriptorPool = m_currentPool;
 
-        result = vkAllocateDescriptorSets(m_device, &allocateInfo, pSets);
+        result = vkAllocateDescriptorSets(m_device, &allocateInfo, sets.data());
 
         if (result != VK_SUCCESS)
             return allocation;
     }
 
-    allocation = VulkanDescriptorAllocation(m_currentPool, numberSetsToAlloc);
+    allocation = VulkanDescriptorAllocation(m_currentPool, numberSetsToAlloc, sets.data(), layouts);
 
     return allocation;
 }
@@ -149,14 +152,14 @@ VkDescriptorPool VulkanDescriptorManager::getPool()
 }
 
 
-ErrType VulkanDescriptorManager::free(const VulkanDescriptorAllocation& allocation, VkDescriptorSet* pSets, U32 numberSetsToFree)
+ErrType VulkanDescriptorManager::free(const VulkanDescriptorAllocation& allocation)
 {
     VkResult result = VK_SUCCESS;
 
     if (allocation.isValid())
     {
         VkDescriptorPool pool = allocation.getPool();
-        result = vkFreeDescriptorSets(m_device, pool, numberSetsToFree, pSets);
+        result = vkFreeDescriptorSets(m_device, pool, allocation.getNumberAllocations(), allocation.getNativeDescriptorSets());
     }
     else
     {

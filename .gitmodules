@@ -16,3 +16,6 @@
 [submodule "ThirdParty/wxWidgets"]
 	path = ThirdParty/wxWidgets
 	url = https://github.com/wxWidgets/wxWidgets
+[submodule "ThirdParty/xxHash"]
+	path = ThirdParty/xxHash
+	url = https://github.com/Cyan4973/xxHash.git

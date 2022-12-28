@@ -27,7 +27,7 @@ public:
     virtual void update(const RealtimeTick& tick) override
     {
         DrawRenderCommand rcmd = {};
-        rcmd.op = C_OP_DRAWABLE_INSTANCED;
+        rcmd.op = CommandOp_DrawableInstanced;
         rcmd.vertexTypeFlags = VERTEX_ATTRIB_POSITION | VERTEX_ATTRIB_NORMAL;
         rcmd.numSubMeshes = 0;
         //pRenderer->pushRenderCommand(rcmd, RENDER_PREZ);

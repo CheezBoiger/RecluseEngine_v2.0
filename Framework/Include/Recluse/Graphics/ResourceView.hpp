@@ -9,31 +9,38 @@ namespace Recluse {
 
 class GraphicsResource;
 
-class GraphicsResourceView 
+typedef GraphicsId ResourceViewId;
+
+class GraphicsResourceView : public ICastableObject, public IGraphicsObject
 {
 public:
     virtual ~GraphicsResourceView() { }
 
-    GraphicsResourceView(const ResourceViewDesc& desc) 
-        : m_desc(desc) { }
+    GraphicsResourceView(const ResourceViewDescription& desc) 
+        : m_desc(desc)
+    { }
 
-    ResourceViewDesc getDesc() const { return m_desc; }
+    const ResourceViewDescription&    getDesc() const { return m_desc; }
+    GraphicsResource*   getResource() const { return m_desc.pResource; }
+    Bool                hasResource() const { return m_desc.pResource != nullptr; }
 
-    GraphicsResource* getResource() const { return m_desc.pResource; }
-
-    Bool hasResource() const { return m_desc.pResource != nullptr; }
-    
 private:
-    ResourceViewDesc m_desc;
+    ResourceViewDescription m_desc;
 };
 
 
-class GraphicsSampler 
+typedef GraphicsId SamplerId;
+
+class GraphicsSampler : public ICastableObject, public IGraphicsObject
 {
 public:
+    GraphicsSampler()
+    { }
+    
     virtual ~GraphicsSampler() { }
 
     // Get a copy.
-    virtual SamplerCreateDesc getDesc() = 0;
+    virtual SamplerCreateDesc   getDesc() = 0;
+
 };
 } // Recluse

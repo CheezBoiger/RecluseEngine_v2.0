@@ -345,15 +345,15 @@ ErrType D3D12Context::destroyCommandList(D3D12PrimaryCommandList* pList)
 }
 
 
-ErrType D3D12Context::copyResource(GraphicsResource* dst, GraphicsResource* src)
+void D3D12Context::copyResource(GraphicsResource* dst, GraphicsResource* src)
 {
-    return RecluseResult_NoImpl;
+    R_NO_IMPL();
 }
 
 
 // Submits copy of regions from src resource to dst resource. Generally the caller thread will
 // be blocked until this function returns, so be sure to use when needed.
-ErrType D3D12Context::copyBufferRegions
+void D3D12Context::copyBufferRegions
     (
         GraphicsResource* dst, 
         GraphicsResource* src, 
@@ -361,13 +361,7 @@ ErrType D3D12Context::copyBufferRegions
         U32 numRegions
     )
 {
-    return RecluseResult_NoImpl;
-}
-
-
-GraphicsCommandList* D3D12Context::getCommandList()
-{
-    return m_pPrimaryCommandList;
+    R_NO_IMPL();
 }
 
 

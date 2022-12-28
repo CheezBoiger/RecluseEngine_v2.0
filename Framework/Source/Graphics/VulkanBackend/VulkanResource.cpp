@@ -10,8 +10,60 @@
 
 
 namespace Recluse {
+namespace Resources {
 
-ErrType VulkanResource::initialize(VulkanDevice* pDevice, GraphicsResourceDescription& desc, ResourceState initState)
+std::unordered_map<ResourceId, VulkanResource*> g_resourcesMap;
+
+VulkanResource* makeResource(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState)
+{
+    if (desc.dimension == ResourceDimension_Buffer)
+    {
+        VulkanBuffer* pBuffer   = new VulkanBuffer(desc);
+        pBuffer->initialize(pDevice, desc, initState);
+        ResourceId id           = pBuffer->getId();
+        g_resourcesMap[id]      = pBuffer;
+        return g_resourcesMap[id];
+    }
+    else
+    {
+        VulkanImage* pImage = new VulkanImage(desc);
+        pImage->initialize(pDevice, desc, initState);
+        ResourceId id       = pImage->getId();
+        g_resourcesMap[id]  = pImage;
+        return g_resourcesMap[id];
+    }
+
+    return nullptr;
+}
+
+
+ErrType releaseResource(VulkanDevice* pDevice, ResourceId id)
+{
+    auto& iter = g_resourcesMap.find(id);
+    if (iter != g_resourcesMap.end())
+    {
+        iter->second->release();
+        g_resourcesMap.erase(iter);
+        return RecluseResult_Ok;
+    }
+
+    return RecluseResult_NotFound;
+}
+
+
+VulkanResource* obtainResource(ResourceId id)
+{
+    auto& iter = g_resourcesMap.find(id);
+    if (iter == g_resourcesMap.end())
+        return nullptr;
+    return iter->second;
+}
+} // Resources
+
+ResourceId VulkanResource::kResourceCreationCounter = 0;
+Mutex VulkanResource::kResourceCreationMutex        = createMutex("VulkanCreationMutex");
+
+ErrType VulkanResource::initialize(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState)
 {
     VkMemoryRequirements memoryRequirements = { };
     VulkanAllocator* allocator              = nullptr;
@@ -26,7 +78,7 @@ ErrType VulkanResource::initialize(VulkanDevice* pDevice, GraphicsResourceDescri
     {
         R_ERR(R_CHANNEL_VULKAN, "Unable to create resource object!");
 
-        destroy();
+        release();
 
         return result;
     }
@@ -47,7 +99,7 @@ ErrType VulkanResource::initialize(VulkanDevice* pDevice, GraphicsResourceDescri
     {
         R_ERR(R_CHANNEL_VULKAN, "No allocator for the given resource to allocate from!");
 
-        destroy();
+        release();
 
         return RecluseResult_NullPtrExcept;
     }
@@ -58,7 +110,7 @@ ErrType VulkanResource::initialize(VulkanDevice* pDevice, GraphicsResourceDescri
     {
         R_ERR(R_CHANNEL_VULKAN, "Unable to allocate memory for resource!");
 
-        destroy();
+        release();
 
         return result;
     }
@@ -69,13 +121,13 @@ ErrType VulkanResource::initialize(VulkanDevice* pDevice, GraphicsResourceDescri
 }
 
 
-void VulkanResource::destroy()
+void VulkanResource::release()
 {
     VulkanAllocator* allocator              = nullptr;
     const GraphicsResourceDescription& desc = getDesc();
     ErrType result                          = RecluseResult_Ok;
 
-    onDestroy(m_pDevice);
+    onRelease(m_pDevice);
 
     if (m_memory.deviceMemory) 
     {
@@ -112,7 +164,7 @@ void VulkanResource::destroy()
 }
 
 
-ErrType VulkanBuffer::onCreate(VulkanDevice* pDevice, GraphicsResourceDescription& desc, ResourceState initState) 
+ErrType VulkanBuffer::onCreate(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState) 
 {
     ErrType result                  = RecluseResult_Ok;
     ResourceUsageFlags usageFlags   = desc.usage;
@@ -127,6 +179,7 @@ ErrType VulkanBuffer::onCreate(VulkanDevice* pDevice, GraphicsResourceDescriptio
     if (usageFlags & ResourceUsage_VertexBuffer)        info.usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
     if (usageFlags & ResourceUsage_IndexBuffer)         info.usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
     if (usageFlags & ResourceUsage_UnorderedAccess)     info.usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+    if (usageFlags & ResourceUsage_ShaderResource)      info.usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
     if (usageFlags & ResourceUsage_TransferDestination) info.usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     if (usageFlags & ResourceUsage_TransferSource)      info.usage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
     if (usageFlags & ResourceUsage_ConstantBuffer)      info.usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
@@ -145,7 +198,7 @@ ErrType VulkanBuffer::onCreate(VulkanDevice* pDevice, GraphicsResourceDescriptio
 }
 
 
-ErrType VulkanBuffer::onDestroy(VulkanDevice* pDevice)
+ErrType VulkanBuffer::onRelease(VulkanDevice* pDevice)
 {
     ErrType result = RecluseResult_Ok;
 
@@ -206,7 +259,7 @@ VkFormatFeatureFlags VulkanImage::loadFormatFeatures(VkImageCreateInfo& info, Re
 }
 
 
-ErrType VulkanImage::onCreate(VulkanDevice* pDevice, GraphicsResourceDescription& desc, ResourceState initState)
+ErrType VulkanImage::onCreate(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState)
 {
     ErrType result                      = RecluseResult_Ok;
     ResourceUsageFlags usage            = desc.usage;
@@ -273,7 +326,7 @@ ErrType VulkanImage::onCreate(VulkanDevice* pDevice, GraphicsResourceDescription
 }
 
 
-ErrType VulkanImage::onDestroy(VulkanDevice* pDevice)
+ErrType VulkanImage::onRelease(VulkanDevice* pDevice)
 {
     ErrType result = RecluseResult_Ok;
 
@@ -439,7 +492,6 @@ VkBufferMemoryBarrier VulkanBuffer::transition(ResourceState dstState)
     barrier.srcAccessMask   = getCurrentAccessMask();
     barrier.dstAccessMask   = Vulkan::getDesiredResourceStateAccessMask(dstState) 
                             | Vulkan::getDesiredHostMemoryUsageAccess(description.memoryUsage);
-
     
     setCurrentResourceState(dstState);
     setCurrentAccessMask(barrier.dstAccessMask);

@@ -6,9 +6,12 @@
 #include "Recluse/Messaging.hpp"
 
 #include "Recluse/Graphics/ShaderBuilder.hpp"
+#include "Recluse/Threading/Threading.hpp"
 
 namespace Recluse {
 
+ShaderId kShaderCounter = 0;
+Mutex kShaderCounterMutex = createMutex("ShaderCounterMutex");
 
 Shader* Shader::create()
 {
@@ -27,18 +30,23 @@ void Shader::destroy(Shader* pShader)
 
 void Shader::genHashId()
 {
-    Hash64 hash = recluseHash(m_byteCode.data(), m_byteCode.size());
-    m_hashId = hash;
+    // Only generate the id if it doesn't already have one.
+    if (kShaderCounter == ~0)
+    { 
+        ScopedLock _(kShaderCounterMutex);
+        m_uniqueId = kShaderCounter++;
+    }
 }
 
 
-ErrType Shader::load(const char* pByteCode, U64 szBytes, ShaderIntermediateCode imm, ShaderType shaderType)
+ErrType Shader::load(const char* entryPoint, const char* pByteCode, U64 szBytes, ShaderIntermediateCode imm, ShaderType shaderType)
 {
     m_byteCode.resize(szBytes);
     memcpy(m_byteCode.data(), pByteCode, szBytes);
 
     m_intermediateCode  = imm;
     m_shaderType        = shaderType;
+    m_entryPoint        = entryPoint;
 
     genHashId();
 
@@ -49,10 +57,12 @@ ErrType Shader::load(const char* pByteCode, U64 szBytes, ShaderIntermediateCode 
 ErrType ShaderBuilder::compile
     (
         Shader* pShader, 
+        const char* entryPoint,
         const char* sourceCode, 
         U64 sourceCodeBytes, 
         ShaderLang lang, 
-        ShaderType shaderType
+        ShaderType shaderType,
+        const std::vector<PreprocessDefine>& defines
     )
 {
     ErrType result              = RecluseResult_Ok;
@@ -64,11 +74,11 @@ ErrType ShaderBuilder::compile
     memcpy(srcCodeString.data(), sourceCode, sourceCodeBytes);
     srcCodeString[sourceCodeBytes] = '\0';    
 
-    result = onCompile(srcCodeString, byteCodeString, lang, shaderType);
+    result = onCompile(srcCodeString, byteCodeString, entryPoint, lang, shaderType, defines);
 
     if (result == RecluseResult_Ok) 
     {
-        pShader->load(byteCodeString.data(), byteCodeString.size(), getIntermediateCode(), shaderType);
+        pShader->load(entryPoint, byteCodeString.data(), byteCodeString.size(), getIntermediateCode(), shaderType);
     } 
     else 
     {

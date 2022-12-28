@@ -23,7 +23,6 @@ ErrType VulkanPrimaryCommandList::initialize
     VkDevice device                                 = static_cast<VulkanDevice*>(pContext->getDevice())->get();
 
     m_buffers.resize(poolCount);
-    m_pools.resize(m_buffers.size());
 
     // For each command pool, be sure to allocate a command buffer handle
     // that reference our primary. We need to have one command buffer
@@ -44,11 +43,9 @@ ErrType VulkanPrimaryCommandList::initialize
         {
             R_ERR(R_CHANNEL_VULKAN, "Failed to allocate command buffer!");
         }
-        
-        m_pools[j] = pools[j];
     }
 
-    m_contextRef = pContext;
+    m_queueFamilyIndex  = queueFamilyIndex;
 
     return result;
 }
@@ -58,12 +55,14 @@ void VulkanPrimaryCommandList::release(VulkanContext* pContext)
 {
     // Destroy all buffers, ensure they correspond to the proper 
     // command pool.
-    VulkanDevice* pDevice = static_cast<VulkanDevice*>(pContext->getDevice());
+    VulkanDevice* pDevice                           = static_cast<VulkanDevice*>(pContext->getDevice());
+    const std::vector<QueueFamily>& queueFamiles    = pDevice->getQueueFamilies();
+    const std::vector<VkCommandPool>& commandPools  = queueFamiles[m_queueFamilyIndex].commandPools;
     for (U32 i = 0; i < m_buffers.size(); ++i) 
     {    
         if (m_buffers[i] != VK_NULL_HANDLE) 
         {   
-            vkFreeCommandBuffers(pDevice->get(), m_pools[i], 1, &m_buffers[i]);
+            vkFreeCommandBuffers(pDevice->get(), commandPools[i], 1, &m_buffers[i]);
             m_buffers[i] = VK_NULL_HANDLE;
         }
     }
@@ -88,9 +87,6 @@ void VulkanPrimaryCommandList::beginCommandList(U32 idx)
     U32 bufIndex            = idx;
     VkCommandBuffer buffer  = m_buffers[bufIndex];
 
-    // Reset all binding info that is referenced.
-    resetBinds();
-
     VkResult result = vkBeginCommandBuffer(buffer, &info);
 
     R_ASSERT(result == VK_SUCCESS);
@@ -100,7 +96,7 @@ void VulkanPrimaryCommandList::beginCommandList(U32 idx)
 void VulkanPrimaryCommandList::begin()
 {
     R_ASSERT_MSG(m_status != CommandList_Recording, "Primary command list already begun recording! Only call GraphicsContext->begin() to begin the primary command list!");
-    U32 bufferIdx       = m_contextRef->getCurrentBufferIndex();
+    const U32 bufferIdx = m_currentIdx;
     m_currentCmdBuffer  = m_buffers[bufferIdx];
     m_currentIdx        = bufferIdx;
 
@@ -113,16 +109,7 @@ void VulkanPrimaryCommandList::begin()
 void VulkanPrimaryCommandList::end()
 {
     R_ASSERT_MSG(m_status == CommandList_Recording, "Primary command list has already ended! Only call GraphicsContext->end() to end the primary command list!");
-    if (m_boundRenderPass) 
-    {
-        endRenderPass(m_currentCmdBuffer);
-    }
-
-    // Last minute transitions will be done in here.
-    flushBarrierTransitions(m_currentCmdBuffer);
-
     endCommandList(m_currentIdx);
-
     m_status = CommandList_Ready;
 }
 
@@ -138,44 +125,41 @@ void VulkanPrimaryCommandList::endCommandList(U32 idx)
 
 VkCommandBuffer VulkanPrimaryCommandList::get() const
 {
-    U32 bufIdx = m_contextRef->getCurrentBufferIndex();
+    const U32 bufIdx = m_currentIdx;
     return m_buffers[bufIdx];
 }
 
 
-void VulkanPrimaryCommandList::setRenderPass(RenderPass* pRenderPass)
+void VulkanContext::setRenderPass(VulkanRenderPass* pPass)
 {
-    R_ASSERT(pRenderPass != NULL);
+    R_ASSERT(pPass != NULL);
 
-    if (pRenderPass == m_boundRenderPass) 
-    {
+    if (m_boundRenderPass == pPass)
         return;
-    }
 
-    flushBarrierTransitions(m_currentCmdBuffer);
+    flushBarrierTransitions(m_primaryCommandList.get());
 
-    VulkanRenderPass* pVrp  = static_cast<VulkanRenderPass*>(pRenderPass);
     // End current render pass if it doesn't match this one...
-    if (m_boundRenderPass != pVrp) 
+    if (m_boundRenderPass != pPass) 
     {
-        endRenderPass(m_currentCmdBuffer);   
+        endRenderPass(m_primaryCommandList.get());   
     }
 
     VkRenderPassBeginInfo beginInfo = { };
     beginInfo.sType                 = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    beginInfo.framebuffer           = pVrp->getFbo();
-    beginInfo.renderPass            = pVrp->get();
+    beginInfo.framebuffer           = pPass->getFbo();
+    beginInfo.renderPass            = pPass->get();
     beginInfo.clearValueCount       = 0;
     beginInfo.pClearValues          = nullptr;
-    beginInfo.renderArea            = pVrp->getRenderArea();
+    beginInfo.renderArea            = pPass->getRenderArea();
 
-    vkCmdBeginRenderPass(m_currentCmdBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(m_primaryCommandList.get(), &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
     
-    m_boundRenderPass = pVrp;
+    m_boundRenderPass = pPass;
 }
 
 
-void VulkanPrimaryCommandList::endRenderPass(VkCommandBuffer buffer)
+void VulkanContext::endRenderPass(VkCommandBuffer buffer)
 {
     if (m_boundRenderPass) 
     {
@@ -185,13 +169,21 @@ void VulkanPrimaryCommandList::endRenderPass(VkCommandBuffer buffer)
 }
 
 
-void VulkanPrimaryCommandList::resetBinds()
+void VulkanContext::resetBinds()
 {
     m_boundRenderPass = VK_NULL_HANDLE;
+    m_srvs.clear();
+    m_uavs.clear();
+    m_cbvs.clear();
+    m_samplers.clear();
+    m_resourceViewShaderAccessMap.clear();
+    m_constantBufferShaderAccessMap.clear();
+    m_samplerShaderAccessMap.clear();
+    m_pipelineState.pipeline = VK_NULL_HANDLE;
 }
 
 
-void VulkanPrimaryCommandList::clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect)
+void VulkanContext::clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect)
 {
     R_ASSERT(m_boundRenderPass != NULL);
 
@@ -212,64 +204,52 @@ void VulkanPrimaryCommandList::clearRenderTarget(U32 idx, F32* clearColor, const
     attachment.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     attachment.clearValue = color;
     attachment.colorAttachment = idx;
-    vkCmdClearAttachments(m_currentCmdBuffer, 1, &attachment, 1, &clearRect);
+    vkCmdClearAttachments(m_primaryCommandList.get(), 1, &attachment, 1, &clearRect);
 }
 
 
-void VulkanPrimaryCommandList::setPipelineState(PipelineState* pPipelineState, BindType bindType)
+void VulkanContext::bindPipelineState(const VulkanDescriptorAllocation& set)
 {
-    flushBarrierTransitions(m_currentCmdBuffer);
-    VkPipelineBindPoint bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-
-    SETBIND(bindType, bindPoint)
-
-    VulkanPipelineState* pVps   = static_cast<VulkanPipelineState*>(pPipelineState);
-    VkPipeline pipeline         = pVps->get();
-    
-    vkCmdBindPipeline(m_currentCmdBuffer, bindPoint, pipeline);
-
-    m_boundPipelineState        = pVps;
-}
-
-
-void VulkanPrimaryCommandList::bindDescriptorSets(U32 count, DescriptorSet** pSets, BindType bindType)
-{
-    R_ASSERT(m_boundPipelineState != NULL);
-    R_ASSERT(count < 8);
-    flushBarrierTransitions(m_currentCmdBuffer);
-    // Let's say we can only bound 8 descriptor sets at a time...
-    VkDescriptorSet descriptorSets[8];
-
-    U32 numDescriptorSetsBound      = 0;
-    VkPipelineBindPoint bindPoint   = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    VkPipelineLayout layout         = m_boundPipelineState->getLayout();
-
-    SETBIND(bindType, bindPoint)
-
-    while (numDescriptorSetsBound < count)
-    {
-        VulkanDescriptorSet* pSet                   = static_cast<VulkanDescriptorSet*>(pSets[numDescriptorSetsBound]);
-        descriptorSets[numDescriptorSetsBound++]    = pSet->get();
+    m_pipelineStructure.state.descriptorLayout = set.getDescriptorSet(0).layout;
+    flushBarrierTransitions(m_primaryCommandList.get());
+    const Pipelines::PipelineState pipelineState = Pipelines::makePipeline(getNativeDevice(), m_pipelineStructure);
+    VkPipelineBindPoint bindPoint   = pipelineState.bindPoint;
+    VkPipeline pipeline             = pipelineState.pipeline;
+    if (pipeline != m_pipelineState.pipeline)
+    { 
+        vkCmdBindPipeline(m_primaryCommandList.get(), bindPoint, pipeline);
+        m_pipelineState = pipelineState;
     }
+}
+
+
+void VulkanContext::bindDescriptorSet(const VulkanDescriptorAllocation& set)
+{
+    R_ASSERT(m_pipelineState.pipeline != NULL);
+    flushBarrierTransitions(m_primaryCommandList.get());
+    const VulkanDescriptorAllocation::DescriptorSet descriptorSet = set.getDescriptorSet(0);
+    VkPipelineLayout layout                 = Pipelines::makeLayout(getNativeDevice(), descriptorSet.layout);
+    const VkPipelineBindPoint bindPoint     = m_pipelineState.bindPoint;
+    const VkDescriptorSet vSet              = descriptorSet.set;
 
     vkCmdBindDescriptorSets
         (
-            m_currentCmdBuffer, 
+            m_primaryCommandList.get(),
             bindPoint, 
             layout, 
             0, 
-            numDescriptorSetsBound,
-            descriptorSets, 
+            1,
+            &vSet, 
             0, 
             nullptr
         );
 }
 
 
-void VulkanPrimaryCommandList::bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* pOffsets)
+void VulkanContext::bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* pOffsets)
 {
 
-    flushBarrierTransitions(m_currentCmdBuffer);
+    flushBarrierTransitions(m_primaryCommandList.get());
     // Max number of vertex buffers to bind at a time.
     static VkBuffer vertexBuffers[8];
     
@@ -279,20 +259,24 @@ void VulkanPrimaryCommandList::bindVertexBuffers(U32 numBuffers, GraphicsResourc
         vertexBuffers[i]    = pVb->get();
     }
 
-    vkCmdBindVertexBuffers(m_currentCmdBuffer, 0, numBuffers, vertexBuffers, pOffsets);
+    vkCmdBindVertexBuffers(m_primaryCommandList.get(), 0, numBuffers, vertexBuffers, pOffsets);
 }
 
 
-void VulkanPrimaryCommandList::drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstVertex, U32 firstInstance)
+void VulkanContext::drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstVertex, U32 firstInstance)
 {
-    flushBarrierTransitions(m_currentCmdBuffer);
-    vkCmdDraw(m_currentCmdBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
+    const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, m_boundDescriptorSetStructure);
+    
+    bindDescriptorSet(set);
+    flushBarrierTransitions(m_primaryCommandList.get());
+    
+    vkCmdDraw(m_primaryCommandList.get(), vertexCount, instanceCount, firstVertex, firstInstance);
 }
 
 
-void VulkanPrimaryCommandList::copyResource(GraphicsResource* dst, GraphicsResource* src)
+void VulkanContext::copyResource(GraphicsResource* dst, GraphicsResource* src)
 {
-    flushBarrierTransitions(m_currentCmdBuffer);
+    flushBarrierTransitions(m_primaryCommandList.get());
 
     const GraphicsResourceDescription& dstDesc = dst->getDesc();
     const GraphicsResourceDescription& srcDesc = src->getDesc();
@@ -311,7 +295,7 @@ void VulkanPrimaryCommandList::copyResource(GraphicsResource* dst, GraphicsResou
             region.size             = dstDesc.width;
             region.dstOffset        = 0;
             region.srcOffset        = 0;
-            vkCmdCopyBuffer(m_currentCmdBuffer, srcBuffer->get(), dstBuffer->get(), 1, &region);
+            vkCmdCopyBuffer(m_primaryCommandList.get(), srcBuffer->get(), dstBuffer->get(), 1, &region);
         } 
         else 
         {
@@ -320,7 +304,7 @@ void VulkanPrimaryCommandList::copyResource(GraphicsResource* dst, GraphicsResou
             // TODO:
             vkCmdCopyImageToBuffer
                 (
-                    m_currentCmdBuffer, 
+                    m_primaryCommandList.get(),
                     pSrcImage->get(), 
                     pSrcImage->getCurrentLayout(),
                     dstBuffer->get(), 
@@ -332,7 +316,7 @@ void VulkanPrimaryCommandList::copyResource(GraphicsResource* dst, GraphicsResou
 }
 
 
-void VulkanPrimaryCommandList::setViewports(U32 numViewports, Viewport* pViewports)
+void VulkanContext::setViewports(U32 numViewports, Viewport* pViewports)
 {
     VkViewport viewports[8];
     for (U32 i = 0; i < numViewports; ++i) 
@@ -345,11 +329,11 @@ void VulkanPrimaryCommandList::setViewports(U32 numViewports, Viewport* pViewpor
         viewports[i].maxDepth   = pViewports[i].maxDepth;
     }
 
-    vkCmdSetViewport(m_currentCmdBuffer, 0, numViewports, viewports);
+    vkCmdSetViewport(m_primaryCommandList.get(), 0, numViewports, viewports);
 }
 
 
-void VulkanPrimaryCommandList::setScissors(U32 numScissors, Rect* pRects) 
+void VulkanContext::setScissors(U32 numScissors, Rect* pRects) 
 {
     VkRect2D scissors[8];
     for (U32 i = 0; i < numScissors; ++i) 
@@ -360,24 +344,27 @@ void VulkanPrimaryCommandList::setScissors(U32 numScissors, Rect* pRects)
         scissors[i].offset.y        = (I32)pRects[i].y;    
     }
 
-    vkCmdSetScissor(m_currentCmdBuffer, 0, numScissors, scissors);
+    vkCmdSetScissor(m_primaryCommandList.get(), 0, numScissors, scissors);
 }
 
 
-void VulkanPrimaryCommandList::dispatch(U32 x, U32 y, U32 z)
+void VulkanContext::dispatch(U32 x, U32 y, U32 z)
 {
-    endRenderPass(m_currentCmdBuffer);
-    flushBarrierTransitions(m_currentCmdBuffer);
-    vkCmdDispatch(m_currentCmdBuffer, x, y, z);
+    endRenderPass(m_primaryCommandList.get());
+    const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, m_boundDescriptorSetStructure);
+    bindPipelineState(set);
+    bindDescriptorSet(set);
+    flushBarrierTransitions(m_primaryCommandList.get());
+    vkCmdDispatch(m_primaryCommandList.get(), x, y, z);
 }
 
 
-void VulkanPrimaryCommandList::transition(GraphicsResource* pResource, ResourceState dstState)
+void VulkanContext::transition(GraphicsResource* pResource, ResourceState dstState)
 {
     R_ASSERT(pResource != NULL);
     R_ASSERT(pResource->getApi() == GraphicsApi_Vulkan);
     // End any render pass that may not have been cleaned up.
-    endRenderPass(m_currentCmdBuffer);
+    endRenderPass(m_primaryCommandList.get());
 
     // Ignore the transition state, if we are already in this state.
     if (pResource->isInResourceState(dstState))
@@ -419,9 +406,9 @@ void VulkanPrimaryCommandList::transition(GraphicsResource* pResource, ResourceS
     }
 }
 
-void VulkanPrimaryCommandList::bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBytes, IndexType type)
+void VulkanContext::bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBytes, IndexType type)
 {
-    flushBarrierTransitions(m_currentCmdBuffer);
+    flushBarrierTransitions(m_primaryCommandList.get());
 
     VkBuffer buffer         = static_cast<VulkanBuffer*>(pIndexBuffer)->get();
     VkDeviceSize offset     = (VkDeviceSize)offsetBytes;
@@ -433,22 +420,23 @@ void VulkanPrimaryCommandList::bindIndexBuffer(GraphicsResource* pIndexBuffer, U
         default:                    indexType = VK_INDEX_TYPE_UINT32; break;
     }
 
-    vkCmdBindIndexBuffer(m_currentCmdBuffer, buffer, offset, indexType);
+    vkCmdBindIndexBuffer(m_primaryCommandList.get(), buffer, offset, indexType);
 }
 
-void VulkanPrimaryCommandList::drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 firstIndex, U32 vertexOffset, U32 firstInstance)
+void VulkanContext::drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 firstIndex, U32 vertexOffset, U32 firstInstance)
 {
-    flushBarrierTransitions(m_currentCmdBuffer);
-
-    vkCmdDrawIndexed(m_currentCmdBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+    flushBarrierTransitions(m_primaryCommandList.get());
+    const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, m_boundDescriptorSetStructure);
+    bindDescriptorSet(set);
+    vkCmdDrawIndexed(m_primaryCommandList.get(), indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
 }
 
 
-void VulkanPrimaryCommandList::clearDepthStencil(F32 clearDepth, U8 clearStencil, const Rect& rect)
+void VulkanContext::clearDepthStencil(F32 clearDepth, U8 clearStencil, const Rect& rect)
 {
     R_ASSERT(m_boundRenderPass != NULL);
     
-    flushBarrierTransitions(m_currentCmdBuffer);
+    flushBarrierTransitions(m_primaryCommandList.get());
 
     VkClearRect clearRect                       = { };
     VkClearAttachment attachment                = { };
@@ -464,17 +452,20 @@ void VulkanPrimaryCommandList::clearDepthStencil(F32 clearDepth, U8 clearStencil
     clearRect.rect.extent       = { (U32)rect.width, (U32)rect.height };
     clearRect.rect.offset       = { (I32)rect.x, (I32)rect.y };
 
-    vkCmdClearAttachments(m_currentCmdBuffer, 1, &attachment, 1, &clearRect);
+    vkCmdClearAttachments(m_primaryCommandList.get(), 1, &attachment, 1, &clearRect);
         
 }
 
 
-void VulkanPrimaryCommandList::drawIndexedInstancedIndirect(GraphicsResource* pParams, U32 offset, U32 drawCount, U32 stride)
+void VulkanContext::drawIndexedInstancedIndirect(GraphicsResource* pParams, U32 offset, U32 drawCount, U32 stride)
 {
     R_ASSERT(pParams != NULL);
     R_ASSERT(pParams->getApi() == GraphicsApi_Vulkan);
 
-    flushBarrierTransitions(m_currentCmdBuffer);
+    flushBarrierTransitions(m_primaryCommandList.get());
+    const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, m_boundDescriptorSetStructure);
+    bindPipelineState(set);
+    bindDescriptorSet(set);
     
     VulkanResource* pResource = pParams->castTo<VulkanResource>();
 
@@ -486,17 +477,17 @@ void VulkanPrimaryCommandList::drawIndexedInstancedIndirect(GraphicsResource* pP
 
     const VulkanBuffer* pBuffer = pResource->castTo<VulkanBuffer>();
 
-    vkCmdDrawIndexedIndirect(m_currentCmdBuffer, pBuffer->get(), offset, drawCount, stride);
+    vkCmdDrawIndexedIndirect(m_primaryCommandList.get(), pBuffer->get(), offset, drawCount, stride);
 }
 
 
-void VulkanPrimaryCommandList::drawInstancedIndirect(GraphicsResource* pParams, U32 offset, U32 drawCount, U32 stride)
+void VulkanContext::drawInstancedIndirect(GraphicsResource* pParams, U32 offset, U32 drawCount, U32 stride)
 {
     R_ASSERT(pParams != NULL);
     R_ASSERT(pParams->getApi() == GraphicsApi_Vulkan);
 
-    flushBarrierTransitions(m_currentCmdBuffer);
-    
+    flushBarrierTransitions(m_primaryCommandList.get());
+    bindDescriptorSet(DescriptorSets::makeDescriptorSet(this, m_boundDescriptorSetStructure));
     VulkanResource* pResource = static_cast<VulkanResource*>(pParams);
 
     if (!pResource->isBuffer())
@@ -507,24 +498,24 @@ void VulkanPrimaryCommandList::drawInstancedIndirect(GraphicsResource* pParams, 
 
     const VulkanBuffer* pBuffer = pResource->castTo<VulkanBuffer>();
 
-    vkCmdDrawIndirect(m_currentCmdBuffer, pBuffer->get(), offset, drawCount, stride);
+    vkCmdDrawIndirect(m_primaryCommandList.get(), pBuffer->get(), offset, drawCount, stride); 
 }
 
 
-void VulkanPrimaryCommandList::dispatchIndirect(GraphicsResource* pParams, U64 offset)
+void VulkanContext::dispatchIndirect(GraphicsResource* pParams, U64 offset)
 {
     R_ASSERT(pParams != NULL);
     R_ASSERT(pParams->getApi() == GraphicsApi_Vulkan);
 
-    flushBarrierTransitions(m_currentCmdBuffer);
-
+    flushBarrierTransitions(m_primaryCommandList.get());
+    bindDescriptorSet(DescriptorSets::makeDescriptorSet(this, m_boundDescriptorSetStructure));
     VulkanResource* pResource = pParams->castTo<VulkanResource>();
     
     if (pResource->isBuffer())
     {
         VulkanBuffer* pBuffer = pResource->castTo<VulkanBuffer>();
         const VkBuffer buffer = pBuffer->get();
-        vkCmdDispatchIndirect(m_currentCmdBuffer, buffer, offset);
+        vkCmdDispatchIndirect(m_primaryCommandList.get(), buffer, offset);
     }
     else
     {
@@ -533,15 +524,15 @@ void VulkanPrimaryCommandList::dispatchIndirect(GraphicsResource* pParams, U64 o
 }
 
 
-void VulkanPrimaryCommandList::flushBarrierTransitions(VkCommandBuffer cmdBuffer)
+void VulkanContext::flushBarrierTransitions(VkCommandBuffer cmdBuffer)
 {
     if (!m_bufferMemoryBarriers.empty() || !m_imageMemoryBarriers.empty())
     { 
         vkCmdPipelineBarrier
             (
                 cmdBuffer,
-                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
                 VK_DEPENDENCY_BY_REGION_BIT,
                 0,
                 nullptr,
@@ -554,5 +545,106 @@ void VulkanPrimaryCommandList::flushBarrierTransitions(VkCommandBuffer cmdBuffer
         m_bufferMemoryBarriers.clear();
         m_imageMemoryBarriers.clear();
     }
+}
+
+
+void VulkanContext::bindRenderTargets(U32 count, GraphicsResourceView** ppResourceViews, GraphicsResourceView* pDepthStencil)
+{
+    // Obtain the given render pass for the following resources. If one is already available, don't set it again!
+    VulkanRenderPass* pPass = RenderPasses::makeRenderPass(m_pDevice, count, ppResourceViews, pDepthStencil);
+    if (pPass == m_boundRenderPass)
+        return;
+    m_boundRenderPass = pPass;
+    setRenderPass(m_boundRenderPass);
+}
+
+
+void VulkanContext::copyBufferRegions
+    (
+        GraphicsResource* dst, 
+        GraphicsResource* src, 
+        CopyBufferRegion* pRegions, 
+        U32 numRegions
+    )
+{
+    VkBuffer dstBuf             = dst->castTo<VulkanBuffer>()->get();
+    VkBuffer srcBuf             = src->castTo<VulkanBuffer>()->get();
+    std::vector<VkBufferCopy> bufferCopies(numRegions);
+    
+    for (U32 i = 0; i < numRegions; ++i) 
+    {
+        bufferCopies[i].srcOffset = (VkDeviceSize)pRegions[i].srcOffsetBytes;
+        bufferCopies[i].dstOffset = (VkDeviceSize)pRegions[i].dstOffsetBytes;
+        bufferCopies[i].size      = (VkDeviceSize)pRegions[i].szBytes;
+    }
+
+    vkCmdCopyBuffer(m_primaryCommandList.get(), srcBuf, dstBuf, numRegions, bufferCopies.data());
+}
+
+
+void VulkanContext::bindConstantBuffers(ShaderType type, U32 offset, U32 count, GraphicsResource** ppResources)
+{
+    m_cbvs.reserve(count);
+    ShaderStageFlags shaderFlags = shaderTypeToShaderStageFlags(type);
+    for (U32 i = 0; i < count; ++i)
+    {
+        R_ASSERT(ppResources[i]->getApi() == GraphicsApi_Vulkan);
+        VulkanResource* pVulkanResource = ppResources[i]->castTo<VulkanResource>();
+        R_ASSERT(pVulkanResource->isBuffer());
+        VulkanBuffer* pBuffer           = pVulkanResource->castTo<VulkanBuffer>();
+        m_constantBufferShaderAccessMap[pBuffer->getId()] |= shaderFlags;
+        m_cbvs.push_back(pBuffer);
+    }
+    m_boundDescriptorSetStructure.key.value.shaderTypeFlags |= shaderFlags;
+    m_boundDescriptorSetStructure.ppConstantBuffers         = m_cbvs.data();
+    m_boundDescriptorSetStructure.key.value.constantBuffers = m_cbvs.size();
+}
+
+
+void VulkanContext::bindShaderResources(ShaderType type, U32 offset, U32 count, GraphicsResourceView** ppResourceViews)
+{
+    m_srvs.reserve(count);
+    ShaderStageFlags shaderFlags = shaderTypeToShaderStageFlags(type);
+    for (U32 i = 0; i < count; ++i)
+    {
+        VulkanResourceView* pVulkanResourceView = ppResourceViews[i]->castTo<VulkanResourceView>();
+        m_resourceViewShaderAccessMap[pVulkanResourceView->getId()] |= shaderFlags;
+        m_srvs.push_back(pVulkanResourceView);
+    }
+    m_boundDescriptorSetStructure.key.value.shaderTypeFlags     |= shaderFlags;
+    m_boundDescriptorSetStructure.ppShaderResources             = m_srvs.data();
+    m_boundDescriptorSetStructure.key.value.srvs                = m_srvs.size();
+}
+
+
+void VulkanContext::bindUnorderedAccessViews(ShaderType type, U32 offset, U32 count, GraphicsResourceView** ppResourceViews)
+{
+    m_uavs.reserve(count);
+    ShaderStageFlags shaderFlags = shaderTypeToShaderStageFlags(type);
+    for (U32 i = 0; i < count; ++i)
+    {
+        VulkanResourceView* pVulkanResourceView = ppResourceViews[i]->castTo<VulkanResourceView>();
+        m_resourceViewShaderAccessMap[pVulkanResourceView->getId()] |= shaderFlags;
+        m_uavs.push_back(pVulkanResourceView);
+    }
+    m_boundDescriptorSetStructure.key.value.shaderTypeFlags     |= shaderFlags;
+    m_boundDescriptorSetStructure.ppUnorderedAccesses           = m_uavs.data();
+    m_boundDescriptorSetStructure.key.value.uavs                = m_uavs.size();
+}
+
+
+void VulkanContext::bindSamplers(ShaderType type, U32 count, GraphicsSampler** ppSamplers)
+{
+    m_samplers.reserve(count);
+    ShaderStageFlags shaderFlags = shaderTypeToShaderStageFlags(type);
+    for (U32 i = 0; i < count; ++i)
+    {
+        VulkanSampler* pVulkanSampler = ppSamplers[i]->castTo<VulkanSampler>();
+        m_samplerShaderAccessMap[pVulkanSampler->getId()] |= shaderFlags;
+        m_samplers.push_back(pVulkanSampler);
+    }
+    m_boundDescriptorSetStructure.key.value.shaderTypeFlags |= shaderFlags;
+    m_boundDescriptorSetStructure.ppSamplers                = m_samplers.data();
+    m_boundDescriptorSetStructure.key.value.samplers        = m_samplers.size();
 }
 } // Recluse

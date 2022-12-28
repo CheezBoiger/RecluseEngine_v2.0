@@ -10,6 +10,7 @@
 #include "Recluse/Graphics/ResourceView.hpp"
 #include "Recluse/Graphics/RenderPass.hpp"
 #include "Recluse/Graphics/ShaderBuilder.hpp"
+#include "Recluse/Graphics/ShaderProgramBuilder.hpp"
 
 #include "Recluse/Memory/MemoryCommon.hpp"
 #include "Recluse/System/Window.hpp"
@@ -57,16 +58,13 @@ int main(int c, char* argv[])
     GraphicsAdapter* pAdapter       = nullptr;
     GraphicsDevice* pDevice         = nullptr;
     GraphicsResource* pData         = nullptr;
-    DescriptorSetLayout* pLayout    = nullptr;
     PipelineState* pPipeline        = nullptr;
     GraphicsSwapchain* pSwapchain   = nullptr;
-    GraphicsCommandList* pList      = nullptr;
     GraphicsContext* pContext       = nullptr;
     Window* pWindow                 = Window::create("Compute", 0, 0, 1024, 1024);
     ErrType result                  = RecluseResult_Ok;
 
     std::vector<GraphicsResourceView*> views;
-    std::vector<DescriptorSet*> sets;
 
     if (!pInstance) 
     { 
@@ -100,6 +98,7 @@ int main(int c, char* argv[])
         info.swapchainDescription.desiredFrames = 3;
         info.swapchainDescription.renderWidth = pWindow->getWidth();
         info.swapchainDescription.renderHeight = pWindow->getHeight();
+        info.swapchainDescription.format = ResourceFormat_R8G8B8A8_Unorm;
 
         result = pAdapter->createDevice(info, &pDevice);
     }
@@ -126,51 +125,13 @@ int main(int c, char* argv[])
     }
 
     {
-        DescriptorSetLayoutDesc desc = { };
-        desc.numDescriptorBinds = 2;
-
-        DescriptorBindDesc bind[2] = { };
-        bind[0].binding = 0;
-        bind[0].bindType = DescriptorBindType_ConstantBuffer;
-        bind[0].numDescriptors = 1;
-        bind[0].shaderStages = ShaderType_Compute;
-    
-        bind[1].binding = 1;
-        bind[1].bindType = DescriptorBindType_StorageImage;
-        bind[1].numDescriptors = 1;
-        bind[1].shaderStages = ShaderType_Compute;
-
-        desc.pDescriptorBinds = bind;
-        
-        result = pDevice->createDescriptorSetLayout(&pLayout, desc);
-    }
-
-    if (result != RecluseResult_Ok) 
-    {
-        R_ERR("TEST", "Failed to create descriptor set layout...");
-    }
-
-    pSwapchain = pDevice->getSwapchain();
-
-    sets.resize(pSwapchain->getDesc().desiredFrames);
-    for (U32 i = 0; i < sets.size(); ++i) 
-    {
-        result = pDevice->createDescriptorSet(&sets[i], pLayout); 
-        if (result != RecluseResult_Ok) 
-        {
-            R_ERR("TEST", "Failed to create descriptor set!");
-        }
-    }
-    
-
-    {
         GraphicsResourceDescription desc = { };
         desc.dimension = ResourceDimension_Buffer;
         desc.width = sizeof(ConstData);
         desc.memoryUsage = ResourceMemoryUsage_CpuToGpu;
         desc.usage = ResourceUsage_ConstantBuffer;
         
-        result = pDevice->createResource(&pData, desc, ResourceState_VertexAndConstantBuffer);
+        result = pDevice->createResource(&pData, desc, ResourceState_ConstantBuffer);
     }
 
     if (result != RecluseResult_Ok) 
@@ -178,11 +139,13 @@ int main(int c, char* argv[])
         R_ERR("TEST", "Failed to create data resource!");
     }
 
+    pSwapchain = pDevice->getSwapchain();
+
     {
-        ResourceViewDesc desc   = { };
-        desc.type               = ResourceViewType_StorageImage;
+        ResourceViewDescription desc   = { };
+        desc.type               = ResourceViewType_UnorderedAccess;
         desc.dimension          = ResourceViewDimension_2d;
-        desc.format             = ResourceFormat_R8G8B8A8_Unorm;
+        desc.format             = ResourceFormat_B8G8R8A8_Unorm;
         desc.layerCount         = 1;
         desc.mipLevelCount      = 1;
         desc.baseArrayLayer     = 0;
@@ -214,63 +177,20 @@ int main(int c, char* argv[])
         pData->map(&ptr, &range);
         memcpy(ptr, &dat, sizeof(ConstData));
         pData->unmap(&range);
-
-        for (U32 i = 0; i < sets.size(); ++i) 
-        {
-            DescriptorSetBind bind[2] = { };
-            bind[0].binding = 0;
-            bind[0].bindType = DescriptorBindType_ConstantBuffer;
-            bind[0].descriptorCount = 1;
-            bind[0].cb.buffer = pData;
-            bind[0].cb.offset = 0;
-            bind[0].cb.sizeBytes = sizeof(ConstData);
-
-            bind[1].binding = 1;
-            bind[1].bindType = DescriptorBindType_StorageImage;
-            bind[1].descriptorCount = 1;
-            bind[1].srv.pView = views[i];
-
-            sets[i]->update(bind, 2);
-        }
     }
 
     {
-        ShaderBuilder* pBuilder = createGlslangShaderBuilder(ShaderIntermediateCode_Spirv);
-        pBuilder->setUp();
-        Shader* pCompShader = Shader::create();
         std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
         FileBufferData file;
-        std::string shaderSource = currDir + "/" + "test.cs.hlsl";
-        result = File::readFrom(&file, shaderSource);
-
-        if (result != RecluseResult_Ok) 
-        {    
-            R_ERR("TEST", "Could not find %s", shaderSource.c_str());
-        }
-
-        result = pBuilder->compile(pCompShader, file.data(), file.size(), ShaderLang_Hlsl, ShaderType_Compute);
-
-        if (result != RecluseResult_Ok) 
-        {
-            R_ERR("TEST", "Failed to compile compute shader!");
-        }
-
-        ComputePipelineStateDesc ci = { };
-        ci.numDescriptorSetLayouts = 1;
-        ci.ppDescriptorLayouts = &pLayout;
-        ci.pCS = pCompShader;
-        ci.pRenderPass = nullptr;
-
-        result = pDevice->createComputePipelineState(&pPipeline, ci);
-
-        if (result != RecluseResult_Ok) 
-        {
-            R_ERR("TEST", "Failed to create compute pipeline!");
-        }
-
-        Shader::destroy(pCompShader);
-        pBuilder->tearDown();
-        freeShaderBuilder(pBuilder);
+        std::string shaderPath = currDir + "/" + "test.cs.hlsl";
+        Builder::ShaderProgramDescription description = { };
+        description.pipelineType = BindType_Compute;
+        description.language = ShaderLang_Hlsl;
+        description.compute.cs = shaderPath.c_str();
+        description.compute.csName = "main";
+        Builder::buildShaderProgramDefinitions(description, 0, ShaderIntermediateCode_Spirv);
+        Builder::Runtime::buildShaderProgram(pDevice, 0);
+        Builder::clearShaderProgramDefinitions();
     }
 
     pWindow->open();
@@ -284,28 +204,27 @@ int main(int c, char* argv[])
         RealtimeTick::updateWatch(1ull, 0);
         RealtimeTick tick = RealtimeTick::getTick(0);
         updateConstData(pData, tick);
-        pDevice->getContext()->begin();
-        pList = pDevice->getContext()->getCommandList();
-        pList->begin();
+        GraphicsContext* context = pDevice->getContext();
+        context->begin();
             GraphicsResource* pResource = views[pSwapchain->getCurrentFrameIndex()]->getResource();
-            pList->transition(pResource, ResourceState_Storage);
-            pList->setPipelineState(pPipeline, BindType_Compute);
-            pList->bindDescriptorSets(1, &sets[pSwapchain->getCurrentFrameIndex()], BindType_Compute);
-            pList->dispatch(pWindow->getWidth() / 8 + 1, pWindow->getHeight() / 8 + 1, 1);
-        pList->end();
-        pDevice->getContext()->end();
+            context->transition(pResource, ResourceState_UnorderedAccess);
+            context->bindConstantBuffers(ShaderType_Compute, 0, 1, &pData);
+            context->bindUnorderedAccessViews(ShaderType_Compute, 0, 1, &views[pSwapchain->getCurrentFrameIndex()]);
+            context->setShaderProgram(0);
+            context->dispatch(pWindow->getWidth() / 8 + 1, pWindow->getHeight() / 8 + 1, 1);
+        context->end();
         F32 deltaFrameRate = 1.0f / tick.delta();
         counterFps += tick.delta();
 
         GraphicsSwapchain::PresentConfig conf = GraphicsSwapchain::PresentConfig_SkipPresent;
         if (counterFps >= desiredFps)
         {
-            R_VERBOSE("Test", "Frame Rate: %f fps", 1.0f / counterFps);
+            //R_VERBOSE("Test", "Frame Rate: %f fps", 1.0f / counterFps);
             counterFps = 0.f;
             conf = GraphicsSwapchain::PresentConfig_Present;
         }
-
-        pSwapchain->present(conf);
+        R_VERBOSE("Test", "Frame Rage: %f fps", deltaFrameRate);
+        pSwapchain->present(/*conf*/);
 
         pollEvents();
     
@@ -315,14 +234,9 @@ int main(int c, char* argv[])
 
     pDevice->destroyResource(pData);
 
-    for (U32 i = 0; i < sets.size(); ++i)
-        pDevice->destroyDescriptorSet(sets[i]);
-
     for (U32 i = 0; i < views.size(); ++i)
         pDevice->destroyResourceView(views[i]);
 
-    pDevice->destroyPipelineState(pPipeline);
-    pDevice->destroyDescriptorSetLayout(pLayout);
     pAdapter->destroyDevice(pDevice);
     GraphicsInstance::destroyInstance(pInstance);
     Log::destroyLoggingSystem();

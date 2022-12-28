@@ -15,7 +15,7 @@ int main(int c, char* argv[])
 
     Recluse::ErrType result = Recluse::Editor::GUIFactory::createContext(Recluse::Editor::GUIFactory::Context_WxWidgets);
 
-    if (result == Recluse::R_RESULT_OK)
+    if (result == Recluse::RecluseResult_Ok)
     {
         Recluse::Editor::IGUIContext* guiCtx = Recluse::Editor::GUIContext::get();
         guiCtx->setUp();

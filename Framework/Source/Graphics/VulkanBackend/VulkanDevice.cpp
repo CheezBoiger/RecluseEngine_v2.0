@@ -21,7 +21,6 @@
 
 namespace Recluse {
 
-
 std::vector<const char*> getDeviceExtensions() 
 {
     return { };    
@@ -69,14 +68,14 @@ void VulkanContext::initialize()
 {
     // Create the command pool.
     createFences(m_bufferCount);
-    createCommandList(&m_pPrimaryCommandList, VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_TRANSFER_BIT | VK_QUEUE_COMPUTE_BIT);
+    createPrimaryCommandList(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_TRANSFER_BIT | VK_QUEUE_COMPUTE_BIT);
 }
 
 
 void VulkanContext::release()
 {
     destroyFences();
-    destroyCommandList(m_pPrimaryCommandList);
+    destroyPrimaryCommandList();
 }
 
 
@@ -104,14 +103,16 @@ void VulkanContext::begin()
 
     prepare();
 
-    m_pPrimaryCommandList->reset();
-    m_pPrimaryCommandList->begin();
+    m_primaryCommandList.use(getCurrentBufferIndex());
+    m_primaryCommandList.reset();
+    m_primaryCommandList.begin();
 }
 
 
 void VulkanContext::end()
 {
-    m_pPrimaryCommandList->end();
+    m_primaryCommandList.end();
+    resetBinds();
 }
 
 
@@ -278,8 +279,7 @@ void VulkanDevice::release(VkInstance instance)
     destroyCommandPools();
     destroyDescriptorHeap();
     freeMemCache();
-
-    m_cache.clearCache(this);
+    ShaderPrograms::unloadAll(this);
 
     if (m_surface) 
     {
@@ -703,40 +703,9 @@ ErrType VulkanDevice::destroyQueues()
 
 ErrType VulkanDevice::createResource(GraphicsResource** ppResource, GraphicsResourceDescription& desc, ResourceState initState)
 {
-    ErrType result = RecluseResult_Ok;
-
-    if (desc.dimension == ResourceDimension_Buffer) 
-    {
-        VulkanBuffer* pBuffer = new VulkanBuffer(desc);
-
-        result = pBuffer->initialize(this, desc, initState);
-
-        if (result != RecluseResult_Ok) 
-        {
-            delete pBuffer;
-        } 
-        else 
-        {
-            *ppResource = pBuffer;
-        }
-    } 
-    else 
-    {
-    
-        VulkanImage* pImage = new VulkanImage(desc);
-
-        result = pImage->initialize(this, desc, initState);
-
-        if (result != RecluseResult_Ok) 
-        {
-            delete pImage;
-        } 
-        else 
-        {
-            *ppResource = pImage;
-        }
-    }
-    return result;
+    VulkanResource* pResource = Resources::makeResource(this, desc, initState);
+    *ppResource = pResource;
+    return pResource ? RecluseResult_Ok : RecluseResult_Failed;
 }
 
 
@@ -744,12 +713,7 @@ ErrType VulkanDevice::destroyResource(GraphicsResource* pResource)
 {
     if (pResource) 
     {
-        VulkanResource* pVr = static_cast<VulkanResource*>(pResource);
-        
-        pVr->destroy();
-        
-        delete pResource;
-        return RecluseResult_Ok;
+        return Resources::releaseResource(this, pResource->getId());
     }
 
     return RecluseResult_Failed;
@@ -809,7 +773,7 @@ void VulkanDevice::destroyCommandPools()
 }
 
 
-ErrType VulkanContext::createCommandList(VulkanPrimaryCommandList** pList, VkQueueFlags flags)
+ErrType VulkanContext::createPrimaryCommandList(VkQueueFlags flags)
 {
     ErrType result = RecluseResult_Ok;
 
@@ -824,9 +788,8 @@ ErrType VulkanContext::createCommandList(VulkanPrimaryCommandList** pList, VkQue
         if (flags & famFlags) 
         {
             U32 queueFamilyIndex        = queueFamilies[i].queueFamilyIndex;
-            VulkanPrimaryCommandList* pVList   = new VulkanPrimaryCommandList();
 
-            result = pVList->initialize
+            result = m_primaryCommandList.initialize
                         (
                             this,
                             queueFamilyIndex, 
@@ -838,13 +801,11 @@ ErrType VulkanContext::createCommandList(VulkanPrimaryCommandList** pList, VkQue
             {
                 R_ERR(R_CHANNEL_VULKAN, "Could not create CommandList...");
 
-                pVList->release(this);
-                delete pVList;
+                m_primaryCommandList.release(this);
 
                 return result;
             }
 
-            *pList = pVList;
             break;
         }    
 
@@ -854,19 +815,11 @@ ErrType VulkanContext::createCommandList(VulkanPrimaryCommandList** pList, VkQue
 }
 
 
-ErrType VulkanContext::destroyCommandList(VulkanPrimaryCommandList* pList)
+ErrType VulkanContext::destroyPrimaryCommandList()
 {
-    if (pList) 
-    {
-        R_DEBUG(R_CHANNEL_VULKAN, "Destroying command list...");
-
-        pList->release(this);
-        delete pList;
-
-        return RecluseResult_Ok;
-    }
-
-    return RecluseResult_Failed;
+    R_DEBUG(R_CHANNEL_VULKAN, "Destroying command list...");
+    m_primaryCommandList.release(this);
+    return RecluseResult_Ok;
 }
 
 
@@ -890,11 +843,11 @@ void VulkanContext::prepare()
     }
 
     // Reset this current command list.
-    m_pPrimaryCommandList->setStatus(CommandList_Reset);
+    m_primaryCommandList.setStatus(CommandList_Reset);
 
     const VulkanAllocator::VulkanAllocUpdateFlags allocUpdate = 
-          VulkanAllocator::VULKAN_ALLOC_SET_FRAME_INDEX 
-        & VulkanAllocator::VULKAN_ALLOC_UPDATE_FLAG;
+          VulkanAllocator::VulkanAllocUpdateFlag_SetFrameIndex 
+        & VulkanAllocator::VulkanAllocUpdateFlag_Update;
 
     VulkanAllocator::UpdateConfig config;
 
@@ -947,45 +900,20 @@ void VulkanContext::destroyFences()
 }
 
 
-ErrType VulkanDevice::createResourceView(GraphicsResourceView** ppView, const ResourceViewDesc& desc)
+ErrType VulkanDevice::createResourceView(GraphicsResourceView** ppView, const ResourceViewDescription& desc)
 {
-    VulkanResourceView* pView = new VulkanResourceView(desc);
-    ErrType err               = pView->initialize(this);
-
-    if (err != RecluseResult_Ok) 
-    {
-        pView->destroy(this);
-        delete pView;
-    }
-
+    VulkanResourceView* pView = ResourceViews::makeResourceView(this, desc);
+    if (!pView)
+       return RecluseResult_Failed;
     *ppView = pView;
-
-    return err;
+    return RecluseResult_Ok;
 }
 
 
 ErrType VulkanDevice::destroyResourceView(GraphicsResourceView* pView)
 {
-    ErrType result = RecluseResult_Ok;
-
-    if (!pView) 
-    {
-        return RecluseResult_NullPtrExcept;
-    }
-
-    VulkanResourceView* pVv = static_cast<VulkanResourceView*>(pView);
-    result                  = pVv->destroy(this);
-
-    if (result != RecluseResult_Ok) 
-    {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to destroy vulkan image view!");
-
-        return result;
-    }
-
-    delete pVv;    
-
-    return result;
+    if (!pView) return RecluseResult_NullPtrExcept;
+    return ResourceViews::releaseResourceView(this, pView->getId());
 }
 
 
@@ -1007,144 +935,6 @@ void VulkanDevice::destroyDescriptorHeap()
         delete m_pDescriptorManager;
         m_pDescriptorManager = nullptr;
     }
-}
-
-
-ErrType VulkanDevice::createDescriptorSet(DescriptorSet** ppDescriptorSet, DescriptorSetLayout* pLayout)
-{
-    VulkanDescriptorSetLayout* pVl      = static_cast<VulkanDescriptorSetLayout*>(pLayout);
-    VulkanDescriptorSet* pDescriptorSet = new VulkanDescriptorSet();
-    ErrType result                      = pDescriptorSet->initialize(this, pVl);
-
-    if (result != RecluseResult_Ok) 
-    {
-        R_ERR(R_CHANNEL_VULKAN, "Device failed to create vulkan descriptor!");
-        delete pVl;
-        return result;
-    }
-
-    *ppDescriptorSet = pDescriptorSet;
-
-    return result;
-}
-
-
-ErrType VulkanDevice::destroyDescriptorSet(DescriptorSet* pDescriptorSet)
-{
-    VulkanDescriptorSet* pSet = static_cast<VulkanDescriptorSet*>(pDescriptorSet);
-    pSet->destroy();
-    delete pSet;
-    return RecluseResult_Ok;
-}
-
-
-ErrType VulkanDevice::createDescriptorSetLayout(DescriptorSetLayout** ppLayout, const DescriptorSetLayoutDesc& desc)
-{
-    VulkanDescriptorSetLayout* pVl  = new VulkanDescriptorSetLayout();
-    ErrType result                  = pVl->initialize(this, desc);
-
-    if (result != RecluseResult_Ok) 
-    {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to create vulkan descriptor set layout!");
-        pVl->destroy(this);
-        delete pVl;
-        return result;
-    }
-
-    *ppLayout = pVl;
-
-    return RecluseResult_Ok;
-}
-
-
-ErrType VulkanDevice::destroyDescriptorSetLayout(DescriptorSetLayout* pLayout)
-{
-    if (!pLayout) 
-    {
-        return RecluseResult_NullPtrExcept;
-    }
-
-    VulkanDescriptorSetLayout* pVl = static_cast<VulkanDescriptorSetLayout*>(pLayout);
-    ErrType result = pVl->destroy(this);
-
-    return result;
-}
-
-
-ErrType VulkanDevice::createRenderPass(RenderPass** ppRenderPass, const RenderPassDesc& desc)
-{
-    VulkanRenderPass* pVrp = new VulkanRenderPass();
-    ErrType result = pVrp->initialize(this, desc);
-
-    if (result != RecluseResult_Ok) 
-    {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to create vulkan render pass...");
-    
-        pVrp->destroy(this);
-        delete pVrp;
-
-        return result;
-    }
-
-    *ppRenderPass = pVrp;
-
-    return result;
-}
-
-
-ErrType VulkanDevice::destroyRenderPass(RenderPass* pRenderPass)
-{
-    if (!pRenderPass) 
-    {
-        return RecluseResult_NullPtrExcept;
-    }
-
-    VulkanRenderPass* pVrp = static_cast<VulkanRenderPass*>(pRenderPass);
-    ErrType result = pVrp->destroy(this);
-    delete pVrp;
-
-    if (result != RecluseResult_Ok) 
-    {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to destroy render pass!");
-    }
-
-    return result;
-}
-
-
-ErrType VulkanDevice::createGraphicsPipelineState(PipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc)
-{
-    VulkanGraphicsPipelineState* pPipeline  = new VulkanGraphicsPipelineState();
-    ErrType result                          = RecluseResult_Ok;
-
-    result = pPipeline->initialize(this, desc);
-    
-    if (result != RecluseResult_Ok) 
-    {
-        pPipeline->destroy(this);
-        delete pPipeline;
-
-        return result;
-    }
-
-    *ppPipelineState = pPipeline;
-
-    return result;
-}
-
-
-ErrType VulkanDevice::destroyPipelineState(PipelineState* pPipelineState)
-{
-    R_ASSERT(pPipelineState != NULL);
-
-    ErrType result                  = RecluseResult_Ok;
-    VulkanPipelineState* pPipeline  = static_cast<VulkanPipelineState*>(pPipelineState);
-    
-    pPipeline->destroy(this);
-
-    delete pPipeline;
-
-    return result;
 }
 
 
@@ -1306,53 +1096,9 @@ void VulkanDevice::pushInvalidateMemoryRange(const VkMappedMemoryRange& mappedRa
 }
 
 
-ErrType VulkanDevice::createComputePipelineState(PipelineState** ppPipelineState, const ComputePipelineStateDesc& desc)
-{
-    VulkanComputePipelineState* pPipeline = new VulkanComputePipelineState();
-    ErrType result = RecluseResult_Ok;
-    
-    result = pPipeline->initialize(this, desc);
-
-    if (result != RecluseResult_Ok) 
-    {
-        pPipeline->destroy(this);
-        delete pPipeline;
-
-        return result;
-    }
-
-    *ppPipelineState = pPipeline;
-
-    return result;
-}
-
-
-GraphicsCommandList* VulkanContext::getCommandList()
-{
-    return m_pPrimaryCommandList;
-}
-
-
 GraphicsSwapchain* VulkanDevice::getSwapchain()
 {
     return m_swapchain;
-}
-
-
-ErrType VulkanContext::copyResource(GraphicsResource* dst, GraphicsResource* src)
-{
-    return m_pDevice->getBackbufferQueue()->copyResource(dst, src);
-}
-
-ErrType VulkanContext::copyBufferRegions
-    (
-        GraphicsResource* dst, 
-        GraphicsResource* src, 
-        CopyBufferRegion* pRegions, 
-        U32 numRegions
-    )
-{
-    return m_pDevice->getBackbufferQueue()->copyBufferRegions(dst, src, pRegions, numRegions);
 }
 
 
@@ -1365,33 +1111,53 @@ ErrType VulkanContext::wait()
 
 ErrType VulkanDevice::createSampler(GraphicsSampler** ppSampler, const SamplerCreateDesc& desc)
 {
-    ErrType result              = RecluseResult_Ok;
-    VulkanSampler* pVSampler    = new VulkanSampler();
-    
-    result = pVSampler->initialize(this, desc);
-
-    if (result != RecluseResult_Ok) 
-    {
-        pVSampler->destroy(this);
-        return result;
-    }
-
+    VulkanSampler* pVSampler    = ResourceViews::makeSampler(this, desc);
+    if (!pVSampler) return RecluseResult_Failed;
     *ppSampler = pVSampler;
-
     return RecluseResult_Ok;
 }
 
 ErrType VulkanDevice::destroySampler(GraphicsSampler* pSampler)
 {
     if (!pSampler) return RecluseResult_NullPtrExcept;
+    return ResourceViews::releaseSampler(this, pSampler->getId());
+}
 
-    ErrType result              = RecluseResult_Ok;
-    VulkanSampler* pVSampler    = static_cast<VulkanSampler*>(pSampler);
 
-    result = pVSampler->destroy(this);
+ErrType VulkanDevice::loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition)
+{
+    if (ShaderPrograms::isProgramCached(program, permutation))
+    {
+        return RecluseResult_NeedsUpdate;
+    }
+    return ShaderPrograms::loadNativeShaderProgramPermutation(this, program, permutation, definition);
+}
 
-    delete pVSampler;
 
-    return result;
+ErrType VulkanDevice::unloadShaderProgram(ShaderProgramId program)
+{
+    if (!ShaderPrograms::isProgramCached(program))
+    {
+        return RecluseResult_Ok;
+    }
+    return ShaderPrograms::unloadProgram(this, program);
+}
+
+
+void VulkanDevice::unloadAllShaderPrograms()
+{
+    ShaderPrograms::unloadAll(this);
+}
+
+
+Bool VulkanDevice::makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout)
+{
+    return Pipelines::VertexLayout::make(id, layout);
+}
+
+
+Bool VulkanDevice::destroyVertexLayout(VertexInputLayoutId id)
+{
+    return false;
 }
 } // Recluse

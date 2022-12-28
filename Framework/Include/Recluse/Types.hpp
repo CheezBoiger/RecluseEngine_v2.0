@@ -38,6 +38,7 @@ typedef U8                  B8;
 typedef U32                 B32;
 typedef U64                 B64;
 typedef bool                Bool;
+typedef B32                 Bool32;
 
 // Error type to use for error checking.
 typedef U32                 ErrType;
@@ -77,7 +78,10 @@ enum RecluseResult
     RecluseResult_Timeout,
     RecluseResult_NeedsUpdate,
     RecluseResult_OutOfMemory,
-    RecluseResult_NotFound
+    RecluseResult_NotFound,
+    RecluseResult_AlreadyExists,
+    RecluseResult_UnknownError,
+    RecluseResult_Unexpected
 };
 
 
@@ -88,83 +92,233 @@ static R_FORCE_INLINE ToCast staticCast(Class obj)
 }
 
 // Common Reference counter object. To handle references of a shared object.
-// 
-template<typename T>
-class RefCount
+class ReferenceCounter
 {
 public:
-    RefCount()
-        : m_count(0)
-        , m_dat(T()) 
+    ReferenceCounter()
+        : m_count(new U32(0))
     {
+    }
+
+    ReferenceCounter(const ReferenceCounter& ref) { m_count = ref.m_count; increment(); }
+    ReferenceCounter(ReferenceCounter&& ref) { m_count = ref.m_count; ref.m_count = nullptr; }
+
+    ReferenceCounter& operator=(const ReferenceCounter& ref)
+    {
+        m_count = ref.m_count;
         increment();
+        return (*this);
     }
 
-    RefCount(const T& data) { m_count = 0; m_dat = data; }
-
-    RefCount(const RefCount& ref)
+    ReferenceCounter& operator=(ReferenceCounter&& ref)
     {
-        m_count = ref.getCount();
-        m_dat = ref.m_dat;
-        increment();
+        m_count = ref.m_count;
+        ref.m_count = nullptr;
+        return (*this);
     }
 
-    ~RefCount()
+    virtual ~ReferenceCounter()
     {
     }
 
-    U32 getCount() const { return m_count;  }
+    U32 getCount() const { return *m_count;  }
+    U32 operator()() const { return getCount(); }
 
-    T& getData() { return m_dat; }
-
-    T& operator()() { return getData(); }
-
-    void addRef() { increment(); }
+    // Add a reference to the counter. Increments the counter value by one.
+    void add() 
+    {
+        if (!m_count)
+            m_count = new U32(0);
+        increment(); 
+    }
 
     // Release by decrementing the reference counter on this object. Returns the 
-    // result of the decrement.
-    U32  release() { decrement(); return m_count; }
+    // result of the decrement. Returns 0 if this reference counter has no more reference, or was already released.
+    U32  release() 
+    { 
+        if (!m_count) return 0;
+        decrement();
+        U32 count = getCount();
+        if (hasNoReferences())
+        {
+            delete m_count;
+            m_count = nullptr;
+        }
+        return count; 
+    }
 
-    Bool hasRefs() const { return (getCount() > 0); }
-    Bool hasNoRefs() const { return !hasRefs(); }
+    Bool hasReferences() const { return m_count ? (getCount() > 0) : false; }
+    Bool hasNoReferences() const { return !hasReferences(); }
 
-    operator T () { return getData(); }
     //RefCount<T> operator=(const T& data) { return RefCount<T>(); }
+protected:
+    // Should only call these functions if the object that encapsulates it, needs to remove the counter itself.
+    Bool hasCounter() { return m_count; }
+    void releaseCounterReference() { m_count = nullptr; }
+    void reset() { *m_count = 0; }
 
 private:
-    void increment() { ++m_count; }
-    void decrement() { if (m_count > 0) --m_count; }
-
-    T m_dat;
-    U32 m_count;
+    void increment() { ++(*m_count); }
+    void decrement() { if ((*m_count) > 0) --(*m_count); }
+    U32* m_count;
 };
 
 
-template<typename Class>
-class SmartPtr
+// Smart pointer system that handles if a pointer is fully released.
+// Keeps track of all pointer references.
+template<typename ClassT>
+class SmartPtr : public ReferenceCounter
 {
 public:
-    SmartPtr(Class* pData = nullptr)
-        : pData(pData)
+    SmartPtr(ClassT* pData = nullptr)
+        : m_pData(pData)
+        , ReferenceCounter()
     {
+        if (m_pData)
+            add();
+    }
+
+    SmartPtr(const SmartPtr& sp)
+        : ReferenceCounter(sp)
+    {
+        m_pData = sp.m_pData;
+        sp.m_pData = nullptr;
+    }
+
+    SmartPtr(SmartPtr&& sp)
+        : ReferenceCounter(sp)
+    {
+        m_pData = sp.m_pData;
     }
 
     ~SmartPtr()
     {
-        if (pData) delete pData;
-        pData = nullptr;
+        release();
+    }
+    
+    // Release a reference to the smart pointer object.
+    // This needs to be called for smart pointers, DO NOT CALL 
+    // ReferenceCounter::release() by itself, otherwise it will only decrement
+    // the counter, without cleaning up the object (which means you will defer the 
+    // deletion of this object until counter is 0, towards the destruction of the smart pointer.)
+    U32 release()
+    {
+        U32 count = ReferenceCounter::release();
+        if (count == 0 && m_pData)
+        {
+            delete m_pData;
+        }
+
+        releaseCounterReference();
+        m_pData = nullptr;
+        return count;
     }
 
-    Class* raw() { return pData; }
+    ClassT* raw() { return m_pData; }
+    const ClassT* raw() const { return m_pData; }
+    const ClassT* operator()() const { return m_pData; }
+    const ClassT* operator->() const { return m_pData; }
+    ClassT* operator->() { return m_pData; }
+    ClassT* operator()() { return m_pData; }
+    ClassT& operator[](U64 i) { return m_pData[i]; }
+    const ClassT& operator[](U64 i) const { return m_pData[i]; }
 
-    SmartPtr& operator=(Class* ptr)
+    SmartPtr& operator=(ClassT* ptr)
     {
-        pData = ptr;
+        if (m_pData != ptr)
+        { 
+            reset();
+            add();
+        }
+        m_pData = ptr;
+        return (*this);
+    }
+
+    SmartPtr& operator=(const SmartPtr& sp)
+    {
+        ReferenceCounter::operator=(sp);
+        m_pData = sp.m_pData;
+        return (*this);
+    }
+
+    SmartPtr& operator=(SmartPtr&& sp)
+    {
+        ReferenceCounter::operator=(sp);
+        m_pData = sp.m_pData;
+        sp.m_pData = nullptr;
+        return (*this);
     }
 
 private:
-    Class* pData;
+    ClassT*             m_pData;
 };
+
+
+template<typename ClassT>
+SmartPtr<ClassT> makeSmartPtr(ClassT* pData)
+{
+    return SmartPtr<ClassT>(pData);
+}
+
+
+// Simpler reference object. This simply holds the object and tracks the number of references, but will not release it
+// if the counter hits 0!
+template<typename ClassT>
+class ReferenceObject : public ReferenceCounter
+{
+public:
+    ReferenceObject()
+    {
+
+    }
+
+    ReferenceObject(const ClassT dat)
+        : m_dat(dat) { add(); }
+
+    ~ReferenceObject()
+    {
+    }
+
+    ReferenceObject(const ReferenceObject& obj)
+        : ReferenceCounter(obj)
+    {
+        m_dat = obj.m_dat;
+        add();
+    }
+
+    ReferenceObject(ReferenceObject&& obj)
+        : ReferenceCounter(obj)
+    {
+        m_dat = obj.m_dat;
+    }
+
+    ReferenceObject& operator=(const ReferenceObject& obj)
+    {
+        ReferenceCounter::operator=(obj);
+        m_dat = obj.m_dat;
+        return (*this);
+    }
+
+    ReferenceObject& operator=(ReferenceObject&& obj)
+    {
+        ReferenceCounter::operator=(obj);
+        m_dat = obj.m_dat;
+        return (*this);
+    }
+
+    const ClassT& operator()() const { return m_dat; }
+    ClassT& operator()() { return m_dat; }
+
+private:
+    ClassT m_dat;
+};
+
+
+template<typename ClassT>
+ReferenceObject<ClassT> makeReference(const ClassT data)
+{
+    return ReferenceObject<ClassT>(data);
+}
 
 
 class ICastableObject
@@ -176,5 +330,16 @@ public:
         return static_cast<Type*>(this);
     }
 };
+
+
+R_FORCE_INLINE U64 makeBitset64(U64 offset, U64 size, U64 value)
+{
+    return ((value & ~(0xFFFFFFFFFFFFFFFF << size)) << offset);
+}
+
+R_FORCE_INLINE U32 makeBitset32(U32 offset, U32 size, U32 value)
+{
+    return ((value & ~(0xFFFFFFFF << size)) << offset);
+}
 } // Recluse
 #endif // RECLUSE_TYPES_HPP

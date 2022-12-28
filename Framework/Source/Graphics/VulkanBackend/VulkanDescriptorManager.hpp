@@ -14,12 +14,12 @@ class VulkanDevice;
 
 struct DescriptorPoolSizeFactors
 {
-    U32 numberSamplersFactor            = 0.5f;
-    U32 numberSampledImagesFactor       = 1.0f;
-    U32 numberStorageBuffersFactor      = 1.0f;
-    U32 numberStorageImagesFactor       = 1.0f;
-    U32 numberUbosFactor                = 1.0f;
-    U32 numberInputAttachmentsFactor    = 1.0f;
+    F32 numberSamplersFactor            = 0.5f;
+    F32 numberSampledImagesFactor       = 1.0f;
+    F32 numberStorageBuffersFactor      = 1.0f;
+    F32 numberStorageImagesFactor       = 1.0f;
+    F32 numberUbosFactor                = 1.0f;
+    F32 numberInputAttachmentsFactor    = 1.0f;
 };
 
 
@@ -52,24 +52,93 @@ private:
 class VulkanDescriptorAllocation
 {
 public:
-    VulkanDescriptorAllocation(VkDescriptorPool pool = VK_NULL_HANDLE, U32 numberAllocs = 0)
-        : pool(pool)
-        , numberAllocations(numberAllocs)
+    struct DescriptorSet
     {
+        VkDescriptorSetLayout layout;
+        VkDescriptorSet       set;
+    };
+
+    VulkanDescriptorAllocation(VkDescriptorPool pool = VK_NULL_HANDLE, U32 numberAllocs = 0, VkDescriptorSet* sets = nullptr, VkDescriptorSetLayout* layouts = VK_NULL_HANDLE)
+        : pool(pool)
+        , size(numberAllocs)
+    {
+        pSets = new VkDescriptorSet[numberAllocs];
+        pLayouts = new VkDescriptorSetLayout[numberAllocs];
+        for (U32 i = 0; i < numberAllocs; ++i)
+        {
+            pSets[i] = sets[i];
+            pLayouts[i] = layouts[i];
+        }
+    }
+
+    VulkanDescriptorAllocation(VulkanDescriptorAllocation&& alloc)
+    {
+        pool = alloc.pool;
+        pSets = std::move(alloc.pSets);
+        pLayouts = std::move(alloc.pLayouts);
+        size = alloc.size;
+        alloc.pSets = nullptr;
+        alloc.pLayouts = nullptr;
+    }
+
+    VulkanDescriptorAllocation(const VulkanDescriptorAllocation& alloc)
+    {
+        pool = alloc.pool;
+        pSets = alloc.pSets;
+        pLayouts = alloc.pLayouts;
+        size = alloc.size;
+    }
+
+    VulkanDescriptorAllocation& operator=(VulkanDescriptorAllocation&& alloc)
+    {
+        pool = alloc.pool;
+        pSets = std::move(alloc.pSets);
+        pLayouts = std::move(alloc.pLayouts);
+        size = alloc.size;
+        alloc.pSets = nullptr;
+        alloc.pLayouts = nullptr;
+        return (*this);
+    }
+
+    VulkanDescriptorAllocation& operator=(const VulkanDescriptorAllocation& alloc)
+    {
+        pool = alloc.pool;
+        pSets = alloc.pSets;
+        pLayouts = alloc.pLayouts;
+        size = alloc.size;
+    }
+
+    ~VulkanDescriptorAllocation()
+    {
+        invalidate();
     }
 
     VkDescriptorPool getPool() { return pool; }
     VkDescriptorPool getPool() const { return pool; }
 
-    U32 getNumberAllocations() const { return numberAllocations; }
+    U32 getNumberAllocations() const { return size; }
 
     Bool isValid() const { return (pool != VK_NULL_HANDLE); }
 
-    void invalidate() { pool = VK_NULL_HANDLE; numberAllocations = 0; }
+    void invalidate() 
+    { 
+        pool = VK_NULL_HANDLE;
+        pSets.release();
+        pLayouts.release();
+        pSets = nullptr;
+        pLayouts = nullptr;
+        size = 0;
+    }
+
+    const DescriptorSet getDescriptorSet(U32 idx) const { return DescriptorSet{pLayouts[idx], pSets[idx]}; }
+    const VkDescriptorSet* getNativeDescriptorSets() const { return pSets.raw(); }
+    const VkDescriptorSetLayout* getNativeDescriptorSetLayout() const { return pLayouts.raw(); }
 
 private:
-    VkDescriptorPool pool;
-    U32              numberAllocations;
+    VkDescriptorPool                pool;
+    SmartPtr<VkDescriptorSet>       pSets;
+    SmartPtr<VkDescriptorSetLayout> pLayouts;
+    U32                             size;
 };
 
 
@@ -90,11 +159,11 @@ public:
     // Allocate the given number of descriptor sets. Normally the allocated sets should be allocated in the same descriptor pool.
     // Therefore special care should be taken when we allocate a number of sets, where partially some are allocated in a pool 
     // that is almost filled.
-    VulkanDescriptorAllocation  allocate(VkDescriptorSet* pSets, U32 numberSetsToAlloc, VkDescriptorSetLayout* layouts);
+    VulkanDescriptorAllocation  allocate(U32 numberSetsToAlloc, VkDescriptorSetLayout* layouts);
 
     // Optionally, we can free the descriptor sets. Keep in mind that we don't need to call this, as 
     // destroy(), or reset(), will automatically clean up our allocations.
-    ErrType                     free(const VulkanDescriptorAllocation& allocation, VkDescriptorSet* pSets, U32 numberSetsToFree);
+    ErrType                     free(const VulkanDescriptorAllocation& allocation);
 
     // Reset the pools once we finish using.
     void                        resetPools();
