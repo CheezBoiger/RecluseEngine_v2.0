@@ -8,6 +8,7 @@ namespace Recluse {
 
 const D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHeap::invalidGpuAddress = { 0 };
 const D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeap::invalidCpuAddress = { 0 };
+const F32 DescriptorHeapAllocationManager::kNumDescriptorsPageSize = 1000.0f;
 
 
 DescriptorHeapAllocation::DescriptorHeapAllocation
@@ -368,12 +369,12 @@ DescriptorHeapAllocation CpuDescriptorHeapManager::allocate(U32 numberDescriptor
 
 DescriptorHeapAllocation DescriptorHeapAllocationManager::allocate(U32 numberDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type)
 {
-    CpuHeapType cpuType = CPU_UNKNOWN;
+    CpuHeapType cpuType = CpuHeapType_Unknown;
 
     switch (type)
     {
     case D3D12_DESCRIPTOR_HEAP_TYPE_RTV:
-        cpuType = CPU_RTV;
+        cpuType = CpuHeapType_Rtv;
         break;
     case D3D12_DESCRIPTOR_HEAP_TYPE_DSV:
     case D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV:
@@ -404,12 +405,35 @@ void DescriptorHeapAllocationManager::free(const DescriptorHeapAllocation& alloc
 }
 
 
+ErrType DescriptorHeapAllocationManager::initialize(ID3D12Device* pDevice, const DescriptorCoreSize& descriptorSizes)
+{
+    D3D12_DESCRIPTOR_HEAP_DESC desc = { };
+    desc.NumDescriptors = static_cast<U32>(kNumDescriptorsPageSize * descriptorSizes.rtvDescriptorCountFactor);
+    desc.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+    m_cpuDescriptorHeapManagers[CpuHeapType_Rtv].initialize(desc);
+
+    desc.NumDescriptors = static_cast<U32>(kNumDescriptorsPageSize * descriptorSizes.dsvDescriptorCountFactor);
+    desc.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+    m_cpuDescriptorHeapManagers[CpuHeapType_Dsv].initialize(desc);
+
+    desc.NumDescriptors = static_cast<U32>(kNumDescriptorsPageSize * descriptorSizes.cbvSrvUavDescriptorCountFactor);
+    desc.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    m_cpuDescriptorHeapManagers[CpuHeapType_CbvSrvUav].initialize(desc);
+
+    desc.NumDescriptors = static_cast<U32>(kNumDescriptorsPageSize * descriptorSizes.samplerDescriptorCountFactor);
+    desc.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
+    m_cpuDescriptorHeapManagers[CpuHeapType_Sampler].initialize(desc);
+    return RecluseResult_NoImpl;
+}
+
+
 namespace Binder {
 
 
 ID3D12RootSignature* makeRootSignature()
 {
-
+    // D3D12SerializeRootSignature();
+    return nullptr;
 }
 } // Binder
 } // Recluse

@@ -172,7 +172,8 @@ struct RenderTargetBlendState
 
 struct VertexInputLayout 
 {
-    VertexBinding   vertexBindings[16];
+    enum { VertexInputLayout_Count = 16 };
+    VertexBinding   vertexBindings[VertexInputLayout_Count];
     U32             numVertexBindings;
 };
 

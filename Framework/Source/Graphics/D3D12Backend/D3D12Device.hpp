@@ -85,7 +85,7 @@ private:
     U32                                 m_currentBufferIndex;
     U32                                 m_bufferCount;
     D3D12PrimaryCommandList*            m_pPrimaryCommandList;
-    PipelineState::PipelineStateObject  m_pipelineStateObject;
+    Pipelines::PipelineStateObject      m_pipelineStateObject;
 };
 
 class D3D12Device : public GraphicsDevice 

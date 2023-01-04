@@ -344,6 +344,7 @@ std::unordered_map<VertexInputLayoutId, VulkanVertexLayout> g_vertexLayoutMap;
 
 static VulkanVertexLayout createVertexInput(const VertexInputLayout& vi)
 {
+    R_ASSERT(vi.numVertexBindings < VertexInputLayout::VertexInputLayout_Count);
     VulkanVertexLayout layout = { };
     
     for (U32 i = 0; i < vi.numVertexBindings; ++i) 
@@ -391,6 +392,13 @@ const VulkanVertexLayout* obtain(VertexInputLayoutId inputLayoutId)
     if (iter != g_vertexLayoutMap.end())
         return &iter->second;
     return nullptr;
+}
+
+
+Bool unloadAll()
+{
+    g_vertexLayoutMap.clear();
+    return true;
 }
 } // VertexLayout
 
@@ -617,6 +625,25 @@ PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure, Pi
         pipeline = iter->second;
     }
     return pipeline;
+}
+
+
+ErrType clearPipelineCache(VulkanDevice* pDevice)
+{
+    for (auto pipelineLayoutIt : g_pipelineLayoutMap)
+    {
+        destroyPipelineLayout(pDevice, pipelineLayoutIt.second);
+    }
+
+    for (auto pipelineIt : g_pipelineMap)
+    {
+        destroyPipeline(pDevice, pipelineIt.second.pipeline);
+    }
+
+    g_pipelineLayoutMap.clear();
+    g_pipelineMap.clear();
+
+    return RecluseResult_Ok;
 }
 } // Pipelines
 } // Recluse

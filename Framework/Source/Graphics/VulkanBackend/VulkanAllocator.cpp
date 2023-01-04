@@ -1,10 +1,15 @@
 //
+#include "VulkanAdapter.hpp"
 #include "VulkanAllocator.hpp"
+#include "VulkanDevice.hpp"
+#include "Recluse/Memory/MemoryCommon.hpp"
+#include "Recluse/Memory/LinearAllocator.hpp"
 
 #include "Recluse/Messaging.hpp"
 
 namespace Recluse {
 
+VkDeviceSize VulkanAllocationManager::kPerMemoryPageSizeBytes = R_MB(8);
 
 static B32 isMemoryResourcesOnSeparatePages
                 (
@@ -24,7 +29,7 @@ static B32 isMemoryResourcesOnSeparatePages
 }
 
 
-ErrType VulkanAllocator::allocate(VulkanMemory* pOut, VkMemoryRequirements& requirements)
+ErrType VulkanAllocator::allocate(VulkanMemory* pOut, const VkMemoryRequirements& requirements)
 {
     R_ASSERT(m_allocator != NULL);
     
@@ -34,6 +39,11 @@ ErrType VulkanAllocator::allocate(VulkanMemory* pOut, VkMemoryRequirements& requ
 
     result = m_allocator->allocate(&allocation, requirements.size, (U16)requirements.alignment);
     
+    if (result == RecluseResult_OutOfMemory)
+    {
+        return result;
+    }
+
     if (result != RecluseResult_Ok) 
     {
         R_ERR(R_CHANNEL_VULKAN, "Failed to allocate memory!");
@@ -41,16 +51,15 @@ ErrType VulkanAllocator::allocate(VulkanMemory* pOut, VkMemoryRequirements& requ
         return result;
     }
 
-    pOut->sizeBytes     = allocation.sizeBytes;
-    pOut->offsetBytes   = allocation.baseAddress;
-    pOut->baseAddr      = m_pool->basePtr;
-    pOut->deviceMemory  = m_pool->memory;
-    
+    pOut->sizeBytes         = allocation.sizeBytes;
+    pOut->offsetBytes       = allocation.baseAddress;
+    pOut->deviceMemory      = m_pool.memory;
+    pOut->baseAddr          = m_pool.basePtr;
     return result;
 }
 
 
-ErrType VulkanAllocator::free(VulkanMemory* pOut, Bool immediate)
+ErrType VulkanAllocator::free(VulkanMemory* pOut)
 {
     R_ASSERT(m_allocator != NULL);
     
@@ -61,35 +70,32 @@ ErrType VulkanAllocator::free(VulkanMemory* pOut, Bool immediate)
         return RecluseResult_NullPtrExcept;
     }
 
-    if (immediate) 
-    {
-        Allocation allocation   = { };
-        allocation.baseAddress          = pOut->offsetBytes;
-        allocation.sizeBytes    = pOut->sizeBytes;
+    Allocation allocation   = { };
+    allocation.baseAddress  = pOut->offsetBytes;
+    allocation.sizeBytes    = pOut->sizeBytes;
 
-        result = m_allocator->free(&allocation);
-    } 
-    else 
-    {
-        // Push back a copy.
-        std::vector<VulkanMemory>& garbageChute = m_frameGarbage[m_garbageIndex];
-        garbageChute.push_back(*pOut);
-    }
+    result = m_allocator->free(&allocation);
+    //else 
+    //{
+    //    // Push back a copy.
+    //    std::vector<VulkanMemory>& garbageChute = m_frameGarbage[m_garbageIndex];
+    //    garbageChute.push_back(*pOut);
+    //}
 
     return result;
 }
 
 
-void VulkanAllocator::destroy()
+Bool VulkanAllocator::hasSpace(VkDeviceSize requestedSize) const
 {
-    // Perform a full garbage cleanup.
-    for (U32 i = 0; i < m_frameGarbage.size(); ++i) 
-    {
-        emptyGarbage(i);
-    }
+    const U64 totalSizeBytes = m_allocator->getTotalSizeBytes();
+    const U64 usedSizeBytes = m_allocator->getUsedSizeBytes();
+    return ((usedSizeBytes + requestedSize) < totalSizeBytes);
+}
 
-    m_frameGarbage.clear();
 
+void VulkanAllocator::release(VkDevice device)
+{
     if (m_allocator) 
     {
 
@@ -97,12 +103,38 @@ void VulkanAllocator::destroy()
 
         delete m_allocator;
         m_allocator = nullptr;
+    }
 
+    if (m_pool.memory)
+    {
+        vkFreeMemory(device, m_pool.memory, nullptr);
+        m_pool.memory = VK_NULL_HANDLE;
     }
 }
 
 
-void VulkanAllocator::emptyGarbage(U32 index)
+ErrType VulkanAllocationManager::release()
+{
+    VkDevice device = m_pDevice->get();
+    // Perform a full garbage cleanup.
+    for (U32 i = 0; i < m_frameGarbage.size(); ++i)
+    {
+        emptyGarbage(i);
+    }
+
+    m_frameGarbage.clear();
+
+    for (auto it : m_resourceAllocators)
+    {
+        for (auto allocator : it.second)
+            allocator->release(device);
+    }
+
+    return RecluseResult_Ok;
+}
+
+
+void VulkanAllocationManager::emptyGarbage(U32 index)
 {
     std::vector<VulkanMemory>& garbage = m_frameGarbage[index];
     ErrType result;
@@ -111,22 +143,24 @@ void VulkanAllocator::emptyGarbage(U32 index)
     {
         result = RecluseResult_Ok;
         
-        VulkanMemory& mrange    = garbage[i];
-        Allocation alloc        = { };
+        VulkanMemory& mrange        = garbage[i];
+        Allocation alloc            = { };
+        VulkanAllocator* allocator  = m_resourceAllocators[mrange.memoryTypeIndex][mrange.allocatorIndex];
 
-        alloc.baseAddress               = mrange.offsetBytes;
+        alloc.baseAddress       = mrange.offsetBytes;
         alloc.sizeBytes         = mrange.sizeBytes;
 
-        result = m_allocator->free(&alloc);
+        result = allocator->free(&mrange);
 
         if (result != RecluseResult_Ok) 
         {
+            const U64 baseAddress = reinterpret_cast<U64>(mrange.baseAddr);
             R_ERR
                 (
                     "Allocator", 
                     "Failed to free garbage addr=%llu, at base addr=%llu", 
-                    (U64)mrange.baseAddr + mrange.offsetBytes, 
-                    (U64)mrange.baseAddr
+                    (U64)baseAddress + mrange.offsetBytes,
+                    (U64)baseAddress
                 );
         }
     }
@@ -135,7 +169,7 @@ void VulkanAllocator::emptyGarbage(U32 index)
 }
 
 
-void VulkanAllocator::update(const UpdateConfig& config) 
+void VulkanAllocationManager::update(const UpdateConfig& config) 
 {
     if 
         (
@@ -186,17 +220,89 @@ void VulkanAllocator::update(const UpdateConfig& config)
     }
 }
 
-
 void VulkanAllocator::clear()
 {
-    R_ASSERT(m_pool->memory != NULL);
+    R_ASSERT(m_pool.memory != VK_NULL_HANDLE);
     R_ASSERT(m_allocator    != NULL);
 
-    for (U32 i = 0; i < (U32)m_frameGarbage.size(); ++i) 
+    m_allocator->reset();
+}
+
+
+ErrType VulkanAllocationManager::initialize(VulkanDevice* device)
+{
+    m_pDevice = device;
+    return RecluseResult_Ok;
+}
+
+
+ErrType VulkanAllocationManager::allocateBuffer(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements)
+{
+    VkDevice device                 = m_pDevice->get();
+    VulkanAdapter* pAdapter         = m_pDevice->getAdapter();
+    MemoryTypeIndex memoryTypeIndex = pAdapter->findMemoryType(requirements.memoryTypeBits, usage);
+    VulkanAllocator* pAllocator     = nullptr;
+    
+    auto it = m_resourceAllocators.find(memoryTypeIndex);
+    if (it == m_resourceAllocators.end())
     {
-      m_frameGarbage[i].clear();
+        pAllocator = allocateMemoryPage(memoryTypeIndex, usage);
+    }
+    else
+    {
+        for (U32 i = 0; i < m_resourceAllocators[memoryTypeIndex].size(); ++i)
+        {
+            VulkanAllocator* potentialAllocator = m_resourceAllocators[memoryTypeIndex][i];
+            if (potentialAllocator->hasSpace(align(requirements.size, requirements.alignment)))
+            {
+                pAllocator = potentialAllocator;
+                break;
+            }
+        }
     }
 
-    m_allocator->reset();
+    if (!pAllocator)
+    {
+        pAllocator = allocateMemoryPage(memoryTypeIndex, usage);
+    }
+
+    return pAllocator->allocate(pOut, requirements);
+}
+
+
+ErrType VulkanAllocationManager::allocateImage(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements, VkImageTiling tiling)
+{
+    return RecluseResult_NoImpl;
+}
+
+
+ErrType VulkanAllocationManager::free(VulkanMemory* pOut, Bool immediate)
+{
+    std::vector<VulkanMemory>& garbageChute = m_frameGarbage[m_garbageIndex];
+    garbageChute.push_back(*pOut);
+    return RecluseResult_Ok;
+}
+
+
+VulkanAllocator* VulkanAllocationManager::allocateMemoryPage(MemoryTypeIndex memoryTypeIndex, ResourceMemoryUsage usage)
+{
+    VkDevice device = m_pDevice->get();
+    m_resourceAllocators[memoryTypeIndex].push_back(makeSmartPtr(new VulkanAllocator()));
+    VulkanAllocator* pAllocator = m_resourceAllocators[memoryTypeIndex].back();
+    pAllocator->initialize(device, new LinearAllocator(), memoryTypeIndex, kPerMemoryPageSizeBytes, usage);
+    m_totalAllocationSize += pAllocator->getTotalSizeBytes();
+    return pAllocator;
+}
+
+
+void VulkanAllocationManager::clear()
+{
+    for (auto it : m_resourceAllocators)
+    {
+        for (auto allocator : it.second)
+        {
+            allocator->clear();
+        }
+    }
 }
 } // Recluse

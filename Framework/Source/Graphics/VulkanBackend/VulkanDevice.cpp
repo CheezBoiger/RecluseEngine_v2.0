@@ -242,6 +242,14 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
     createCommandPools(info.buffering);
     createDescriptorHeap();
     allocateMemCache();
+
+    m_allocationManager = makeSmartPtr(new VulkanAllocationManager());
+    ErrType err = m_allocationManager->initialize(this);
+
+    if (err != RecluseResult_Ok)
+    {
+        R_ERR(R_CHANNEL_VULKAN, "Failed to initialize the allocation manager!");
+    }
     
     m_context = new VulkanContext(this, info.buffering);
 
@@ -268,6 +276,8 @@ void VulkanDevice::release(VkInstance instance)
     }
 
     m_context->release();
+    
+    m_allocationManager->release();
 
     if (m_context)
     { 
@@ -280,6 +290,8 @@ void VulkanDevice::release(VkInstance instance)
     destroyDescriptorHeap();
     freeMemCache();
     ShaderPrograms::unloadAll(this);
+    Pipelines::VertexLayout::unloadAll();
+    Pipelines::clearPipelineCache(this);
 
     if (m_surface) 
     {
@@ -287,45 +299,6 @@ void VulkanDevice::release(VkInstance instance)
         m_surface = VK_NULL_HANDLE;
         R_DEBUG(R_CHANNEL_VULKAN, "Destroyed surface.");
     }
-
-    for (U32 i = 0; i < ResourceMemoryUsage_Count; ++i) 
-    {
-        if (m_bufferAllocators[i]) 
-        {
-            R_DEBUG(R_CHANNEL_VULKAN, "Freeing buffer allocator...");
-
-            m_bufferAllocators[i]->destroy();
-            delete m_bufferAllocators[i];
-            m_bufferAllocators[i] = nullptr;
-        }
-
-        if (m_imageAllocators[i]) 
-        {
-            R_DEBUG(R_CHANNEL_VULKAN, "Freeing image allocator...");
-
-            m_imageAllocators[i]->destroy();
-            delete m_imageAllocators[i];
-            m_imageAllocators[i] = nullptr;
-        }
-    
-        if (m_bufferPool[i].memory) 
-        {
-            R_DEBUG(R_CHANNEL_VULKAN, "Freeing allocated pool...");
-            
-            vkFreeMemory(m_device, m_bufferPool[i].memory, nullptr);
-            m_bufferPool[i].memory = nullptr;
-        }
-
-        if (m_imagePool[i].memory) 
-        {
-            R_DEBUG(R_CHANNEL_VULKAN, "Freeing allocated image pool...");
-
-            vkFreeMemory(m_device, m_imagePool[i].memory, nullptr);
-            m_imagePool[i].memory = nullptr;
-        }
-    }
-
-    
 
     if (m_device != VK_NULL_HANDLE) 
     {
@@ -447,7 +420,6 @@ ErrType VulkanDevice::createSurface(VkInstance instance, void* handle)
 ErrType VulkanDevice::reserveMemory(const MemoryReserveDesc& desc)
 {
     VkMemoryRequirements memoryRequirements = { };
-
     R_DEBUG
         (
             R_CHANNEL_VULKAN, 
@@ -465,151 +437,7 @@ ErrType VulkanDevice::reserveMemory(const MemoryReserveDesc& desc)
             F32(desc.bufferPools[ResourceMemoryUsage_GpuOnly] + desc.texturePoolGPUOnly) / R_1GB,
             F32(desc.bufferPools[ResourceMemoryUsage_CpuOnly]) / R_1GB
         );
-
-    VkMemoryAllocateInfo allocInfo = { };
-    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-
-    VkBuffer buffer;
-    VkImage image;
-    VkResult result = VK_SUCCESS;
-
-    for (U32 i = 0; i < ResourceMemoryUsage_Count; ++i) 
-    {
-        // start with memory gpu.
-        VkBufferCreateInfo bufferInfo = { };
-        bufferInfo.sType        = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        bufferInfo.size         = desc.bufferPools[i];
-        bufferInfo.sharingMode  = VK_SHARING_MODE_EXCLUSIVE;
-
-        bufferInfo.usage        = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT 
-                                    | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT 
-                                    | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT 
-                                    | VK_BUFFER_USAGE_INDEX_BUFFER_BIT 
-                                    | VK_BUFFER_USAGE_TRANSFER_DST_BIT 
-                                    | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-
-        result = vkCreateBuffer(m_device, &bufferInfo, nullptr, &buffer);
-
-        if (result != VK_SUCCESS) 
-        {
-            R_ERR(R_CHANNEL_VULKAN, "Failed to create temp buffer!");
-        }
-
-        vkGetBufferMemoryRequirements(m_device, buffer, &memoryRequirements);
-
-        allocInfo.memoryTypeIndex = 
-            m_adapter->findMemoryType(memoryRequirements.memoryTypeBits, (ResourceMemoryUsage)i);
-
-        allocInfo.allocationSize = R_ALLOC_MASK(memoryRequirements.size, memoryRequirements.alignment);
-
-        R_DEBUG(R_CHANNEL_VULKAN, "Allocating device memory...");
-
-        result = vkAllocateMemory
-                    (
-                        m_device, 
-                        &allocInfo, 
-                        nullptr, 
-                        &m_bufferPool[i].memory
-                    );
-    
-        if (result != VK_SUCCESS) 
-        {
-            R_ERR(R_CHANNEL_VULKAN, "Failed to allocate device memory!");
-        }
-
-        m_bufferPool[i].sizeBytes = allocInfo.allocationSize;
-
-        if (i != ResourceMemoryUsage_GpuOnly) 
-        {
-            vkMapMemory
-                (
-                    m_device, 
-                    m_bufferPool[i].memory, 
-                    0, 
-                    allocInfo.allocationSize, 
-                    0, 
-                    &m_bufferPool[i].basePtr
-                );
-        }
-
-        vkDestroyBuffer(m_device, buffer, nullptr);
-
-        // TODO: Need to add allocator for buffers later.
-        m_bufferAllocators[i] = new VulkanAllocator();
-        m_bufferAllocators[i]->initialize
-            (
-                new BuddyAllocator(), 
-                &m_bufferPool[i],
-                m_context->getBufferCount()
-            );
-    }
-    
-    // Create image pools.
-#if 1
-    // start with memory gpu.
-    VkImageCreateInfo imageInfo = { };
-    imageInfo.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    imageInfo.arrayLayers   = 1;
-    imageInfo.extent.width  = 1;
-    imageInfo.extent.height = 1;
-    imageInfo.extent.depth  = 1;
-    imageInfo.format        = VK_FORMAT_R32_SFLOAT;
-    imageInfo.imageType     = VK_IMAGE_TYPE_1D;
-    imageInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
-    imageInfo.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
-    imageInfo.mipLevels     = 1;
-    imageInfo.tiling        = VK_IMAGE_TILING_OPTIMAL;
-    imageInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
-
-    imageInfo.usage         = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT 
-                                | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT 
-                                | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT 
-                                | VK_IMAGE_USAGE_SAMPLED_BIT 
-                                | VK_IMAGE_USAGE_TRANSFER_DST_BIT 
-                                | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;    
-
-    result = vkCreateImage(m_device, &imageInfo, nullptr, &image);
-
-    if (result != VK_SUCCESS) 
-    {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to create temp image!");
-    }
-
-    vkGetImageMemoryRequirements(m_device, image, &memoryRequirements);
-
-    allocInfo.memoryTypeIndex = 
-        m_adapter->findMemoryType(memoryRequirements.memoryTypeBits, ResourceMemoryUsage_GpuOnly);
-
-    allocInfo.allocationSize = R_ALLOC_MASK(desc.texturePoolGPUOnly, memoryRequirements.alignment);
-
-    R_DEBUG(R_CHANNEL_VULKAN, "Allocating device memory...");
-
-    result = vkAllocateMemory
-                (
-                    m_device, 
-                    &allocInfo, 
-                    nullptr, 
-                    &m_imagePool[ResourceMemoryUsage_GpuOnly].memory
-                );
-    
-    if (result != VK_SUCCESS) 
-    {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to allocate device memory!");
-    }
-
-    m_imagePool[ResourceMemoryUsage_GpuOnly].sizeBytes = allocInfo.allocationSize;
-
-    vkDestroyImage(m_device, image, nullptr);
-
-    // TODO: Need to add allocator for images later.
-    m_imageAllocators[ResourceMemoryUsage_GpuOnly] = new VulkanAllocator();
-    m_imageAllocators[ResourceMemoryUsage_GpuOnly]->initialize
-        (
-            new LinearAllocator(),
-            &m_imagePool[ResourceMemoryUsage_GpuOnly], 
-            m_context->getBufferCount()
-        );
-#endif
+    m_allocationManager->setTotalMemory(desc);
     return RecluseResult_Ok;
 }
 
@@ -845,34 +673,17 @@ void VulkanContext::prepare()
     // Reset this current command list.
     m_primaryCommandList.setStatus(CommandList_Reset);
 
-    const VulkanAllocator::VulkanAllocUpdateFlags allocUpdate = 
-          VulkanAllocator::VulkanAllocUpdateFlag_SetFrameIndex 
-        & VulkanAllocator::VulkanAllocUpdateFlag_Update;
+    const VulkanAllocationManager::VulkanAllocUpdateFlags allocUpdate = 
+        VulkanAllocationManager::VulkanAllocUpdateFlag_SetFrameIndex
+        & VulkanAllocationManager::VulkanAllocUpdateFlag_Update;
 
-    VulkanAllocator::UpdateConfig config;
+    VulkanAllocationManager::UpdateConfig config;
 
     config.flags                = allocUpdate;
     config.frameIndex           = currentBufferIndex;
     config.garbageBufferCount   = m_bufferCount;
 
-    m_pDevice->updateAllocators(config);
-}
-
-
-void VulkanDevice::updateAllocators(const VulkanAllocator::UpdateConfig& config)
-{
-    // Call up allocators to update.
-    for (U32 i = 0; i < ResourceMemoryUsage_Count; ++i) 
-    {
-        if (m_bufferAllocators[i])
-            m_bufferAllocators[i]->update(config);
-    }
-
-    for (U32 i = 0; i < ResourceMemoryUsage_Count; ++i) 
-    {
-        if (m_imageAllocators[i])
-            m_imageAllocators[i]->update(config);
-    }
+    m_pDevice->getAllocationManager()->update(config);
 }
 
 

@@ -66,7 +66,7 @@ Mutex VulkanResource::kResourceCreationMutex        = createMutex("VulkanCreatio
 ErrType VulkanResource::initialize(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState)
 {
     VkMemoryRequirements memoryRequirements = { };
-    VulkanAllocator* allocator              = nullptr;
+    VulkanAllocationManager* allocator      = pDevice->getAllocationManager();
     ErrType result                          = RecluseResult_Ok;
     m_pDevice                               = pDevice;
   
@@ -88,23 +88,12 @@ ErrType VulkanResource::initialize(VulkanDevice* pDevice, const GraphicsResource
     // allocate our resource.
     if (desc.dimension == ResourceDimension_Buffer) 
     {
-        allocator = pDevice->getBufferAllocator(desc.memoryUsage);
+        result = allocator->allocateBuffer(&m_memory, desc.memoryUsage, memoryRequirements);
     } 
     else 
     {
-        allocator = pDevice->getImageAllocator(desc.memoryUsage);
+        result = allocator->allocateImage(&m_memory, desc.memoryUsage, memoryRequirements, VK_IMAGE_TILING_OPTIMAL);
     }
-
-    if (!allocator) 
-    {
-        R_ERR(R_CHANNEL_VULKAN, "No allocator for the given resource to allocate from!");
-
-        release();
-
-        return RecluseResult_NullPtrExcept;
-    }
-
-    result = allocator->allocate(&m_memory, memoryRequirements);
 
     if (result != RecluseResult_Ok) 
     {
@@ -123,7 +112,7 @@ ErrType VulkanResource::initialize(VulkanDevice* pDevice, const GraphicsResource
 
 void VulkanResource::release()
 {
-    VulkanAllocator* allocator              = nullptr;
+    VulkanAllocationManager* allocator      = m_pDevice->getAllocationManager();
     const GraphicsResourceDescription& desc = getDesc();
     ErrType result                          = RecluseResult_Ok;
 
@@ -131,30 +120,7 @@ void VulkanResource::release()
 
     if (m_memory.deviceMemory) 
     {
-        if (desc.dimension == ResourceDimension_Buffer) 
-        { 
-            R_DEBUG(R_CHANNEL_VULKAN, "Freeing allocated buffer...");
-            
-            allocator = m_pDevice->getBufferAllocator(desc.memoryUsage);
-        } 
-        else 
-        {
-            R_DEBUG(R_CHANNEL_VULKAN, "Freeing allocated image...");
-
-            allocator = m_pDevice->getImageAllocator(desc.memoryUsage);
-        }
-
-        if (!allocator) 
-        {
-            R_ERR(R_CHANNEL_VULKAN, "No allocator provided for this memory! Can not destroy...");
-
-            result = RecluseResult_Failed;
-        } 
-        else 
-        {
-            result = allocator->free(&m_memory);
-        }
-
+        result = allocator->free(&m_memory);
         if (result != RecluseResult_Ok) 
         {
             R_ERR(R_CHANNEL_VULKAN, "Vulkan resource memory failed to free!");

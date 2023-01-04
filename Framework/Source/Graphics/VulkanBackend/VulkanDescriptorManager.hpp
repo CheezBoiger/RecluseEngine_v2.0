@@ -147,7 +147,7 @@ class VulkanDescriptorManager
 {
 public:
     static const U32 kMaxSetsPerPool;
-    static const F32 kAllocationPerResource;
+    static const F32 kDescriptorChunkSize;
 
     VulkanDescriptorManager() 
         : m_device(VK_NULL_HANDLE)

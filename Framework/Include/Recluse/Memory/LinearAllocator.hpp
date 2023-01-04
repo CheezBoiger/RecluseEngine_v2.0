@@ -23,7 +23,7 @@ public:
 
     ErrType onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override 
     {
-        PtrType neededSzBytes   = R_ALLOC_MASK(requestSz, alignment);
+        PtrType neededSzBytes   = align(requestSz, alignment);
         U64 totalSzBytes        = getTotalSizeBytes();
         PtrType szAddr          = getBaseAddr() + totalSzBytes;
         PtrType endAddr         = m_top + neededSzBytes;

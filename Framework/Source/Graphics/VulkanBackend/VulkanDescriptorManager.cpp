@@ -12,7 +12,7 @@ namespace Recluse {
 
 
 const U32 VulkanDescriptorManager::kMaxSetsPerPool          = 1000;
-const F32 VulkanDescriptorManager::kAllocationPerResource   = 1000.f;
+const F32 VulkanDescriptorManager::kDescriptorChunkSize   = 1000.f;
 
 void VulkanDescriptorManager::initialize(VulkanDevice* pDevice)
 {
@@ -50,17 +50,17 @@ VkDescriptorPool VulkanDescriptorManager::createDescriptorPool(const DescriptorP
     VkDescriptorPool resultingPool  = VK_NULL_HANDLE;
 
     poolSizes[0].type               = VK_DESCRIPTOR_TYPE_SAMPLER;
-    poolSizes[0].descriptorCount    = static_cast<U32>(poolSize.numberSamplersFactor * kAllocationPerResource);
+    poolSizes[0].descriptorCount    = static_cast<U32>(poolSize.numberSamplersFactor * kDescriptorChunkSize);
     poolSizes[1].type               = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    poolSizes[1].descriptorCount    = static_cast<U32>(poolSize.numberSampledImagesFactor * kAllocationPerResource);
+    poolSizes[1].descriptorCount    = static_cast<U32>(poolSize.numberSampledImagesFactor * kDescriptorChunkSize);
     poolSizes[2].type               = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    poolSizes[2].descriptorCount    = static_cast<U32>(poolSize.numberStorageBuffersFactor * kAllocationPerResource);
+    poolSizes[2].descriptorCount    = static_cast<U32>(poolSize.numberStorageBuffersFactor * kDescriptorChunkSize);
     poolSizes[3].type               = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-    poolSizes[3].descriptorCount    = static_cast<U32>(poolSize.numberStorageImagesFactor * kAllocationPerResource);
+    poolSizes[3].descriptorCount    = static_cast<U32>(poolSize.numberStorageImagesFactor * kDescriptorChunkSize);
     poolSizes[4].type               = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    poolSizes[4].descriptorCount    = static_cast<U32>(poolSize.numberUbosFactor * kAllocationPerResource);
+    poolSizes[4].descriptorCount    = static_cast<U32>(poolSize.numberUbosFactor * kDescriptorChunkSize);
     poolSizes[5].type               = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-    poolSizes[5].descriptorCount    = static_cast<U32>(poolSize.numberInputAttachmentsFactor * kAllocationPerResource);
+    poolSizes[5].descriptorCount    = static_cast<U32>(poolSize.numberInputAttachmentsFactor * kDescriptorChunkSize);
 
     ci.sType                        = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     ci.pPoolSizes                   = poolSizes.data();

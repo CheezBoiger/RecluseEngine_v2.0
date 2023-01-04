@@ -182,13 +182,13 @@ public:
         : ReferenceCounter(sp)
     {
         m_pData = sp.m_pData;
-        sp.m_pData = nullptr;
     }
 
     SmartPtr(SmartPtr&& sp)
         : ReferenceCounter(sp)
     {
         m_pData = sp.m_pData;
+        sp.m_pData = nullptr;
     }
 
     ~SmartPtr()
@@ -222,6 +222,12 @@ public:
     ClassT* operator()() { return m_pData; }
     ClassT& operator[](U64 i) { return m_pData[i]; }
     const ClassT& operator[](U64 i) const { return m_pData[i]; }
+    Bool operator!() const { return !(m_pData); }
+    //Bool operator==(const SmartPtr<ClassT>& rh) const { return (m_pData == rh.m_pData); }
+    //Bool operator!=(const SmartPtr<ClassT>& rh) const { return (m_pData != rh.m_pData); }
+
+    operator ClassT* () { return m_pData; }
+    operator const ClassT* () const { return m_pData; }
 
     SmartPtr& operator=(ClassT* ptr)
     {
@@ -254,6 +260,7 @@ private:
 };
 
 
+// Make a smart pointer object. This might seem redundant though...
 template<typename ClassT>
 SmartPtr<ClassT> makeSmartPtr(ClassT* pData)
 {

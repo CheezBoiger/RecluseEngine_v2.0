@@ -210,7 +210,8 @@ U32 VulkanAdapter::findMemoryType(U32 filter, ResourceMemoryUsage usage) const
     VkMemoryPropertyFlags preferred = 0;
     U32 index = 0xffffffff;
 
-    switch (usage) {
+    switch (usage) 
+    {
         case ResourceMemoryUsage_CpuOnly:
         {
             required |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
@@ -236,7 +237,7 @@ U32 VulkanAdapter::findMemoryType(U32 filter, ResourceMemoryUsage usage) const
 
         default:
             break;
-    };
+    }
 
     VkPhysicalDeviceMemoryProperties memoryProperties = getMemoryProperties();
 

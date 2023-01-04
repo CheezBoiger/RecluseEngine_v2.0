@@ -194,13 +194,6 @@ public:
         , m_swapchain(nullptr) 
         , m_context(nullptr)
     { 
-        for (U32 i = 0; i < ResourceMemoryUsage_Count; ++i) 
-        { 
-            m_bufferPool[i].memory = VK_NULL_HANDLE;
-            m_imagePool[i].memory = VK_NULL_HANDLE;
-            m_bufferAllocators[i] = nullptr;
-            m_imageAllocators[i] = nullptr;
-        }
     }
 
     ErrType initialize(VulkanAdapter* iadapter, DeviceCreateInfo& info);
@@ -231,7 +224,6 @@ public:
     Bool        destroyVertexLayout(VertexInputLayoutId id) override;
     void        release(VkInstance instance);
     ErrType     destroyResourceView(GraphicsResourceView* pResourceView) override;
-    void        updateAllocators(const VulkanAllocator::UpdateConfig& config);
 
     VkDevice operator()() {
         return m_device;
@@ -247,11 +239,8 @@ public:
 
     VulkanAdapter* getAdapter() const { return m_adapter; }
 
-    VulkanAllocator* getBufferAllocator(ResourceMemoryUsage usage) const
-        { return m_bufferAllocators[usage]; }
-
-    VulkanAllocator* getImageAllocator(ResourceMemoryUsage usage) const 
-        { return m_imageAllocators[usage]; }
+    VulkanAllocationManager* getAllocationManager()
+        { return m_allocationManager.raw(); }
 
     VulkanDescriptorManager* getDescriptorHeap() { return m_pDescriptorManager; }
 
@@ -300,12 +289,8 @@ private:
 
     } m_memCache;
 
-    VulkanMemoryPool m_bufferPool       [ResourceMemoryUsage_Count];
-    VulkanMemoryPool m_imagePool        [ResourceMemoryUsage_Count];
-    VulkanAllocator* m_bufferAllocators [ResourceMemoryUsage_Count];
-    VulkanAllocator* m_imageAllocators  [ResourceMemoryUsage_Count];
-
-    VulkanDescriptorManager*    m_pDescriptorManager;
+    SmartPtr<VulkanAllocationManager> m_allocationManager;
+    VulkanDescriptorManager*          m_pDescriptorManager;
     VulkanSwapchain*            m_swapchain;
     VulkanContext*              m_context;
     std::vector<QueueFamily>    m_queueFamilies;

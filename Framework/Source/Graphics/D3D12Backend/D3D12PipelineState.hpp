@@ -10,7 +10,7 @@ namespace Recluse {
 
 class D3D12Context;
 
-namespace PipelineState {
+namespace Pipelines {
 
 
 struct PipelineStateObject
@@ -41,5 +41,5 @@ struct PipelineStateObject
 
 ID3D12PipelineState* makePipelineState(D3D12Context* pContext, const PipelineStateObject& pipelineState);
 
-} // PipelineState
+} // Pipelines
 } // Recluse

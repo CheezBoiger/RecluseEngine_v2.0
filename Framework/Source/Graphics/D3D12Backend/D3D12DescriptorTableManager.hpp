@@ -136,6 +136,7 @@ public:
 class CpuDescriptorHeapManager
 {
 public:
+    ErrType                     initialize(const D3D12_DESCRIPTOR_HEAP_DESC &desc);
     DescriptorHeapAllocation    allocate(U32 numberDescriptors);
     void                        free(const DescriptorHeapAllocation& alloc);
 private:
@@ -148,24 +149,36 @@ class DescriptorHeapAllocationManager
 public:
     enum GpuHeapType
     {
-        GPU_CBV_SRV_UAV,
-        GPU_SAMPLER,
-        GPU_DESCRIPTOR_HEAP_COUNTS,
-        GPU_UNKNOWN
+        GpuHeapType_CbvSrvUav,
+        GpuHeapType_Sampler,
+        GpuHeapType_DescriptorHeapCount,
+        GpuHeapType_Unknown
     };
 
     enum CpuHeapType
     {
-        CPU_RTV,
-        CPU_DSV,
-        CPU_CBV_SRV_UAV,
-        CPU_SAMPLER,
-        CPU_DESCRIPTOR_HEAP_COUNTS,
-        CPU_UNKNOWN
+        CpuHeapType_Rtv,
+        CpuHeapType_Dsv,
+        CpuHeapType_CbvSrvUav,
+        CpuHeapType_Sampler,
+        CpuHeapType_DescriptorHeapCount,
+        CpuHeapType_Unknown
     };
 
-    ErrType                     initialize();
-    ErrType                     release();
+    struct DescriptorCoreSize
+    {
+        F32 rtvDescriptorCountFactor = 1.0f;
+        F32 dsvDescriptorCountFactor = 1.0f;
+        F32 cbvSrvUavDescriptorCountFactor = 1.0f;
+        F32 samplerDescriptorCountFactor = 1.0f;
+    };
+
+    // Chunk size of each descriptor heap. When a chunk is fully filled with descriptors, we create a new sized chunk based on this
+    // size value.
+    static const F32 kNumDescriptorsPageSize;
+
+    ErrType                     initialize(ID3D12Device* pDevice, const DescriptorCoreSize& descriptorSizes);
+    ErrType                     release(ID3D12Device* pDevice);
 
     DescriptorHeapAllocation    allocate(U32 numberDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
     void                        free(const DescriptorHeapAllocation& alloc);
@@ -175,8 +188,8 @@ public:
 
 private:
 
-    CpuDescriptorHeapManager        m_cpuDescriptorHeapManagers[CPU_DESCRIPTOR_HEAP_COUNTS];
-    GpuDescriptorHeap               m_gpuHeaps[GPU_DESCRIPTOR_HEAP_COUNTS];
+    CpuDescriptorHeapManager        m_cpuDescriptorHeapManagers[CpuHeapType_DescriptorHeapCount];
+    GpuDescriptorHeap               m_gpuHeaps[GpuHeapType_DescriptorHeapCount];
 };
 
 

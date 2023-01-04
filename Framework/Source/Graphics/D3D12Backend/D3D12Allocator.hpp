@@ -15,15 +15,10 @@ namespace Recluse {
 class D3D12ResourceAllocator 
 {
 public:
-    D3D12ResourceAllocator
-        (
-            Allocator* pAllocator = nullptr,
-            D3D12MemoryPool* pPool = nullptr
-        );
+    D3D12ResourceAllocator();
 
-    void    setMemoryPool(D3D12MemoryPool* pPool) { m_pPool = pPool; }
-    ErrType initialize(U32 garbageBufferCount);
-    ErrType destroy();
+    ErrType initialize(ID3D12Device* pDevice, U64 totalSizeBytes);
+    ErrType release();
 
     ErrType allocate
                 (
@@ -34,17 +29,30 @@ public:
                 );
 
     ErrType free(D3D12MemoryObject* pObject);
-
-    ErrType cleanGarbage(U32 index);
-
+    
     void    clear();
     
 private:
-    D3D12MemoryPool*                m_pPool;
+    D3D12MemoryPool                 m_pool;
     Allocator*                      m_pAllocator;
+};
 
+
+class D3D12ResourceAllocationManager
+{
+public:
+    static const U64 kAllocationPageSizeBytes;
+
+    ErrType initialize(ID3D12Device* pDevice);
+    
+    ErrType allocate(D3D12MemoryObject* pOut, const D3D12_RESOURCE_DESC& desc, D3D12_RESOURCE_STATES initialState);
+    ErrType free(D3D12MemoryObject* pObject);
+    ErrType cleanGarbage(U32 index);
+
+private:
+    std::vector<D3D12ResourceAllocator*>    m_allocators;
     // garbage resources to clean up after use.
-    std::vector<ID3D12Resource*>    m_garbageToClean;
-    U32                             m_garbageIndex;
+    std::vector<ID3D12Resource*>            m_garbageToClean;
+    U32                                     m_garbageIndex;
 };
 } // Recluse
