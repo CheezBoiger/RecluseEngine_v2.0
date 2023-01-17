@@ -104,6 +104,16 @@ const TBuiltInResource DefaultTBuiltInResource = {
     /* .maxTaskWorkGroupSizeY_NV = */ 1,
     /* .maxTaskWorkGroupSizeZ_NV = */ 1,
     /* .maxMeshViewCountNV = */ 4,
+    /* .maxMeshOutputVerticesEXT */ 256,
+    /* .maxMeshOutputPrimitivesEXT */ 512,
+    /* .maxMeshWorkGroupSizeX_EXT */ 32,
+    /* .maxMeshWorkGroupSizeY_EXT */ 1,
+    /* .maxMeshWorkGroupSizeZ_EXT */ 1,
+    /* .maxTaskWorkGroupSizeX_EXT */ 32,
+    /* .maxTaskWorkGroupSizeY_EXT */ 1,
+    /* .maxTaskWorkGroupSizeZ_EXT */ 1,
+    /* .maxMeshViewCountEXT */  4,
+    /* .maxDualSourceDrawBuffersEXT */ 1,
 
     /* .limits = */ {
         /* .nonInductiveForLoops = */ 1,
@@ -213,7 +223,6 @@ public:
         glslang::GlslangToSpv(*program.getIntermediate(stage), spirv, &logger);
         byteCode.resize(spirv.size() * sizeof(U32)); // Byte code is in uint32 format.
         memcpy(byteCode.data(), spirv.data(), byteCode.size());
-        
         return RecluseResult_Ok;
     }
 

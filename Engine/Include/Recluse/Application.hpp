@@ -15,10 +15,10 @@
 #include <list>
 #include <functional>
 
-#define R_RETAIL                (0)
-#define R_RELEASE               (0)
-#define R_DEBUG                 (0)
-#define R_DEVELOPER             (0)
+#define R_BUILD_RETAIL                (0)
+#define R_BUILD_RELEASE               (0)
+#define R_BUILD_DEBUG                 (0)
+#define R_BUILD_DEVELOPER             (0)
 
 #define R_CLIENT                (1 << 0)
 #define R_SERVER                (1 << 1)

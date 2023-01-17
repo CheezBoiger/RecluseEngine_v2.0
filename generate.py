@@ -24,6 +24,7 @@ def parse_arguments():
     parser.add_argument("-dxil", dest="dxil", action="store_true", help="Enable DXIL compilation.", default=False)
     parser.add_argument("-test", dest="test", action="store_true", help="Enable tests.", default=False)
     parser.add_argument("-xxhash", dest="xxhash", action="store_true", help="Use XXhashing instead of the default Meow Hash.", default=False)
+    parser.add_argument("-first-time", dest="ft", action="store_true", help="Run first time set up.", default=False)
     args = parser.parse_args()
     parsed_commands = args
     return
@@ -60,10 +61,19 @@ def add_additional_cmake_commands():
 
 def check_install_package(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+    
+def run_submodule_update():
+    if parsed_commands.ft == True:
+        git_command = ["git", "submodule", "update"]
+        git_command.append("--recursive")
+        git_command.append("--init")
+        subprocess.call(git_command)
+    return
 
 def main():
     parse_arguments()
     
+    run_submodule_update()
     check_install_package("xxhash")
     
     #subprocess.call(["git", "submodule", "update"])

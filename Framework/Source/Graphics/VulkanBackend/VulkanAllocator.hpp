@@ -155,7 +155,7 @@ public:
     ErrType     free(VulkanMemory* pOut, Bool immediate = false);
 
     void        update(const UpdateConfig& config);
-    void        setTotalMemory(const MemoryReserveDesc& desc);
+    void        setTotalMemory(const MemoryReserveDesc& desc) { }
 private:
     // Empty garbage from last frame.
     void emptyGarbage(U32 index);
