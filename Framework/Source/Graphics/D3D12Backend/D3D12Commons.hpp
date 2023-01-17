@@ -37,10 +37,11 @@ struct D3D12MemoryPool
 
 struct D3D12MemoryObject 
 {
-    ID3D12Resource* pResource;
+    ID3D12Resource*         pResource;
     U64                     sizeInBytes;
     PtrType                 basePtr;
     U32                     allocatorIndex;
+    ResourceMemoryUsage     usage;
 };
 } // Recluse
 

@@ -67,13 +67,13 @@ int main(int c, char* argv[])
     Log::initializeLoggingSystem();
     RealtimeTick::initializeWatch(1ull, 0);
 
-    GraphicsInstance* pInstance       = nullptr;
+    GraphicsInstance* pInstance     = nullptr;
     GraphicsAdapter* pAdapter       = nullptr;
     GraphicsDevice* pDevice         = nullptr;
     Window* pWindow                 = nullptr;
-    GraphicsCommandList* pList      = nullptr;
     GraphicsResource* pData         = nullptr;
     GraphicsSwapchain* pSwapchain   = nullptr;
+    GraphicsContext* context        = nullptr;
     std::vector<RenderPass*> renderPasses;
     ErrType result                  = RecluseResult_Ok;
 
@@ -228,12 +228,13 @@ int main(int c, char* argv[])
         desc.numRenderTargets = 1;
         desc.width = pSwapchain->getDesc().renderWidth;
         desc.height = pSwapchain->getDesc().renderHeight;
-        for (U32 i = 0; i < pSwapchain->getDesc().desiredFrames; ++i) {        
+        for (U32 i = 0; i < pSwapchain->getDesc().desiredFrames; ++i) 
+        {        
             desc.ppRenderTargetViews[0] = pSwapchain->getFrameView(i);
             result = pDevice->createRenderPass(&renderPasses[i], desc);
 
-            if (result != RecluseResult_Ok) {
-        
+            if (result != RecluseResult_Ok) 
+            {
                 R_ERR("TEST", "Failed to create render pass for frame view: %d", i);
                 
             }
@@ -247,10 +248,12 @@ int main(int c, char* argv[])
     // Enter game loop.
     R_TRACE("TEST", "Entering game loop...");
 
+    context = pDevice->getContext();
     F32 index = 200;
     F32 counterFps = 0.f;
     F32 desiredFps = 1.f / 144.f;
-    while (!pWindow->shouldClose()) {
+    while (!pWindow->shouldClose()) 
+    {
         RealtimeTick::updateWatch(1ull, 0);
         RealtimeTick tick = RealtimeTick::getTick(0);
         //R_TRACE("TEST", "FPS: %f", 1.0f / tick.getDeltaTimeS());
@@ -260,22 +263,20 @@ int main(int c, char* argv[])
         Rect rect = { 200.f + (F32)index, 200.f, 1024.f/2.f, 1024.f/2.f };
         Rect rect2 = { 0.f, 0.f, 1024.f, 1024.f };
 
-        pDevice->getContext()->begin();
-            pList = pDevice->getContext()->getCommandList();
+        context->begin();
             //pList->begin();
-                pList->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
-                pList->setRenderPass(renderPasses[pSwapchain->getCurrentFrameIndex()]);
-                pList->clearRenderTarget(0, color2, rect2);
-                pList->clearRenderTarget(0, color, rect);
-                pList->setRenderPass(renderPasses[pSwapchain->getCurrentFrameIndex()]);
-                pList->clearRenderTarget(0, color2, rect2);
-                pList->clearRenderTarget(0, color, rect);
-
                 GraphicsResourceView* pView = pSwapchain->getFrameView(pSwapchain->getCurrentFrameIndex());
-                pList->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
-                pList->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
+                context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
+                context->bindRenderTargets(1, &pView, nullptr);
+                context->clearRenderTarget(0, color2, rect2);
+                context->clearRenderTarget(0, color, rect);
+                context->bindRenderTargets(1, &pView, nullptr);
+                context->clearRenderTarget(0, color2, rect2);
+                context->clearRenderTarget(0, color, rect);
+                context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
+                context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
             //pList->end();
-        pDevice->getContext()->end();
+                context->end();
         F32 deltaFrameRate = 1.0f / tick.delta();
         counterFps += tick.delta();
 
@@ -293,13 +294,6 @@ int main(int c, char* argv[])
 
     R_TRACE("TEST", "Exited game loop...");
     pDevice->getContext()->wait();    
-
-    for (U32 i = 0; i < pSwapchain->getDesc().desiredFrames; ++i) {
-        pDevice->destroyRenderPass(renderPasses[i]);
-    }
-
-    pDevice->destroyDescriptorSetLayout(pLayout);
-    pDevice->destroyDescriptorSet(pSet);
     pDevice->destroyResource(pData); 
     pAdapter->destroyDevice(pDevice);
     Window::destroy(pWindow);

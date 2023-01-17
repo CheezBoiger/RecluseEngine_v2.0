@@ -13,7 +13,7 @@
 namespace Recluse {
 
 class D3D12Adapter;
-class D3D12ResourceAllocator;
+class D3D12ResourcePagedAllocator;
 class D3D12Swapchain;
 class D3D12Queue;
 class D3D12PrimaryCommandList;
@@ -137,8 +137,8 @@ public:
     Bool makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout) override;
     Bool destroyVertexLayout(VertexInputLayoutId id) override;
 
-    D3D12ResourceAllocator* getBufferAllocator(ResourceMemoryUsage usage) const { return m_bufferPool[usage]; }
-    D3D12ResourceAllocator* getTextureAllocator() const { return m_texturePool; }
+    D3D12ResourcePagedAllocator* getBufferAllocator(ResourceMemoryUsage usage) const { return m_bufferPool[usage]; }
+    D3D12ResourcePagedAllocator* getTextureAllocator() const { return m_texturePool; }
 
 private:
 
@@ -148,8 +148,8 @@ private:
 
     // Resource pools.
     D3D12MemoryPool                 m_bufferMemPools[ResourceMemoryUsage_Count];
-    D3D12ResourceAllocator*         m_bufferPool[ResourceMemoryUsage_Count];
-    D3D12ResourceAllocator*         m_texturePool;
+    D3D12ResourcePagedAllocator*         m_bufferPool[ResourceMemoryUsage_Count];
+    D3D12ResourcePagedAllocator*         m_texturePool;
     D3D12MemoryPool                 m_textureMemPool;
 
     ID3D12Device*                   m_device;

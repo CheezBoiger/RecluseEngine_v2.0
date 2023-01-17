@@ -26,14 +26,14 @@ struct VulkanMemory
 
 // Vulkan allocator manager, handles memory heaps provided by Vulkan API.
 //
-class VulkanAllocator 
+class VulkanPagedAllocator 
 {
 public:
-    VulkanAllocator()
+    VulkanPagedAllocator()
         : m_allocator(nullptr)
     { }
 
-    ~VulkanAllocator() { }
+    ~VulkanPagedAllocator() { }
 
     ErrType initialize
                 (
@@ -141,7 +141,7 @@ public:
     VulkanAllocationManager()
         : m_garbageIndex(0u) 
         , m_numObjectAllocations(0ull)
-        , m_totalAllocationSize(0ull)
+        , m_totalAllocationSizeBytes(0ull)
         , m_pDevice(nullptr)
     {
     }
@@ -159,14 +159,15 @@ public:
 private:
     // Empty garbage from last frame.
     void emptyGarbage(U32 index);
-    VulkanAllocator* allocateMemoryPage(MemoryTypeIndex memoryTypeIndex, ResourceMemoryUsage usage);
+    VulkanPagedAllocator* allocateMemoryPage(MemoryTypeIndex memoryTypeIndex, ResourceMemoryUsage usage);
 
-    std::map<MemoryTypeIndex, std::vector<SmartPtr<VulkanAllocator>>>   m_resourceAllocators;
+    std::map<MemoryTypeIndex, std::vector<SmartPtr<VulkanPagedAllocator>>>   m_resourceAllocators;
+    std::map<MemoryTypeIndex, U64>                                      m_pagedMemoryTotalSizeBytes;
     U32                                                                 m_garbageIndex;
     U32                                                                 m_numObjectAllocations;
     std::vector<std::vector<VulkanMemory>>                              m_frameGarbage;
     VulkanDevice*                                                       m_pDevice;
-    U32                                                                 m_totalAllocationSize;
+    U32                                                                 m_totalAllocationSizeBytes;
     MemoryReserveDesc                                                   m_maxDedicatedMemoryDesc;
 
 };
