@@ -58,7 +58,7 @@ protected:
 
 private:
     static ResourceId   kResourceCreationCounter;
-    static Mutex        kResourceCreationMutex;
+    static MutexGuard   kResourceCreationMutex;
 
     void generateId() override 
     {

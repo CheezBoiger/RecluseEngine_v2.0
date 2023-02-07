@@ -23,14 +23,21 @@ struct BuddyBlock
 class R_PUBLIC_API BuddyAllocator : public Allocator 
 {
 private:
+    typedef Allocation BlockAllocation;
+
     ErrType onInitialize() override;
     ErrType onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override;
     ErrType onFree(Allocation* pOutput) override;
     ErrType onReset() override;
     ErrType onCleanUp() override;
 
-    std::vector<std::vector<BuddyBlock>> m_freeList;
-    std::map<SizeT, SizeT>               m_allocatedBlocks;
-    U32                                  m_maxOrder;
+    inline BlockAllocation makeBlockAllocation(U64 blockAddress, U64 blockSzBytes)
+    {
+        return { blockAddress, blockSzBytes };
+    }
+
+    std::vector<std::vector<BuddyBlock>>        m_freeList;
+    std::map<SizeT, BlockAllocation>            m_allocatedBlocks;
+    U32                                         m_maxOrder;
 };
 } // Recluse

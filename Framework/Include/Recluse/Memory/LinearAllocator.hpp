@@ -23,7 +23,7 @@ public:
 
     ErrType onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override 
     {
-        PtrType neededSzBytes   = align(requestSz, alignment);
+        PtrType neededSzBytes   = requestSz + alignment;
         U64 totalSzBytes        = getTotalSizeBytes();
         PtrType szAddr          = getBaseAddr() + totalSzBytes;
         PtrType endAddr         = m_top + neededSzBytes;
@@ -33,7 +33,7 @@ public:
             return RecluseResult_OutOfMemory;
         }
 
-        pOutput->baseAddress        = m_top;
+        pOutput->baseAddress        = align(m_top, alignment);
         pOutput->sizeBytes          = neededSzBytes;
         m_top                       = endAddr;
 

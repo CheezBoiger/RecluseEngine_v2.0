@@ -33,7 +33,7 @@ public:
     ResourceViewId getId() const override { return m_id; }
 private:
     static ResourceViewId kResourceViewCreationCounter;
-    static Mutex kResourceViewCreationMutex;
+    static MutexGuard kResourceViewCreationMutex;
 
     void generateId() override 
     {
@@ -75,7 +75,7 @@ public:
     SamplerId getId() const override { return m_id; }
 private:
     static SamplerId kSamplerCreationCounter;
-    static Mutex kSamplerCreationMutex;
+    static MutexGuard kSamplerCreationMutex;
 
     void generateId() override
     {

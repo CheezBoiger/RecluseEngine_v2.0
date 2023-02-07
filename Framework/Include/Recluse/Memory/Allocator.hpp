@@ -4,6 +4,7 @@
 #pragma once
 
 #include "Recluse/Types.hpp"
+#include "Recluse/Memory/MemoryCommon.hpp"
 
 namespace Recluse {
 
@@ -116,7 +117,7 @@ private:
 };
 
 
-class DefaultAllocator : public Allocator 
+class MallocAllocator : public Allocator 
 {
 public:
 
@@ -127,7 +128,20 @@ public:
 
     virtual ErrType onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override 
     {
+        U64 offset = alignment - 1 + sizeof(void*);
+        U64 neededSzBytes = requestSz + offset;
+        void* ptr = malloc(neededSzBytes);
+        void** ptrr = (void**)(((PtrType)(ptr) + offset) & ~(alignment - 1));
+        ptrr[-1] = ptr;
+        pOutput->baseAddress = (U64)(void*)ptrr;
+        pOutput->sizeBytes = requestSz;
         return RecluseResult_Ok;
+    }
+
+    virtual ErrType onFree(Allocation* pOutput) override
+    {
+        void** ptrr = (void**)pOutput->baseAddress;
+        ::free(ptrr[-1]);
     }
 };
 } // Recluse

@@ -11,7 +11,7 @@
 namespace Recluse {
 
 ShaderId kShaderCounter = 0;
-Mutex kShaderCounterMutex = createMutex("ShaderCounterMutex");
+MutexGuard kShaderCounterMutex = MutexGuard("ShaderCounterMutex");
 
 Shader* Shader::create()
 {

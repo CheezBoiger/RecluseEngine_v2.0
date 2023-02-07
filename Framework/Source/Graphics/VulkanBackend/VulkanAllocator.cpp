@@ -6,12 +6,17 @@
 #include "Recluse/Memory/LinearAllocator.hpp"
 
 #include "Recluse/Messaging.hpp"
+#include "Recluse/Math/MathCommons.hpp"
 
 namespace Recluse {
 
 VkDeviceSize VulkanAllocationManager::kPerMemoryPageSizeBytes = R_MB(8);
 
-static B32 isMemoryResourcesOnSeparatePages
+// Understanding buffer-image granularity is one of the pains of Vulkan.
+// Here is a quick visual reference description by akeley98 who describes this well:
+// https://www.reddit.com/r/vulkan/comments/krdrxi/how_to_allocate_with_bufferimagegranularity/
+//
+static B32 areMemoryResourcesOnSeparatePages
                 (
                     VkDeviceSize offsetA, 
                     VkDeviceSize sizeA,     
@@ -29,15 +34,23 @@ static B32 isMemoryResourcesOnSeparatePages
 }
 
 
-ErrType VulkanPagedAllocator::allocate(VulkanMemory* pOut, const VkMemoryRequirements& requirements)
+ErrType VulkanPagedAllocator::allocate(VulkanMemory* pOut, const VkMemoryRequirements& requirements, VkDeviceSize granularityBytes, VkImageTiling tiling)
 {
-    R_ASSERT(m_allocator != NULL);
+     R_ASSERT(m_allocator != NULL);
     
     Allocation allocation   = { };
     ErrType result          = RecluseResult_Ok;
     PtrType baseAddr        = m_allocator->getBaseAddr();
 
-    result = m_allocator->allocate(&allocation, requirements.size, (U16)requirements.alignment);
+    // Obtain the max alignment between granularity and memory requirement.
+    // If the previous block contains a non-linear resource while the current one is linear or vice versa 
+    // then the alignment requirement is the max of the VkMemoryRequirements.alignment and the device's bufferImageGranularity. 
+    // This also needs to be check for the end of the memory block.
+    // https://stackoverflow.com/questions/45458918/vulkan-memory-alignment-requirements
+    U16 alignment = static_cast<U16>(Math::maximum(requirements.alignment, granularityBytes));
+    // Align the block size of the requested memory with the needed requirements.
+    // From there, allocate the aligned requested size, with the bufferImage granularity, so as to ensure we align with this.
+    result = m_allocator->allocate(&allocation, (U64)requirements.size, alignment);
     
     if (result == RecluseResult_OutOfMemory)
     {
@@ -51,10 +64,11 @@ ErrType VulkanPagedAllocator::allocate(VulkanMemory* pOut, const VkMemoryRequire
         return result;
     }
 
+    // The last alignment will be done with granularity.
     pOut->sizeBytes         = allocation.sizeBytes;
     pOut->offsetBytes       = allocation.baseAddress;
     pOut->deviceMemory      = m_pool.memory;
-    pOut->baseAddr          = m_pool.basePtr;
+    pOut->baseAddr          = m_pool.basePtr;   
     return result;
 }
 
@@ -73,16 +87,13 @@ ErrType VulkanPagedAllocator::free(VulkanMemory* pOut)
     Allocation allocation   = { };
     allocation.baseAddress  = pOut->offsetBytes;
     allocation.sizeBytes    = pOut->sizeBytes;
-
-    result = m_allocator->free(&allocation);
-    //else 
     //{
     //    // Push back a copy.
     //    std::vector<VulkanMemory>& garbageChute = m_frameGarbage[m_garbageIndex];
     //    garbageChute.push_back(*pOut);
     //}
 
-    return result;
+    return m_allocator->free(&allocation);
 }
 
 
@@ -232,19 +243,19 @@ void VulkanPagedAllocator::clear()
 ErrType VulkanAllocationManager::initialize(VulkanDevice* device)
 {
     m_pDevice = device;
+    VkPhysicalDeviceProperties properties = m_pDevice->getAdapter()->getProperties();
+    m_bufferImageGranularityBytes = properties.limits.bufferImageGranularity;
     return RecluseResult_Ok;
 }
 
 
-ErrType VulkanAllocationManager::allocateBuffer(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements)
+VulkanPagedAllocator* VulkanAllocationManager::getAllocator(const VkMemoryRequirements& requirements, ResourceMemoryUsage usage)
 {
     VkDevice device                     = m_pDevice->get();
     VulkanAdapter* pAdapter             = m_pDevice->getAdapter();
     MemoryTypeIndex memoryTypeIndex     = pAdapter->findMemoryType(requirements.memoryTypeBits, usage);
     VulkanPagedAllocator* pAllocator    = nullptr;
 
-    // TODO: We need to set the limit of page allocations are allowed per request.
-    
     auto it = m_resourceAllocators.find(memoryTypeIndex);
     if (it == m_resourceAllocators.end())
     {
@@ -255,7 +266,8 @@ ErrType VulkanAllocationManager::allocateBuffer(VulkanMemory* pOut, ResourceMemo
         for (U32 i = 0; i < m_resourceAllocators[memoryTypeIndex].size(); ++i)
         {
             VulkanPagedAllocator* potentialAllocator = m_resourceAllocators[memoryTypeIndex][i];
-            if (potentialAllocator->hasSpace(align(requirements.size, requirements.alignment)))
+            U64 alignment = Math::maximum(requirements.alignment, m_bufferImageGranularityBytes);
+            if (potentialAllocator->hasSpace(align(requirements.size, alignment)))
             {
                 pAllocator = potentialAllocator;
                 break;
@@ -267,14 +279,22 @@ ErrType VulkanAllocationManager::allocateBuffer(VulkanMemory* pOut, ResourceMemo
     {
         pAllocator = allocateMemoryPage(memoryTypeIndex, usage);
     }
+    
+    return pAllocator;
+}
 
-    return pAllocator->allocate(pOut, requirements);
+
+ErrType VulkanAllocationManager::allocateBuffer(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements)
+{
+    VulkanPagedAllocator* pAllocator = getAllocator(requirements, usage);
+    return pAllocator->allocate(pOut, requirements, m_bufferImageGranularityBytes);
 }
 
 
 ErrType VulkanAllocationManager::allocateImage(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements, VkImageTiling tiling)
 {
-    return RecluseResult_NoImpl;
+    VulkanPagedAllocator* allocator = getAllocator(requirements, usage);
+    return allocator->allocate(pOut, requirements, m_bufferImageGranularityBytes, tiling);
 }
 
 

@@ -37,25 +37,23 @@ ErrType BuddyAllocator::onInitialize()
 
 ErrType BuddyAllocator::onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment)
 {
+    R_ASSERT(Math::isPowerOf2(alignment));
     PtrType baseAddr    = getBaseAddr();
-    U64 alignedSzBytes  = align(requestSz, alignment);
+    U64 neededSzBytes   = requestSz + (alignment - 1);
     
-    U32 nthBit          = (U32)ceil(log2(alignedSzBytes));
+    U32 nthBit          = (U32)ceil(log2(neededSzBytes));
     
     if (m_freeList[nthBit].size() > 0) 
     {
-    
         BuddyBlock block = m_freeList[nthBit][0];
         m_freeList[nthBit].erase(m_freeList[nthBit].begin());
-
-        pOutput->baseAddress                    = baseAddr + block.offsetBytes;
-        pOutput->sizeBytes                      = alignedSzBytes;
-        m_allocatedBlocks[pOutput->baseAddress] = block.memSzBytes;
-    
+        U64 blockAddress                        = baseAddr + block.offsetBytes;
+        pOutput->baseAddress                    = align(baseAddr + block.offsetBytes, alignment);
+        pOutput->sizeBytes                      = neededSzBytes;
+        m_allocatedBlocks[pOutput->baseAddress] = makeBlockAllocation(blockAddress, block.memSzBytes);
     } 
     else 
     {
-    
         U32 i = 0;
         for (i = nthBit + 1; i < m_maxOrder; ++i) 
         {
@@ -72,7 +70,6 @@ ErrType BuddyAllocator::onAllocate(Allocation* pOutput, U64 requestSz, U16 align
         } 
         else 
         {
-        
             BuddyBlock block    = { };
             block               = m_freeList[i][0];
 
@@ -99,9 +96,11 @@ ErrType BuddyAllocator::onAllocate(Allocation* pOutput, U64 requestSz, U16 align
                 m_freeList[i].erase(m_freeList[i].begin());
             }
         
-            pOutput->baseAddress                    = baseAddr + block.offsetBytes;
-            pOutput->sizeBytes                      = alignedSzBytes;
-            m_allocatedBlocks[pOutput->baseAddress] = block.memSzBytes;
+            // Allocate the buddy block. Use the aligned address as the key to the mapped buddy block.
+            U64 blockAddress                        = baseAddr + block.offsetBytes;
+            pOutput->baseAddress                    = align(blockAddress, alignment);
+            pOutput->sizeBytes                      = neededSzBytes;
+            m_allocatedBlocks[pOutput->baseAddress] = makeBlockAllocation(blockAddress, block.memSzBytes);
         }
     }
 
@@ -117,12 +116,15 @@ ErrType BuddyAllocator::onFree(Allocation* pOutput)
     
     }
 
+    // Get the block allocation using the aligned address.
+    const BlockAllocation& blockAllocation = m_allocatedBlocks[pOutput->baseAddress];    
+
     PtrType baseAddr    = getBaseAddr();
     U64 szBytes         = pOutput->sizeBytes;
     U32 nthBit          = (U32)ceil(log2(szBytes));
-    U32 buddyNumber     = (U32)(pOutput->baseAddress / m_allocatedBlocks[pOutput->baseAddress]);
+    U32 buddyNumber     = (U32)(blockAllocation.baseAddress / blockAllocation.sizeBytes);
     SizeT buddyAddr     = 0;
-    U64 allocOffset     = pOutput->baseAddress - baseAddr;
+    U64 allocOffset     = blockAllocation.baseAddress - baseAddr;
 
     // memSzBytes is always the power of our N-th value.
     BuddyBlock block    = { };
@@ -166,7 +168,7 @@ ErrType BuddyAllocator::onFree(Allocation* pOutput)
         }
     }
 
-    // Erase the block after.
+    // Erase the block after, using the aligned address.
     m_allocatedBlocks.erase(pOutput->baseAddress);
 
     return RecluseResult_Ok;

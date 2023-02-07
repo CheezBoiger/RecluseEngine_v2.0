@@ -38,6 +38,7 @@ struct R_PUBLIC_API Thread
 };
 
 
+
 typedef void* Mutex;
 typedef void* Cond;
 typedef void* Semaphore;
@@ -101,5 +102,17 @@ private:
 
     ScopedLock(const ScopedLock&)   = delete;
     ScopedLock(ScopedLock&&)        = delete;
+};
+
+class MutexGuard
+{
+public:
+    MutexGuard(const char* debugName) { m_mutex = createMutex(debugName); }
+    ~MutexGuard() { destroyMutex(m_mutex); }
+    operator Mutex() const { return m_mutex; }
+    Mutex* operator*() { return &m_mutex; }
+    Mutex& operator&() { return m_mutex; }
+private:
+    Mutex m_mutex;
 };
 } // Recluse

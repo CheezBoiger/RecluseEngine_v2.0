@@ -78,12 +78,23 @@ public:
     }
 
     // Allocate memory from program managed heap. This will require 
-    // using automated allocation structures.
-    // @param pOut 
-    // @param requirements
+    // using automated allocation structures. 
+    // @param pOut         The final result of our allocated resource, which contains the memory address from which was allocated, and the size allocated.
+    // @param requirements Resource requirements for the given buffer or image object.
+    // @param granularityBytes The granularity page size of memory addresses within the vulkan hardware. This is intended to ensure linear resources
+    //                          and non-linear resources, do not inadverdently occupy the same memory sub-regions, so as to cause aliasing.
+    //                          Considering this, we won't have an issue if we only allocate either only linear resources, or only non-linear resources
+    //                          within the same allocator.
     // 
-    // @return ErrType result.
-    ErrType     allocate(VulkanMemory* pOut, const VkMemoryRequirements& requirements);
+    // @return ErrType The result of the allocation, whether successful or not. If successful, returns pOut with filled data about the allocation. A failure
+    //                 will give out the reason for the failure, along with no data fill in pOut.
+    ErrType     allocate
+                    (
+                        VulkanMemory* pOut, 
+                        const VkMemoryRequirements& requirements, 
+                        VkDeviceSize granularityBytes, 
+                        VkImageTiling tiling = VK_IMAGE_TILING_LINEAR
+                    );
 
     // Free up memory, handles throwing memory into the garbage.
     // Immediate free can be done if we know we are in the same frame index.
@@ -143,6 +154,7 @@ public:
         , m_numObjectAllocations(0ull)
         , m_totalAllocationSizeBytes(0ull)
         , m_pDevice(nullptr)
+        , m_bufferImageGranularityBytes(0ull)
     {
     }
 
@@ -156,9 +168,15 @@ public:
 
     void        update(const UpdateConfig& config);
     void        setTotalMemory(const MemoryReserveDesc& desc) { }
+
+    U64         getTotalAllocationSizeBytes() const { return m_totalAllocationSizeBytes; }    
+
 private:
     // Empty garbage from last frame.
     void emptyGarbage(U32 index);
+    // Get the next allocator available.
+    VulkanPagedAllocator* getAllocator(const VkMemoryRequirements& requirements, ResourceMemoryUsage usage);
+    // Allocate a page of memory if required.
     VulkanPagedAllocator* allocateMemoryPage(MemoryTypeIndex memoryTypeIndex, ResourceMemoryUsage usage);
 
     std::map<MemoryTypeIndex, std::vector<SmartPtr<VulkanPagedAllocator>>>   m_resourceAllocators;
@@ -167,8 +185,8 @@ private:
     U32                                                                 m_numObjectAllocations;
     std::vector<std::vector<VulkanMemory>>                              m_frameGarbage;
     VulkanDevice*                                                       m_pDevice;
-    U32                                                                 m_totalAllocationSizeBytes;
+    U64                                                                 m_totalAllocationSizeBytes;
     MemoryReserveDesc                                                   m_maxDedicatedMemoryDesc;
-
+    VkDeviceSize                                                        m_bufferImageGranularityBytes;
 };
 } // Recluse

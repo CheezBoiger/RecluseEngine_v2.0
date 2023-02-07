@@ -61,7 +61,7 @@ VulkanResource* obtainResource(ResourceId id)
 } // Resources
 
 ResourceId VulkanResource::kResourceCreationCounter = 0;
-Mutex VulkanResource::kResourceCreationMutex        = createMutex("VulkanCreationMutex");
+MutexGuard VulkanResource::kResourceCreationMutex        = MutexGuard("VulkanCreationMutex");
 
 ErrType VulkanResource::initialize(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState)
 {

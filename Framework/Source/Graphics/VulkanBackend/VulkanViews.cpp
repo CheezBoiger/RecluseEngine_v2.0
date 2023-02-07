@@ -75,8 +75,8 @@ VulkanSampler* obtainSampler(SamplerId id)
 ResourceViewId VulkanResourceView::kResourceViewCreationCounter = 0;
 SamplerId VulkanSampler::kSamplerCreationCounter                = 0;
 
-Mutex VulkanResourceView::kResourceViewCreationMutex    = createMutex("VulkanResourceViewCreationMutex");
-Mutex VulkanSampler::kSamplerCreationMutex              = createMutex("VulkanSamplerCreationMutex");
+MutexGuard VulkanResourceView::kResourceViewCreationMutex    = MutexGuard("VulkanResourceViewCreationMutex");
+MutexGuard VulkanSampler::kSamplerCreationMutex              = MutexGuard("VulkanSamplerCreationMutex");
 
 ErrType VulkanResourceView::initialize(VulkanDevice* pDevice)
 {
