@@ -14,35 +14,31 @@ ErrType D3D12GraphicsResourceView::initialize(D3D12Device* pDevice)
     R_ASSERT(pDevice != NULL);
     ID3D12Device* pNative = pDevice->get();
     R_ASSERT(pNative != NULL);
-    ResourceViewDescription resourceDesc = getDesc();
+    ResourceViewDescription resourceViewDescription = getDesc();
 
     switch (getDesc().type) 
     {   
         case ResourceViewType_RenderTarget:
         {
-            D3D12_RENDER_TARGET_VIEW_DESC desc = { };
-            m_rtvDesc = desc;
+            rtvDescription.ViewDimension = getRtvDimension(resourceViewDescription.dimension);
             break;
         }
 
         case ResourceViewType_DepthStencil:
         {
-            D3D12_DEPTH_STENCIL_VIEW_DESC desc = { };
-            m_dsvDesc = desc;
+            dsvDescription.ViewDimension = getDsvDimension(resourceViewDescription.dimension);
             break;
         }
 
         case ResourceViewType_ShaderResource:
         {
-            D3D12_SHADER_RESOURCE_VIEW_DESC desc = { };
-            m_srvDesc = desc;
+            srvDescription.ViewDimension = getSrvDimension(resourceViewDescription.dimension);
             break;
         }
 
         case ResourceViewType_UnorderedAccess:
         {
-            D3D12_UNORDERED_ACCESS_VIEW_DESC desc = { };
-            m_uavDesc = desc;
+            uavDescription.ViewDimension = getUavDimension(resourceViewDescription.dimension);
             break;
         }
 

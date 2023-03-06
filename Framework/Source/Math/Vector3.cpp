@@ -62,45 +62,51 @@ Float3 Float3::operator-(F32 scalar) const
 }
 
 
-Float3 Float3::operator==(const Float3& rh) const
+Bool3 Float3::operator==(const Float3& rh) const
 {
-    return Float3(x == rh.x, y == rh.y, z == rh.z);
+    return Bool3(x == rh.x, y == rh.y, z == rh.z);
 }
 
 
-Float3 Float3::operator&&(const Float3& rh) const
+Bool3 Float3::operator!=(const Float3& rh) const
 {
-    return Float3(x && rh.x, y && rh.y, z && rh.z);
+    return !(*this == rh);
 }
 
 
-Float3 Float3::operator||(const Float3& rh) const
+Bool3 Float3::operator&&(const Float3& rh) const
 {
-    return Float3(x || rh.x, y || rh.y, z || rh.z);
+    return Bool3(x && rh.x, y && rh.y, z && rh.z);
 }
 
 
-Float3 Float3::operator<(const Float3& rh) const
+Bool3 Float3::operator||(const Float3& rh) const
 {
-    return Float3(x < rh.x, y < rh.y, z < rh.z);
+    return Bool3(x || rh.x, y || rh.y, z || rh.z);
 }
 
 
-Float3 Float3::operator>(const Float3& rh) const
+Bool3 Float3::operator<(const Float3& rh) const
 {
-    return Float3(x > rh.x, y > rh.y, z > rh.z);
+    return Bool3(x < rh.x, y < rh.y, z < rh.z);
 }
 
 
-Float3 Float3::operator>=(const Float3& rh) const
+Bool3 Float3::operator>(const Float3& rh) const
 {
-    return Float3(x >= rh.x, y >= rh.y, z >= rh.z);
+    return Bool3(x > rh.x, y > rh.y, z > rh.z);
 }
 
 
-Float3 Float3::operator<=(const Float3& rh) const
+Bool3 Float3::operator>=(const Float3& rh) const
 {
-    return Float3(x <= rh.x, y <= rh.y, z <= rh.z);
+    return Bool3(x >= rh.x, y >= rh.y, z >= rh.z);
+}
+
+
+Bool3 Float3::operator<=(const Float3& rh) const
+{
+    return Bool3(x <= rh.x, y <= rh.y, z <= rh.z);
 }
 
 
@@ -131,33 +137,33 @@ Float3 operator/(F32 scalar, const Float3& rh)
 }
 
 
-Float3 Float3::operator==(F32 scalar) const
+Bool3 Float3::operator==(F32 scalar) const
 {
-    return Float3(x == scalar, y == scalar, z == scalar);
+    return Bool3(x == scalar, y == scalar, z == scalar);
 }
 
 
-Float3 Float3::operator<(F32 scalar) const
+Bool3 Float3::operator<(F32 scalar) const
 {
-    return Float3(x < scalar, y < scalar, z < scalar);
+    return Bool3(x < scalar, y < scalar, z < scalar);
 }
 
 
-Float3 Float3::operator>(F32 scalar) const
+Bool3 Float3::operator>(F32 scalar) const
 {
-    return Float3(x > scalar, y > scalar, z > scalar);
+    return Bool3(x > scalar, y > scalar, z > scalar);
 }
 
 
-Float3 Float3::operator<=(F32 scalar) const
+Bool3 Float3::operator<=(F32 scalar) const
 {
-    return Float3(x <= scalar, y <= scalar, z <= scalar);
+    return Bool3(x <= scalar, y <= scalar, z <= scalar);
 }
 
 
-Float3 Float3::operator>=(F32 scalar) const
+Bool3 Float3::operator>=(F32 scalar) const
 {
-    return Float3(x >= scalar, y >= scalar, z >= scalar);
+    return Bool3(x >= scalar, y >= scalar, z >= scalar);
 }
 
 

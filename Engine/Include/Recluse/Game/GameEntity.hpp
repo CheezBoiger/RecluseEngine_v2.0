@@ -63,7 +63,7 @@ struct GameEntityAllocation
 // Game entity manager calls that need to be overridden if you plan to override the manager!
 typedef GameEntity* (*OnAllocationCallback)         (U64, GameEntityMemoryAllocationType);
 typedef void        (*OnFreeCallback)               (GameEntity*);
-typedef GameEntity* (*OnGetEntityByRguidCallback)   (const Recluse::RGUID&);
+typedef GameEntity* (*OnFindEntityByRguidCallback)   (const Recluse::RGUID&);
 typedef void        (*OnCleanUpCallback)            ();
 typedef void        (*OnInitializeCallback)         ();
 
@@ -73,7 +73,7 @@ struct GameEntityAllocationCall
     OnInitializeCallback        onInitializeFn;
     OnAllocationCallback        onAllocationFn;
     OnFreeCallback              onFreeFn;
-    OnGetEntityByRguidCallback  onGetEntityByRguidFn;
+    OnFindEntityByRguidCallback onFindEntityByRguidFn;
 };
 
 // Game entity, which holds all components associated with it.
@@ -113,7 +113,7 @@ public:
     static R_PUBLIC_API void        setOnAllocation(GameEntityAllocationCall allocCallback);
 
     // Get an entity from the entity pool.
-    static R_PUBLIC_API GameEntity* getEntity(const RGUID& guid);
+    static R_PUBLIC_API GameEntity* findEntity(const RGUID& guid);
 
     Bool isActive() const 
     {

@@ -66,45 +66,50 @@ Float4 Float4::operator-() const
 }
 
 
-Float4 Float4::operator==(const Float4& rh) const
+Bool4 Float4::operator==(const Float4& rh) const
 {
-    return Float4(x == rh.x, y == rh.y, z == rh.z, w == rh.w);
+    return Bool4(x == rh.x, y == rh.y, z == rh.z, w == rh.w);
+}
+
+Bool4 Float4::operator!=(const Float4& rh) const
+{
+    return !(*this == rh);
 }
 
 
-Float4 Float4::operator&&(const Float4& rh) const
+Bool4 Float4::operator&&(const Float4& rh) const
 {
-    return Float4(x && rh.x, y && rh.y, z && rh.z, w && rh.w);
+    return Bool4(x && rh.x, y && rh.y, z && rh.z, w && rh.w);
 }
 
 
-Float4 Float4::operator||(const Float4& rh) const
+Bool4 Float4::operator||(const Float4& rh) const
 {
-    return Float4(x || rh.x, y || rh.y, z || rh.z, w || rh.w);
+    return Bool4(x || rh.x, y || rh.y, z || rh.z, w || rh.w);
 }
 
 
-Float4 Float4::operator<(const Float4& rh) const
+Bool4 Float4::operator<(const Float4& rh) const
 {
-    return Float4(x < rh.x, y < rh.y, z < rh.z, w < rh.w);
+    return Bool4(x < rh.x, y < rh.y, z < rh.z, w < rh.w);
 }
 
 
-Float4 Float4::operator>(const Float4& rh) const
+Bool4 Float4::operator>(const Float4& rh) const
 {
-    return Float4(x > rh.x, y > rh.y, z > rh.z, w > rh.w);
+    return Bool4(x > rh.x, y > rh.y, z > rh.z, w > rh.w);
 }
 
 
-Float4 Float4::operator>=(const Float4& rh) const
+Bool4 Float4::operator>=(const Float4& rh) const
 {
-    return Float4(x >= rh.x, y >= rh.y, z >= rh.z, w >= rh.w);
+    return Bool4(x >= rh.x, y >= rh.y, z >= rh.z, w >= rh.w);
 }
 
 
-Float4 Float4::operator<=(const Float4& rh) const
+Bool4 Float4::operator<=(const Float4& rh) const
 {
-    return Float4(x <= rh.x, y <= rh.y, z <= rh.z, w < rh.w);
+    return Bool4(x <= rh.x, y <= rh.y, z <= rh.z, w < rh.w);
 }
 
 
@@ -136,33 +141,33 @@ Float4 operator/(F32 scalar, const Float4& rh)
 }
 
 
-Float4 Float4::operator==(F32 scalar) const
+Bool4 Float4::operator==(F32 scalar) const
 {
-    return Float4(x == scalar, y == scalar, z == scalar, w == scalar);
+    return Bool4(x == scalar, y == scalar, z == scalar, w == scalar);
 }
 
 
-Float4 Float4::operator<(F32 scalar) const
+Bool4 Float4::operator<(F32 scalar) const
 {
-    return Float4(x < scalar, y < scalar, z < scalar, w < scalar);
+    return Bool4(x < scalar, y < scalar, z < scalar, w < scalar);
 }
 
 
-Float4 Float4::operator>(F32 scalar) const
+Bool4 Float4::operator>(F32 scalar) const
 {
-    return Float4(x > scalar, y > scalar, z > scalar, w > scalar);
+    return Bool4(x > scalar, y > scalar, z > scalar, w > scalar);
 }
 
 
-Float4 Float4::operator<=(F32 scalar) const
+Bool4 Float4::operator<=(F32 scalar) const
 {
-    return Float4(x <= scalar, y <= scalar, z <= scalar, w <= scalar);
+    return Bool4(x <= scalar, y <= scalar, z <= scalar, w <= scalar);
 }
 
 
-Float4 Float4::operator>=(F32 scalar) const
+Bool4 Float4::operator>=(F32 scalar) const
 {
-    return Float4(x >= scalar, y >= scalar, z >= scalar, w >= scalar);
+    return Bool4(x >= scalar, y >= scalar, z >= scalar, w >= scalar);
 }
 
 

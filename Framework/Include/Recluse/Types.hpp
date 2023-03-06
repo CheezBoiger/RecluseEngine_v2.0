@@ -336,6 +336,12 @@ public:
     {
         return static_cast<Type*>(this);
     }
+
+    template<typename Type>
+    R_FORCE_INLINE const Type* castTo() const
+    {
+        return static_cast<const Type*>(this);
+    }
 };
 
 

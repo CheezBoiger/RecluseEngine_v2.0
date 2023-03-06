@@ -78,9 +78,9 @@ void GameEntity::setOnAllocation(GameEntityAllocationCall callback)
 }
 
 
-GameEntity* GameEntity::getEntity(const RGUID& guid)
+GameEntity* GameEntity::findEntity(const RGUID& guid)
 {
-    return gameEntityAllocator.onGetEntityByRguidFn(guid);
+    return gameEntityAllocator.onFindEntityByRguidFn(guid);
 }
 
 

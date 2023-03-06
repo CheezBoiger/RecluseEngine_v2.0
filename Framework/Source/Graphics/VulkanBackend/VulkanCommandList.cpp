@@ -172,10 +172,13 @@ void VulkanContext::endRenderPass(VkCommandBuffer buffer)
 void VulkanContext::resetBinds()
 {
     m_boundRenderPass = VK_NULL_HANDLE;
-    m_srvs.clear();
-    m_uavs.clear();
-    m_cbvs.clear();
-    m_samplers.clear();
+    // Make sure we have at least one context state (this is our primary context state.)
+    m_contextStates.clear();
+    m_contextStates.push_back({ });
+    currentState().m_srvs.clear();
+    currentState().m_uavs.clear();
+    currentState().m_cbvs.clear();
+    currentState().m_samplers.clear();
     m_resourceViewShaderAccessMap.clear();
     m_constantBufferShaderAccessMap.clear();
     m_samplerShaderAccessMap.clear();
@@ -210,9 +213,15 @@ void VulkanContext::clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect
 
 void VulkanContext::bindPipelineState(const VulkanDescriptorAllocation& set)
 {
-    m_pipelineStructure.state.descriptorLayout = set.getDescriptorSet(0).layout;
+    currentState().m_pipelineStructure.state.descriptorLayout = set.getDescriptorSet(0).layout;
     flushBarrierTransitions(m_primaryCommandList.get());
-    const Pipelines::PipelineState pipelineState = Pipelines::makePipeline(getNativeDevice(), m_pipelineStructure);
+
+    if (!isPipelineDirty())
+    {
+        return;
+    }
+
+    const Pipelines::PipelineState pipelineState = Pipelines::makePipeline(getNativeDevice(), currentState().m_pipelineStructure);
     VkPipelineBindPoint bindPoint   = pipelineState.bindPoint;
     VkPipeline pipeline             = pipelineState.pipeline;
     if (pipeline != m_pipelineState.pipeline)
@@ -265,7 +274,7 @@ void VulkanContext::bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVerte
 
 void VulkanContext::drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstVertex, U32 firstInstance)
 {
-    const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, m_boundDescriptorSetStructure);
+    const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure);
     
     bindDescriptorSet(set);
     flushBarrierTransitions(m_primaryCommandList.get());
@@ -351,7 +360,7 @@ void VulkanContext::setScissors(U32 numScissors, Rect* pRects)
 void VulkanContext::dispatch(U32 x, U32 y, U32 z)
 {
     endRenderPass(m_primaryCommandList.get());
-    const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, m_boundDescriptorSetStructure);
+    const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure);
     bindPipelineState(set);
     bindDescriptorSet(set);
     flushBarrierTransitions(m_primaryCommandList.get());
@@ -426,7 +435,7 @@ void VulkanContext::bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBy
 void VulkanContext::drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 firstIndex, U32 vertexOffset, U32 firstInstance)
 {
     flushBarrierTransitions(m_primaryCommandList.get());
-    const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, m_boundDescriptorSetStructure);
+    const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure);
     bindDescriptorSet(set);
     vkCmdDrawIndexed(m_primaryCommandList.get(), indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
 }
@@ -463,7 +472,7 @@ void VulkanContext::drawIndexedInstancedIndirect(GraphicsResource* pParams, U32 
     R_ASSERT(pParams->getApi() == GraphicsApi_Vulkan);
 
     flushBarrierTransitions(m_primaryCommandList.get());
-    const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, m_boundDescriptorSetStructure);
+    const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure);
     bindPipelineState(set);
     bindDescriptorSet(set);
     
@@ -487,7 +496,7 @@ void VulkanContext::drawInstancedIndirect(GraphicsResource* pParams, U32 offset,
     R_ASSERT(pParams->getApi() == GraphicsApi_Vulkan);
 
     flushBarrierTransitions(m_primaryCommandList.get());
-    bindDescriptorSet(DescriptorSets::makeDescriptorSet(this, m_boundDescriptorSetStructure));
+    bindDescriptorSet(DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure));
     VulkanResource* pResource = static_cast<VulkanResource*>(pParams);
 
     if (!pResource->isBuffer())
@@ -508,7 +517,7 @@ void VulkanContext::dispatchIndirect(GraphicsResource* pParams, U64 offset)
     R_ASSERT(pParams->getApi() == GraphicsApi_Vulkan);
 
     flushBarrierTransitions(m_primaryCommandList.get());
-    bindDescriptorSet(DescriptorSets::makeDescriptorSet(this, m_boundDescriptorSetStructure));
+    bindDescriptorSet(DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure));
     VulkanResource* pResource = pParams->castTo<VulkanResource>();
     
     if (pResource->isBuffer())
@@ -584,7 +593,7 @@ void VulkanContext::copyBufferRegions
 
 void VulkanContext::bindConstantBuffers(ShaderType type, U32 offset, U32 count, GraphicsResource** ppResources)
 {
-    m_cbvs.reserve(count);
+    currentState().m_cbvs.reserve(count);
     ShaderStageFlags shaderFlags = shaderTypeToShaderStageFlags(type);
     for (U32 i = 0; i < count; ++i)
     {
@@ -593,58 +602,83 @@ void VulkanContext::bindConstantBuffers(ShaderType type, U32 offset, U32 count, 
         R_ASSERT(pVulkanResource->isBuffer());
         VulkanBuffer* pBuffer           = pVulkanResource->castTo<VulkanBuffer>();
         m_constantBufferShaderAccessMap[pBuffer->getId()] |= shaderFlags;
-        m_cbvs.push_back(pBuffer);
+        currentState().m_cbvs.push_back(pBuffer);
     }
-    m_boundDescriptorSetStructure.key.value.shaderTypeFlags |= shaderFlags;
-    m_boundDescriptorSetStructure.ppConstantBuffers         = m_cbvs.data();
-    m_boundDescriptorSetStructure.key.value.constantBuffers = m_cbvs.size();
+    currentState().m_boundDescriptorSetStructure.key.value.shaderTypeFlags |= shaderFlags;
+    currentState().m_boundDescriptorSetStructure.ppConstantBuffers         = currentState().m_cbvs.data();
+    currentState().m_boundDescriptorSetStructure.key.value.constantBuffers = currentState().m_cbvs.size();
 }
 
 
 void VulkanContext::bindShaderResources(ShaderType type, U32 offset, U32 count, GraphicsResourceView** ppResourceViews)
 {
-    m_srvs.reserve(count);
+    currentState().m_srvs.reserve(count);
     ShaderStageFlags shaderFlags = shaderTypeToShaderStageFlags(type);
     for (U32 i = 0; i < count; ++i)
     {
         VulkanResourceView* pVulkanResourceView = ppResourceViews[i]->castTo<VulkanResourceView>();
         m_resourceViewShaderAccessMap[pVulkanResourceView->getId()] |= shaderFlags;
-        m_srvs.push_back(pVulkanResourceView);
+        currentState().m_srvs.push_back(pVulkanResourceView);
     }
-    m_boundDescriptorSetStructure.key.value.shaderTypeFlags     |= shaderFlags;
-    m_boundDescriptorSetStructure.ppShaderResources             = m_srvs.data();
-    m_boundDescriptorSetStructure.key.value.srvs                = m_srvs.size();
+    currentState().m_boundDescriptorSetStructure.key.value.shaderTypeFlags     |= shaderFlags;
+    currentState().m_boundDescriptorSetStructure.ppShaderResources             = currentState().m_srvs.data();
+    currentState().m_boundDescriptorSetStructure.key.value.srvs                = currentState().m_srvs.size();
 }
 
 
 void VulkanContext::bindUnorderedAccessViews(ShaderType type, U32 offset, U32 count, GraphicsResourceView** ppResourceViews)
 {
-    m_uavs.reserve(count);
+    currentState().m_uavs.reserve(count);
     ShaderStageFlags shaderFlags = shaderTypeToShaderStageFlags(type);
     for (U32 i = 0; i < count; ++i)
     {
         VulkanResourceView* pVulkanResourceView = ppResourceViews[i]->castTo<VulkanResourceView>();
         m_resourceViewShaderAccessMap[pVulkanResourceView->getId()] |= shaderFlags;
-        m_uavs.push_back(pVulkanResourceView);
+        currentState().m_uavs.push_back(pVulkanResourceView);
     }
-    m_boundDescriptorSetStructure.key.value.shaderTypeFlags     |= shaderFlags;
-    m_boundDescriptorSetStructure.ppUnorderedAccesses           = m_uavs.data();
-    m_boundDescriptorSetStructure.key.value.uavs                = m_uavs.size();
+    currentState().m_boundDescriptorSetStructure.key.value.shaderTypeFlags     |= shaderFlags;
+    currentState().m_boundDescriptorSetStructure.ppUnorderedAccesses           = currentState().m_uavs.data();
+    currentState().m_boundDescriptorSetStructure.key.value.uavs                = currentState().m_uavs.size();
 }
 
 
 void VulkanContext::bindSamplers(ShaderType type, U32 count, GraphicsSampler** ppSamplers)
 {
-    m_samplers.reserve(count);
+    currentState().m_samplers.reserve(count);
     ShaderStageFlags shaderFlags = shaderTypeToShaderStageFlags(type);
     for (U32 i = 0; i < count; ++i)
     {
         VulkanSampler* pVulkanSampler = ppSamplers[i]->castTo<VulkanSampler>();
         m_samplerShaderAccessMap[pVulkanSampler->getId()] |= shaderFlags;
-        m_samplers.push_back(pVulkanSampler);
+        currentState().m_samplers.push_back(pVulkanSampler);
     }
-    m_boundDescriptorSetStructure.key.value.shaderTypeFlags |= shaderFlags;
-    m_boundDescriptorSetStructure.ppSamplers                = m_samplers.data();
-    m_boundDescriptorSetStructure.key.value.samplers        = m_samplers.size();
+    currentState().m_boundDescriptorSetStructure.key.value.shaderTypeFlags |= shaderFlags;
+    currentState().m_boundDescriptorSetStructure.ppSamplers                = currentState().m_samplers.data();
+    currentState().m_boundDescriptorSetStructure.key.value.samplers        = currentState().m_samplers.size();
+}
+
+
+void VulkanContext::pushState(ContextFlags flags)
+{
+    ContextState state = { };
+    state.m_pipelineStructure = { };
+    state.m_boundDescriptorSetStructure = { };
+
+    if (flags & ContextFlag_InheritPipelineState)
+    {
+        state = *m_contextStates.end();
+    }    
+
+    m_contextStates.push_back(state);
+}
+
+
+void VulkanContext::popState()
+{
+    R_ASSERT_MSG(!m_contextStates.empty(), "We can not have 0 context states. Must at least be one context state!");
+    if (m_contextStates.size() > 1)
+    {
+        m_contextStates.pop_back();
+    }
 }
 } // Recluse

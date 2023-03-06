@@ -33,10 +33,12 @@ enum ResourceViewDimension
     ResourceViewDimension_1dArray,
     ResourceViewDimension_2d,
     ResourceViewDimension_2dMultisample,
+    ResourceViewDimension_2dMultisampleArray,
     ResourceViewDimension_2dArray,
     ResourceViewDimension_3d,
     ResourceViewDimension_Cube,
-    ResourceViewDimension_CubeArray
+    ResourceViewDimension_CubeArray,
+    ResourceViewDimension_RayTraceAccelerationStructure
 };
 
 
@@ -239,6 +241,15 @@ struct SamplerCreateDesc
     SamplerMipMapMode   mipMapMode;
     Bool                anisotropyEnable;
     Bool                compareEnable;
+};
+
+
+struct MemoryReserveDesc 
+{
+    //< Memory resource amount, in bytes, per usage index.
+    U64 bufferPools[ResourceMemoryUsage_Count];
+    //< Memory resoure amount, in bytes, for textures on the gpu.
+    U64 texturePoolGPUOnly;
 };
 
 

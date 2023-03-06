@@ -35,13 +35,15 @@ typedef U32 CameraPostProcessFlags;
 
 // Camera is the abstract transformation that is used to view the scene.
 // It also serves to perform visibility culling.
-class Camera
+class R_PUBLIC_API Camera
 {
 public:
+    // Get the main view camera.
+    static Camera* getMain();
 
     // Update the camera transformations. Usually the camera will
     // just need the transform in order to apply it's works.
-    void            update(const Transform* transform);
+    void            updateView(const Transform* transform);
 
     // Obtain the camera view frustum.
     const Math::Frustum&  getFrustum() const { return m_frustum; }
@@ -50,6 +52,7 @@ public:
     void setPostProcessFlags(CameraPostProcessFlags flags)
     {
         m_postProcessFlags = flags;
+        m_needsUpdate = true;
     }
 
     // Check if we intersect the camera frustum.
@@ -64,6 +67,15 @@ public:
         return m_postProcessFlags; 
     }
 
+    void setProjection(const Math::Matrix44& projection)
+    {
+        m_Projection = projection;
+        m_needsUpdate = true;
+    }
+
+    Math::Matrix44 getProjection() const { return m_Projection; }
+    Math::Matrix44 getViewProjection() const { return m_ViewProjection; }
+
 private:
     RecluseSceneView        m_sceneView;
     Math::Frustum           m_frustum;
@@ -77,6 +89,9 @@ private:
     Math::Matrix44          m_InverseProjection;
 
     CameraPostProcessFlags  m_postProcessFlags;
+    Bool                    m_needsUpdate;
+    Float3                  m_position;
+    Quaternion              m_rotation;
 };
 
 } // Engine

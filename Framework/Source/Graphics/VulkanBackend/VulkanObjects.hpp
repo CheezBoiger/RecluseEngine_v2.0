@@ -38,7 +38,7 @@ public:
         , m_fboId(0ull) { }
 
     ErrType         initialize(VulkanDevice* pDevice, const VulkanRenderPassDesc& desc);
-    ErrType         destroy(VulkanDevice* pDevice);
+    ErrType         release(VulkanDevice* pDevice);
 
     VkRenderPass    get() const { return m_renderPass; }
     VkFramebuffer   getFbo() const { return m_fbo; }
@@ -61,7 +61,7 @@ typedef Hash64 RenderPassId;
 typedef Hash64 FrameBufferId;
 
 VulkanRenderPass*       makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, GraphicsResourceView** ppRenderTargetViews, GraphicsResourceView* pDepthStencil);
-void                    clearCache();
+void                    clearCache(VulkanDevice* pDevice);
 } // RenderPassManager
 
 

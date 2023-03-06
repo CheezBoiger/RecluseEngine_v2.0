@@ -194,7 +194,7 @@ ErrType VulkanRenderPass::initialize(VulkanDevice* pDevice, const VulkanRenderPa
     {
         R_ERR(R_CHANNEL_VULKAN, "Failed to create vulkan render pass!");
 
-        destroy(pDevice);
+        release(pDevice);
 
         return RecluseResult_Failed;
     }
@@ -225,7 +225,7 @@ ErrType VulkanRenderPass::initialize(VulkanDevice* pDevice, const VulkanRenderPa
         {
             R_ERR(R_CHANNEL_VULKAN, "Failed to create vulkan framebuffer object.!");
 
-            destroy(pDevice);
+            release(pDevice);
 
             return RecluseResult_Failed;
         }
@@ -242,7 +242,7 @@ ErrType VulkanRenderPass::initialize(VulkanDevice* pDevice, const VulkanRenderPa
 }
 
 
-ErrType VulkanRenderPass::destroy(VulkanDevice* pDevice)
+ErrType VulkanRenderPass::release(VulkanDevice* pDevice)
 {
     R_DEBUG(R_CHANNEL_VULKAN, "Destroying render pass...");
 
@@ -267,7 +267,9 @@ namespace RenderPasses {
 
 VulkanRenderPass* makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, GraphicsResourceView** ppRenderTargetViews, GraphicsResourceView* pDepthStencil)
 {
-    R_ASSERT(numRenderTargets < 9);
+    // We never really have a max of 8 render targets in current hardware.
+    R_ASSERT(numRenderTargets <= 8);
+    R_ASSERT(pDevice != NULL);
     VulkanRenderPass* pPass = nullptr;
     Hash64 accumulate = 0;
 
@@ -305,6 +307,16 @@ VulkanRenderPass* makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, Gr
     }
 
     return pPass;
+}
+
+void clearCache(VulkanDevice* pDevice)
+{
+    R_ASSERT(pDevice != NULL);
+    for (auto iter : g_rpCache)
+    {
+        iter.second.release(pDevice);
+    }
+    g_rpCache.clear();
 }
 } // RenderPass
 } // Recluse

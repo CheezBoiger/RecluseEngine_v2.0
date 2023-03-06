@@ -8,6 +8,26 @@ namespace Recluse {
 namespace Math {
 struct Matrix44;
 
+
+struct Bool4
+{
+    union
+    {
+        struct { Bool x, y, z, w; };
+    };
+
+    Bool4(Bool x = false, Bool y = false, Bool z = false, Bool w = false)
+        : x(x), y(y), z(z), w(w) { }
+
+    // Check if any values are true.
+    Bool any() const { return (x || y || z || w); }
+
+    // Check if all values are true.
+    Bool all() const { return (x && y && z && w); }
+
+    Bool4 operator !() const { return Bool4(!x, !y, !z, !w); } 
+};
+
 // Float4 vector struct.
 struct R_PUBLIC_API Float4 
 {
@@ -39,18 +59,20 @@ struct R_PUBLIC_API Float4
     inline Float4           operator*(F32 scalar) const;
     inline Float4           operator/(F32 scalar) const;
     inline Float4           operator-() const;
-    inline Float4           operator==(const Float4& rh) const;
-    inline Float4           operator&&(const Float4& rh) const;
-    inline Float4           operator||(const Float4& rh) const;
-    inline Float4           operator<(const Float4& rh) const;
-    inline Float4           operator>(const Float4& rh) const;
-    inline Float4           operator>=(const Float4& rh) const;
-    inline Float4           operator<=(const Float4& rh) const;
-    inline Float4           operator==(F32 scalar) const;
-    inline Float4           operator<(F32 scalar) const;
-    inline Float4           operator>(F32 scalar) const;
-    inline Float4           operator<=(F32 scalar) const;
-    inline Float4           operator>=(F32 scalar) const;
+
+    inline Bool4             operator==(const Float4& rh) const;
+    inline Bool4             operator!=(const Float4& rh) const;
+    inline Bool4             operator&&(const Float4& rh) const;
+    inline Bool4             operator||(const Float4& rh) const;
+    inline Bool4             operator<(const Float4& rh) const;
+    inline Bool4             operator>(const Float4& rh) const;
+    inline Bool4             operator>=(const Float4& rh) const;
+    inline Bool4             operator<=(const Float4& rh) const;
+    inline Bool4             operator==(F32 scalar) const;
+    inline Bool4             operator<(F32 scalar) const;
+    inline Bool4             operator>(F32 scalar) const;
+    inline Bool4             operator<=(F32 scalar) const;
+    inline Bool4             operator>=(F32 scalar) const;
 
     inline friend Float4    operator+(F32 scalar, const Float4& rh);
     inline friend Float4    operator-(F32 scalar, const Float4& rh);

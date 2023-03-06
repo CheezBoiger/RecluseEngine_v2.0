@@ -43,5 +43,8 @@ struct R_PUBLIC_API Matrix33
     F32 operator()(U32 row, U32 col) const { return get(row, col); }
     F32& operator()(U32 row, U32 col) { return get(row, col); }
 };
+
+
+R_PUBLIC_API Matrix33 inverse(const Matrix33& mat33);
 } // Math
 } // Recluse

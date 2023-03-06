@@ -106,22 +106,22 @@ public:
     void bindRenderTargets(U32 count, GraphicsResourceView** ppResources, GraphicsResourceView* pDepthStencil) override;
     void bindSamplers(ShaderType type, U32 count, GraphicsSampler** ppSampler) override;
     void bindRasterizerState(const RasterState& state) override { }
-    void bindBlendState(const BlendState& state) override { m_pipelineStructure.state.graphics.blendState = state; }
-    void setTopology(PrimitiveTopology topology) override { m_pipelineStructure.state.graphics.primitiveTopology = topology; }
-    void setPolygonMode(PolygonMode polygonMode) override { m_pipelineStructure.state.graphics.raster.polygonMode = polygonMode; }
-    void setDepthCompareOp(CompareOp compareOp) override { m_pipelineStructure.state.graphics.depthStencil.depthCompareOp = compareOp; }
-    void enableDepth(Bool enable) override { m_pipelineStructure.state.graphics.depthStencil.depthTestEnable = enable; }
-    void enableStencil(Bool enable) override { m_pipelineStructure.state.graphics.depthStencil.stencilTestEnable = enable; }
-    void setFrontFace(FrontFace frontFace) override { m_pipelineStructure.state.graphics.raster.frontFace = frontFace; }
-    void setCullMode(CullMode cullMode) override { m_pipelineStructure.state.graphics.raster.cullMode = cullMode; }
+    void bindBlendState(const BlendState& state) override { currentState().m_pipelineStructure.state.graphics.blendState = state; markPipelineDirty(); }
+    void setTopology(PrimitiveTopology topology) override { currentState().m_pipelineStructure.state.graphics.primitiveTopology = topology; markPipelineDirty(); }
+    void setPolygonMode(PolygonMode polygonMode) override { currentState().m_pipelineStructure.state.graphics.raster.polygonMode = polygonMode; markPipelineDirty(); }
+    void setDepthCompareOp(CompareOp compareOp) override { currentState().m_pipelineStructure.state.graphics.depthStencil.depthCompareOp = compareOp; markPipelineDirty(); }
+    void enableDepth(Bool enable) override { currentState().m_pipelineStructure.state.graphics.depthStencil.depthTestEnable = enable; markPipelineDirty(); }
+    void enableStencil(Bool enable) override { currentState().m_pipelineStructure.state.graphics.depthStencil.stencilTestEnable = enable; markPipelineDirty(); }
+    void setFrontFace(FrontFace frontFace) override { currentState().m_pipelineStructure.state.graphics.raster.frontFace = frontFace; markPipelineDirty(); }
+    void setCullMode(CullMode cullMode) override { currentState().m_pipelineStructure.state.graphics.raster.cullMode = cullMode; markPipelineDirty(); }
     
     void setShaderProgram(ShaderProgramId program, U32 permutation) override 
     { 
-        m_pipelineStructure.state.shaderProgramId = program; 
-        m_pipelineStructure.state.shaderPermutation = permutation; 
+        currentState().m_pipelineStructure.state.shaderProgramId = program; 
+        currentState().m_pipelineStructure.state.shaderPermutation = permutation; 
     }
 
-    void setInputVertexLayout(VertexInputLayoutId inputLayoutId) override { m_pipelineStructure.state.graphics.ia = inputLayoutId; }
+    void setInputVertexLayout(VertexInputLayoutId inputLayoutId) override { currentState().m_pipelineStructure.state.graphics.ia = inputLayoutId; markPipelineDirty(); }
 
     inline void endRenderPass(VkCommandBuffer buffer);
     void resetBinds();
@@ -143,7 +143,20 @@ public:
 
     VulkanDevice* getNativeDevice() { return getDevice()->castTo<VulkanDevice>(); }
 
+    void pushState(ContextFlags flags) override;
+    void popState() override;
+
 private:
+    struct ContextState
+    {
+        Pipelines::Structure                                            m_pipelineStructure;
+        DescriptorSets::Structure                                       m_boundDescriptorSetStructure;
+        std::vector<VulkanResourceView*>                                m_srvs;
+        std::vector<VulkanResourceView*>                                m_uavs;
+        std::vector<VulkanBuffer*>                                      m_cbvs;
+        std::vector<VulkanSampler*>                                     m_samplers;
+    };
+
     void prepare();
     void initialize();
     void destroyFences();
@@ -154,6 +167,10 @@ private:
     void flushBarrierTransitions(VkCommandBuffer cmdBuffer);
     void setRenderPass(VulkanRenderPass* pPass);
     void bindDescriptorSet(const VulkanDescriptorAllocation& set);
+    void markPipelineDirty() { m_pipelineDirty = true; }
+    Bool isPipelineDirty() const { return m_pipelineDirty; }
+    void unmarkPipelineDirty() { m_pipelineDirty = false; }
+    ContextState& currentState() { return *m_contextStates.end(); }
 
     // buffer count 
     U32                                                                 m_bufferCount;
@@ -164,18 +181,15 @@ private:
     ::std::vector<VkImageMemoryBarrier>                                 m_imageMemoryBarriers;
     VulkanRenderPass*                                                   m_boundRenderPass;
     VulkanPrimaryCommandList                                            m_primaryCommandList;
-    Pipelines::Structure                                                m_pipelineStructure;
     Pipelines::PipelineState                                            m_pipelineState;
     PipelineId                                                          m_pipelineId;
-    std::vector<VulkanResourceView*>                                    m_srvs;
-    std::vector<VulkanResourceView*>                                    m_uavs;
-    std::vector<VulkanBuffer*>                                          m_cbvs;
-    std::vector<VulkanSampler*>                                         m_samplers;
     std::unordered_map<ResourceViewId, ShaderStageFlags>                m_resourceViewShaderAccessMap;
     std::unordered_map<ResourceId, ShaderStageFlags>                    m_constantBufferShaderAccessMap;
     std::unordered_map<SamplerId, ShaderStageFlags>                     m_samplerShaderAccessMap;
+    std::vector<ContextState>                                           m_contextStates;
     VkDescriptorSet                                                     m_boundDescriptorSet;
-    DescriptorSets::Structure                                           m_boundDescriptorSetStructure;
+    Bool                                                                m_pipelineDirty;
+    U32                                                                 m_currentStateIdx;
 };
 
 

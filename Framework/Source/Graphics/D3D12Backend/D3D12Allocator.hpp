@@ -4,6 +4,8 @@
 #include "D3D12Commons.hpp"
 #include "Recluse/Memory/Allocator.hpp"
 
+#include "Recluse/Graphics/GraphicsCommon.hpp"
+
 #include <vector>
 
 namespace Recluse {
@@ -52,6 +54,7 @@ public:
     ErrType allocate(D3D12MemoryObject* pOut, const D3D12_RESOURCE_DESC& desc, D3D12_RESOURCE_STATES initialState);
     ErrType free(D3D12MemoryObject* pObject);
     ErrType update();
+    ErrType reserveMemory(const MemoryReserveDesc& description);
 
 private:
     ErrType cleanGarbage(U32 index);
@@ -61,5 +64,7 @@ private:
     // garbage resources to clean up after use.
     std::vector<ID3D12Resource*>            m_garbageToClean;
     U32                                     m_garbageIndex;
+
+    MemoryReserveDesc                       m_description;
 };
 } // Recluse

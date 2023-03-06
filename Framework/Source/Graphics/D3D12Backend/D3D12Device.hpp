@@ -4,6 +4,8 @@
 #include "Win32/Win32Common.hpp"
 #include "D3D12Commons.hpp"
 #include "D3D12DescriptorTableManager.hpp"
+#include "D3D12Allocator.hpp"
+#include "D3D12CommandList.hpp"
 
 #include "Recluse/Graphics/GraphicsAdapter.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
@@ -14,6 +16,7 @@ namespace Recluse {
 
 class D3D12Adapter;
 class D3D12ResourcePagedAllocator;
+class D3D12ResourceAllocationManager;
 class D3D12Swapchain;
 class D3D12Queue;
 class D3D12PrimaryCommandList;
@@ -72,20 +75,27 @@ public:
     const std::vector<BufferResources>& getBufferResources() const { return m_bufferResources; }
     void        resetCurrentResources();
 
+    ID3D12GraphicsCommandList* currentGraphicsCommandList() { return m_pPrimaryCommandList->get(); }
+
 private:
+    struct ContextState
+    {
+        Pipelines::PipelineStateObject  m_pipelineStateObject;
+    };
 
-    void        initializeBufferResources(U32 buffering);
-    void        destroyBufferResources();
+    void            initializeBufferResources(U32 buffering);
+    void            destroyBufferResources();
+    ContextState&   currentState() { return *m_contextStates.end(); }
 
-    ErrType     createCommandList(D3D12PrimaryCommandList** ppList, GraphicsQueueTypeFlags flags);
-    ErrType     destroyCommandList(D3D12PrimaryCommandList* pList);
+    ErrType         createCommandList(D3D12PrimaryCommandList** ppList, GraphicsQueueTypeFlags flags);
+    ErrType         destroyCommandList(D3D12PrimaryCommandList* pList);
 
     D3D12Device*                        m_pDevice;
     std::vector<BufferResources>        m_bufferResources;
     U32                                 m_currentBufferIndex;
     U32                                 m_bufferCount;
     D3D12PrimaryCommandList*            m_pPrimaryCommandList;
-    Pipelines::PipelineStateObject      m_pipelineStateObject;
+    std::vector<ContextState>           m_contextStates;
 };
 
 class D3D12Device : public GraphicsDevice 
@@ -137,8 +147,7 @@ public:
     Bool makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout) override;
     Bool destroyVertexLayout(VertexInputLayoutId id) override;
 
-    D3D12ResourcePagedAllocator* getBufferAllocator(ResourceMemoryUsage usage) const { return m_bufferPool[usage]; }
-    D3D12ResourcePagedAllocator* getTextureAllocator() const { return m_texturePool; }
+    D3D12ResourceAllocationManager* resourceAllocationManager() { return &m_resourceAllocationManager; }
 
 private:
 
@@ -147,11 +156,7 @@ private:
     void allocateMemoryPool(D3D12MemoryPool* pPool, ResourceMemoryUsage memUsage);
 
     // Resource pools.
-    D3D12MemoryPool                 m_bufferMemPools[ResourceMemoryUsage_Count];
-    D3D12ResourcePagedAllocator*         m_bufferPool[ResourceMemoryUsage_Count];
-    D3D12ResourcePagedAllocator*         m_texturePool;
-    D3D12MemoryPool                 m_textureMemPool;
-
+    D3D12ResourceAllocationManager  m_resourceAllocationManager;
     ID3D12Device*                   m_device;
     D3D12Adapter*                   m_pAdapter;
     D3D12Queue*                     m_graphicsQueue;

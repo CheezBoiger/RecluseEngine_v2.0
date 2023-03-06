@@ -190,7 +190,7 @@ ErrType D3D12Swapchain::flushFinishedCommandLists()
 {
     D3D12Context* pContext              = staticCast<D3D12Context*>(m_pDevice->getContext());
     ID3D12CommandQueue* pQueue          = m_pBackbufferQueue->get();
-    ID3D12GraphicsCommandList* pCmdList = staticCast<D3D12PrimaryCommandList*>(pContext->getCommandList())->get();
+    ID3D12GraphicsCommandList* pCmdList = pContext->currentGraphicsCommandList();
 
     if (pCmdList) 
     {

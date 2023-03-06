@@ -37,15 +37,6 @@ struct GraphicsResourceDescription
 };
 
 
-struct MemoryReserveDesc 
-{
-    //< Memory resource amount, in bytes, per usage index.
-    U64 bufferPools[ResourceMemoryUsage_Count];
-    //< Memory resoure amount, in bytes, for textures on the gpu.
-    U64 texturePoolGPUOnly;
-};
-
-
 struct ResourceViewDescription 
 {
     ResourceViewType        type;
@@ -57,6 +48,15 @@ struct ResourceViewDescription
     U32                     layerCount;
     GraphicsResource*       pResource;
 };
+
+
+enum ContextFlag
+{
+    ContextFlag_None = 0,
+    ContextFlag_InheritPipelineState = (1 << 0)
+};
+
+typedef U32 ContextFlags;
 
 
 class R_PUBLIC_API GraphicsContext : public ICastableObject
@@ -148,6 +148,12 @@ public:
     virtual void enableDepth(Bool enable) { }
     virtual void enableStencil(Bool enable) { }
     virtual void setInputVertexLayout(VertexInputLayoutId inputLayout) { }
+
+    // Pop the current pipeline state, resorting to previous pipeline state.
+    virtual void popState() { }
+
+    // Push the current pipeline state. Allows inheriting from previous state.
+    virtual void pushState(ContextFlags flags = ContextFlag_None) { }
 };
 
 

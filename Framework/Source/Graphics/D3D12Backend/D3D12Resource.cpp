@@ -30,9 +30,9 @@ ErrType D3D12Resource::initialize
 {
     ID3D12Device* device                    = pDevice->get();
     D3D12_RESOURCE_DESC d3d12desc           = { };
-    D3D12_RESOURCE_STATES state             = Dxgi::getNativeResourceState(initialState);
+    D3D12_RESOURCE_STATES state             = getNativeResourceState(initialState);
     D3D12_CLEAR_VALUE optimizedClearValue   = { };
-    D3D12ResourcePagedAllocator* pAllocator              = nullptr;
+    D3D12ResourceAllocationManager* pAllocator = pDevice->resourceAllocationManager();
     HRESULT sResult                         = S_OK;
 
     d3d12desc.Dimension         = getDimension(desc.dimension);
@@ -49,32 +49,25 @@ ErrType D3D12Resource::initialize
 
         sResult = device->CreateCommittedResource(&heapProps, flags, &d3d12desc, state, 
             &optimizedClearValue, __uuidof(ID3D12Resource), (void**)&m_memObj.pResource);
-
     } 
     else 
-    {
-        if (d3d12desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
-        {
-            pAllocator = pDevice->getBufferAllocator(desc.memoryUsage);
-        }
-        else if (d3d12desc.Dimension != D3D12_RESOURCE_DIMENSION_UNKNOWN)
-        {
-            pAllocator = pDevice->getTextureAllocator();
-        }
-
+    {   
         R_ASSERT_MSG(pAllocator, "No allocator exists for the given dimension! Is the resource unknown?");
 
-        R_NO_IMPL();
-
-        ErrType result  = pAllocator->allocate(device, &m_memObj, d3d12desc, state);
+        ErrType result  = pAllocator->allocate(&m_memObj, d3d12desc, state);
 
         if (result != RecluseResult_Ok)    
         {
             R_ERR(R_CHANNEL_D3D12, "Failed to allocate a D3D12 resource!");
-        } 
-        else 
-        {
-            
+
+            // We will have to do a committed resource allocation instead!
+            R_WARN(R_CHANNEL_D3D12, "Failed to perform a sub-allocation for the given resource request, resorting to committed allocation...");
+            makeCommitted = true;
+            D3D12_HEAP_PROPERTIES heapProps = { };
+            D3D12_HEAP_FLAGS flags          = D3D12_HEAP_FLAG_NONE;
+
+            sResult = device->CreateCommittedResource(&heapProps, flags, &d3d12desc, state, 
+                &optimizedClearValue, __uuidof(ID3D12Resource), (void**)&m_memObj.pResource);
         }
     }
 
@@ -128,8 +121,8 @@ D3D12_RESOURCE_BARRIER D3D12Resource::transition(ResourceState newState)
 
     barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
     barrier.Transition.pResource    = m_memObj.pResource;
-    barrier.Transition.StateBefore  = Dxgi::getNativeResourceState(getCurrentResourceState());
-    barrier.Transition.StateAfter   = Dxgi::getNativeResourceState(newState);
+    barrier.Transition.StateBefore  = getNativeResourceState(getCurrentResourceState());
+    barrier.Transition.StateAfter   = getNativeResourceState(newState);
     barrier.Transition.Subresource  = 0u;
 
     return barrier;

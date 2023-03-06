@@ -205,33 +205,7 @@ void D3D12Device::allocateMemoryPool(D3D12MemoryPool* pPool, ResourceMemoryUsage
 
 ErrType D3D12Device::reserveMemory(const MemoryReserveDesc& desc)
 {
-    for (U32 i = 0; i < ResourceMemoryUsage_Count; ++i)
-    {
-        HRESULT hresult = S_OK;
-        if (m_bufferPool[i])
-        {
-            if (m_bufferMemPools[i].pHeap->GetDesc().SizeInBytes < desc.bufferPools[i])
-            {
-                allocateMemoryPool(&m_bufferMemPools[i], (ResourceMemoryUsage)i);
-            }
-            m_bufferPool[i]->clear();
-            m_bufferPool[i]->setMemoryPool(&m_bufferMemPools[i]);
-        }
-        else
-        {
-            D3D12_HEAP_DESC hdesc = { };
-            hdesc.Properties.Type = D3D12_HEAP_TYPE_DEFAULT;
-            hdesc.SizeInBytes = desc.bufferPools[i];
-            ID3D12Heap* pHeap = nullptr;
-            hresult = m_device->CreateHeap(&hdesc, __uuidof(ID3D12Heap), (void**)&pHeap);
-            if (FAILED(hresult))
-            {
-                R_ERR(R_CHANNEL_D3D12, "Failed to create heap in %s", __FUNCTION__);
-            }
-        }
-    }
-
-    return RecluseResult_Ok;
+    return m_resourceAllocationManager.reserveMemory(desc);
 }
 
 
@@ -424,5 +398,37 @@ D3D12_FEATURE_DATA_FORMAT_SUPPORT D3D12Device::checkFormatSupport(ResourceFormat
     }
 
     return formatSupport;
+}
+
+
+ErrType D3D12Device::loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition)
+{
+    return RecluseResult_NoImpl;
+}
+
+
+ErrType D3D12Device::unloadShaderProgram(ShaderProgramId program)
+{
+    return RecluseResult_NoImpl;
+}
+
+
+void D3D12Device::unloadAllShaderPrograms()
+{
+    R_NO_IMPL();
+}
+
+
+Bool D3D12Device::makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout)
+{
+    R_NO_IMPL();
+    return false;
+}
+
+
+Bool D3D12Device::destroyVertexLayout(VertexInputLayoutId id)
+{
+    R_NO_IMPL();
+    return false;
 }
 } // Recluse

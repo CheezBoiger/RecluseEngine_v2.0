@@ -2,13 +2,14 @@
 #include "D3D12DescriptorTableManager.hpp"
 #include "D3D12Device.hpp"
 #include "Recluse/Messaging.hpp"
+#include "Recluse/Memory/LinearAllocator.hpp"
 
 namespace Recluse {
 
 
 const D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHeap::invalidGpuAddress = { 0 };
 const D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeap::invalidCpuAddress = { 0 };
-const F32 DescriptorHeapAllocationManager::kNumDescriptorsPageSize = 1000.0f;
+const F32 DescriptorHeapAllocationManager::kNumDescriptorsPageSize = 1024.0f;
 
 
 DescriptorHeapAllocation::DescriptorHeapAllocation
@@ -34,6 +35,15 @@ DescriptorHeap::DescriptorHeap()
     : m_pHeap(nullptr)
     , m_pDescriptorHeapAllocator(nullptr)
 {
+}
+
+
+SmartPtr<Allocator> DescriptorHeap::makeAllocator(ID3D12DescriptorHeap* pHeap, U64 numDescriptors, U64 descriptorSizeBytes)
+{
+    SmartPtr<Allocator> allocator = makeSmartPtr(new LinearAllocator());
+    D3D12_CPU_DESCRIPTOR_HANDLE descriptor = pHeap->GetCPUDescriptorHandleForHeapStart();
+    allocator->initialize(descriptor.ptr, numDescriptors * descriptorSizeBytes);
+    return allocator;
 }
 
 //
@@ -205,7 +215,7 @@ DescriptorHeap::DescriptorHeap()
 //}
 
 
-D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHeapAllocation::getGpuHandle(U32 entryOffset) const
+D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHeapAllocation::getGpuDescriptor(U32 entryOffset) const
 {
     D3D12_GPU_DESCRIPTOR_HANDLE baseHandle  = m_baseGpuDescriptorHandle;
     D3D12_GPU_VIRTUAL_ADDRESS baseAddress   = baseHandle.ptr;
@@ -219,7 +229,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHeapAllocation::getGpuHandle(U32 entryOffs
 }
 
 
-D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapAllocation::getCpuHandle(U32 entryOffset) const
+D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapAllocation::getCpuDescriptor(U32 entryOffset) const
 {
     D3D12_CPU_DESCRIPTOR_HANDLE baseHandle  = m_baseCpuDescriptorHandle;
     SIZE_T baseHandlePtr                    = baseHandle.ptr;
@@ -249,13 +259,11 @@ D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapAllocation::getCpuHandle(U32 entryOffs
 //}
 
 
-ErrType DescriptorHeap::initialize(D3D12Device* pDevice, const D3D12_DESCRIPTOR_HEAP_DESC& desc)
+ErrType DescriptorHeap::initialize(ID3D12Device* pDevice, U32 nodeMask, U32 numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type)
 {
     R_ASSERT(pDevice != NULL);
-
-    ID3D12Device* pNative = pDevice->get();
-
-    HRESULT result = pNative->CreateDescriptorHeap(&desc, __uuidof(ID3D12DescriptorHeap), (void**)&m_pHeap);
+    D3D12_DESCRIPTOR_HEAP_DESC desc = makeDescriptorHeapDescription(nodeMask, numDescriptors, type);
+    HRESULT result = pDevice->CreateDescriptorHeap(&desc, __uuidof(ID3D12DescriptorHeap), (void**)&m_pHeap);
 
     if (FAILED(result))
     {
@@ -263,13 +271,23 @@ ErrType DescriptorHeap::initialize(D3D12Device* pDevice, const D3D12_DESCRIPTOR_
     }
 
     m_heapDesc = desc;
+    m_descriptorSize = pDevice->GetDescriptorHandleIncrementSize(type);
+    m_baseCpuHandle = m_pHeap->GetCPUDescriptorHandleForHeapStart();
+    m_baseGpuHandle = m_pHeap->GetGPUDescriptorHandleForHeapStart();
+
+    m_pDescriptorHeapAllocator = makeAllocator(m_pHeap, numDescriptors, m_descriptorSize);
 
     return RecluseResult_Ok;
 }
 
 
-ErrType DescriptorHeap::destroy(D3D12Device* pDevice)
+ErrType DescriptorHeap::release(ID3D12Device* pDevice)
 {
+    if (m_pDescriptorHeapAllocator)
+    {
+        m_pDescriptorHeapAllocator->cleanUp();
+    }
+
     if (m_pHeap)
     {
         m_pHeap->Release();
@@ -335,7 +353,16 @@ DescriptorHeapAllocation GpuDescriptorHeap::allocate(U32 numberDescriptors)
 }
 
 
-DescriptorHeapAllocation CpuDescriptorHeapManager::allocate(U32 numberDescriptors)
+SmartPtr<Allocator> GpuDescriptorHeap::makeAllocator(ID3D12DescriptorHeap* pHeap, U64 numDescriptors, U64 descriptorSizeBytes)
+{
+    SmartPtr<Allocator> allocator = makeSmartPtr(new LinearAllocator());
+    D3D12_GPU_VIRTUAL_ADDRESS baseAddress = pHeap->GetGPUDescriptorHandleForHeapStart().ptr;
+    allocator->initialize(baseAddress, numDescriptors * descriptorSizeBytes);
+    return allocator;
+}
+
+
+DescriptorHeapAllocation CpuDescriptorHeapManager::allocate(ID3D12Device* pDevice, U32 numberDescriptors)
 {
     DescriptorHeapAllocation allocation;
 
@@ -359,7 +386,7 @@ DescriptorHeapAllocation CpuDescriptorHeapManager::allocate(U32 numberDescriptor
         // Create a new descriptor heap.
         D3D12_DESCRIPTOR_HEAP_DESC desc = m_cpuHeaps.end()->getDesc();
         m_cpuHeaps.push_back(CpuDescriptorHeap());
-        m_cpuHeaps.end()->initialize(nullptr, desc);
+        m_cpuHeaps.end()->initialize(pDevice, desc.NodeMask, desc.NumDescriptors, desc.Type);
         allocation = m_cpuHeaps.end()->allocate(numberDescriptors);
     }
 
@@ -367,7 +394,7 @@ DescriptorHeapAllocation CpuDescriptorHeapManager::allocate(U32 numberDescriptor
 }
 
 
-DescriptorHeapAllocation DescriptorHeapAllocationManager::allocate(U32 numberDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type)
+DescriptorHeapAllocation DescriptorHeapAllocationManager::allocate(ID3D12Device* pDevice, U32 numberDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type)
 {
     CpuHeapType cpuType = CpuHeapType_Unknown;
 
@@ -388,7 +415,7 @@ DescriptorHeapAllocation DescriptorHeapAllocationManager::allocate(U32 numberDes
 
     R_ASSERT(manager != NULL);
 
-    allocation = manager->allocate(numberDescriptors);
+    allocation = manager->allocate(pDevice, numberDescriptors);
 
     if (!allocation.isValid())
     {
@@ -407,23 +434,43 @@ void DescriptorHeapAllocationManager::free(const DescriptorHeapAllocation& alloc
 
 ErrType DescriptorHeapAllocationManager::initialize(ID3D12Device* pDevice, const DescriptorCoreSize& descriptorSizes)
 {
-    D3D12_DESCRIPTOR_HEAP_DESC desc = { };
-    desc.NumDescriptors = static_cast<U32>(kNumDescriptorsPageSize * descriptorSizes.rtvDescriptorCountFactor);
-    desc.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-    m_cpuDescriptorHeapManagers[CpuHeapType_Rtv].initialize(desc);
+    U32 numDescriptors = static_cast<U32>(kNumDescriptorsPageSize * descriptorSizes.rtvDescriptorCountFactor);
+    m_cpuDescriptorHeapManagers[CpuHeapType_Rtv].initialize(pDevice, 0, numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
-    desc.NumDescriptors = static_cast<U32>(kNumDescriptorsPageSize * descriptorSizes.dsvDescriptorCountFactor);
-    desc.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-    m_cpuDescriptorHeapManagers[CpuHeapType_Dsv].initialize(desc);
+    numDescriptors = static_cast<U32>(kNumDescriptorsPageSize * descriptorSizes.dsvDescriptorCountFactor);
+    m_cpuDescriptorHeapManagers[CpuHeapType_Dsv].initialize(pDevice, 0, numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
-    desc.NumDescriptors = static_cast<U32>(kNumDescriptorsPageSize * descriptorSizes.cbvSrvUavDescriptorCountFactor);
-    desc.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    m_cpuDescriptorHeapManagers[CpuHeapType_CbvSrvUav].initialize(desc);
+    numDescriptors = static_cast<U32>(kNumDescriptorsPageSize * descriptorSizes.cbvSrvUavDescriptorCountFactor);
+    m_cpuDescriptorHeapManagers[CpuHeapType_CbvSrvUav].initialize(pDevice, 0, numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    desc.NumDescriptors = static_cast<U32>(kNumDescriptorsPageSize * descriptorSizes.samplerDescriptorCountFactor);
-    desc.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
-    m_cpuDescriptorHeapManagers[CpuHeapType_Sampler].initialize(desc);
-    return RecluseResult_NoImpl;
+    numDescriptors = static_cast<U32>(kNumDescriptorsPageSize * descriptorSizes.samplerDescriptorCountFactor);
+    m_cpuDescriptorHeapManagers[CpuHeapType_Sampler].initialize(pDevice, 0, numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+
+    numDescriptors = static_cast<U32>(kNumDescriptorsPageSize * descriptorSizes.cbvSrvUavDescriptorCountFactor);
+    m_gpuHeaps[GpuHeapType_CbvSrvUav].initialize(pDevice, 0, numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    numDescriptors = static_cast<U32>(kNumDescriptorsPageSize * descriptorSizes.samplerDescriptorCountFactor);
+    m_gpuHeaps[GpuHeapType_Sampler].initialize(pDevice, 0, numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+    return RecluseResult_Ok;
+}
+
+
+ErrType CpuDescriptorHeapManager::initialize(ID3D12Device* pDevice, U32 nodeMask, U32 numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type)
+{
+    if (!m_cpuHeaps.empty())
+    {
+        return RecluseResult_AlreadyExists;
+    }
+
+    m_cpuHeaps.resize(1);
+    ErrType result = m_cpuHeaps[0].initialize(pDevice, nodeMask, numDescriptors, type);
+
+    if (result != RecluseResult_Ok)
+    {
+        
+    }
+
+    return result;
 }
 
 

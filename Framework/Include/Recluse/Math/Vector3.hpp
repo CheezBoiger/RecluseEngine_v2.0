@@ -8,6 +8,26 @@
 namespace Recluse {
 namespace Math {
 
+
+struct Bool3
+{
+    union
+    {
+        struct { Bool x, y, z; };
+    };
+
+    Bool3(Bool x = false, Bool y = false, Bool z = false)
+        : x(x), y(y), z(z) { }
+
+    // Check if any boolean values are true.
+    Bool any() const { return x || y || z; };
+
+    // Check if all boolean values are true.
+    Bool all() const { return x && y && z; };
+
+    Bool3 operator!() const { return Bool3(!x, !y, !z); }
+};
+
 // Float Vector data structure.
 struct R_PUBLIC_API Float3 
 {
@@ -35,19 +55,20 @@ struct R_PUBLIC_API Float3
     inline Float3 operator/(F32 scalar) const;
     inline Float3 operator+(F32 scalar) const;
     inline Float3 operator-(F32 scalar) const;
-    inline Float3 operator==(const Float3& rh) const;
-    inline Float3 operator&&(const Float3& rh) const;
-    inline Float3 operator||(const Float3& rh) const;
-    inline Float3 operator<(const Float3& rh) const;
-    inline Float3 operator>(const Float3& rh) const;
-    inline Float3 operator>=(const Float3& rh) const;
-    inline Float3 operator<=(const Float3& rh) const;
+    inline Bool3  operator==(const Float3& rh) const;
+    inline Bool3  operator!=(const Float3& rh) const;
+    inline Bool3  operator&&(const Float3& rh) const;
+    inline Bool3  operator||(const Float3& rh) const;
+    inline Bool3  operator<(const Float3& rh) const;
+    inline Bool3  operator>(const Float3& rh) const;
+    inline Bool3  operator>=(const Float3& rh) const;
+    inline Bool3  operator<=(const Float3& rh) const;
 
-    inline Float3 operator==(F32 scalar) const;
-    inline Float3 operator<(F32 scalar) const;
-    inline Float3 operator>(F32 scalar) const;
-    inline Float3 operator<=(F32 scalar) const;
-    inline Float3 operator>=(F32 scalar) const;
+    inline Bool3  operator==(F32 scalar) const;
+    inline Bool3  operator<(F32 scalar) const;
+    inline Bool3  operator>(F32 scalar) const;
+    inline Bool3  operator<=(F32 scalar) const;
+    inline Bool3  operator>=(F32 scalar) const;
 
     inline R_PUBLIC_API friend Float3 operator*(F32 scalar, const Float3& rh);
     inline R_PUBLIC_API friend Float3 operator+(F32 scalar, const Float3& rh);

@@ -11,22 +11,30 @@
 
 namespace Recluse {
 
+class D3D12GraphicsResourceView;
 
-class D3D12RenderPass : public RenderPass
+class D3D12RenderPass
 {
 public:
     D3D12RenderPass()
     { }
 
-    ErrType                         initialize(D3D12Device* pDevice);
-    ErrType                         destroy(D3D12Device* pDevice);
-    
-    virtual U32                     getNumRenderTargets() const override;
-    virtual GraphicsResourceView*   getRenderTarget(U32 idx) override;
-    virtual GraphicsResourceView*   getDepthStencil() override;
+    ErrType initialize
+        (
+            D3D12Device* pDevice, 
+            U32 numRtvDescriptors, 
+            const D3D12GraphicsResourceView** rtvDescriptors, 
+            const D3D12GraphicsResourceView* dsvDescriptor = nullptr
+        );
 
-    D3D12_CPU_DESCRIPTOR_HANDLE     getRtvHandle() const { return m_rtvDhAllocation.getCpuHandle(); }
-    D3D12_CPU_DESCRIPTOR_HANDLE     getDsvHandle() const { return m_dsvDhAllocation.getCpuHandle(); }
+    ErrType release(D3D12Device* pDevice);
+    
+    U32                     getNumRenderTargets() const;
+    GraphicsResourceView*   getRenderTarget(U32 idx);
+    GraphicsResourceView*   getDepthStencil();
+
+    D3D12_CPU_DESCRIPTOR_HANDLE     getRtvDescriptor(U32 idx = 0u) const { return m_rtvDhAllocation.getCpuDescriptor(idx); }
+    D3D12_CPU_DESCRIPTOR_HANDLE     getDsvDescriptor() const { return m_dsvDhAllocation.getCpuDescriptor(); }
 
 private:
     DescriptorHeapAllocation    m_rtvDhAllocation;

@@ -59,8 +59,8 @@ ErrType D3D12ResourcePagedAllocator::initialize(ID3D12Device* pDevice, Allocator
 
     if (FAILED(result))
     {
-        R_ERR(R_CHANNEL_D3D12, "Failed to create directX heap! ErrCode=%d", result);
-        return;
+        R_ERR(R_CHANNEL_D3D12, "Failed to create Direct3D 12 heap! ErrCode=%d", result);
+        return RecluseResult_Failed;
     }
 
     m_pool.sizeInBytes = totalSizeBytes;
@@ -187,6 +187,13 @@ ErrType D3D12ResourceAllocationManager::update()
 
 ErrType D3D12ResourceAllocationManager::cleanGarbage(U32 index)
 {
+    return RecluseResult_NoImpl;
+}
 
+
+ErrType D3D12ResourceAllocationManager::reserveMemory(const MemoryReserveDesc& description)
+{
+    m_description = description;
+    return RecluseResult_Ok;
 }
 } // Recluse

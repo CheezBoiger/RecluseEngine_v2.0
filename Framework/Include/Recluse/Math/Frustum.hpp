@@ -47,6 +47,6 @@ struct Frustum
 
 
 // Check whether we intersect any of the faces of the frustum.
-Bool intersects(const Frustum& frustum, const Bounds3d& bounds);
+R_PUBLIC_API Bool intersects(const Frustum& frustum, const Bounds3d& bounds);
 } // Math
 } // Recluse

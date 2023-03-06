@@ -24,58 +24,50 @@ GraphicsResourceView* D3D12RenderPass::getDepthStencil()
 
 U32 D3D12RenderPass::getNumRenderTargets() const
 {
-    return m_renderPassDesc.numRenderTargets;
+    return m_rtvDhAllocation.getTotalDescriptors();
 }
 
 
-ErrType D3D12RenderPass::initialize(D3D12Device* pDevice, const RenderPassDesc& desc)
+ErrType D3D12RenderPass::initialize(D3D12Device* pDevice, U32 numRtvDescriptors, const D3D12GraphicsResourceView** rtvDescriptors, const D3D12GraphicsResourceView* dsvDescriptor)
 {
     R_ASSERT(pDevice != NULL);
-
+    R_ASSERT(numRtvDescriptors <= 8);
     auto* pDescriptorManager = pDevice->getDescriptorHeapManager();
 
     R_ASSERT(pDescriptorManager != NULL);
+
+    ID3D12Device* device = pDevice->get();
     D3D12_CPU_DESCRIPTOR_HANDLE baseDescriptor = { 0 };
 
     // allocate our rtv descriptors first.
-    DescriptorHeapAllocation dhAllocation = pDescriptorManager->allocate(desc.numRenderTargets, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-    if (!dhAllocation.isValid())
+    // TODO: We probably want to get rid of the const_cast parts, this is not very efficient.
+    if (numRtvDescriptors)
     {
-        return RecluseResult_Failed;
-    }
-
-    for (U32 i = 0; i < desc.numRenderTargets; ++i)
-    {
-        D3D12GraphicsResourceView* pResourceView        = static_cast<D3D12GraphicsResourceView*>(desc.ppRenderTargetViews[i]);
-        D3D12_RENDER_TARGET_VIEW_DESC descRtv           = pResourceView->getRtvDesc();
-        D3D12Resource* pResource                        = static_cast<D3D12Resource*>(pResourceView->getResource());
-
-        R_ASSERT_MSG(pResource != NULL, "Resource for the given resource view is NULL!");
-        D3D12_CPU_DESCRIPTOR_HANDLE destHandle = dhAllocation.getCpuHandle(i);
-
-        pDevice->createRenderTargetView(pResource, descRtv, destHandle);
-    }
-
-    // If we have depth stencil, we will allocate to the dsv descriptor heap.
-    if (desc.pDepthStencil)
-    {
-        if (desc.pDepthStencil->hasResource())
+        DescriptorHeapAllocation dhAllocation = pDescriptorManager->allocate(device, numRtvDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+        for (U32 i = 0; i < numRtvDescriptors; ++i)
         {
-            DescriptorHeapAllocation allocation         = pDescriptorManager->allocate(1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-            D3D12GraphicsResourceView* pResourceView    = static_cast<D3D12GraphicsResourceView*>(desc.pDepthStencil);
-            D3D12_DEPTH_STENCIL_VIEW_DESC descDsv       = pResourceView->getDsvDesc();
-            D3D12Resource* pResource                    = static_cast<D3D12Resource*>(pResourceView->getResource());
-
-            pDevice->createDepthStencilView(pResource, descDsv, allocation.getCpuHandle());
+            const D3D12GraphicsResourceView* pResourceView = rtvDescriptors[i];
+            const D3D12_RENDER_TARGET_VIEW_DESC& rtvDescription = pResourceView->asRtv();
+            ID3D12Resource* pResource = const_cast<ID3D12Resource*>(pResourceView->getResource()->castTo<D3D12Resource>()->get());
+            device->CreateRenderTargetView(pResource, &rtvDescription, dhAllocation.getCpuDescriptor(i));
         }
+        m_rtvDhAllocation = dhAllocation;
+    }
+
+    if (dsvDescriptor)
+    {
+        DescriptorHeapAllocation dsvAllocation = pDescriptorManager->allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+        const D3D12_DEPTH_STENCIL_VIEW_DESC& dsvDescription = dsvDescriptor->asDsv();
+        ID3D12Resource* pResource = const_cast<ID3D12Resource*>(dsvDescriptor->getResource()->castTo<D3D12Resource>()->get());
+        device->CreateDepthStencilView(pResource, &dsvDescription, dsvAllocation.getCpuDescriptor());
+        m_dsvDhAllocation = dsvAllocation;
     }
 
     return RecluseResult_Ok;
 }
 
 
-ErrType D3D12RenderPass::destroy(D3D12Device* pDevice)
+ErrType D3D12RenderPass::release(D3D12Device* pDevice)
 {
     R_ASSERT(pDevice != NULL);
 

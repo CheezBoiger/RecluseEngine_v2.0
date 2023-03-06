@@ -38,6 +38,7 @@ public:
 
     // Get the memory object.
     ID3D12Resource*         get() { return m_memObj.pResource; }
+    const ID3D12Resource*   get() const { return m_memObj.pResource; }
 
     // Is the resource committed.
     Bool                    isCommitted() const { return m_isCommitted; }

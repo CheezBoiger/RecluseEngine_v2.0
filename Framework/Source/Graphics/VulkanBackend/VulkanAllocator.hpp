@@ -179,14 +179,14 @@ private:
     // Allocate a page of memory if required.
     VulkanPagedAllocator* allocateMemoryPage(MemoryTypeIndex memoryTypeIndex, ResourceMemoryUsage usage);
 
-    std::map<MemoryTypeIndex, std::vector<SmartPtr<VulkanPagedAllocator>>>   m_resourceAllocators;
-    std::map<MemoryTypeIndex, U64>                                      m_pagedMemoryTotalSizeBytes;
-    U32                                                                 m_garbageIndex;
-    U32                                                                 m_numObjectAllocations;
-    std::vector<std::vector<VulkanMemory>>                              m_frameGarbage;
-    VulkanDevice*                                                       m_pDevice;
-    U64                                                                 m_totalAllocationSizeBytes;
-    MemoryReserveDesc                                                   m_maxDedicatedMemoryDesc;
-    VkDeviceSize                                                        m_bufferImageGranularityBytes;
+    std::map<MemoryTypeIndex, std::vector<SmartPtr<VulkanPagedAllocator>>>      m_resourceAllocators;
+    std::map<MemoryTypeIndex, U64>                                              m_pagedMemoryTotalSizeBytes;
+    U32                                                                         m_garbageIndex;
+    U32                                                                         m_numObjectAllocations;
+    std::vector<std::vector<VulkanMemory>>                                      m_frameGarbage;
+    VulkanDevice*                                                               m_pDevice;
+    U64                                                                         m_totalAllocationSizeBytes;
+    MemoryReserveDesc                                                           m_maxDedicatedMemoryDesc;
+    VkDeviceSize                                                                m_bufferImageGranularityBytes;
 };
 } // Recluse

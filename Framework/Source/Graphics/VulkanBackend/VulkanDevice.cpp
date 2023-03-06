@@ -112,7 +112,6 @@ void VulkanContext::begin()
 void VulkanContext::end()
 {
     m_primaryCommandList.end();
-    resetBinds();
 }
 
 
@@ -289,6 +288,7 @@ void VulkanDevice::release(VkInstance instance)
     destroyCommandPools();
     destroyDescriptorHeap();
     freeMemCache();
+    RenderPasses::clearCache(this);
     ShaderPrograms::unloadAll(this);
     Pipelines::VertexLayout::unloadAll();
     Pipelines::clearPipelineCache(this);
@@ -684,6 +684,7 @@ void VulkanContext::prepare()
     config.garbageBufferCount   = m_bufferCount;
 
     m_pDevice->getAllocationManager()->update(config);
+    resetBinds();
 }
 
 

@@ -60,6 +60,7 @@ void generate(GraphicsContext* context, Engine::RenderCommandList* pMeshCommandL
     depthRect.height    = depth.height;
 
     // Set the PreZ pass.
+    context->pushState();
     context->setShaderProgram(ShaderProgram_PreZDepth);
     context->clearDepthStencil(1.0f, 0, depthRect);
     context->setCullMode(CullMode_Back);
@@ -144,6 +145,8 @@ void generate(GraphicsContext* context, Engine::RenderCommandList* pMeshCommandL
             }
         }
     }
+
+    context->popState();
 }
 } // PreZ
 } // Recluse
