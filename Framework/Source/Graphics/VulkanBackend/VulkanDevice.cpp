@@ -21,46 +21,9 @@
 
 namespace Recluse {
 
-std::vector<const char*> getDeviceExtensions() 
-{
-    return { };    
-}
-
 
 void checkAvailableDeviceExtensions(const VulkanAdapter* adapter, std::vector<const char*>& extensions)
 {
-    std::vector<VkExtensionProperties> deviceExtensions = adapter->getDeviceExtensionProperties();
-
-    // Query all device extensions available for this device.
-    for (U32 i = 0; i < extensions.size(); ++i) 
-    {
-        B32 found = false;
-        for (U32 j = 0; j < deviceExtensions.size(); ++j) 
-        { 
-            if (strcmp(deviceExtensions[j].extensionName, extensions[i]) == 0) 
-            {
-                R_DEBUG
-                    (
-                        R_CHANNEL_VULKAN, 
-                        "Found %s Spec Version: %d", 
-                        deviceExtensions[j].extensionName,
-                        deviceExtensions[j].specVersion
-                    );
-
-                found = true;
-                break;
-            }
-    
-        }
-
-        if (!found) 
-        {
-            R_WARN(R_CHANNEL_VULKAN, "%s not found. Removing extension.", extensions[i]);
-            extensions.erase(extensions.begin() + i);
-            --i;
-        }
-        
-    }
 }
 
 
@@ -123,7 +86,7 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
 
     VulkanInstance* pVc                                  = adapter->getInstance();
     std::vector<VkQueueFamilyProperties> queueFamilies  = adapter->getQueueFamilyProperties();
-    std::vector<const char*> deviceExtensions           = getDeviceExtensions();
+    std::vector<const char*> deviceExtensions           = adapter->queryAvailableDeviceExtensions(pVc->getRequestedDeviceFeatures());
 
     createInfo.sType                                    = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
@@ -147,8 +110,6 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
         // Add swapchain extension capability.
         deviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
     }
-
-    checkAvailableDeviceExtensions(adapter, deviceExtensions);
 
     // we just need one priority bit, since we are only allocating one queue for both graphics and compute. 
     F32 priority = 1.0f;
@@ -250,6 +211,14 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
         R_ERR(R_CHANNEL_VULKAN, "Failed to initialize the allocation manager!");
     }
     
+    {
+        VulkanAllocationManager::UpdateConfig config;
+        config.flags = VulkanAllocationManager::VulkanAllocUpdateFlag_GarbageResize;
+        config.garbageBufferCount = info.buffering;
+        config.frameIndex = 0; 
+        m_allocationManager->update(config);
+    }
+
     m_context = new VulkanContext(this, info.buffering);
 
     // Create a swapchain if we have our info.
@@ -754,14 +723,16 @@ void VulkanDevice::allocateMemCache()
 {
     // TODO: In the future, we might need to consider multithreading cases, although
     //       I don't think we will have more than one main rendering thread.
-    U64 cacheSizeBytes              = R_ALLOC_MASK(sizeof(VkMappedMemoryRange) * 128ull, ARCH_PTR_SZ_BYTES);
+    U64 cacheSizeBytes              = align(sizeof(VkMappedMemoryRange) * 128ull, pointerSizeBytes());
     m_memCache.flush.pool           = new MemoryPool(cacheSizeBytes);
     m_memCache.invalid.pool         = new MemoryPool(cacheSizeBytes);
     m_memCache.flush.allocator      = new LinearAllocator();
     m_memCache.invalid.allocator    = new LinearAllocator();
+    PtrType alignedFlushAddress     = align(m_memCache.flush.pool->getBaseAddress(), pointerSizeBytes());
+    PtrType alignedInvalidAddress   = align(m_memCache.invalid.pool->getBaseAddress(), pointerSizeBytes());
 
-    m_memCache.flush.allocator->initialize(m_memCache.flush.pool->getBaseAddress(), cacheSizeBytes);
-    m_memCache.invalid.allocator->initialize(m_memCache.invalid.pool->getBaseAddress(), cacheSizeBytes);
+    m_memCache.flush.allocator->initialize(alignedFlushAddress, cacheSizeBytes);
+    m_memCache.invalid.allocator->initialize(alignedInvalidAddress, cacheSizeBytes);
 }
 
 
@@ -802,6 +773,7 @@ void VulkanDevice::flushAllMappedRanges()
         return;
     }
 
+    // Ensure to obtain the aligned base memory address, since the first entry will need to be so.
     VkResult result                 = VK_SUCCESS;
     U32 totalCount                  = (U32)m_memCache.flush.allocator->getTotalAllocations();
     VkMappedMemoryRange* pRanges    = (VkMappedMemoryRange*)m_memCache.flush.allocator->getBaseAddr();
@@ -824,6 +796,7 @@ void VulkanDevice::invalidateAllMappedRanges()
         return;
     }
 
+    // Ensure to obtain the aligned base memory address, since the first entry will need to be so.
     VkResult result                 = VK_SUCCESS;
     U32 totalCount                  = (U32)m_memCache.invalid.allocator->getTotalAllocations();
     VkMappedMemoryRange* pRanges    = (VkMappedMemoryRange*)m_memCache.invalid.allocator->getBaseAddr();
@@ -843,11 +816,13 @@ void VulkanDevice::pushFlushMemoryRange(const VkMappedMemoryRange& mappedRange)
 {
     Allocation allocation   = { };
     VkDeviceSize atomSz     = getNonCoherentSize();
+    // Alignment of 0 since we want to pack these ranges together. We hope that 
+    // the api struct itself will be aligned properly.
     ErrType result          = m_memCache.flush.allocator->allocate
                                 (
                                     &allocation, 
                                     sizeof(VkMappedMemoryRange), 
-                                    ARCH_PTR_SZ_BYTES
+                                    0
                                 );
  
     if (result != RecluseResult_Ok) 
@@ -877,11 +852,12 @@ void VulkanDevice::pushInvalidateMemoryRange(const VkMappedMemoryRange& mappedRa
 {
     Allocation allocation   = { };
     VkDeviceSize atomSz     = getNonCoherentSize();
+    // Alignement of 0 since we want to pack these ranges together. We hope that the api struct itself will be aligned properly.
     ErrType result          = m_memCache.invalid.allocator->allocate
                                 (
                                     &allocation, 
                                     sizeof(VkMappedMemoryRange), 
-                                    ARCH_PTR_SZ_BYTES
+                                    0
                                 );
  
     if (result != RecluseResult_Ok) 

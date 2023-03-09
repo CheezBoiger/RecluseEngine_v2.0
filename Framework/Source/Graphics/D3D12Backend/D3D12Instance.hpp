@@ -22,7 +22,7 @@ public:
 private:
     void queryGraphicsAdapters() override;
     void freeGraphicsAdapters() override;
-    ErrType onInitialize(const ApplicationInfo& appInfo, EnableLayerFlags flags) override;
+    ErrType onInitialize(const ApplicationInfo& appInfo, LayerFeatureFlags flags) override;
     void onDestroy() override;
 
     void enableDebugValidation();

@@ -46,5 +46,7 @@ struct R_PUBLIC_API Matrix33
 
 
 R_PUBLIC_API Matrix33 inverse(const Matrix33& mat33);
+R_PUBLIC_API F32 determinant(const Matrix33& mat33);
+R_PUBLIC_API Matrix33 transpose(const Matrix33& mat33);
 } // Math
 } // Recluse

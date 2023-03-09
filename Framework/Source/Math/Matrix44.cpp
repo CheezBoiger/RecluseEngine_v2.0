@@ -110,12 +110,16 @@ Matrix44 transpose(const Matrix44& lh)
 {
     Matrix44 ans    = lh;
 
+    ans[1]          = lh[4];
+    ans[2]          = lh[8];
     ans[3]          = lh[12];
     ans[7]          = lh[13];
     ans[11]         = lh[14];
     ans[12]         = lh[3];
     ans[13]         = lh[7];
     ans[14]         = lh[11];
+    ans[8]          = lh[2];
+    ans[4]          = lh[1];
 
     return ans;
 }

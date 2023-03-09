@@ -9,7 +9,8 @@ namespace Recluse {
 
 const D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHeap::invalidGpuAddress = { 0 };
 const D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeap::invalidCpuAddress = { 0 };
-const F32 DescriptorHeapAllocationManager::kNumDescriptorsPageSize = 1024.0f;
+const F32 DescriptorHeapAllocationManager::kNumDescriptorsPageSize              = 1024.0f;
+const F32 DescriptorHeapAllocationManager::kNumSamplerDescriptorsPageSize       = 128.f;
 
 
 DescriptorHeapAllocation::DescriptorHeapAllocation
@@ -432,7 +433,7 @@ void DescriptorHeapAllocationManager::free(const DescriptorHeapAllocation& alloc
 }
 
 
-ErrType DescriptorHeapAllocationManager::initialize(ID3D12Device* pDevice, const DescriptorCoreSize& descriptorSizes)
+ErrType DescriptorHeapAllocationManager::initialize(ID3D12Device* pDevice, const DescriptorCoreSize& descriptorSizes, U32 bufferCount)
 {
     U32 numDescriptors = static_cast<U32>(kNumDescriptorsPageSize * descriptorSizes.rtvDescriptorCountFactor);
     m_cpuDescriptorHeapManagers[CpuHeapType_Rtv].initialize(pDevice, 0, numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -443,13 +444,13 @@ ErrType DescriptorHeapAllocationManager::initialize(ID3D12Device* pDevice, const
     numDescriptors = static_cast<U32>(kNumDescriptorsPageSize * descriptorSizes.cbvSrvUavDescriptorCountFactor);
     m_cpuDescriptorHeapManagers[CpuHeapType_CbvSrvUav].initialize(pDevice, 0, numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    numDescriptors = static_cast<U32>(kNumDescriptorsPageSize * descriptorSizes.samplerDescriptorCountFactor);
+    numDescriptors = static_cast<U32>(kNumSamplerDescriptorsPageSize * descriptorSizes.samplerDescriptorCountFactor);
     m_cpuDescriptorHeapManagers[CpuHeapType_Sampler].initialize(pDevice, 0, numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 
     numDescriptors = static_cast<U32>(kNumDescriptorsPageSize * descriptorSizes.cbvSrvUavDescriptorCountFactor);
     m_gpuHeaps[GpuHeapType_CbvSrvUav].initialize(pDevice, 0, numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    numDescriptors = static_cast<U32>(kNumDescriptorsPageSize * descriptorSizes.samplerDescriptorCountFactor);
+    numDescriptors = static_cast<U32>(kNumSamplerDescriptorsPageSize * descriptorSizes.samplerDescriptorCountFactor);
     m_gpuHeaps[GpuHeapType_Sampler].initialize(pDevice, 0, numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
     return RecluseResult_Ok;
 }
@@ -472,6 +473,11 @@ ErrType CpuDescriptorHeapManager::initialize(ID3D12Device* pDevice, U32 nodeMask
 
     return result;
 }
+
+
+void DescriptorHeapAllocationManager::requestUpload(const DescriptorHeapAllocation& descriptor, GpuHeapType heapType)
+{
+} 
 
 
 namespace Binder {

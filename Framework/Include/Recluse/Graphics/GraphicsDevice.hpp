@@ -195,7 +195,14 @@ public:
     virtual ErrType unloadShaderProgram(ShaderProgramId program) { return RecluseResult_NoImpl; }
     // Unload all shader programs, as well as their permutations.
     virtual void unloadAllShaderPrograms() { return; }
+
+    Bool hasFeaturesSupport(LayerFeatureFlags features) { return (m_supportedFeatures & features); }
+protected:
+    // Implementation should set this flag in order to be queried by users. This checks if the device is capable of 
+    // supporting features requested.
+    void setSupportedFeatures(LayerFeatureFlags flags) { m_supportedFeatures = flags; }
 private:
+    LayerFeatureFlags m_supportedFeatures;
 };
 
 

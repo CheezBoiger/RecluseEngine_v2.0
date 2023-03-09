@@ -53,6 +53,9 @@ typedef U32 SizeT;
 #endif
 #endif
 
+// Check the OS architecture bitness size. 
+// This is the size of the supported instruction set.
+// that works with the certain address size.
 #if defined(RECLUSE_64BIT)
 #define ARCH_PTR_SZ_BYTES 8
 #else
@@ -62,7 +65,8 @@ typedef U32 SizeT;
 #define R_STRINGIFY(s) (#s)
 
 // Function representation of defining the recluse engine pointer size.
-static R_FORCE_INLINE PtrType pointerSize()
+// This is the size of the stored address, based on the OS architecture.
+static R_FORCE_INLINE PtrType pointerSizeBytes()
 {
     return ARCH_PTR_SZ_BYTES;
 }

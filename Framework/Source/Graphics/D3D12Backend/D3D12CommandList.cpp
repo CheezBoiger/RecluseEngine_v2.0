@@ -80,7 +80,6 @@ void D3D12PrimaryCommandList::end()
 
 void D3D12PrimaryCommandList::bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* offsets)
 {
-
 }
 
 

@@ -3,6 +3,7 @@
 
 #include "Recluse/Memory/Allocator.hpp"
 #include "Recluse/Memory/MemoryCommon.hpp"
+#include "Recluse/Math/MathCommons.hpp"
 
 namespace Recluse {
 
@@ -23,6 +24,7 @@ public:
 
     ErrType onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override 
     {
+        R_ASSERT(Math::isPowerOf2(alignment));
         PtrType neededSzBytes   = requestSz + alignment;
         U64 totalSzBytes        = getTotalSizeBytes();
         PtrType szAddr          = getBaseAddr() + totalSzBytes;

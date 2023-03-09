@@ -7,6 +7,7 @@
 namespace Recluse {
 namespace Math {
 struct Matrix44;
+struct Matrix43;
 
 
 struct Bool4
@@ -126,11 +127,15 @@ struct R_PUBLIC_API UInt4
 R_PUBLIC_API F32 dot(const Float4& a, const Float4& b);
 R_PUBLIC_API F32 length(const Float4& a);
 R_PUBLIC_API F32 length2(const Float4& a);
-// [1 x 4] * [4 x 4} = [1 x 4]
+// [1 x 4] * [4 x 4] = [1 x 4]
 R_PUBLIC_API Float4 operator*(const Float4& lh, const Matrix44& rh);
+// [1 x 4] * [4 x 3] = [1 x 4]
+R_PUBLIC_API Float4 operator*(const Float4& lh, const Matrix43& rh);
 R_PUBLIC_API Float4 normalize(const Float4& lh);
 
 // See if any component in the vector is a nonzero number.
 R_PUBLIC_API Bool any(const Float4& a);
+// Check if all components in the vector are true.
+R_PUBLIC_API Bool all(const Float4& a);
 } // Math
 } // Recluse

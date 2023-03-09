@@ -97,7 +97,7 @@ int main(int c, char* argv[])
         appInfo.engineMinor = 0;
         appInfo.engineName = "DescriptorSetInitialization";
 
-        EnableLayerFlags flags = LayerFeature_DebugValidationBit;
+        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation;
 
         result = pInstance->initialize(appInfo, flags);
     }
@@ -174,72 +174,72 @@ int main(int c, char* argv[])
 
     updateResource(pData);
 
-    {
-        DescriptorBindDesc bindLayout = { };
-        DescriptorSetLayoutDesc desc = { };
-        desc.pDescriptorBinds = &bindLayout;
-        desc.numDescriptorBinds = 1;
+    //{
+    //    DescriptorBindDesc bindLayout = { };
+    //    DescriptorSetLayoutDesc desc = { };
+    //    desc.pDescriptorBinds = &bindLayout;
+    //    desc.numDescriptorBinds = 1;
 
-        bindLayout.binding = 0;
-        bindLayout.bindType = DescriptorBindType_ConstantBuffer;
-        bindLayout.numDescriptors = 1;
-        bindLayout.shaderStages = ShaderType_Fragment | ShaderType_Vertex;
+    //    bindLayout.binding = 0;
+    //    bindLayout.bindType = DescriptorBindType_ConstantBuffer;
+    //    bindLayout.numDescriptors = 1;
+    //    bindLayout.shaderStages = ShaderType_Fragment | ShaderType_Vertex;
 
-        result = pDevice->createDescriptorSetLayout(&pLayout, desc);
-        
-    }
-    
-    if (result != RecluseResult_Ok) {
+    //    result = pDevice->createDescriptorSetLayout(&pLayout, desc);
+    //    
+    //}
+    //
+    //if (result != RecluseResult_Ok) {
 
-        R_ERR("TEST", "Failed to create descriptor set layout!");
-    
-    }
+    //    R_ERR("TEST", "Failed to create descriptor set layout!");
+    //
+    //}
 
-    result = pDevice->createDescriptorSet(&pSet, pLayout);
+    //result = pDevice->createDescriptorSet(&pSet, pLayout);
 
-    if (result != RecluseResult_Ok) {
-    
-        R_ERR("TEST", "Failed to create descriptor set!");
-    
-    }
+    //if (result != RecluseResult_Ok) {
+    //
+    //    R_ERR("TEST", "Failed to create descriptor set!");
+    //
+    //}
 
-    {
-        DescriptorSetBind bind = { };
-        bind.binding = 0;
-        bind.bindType = DescriptorBindType_ConstantBuffer;
-        bind.descriptorCount = 1;
-        bind.cb.buffer = pData;
-        bind.cb.offset = 0;
-        bind.cb.sizeBytes = sizeof(VertexData);
-        result = pSet->update(&bind, 1);
-    }
-    
-    if (result != RecluseResult_Ok) {
-    
-        R_ERR("TEST", "Failed to update descriptor set!");
-    
-    }
+    //{
+    //    DescriptorSetBind bind = { };
+    //    bind.binding = 0;
+    //    bind.bindType = DescriptorBindType_ConstantBuffer;
+    //    bind.descriptorCount = 1;
+    //    bind.cb.buffer = pData;
+    //    bind.cb.offset = 0;
+    //    bind.cb.sizeBytes = sizeof(VertexData);
+    //    result = pSet->update(&bind, 1);
+    //}
+    //
+    //if (result != RecluseResult_Ok) {
+    //
+    //    R_ERR("TEST", "Failed to update descriptor set!");
+    //
+    //}
 
-    pSwapchain = pDevice->getSwapchain();
+    //pSwapchain = pDevice->getSwapchain();
 
-    {
-        renderPasses.resize(pSwapchain->getDesc().desiredFrames);
-        RenderPassDesc desc = { };
-        desc.numRenderTargets = 1;
-        desc.width = pSwapchain->getDesc().renderWidth;
-        desc.height = pSwapchain->getDesc().renderHeight;
-        for (U32 i = 0; i < pSwapchain->getDesc().desiredFrames; ++i) 
-        {        
-            desc.ppRenderTargetViews[0] = pSwapchain->getFrameView(i);
-            result = pDevice->createRenderPass(&renderPasses[i], desc);
+    //{
+    //    renderPasses.resize(pSwapchain->getDesc().desiredFrames);
+    //    RenderPassDesc desc = { };
+    //    desc.numRenderTargets = 1;
+    //    desc.width = pSwapchain->getDesc().renderWidth;
+    //    desc.height = pSwapchain->getDesc().renderHeight;
+    //    for (U32 i = 0; i < pSwapchain->getDesc().desiredFrames; ++i) 
+    //    {        
+    //        desc.ppRenderTargetViews[0] = pSwapchain->getFrameView(i);
+    //        result = pDevice->createRenderPass(&renderPasses[i], desc);
 
-            if (result != RecluseResult_Ok) 
-            {
-                R_ERR("TEST", "Failed to create render pass for frame view: %d", i);
-                
-            }
-        }
-    }
+    //        if (result != RecluseResult_Ok) 
+    //        {
+    //            R_ERR("TEST", "Failed to create render pass for frame view: %d", i);
+    //            
+    //        }
+    //    }
+    //}
     
     pWindow->open();
 

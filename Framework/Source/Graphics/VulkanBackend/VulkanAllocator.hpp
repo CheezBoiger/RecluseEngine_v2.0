@@ -41,11 +41,13 @@ public:
                     Allocator* pAllocator,
                     U32 memoryTypeIndex,
                     VkDeviceSize memorySizeBytes,
-                    ResourceMemoryUsage usage
+                    ResourceMemoryUsage usage,
+                    U32 allocationId
                 ) 
     {
         m_allocator             = pAllocator;
         m_pool.sizeBytes        = memorySizeBytes;
+        m_allocationId          = allocationId;
         if (!m_allocator) return RecluseResult_NullPtrExcept;
 
         VkMemoryAllocateInfo info   = { };
@@ -112,10 +114,12 @@ public:
 
     U64         getTotalSizeBytes() const { return m_allocator->getTotalSizeBytes(); }
     U64         getUsedSizeBytes() const { return m_allocator->getUsedSizeBytes(); }
+    U32         getAllocationId() const { return m_allocationId; }
     
 private:
     VulkanMemoryPool                        m_pool;
     SmartPtr<Allocator>                     m_allocator;
+    U32                                     m_allocationId;
 };
 
 
@@ -175,9 +179,10 @@ private:
     // Empty garbage from last frame.
     void emptyGarbage(U32 index);
     // Get the next allocator available.
-    VulkanPagedAllocator* getAllocator(const VkMemoryRequirements& requirements, ResourceMemoryUsage usage);
+    VulkanPagedAllocator* getAllocator(ResourceMemoryUsage usage, MemoryTypeIndex memoryTypeIndex, VkDeviceSize sizeBytes, VkDeviceSize alignment);
     // Allocate a page of memory if required.
     VulkanPagedAllocator* allocateMemoryPage(MemoryTypeIndex memoryTypeIndex, ResourceMemoryUsage usage);
+    ErrType allocate(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements, VkImageTiling tiling = VK_IMAGE_TILING_LINEAR);
 
     std::map<MemoryTypeIndex, std::vector<SmartPtr<VulkanPagedAllocator>>>      m_resourceAllocators;
     std::map<MemoryTypeIndex, U64>                                              m_pagedMemoryTotalSizeBytes;

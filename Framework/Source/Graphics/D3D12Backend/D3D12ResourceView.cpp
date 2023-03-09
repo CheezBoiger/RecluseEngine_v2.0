@@ -9,6 +9,10 @@
 namespace Recluse {
 
 
+U64 D3D12GraphicsResourceView::kViewCreationCounter = 0;
+MutexGuard D3D12GraphicsResourceView::kViewMutex = MutexGuard("D3D12GraphicsResourceViewMutex");
+
+
 ErrType D3D12GraphicsResourceView::initialize(D3D12Device* pDevice)
 {
     R_ASSERT(pDevice != NULL);
@@ -21,24 +25,28 @@ ErrType D3D12GraphicsResourceView::initialize(D3D12Device* pDevice)
         case ResourceViewType_RenderTarget:
         {
             rtvDescription.ViewDimension = getRtvDimension(resourceViewDescription.dimension);
+            rtvDescription.Format = Dxgi::getNativeFormat(resourceViewDescription.format);
             break;
         }
 
         case ResourceViewType_DepthStencil:
         {
             dsvDescription.ViewDimension = getDsvDimension(resourceViewDescription.dimension);
+            dsvDescription.Format = Dxgi::getNativeFormat(resourceViewDescription.format);
             break;
         }
 
         case ResourceViewType_ShaderResource:
         {
             srvDescription.ViewDimension = getSrvDimension(resourceViewDescription.dimension);
+            srvDescription.Format = Dxgi::getNativeFormat(resourceViewDescription.format);
             break;
         }
 
         case ResourceViewType_UnorderedAccess:
         {
             uavDescription.ViewDimension = getUavDimension(resourceViewDescription.dimension);
+            uavDescription.Format = Dxgi::getNativeFormat(resourceViewDescription.format);
             break;
         }
 

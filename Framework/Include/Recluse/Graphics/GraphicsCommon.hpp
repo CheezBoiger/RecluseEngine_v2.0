@@ -112,16 +112,23 @@ enum FrameBuffering
 };
 
 
-enum R_PUBLIC_API LayerFeatures 
+enum R_PUBLIC_API LayerFeatureFlag 
 {
-    LayerFeature_RaytracingBit       = (1 << 0),
-    LayerFeature_MeshShadingBit      = (1 << 1),
-    LayerFeature_DebugValidationBit  = (1 << 2),
-    LayerFeature_ApiDumpBit          = (1 << 3)
+    LayerFeatureFlag_None               = 0,
+    // Checks if gpu has dedicated raytracing.
+    LayerFeatureFlag_Raytracing         = (1 << 0),
+    // Checks if gpu has dedicated mesh shading.
+    LayerFeatureFlag_MeshShading        = (1 << 1),
+    // Enables gpu validation, validation messages and errors.
+    LayerFeatureFlag_DebugValidation    = (1 << 2),
+    // 
+    LayerFeatureFlag_ApiDump            = (1 << 3),
+    // Enable marking debugging. This allows graphics objects to be marked or named.
+    LayerFeatureFlag_DebugMarking       = (1 << 4)
 };
 
 
-typedef U32 EnableLayerFlags;
+typedef U32 LayerFeatureFlags;
 
 
 enum GraphicsAPI 

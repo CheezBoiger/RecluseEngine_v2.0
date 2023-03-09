@@ -22,6 +22,12 @@ struct VulkanMemoryPool
     void*           basePtr;           
 };
 
+
+// Proc access to these functions when we query for instance.
+extern PFN_vkSetDebugUtilsObjectNameEXT    pfn_vkSetDebugUtilsObjectNameEXT;
+extern PFN_vkSetDebugUtilsObjectTagEXT     pfn_vkSetDebugUtilsObjectTagEXT;
+
+
 namespace Recluse {
 
 class VulkanGraphicsObject : public virtual IGraphicsObject

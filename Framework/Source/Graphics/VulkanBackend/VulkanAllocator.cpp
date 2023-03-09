@@ -68,7 +68,7 @@ ErrType VulkanPagedAllocator::allocate(VulkanMemory* pOut, const VkMemoryRequire
     pOut->sizeBytes         = allocation.sizeBytes;
     pOut->offsetBytes       = allocation.baseAddress;
     pOut->deviceMemory      = m_pool.memory;
-    pOut->baseAddr          = m_pool.basePtr;   
+    pOut->baseAddr          = m_pool.basePtr;
     return result;
 }
 
@@ -249,11 +249,8 @@ ErrType VulkanAllocationManager::initialize(VulkanDevice* device)
 }
 
 
-VulkanPagedAllocator* VulkanAllocationManager::getAllocator(const VkMemoryRequirements& requirements, ResourceMemoryUsage usage)
+VulkanPagedAllocator* VulkanAllocationManager::getAllocator(ResourceMemoryUsage usage, MemoryTypeIndex memoryTypeIndex, VkDeviceSize sizeBytes, VkDeviceSize alignment)
 {
-    VkDevice device                     = m_pDevice->get();
-    VulkanAdapter* pAdapter             = m_pDevice->getAdapter();
-    MemoryTypeIndex memoryTypeIndex     = pAdapter->findMemoryType(requirements.memoryTypeBits, usage);
     VulkanPagedAllocator* pAllocator    = nullptr;
 
     auto it = m_resourceAllocators.find(memoryTypeIndex);
@@ -266,8 +263,8 @@ VulkanPagedAllocator* VulkanAllocationManager::getAllocator(const VkMemoryRequir
         for (U32 i = 0; i < m_resourceAllocators[memoryTypeIndex].size(); ++i)
         {
             VulkanPagedAllocator* potentialAllocator = m_resourceAllocators[memoryTypeIndex][i];
-            U64 alignment = Math::maximum(requirements.alignment, m_bufferImageGranularityBytes);
-            if (potentialAllocator->hasSpace(align(requirements.size, alignment)))
+            U64 alignment = Math::maximum(alignment, m_bufferImageGranularityBytes);
+            if (potentialAllocator->hasSpace(align(sizeBytes, alignment)))
             {
                 pAllocator = potentialAllocator;
                 break;
@@ -284,17 +281,41 @@ VulkanPagedAllocator* VulkanAllocationManager::getAllocator(const VkMemoryRequir
 }
 
 
+ErrType VulkanAllocationManager::allocate(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements, VkImageTiling tiling)
+{
+    VulkanAdapter* pAdapter                 = m_pDevice->getAdapter();
+    MemoryTypeIndex memoryTypeIndex         = pAdapter->findMemoryType(requirements.memoryTypeBits, usage);
+    VulkanPagedAllocator* pagedAllocator    = getAllocator(usage, memoryTypeIndex, requirements.size, requirements.alignment);
+    ErrType result                          = RecluseResult_Ok;
+
+    if (!pagedAllocator)
+    {
+        return RecluseResult_OutOfMemory;
+    }
+
+    result = pagedAllocator->allocate(pOut, requirements, m_bufferImageGranularityBytes, tiling);
+
+    if (result != RecluseResult_Ok)
+    {
+        return result;
+    }
+
+    pOut->memoryTypeIndex = memoryTypeIndex;
+    pOut->allocatorIndex = pagedAllocator->getAllocationId();
+
+    return result;
+}
+
+
 ErrType VulkanAllocationManager::allocateBuffer(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements)
 {
-    VulkanPagedAllocator* pAllocator = getAllocator(requirements, usage);
-    return pAllocator->allocate(pOut, requirements, m_bufferImageGranularityBytes);
+    return allocate(pOut, usage, requirements);
 }
 
 
 ErrType VulkanAllocationManager::allocateImage(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements, VkImageTiling tiling)
 {
-    VulkanPagedAllocator* allocator = getAllocator(requirements, usage);
-    return allocator->allocate(pOut, requirements, m_bufferImageGranularityBytes, tiling);
+    return allocate(pOut, usage, requirements, tiling);
 }
 
 
@@ -311,7 +332,8 @@ VulkanPagedAllocator* VulkanAllocationManager::allocateMemoryPage(MemoryTypeInde
     VkDevice device                     = m_pDevice->get();
     m_resourceAllocators[memoryTypeIndex].push_back(makeSmartPtr(new VulkanPagedAllocator()));
     VulkanPagedAllocator* pAllocator    = m_resourceAllocators[memoryTypeIndex].back();
-    pAllocator->initialize(device, new LinearAllocator(), memoryTypeIndex, kPerMemoryPageSizeBytes, usage);
+    const U32 allocationId              = (m_resourceAllocators[memoryTypeIndex].size() - 1);
+    pAllocator->initialize(device, new LinearAllocator(), memoryTypeIndex, kPerMemoryPageSizeBytes, usage, allocationId);
     m_totalAllocationSizeBytes          += pAllocator->getTotalSizeBytes();
     return pAllocator;
 }

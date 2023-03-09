@@ -94,7 +94,7 @@ int main(int c, char* argv[])
         app.engineName = "Cat";
         app.appName = "PipelineInitialization";
 
-        EnableLayerFlags flags = LayerFeature_DebugValidationBit;
+        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation;
 
         result = pInstance->initialize(app, flags);
     }

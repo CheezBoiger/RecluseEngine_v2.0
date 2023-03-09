@@ -44,12 +44,12 @@ void D3D12Instance::freeGraphicsAdapters()
 }
 
 
-ErrType D3D12Instance::onInitialize(const ApplicationInfo& appInfo, EnableLayerFlags flags)
+ErrType D3D12Instance::onInitialize(const ApplicationInfo& appInfo, LayerFeatureFlags flags)
 {
     R_DEBUG(R_CHANNEL_D3D12, "Initializing D3D12 context...");
     HRESULT result = S_OK;
 
-    if (flags & LayerFeature_DebugValidationBit) 
+    if (flags & LayerFeatureFlag_DebugValidation) 
     {
         enableDebugValidation();
     }    

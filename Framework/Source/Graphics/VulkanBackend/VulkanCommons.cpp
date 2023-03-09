@@ -1,6 +1,10 @@
 //
 #include "VulkanCommons.hpp"
 
+// Set to null, but will be queried as soon as we get an instance, and we are supporting debug utils.
+PFN_vkSetDebugUtilsObjectNameEXT    pfn_vkSetDebugUtilsObjectNameEXT    = nullptr;
+PFN_vkSetDebugUtilsObjectTagEXT     pfn_vkSetDebugUtilsObjectTagEXT     = nullptr;
+
 namespace Vulkan {
 
 

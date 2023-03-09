@@ -115,7 +115,7 @@ Log::~Log()
 void LoggingQueue::store(const Log& log)
 {
     SizeT alignedSzBytes    = sizeof(LogNode);
-    alignedSzBytes          = align(alignedSzBytes, pointerSize());
+    alignedSzBytes          = align(alignedSzBytes, pointerSizeBytes());
     SizeT poolSzBytes       = m_pool->getTotalSizeBytes();
 
     ScopedLock lck(m_mutex);

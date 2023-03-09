@@ -92,5 +92,29 @@ F32& Matrix33::get(U32 row, U32 col)
     R_ASSERT(row < 3 && col < 3);
     return m[3u * row + col];
 }
+
+
+F32 determinant(const Matrix33& m)
+{
+    return  (m[0] * m[4] * m[8]) + 
+            (m[1] * m[5] * m[6]) + 
+            (m[2] * m[3] * m[7]) - 
+            (m[2] * m[4] * m[6]) -
+            (m[1] * m[3] * m[8]) -
+            (m[0] * m[5] * m[7]);
+}
+
+
+Matrix33 transpose(const Matrix33& m)
+{
+    Matrix33 t = m;
+    t[1] = m[3];
+    t[2] = m[6];
+    t[5] = m[7];
+    t[7] = m[5];
+    t[6] = m[2];
+    t[3] = m[1];
+    return t;
+}
 } // Math
 } // Recluse

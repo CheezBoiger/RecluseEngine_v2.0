@@ -201,8 +201,9 @@ public:
     // Chunk size of each descriptor heap. When a chunk is fully filled with descriptors, we create a new sized chunk based on this
     // size value.
     static const F32 kNumDescriptorsPageSize;
+    static const F32 kNumSamplerDescriptorsPageSize;
 
-    ErrType                     initialize(ID3D12Device* pDevice, const DescriptorCoreSize& descriptorSizes);
+    ErrType                     initialize(ID3D12Device* pDevice, const DescriptorCoreSize& descriptorSizes, U32 bufferCount);
     ErrType                     release(ID3D12Device* pDevice);
 
     // Allocate a table of descriptors. Uses device only if we run out of descriptor space... This shouldn't usually happen unless
@@ -213,8 +214,9 @@ public:
     void                        free(const DescriptorHeapAllocation& descriptorAllocation);
 
     // Upload a section of cpu handles to the gpu descriptor heap.
-    void                        requestUpload(const DescriptorHeapAllocation& descriptor);
-    void                        update();
+    void                        requestUpload(const DescriptorHeapAllocation& descriptor, GpuHeapType heapType);
+    void                        update(U32 index);
+    GpuDescriptorHeap*          getGpuDescriptorHeap(GpuHeapType heapType, U32 index);
 
 private:
 

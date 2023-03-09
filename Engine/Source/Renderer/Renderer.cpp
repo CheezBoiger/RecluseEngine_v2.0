@@ -43,7 +43,7 @@ void Renderer::initialize()
     // Immediately initialize the render configs to the current.
     m_currentRendererConfigs = m_newRendererConfigs;
 
-    EnableLayerFlags flags  = 0;
+    LayerFeatureFlags flags  = 0;
     ApplicationInfo info    = { };
     ErrType result          = RecluseResult_Ok;
     m_windowHandle          = m_currentRendererConfigs.windowHandle;

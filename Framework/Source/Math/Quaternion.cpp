@@ -67,6 +67,18 @@ Float3 Quaternion::operator*(const Float3& rh) const
 }
 
 
+Bool4 Quaternion::operator==(const Quaternion& rh) const
+{
+    return Bool4(x == rh[0], y == rh[1], z == rh[2], w == rh[3]);
+}
+
+
+Bool4 Quaternion::operator!=(const Quaternion& rh) const
+{
+    return !(*this == rh);
+}
+
+
 Quaternion conjugate(const Quaternion& quat)
 {
     return Quaternion(-quat[0], -quat[1], -quat[2], quat[3]);

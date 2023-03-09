@@ -51,7 +51,7 @@ void VulkanInstance::setDebugCallback()
 }
 
 
-static std::vector<const char*> loadExtensions(EnableLayerFlags flags)
+static std::vector<const char*> loadExtensions(LayerFeatureFlags flags, std::vector<LayerFeatureFlag>& wantedExtBits)
 {
     std::vector<const char*> extensions = 
         { 
@@ -62,16 +62,28 @@ static std::vector<const char*> loadExtensions(EnableLayerFlags flags)
             , "VK_KHR_get_physical_device_properties2"
         };
 
-    if (flags & LayerFeature_DebugValidationBit) 
+    if (flags & LayerFeatureFlag_DebugValidation) 
     {
-        extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);    
+        extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+        wantedExtBits.push_back(LayerFeatureFlag_DebugValidation);    
+    }
+
+    if (flags & (LayerFeatureFlag_Raytracing | LayerFeatureFlag_MeshShading))
+    {
+        extensions.push_back("VK_KHR_device_group_creation");
+    }
+
+    if (flags & LayerFeatureFlag_DebugMarking)
+    {
+        extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+        wantedExtBits.push_back(LayerFeatureFlag_DebugMarking);
     }
 
     return extensions;
 }
 
 
-static void checkForValidExtensions(std::vector<const char*>& wantedExtensions)
+static void checkForValidExtensions(std::vector<const char*>& wantedExtensions, std::vector<LayerFeatureFlag>& wantedExtBits)
 {
     U32 count = 0;
     std::vector<VkExtensionProperties> properties;
@@ -114,31 +126,34 @@ static void checkForValidExtensions(std::vector<const char*>& wantedExtensions)
             // Not supported.
             R_WARN(R_CHANNEL_VULKAN, "Extension %s not supported.", wantedExtensions[i]);
             wantedExtensions.erase(wantedExtensions.begin() + i);
+            wantedExtBits.erase(wantedExtBits.begin() + i);
             --i;
         }
     }
 }
 
 
-static std::vector<const char*> loadLayers(EnableLayerFlags flags)
+static std::vector<const char*> loadLayers(LayerFeatureFlags flags, std::vector<LayerFeatureFlag>& wantedLayers)
 {
     std::vector<const char*> desiredLayers = { };
 
-    if (flags & LayerFeature_DebugValidationBit) 
+    if (flags & LayerFeatureFlag_DebugValidation) 
     {
         desiredLayers.push_back("VK_LAYER_KHRONOS_validation");
+        wantedLayers.push_back(LayerFeatureFlag_DebugValidation);
     }
 
-    if (flags & LayerFeature_ApiDumpBit) 
+    if (flags & LayerFeatureFlag_ApiDump) 
     {
         desiredLayers.push_back("VK_LAYER_LUNARG_api_dump");
+        wantedLayers.push_back(LayerFeatureFlag_ApiDump);
     }
 
     return desiredLayers;
 }
 
 
-void checkForValidLayers(std::vector<const char*>& wantedLayers)
+void checkForValidLayers(std::vector<const char*>& wantedLayers, std::vector<LayerFeatureFlag>& wantedBits)
 {
     std::vector<VkLayerProperties> layerProperties;
     U32 count = 0;
@@ -169,41 +184,44 @@ void checkForValidLayers(std::vector<const char*>& wantedLayers)
             // Remove and decrement search index by 1.
             R_WARN(R_CHANNEL_VULKAN, "%s was not found.", wantedLayers[i]);
             wantedLayers.erase(wantedLayers.begin() + i);
+            wantedBits.erase(wantedBits.begin() + i);
             --i;
         }
     }
 }
 
 
-ErrType VulkanInstance::onInitialize(const ApplicationInfo& appInfo, EnableLayerFlags flags)
+ErrType VulkanInstance::onInitialize(const ApplicationInfo& appInfo, LayerFeatureFlags flags)
 {
-    std::vector<const char*> extensions = loadExtensions(flags);
-    std::vector<const char*> layers     = loadLayers(flags);
+    std::vector<LayerFeatureFlag> wantedLayerBits   = { };
+    std::vector<LayerFeatureFlag> wantedExtBits     = { };
+    std::vector<const char*> extensions             = loadExtensions(flags, wantedExtBits);
+    std::vector<const char*> layers                 = loadLayers(flags, wantedLayerBits);
 
-    checkForValidExtensions(extensions);
-    checkForValidLayers(layers);
+    checkForValidExtensions(extensions, wantedExtBits);
+    checkForValidLayers(layers, wantedLayerBits);
     
-    VkApplicationInfo nativeAppInfo     = { };    
-    VkInstanceCreateInfo createInfo     = { };
+    VkApplicationInfo nativeAppInfo         = { };    
+    VkInstanceCreateInfo createInfo         = { };
 
-    m_debugReportCallback               = VK_NULL_HANDLE;
-    m_appName                           = appInfo.appName;
-    m_engineName                        = appInfo.engineName;
+    m_debugReportCallback                   = VK_NULL_HANDLE;
+    m_appName                               = appInfo.appName;
+    m_engineName                            = appInfo.engineName;
 
-    nativeAppInfo.sType                 = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    nativeAppInfo.apiVersion            = VK_MAKE_VERSION(1, 1, 0); // We will target Vulkan v1.1.0
-    nativeAppInfo.pApplicationName      = appInfo.appName;
-    nativeAppInfo.pEngineName           = appInfo.engineName;
-    nativeAppInfo.engineVersion         = VK_MAKE_VERSION(appInfo.engineMajor, appInfo.engineMinor, appInfo.enginePatch);
-    nativeAppInfo.applicationVersion    = VK_MAKE_VERSION(appInfo.appMajor, appInfo.appMinor, appInfo.appPatch);
+    nativeAppInfo.sType                     = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    nativeAppInfo.apiVersion                = VK_MAKE_VERSION(1, 1, 0); // We will target Vulkan v1.1.0
+    nativeAppInfo.pApplicationName          = appInfo.appName;
+    nativeAppInfo.pEngineName               = appInfo.engineName;
+    nativeAppInfo.engineVersion             = VK_MAKE_VERSION(appInfo.engineMajor, appInfo.engineMinor, appInfo.enginePatch);
+    nativeAppInfo.applicationVersion        = VK_MAKE_VERSION(appInfo.appMajor, appInfo.appMinor, appInfo.appPatch);
     nativeAppInfo.pNext = nullptr;
     
-    createInfo.sType                    = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    createInfo.pApplicationInfo         = &nativeAppInfo;
-    createInfo.enabledLayerCount        = (U32)layers.size();
-    createInfo.ppEnabledLayerNames      = layers.data();
-    createInfo.enabledExtensionCount    = (U32)extensions.size();
-    createInfo.ppEnabledExtensionNames  = extensions.data();
+    createInfo.sType                        = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    createInfo.pApplicationInfo             = &nativeAppInfo;
+    createInfo.enabledLayerCount            = (U32)layers.size();
+    createInfo.ppEnabledLayerNames          = layers.data();
+    createInfo.enabledExtensionCount        = (U32)extensions.size();
+    createInfo.ppEnabledExtensionNames      = extensions.data();
 
     VkResult result = vkCreateInstance(&createInfo, nullptr, &m_instance);
     
@@ -214,13 +232,27 @@ ErrType VulkanInstance::onInitialize(const ApplicationInfo& appInfo, EnableLayer
 
     R_DEBUG(R_CHANNEL_VULKAN, "Application: %s\nEngine: %s", m_appName.c_str(), m_engineName.c_str());
 
-    if (flags & LayerFeature_DebugValidationBit) 
+    if (flags & LayerFeatureFlag_DebugValidation) 
     {
         setDebugCallback();
     }
 
+    for (LayerFeatureFlag featureBit : wantedLayerBits)
+    {
+        m_enabledLayers |= featureBit;
+    }
+    
+    for (LayerFeatureFlag featureBit : wantedExtBits)
+    {
+        m_enabledLayers |= featureBit;
+    }
+
     m_engineVersion = nativeAppInfo.engineVersion;
     m_appVersion    = nativeAppInfo.applicationVersion;
+
+    setRequestedDeviceExtensions(flags);
+
+    queryFunctions();
 
     return 0;
 }
@@ -290,6 +322,27 @@ void VulkanInstance::destroyDebugCallback()
             vkDestroyDebugReportCallbackEXT(m_instance, m_debugReportCallback, nullptr);
             m_debugReportCallback = VK_NULL_HANDLE;
         }
+    }
+}
+
+
+void VulkanInstance::setRequestedDeviceExtensions(LayerFeatureFlags flags)
+{
+    if (flags & LayerFeatureFlag_MeshShading)
+        m_requestedDeviceFeatures |= LayerFeatureFlag_MeshShading;
+    if (flags & LayerFeatureFlag_Raytracing)
+        m_requestedDeviceFeatures |= LayerFeatureFlag_Raytracing;
+}
+
+
+void VulkanInstance::queryFunctions()
+{
+    if (supportsDebugMarking())
+    {
+        if (!pfn_vkSetDebugUtilsObjectNameEXT)
+            pfn_vkSetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)getProcAddr("vkSetDebugUtilsObjectNameEXT");
+        if (!pfn_vkSetDebugUtilsObjectTagEXT)
+            pfn_vkSetDebugUtilsObjectTagEXT = (PFN_vkSetDebugUtilsObjectTagEXT)getProcAddr("vkSetDebugUtilsObjectTagEXT");
     }
 }
 } // Recluse

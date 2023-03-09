@@ -107,7 +107,7 @@ private:
 class MutexGuard
 {
 public:
-    MutexGuard(const char* debugName) { m_mutex = createMutex(debugName); }
+    MutexGuard(const char* debugName = nullptr) { m_mutex = createMutex(debugName); }
     ~MutexGuard() { destroyMutex(m_mutex); }
     operator Mutex() const { return m_mutex; }
     Mutex* operator*() { return &m_mutex; }

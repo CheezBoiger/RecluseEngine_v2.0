@@ -16,7 +16,7 @@ namespace Engine {
 void RenderCommandList::initialize()
 {
     // 2 MB for our render command list.
-    U64 szBytes = align(2 * R_1MB, pointerSize());
+    U64 szBytes = align(2 * R_1MB, pointerSizeBytes());
     if (!m_pool) 
     {
         m_pool = new MemoryPool(szBytes);
@@ -27,7 +27,7 @@ void RenderCommandList::initialize()
 
     if (!m_pointerPool) 
     {
-        szBytes = align(64 * R_1KB, pointerSize());
+        szBytes = align(64 * R_1KB, pointerSizeBytes());
         m_pointerPool = new MemoryPool(szBytes);
         m_pointerAllocator = new LinearAllocator();
     
@@ -94,7 +94,7 @@ ErrType RenderCommandList::push(const RenderCommand& renderCommand)
     }
 
     PtrType p = allocation.baseAddress;
-    ErrType result = m_pointerAllocator->allocate(&allocation, pointerSize(), pointerSize());
+    ErrType result = m_pointerAllocator->allocate(&allocation, pointerSizeBytes(), pointerSizeBytes());
 
     if (result == RecluseResult_Ok) 
     {

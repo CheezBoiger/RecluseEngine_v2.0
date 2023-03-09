@@ -3,6 +3,10 @@
 #include "VulkanDevice.hpp"
 #include "Recluse/Messaging.hpp"
 
+#include "Recluse/Serialization/Hasher.hpp"
+
+#include <set>
+
 namespace Recluse {
 
 
@@ -35,6 +39,7 @@ std::vector<VulkanAdapter> VulkanAdapter::getAvailablePhysicalDevices(VulkanInst
             VulkanAdapter device;
             device.m_phyDevice = devices[i];
             device.m_instance = ctx;
+            device.checkAvailableDeviceExtensions();
             physicalDevices[i] = std::move(device);
         }
     }
@@ -283,5 +288,106 @@ std::vector<VkSurfaceFormatKHR> VulkanAdapter::getSurfaceFormats(VkSurfaceKHR su
     std::vector<VkSurfaceFormatKHR> formats(formatCount);
     vkGetPhysicalDeviceSurfaceFormatsKHR(m_phyDevice, surface, &formatCount, formats.data());
     return formats;
+}
+
+
+void VulkanAdapter::checkAvailableDeviceExtensions()
+{
+    std::vector<VkExtensionProperties> deviceExtensions = getDeviceExtensionProperties();
+
+    // TODO: Need to find a better way to query extensions. Some of these have dependencies between device and instance extensions.
+    //       We could create a config that has an extension, and its dependency, than create some kind of DAG?
+    m_supportedDeviceExtensions.push_back(std::make_tuple(LayerFeatureFlag_Raytracing, 
+        std::vector<const char*>{   "VK_KHR_ray_tracing_pipeline", 
+                                    "VK_KHR_acceleration_structure", 
+                                    "VK_KHR_ray_query", 
+                                    "VK_KHR_spirv_1_4",
+                                    "VK_KHR_buffer_device_address",
+                                    "VK_KHR_deferred_host_operations",
+                                    "VK_EXT_descriptor_indexing",
+                                    "VK_KHR_device_group",
+                                    "VK_KHR_maintenance3",
+                                    "VK_KHR_shader_float_controls"}));
+    m_supportedDeviceExtensions.push_back(std::make_tuple(LayerFeatureFlag_MeshShading, 
+        std::vector<const char*>{   "VK_EXT_mesh_shader", 
+                                    "VK_KHR_spirv_1_4",
+                                    "VK_KHR_shader_float_controls"}));
+    
+    m_supportedDeviceExtensionFlags = LayerFeatureFlag_MeshShading | LayerFeatureFlag_Raytracing;
+
+    // Query all device extensions available for this device.
+    for (U32 i = 0; i < m_supportedDeviceExtensions.size(); ++i) 
+    {
+        B32 found = false;
+        for (U32 extI = 0; extI < std::get<1>(m_supportedDeviceExtensions[i]).size(); ++extI)
+        {
+            const char* extensionStr = std::get<1>(m_supportedDeviceExtensions[i])[extI];
+            for (U32 j = 0; j < deviceExtensions.size(); ++j) 
+            { 
+                if (strcmp(deviceExtensions[j].extensionName, extensionStr) == 0) 
+                {
+                    R_DEBUG
+                        (
+                            R_CHANNEL_VULKAN, 
+                            "Found %s Spec Version: %d", 
+                            deviceExtensions[j].extensionName,
+                            deviceExtensions[j].specVersion
+                        );
+
+                    found = true;
+                    break;
+                }
+    
+            }
+
+            if (!found) 
+            {
+                R_WARN(R_CHANNEL_VULKAN, "%s not found. Removing extension.", std::get<1>(m_supportedDeviceExtensions[i])[extI]);
+                m_supportedDeviceExtensionFlags &= ~(std::get<0>(m_supportedDeviceExtensions[i]));
+                m_supportedDeviceExtensions.erase(m_supportedDeviceExtensions.begin() + i);
+                --i;
+                break;
+            }
+        }
+    }
+}
+
+
+std::vector<const char*> VulkanAdapter::queryAvailableDeviceExtensions(LayerFeatureFlags requested) const
+{
+
+    struct Comp
+    {
+        bool operator()(const char* p0, const char* p1) const
+        {
+            return (strcmp(p0, p1) > 0);
+        }
+    };
+
+    std::set<const char*, Comp> supportedExtensions;
+    std::vector<const char*> extensions;
+    for (U32 bit = 1; bit != 0; bit <<= 1)
+    {
+        if (bit & requested)
+        {
+            for (U32 i = 0; i < m_supportedDeviceExtensions.size(); ++i)
+            {
+                if (bit & std::get<0>(m_supportedDeviceExtensions[i]))
+                {
+                    for (U32 j = 0; j < std::get<1>(m_supportedDeviceExtensions[i]).size(); ++j)
+                    {
+                        supportedExtensions.insert(std::get<1>(m_supportedDeviceExtensions[i])[j]);
+                    }
+                }
+            }
+        }
+    }
+
+    for (const char* str : supportedExtensions)
+    {
+        extensions.push_back(str);
+    }
+
+    return extensions;
 }
 } // Recluse 

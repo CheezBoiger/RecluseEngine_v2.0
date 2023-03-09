@@ -337,7 +337,23 @@ ErrType VulkanBuffer::onBind(VulkanDevice* pDevice)
     {    
         return RecluseResult_Failed;
     }
-    
+
+    const Bool supportsDebugMarking = pDevice->getAdapter()->getInstance()->supportsDebugMarking();
+    if (supportsDebugMarking)
+    {
+        VkDebugUtilsObjectNameInfoEXT nameInfo = { };
+        nameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+        nameInfo.objectType = VK_OBJECT_TYPE_BUFFER;
+        nameInfo.pNext = nullptr;
+        nameInfo.objectHandle = reinterpret_cast<uint64_t>(m_buffer);
+        nameInfo.pObjectName = "DebugBufferName";
+        VkResult debugResult = pfn_vkSetDebugUtilsObjectNameEXT(pDevice->get(), &nameInfo);
+        if (debugResult != VK_SUCCESS)
+        {
+            R_WARN(R_CHANNEL_VULKAN, "Failed to create buffer debug name object.");
+        }
+    }    
+
     return RecluseResult_Ok;
 }
 
@@ -352,6 +368,23 @@ ErrType VulkanImage::onBind(VulkanDevice* pDevice)
     {
         return RecluseResult_Failed;
     }
+
+    const Bool supportsDebugMarking = pDevice->getAdapter()->getInstance()->supportsDebugMarking();
+    if (supportsDebugMarking)
+    {
+        VkDebugUtilsObjectNameInfoEXT nameInfo = { };
+        nameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+        nameInfo.objectType = VK_OBJECT_TYPE_IMAGE;
+        nameInfo.pNext = nullptr;
+        nameInfo.objectHandle = reinterpret_cast<uint64_t>(m_image);
+        nameInfo.pObjectName = "DebugImageName";
+        VkResult debugResult = pfn_vkSetDebugUtilsObjectNameEXT(pDevice->get(), &nameInfo);
+        if (debugResult != VK_SUCCESS)
+        {
+            R_WARN(R_CHANNEL_VULKAN, "Failed to create image debug name object.");
+        }
+    }
+
 
     return RecluseResult_Ok;
 }

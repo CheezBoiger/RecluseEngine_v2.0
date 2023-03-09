@@ -109,7 +109,7 @@ public:
             {
                 if (mover->isEnabled())
                 {
-                    ECS::GameEntity* pEntity            = ECS::GameEntity::getEntity(mover->getOwner());
+                    ECS::GameEntity* pEntity            = ECS::GameEntity::findEntity(mover->getOwner());
                     if (pEntity->isActive())
                     {       
                         Transform* t                        = pEntity->getComponent<Transform>();

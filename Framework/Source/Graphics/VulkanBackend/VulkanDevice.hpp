@@ -170,7 +170,7 @@ private:
     void markPipelineDirty() { m_pipelineDirty = true; }
     Bool isPipelineDirty() const { return m_pipelineDirty; }
     void unmarkPipelineDirty() { m_pipelineDirty = false; }
-    ContextState& currentState() { return *m_contextStates.end(); }
+    ContextState& currentState() { return m_contextStates.back(); }
 
     // buffer count 
     U32                                                                 m_bufferCount;

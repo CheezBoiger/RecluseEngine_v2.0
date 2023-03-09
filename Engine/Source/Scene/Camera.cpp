@@ -9,6 +9,11 @@ void Camera::updateView(const Transform* transform)
 {
     if ((transform->position != m_position).all())
     {
+        m_position = transform->position;
+    }
+
+    if ((transform->rotation != m_rotation).all())
+    {
     }
 }
 } // Engine

@@ -77,7 +77,7 @@ int main(int c, char* argv[])
         app.engineName = "Cat";
         app.appName = "Compute";
 
-        EnableLayerFlags flags = LayerFeature_DebugValidationBit;
+        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation | LayerFeatureFlag_Raytracing | LayerFeatureFlag_MeshShading | LayerFeatureFlag_DebugMarking;
 
         result = pInstance->initialize(app, flags);
     }

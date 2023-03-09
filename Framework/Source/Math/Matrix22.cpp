@@ -121,5 +121,20 @@ Matrix22 Matrix22::operator*(const Matrix22& rh) const
             m[2] * rh[0] + m[3] * rh[2], m[2] * rh[1] + m[3] * rh[3]
         );
 }
+
+
+F32 determinant(const Matrix22& m)
+{
+    return (m[0] * m[3]) - (m[1] * m[2]);
+}
+
+
+Matrix22 transpose(const Matrix22& m)
+{
+    Matrix22 t = m;
+    t[1] = t[2];
+    t[2] = t[1];
+    return t;
+}
 } // Math
 } // Recluse

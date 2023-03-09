@@ -36,6 +36,9 @@ struct R_PUBLIC_API Quaternion
 
     inline Quaternion operator-() const;
     inline Quaternion operator~() const;
+
+    inline Bool4 operator==(const Quaternion& rh) const;
+    inline Bool4 operator!=(const Quaternion& rh) const;
     
     inline Float3 operator*(const Float3& rh) const;
 };
