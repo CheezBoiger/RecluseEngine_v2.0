@@ -134,21 +134,21 @@ public:
     static VkDeviceSize kPerMemoryPageSizeBytes;
     typedef U32 MemoryTypeIndex;
 
-    enum VulkanAllocUpdateFlag
+    enum Flag
     {
-        VulkanAllocUpdateFlag_None                  = 0,
-        VulkanAllocUpdateFlag_Update                = (1 << 0),
-        VulkanAllocUpdateFlag_SetFrameIndex         = (1 << 1),
-        VulkanAllocUpdateFlag_IncrementFrameIndex   = (1 << 2),
-        VulkanAllocUpdateFlag_GarbageResize         = (1 << 3),
-        VulkanAllocUpdateFlag_Clear                 = (1 << 4)
+        Flag_None                  = 0,
+        Flag_Update                = (1 << 0),
+        Flag_SetFrameIndex         = (1 << 1),
+        Flag_IncrementFrameIndex   = (1 << 2),
+        Flag_GarbageResize         = (1 << 3),
+        Flag_Clear                 = (1 << 4)
     };
 
-    typedef U32 VulkanAllocUpdateFlags;
+    typedef U32 Flags;
 
     struct UpdateConfig
     {
-        VulkanAllocUpdateFlags flags;
+        Flags flags;
         U32 frameIndex : 16;
         U32 garbageBufferCount : 16;
     };
@@ -162,27 +162,27 @@ public:
     {
     }
 
-    ErrType     initialize(VulkanDevice* pDevice);
-    void        clear();
-    ErrType     release();
+    ErrType                 initialize(VulkanDevice* pDevice);
+    void                    clear();
+    ErrType                 release();
 
-    ErrType     allocateBuffer(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements);
-    ErrType     allocateImage(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements, VkImageTiling tiling);
-    ErrType     free(VulkanMemory* pOut, Bool immediate = false);
+    ErrType                 allocateBuffer(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements);
+    ErrType                 allocateImage(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements, VkImageTiling tiling);
+    ErrType                 free(VulkanMemory* pOut, Bool immediate = false);
 
-    void        update(const UpdateConfig& config);
-    void        setTotalMemory(const MemoryReserveDesc& desc) { }
+    void                    update(const UpdateConfig& config);
+    void                    setTotalMemory(const MemoryReserveDesc& desc) { }
 
-    U64         getTotalAllocationSizeBytes() const { return m_totalAllocationSizeBytes; }    
+    U64                     getTotalAllocationSizeBytes() const { return m_totalAllocationSizeBytes; }    
 
 private:
     // Empty garbage from last frame.
-    void emptyGarbage(U32 index);
+    void                    emptyGarbage(U32 index);
     // Get the next allocator available.
-    VulkanPagedAllocator* getAllocator(ResourceMemoryUsage usage, MemoryTypeIndex memoryTypeIndex, VkDeviceSize sizeBytes, VkDeviceSize alignment);
+    VulkanPagedAllocator*   getAllocator(ResourceMemoryUsage usage, MemoryTypeIndex memoryTypeIndex, VkDeviceSize sizeBytes, VkDeviceSize alignment);
     // Allocate a page of memory if required.
-    VulkanPagedAllocator* allocateMemoryPage(MemoryTypeIndex memoryTypeIndex, ResourceMemoryUsage usage);
-    ErrType allocate(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements, VkImageTiling tiling = VK_IMAGE_TILING_LINEAR);
+    VulkanPagedAllocator*   allocateMemoryPage(MemoryTypeIndex memoryTypeIndex, ResourceMemoryUsage usage);
+    ErrType                 allocate(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements, VkImageTiling tiling = VK_IMAGE_TILING_LINEAR);
 
     std::map<MemoryTypeIndex, std::vector<SmartPtr<VulkanPagedAllocator>>>      m_resourceAllocators;
     std::map<MemoryTypeIndex, U64>                                              m_pagedMemoryTotalSizeBytes;

@@ -8,6 +8,7 @@
 #include "VulkanResource.hpp"
 #include "VulkanObjects.hpp"
 #include "VulkanViews.hpp"
+#include "VulkanDescriptorManager.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 #include "VulkanCommandList.hpp"
 #include <vector>
@@ -19,7 +20,6 @@ namespace Recluse {
 class VulkanAdapter;
 class VulkanQueue;
 class VulkanSwapchain;
-class VulkanDescriptorManager;
 class VulkanDevice;
 class VulkanSwapchain;
 class Allocator;
@@ -201,7 +201,6 @@ public:
         , m_surface(VK_NULL_HANDLE)
         , m_windowHandle(nullptr)
         , m_adapter(nullptr)
-        , m_pDescriptorManager(nullptr)
         , m_pGraphicsQueue(nullptr)
         , m_properties({ })
         , m_memCache({ })
@@ -239,11 +238,18 @@ public:
     void        release(VkInstance instance);
     ErrType     destroyResourceView(GraphicsResourceView* pResourceView) override;
 
-    VkDevice operator()() {
+    DescriptorAllocatorInstance* getDescriptorAllocatorInstance(U32 bufferIndex)
+    {
+        return m_descriptorAllocator.getInstance(bufferIndex);
+    }
+
+    VkDevice operator()() 
+    {
         return m_device;
     }
 
-    VkDevice get() const {
+    VkDevice get() const 
+    {
         return m_device;
     }
 
@@ -255,8 +261,6 @@ public:
 
     VulkanAllocationManager* getAllocationManager()
         { return m_allocationManager.raw(); }
-
-    VulkanDescriptorManager* getDescriptorHeap() { return m_pDescriptorManager; }
 
     // Invalidate resources when reading back from GPU.
     void pushInvalidateMemoryRange(const VkMappedMemoryRange& mappedRange);
@@ -303,15 +307,15 @@ private:
 
     } m_memCache;
 
-    SmartPtr<VulkanAllocationManager> m_allocationManager;
-    VulkanDescriptorManager*          m_pDescriptorManager;
-    VulkanSwapchain*            m_swapchain;
-    VulkanContext*              m_context;
-    std::vector<QueueFamily>    m_queueFamilies;
-    std::vector<VkCommandPool>  m_commandPools;
-    VulkanQueue*                m_pGraphicsQueue;
+    SmartPtr<VulkanAllocationManager>   m_allocationManager;
+    VulkanSwapchain*                    m_swapchain;
+    VulkanContext*                      m_context;
+    std::vector<QueueFamily>            m_queueFamilies;
+    std::vector<VkCommandPool>          m_commandPools;
+    VulkanQueue*                        m_pGraphicsQueue;
+    DescriptorAllocator                 m_descriptorAllocator;
     
-    void* m_windowHandle;
+    void*                               m_windowHandle;
     
     // Adapter properties.
     VkPhysicalDeviceProperties m_properties;

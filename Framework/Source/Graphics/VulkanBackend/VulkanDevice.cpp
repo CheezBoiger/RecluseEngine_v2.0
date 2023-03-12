@@ -213,7 +213,7 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
     
     {
         VulkanAllocationManager::UpdateConfig config;
-        config.flags = VulkanAllocationManager::VulkanAllocUpdateFlag_GarbageResize;
+        config.flags = VulkanAllocationManager::Flag_GarbageResize;
         config.garbageBufferCount = info.buffering;
         config.frameIndex = 0; 
         m_allocationManager->update(config);
@@ -236,6 +236,9 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
 void VulkanDevice::release(VkInstance instance)
 {
     vkDeviceWaitIdle(m_device);
+
+    DescriptorSets::clearDescriptorSetCache(this);
+    DescriptorSets::clearDescriptorLayoutCache(this);
 
     if (m_swapchain) 
     {
@@ -642,9 +645,7 @@ void VulkanContext::prepare()
     // Reset this current command list.
     m_primaryCommandList.setStatus(CommandList_Reset);
 
-    const VulkanAllocationManager::VulkanAllocUpdateFlags allocUpdate = 
-        VulkanAllocationManager::VulkanAllocUpdateFlag_SetFrameIndex
-        & VulkanAllocationManager::VulkanAllocUpdateFlag_Update;
+    const VulkanAllocationManager::Flags allocUpdate = (VulkanAllocationManager::Flag_SetFrameIndex & VulkanAllocationManager::Flag_Update);
 
     VulkanAllocationManager::UpdateConfig config;
 
@@ -653,6 +654,9 @@ void VulkanContext::prepare()
     config.garbageBufferCount   = m_bufferCount;
 
     m_pDevice->getAllocationManager()->update(config);
+    
+    // TODO: probably want to figure out a cleaner way of doing this.
+    DescriptorSets::clearDescriptorSetCache(getDevice()->castTo<VulkanDevice>(), DescriptorSets::ClearCacheFlag_DescriptorPoolFastClear);
     resetBinds();
 }
 
@@ -700,22 +704,15 @@ ErrType VulkanDevice::destroyResourceView(GraphicsResourceView* pView)
 
 void VulkanDevice::createDescriptorHeap()
 {
-    if (!m_pDescriptorManager) 
-    {
-        m_pDescriptorManager = new VulkanDescriptorManager();
-        m_pDescriptorManager->initialize(this);
-    }
+    // TODO: Need to do a resize of this, and probably not rely on context so much on obtaining the buffer count.
+    //       Maybe we should move the descriptor allocator to the context?
+    m_descriptorAllocator.initialize(this, m_context->getBufferCount());
 }
 
 
 void VulkanDevice::destroyDescriptorHeap()
 {
-    if (m_pDescriptorManager) 
-    {
-        m_pDescriptorManager->destroy(this);
-        delete m_pDescriptorManager;
-        m_pDescriptorManager = nullptr;
-    }
+    m_descriptorAllocator.release(this);
 }
 
 
@@ -844,7 +841,7 @@ void VulkanDevice::pushFlushMemoryRange(const VkMappedMemoryRange& mappedRange)
     *pRange                     = mappedRange;
 
     // We need to align on nonCoherentAtomSize, as spec states it must be a multiple of this.
-    pRange->size                = R_ALLOC_MASK(mappedRange.size, atomSz);
+    pRange->size                = align(mappedRange.size, atomSz);
 }
 
 
@@ -880,7 +877,7 @@ void VulkanDevice::pushInvalidateMemoryRange(const VkMappedMemoryRange& mappedRa
     VkMappedMemoryRange* pRange = (VkMappedMemoryRange*)allocation.baseAddress;
     *pRange                     = mappedRange;
 
-    pRange->size                = R_ALLOC_MASK(mappedRange.size, atomSz);
+    pRange->size                = align(mappedRange.size, atomSz);
 }
 
 

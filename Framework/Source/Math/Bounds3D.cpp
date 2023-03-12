@@ -74,5 +74,32 @@ Bool intersects(const Plane& plane, const Bounds3d& bounds)
     F32 s       = dot(n, c);
     return (fabs(s) <= r);
 }
+
+
+Bool intersects(const Bounds3d& a, const BoundsSphere& sp)
+{
+    // 3d collisions understood by this article:
+    // https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection
+
+    const Float3 offset = Float3(Math::maximum(a.mmin.x, Math::minimum(sp.point.x, a.mmax.x)),
+                                 Math::maximum(a.mmin.y, Math::minimum(sp.point.y, a.mmax.y)),
+                                 Math::maximum(a.mmin.z, Math::minimum(sp.point.z, a.mmax.z)));
+    const F32 distance = length(offset);
+    return (distance < sp.radius);
+}
+
+
+Bool intersects(const BoundsSphere& sp, const Bounds3d& a)
+{
+    return intersects(a, sp);
+}
+
+
+Bool intersects(const BoundsSphere& sp0, const BoundsSphere& sp1)
+{
+    const Float3 offset = sp0.point - sp1.point;
+    const F32 distance  = length(offset);
+    return (distance < (sp0.radius + sp1.radius));
+}
 } // Math
 } // Recluse

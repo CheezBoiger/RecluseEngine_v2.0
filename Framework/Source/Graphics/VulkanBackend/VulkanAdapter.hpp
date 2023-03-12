@@ -17,7 +17,7 @@ class VulkanAdapter : public GraphicsAdapter
 public:
     ~VulkanAdapter();
 
-    VulkanAdapter(VulkanAdapter&& a) 
+    VulkanAdapter(VulkanAdapter&& a) noexcept
     { 
         m_devices = std::move(a.m_devices); 
         m_supportedDeviceExtensionFlags = a.m_supportedDeviceExtensionFlags;
@@ -26,7 +26,7 @@ public:
         m_instance = a.m_instance;
     }
 
-    VulkanAdapter& operator=(VulkanAdapter&& a) 
+    VulkanAdapter& operator=(VulkanAdapter&& a) noexcept
     {
         m_devices = std::move(a.m_devices);
         m_supportedDeviceExtensionFlags = a.m_supportedDeviceExtensionFlags;

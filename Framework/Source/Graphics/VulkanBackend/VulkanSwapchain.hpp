@@ -15,6 +15,11 @@ class VulkanResourceView;
 
 struct QueueFamily;
 
+// Swapchain handles the swap frames for the display engine of the graphics RHI. 
+// Keep in mind this is dependent on buffers available for the graphics engine.
+// We can theoretically have as many frames as we may want (although we probably should only have about 2 at least, 3+ recommended)
+// but the number of available buffers in the graphics engine is the one that we are governed by.
+// 
 class VulkanSwapchain : public GraphicsSwapchain 
 {
 public:
@@ -29,7 +34,7 @@ public:
 
     // Build the vulkan swapchain. This will return the total number of frames that 
     // were created.
-    ErrType build(VulkanDevice* pDevice);
+    ErrType                 build(VulkanDevice* pDevice);
 
     ErrType                 onRebuild() override;
     

@@ -121,8 +121,9 @@ VkDescriptorSetLayout createDescriptorSetLayout(VulkanContext* pContext, const D
 
 static VulkanDescriptorAllocation allocateDescriptorSet(VulkanDevice* pDevice, VkDescriptorSetLayout layout)
 {
-    VulkanDescriptorManager* pManager       = pDevice->getDescriptorHeap();
-    VulkanDescriptorAllocation allocation   = pManager->allocate(1, &layout);
+    VulkanContext* context                  = pDevice->getContext()->castTo<VulkanContext>();
+    DescriptorAllocatorInstance* instance   = pDevice->getDescriptorAllocatorInstance(context->getCurrentBufferIndex());
+    VulkanDescriptorAllocation allocation   = instance->allocate(1, &layout);
     if (!allocation.isValid()) 
     {
         R_ERR(R_CHANNEL_VULKAN, "Failed to allocate vulkan descriptor set!!");
@@ -133,9 +134,10 @@ static VulkanDescriptorAllocation allocateDescriptorSet(VulkanDevice* pDevice, V
 
 static ErrType freeDescriptorSet(VulkanDevice* pDevice, const VulkanDescriptorAllocation& allocation)
 {
-    VkDevice device                     = pDevice->get();
-    VulkanDescriptorManager* pManager   = pDevice->getDescriptorHeap();
-    ErrType result                      = RecluseResult_Ok;
+    VkDevice device                         = pDevice->get();
+    VulkanContext* context                  = pDevice->getContext()->castTo<VulkanContext>();
+    DescriptorAllocatorInstance* pManager   = pDevice->getDescriptorAllocatorInstance(context->getCurrentBufferIndex());
+    ErrType result                          = RecluseResult_Ok;
 
     if (allocation.isValid()) 
     {
@@ -359,6 +361,7 @@ VkDescriptorSetLayout makeLayout(VulkanContext* pContext, const Structure& struc
     return layout;
 }
 
+
 const VulkanDescriptorAllocation& makeDescriptorSet(VulkanContext* pContext, const Structure& structure)
 {
     VulkanDevice* pDevice   = pContext->getDevice()->castTo<VulkanDevice>();
@@ -380,6 +383,14 @@ const VulkanDescriptorAllocation& makeDescriptorSet(VulkanContext* pContext, con
 }
 
 
+ErrType releaseDescriptorSetHelper(VulkanDevice* pDevice, const VulkanDescriptorAllocation& allocation)
+{
+    VulkanContext* context = pDevice->getContext()->castTo<VulkanContext>();
+    DescriptorAllocatorInstance* pDescriptorManager = pDevice->getDescriptorAllocatorInstance(context->getCurrentBufferIndex());
+    return pDescriptorManager->free(allocation);
+}
+
+
 ErrType releaseDescriptorSet(VulkanContext* pContext, const Structure& structure)
 {
     DescriptorSetId id = DescriptorSetKeyHasher()(structure);
@@ -387,9 +398,8 @@ ErrType releaseDescriptorSet(VulkanContext* pContext, const Structure& structure
     if (iter != g_descriptorSetMap.end())
     {
         VulkanDevice* pDevice                           = pContext->getDevice()->castTo<VulkanDevice>();
-        VulkanDescriptorManager* pDescriptorManager     = pDevice->getDescriptorHeap();
         VulkanDescriptorAllocation allocation           = iter->second;
-        ErrType error = pDescriptorManager->free(allocation);
+        ErrType error = releaseDescriptorSetHelper(pDevice, allocation);
         
         if (error == RecluseResult_Ok)
         { 
@@ -419,6 +429,45 @@ ErrType releaseLayout(VulkanContext* pContext, const Structure& structure)
 DescriptorSetLayoutId obtainDescriptorLayoutKey(const Structure& structure)
 {
     return DescriptorSetKeyHasher()(structure);
+}
+
+
+void clearDescriptorSetCache(VulkanDevice* pDevice, ClearCacheFlag flag)
+{
+    if (flag == ClearCacheFlag_IndividualDescriptorSetClear)
+    {
+        ErrType err = RecluseResult_Ok;
+        for (auto& descriptor : g_descriptorSetMap)
+        {
+            err = releaseDescriptorSetHelper(pDevice, descriptor.second);
+            if (err != RecluseResult_Ok)
+            {
+                continue;
+            }
+        }
+    }
+    else
+    {
+        // Perform a simple fast clear for the descriptor pool instance.
+        // We won't need to individually release each descriptor set, since they will all be released
+        // in an instant, but will require re-allocating for the next available frame.
+        VulkanContext* context                  = pDevice->castTo<VulkanContext>();
+        DescriptorAllocatorInstance* instance   = pDevice->getDescriptorAllocatorInstance(context->getCurrentBufferIndex());
+        instance->resetPools();
+    }
+
+    g_descriptorSetMap.clear();
+}
+
+
+void clearDescriptorLayoutCache(VulkanDevice* pDevice)
+{
+    VkDevice device = pDevice->get();
+    for (auto it : g_layoutMap)
+    {
+        vkDestroyDescriptorSetLayout(device, it.second, nullptr);
+    }
+    g_layoutMap.clear();
 }
 } // DescriptorSet
 } // Recluse

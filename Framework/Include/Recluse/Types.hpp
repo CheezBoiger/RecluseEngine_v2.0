@@ -105,7 +105,7 @@ public:
     }
 
     ReferenceCounter(const ReferenceCounter& ref) { m_count = ref.m_count; increment(); }
-    ReferenceCounter(ReferenceCounter&& ref) { m_count = ref.m_count; ref.m_count = nullptr; }
+    ReferenceCounter(ReferenceCounter&& ref) noexcept { m_count = ref.m_count; ref.m_count = nullptr; }
 
     ReferenceCounter& operator=(const ReferenceCounter& ref)
     {
@@ -114,7 +114,7 @@ public:
         return (*this);
     }
 
-    ReferenceCounter& operator=(ReferenceCounter&& ref)
+    ReferenceCounter& operator=(ReferenceCounter&& ref) noexcept
     {
         m_count = ref.m_count;
         ref.m_count = nullptr;
@@ -168,14 +168,37 @@ private:
 };
 
 
+template<typename ClassT>
+class DefaultDeleter
+{
+public:
+    void operator()(ClassT* ptr)
+    {
+        delete ptr;
+    }
+};
+
+
+template<typename ClassT>
+class DefaultDeleter<ClassT[]>
+{
+public:
+    void operator()(ClassT* ptr)
+    {
+        delete[] ptr;
+    }
+};
+
+
 // Smart pointer system that handles if a pointer is fully released.
 // Keeps track of all pointer references.
-template<typename ClassT>
+template<typename ClassT, typename Deleter = DefaultDeleter<ClassT>>
 class SmartPtr : public ReferenceCounter
 {
 public:
-    SmartPtr(ClassT* pData = nullptr)
+    SmartPtr(ClassT* pData = nullptr, Deleter deleter = Deleter())
         : m_pData(pData)
+        , m_deleter(deleter)
         , ReferenceCounter()
     {
         if (m_pData)
@@ -186,12 +209,14 @@ public:
         : ReferenceCounter(sp)
     {
         m_pData = sp.m_pData;
+        m_deleter = sp.m_deleter;
     }
 
     SmartPtr(SmartPtr&& sp)
         : ReferenceCounter(sp)
     {
         m_pData = sp.m_pData;
+        m_deleter = sp.m_deleter;
         sp.m_pData = nullptr;
     }
 
@@ -210,9 +235,8 @@ public:
         U32 count = ReferenceCounter::release();
         if (count == 0 && m_pData)
         {
-            delete m_pData;
+            m_deleter(m_pData);
         }
-
         releaseCounterReference();
         m_pData = nullptr;
         return count;
@@ -235,6 +259,7 @@ public:
 
     SmartPtr& operator=(ClassT* ptr)
     {
+        m_deleter = Deleter();
         if (m_pData != ptr)
         { 
             reset();
@@ -247,13 +272,15 @@ public:
     SmartPtr& operator=(const SmartPtr& sp)
     {
         ReferenceCounter::operator=(sp);
+        m_deleter = sp.m_deleter;
         m_pData = sp.m_pData;
         return (*this);
     }
 
-    SmartPtr& operator=(SmartPtr&& sp)
+    SmartPtr& operator=(SmartPtr&& sp) noexcept
     {
         ReferenceCounter::operator=(sp);
+        m_deleter = sp.m_deleter;
         m_pData = sp.m_pData;
         sp.m_pData = nullptr;
         return (*this);
@@ -261,14 +288,15 @@ public:
 
 private:
     ClassT*             m_pData;
+    Deleter             m_deleter;
 };
 
 
 // Make a smart pointer object. This might seem redundant though...
-template<typename ClassT>
-SmartPtr<ClassT> makeSmartPtr(ClassT* pData)
+template<typename ClassT, typename Deleter = DefaultDeleter<ClassT>>
+SmartPtr<ClassT, Deleter> makeSmartPtr(ClassT* pData, Deleter deleter = Deleter())
 {
-    return SmartPtr<ClassT>(pData);
+    return SmartPtr<ClassT, Deleter>(pData, deleter);
 }
 
 

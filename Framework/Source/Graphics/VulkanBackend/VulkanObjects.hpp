@@ -102,6 +102,12 @@ struct Structure
     }
 };
 
+enum ClearCacheFlag
+{
+    ClearCacheFlag_DescriptorPoolFastClear,
+    ClearCacheFlag_IndividualDescriptorSetClear
+};
+
 typedef Hash64 DescriptorSetLayoutId;
 typedef Hash64 DescriptorSetId;
 
@@ -110,6 +116,7 @@ const VulkanDescriptorAllocation& makeDescriptorSet(VulkanContext* pContext, con
 ErrType                     releaseLayout(VulkanContext* pContext, const Structure& structure);
 ErrType                     releaseDescriptorSet(VulkanContext* pContext, const Structure& structure);
 DescriptorSetLayoutId       obtainDescriptorLayoutKey(const Structure& structure);
-void                        clearCache();
+void                        clearDescriptorSetCache(VulkanDevice* pDevice, ClearCacheFlag flag = ClearCacheFlag_DescriptorPoolFastClear);
+void                        clearDescriptorLayoutCache(VulkanDevice* pDevice);
 } // DescriptorSet
 } // Recluse

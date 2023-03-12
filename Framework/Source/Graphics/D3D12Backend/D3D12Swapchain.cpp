@@ -135,7 +135,7 @@ ErrType D3D12Swapchain::present(PresentConfig config)
     
     if (FAILED(result)) 
     {
-        R_ERR(R_CHANNEL_D3D12, "Failed to present current frame: %d");        
+        R_ERR(R_CHANNEL_D3D12, "Failed to present current frame: %d", getCurrentFrameIndex());        
     }
 
     pBR->fenceValue     = pBR->fenceValue + 1;

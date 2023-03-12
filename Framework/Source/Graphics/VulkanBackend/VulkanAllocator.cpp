@@ -184,7 +184,7 @@ void VulkanAllocationManager::update(const UpdateConfig& config)
 {
     if 
         (
-            (config.flags & VulkanAllocUpdateFlag_GarbageResize) 
+            (config.flags & Flag_GarbageResize) 
             && (config.garbageBufferCount != (U32)m_frameGarbage.size())
         ) 
     {
@@ -202,7 +202,7 @@ void VulkanAllocationManager::update(const UpdateConfig& config)
 
     U32 garbageSize = (U32)m_frameGarbage.size();
         
-    if (config.flags & VulkanAllocUpdateFlag_SetFrameIndex) 
+    if (config.flags & Flag_SetFrameIndex) 
     {
         if (config.frameIndex >= garbageSize) 
         {
@@ -220,12 +220,12 @@ void VulkanAllocationManager::update(const UpdateConfig& config)
             m_garbageIndex = config.frameIndex;
         }
     } 
-    else if (config.flags & VulkanAllocUpdateFlag_IncrementFrameIndex) 
+    else if (config.flags & Flag_IncrementFrameIndex) 
     {
         m_garbageIndex = (m_garbageIndex + 1) % garbageSize;
     }
 
-    if (config.flags & VulkanAllocUpdateFlag_Update)
+    if (config.flags & Flag_Update)
     {
         emptyGarbage(m_garbageIndex);
     }
@@ -263,8 +263,8 @@ VulkanPagedAllocator* VulkanAllocationManager::getAllocator(ResourceMemoryUsage 
         for (U32 i = 0; i < m_resourceAllocators[memoryTypeIndex].size(); ++i)
         {
             VulkanPagedAllocator* potentialAllocator = m_resourceAllocators[memoryTypeIndex][i];
-            U64 alignment = Math::maximum(alignment, m_bufferImageGranularityBytes);
-            if (potentialAllocator->hasSpace(align(sizeBytes, alignment)))
+            U64 adjustedAlignment = Math::maximum(alignment, m_bufferImageGranularityBytes);
+            if (potentialAllocator->hasSpace(align(sizeBytes, adjustedAlignment)))
             {
                 pAllocator = potentialAllocator;
                 break;
