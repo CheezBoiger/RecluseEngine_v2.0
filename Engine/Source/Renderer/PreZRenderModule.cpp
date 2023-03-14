@@ -76,8 +76,8 @@ void generate(GraphicsContext* context, Engine::RenderCommandList* pMeshCommandL
 
         if 
             (
-                meshCmd->op != Engine::CommandOp_DrawableIndexedInstanced 
-                || meshCmd->op != Engine::CommandOp_DrawableInstanced
+                pRCmd->op != Engine::CommandOp_DrawableIndexedInstanced 
+                && pRCmd->op != Engine::CommandOp_DrawableInstanced
             ) 
         {
             continue;

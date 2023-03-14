@@ -100,7 +100,7 @@ class ReferenceCounter
 {
 public:
     ReferenceCounter()
-        : m_count(new U32(0))
+        : m_count(nullptr)
     {
     }
 
@@ -159,7 +159,7 @@ protected:
     // Should only call these functions if the object that encapsulates it, needs to remove the counter itself.
     Bool hasCounter() { return m_count; }
     void releaseCounterReference() { m_count = nullptr; }
-    void reset() { *m_count = 0; }
+    void reset() { if (m_count) *m_count = 0; }
 
 private:
     void increment() { ++(*m_count); }
@@ -213,7 +213,7 @@ public:
     }
 
     SmartPtr(SmartPtr&& sp)
-        : ReferenceCounter(sp)
+        : ReferenceCounter(static_cast<ReferenceCounter&&>(sp))
     {
         m_pData = sp.m_pData;
         m_deleter = sp.m_deleter;
@@ -279,7 +279,7 @@ public:
 
     SmartPtr& operator=(SmartPtr&& sp) noexcept
     {
-        ReferenceCounter::operator=(sp);
+        ReferenceCounter::operator=(static_cast<ReferenceCounter&&>(sp));
         m_deleter = sp.m_deleter;
         m_pData = sp.m_pData;
         sp.m_pData = nullptr;
@@ -296,7 +296,7 @@ private:
 template<typename ClassT, typename Deleter = DefaultDeleter<ClassT>>
 SmartPtr<ClassT, Deleter> makeSmartPtr(ClassT* pData, Deleter deleter = Deleter())
 {
-    return SmartPtr<ClassT, Deleter>(pData, deleter);
+    return static_cast<SmartPtr<ClassT, Deleter>&&>(SmartPtr<ClassT, Deleter>(pData, deleter));
 }
 
 

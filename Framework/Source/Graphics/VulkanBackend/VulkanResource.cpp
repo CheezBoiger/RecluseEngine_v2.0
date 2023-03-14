@@ -20,6 +20,7 @@ VulkanResource* makeResource(VulkanDevice* pDevice, const GraphicsResourceDescri
     {
         VulkanBuffer* pBuffer   = new VulkanBuffer(desc);
         pBuffer->initialize(pDevice, desc, initState);
+        pBuffer->generateId();
         ResourceId id           = pBuffer->getId();
         g_resourcesMap[id]      = pBuffer;
         return g_resourcesMap[id];
@@ -28,6 +29,7 @@ VulkanResource* makeResource(VulkanDevice* pDevice, const GraphicsResourceDescri
     {
         VulkanImage* pImage = new VulkanImage(desc);
         pImage->initialize(pDevice, desc, initState);
+        pImage->generateId();
         ResourceId id       = pImage->getId();
         g_resourcesMap[id]  = pImage;
         return g_resourcesMap[id];

@@ -30,7 +30,7 @@ ErrType GPUBuffer::initialize(GraphicsDevice* pDevice, U64 totalSzBytes, Resourc
 }
 
 
-ErrType GPUBuffer::stream(GraphicsDevice* pDevice, void* ptr, U64 offsetBytes, U64 szBytes)
+ErrType GPUBuffer::stream(GraphicsContext* pContext, void* ptr, U64 offsetBytes, U64 szBytes)
 {
     ErrType result = RecluseResult_Ok;
     GraphicsResource* pStaging = nullptr;
@@ -56,8 +56,8 @@ ErrType GPUBuffer::stream(GraphicsDevice* pDevice, void* ptr, U64 offsetBytes, U
     region.srcOffsetBytes   = 0;
     region.szBytes          = szBytes;
 
-    pDevice->getContext()->transition(m_pResource, ResourceState_CopyDestination);
-    pDevice->getContext()->copyBufferRegions(m_pResource, pStaging, &region, 1);
+    pContext->transition(m_pResource, ResourceState_CopyDestination);
+    pContext->copyBufferRegions(m_pResource, pStaging, &region, 1);
 
     m_pDevice->destroyResource(pStaging);
 

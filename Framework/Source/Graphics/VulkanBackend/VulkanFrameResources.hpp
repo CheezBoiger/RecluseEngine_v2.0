@@ -27,7 +27,7 @@ public:
     VkFramebuffer       getFrameBuffer(U32 idx) const { return m_frameBuffers[idx]; }
     VkSemaphore         getWaitSemaphore(U32 idx) const { return m_frameWaitSemaphores[idx]; }
     VkSemaphore         getSignalSemaphore(U32 idx) const { return m_frameSignalSemaphores[idx]; }
-    VkFence             getFrence(U32 idx) const { return m_frameFences[idx]; }
+    VkFence             getFence(U32 idx) const { return m_frameFences[idx]; }
     
 private:
 

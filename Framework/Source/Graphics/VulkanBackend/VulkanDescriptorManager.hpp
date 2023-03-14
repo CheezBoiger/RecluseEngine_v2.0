@@ -2,7 +2,7 @@
 #pragma once
 
 #include "VulkanCommons.hpp"
-
+#include "Recluse/Messaging.hpp"
 #include <vector>
 
 
@@ -68,12 +68,20 @@ public:
         : pool(pool)
         , size(numberAllocs)
     {
-        pSets       = makeSmartPtr(new VkDescriptorSet[numberAllocs], DefaultDeleter<VkDescriptorSet[]>());
-        pLayouts    = makeSmartPtr(new VkDescriptorSetLayout[numberAllocs], DefaultDeleter<VkDescriptorSetLayout[]>());
+        // Do not attempt to allocate if we don't have anything to allocate.
+        if (numberAllocs == 0)
+            return;
+
+        //pSets       = makeSmartPtr(new VkDescriptorSet[numberAllocs], DefaultDeleter<VkDescriptorSet[]>());
+        //pLayouts    = makeSmartPtr(new VkDescriptorSetLayout[numberAllocs], DefaultDeleter<VkDescriptorSetLayout[]>());
+        pSets.resize(numberAllocs);
+        pLayouts.resize(numberAllocs);
         for (U32 i = 0; i < numberAllocs; ++i)
         {
             pSets[i]    = sets[i];
             pLayouts[i] = layouts[i];
+            R_ASSERT(pSets[i] == sets[i]);
+            R_ASSERT(pLayouts[i] == layouts[i]);
         }
     }
 
@@ -83,8 +91,8 @@ public:
         pSets           = std::move(alloc.pSets);
         pLayouts        = std::move(alloc.pLayouts);
         size            = alloc.size;
-        alloc.pSets     = nullptr;
-        alloc.pLayouts  = nullptr;
+        //alloc.pSets     = nullptr;
+        //alloc.pLayouts  = nullptr;
     }
 
     VulkanDescriptorAllocation(const VulkanDescriptorAllocation& alloc)
@@ -101,8 +109,8 @@ public:
         pSets           = std::move(alloc.pSets);
         pLayouts        = std::move(alloc.pLayouts);
         size            = alloc.size;
-        alloc.pSets     = nullptr;
-        alloc.pLayouts  = nullptr;
+        //alloc.pSets     = nullptr;
+        //alloc.pLayouts  = nullptr;
         return (*this);
     }
 
@@ -129,22 +137,24 @@ public:
     void invalidate() 
     { 
         pool = VK_NULL_HANDLE;
-        pSets.release();
-        pLayouts.release();
-        pSets = nullptr;
-        pLayouts = nullptr;
+        //pSets.release();
+        //pLayouts.release();
+        //pSets = nullptr;
+        //pLayouts = nullptr;
+        pSets.clear();
+        pLayouts.clear();
         size = 0;
     }
 
     const DescriptorSet getDescriptorSet(U32 idx) const { return DescriptorSet{pLayouts[idx], pSets[idx]}; }
-    const VkDescriptorSet* getNativeDescriptorSets() const { return pSets.raw(); }
-    const VkDescriptorSetLayout* getNativeDescriptorSetLayout() const { return pLayouts.raw(); }
+    const VkDescriptorSet* getNativeDescriptorSets() const { return pSets.data(); }
+    const VkDescriptorSetLayout* getNativeDescriptorSetLayout() const { return pLayouts.data(); }
 
 private:
-    VkDescriptorPool                pool;
-    SmartPtr<VkDescriptorSet>       pSets;
-    SmartPtr<VkDescriptorSetLayout> pLayouts;
-    U32                             size;
+    VkDescriptorPool                    pool;
+    std::vector<VkDescriptorSet>        pSets;
+    std::vector<VkDescriptorSetLayout>  pLayouts;
+    U32                                 size;
 };
 
 
@@ -161,7 +171,7 @@ public:
         : m_device(VK_NULL_HANDLE)
         , m_currentPool(VK_NULL_HANDLE) { }
 
-    void                        initialize(VulkanDevice* pDevice);
+    void                        initialize(VulkanDevice* pDevice, VkDescriptorPoolCreateFlags flags = 0);
     void                        release(VulkanDevice* pDevice);
 
     // Allocate the given number of descriptor sets. Normally the allocated sets should be allocated in the same descriptor pool.
@@ -186,6 +196,7 @@ private:
     std::vector<VkDescriptorPool>   m_availablePools;
     std::vector<VkDescriptorPool>   m_usedPools;
     VkDevice                        m_device;
+    VkDescriptorPoolCreateFlags     m_flags;
 };
 
 
@@ -196,7 +207,7 @@ class DescriptorAllocator
 public:
     const static U32 kMaxReservedBufferInstances;
     // Initialize the descriptor allocator with the number of available buffers.
-    void                            initialize(VulkanDevice* pDevice, U32 bufferCount);
+    void                            initialize(VulkanDevice* pDevice, U32 bufferCount, VkDescriptorPoolCreateFlags flags = 0);
     // Release all descriptor allocator instances.
     void                            release(VulkanDevice* pDevice);
     // Resize our buffered instances. Only if we need to resize instance, instead of releasing everything and reinitialize.
@@ -207,8 +218,9 @@ public:
     U32                             getBufferCount() const { return m_bufferedInstances.size(); }  
 
 private:
-    ErrType                         checkAndManageInstances(VulkanDevice* pDevice, U32 newbufferCount);
+    ErrType                         checkAndManageInstances(VulkanDevice* pDevice, U32 newbufferCount, VkDescriptorPoolCreateFlags flags);
 
     std::vector<DescriptorAllocatorInstance> m_bufferedInstances;
+    VkDescriptorPoolCreateFlags             m_flags;
 };
 } // Recluse

@@ -68,6 +68,8 @@ public:
     virtual void end() { }
 
     virtual GraphicsDevice* getDevice() { return nullptr; }
+    
+    virtual ErrType setBuffers(U32 newBufferCount) { return RecluseResult_NoImpl; }
 
         // Not recommended, but submits a copy to this queue, and waits until the command has 
     // completed.
@@ -160,6 +162,8 @@ public:
 class R_PUBLIC_API GraphicsDevice : public ICastableObject
 {
 public:
+    static const U32 kMaxGraphicsContexts = 4;
+
     virtual ~GraphicsDevice() { }
 
     // Reserve memory to be used for graphics resources.
@@ -184,7 +188,8 @@ public:
     virtual Bool makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout) { return false; }
     virtual Bool destroyVertexLayout(VertexInputLayoutId id) { return false; }
 
-    virtual GraphicsContext* getContext() { return nullptr; }
+    virtual GraphicsContext* createContext() { return nullptr; }
+    virtual ErrType releaseContext(GraphicsContext* pContext) { return RecluseResult_NoImpl; }
     
     virtual GraphicsSwapchain* getSwapchain() { return nullptr; }
 
@@ -206,7 +211,7 @@ private:
 };
 
 
-class GraphicsSwapchain 
+class GraphicsSwapchain : public ICastableObject
 {
 public:
 

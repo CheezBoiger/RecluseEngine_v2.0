@@ -16,7 +16,7 @@ namespace Recluse {
 
 GraphicsResource* VulkanSwapchain::getFrame(U32 idx)
 {
-    return m_frameResources[idx];
+    return m_frameImages[idx];
 }
 
 
@@ -157,15 +157,15 @@ ErrType VulkanSwapchain::destroy()
 
     if (m_swapchain) 
     {
-        m_rawFrames.destroy(this);
+        m_frameResources.destroy(this);
 
-        for (U32 i = 0; i < m_frameResources.size(); ++i) 
+        for (U32 i = 0; i < m_frameImages.size(); ++i) 
         {   
             m_frameViews[i]->release(m_pDevice);
             // Do not call m_frameResources[i]->destroy(), images are originally handled
             // by the swapchain.
             delete m_frameViews[i];
-            delete m_frameResources[i];
+            delete m_frameImages[i];
         }
 
         vkDestroySwapchainKHR(device, m_swapchain, nullptr);    
@@ -179,11 +179,13 @@ ErrType VulkanSwapchain::destroy()
         vkFreeCommandBuffers
             (
                 device, 
-                m_queueFamily->commandPools[i],
+                m_commandPool,
                 1, 
                 &m_commandbuffers[i]
             );   
     }
+
+    vkDestroyCommandPool(device, m_commandPool, nullptr);
 
     return RecluseResult_Ok;
 }
@@ -201,14 +203,13 @@ ErrType VulkanSwapchain::present(PresentConfig config)
 
     if (config & PresentConfig_DelayPresent)
     {
-        VulkanContext* pContext = static_cast<VulkanContext*>(m_pDevice->getContext());
+        U32 currentFrameIndex   = getCurrentFrameIndex();
+        VkFence frameFence = m_frameResources.getFence(currentFrameIndex);
         VkSubmitInfo info       = { };
         info.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        vkQueueSubmit(m_pBackbufferQueue->get(), 1, &info, pContext->getCurrentFence());
+        vkQueueSubmit(m_pBackbufferQueue->get(), 1, &info, frameFence);
         return RecluseResult_Ok;
     }
-
-    submitCommandsForPresenting();
 
     VkSwapchainKHR swapchains[]     = { m_swapchain };
     VkSemaphore pWaitSemaphores[]   = { getSignalSemaphore(m_currentFrameIndex) };
@@ -260,12 +261,12 @@ ErrType VulkanSwapchain::present(PresentConfig config)
 
 void VulkanSwapchain::buildFrameResources(ResourceFormat resourceFormat)
 {
-    m_rawFrames.build(this);
+    m_frameResources.build(this);
 
-    U32 numMaxFrames                                = m_rawFrames.getNumMaxFrames();
+    U32 numMaxFrames                                = m_frameResources.getNumMaxFrames();
     const SwapchainCreateDescription& swapchainDesc = getDesc();
 
-    m_frameResources.resize(numMaxFrames);
+    m_frameImages.resize(numMaxFrames);
     m_frameViews.resize(numMaxFrames);
 
     // For swapchain resources, we don't necessarily need to allocate or create the native handles
@@ -275,7 +276,7 @@ void VulkanSwapchain::buildFrameResources(ResourceFormat resourceFormat)
     // We do need to create our view resources however.
     for (U32 i = 0; i < numMaxFrames; ++i) 
     {
-        VkImage frame = m_rawFrames.getImage(i);
+        VkImage frame = m_frameResources.getImage(i);
 
         GraphicsResourceDescription desc = { };
         desc.width          = swapchainDesc.renderWidth;
@@ -289,11 +290,11 @@ void VulkanSwapchain::buildFrameResources(ResourceFormat resourceFormat)
         desc.samples        = 1;
         desc.arrayLevels    = 1;
 
-        m_frameResources[i] = new VulkanImage(desc, frame, VK_IMAGE_LAYOUT_UNDEFINED);
+        m_frameImages[i] = new VulkanImage(desc, frame, VK_IMAGE_LAYOUT_UNDEFINED);
 
         ResourceViewDescription viewDesc = { };
         viewDesc.format         = resourceFormat;
-        viewDesc.pResource      = m_frameResources[i];
+        viewDesc.pResource      = m_frameImages[i];
         viewDesc.mipLevelCount  = 1;
         viewDesc.layerCount     = 1;
         viewDesc.baseArrayLayer = 0;
@@ -307,28 +308,60 @@ void VulkanSwapchain::buildFrameResources(ResourceFormat resourceFormat)
 }
 
 
-void VulkanSwapchain::submitCommandsForPresenting()
+void VulkanSwapchain::queryCommandPools()
 {
-    VulkanContext* pContext             = m_pDevice->getContext()->castTo<VulkanContext>();
-    VulkanImage* frame                  = m_frameResources[m_currentFrameIndex];
-    VulkanPrimaryCommandList* pCmdList  = pContext->getPrimaryCommandList();
+    const std::vector<QueueFamily>& queueFamilies = m_pDevice->getQueueFamilies();
+    VkDevice device = m_pDevice->get();
+
+    for (U32 i = 0; i < queueFamilies.size(); ++i) 
+    {
+        if (queueFamilies[i].flags & (VK_QUEUE_TRANSFER_BIT | VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT)) 
+        {
+            m_commandbuffers.resize(m_frameResources.getNumMaxFrames());
+            m_queueFamily = &queueFamilies[i];
+
+            {
+                VkCommandPoolCreateInfo poolCreateInfo = { };
+                poolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+                poolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+                poolCreateInfo.queueFamilyIndex = m_queueFamily->queueFamilyIndex;
+
+                vkCreateCommandPool(device, &poolCreateInfo, nullptr, &m_commandPool);
+            }
+
+            for (U32 j = 0; j < m_commandbuffers.size(); ++j) 
+            {    
+                VkCommandBufferAllocateInfo allocIf = { };
+                allocIf.sType                       = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+                allocIf.commandBufferCount          = 1;
+                allocIf.level                       = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+                allocIf.commandPool                 = m_commandPool;
+                vkAllocateCommandBuffers(device, &allocIf, &m_commandbuffers[j]);
+            }
+
+            break;
+        }
+    }
+
+    // For the back buffer queue to be able to handle one time only command buffers, set it up from
+    // the swapchain command pool.
+    m_pBackbufferQueue->setTemporaryCommandPoolUse(m_commandPool);
+}
+
+
+ErrType VulkanSwapchain::submitFinalCommandBuffer(VkCommandBuffer commandBuffer, VkFence cpuFence)
+{
+    VulkanImage* frame                  = m_frameImages[m_currentFrameIndex];
     VkDevice device                     = m_pDevice->get();
-    U32 bufferIdx                       = pContext->getCurrentBufferIndex();
     VkImageMemoryBarrier imgBarrier     = { };
     VkImageSubresourceRange range       = { };
-    VkCommandBuffer primaryCmdBuf       = pCmdList->get();
-    VkCommandBuffer singleUseCmdBuf     = m_commandbuffers[bufferIdx];
-    VkFence fence                       = pContext->getCurrentFence();
-    VkSemaphore signalSemaphore         = m_rawFrames.getSignalSemaphore(m_currentFrameIndex);
-    VkSemaphore waitSemaphore           = m_rawFrames.getWaitSemaphore(m_currentFrameIndex);
+    VkCommandBuffer primaryCmdBuf       = commandBuffer;
+    VkCommandBuffer singleUseCmdBuf     = m_commandbuffers[m_currentFrameIndex];
+    VkFence fence                       = cpuFence;
+    VkSemaphore signalSemaphore         = m_frameResources.getSignalSemaphore(m_currentFrameIndex);
+    VkSemaphore waitSemaphore           = m_frameResources.getWaitSemaphore(m_currentFrameIndex);
 
     R_ASSERT(primaryCmdBuf != NULL);
-
-    if (pCmdList->getStatus() != CommandList_Ready) 
-    {
-        pCmdList->begin();
-        pCmdList->end();
-    }
 
     if (frame->getCurrentLayout() == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) 
     {
@@ -346,7 +379,7 @@ void VulkanSwapchain::submitCommandsForPresenting()
 
         vkQueueSubmit(m_pBackbufferQueue->get(), 1, &submitInfo, fence);
 
-        return;
+        return RecluseResult_Ok;
     }
     
     range.aspectMask        = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -356,6 +389,8 @@ void VulkanSwapchain::submitCommandsForPresenting()
     range.levelCount        = 1;
 
     imgBarrier = frame->transition(ResourceState_Present, range);    
+
+    vkResetCommandBuffer(singleUseCmdBuf, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 
     {
         VkCommandBufferBeginInfo begin = { };
@@ -390,33 +425,6 @@ void VulkanSwapchain::submitCommandsForPresenting()
     submitInfo.pWaitDstStageMask        = waitStages;
 
     vkQueueSubmit(m_pBackbufferQueue->get(), 1, &submitInfo, fence);
-}
-
-
-void VulkanSwapchain::queryCommandPools()
-{
-    const std::vector<QueueFamily>& queueFamilies = m_pDevice->getQueueFamilies();
-    VkDevice device = m_pDevice->get();
-
-    for (U32 i = 0; i < queueFamilies.size(); ++i) 
-    {
-        if (queueFamilies[i].flags & (QUEUE_TYPE_GRAPHICS | QUEUE_TYPE_COPY)) 
-        {
-            m_commandbuffers.resize(queueFamilies[i].commandPools.size());
-            m_queueFamily = &queueFamilies[i];
-
-            for (U32 j = 0; j < queueFamilies[i].commandPools.size(); ++j) 
-            {    
-                VkCommandBufferAllocateInfo allocIf = { };
-                allocIf.sType                       = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-                allocIf.commandBufferCount          = 1;
-                allocIf.level                       = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-                allocIf.commandPool                 = queueFamilies[i].commandPools[j];
-                vkAllocateCommandBuffers(device, &allocIf, &m_commandbuffers[j]);
-            }
-
-            break;
-        }
-    }
+    return RecluseResult_Ok;
 }
 } // Recluse

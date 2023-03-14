@@ -100,7 +100,7 @@ void Texture2D::destroy(Renderer* pRenderer)
 
 void Texture2D::load(Renderer* pRenderer, void* pData, U64 szBytes)
 {
-    pRenderer->getDevice()->getContext()->copyResource(m_resource, nullptr);
+    pRenderer->getContext()->copyResource(m_resource, nullptr);
 }
 
 

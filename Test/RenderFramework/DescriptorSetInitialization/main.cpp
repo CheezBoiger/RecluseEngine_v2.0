@@ -70,6 +70,7 @@ int main(int c, char* argv[])
     GraphicsInstance* pInstance     = nullptr;
     GraphicsAdapter* pAdapter       = nullptr;
     GraphicsDevice* pDevice         = nullptr;
+    GraphicsContext* pContext       = nullptr;
     Window* pWindow                 = nullptr;
     GraphicsResource* pData         = nullptr;
     GraphicsSwapchain* pSwapchain   = nullptr;
@@ -127,6 +128,8 @@ int main(int c, char* argv[])
         R_ERR("TEST", "Failed to create device from adapter!");
     
     }
+
+    pContext = pDevice->createContext();
 
     {
         MemoryReserveDesc mem = { };
@@ -248,7 +251,7 @@ int main(int c, char* argv[])
     // Enter game loop.
     R_TRACE("TEST", "Entering game loop...");
 
-    context = pDevice->getContext();
+    context = pContext;
     F32 index = 200;
     F32 counterFps = 0.f;
     F32 desiredFps = 1.f / 144.f;
@@ -293,7 +296,7 @@ int main(int c, char* argv[])
     }
 
     R_TRACE("TEST", "Exited game loop...");
-    pDevice->getContext()->wait();    
+    pContext->wait();    
     pDevice->destroyResource(pData); 
     pAdapter->destroyDevice(pDevice);
     Window::destroy(pWindow);

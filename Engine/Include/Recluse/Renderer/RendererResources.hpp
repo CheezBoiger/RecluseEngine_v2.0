@@ -54,7 +54,7 @@ public:
     ErrType             destroy();
 
     // Stream a staging resource back to the gpu.
-    ErrType             stream(GraphicsDevice* pDevice, void* ptr, U64 offsetBytes, U64 szBytes);
+    ErrType             stream(GraphicsContext* pContext, void* ptr, U64 offsetBytes, U64 szBytes);
 
     // Obtain a staging buffer based on the offset of this gpu resource, and the total size bytes to work with.
     GpuToCpuBuffer      stage(U64 offsetBytes, U64 szBytes);

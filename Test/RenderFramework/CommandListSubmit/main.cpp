@@ -17,6 +17,7 @@ int main(int c, char* argv[])
 
     GraphicsSwapchain* pSwapchain   = nullptr;
     GraphicsDevice* pDevice         = nullptr;
+    GraphicsContext* pContext       = nullptr;
     GraphicsInstance* pInstance      = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
 
     Window* pWindow = Window::create(u8"CommandListSubmit", 0, 0, 128, 128);
@@ -88,15 +89,15 @@ int main(int c, char* argv[])
             RealtimeTick::updateWatch(1ull, 0);
             RealtimeTick tick = RealtimeTick::getTick(0);
             R_TRACE("Graphics", "FPS: %f", 1.f / tick.delta());
-            pDevice->getContext()->begin(); 
-            pDevice->getContext()->end();
+            pContext->begin(); 
+            pContext->end();
             pSwapchain->present();
             pollEvents();
                     
         }
 
         // Wait until all command lists have been executed.
-        pDevice->getContext()->wait();
+        pContext->wait();
     }
 
     adapters[0]->destroyDevice(pDevice);

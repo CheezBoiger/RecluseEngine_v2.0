@@ -197,14 +197,15 @@ int main(int c, char* argv[])
 
     F32 counterFps = 0.f;
     F32 desiredFps = 1.f / 60.f;
-    pContext = pDevice->getContext();
+    pContext = pDevice->createContext();
+    pContext->setBuffers(3);
 
     while (!pWindow->shouldClose()) 
     {
         RealtimeTick::updateWatch(1ull, 0);
         RealtimeTick tick = RealtimeTick::getTick(0);
         updateConstData(pData, tick);
-        GraphicsContext* context = pDevice->getContext();
+        GraphicsContext* context = pContext;
         context->begin();
             GraphicsResource* pResource = views[pSwapchain->getCurrentFrameIndex()]->getResource();
             context->transition(pResource, ResourceState_UnorderedAccess);
@@ -230,13 +231,13 @@ int main(int c, char* argv[])
     
     }
     
-    pDevice->getContext()->wait();
-
+    pContext->wait();
     pDevice->destroyResource(pData);
 
     for (U32 i = 0; i < views.size(); ++i)
         pDevice->destroyResourceView(views[i]);
 
+    pDevice->releaseContext(pContext);
     pAdapter->destroyDevice(pDevice);
     GraphicsInstance::destroyInstance(pInstance);
     Log::destroyLoggingSystem();

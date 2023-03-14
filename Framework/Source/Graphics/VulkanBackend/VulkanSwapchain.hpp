@@ -56,29 +56,33 @@ public:
 
     VulkanDevice*   getDevice() const { return m_pDevice; }
 
-    VkFramebuffer   getFramebuffer(U32 idx) const { return m_rawFrames.getFrameBuffer(idx); }
-    VkSemaphore     getWaitSemaphore(U32 idx) const { return m_rawFrames.getWaitSemaphore(idx); }
-    VkSemaphore     getSignalSemaphore(U32 idx) const { return m_rawFrames.getSignalSemaphore(idx); }
+    VkFramebuffer   getFramebuffer(U32 idx) const { return m_frameResources.getFrameBuffer(idx); }
+    VkSemaphore     getWaitSemaphore(U32 idx) const { return m_frameResources.getWaitSemaphore(idx); }
+    VkSemaphore     getSignalSemaphore(U32 idx) const { return m_frameResources.getSignalSemaphore(idx); }
+    VkFence         getFence(U32 idx) const { return m_frameResources.getFence(idx); }
 
     VulkanQueue*    getPresentationQueue() const { return m_pBackbufferQueue; }
+
+    // Submit the final command buffer, which will utilize the wait and signal semphores for the current frame.
+    ErrType         submitFinalCommandBuffer(VkCommandBuffer commandBuffer, VkFence cpuFence);
 
 private:
 
     void        buildFrameResources(ResourceFormat resourceFormat);
     void        queryCommandPools();
-    void        submitCommandsForPresenting();
     inline void incrementFrameIndex() 
-        { m_currentFrameIndex = (m_currentFrameIndex + 1) % m_rawFrames.getNumMaxFrames(); }
+        { m_currentFrameIndex = (m_currentFrameIndex + 1) % m_frameResources.getNumMaxFrames(); }
 
     VkSwapchainKHR                      m_swapchain;
     VulkanQueue*                        m_pBackbufferQueue;
     VulkanDevice*                       m_pDevice;
     U32                                 m_currentFrameIndex;
     U32                                 m_currentImageIndex;
-    VulkanFrameResources                m_rawFrames;
-    std::vector<VulkanImage*>           m_frameResources;
+    VulkanFrameResources                m_frameResources;
+    std::vector<VulkanImage*>           m_frameImages;
     std::vector<VulkanResourceView*>    m_frameViews;
     std::vector<VkCommandBuffer>        m_commandbuffers;
+    VkCommandPool                       m_commandPool;
     const QueueFamily*                  m_queueFamily;
     
 };

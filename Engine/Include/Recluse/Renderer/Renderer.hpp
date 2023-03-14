@@ -90,6 +90,7 @@ public:
     void                        present(Bool delayPresent = false);
 
     const RendererConfigs&      getCurrentConfigs() const { return m_currentRendererConfigs; }
+    GraphicsContext*            getContext() { return m_pContext; }
 
     // Set the new configurations for the renderer. This won't be used until we call recreate().
     // Call will be blocked if we are in the middle of recreating.
@@ -135,6 +136,7 @@ private:
     GraphicsAdapter*                    m_pAdapter;
     GraphicsDevice*                     m_pDevice;
     GraphicsSwapchain*                  m_pSwapchain;
+    GraphicsContext*                    m_pContext;
 
     // Renderer configs.
     Mutex                               m_configLock;

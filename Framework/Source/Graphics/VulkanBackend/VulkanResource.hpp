@@ -60,12 +60,14 @@ private:
     static ResourceId   kResourceCreationCounter;
     static MutexGuard   kResourceCreationMutex;
 
+public:
     void generateId() override 
     {
         ScopedLock _(kResourceCreationMutex);
         m_id = kResourceCreationCounter++;
     }
 
+private:
     virtual ErrType onCreate(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState)
         { return RecluseResult_NoImpl; }
 

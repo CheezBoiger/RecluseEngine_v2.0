@@ -275,7 +275,7 @@ class IGraphicsObject
 {
 public:
     IGraphicsObject()
-    { generateId(); }
+    { }
 
     virtual ~IGraphicsObject() { }
 
@@ -287,5 +287,7 @@ public:
     // This function is called for everytime an object is created. Ensure this 
     // assigns a unique id to it!
     virtual void generateId() { }
+
+    virtual void setDebugName(const char* name) { }
 };
 } // Recluse

@@ -34,20 +34,18 @@ struct QueueFamily
     U32                                     currentAvailableQueueIndex;
     VkQueueFlags                            flags;
     B32                                     isPresentSupported;
-    std::vector<VkCommandPool>              commandPools;
 };
 
 
 class VulkanContext : public GraphicsContext
 {
 public:
-    VulkanContext(VulkanDevice* pDevice, U32 buffers)
-        : m_bufferCount(buffers)
+    VulkanContext(VulkanDevice* pDevice)
+        : m_bufferCount(0)
         , m_currentBufferIndex(0)
         , m_boundRenderPass(nullptr)
         , m_pDevice(pDevice) 
     { 
-        initialize(); 
     }
     
     void                release();
@@ -59,6 +57,8 @@ public:
     inline VkFence      getCurrentFence() const { return m_fences[m_currentBufferIndex]; }
     ErrType             createPrimaryCommandList(VkQueueFlags flags);
     ErrType             destroyPrimaryCommandList();
+    ErrType             setBuffers(U32 newBufferCount);
+    DescriptorAllocatorInstance* currentDescriptorAllocator();
 
     // Not recommended, but submits a copy to this queue, and waits until the command has 
     // completed.
@@ -70,7 +70,8 @@ public:
                             CopyBufferRegion* pRegions, U32 numRegions) override;
 
     // Increment the buffer index.
-    inline void         incrementBufferIndex() {
+    inline void         incrementBufferIndex() 
+    {
         m_currentBufferIndex = (m_currentBufferIndex + 1) % m_bufferCount;
     }
 
@@ -146,6 +147,9 @@ public:
     void pushState(ContextFlags flags) override;
     void popState() override;
 
+    VkCommandPool* getCommandPools() { return m_commandPools.data(); }
+    U32 getNumCommandPools() const { return static_cast<U32>(m_commandPools.size()); }
+
 private:
     struct ContextState
     {
@@ -158,7 +162,7 @@ private:
     };
 
     void prepare();
-    void initialize();
+    void initialize(U32 bufferCount);
     void destroyFences();
     void createFences(U32 buffered);
     void bindPipelineState(const VulkanDescriptorAllocation& set);
@@ -170,7 +174,10 @@ private:
     void markPipelineDirty() { m_pipelineDirty = true; }
     Bool isPipelineDirty() const { return m_pipelineDirty; }
     void unmarkPipelineDirty() { m_pipelineDirty = false; }
-    ContextState& currentState() { return m_contextStates.back(); }
+    ContextState& currentState() { return m_contextStates.back(); }    
+    ErrType createCommandPools(U32 buffered);
+    void destroyCommandPools();
+    void resetCommandPool(U32 bufferIdx, Bool resetAllResources);
 
     // buffer count 
     U32                                                                 m_bufferCount;
@@ -186,10 +193,12 @@ private:
     std::unordered_map<ResourceViewId, ShaderStageFlags>                m_resourceViewShaderAccessMap;
     std::unordered_map<ResourceId, ShaderStageFlags>                    m_constantBufferShaderAccessMap;
     std::unordered_map<SamplerId, ShaderStageFlags>                     m_samplerShaderAccessMap;
+    std::vector<VkCommandPool>                                          m_commandPools;
     std::vector<ContextState>                                           m_contextStates;
     VkDescriptorSet                                                     m_boundDescriptorSet;
     Bool                                                                m_pipelineDirty;
     U32                                                                 m_currentStateIdx;
+    U32                                                                 m_queueFamilyIndex;
 };
 
 
@@ -204,8 +213,7 @@ public:
         , m_pGraphicsQueue(nullptr)
         , m_properties({ })
         , m_memCache({ })
-        , m_swapchain(nullptr) 
-        , m_context(nullptr)
+        , m_swapchain(nullptr)
     { 
     }
 
@@ -213,8 +221,7 @@ public:
     VulkanQueue* getBackbufferQueue() { return m_pGraphicsQueue; }
     ErrType createQueues();
     const std::vector<QueueFamily>& getQueueFamilies() const { return m_queueFamilies; }    
-    ErrType createCommandPools(U32 buffered);
-    void destroyCommandPools();
+
 
     ErrType createQueue(VulkanQueue** ppQueue, VkQueueFlags flags, B32 isPresentable);
     ErrType destroyQueues();
@@ -222,7 +229,8 @@ public:
     ErrType createSwapchain(VulkanSwapchain** ppSwapchain, 
         const SwapchainCreateDescription& pDesc, VulkanQueue* pPresentationQueue);
 
-    GraphicsContext* getContext() override { return m_context; }
+    GraphicsContext* createContext() override;
+    ErrType releaseContext(GraphicsContext* pContext) override;
 
     ErrType     destroySwapchain(VulkanSwapchain* pSwapchain);
     ErrType     createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc, ResourceState initState) override;
@@ -242,6 +250,8 @@ public:
     {
         return m_descriptorAllocator.getInstance(bufferIndex);
     }
+
+    DescriptorAllocator* getDescriptorAllocator() { return &m_descriptorAllocator; }
 
     VkDevice operator()() 
     {
@@ -309,9 +319,8 @@ private:
 
     SmartPtr<VulkanAllocationManager>   m_allocationManager;
     VulkanSwapchain*                    m_swapchain;
-    VulkanContext*                      m_context;
+    std::vector<VulkanContext*>         m_allocatedContexts;
     std::vector<QueueFamily>            m_queueFamilies;
-    std::vector<VkCommandPool>          m_commandPools;
     VulkanQueue*                        m_pGraphicsQueue;
     DescriptorAllocator                 m_descriptorAllocator;
     

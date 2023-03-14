@@ -56,13 +56,12 @@ void VulkanPrimaryCommandList::release(VulkanContext* pContext)
     // Destroy all buffers, ensure they correspond to the proper 
     // command pool.
     VulkanDevice* pDevice                           = static_cast<VulkanDevice*>(pContext->getDevice());
-    const std::vector<QueueFamily>& queueFamiles    = pDevice->getQueueFamilies();
-    const std::vector<VkCommandPool>& commandPools  = queueFamiles[m_queueFamilyIndex].commandPools;
+    VkCommandPool* pools                            = pContext->getCommandPools();
     for (U32 i = 0; i < m_buffers.size(); ++i) 
     {    
         if (m_buffers[i] != VK_NULL_HANDLE) 
         {   
-            vkFreeCommandBuffers(pDevice->get(), commandPools[i], 1, &m_buffers[i]);
+            vkFreeCommandBuffers(pDevice->get(), pools[i], 1, &m_buffers[i]);
             m_buffers[i] = VK_NULL_HANDLE;
         }
     }
@@ -73,7 +72,7 @@ void VulkanPrimaryCommandList::reset()
 {
     // If we are allowed to reset command lists.
     //vkResetCommandBuffer()
-    R_ASSERT_MSG(m_status == CommandList_Reset, "Command list was already reset!");
+    R_ASSERT_MSG(m_status != CommandList_Reset, "Command list was already reset!");
     m_status = CommandList_Reset;
 }
 

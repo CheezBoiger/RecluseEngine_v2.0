@@ -116,7 +116,7 @@ const VulkanDescriptorAllocation& makeDescriptorSet(VulkanContext* pContext, con
 ErrType                     releaseLayout(VulkanContext* pContext, const Structure& structure);
 ErrType                     releaseDescriptorSet(VulkanContext* pContext, const Structure& structure);
 DescriptorSetLayoutId       obtainDescriptorLayoutKey(const Structure& structure);
-void                        clearDescriptorSetCache(VulkanDevice* pDevice, ClearCacheFlag flag = ClearCacheFlag_DescriptorPoolFastClear);
-void                        clearDescriptorLayoutCache(VulkanDevice* pDevice);
+void                        clearDescriptorSetCache(VulkanContext* pContext, ClearCacheFlag flag = ClearCacheFlag_DescriptorPoolFastClear);
+void                        clearDescriptorLayoutCache(VulkanDevice* pContext);
 } // DescriptorSet
 } // Recluse

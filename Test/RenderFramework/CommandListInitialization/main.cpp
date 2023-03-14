@@ -50,6 +50,7 @@ int main(int c, char* argv[])
 
     DeviceCreateInfo deviceCreate   = { };
     GraphicsDevice* pDevice         = nullptr;
+    GraphicsContext* pContext       = nullptr;
 
     deviceCreate.buffering = 1;
 
@@ -70,11 +71,11 @@ int main(int c, char* argv[])
     } else {
     
         R_TRACE("Graphics", "Successfully created command list!");
-        pDevice->getContext()->begin();
-        context = pDevice->getContext();
+        context = pContext;
+        context->begin();
         context->begin();
         context->end();
-        pDevice->getContext()->end();
+        context->end();
 
     }
 

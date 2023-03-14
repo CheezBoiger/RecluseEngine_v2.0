@@ -35,11 +35,14 @@ private:
     static ResourceViewId kResourceViewCreationCounter;
     static MutexGuard kResourceViewCreationMutex;
 
+public:
     void generateId() override 
     {
         ScopedLock _(kResourceViewCreationMutex);
         m_id = kResourceViewCreationCounter++;
     }
+
+private:
 
     VkImageView             m_view;
     VkImageLayout           m_expectedLayout;
@@ -77,12 +80,14 @@ private:
     static SamplerId kSamplerCreationCounter;
     static MutexGuard kSamplerCreationMutex;
 
+public:
     void generateId() override
     {
         ScopedLock _(kSamplerCreationMutex);
         m_id = kSamplerCreationCounter++;
     }
 
+private:
     VkSampler           m_sampler;
     VkSamplerCreateInfo m_info;
     SamplerId           m_id;

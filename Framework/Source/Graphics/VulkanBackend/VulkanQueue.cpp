@@ -151,15 +151,20 @@ ErrType VulkanQueue::copyResource(GraphicsResource* dst, GraphicsResource* src)
 
 VkCommandBuffer VulkanQueue::beginOneTimeCommandBuffer()
 {
+    // We have null temp pool, we can't allocate.
+    if (m_tempCommandPool == VK_NULL_HANDLE)
+    {
+        return VK_NULL_HANDLE;
+    }
+
     // Create a one time only command list.
-    VulkanContext* pContext     = staticCast<VulkanContext*>(m_pDevice->getContext());
     VkDevice device             = m_pDevice->get();
     VkCommandBuffer cmdBuffer   = VK_NULL_HANDLE;
     VkResult result             = VK_SUCCESS;
 
     VkCommandBufferAllocateInfo allocInfo   = { };
     allocInfo.commandBufferCount            = 1;
-    allocInfo.commandPool                   = m_pFamilyRef->commandPools[pContext->getCurrentBufferIndex()];
+    allocInfo.commandPool                   = m_tempCommandPool;
     allocInfo.sType                         = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.level                         = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     result = vkAllocateCommandBuffers(device, &allocInfo, &cmdBuffer);

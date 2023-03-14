@@ -121,10 +121,10 @@ GraphicsResourceView* D3D12Swapchain::getFrameView(U32 idx)
 
 ErrType D3D12Swapchain::present(PresentConfig config)
 {
-    D3D12Context* pContext      = staticCast<D3D12Context*>(m_pDevice->getContext());
+    //D3D12Context* pContext      = staticCast<D3D12Context*>(m_pDevice->getContext());
     ID3D12CommandQueue* pQueue  = m_pBackbufferQueue->get();
     HRESULT result              = S_OK;
-    BufferResources* pBR        = pContext->getCurrentBufferResource();
+    BufferResources* pBR        = nullptr;//pContext->getCurrentBufferResource();
     HANDLE pEvent               = nullptr;
     ID3D12Fence* pFence         = nullptr;
     U64 currentValue            = 0;
@@ -188,15 +188,15 @@ ErrType D3D12Swapchain::destroyFrameResources()
 
 ErrType D3D12Swapchain::flushFinishedCommandLists()
 {
-    D3D12Context* pContext              = staticCast<D3D12Context*>(m_pDevice->getContext());
-    ID3D12CommandQueue* pQueue          = m_pBackbufferQueue->get();
-    ID3D12GraphicsCommandList* pCmdList = pContext->currentGraphicsCommandList();
+    //D3D12Context* pContext              = staticCast<D3D12Context*>(m_pDevice->getContext());
+    //ID3D12CommandQueue* pQueue          = m_pBackbufferQueue->get();
+    //ID3D12GraphicsCommandList* pCmdList = pContext->currentGraphicsCommandList();
 
-    if (pCmdList) 
-    {
-        ID3D12CommandList* pLists[] = { pCmdList };
-        pQueue->ExecuteCommandLists(1, pLists);
-    }
+    //if (pCmdList) 
+    //{
+    //    ID3D12CommandList* pLists[] = { pCmdList };
+    //    pQueue->ExecuteCommandLists(1, pLists);
+    //}
 
     return RecluseResult_Ok;
 }

@@ -75,6 +75,7 @@ void Renderer::initialize()
     determineAdapter(adapters);
 
     createDevice(m_currentRendererConfigs);
+    m_pContext = m_pDevice->createContext();
     m_pSwapchain = m_pDevice->getSwapchain();
 
     {
@@ -106,7 +107,7 @@ void Renderer::cleanUp()
 
     // Clean up all modules, as well as resources handled by them...
     cleanUpModules();
-
+    m_pDevice->releaseContext(m_pContext);
     if (m_pDevice) 
     {
         m_pAdapter->destroyDevice(m_pDevice);
@@ -128,7 +129,7 @@ void Renderer::present(Bool delayPresent)
 void Renderer::render()
 {
     sortCommandKeys();
-    GraphicsContext* context = m_pDevice->getContext();
+    GraphicsContext* context = getContext();
 
     context->begin();
 #if (!R_NULLIFY_RENDER)

@@ -121,7 +121,7 @@ public:
     ErrType createCommandQueue(D3D12Queue** ppQueue, GraphicsQueueTypeFlags type);
     ErrType destroyCommandQueue(D3D12Queue* pQueue);
 
-    GraphicsContext* getContext() override { return m_context; }
+    GraphicsContext* createContext() override { return m_context; }
     HWND getWindowHandle() const { return m_windowHandle; }
 
     ErrType reserveMemory(const MemoryReserveDesc& desc) override;

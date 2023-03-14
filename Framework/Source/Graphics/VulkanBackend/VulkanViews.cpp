@@ -16,6 +16,7 @@ VulkanResourceView* makeResourceView(VulkanDevice* pDevice, const ResourceViewDe
 {
     VulkanResourceView* pView = new VulkanResourceView(desc);
     pView->initialize(pDevice);
+    pView->generateId();
     g_resourceViewMap[pView->getId()] = pView;
     return pView;
 }
@@ -25,6 +26,7 @@ VulkanSampler* makeSampler(VulkanDevice* pDevice, const SamplerCreateDesc& desc)
 {
     VulkanSampler* pSampler         = new VulkanSampler();
     pSampler->initialize(pDevice, desc);
+    pSampler->generateId();
 
     g_samplerMap[pSampler->getId()] = pSampler;
     

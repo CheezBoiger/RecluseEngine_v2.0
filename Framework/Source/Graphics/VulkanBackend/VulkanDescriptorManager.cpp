@@ -16,11 +16,12 @@ const F32 DescriptorAllocatorInstance::kDescriptorChunkSize         = 512.f;
 const F32 DescriptorAllocatorInstance::kDescriptorSamplerChunkSize  = 64.f;
 const U32 DescriptorAllocator::kMaxReservedBufferInstances          = 16;
 
-void DescriptorAllocatorInstance::initialize(VulkanDevice* pDevice)
+void DescriptorAllocatorInstance::initialize(VulkanDevice* pDevice, VkDescriptorPoolCreateFlags flags)
 {
     R_ASSERT(pDevice != NULL);
 
     m_device = pDevice->get();
+    m_flags = flags;
 }
 
 
@@ -138,19 +139,19 @@ VulkanDescriptorAllocation DescriptorAllocatorInstance::allocate(U32 numberSetsT
 
 VkDescriptorPool DescriptorAllocatorInstance::getPool()
 {
+    VkDescriptorPool pool = VK_NULL_HANDLE;
     if (m_availablePools.size() > 0)
     {
-        VkDescriptorPool pool = m_availablePools.back();
+        pool = m_availablePools.back();
         m_availablePools.pop_back();
-        return pool;
     }
     else
     {
         DescriptorPoolSizeFactors sizes;
-        VkDescriptorPool newPool = createDescriptorPool(sizes, kMaxSetsPerPool, VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
-        m_usedPools.push_back(newPool);
-        return m_usedPools.back();
+        pool = createDescriptorPool(sizes, kMaxSetsPerPool, m_flags);
     }
+    m_usedPools.push_back(pool);
+    return pool;
 }
 
 
@@ -186,20 +187,21 @@ void DescriptorAllocatorInstance::resetPools()
 }
 
 
-ErrType DescriptorAllocator::checkAndManageInstances(VulkanDevice* pDevice, U32 newBufferCount)
+ErrType DescriptorAllocator::checkAndManageInstances(VulkanDevice* pDevice, U32 newBufferCount, VkDescriptorPoolCreateFlags flags)
 {
     R_ASSERT_MSG(newBufferCount <= kMaxReservedBufferInstances, "newBufferCount is greater than the maximum reserved instances. Cancelling this resize.");
 
     if (newBufferCount > kMaxReservedBufferInstances)
         return RecluseResult_Failed;
 
-    U64 bufferedInstanceCount = m_bufferedInstances.size();
+    I32 bufferedInstanceCount = static_cast<I32>(m_bufferedInstances.size());
     if (newBufferCount > bufferedInstanceCount)
     {
         // TODO: We need to resize this properly, without losing our existing allocaters!
         // If the new count is greater than existing, then we need to allocate.
-        for (U32 i = (bufferedInstanceCount - 1); i < newBufferCount; ++i)
+        for (U32 i = bufferedInstanceCount; i < newBufferCount; ++i)
         {
+            m_bufferedInstances.push_back(DescriptorAllocatorInstance());
             DescriptorAllocatorInstance& instance = m_bufferedInstances[i];
             instance.initialize(pDevice);
         }
@@ -208,11 +210,13 @@ ErrType DescriptorAllocator::checkAndManageInstances(VulkanDevice* pDevice, U32 
     {
         // we can probably get away with not resizing the actual array?
         // We are shorter then we must deallocate our excess allocators.
-        for (U32 i = (bufferedInstanceCount - 1); i >= newBufferCount; --i)
+        I32 i;
+        for (i = (bufferedInstanceCount - 1); i >= (I32)newBufferCount; i--)
         {
             DescriptorAllocatorInstance& instance = m_bufferedInstances[i];
             instance.resetPools();
             instance.release(pDevice);
+            m_bufferedInstances.pop_back();
         }
 
     }
@@ -222,22 +226,23 @@ ErrType DescriptorAllocator::checkAndManageInstances(VulkanDevice* pDevice, U32 
 }
 
 
-void DescriptorAllocator::initialize(VulkanDevice* pDevice, U32 bufferCount)
+void DescriptorAllocator::initialize(VulkanDevice* pDevice, U32 bufferCount, VkDescriptorPoolCreateFlags flags)
 {
-    // Reserve a max of 16 buffer instances. We should have that many buffered resources.
+    // Reserve a max of 16 buffer instances. We should not have that many buffered resources.
     m_bufferedInstances.reserve(kMaxReservedBufferInstances);
-    checkAndManageInstances(pDevice, bufferCount);
+    checkAndManageInstances(pDevice, bufferCount, flags);
+    m_flags = flags;
 }
 
 
 void DescriptorAllocator::release(VulkanDevice* pDevice)
 {
-    checkAndManageInstances(pDevice, 0);
+    checkAndManageInstances(pDevice, 0, m_flags);
 }
 
 
 void DescriptorAllocator::resize(VulkanDevice* pDevice, U32 newBufferCount)
 {
-    checkAndManageInstances(pDevice, newBufferCount);
+    checkAndManageInstances(pDevice, newBufferCount, m_flags);
 }
 } // Recluse

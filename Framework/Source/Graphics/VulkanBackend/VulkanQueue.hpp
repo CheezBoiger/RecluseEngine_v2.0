@@ -22,6 +22,7 @@ public:
         , m_fence(VK_NULL_HANDLE)
         , m_pFamilyRef(nullptr)
         , m_isPresentSupported(isPresentSupported)
+        , m_tempCommandPool(VK_NULL_HANDLE)
         , m_queueFlags(type) { }
 
     ~VulkanQueue();
@@ -31,6 +32,8 @@ public:
     void destroy();
 
     //ErrType submit(const QueueSubmit* payload);
+
+    void setTemporaryCommandPoolUse(VkCommandPool pool) { m_tempCommandPool = pool; }
 
     ErrType copyResource(GraphicsResource* dst, GraphicsResource* src);
 
@@ -58,5 +61,6 @@ private:
     VkFence         m_fence;
     B32             m_isPresentSupported;
     VkQueueFlags    m_queueFlags;
+    VkCommandPool   m_tempCommandPool;
 };
 } // Recluse

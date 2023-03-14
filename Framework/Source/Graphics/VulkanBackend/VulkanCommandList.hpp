@@ -17,6 +17,7 @@ class VulkanContext;
 
 enum CommandListStatus 
 {
+    CommandList_Closed,
     CommandList_Reset,
     CommandList_Recording,
     CommandList_Ready
@@ -29,7 +30,7 @@ public:
         : m_currentCmdBuffer(VK_NULL_HANDLE)
         , m_currentIdx(0)
         , m_queueFamilyIndex(0)
-        , m_status(CommandList_Reset) { }
+        , m_status(CommandList_Closed) { }
 
 
     //! Initialize the command buffer, using queue family and the command pools 

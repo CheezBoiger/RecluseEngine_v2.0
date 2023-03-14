@@ -70,6 +70,7 @@ int main(int c, char* argv[])
     GraphicsAdapter* pAdapter       = nullptr;
     GraphicsDevice* pDevice         = nullptr;
     GraphicsResource* pData         = nullptr;
+    GraphicsContext* pContext       = nullptr;
     GraphicsResource* pVertexBuffer = nullptr;
     GraphicsResourceView* pView     = nullptr;
     PipelineState* pPipeline        = nullptr;
@@ -123,6 +124,8 @@ int main(int c, char* argv[])
     {
         R_ERR("TEST", "Failed to create device!");
     }
+
+    pContext = pDevice->createContext();
 
     {
         MemoryReserveDesc desc = { };
@@ -216,7 +219,7 @@ int main(int c, char* argv[])
         region.srcOffsetBytes = 0;
         region.dstOffsetBytes = 0;
         region.szBytes = sizeof(vertices);
-        pDevice->getContext()->copyBufferRegions(pVertexBuffer, pTemp, &region, 1);
+        pContext->copyBufferRegions(pVertexBuffer, pTemp, &region, 1);
 
         pDevice->destroyResource(pTemp);
     }
@@ -268,7 +271,7 @@ int main(int c, char* argv[])
 
     U64 offset = 0;
 
-    GraphicsContext* context = pDevice->getContext();
+    GraphicsContext* context = pContext;
     while (!pWindow->shouldClose()) 
     {
         RealtimeTick::updateWatch(1ull, 0);
@@ -294,7 +297,7 @@ int main(int c, char* argv[])
     
     }
 
-    pDevice->getContext()->wait();
+    pContext->wait();
 
     pDevice->destroyResource(pVertexBuffer);
     pDevice->destroyResource(pData);

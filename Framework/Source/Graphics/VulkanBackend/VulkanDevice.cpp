@@ -27,24 +27,47 @@ void checkAvailableDeviceExtensions(const VulkanAdapter* adapter, std::vector<co
 }
 
 
-void VulkanContext::initialize()
-{
+void VulkanContext::initialize(U32 bufferCount)
+{    
+    VulkanDevice* pDevice = m_pDevice;
+
+    release();
+
     // Create the command pool.
-    createFences(m_bufferCount);
+    createFences(bufferCount);
+    createCommandPools(bufferCount);
     createPrimaryCommandList(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_TRANSFER_BIT | VK_QUEUE_COMPUTE_BIT);
+    DescriptorAllocator* descriptorAllocator = pDevice->getDescriptorAllocator();
+    // We are essentially reserving descriptor allocator instances.
+    descriptorAllocator->initialize(pDevice, bufferCount);
+}
+
+
+ErrType VulkanContext::setBuffers(U32 bufferCount)
+{
+    initialize(bufferCount);
+    m_bufferCount = bufferCount;
+    return RecluseResult_Ok;
 }
 
 
 void VulkanContext::release()
 {
-    destroyFences();
     destroyPrimaryCommandList();
+    destroyCommandPools();
+    destroyFences();
 }
 
 
 GraphicsDevice* VulkanContext::getDevice()
 {
     return m_pDevice;
+}
+
+
+DescriptorAllocatorInstance* VulkanContext::currentDescriptorAllocator()
+{
+    return m_pDevice->getDescriptorAllocatorInstance(getCurrentBufferIndex());
 }
 
 
@@ -75,6 +98,11 @@ void VulkanContext::begin()
 void VulkanContext::end()
 {
     m_primaryCommandList.end();
+    // This performance our submittal.
+    VkFence fence               = getCurrentFence();
+    VulkanDevice* pDevice       = getNativeDevice();
+    VulkanSwapchain* pSwapchain = pDevice->getSwapchain()->castTo<VulkanSwapchain>();
+    pSwapchain->submitFinalCommandBuffer(m_primaryCommandList.get(), fence);
 }
 
 
@@ -199,7 +227,6 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
     m_adapter = adapter;
 
     createQueues();
-    createCommandPools(info.buffering);
     createDescriptorHeap();
     allocateMemCache();
 
@@ -219,8 +246,6 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
         m_allocationManager->update(config);
     }
 
-    m_context = new VulkanContext(this, info.buffering);
-
     // Create a swapchain if we have our info.
     if (info.winHandle) 
     {
@@ -237,27 +262,16 @@ void VulkanDevice::release(VkInstance instance)
 {
     vkDeviceWaitIdle(m_device);
 
-    DescriptorSets::clearDescriptorSetCache(this);
-    DescriptorSets::clearDescriptorLayoutCache(this);
-
     if (m_swapchain) 
     {
         destroySwapchain(m_swapchain);
         m_swapchain = nullptr;
     }
-
-    m_context->release();
     
+    DescriptorSets::clearDescriptorLayoutCache(this);
     m_allocationManager->release();
 
-    if (m_context)
-    { 
-        delete m_context;
-        m_context = nullptr;
-    }
-
     destroyQueues();
-    destroyCommandPools();
     destroyDescriptorHeap();
     freeMemCache();
     RenderPasses::clearCache(this);
@@ -520,97 +534,87 @@ ErrType VulkanDevice::destroyResource(GraphicsResource* pResource)
 }
 
 
-ErrType VulkanDevice::createCommandPools(U32 buffers)
+ErrType VulkanContext::createCommandPools(U32 buffers)
 {
     R_DEBUG(R_CHANNEL_VULKAN, "Creating command pools...");
 
-    VkCommandPoolCreateInfo poolIf  = { };
-    poolIf.sType                    = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    poolIf.flags                    = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    VkCommandPoolCreateInfo poolIf                  = { };
+    poolIf.sType                                    = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    poolIf.flags                                    = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    VkQueueFlags queueFlags                         = (VK_QUEUE_COMPUTE_BIT | VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_TRANSFER_BIT);
+    const std::vector<QueueFamily>& queueFamilies   = m_pDevice->getQueueFamilies(); 
+    VkResult result                                 = VK_SUCCESS;
 
-    for (U32 i = 0; i < m_queueFamilies.size(); ++i) 
+    for (U32 i = 0; i < queueFamilies.size(); ++i) 
     {
-        m_queueFamilies[i].commandPools.resize(buffers);
+        if (queueFamilies[i].flags & queueFlags)
+        {
+            poolIf.queueFamilyIndex = queueFamilies[i].queueFamilyIndex;
+            m_queueFamilyIndex      = poolIf.queueFamilyIndex;
+            m_commandPools.resize(buffers);
+            for (U32 j = 0; j < m_commandPools.size(); ++j) 
+            { 
+                result = vkCreateCommandPool
+                                    (
+                                        m_pDevice->get(),
+                                        &poolIf, 
+                                        nullptr, 
+                                        &m_commandPools[j]
+                                    );
 
-        poolIf.queueFamilyIndex = m_queueFamilies[i].queueFamilyIndex;
-
-        for (U32 j = 0; j < m_queueFamilies[i].commandPools.size(); ++j) 
-        { 
-            VkResult result = vkCreateCommandPool
-                                (
-                                    get(),
-                                    &poolIf, 
-                                    nullptr, 
-                                    &m_queueFamilies[i].commandPools[j]
-                                );
-
-            if (result != VK_SUCCESS) 
-            {
-                R_ERR(R_CHANNEL_VULKAN, "Failed to create command pool for queue family...");
+                if (result != VK_SUCCESS) 
+                {
+                    R_ERR(R_CHANNEL_VULKAN, "Failed to create command pool for queue family...");
+                    destroyCommandPools();
+                    break;
+                }
             }
+            
+            break;
         }
     }
 
-    return RecluseResult_Ok;
+    return ((result != VK_SUCCESS) ? RecluseResult_Failed : RecluseResult_Ok);
 }
 
 
-void VulkanDevice::destroyCommandPools()
+void VulkanContext::destroyCommandPools()
 {
     R_DEBUG(R_CHANNEL_VULKAN, "Destroying command pools...");
-    
-    for (U32 i = 0; i < m_queueFamilies.size(); ++i) 
+    VulkanDevice* pDevice = getNativeDevice();
+    for (U32 i = 0; i < m_commandPools.size(); ++i) 
     {
-        for (U32 j = 0; j < m_queueFamilies[i].commandPools.size(); ++j) 
+        if (m_commandPools[i] != VK_NULL_HANDLE)
         {
-            if (m_queueFamilies[i].commandPools[j]) 
-            {
-                vkDestroyCommandPool(get(), m_queueFamilies[i].commandPools[j], nullptr);
-                m_queueFamilies[i].commandPools[j] = VK_NULL_HANDLE;
-            }
+            vkDestroyCommandPool(pDevice->get(), m_commandPools[i], nullptr);
         }
+        m_commandPools[i] = VK_NULL_HANDLE;
     }
+    m_commandPools.clear();
 }
 
 
 ErrType VulkanContext::createPrimaryCommandList(VkQueueFlags flags)
 {
     ErrType result = RecluseResult_Ok;
-
+    U32 queueFamilyIndex = m_queueFamilyIndex;
     R_DEBUG(R_CHANNEL_VULKAN, "Creating command list...");
+    result = m_primaryCommandList.initialize
+                (
+                    this,
+                    queueFamilyIndex, 
+                    m_commandPools.data(), 
+                    (U32)m_commandPools.size()
+                );
 
-    const std::vector<QueueFamily>& queueFamilies = m_pDevice->getQueueFamilies();
-
-    for (U32 i = 0; i < queueFamilies.size(); ++i) 
+    if (result != RecluseResult_Ok) 
     {
-        VkQueueFlags famFlags = queueFamilies[i].flags;
+        R_ERR(R_CHANNEL_VULKAN, "Could not create CommandList...");
 
-        if (flags & famFlags) 
-        {
-            U32 queueFamilyIndex        = queueFamilies[i].queueFamilyIndex;
+        m_primaryCommandList.release(this);
 
-            result = m_primaryCommandList.initialize
-                        (
-                            this,
-                            queueFamilyIndex, 
-                            queueFamilies[i].commandPools.data(), 
-                            (U32)queueFamilies[i].commandPools.size()
-                        );
-
-            if (result != RecluseResult_Ok) 
-            {
-                R_ERR(R_CHANNEL_VULKAN, "Could not create CommandList...");
-
-                m_primaryCommandList.release(this);
-
-                return result;
-            }
-
-            break;
-        }    
-
+        return result;
     }
-
     return result;
 }
 
@@ -623,6 +627,18 @@ ErrType VulkanContext::destroyPrimaryCommandList()
 }
 
 
+void VulkanContext::resetCommandPool(U32 bufferIdx, Bool resetAllResources)
+{
+    VkCommandPool commandPool = m_commandPools[bufferIdx];
+    VkCommandPoolResetFlags flags = 0;
+    if (resetAllResources)
+    {
+        flags |= VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT;
+    }
+    vkResetCommandPool(m_pDevice->get(), commandPool, flags);
+}
+
+
 void VulkanContext::prepare()
 {
     // NOTE(): Get the current buffer index, this is usually the buffer that we recently have 
@@ -630,20 +646,8 @@ void VulkanContext::prepare()
     U32 currentBufferIndex = getCurrentBufferIndex();
 
     // Reset the current buffer's command pools.
-    const std::vector<QueueFamily>& queueFamilies = m_pDevice->getQueueFamilies();
-    for (U32 i = 0; i < queueFamilies.size(); ++i) 
-    {
-        VkCommandPool pool = queueFamilies[i].commandPools[currentBufferIndex];
-        VkResult result = vkResetCommandPool(m_pDevice->get(), pool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
-
-        if (result != VK_SUCCESS) 
-        {
-            R_ERR(R_CHANNEL_VULKAN, "Failed to reset command pool!");
-        }
-    }
-
-    // Reset this current command list.
-    m_primaryCommandList.setStatus(CommandList_Reset);
+    resetCommandPool(currentBufferIndex, true);
+    DescriptorSets::clearDescriptorSetCache(this);
 
     const VulkanAllocationManager::Flags allocUpdate = (VulkanAllocationManager::Flag_SetFrameIndex & VulkanAllocationManager::Flag_Update);
 
@@ -656,7 +660,7 @@ void VulkanContext::prepare()
     m_pDevice->getAllocationManager()->update(config);
     
     // TODO: probably want to figure out a cleaner way of doing this.
-    DescriptorSets::clearDescriptorSetCache(getDevice()->castTo<VulkanDevice>(), DescriptorSets::ClearCacheFlag_DescriptorPoolFastClear);
+    DescriptorSets::clearDescriptorSetCache(this, DescriptorSets::ClearCacheFlag_DescriptorPoolFastClear);
     resetBinds();
 }
 
@@ -682,6 +686,7 @@ void VulkanContext::destroyFences()
     {
         vkDestroyFence(m_pDevice->get(), m_fences[i], nullptr);
     }
+    m_fences.clear();
 }
 
 
@@ -706,7 +711,7 @@ void VulkanDevice::createDescriptorHeap()
 {
     // TODO: Need to do a resize of this, and probably not rely on context so much on obtaining the buffer count.
     //       Maybe we should move the descriptor allocator to the context?
-    m_descriptorAllocator.initialize(this, m_context->getBufferCount());
+    m_descriptorAllocator.initialize(this, 1);
 }
 
 
@@ -944,5 +949,29 @@ Bool VulkanDevice::makeVertexLayout(VertexInputLayoutId id, const VertexInputLay
 Bool VulkanDevice::destroyVertexLayout(VertexInputLayoutId id)
 {
     return false;
+}
+
+
+GraphicsContext* VulkanDevice::createContext()
+{
+    m_allocatedContexts.reserve(kMaxGraphicsContexts);
+    if (m_allocatedContexts.size() >= kMaxGraphicsContexts)
+    {
+        R_ERR(R_CHANNEL_VULKAN, "Reached maximum allowable graphics contexts to create!");
+        return nullptr;
+    }
+
+    VulkanContext* pContext = new VulkanContext(this);
+    m_allocatedContexts.push_back(pContext);
+    return pContext;
+}
+
+
+ErrType VulkanDevice::releaseContext(GraphicsContext* pContext)
+{
+    VulkanContext* pVc = static_cast<VulkanContext*>(pContext);
+    pVc->release();
+    delete pVc;
+    return RecluseResult_Ok;
 }
 } // Recluse
