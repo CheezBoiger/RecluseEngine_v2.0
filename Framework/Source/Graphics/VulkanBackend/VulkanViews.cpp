@@ -2,6 +2,7 @@
 #include "VulkanViews.hpp"
 #include "VulkanResource.hpp"
 #include "VulkanDevice.hpp"
+#include "VulkanAdapter.hpp"
 
 #include "Recluse/Messaging.hpp"
 
@@ -134,6 +135,23 @@ ErrType VulkanResourceView::initialize(VulkanDevice* pDevice)
     }
 
     m_subresourceRange = info.subresourceRange;
+
+    const Bool supportsDebugMarking = pDevice->getAdapter()->getInstance()->supportsDebugMarking();
+    const char* debugName           = desc.name;
+    if (supportsDebugMarking && debugName)
+    {
+        VkDebugUtilsObjectNameInfoEXT nameInfo = { };
+        nameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+        nameInfo.objectType = VK_OBJECT_TYPE_IMAGE_VIEW;
+        nameInfo.pNext = nullptr;
+        nameInfo.objectHandle = reinterpret_cast<uint64_t>(m_view);
+        nameInfo.pObjectName = debugName;
+        vResult = pfn_vkSetDebugUtilsObjectNameEXT(pDevice->get(), &nameInfo);
+        if (vResult != VK_SUCCESS)
+        {
+            R_WARN(R_CHANNEL_VULKAN, "Failed to create image view debug name object.");
+        }
+    }
     
     return result;
 }

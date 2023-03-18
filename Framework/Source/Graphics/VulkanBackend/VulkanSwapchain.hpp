@@ -40,10 +40,14 @@ public:
     
     ErrType                 present(PresentConfig config = PresentConfig_Present) override; 
 
-    U32                     getCurrentFrameIndex() override { return m_currentImageIndex; }
+    U32                     getCurrentFrameIndex() override { return m_currentFrameIndex; }
 
     GraphicsResource*       getFrame(U32 idx) override;
     GraphicsResourceView*   getFrameView(U32 idx) override;
+
+    // Call this function before the start of a primary command buffer record!
+    // Prepares the frame for the next image to draw onto.
+    ErrType                 prepareFrame();
     
     VkSwapchainKHR operator()() {
         return m_swapchain;
@@ -77,6 +81,9 @@ private:
     VulkanQueue*                        m_pBackbufferQueue;
     VulkanDevice*                       m_pDevice;
     U32                                 m_currentFrameIndex;
+
+    // This is the native image index that is provided from the vulkan API.
+    // Use m_currentFrameIndex to find the application frame index instead!
     U32                                 m_currentImageIndex;
     VulkanFrameResources                m_frameResources;
     std::vector<VulkanImage*>           m_frameImages;

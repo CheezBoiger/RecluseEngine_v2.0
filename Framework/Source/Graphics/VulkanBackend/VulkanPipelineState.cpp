@@ -229,7 +229,7 @@ static VkPipelineDynamicStateCreateInfo getDynamicStates()
 
 
 static VkPipelineColorBlendStateCreateInfo getBlendInfo(const BlendState& state,
-    std::vector<VkPipelineColorBlendAttachmentState>& blendAttachments)
+    std::vector<VkPipelineColorBlendAttachmentState>& blendAttachments, U32 numRenderTargets)
 {
     VkPipelineColorBlendStateCreateInfo info = { };
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -239,11 +239,11 @@ static VkPipelineColorBlendStateCreateInfo getBlendInfo(const BlendState& state,
     info.blendConstants[1]  = state.blendConstants[1];
     info.blendConstants[2]  = state.blendConstants[2];
     info.blendConstants[3]  = state.blendConstants[3];
-    info.attachmentCount    = state.numAttachments;
+    info.attachmentCount    = numRenderTargets;
 
-    blendAttachments.resize(state.numAttachments);
+    blendAttachments.resize(numRenderTargets);
 
-    for (U32 i = 0; i < state.numAttachments; ++i) 
+    for (U32 i = 0; i < numRenderTargets; ++i) 
     {
         const RenderTargetBlendState& blendState      = state.attachments[i];
 
@@ -442,7 +442,7 @@ VkPipeline createGraphicsPipeline(VulkanDevice* pDevice, const Structure& struct
     VkPipelineRasterizationStateCreateInfo rasterState          = getRasterInfo(structure.state.graphics.raster);
     VkPipelineDepthStencilStateCreateInfo depthStencilState     = getDepthStencilInfo(structure.state.graphics.depthStencil);
     VkPipelineViewportStateCreateInfo viewportState             = getViewportInfo();
-    VkPipelineColorBlendStateCreateInfo blendState              = getBlendInfo(structure.state.graphics.blendState, blendAttachments);
+    VkPipelineColorBlendStateCreateInfo blendState              = getBlendInfo(structure.state.graphics.blendState, blendAttachments, structure.state.graphics.numRenderTargets);
     VkPipelineVertexInputStateCreateInfo vertInputState         = { };
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyState   = getAssemblyInfo(structure.state.graphics.primitiveTopology);
     VkPipelineDynamicStateCreateInfo dynamicState               = getDynamicStates();

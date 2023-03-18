@@ -69,12 +69,6 @@ public:
     void                copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, 
                             CopyBufferRegion* pRegions, U32 numRegions) override;
 
-    // Increment the buffer index.
-    inline void         incrementBufferIndex() 
-    {
-        m_currentBufferIndex = (m_currentBufferIndex + 1) % m_bufferCount;
-    }
-
     GraphicsDevice*     getDevice() override;
 
     VulkanPrimaryCommandList* getPrimaryCommandList() { return &m_primaryCommandList; }
@@ -115,6 +109,7 @@ public:
     void enableStencil(Bool enable) override { currentState().m_pipelineStructure.state.graphics.depthStencil.stencilTestEnable = enable; markPipelineDirty(); }
     void setFrontFace(FrontFace frontFace) override { currentState().m_pipelineStructure.state.graphics.raster.frontFace = frontFace; markPipelineDirty(); }
     void setCullMode(CullMode cullMode) override { currentState().m_pipelineStructure.state.graphics.raster.cullMode = cullMode; markPipelineDirty(); }
+    void setLineWidth(F32 width) override { currentState().m_pipelineStructure.state.graphics.raster.lineWidth = width; markPipelineDirty(); }
     
     void setShaderProgram(ShaderProgramId program, U32 permutation) override 
     { 
@@ -174,7 +169,15 @@ private:
     void markPipelineDirty() { m_pipelineDirty = true; }
     Bool isPipelineDirty() const { return m_pipelineDirty; }
     void unmarkPipelineDirty() { m_pipelineDirty = false; }
+    
+    inline void incrementBufferIndex() 
+    { 
+        m_currentBufferIndex = (m_currentBufferIndex + 1) % m_bufferCount; 
+    }
+
+    // The current context state, that is pushed to this context.
     ContextState& currentState() { return m_contextStates.back(); }    
+
     ErrType createCommandPools(U32 buffered);
     void destroyCommandPools();
     void resetCommandPool(U32 bufferIdx, Bool resetAllResources);

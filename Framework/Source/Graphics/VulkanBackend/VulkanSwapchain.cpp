@@ -117,24 +117,24 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
     buildFrameResources(Vulkan::getResourceFormat(vkFormat));
     queryCommandPools();
 
-    VkSemaphore imageAvailableSema = getWaitSemaphore(m_currentFrameIndex);
+    //VkSemaphore imageAvailableSema = getWaitSemaphore(m_currentFrameIndex);
 
-    result = vkAcquireNextImageKHR
-                (
-                    m_pDevice->get(), 
-                    m_swapchain, 
-                    UINT64_MAX, 
-                    imageAvailableSema, 
-                    VK_NULL_HANDLE, 
-                    &m_currentImageIndex
-                );
+    //result = vkAcquireNextImageKHR
+    //            (
+    //                m_pDevice->get(), 
+    //                m_swapchain, 
+    //                UINT64_MAX, 
+    //                imageAvailableSema, 
+    //                VK_NULL_HANDLE, 
+    //                &m_currentImageIndex
+    //            );
 
-    if (result != VK_SUCCESS) 
-    {
-        R_WARN(R_CHANNEL_VULKAN, "AcquireNextImage was not successful...");    
+    //if (result != VK_SUCCESS) 
+    //{
+    //    R_WARN(R_CHANNEL_VULKAN, "AcquireNextImage was not successful...");    
 
-        return RecluseResult_Failed;
-    }
+    //    return RecluseResult_Failed;
+    //}
 
     return RecluseResult_Ok;
 }
@@ -194,17 +194,14 @@ ErrType VulkanSwapchain::destroy()
 ErrType VulkanSwapchain::present(PresentConfig config)
 {
     R_ASSERT(m_pBackbufferQueue != NULL);
-    VkResult result = VK_SUCCESS;
-    ErrType err = RecluseResult_Ok;
+    VkResult result                 = VK_SUCCESS;
+    ErrType err                     = RecluseResult_Ok;
 
-    // Flush all copies down for this run.
-    m_pDevice->flushAllMappedRanges();
-    m_pDevice->invalidateAllMappedRanges();
+    const U32 currentFrameIndex     = getCurrentFrameIndex();
+    VkFence frameFence              = m_frameResources.getFence(currentFrameIndex);
 
     if (config & PresentConfig_DelayPresent)
     {
-        U32 currentFrameIndex   = getCurrentFrameIndex();
-        VkFence frameFence = m_frameResources.getFence(currentFrameIndex);
         VkSubmitInfo info       = { };
         info.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         vkQueueSubmit(m_pBackbufferQueue->get(), 1, &info, frameFence);
@@ -214,7 +211,6 @@ ErrType VulkanSwapchain::present(PresentConfig config)
     VkSwapchainKHR swapchains[]     = { m_swapchain };
     VkSemaphore pWaitSemaphores[]   = { getSignalSemaphore(m_currentFrameIndex) };
     VkDevice device                 = m_pDevice->get();
-    VkSemaphore imageAvailableSema  = VK_NULL_HANDLE;
     
     if (!(config & PresentConfig_SkipPresent))
     {
@@ -236,7 +232,22 @@ ErrType VulkanSwapchain::present(PresentConfig config)
     }
 
     incrementFrameIndex();
-    imageAvailableSema = getWaitSemaphore(m_currentFrameIndex);
+
+    return err;
+}
+
+
+ErrType VulkanSwapchain::prepareFrame()
+{
+    R_ASSERT(m_pBackbufferQueue != NULL);
+    VkResult result                 = VK_SUCCESS;
+    const U32 currentFrameIndex     = getCurrentFrameIndex();
+    VkFence frameFence              = m_frameResources.getFence(currentFrameIndex);
+    VkSemaphore imageAvailableSema  = getWaitSemaphore(currentFrameIndex);
+    ErrType err = RecluseResult_Ok;
+
+    vkWaitForFences(m_pDevice->get(), 1, &frameFence, VK_TRUE, UINT64_MAX);
+    vkResetFences(m_pDevice->get(), 1, &frameFence);
 
     result = vkAcquireNextImageKHR
                 (
@@ -247,7 +258,6 @@ ErrType VulkanSwapchain::present(PresentConfig config)
                     VK_NULL_HANDLE, 
                     &m_currentImageIndex
                 );
-
     if (result != VK_SUCCESS) 
     {
         R_WARN(R_CHANNEL_VULKAN, "AcquireNextImage was not successful...");    
@@ -357,7 +367,7 @@ ErrType VulkanSwapchain::submitFinalCommandBuffer(VkCommandBuffer commandBuffer,
     VkImageSubresourceRange range       = { };
     VkCommandBuffer primaryCmdBuf       = commandBuffer;
     VkCommandBuffer singleUseCmdBuf     = m_commandbuffers[m_currentFrameIndex];
-    VkFence fence                       = cpuFence;
+    VkFence fence                       = m_frameResources.getFence(m_currentFrameIndex);
     VkSemaphore signalSemaphore         = m_frameResources.getSignalSemaphore(m_currentFrameIndex);
     VkSemaphore waitSemaphore           = m_frameResources.getWaitSemaphore(m_currentFrameIndex);
 

@@ -34,6 +34,7 @@ struct GraphicsResourceDescription
     U32                 samples;
     ResourceMemoryUsage memoryUsage;
     ResourceUsageFlags  usage;
+    const char*         name; // for debug purposes.
 };
 
 
@@ -47,12 +48,15 @@ struct ResourceViewDescription
     U32                     baseArrayLayer;
     U32                     layerCount;
     GraphicsResource*       pResource;
+    const char*             name;
 };
 
 
 enum ContextFlag
 {
+    // Context push will create a fresh context state.
     ContextFlag_None = 0,
+    // Context push will create a context state, and inherit from the parent pipeline.
     ContextFlag_InheritPipelineState = (1 << 0)
 };
 
@@ -135,6 +139,7 @@ public:
 
     virtual void setCullMode(CullMode cullmode) { }
     virtual void setFrontFace(FrontFace frontFace) { }
+    virtual void setLineWidth(F32 width) { }
     virtual void setDepthCompareOp(CompareOp compareOp) { }
     virtual void setPolygonMode(PolygonMode polygonMode) { }
     virtual void bindShaderResources(ShaderType type, U32 offset, U32 count, GraphicsResourceView** ppResources) { }
@@ -150,12 +155,38 @@ public:
     virtual void enableDepth(Bool enable) { }
     virtual void enableStencil(Bool enable) { }
     virtual void setInputVertexLayout(VertexInputLayoutId inputLayout) { }
+    virtual void setDepthClampEnable(Bool enable) { }
+    virtual void setDepthBiasEnable(Bool enable) { }
+    virtual void setDepthBiasClamp(F32 value) { }
+
+    // Blend operations to be done on a rendertarget. Index matches the rendertarget index, and must be
+    // less than the max rendertargets bindable.
+    virtual void setBlendEnable(U32 rtIndex, Bool enable) { }
+    virtual void setBlendLogicOpEnable(Bool enable) { }
+    virtual void setBlendLogicOp(LogicOp logicOp) { }
+    virtual void setBlendConstants(F32 blendConstants[4]) { }
+    virtual void setBlend
+                    (
+                        U32 rtIndex, 
+                        BlendFactor srcColorFactor, BlendFactor dstColorFactor, BlendOp colorBlendOp, 
+                        BlendFactor srcAlphaFactor, BlendFactor dstAlphaFactor, BlendOp alphaOp, 
+                        ColorComponentMaskFlags writeMask
+                    ) { }
 
     // Pop the current pipeline state, resorting to previous pipeline state.
     virtual void popState() { }
-
     // Push the current pipeline state. Allows inheriting from previous state.
     virtual void pushState(ContextFlags flags = ContextFlag_None) { }
+
+    // Creates bundles to be used for multithreaded rendering. These will only inherit the current pipeline,
+    // along with allow for binding resources and calling draw commands. In no way shall bundles be 
+    // allowed to change the pipeline state, or render targets.
+    virtual GraphicsContext** makeBundles(U32 requestedCount) { return nullptr; }
+
+    // Submits the bundles that will be ran through the context. Keep in mind that all bundles are cleared 
+    // when end() is called. This indicates that the next batch of bundles will be reset to be used for the next
+    // frame.
+    virtual void submitBundles(GraphicsContext** ppBundles, U32 count) { }
 };
 
 

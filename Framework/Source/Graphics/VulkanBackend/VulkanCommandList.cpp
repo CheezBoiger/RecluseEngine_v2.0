@@ -563,6 +563,7 @@ void VulkanContext::bindRenderTargets(U32 count, GraphicsResourceView** ppResour
     if (pPass == m_boundRenderPass)
         return;
     m_boundRenderPass = pPass;
+    currentState().m_pipelineStructure.state.graphics.numRenderTargets = count;
     setRenderPass(m_boundRenderPass);
 }
 

@@ -94,8 +94,8 @@ int main(int c, char* argv[])
         info.buffering = 3;
         info.winHandle = pWindow->getNativeHandle();
         info.swapchainDescription = { };
-        info.swapchainDescription.buffering = FrameBuffering_Double;
-        info.swapchainDescription.desiredFrames = 3;
+        info.swapchainDescription.buffering = FrameBuffering_Triple;
+        info.swapchainDescription.desiredFrames = 2;
         info.swapchainDescription.renderWidth = pWindow->getWidth();
         info.swapchainDescription.renderHeight = pWindow->getHeight();
         info.swapchainDescription.format = ResourceFormat_R8G8B8A8_Unorm;
@@ -130,6 +130,7 @@ int main(int c, char* argv[])
         desc.width = sizeof(ConstData);
         desc.memoryUsage = ResourceMemoryUsage_CpuToGpu;
         desc.usage = ResourceUsage_ConstantBuffer;
+        desc.name = "ComputeConstantBuffer";
         
         result = pDevice->createResource(&pData, desc, ResourceState_ConstantBuffer);
     }
@@ -150,6 +151,7 @@ int main(int c, char* argv[])
         desc.mipLevelCount      = 1;
         desc.baseArrayLayer     = 0;
         desc.baseMipLevel       = 0;
+        desc.name               = "ResultMandelbrot";
 
         views.resize(pSwapchain->getDesc().desiredFrames);
         for (U32 i = 0; i < pSwapchain->getDesc().desiredFrames; ++i) 
@@ -225,7 +227,7 @@ int main(int c, char* argv[])
             conf = GraphicsSwapchain::PresentConfig_Present;
         }
         R_VERBOSE("Test", "Frame Rage: %f fps", deltaFrameRate);
-        pSwapchain->present(/*conf*/);
+        pSwapchain->present(conf);
 
         pollEvents();
     

@@ -21,6 +21,7 @@ void VulkanFrameResources::build(VulkanSwapchain* pSwapchain)
     m_frameBuffers.resize(swapchainImageCount);
     m_frameSignalSemaphores.resize(swapchainImageCount);
     m_frameWaitSemaphores.resize(swapchainImageCount);
+    m_frameFences.resize(swapchainImageCount);
 
     vkGetSwapchainImagesKHR(device, swapchain, &swapchainImageCount, m_frames.data());
 
@@ -30,12 +31,13 @@ void VulkanFrameResources::build(VulkanSwapchain* pSwapchain)
 
     VkFenceCreateInfo fenceIf       = { };
     fenceIf.sType                   = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    fenceIf.flags                   = 0;
-
+    fenceIf.flags                   = VK_FENCE_CREATE_SIGNALED_BIT;
+    
     for (U32 i = 0; i < m_frameWaitSemaphores.size(); ++i) 
     {
         vkCreateSemaphore(device, &semaIf, nullptr, &m_frameWaitSemaphores[i]);
         vkCreateSemaphore(device, &semaIf, nullptr, &m_frameSignalSemaphores[i]);
+        vkCreateFence(device, &fenceIf, nullptr, &m_frameFences[i]);
     }
     
 }
@@ -49,6 +51,7 @@ void VulkanFrameResources::destroy(VulkanSwapchain* pSwapchain)
     {
         vkDestroySemaphore(device, m_frameSignalSemaphores[i], nullptr);
         vkDestroySemaphore(device, m_frameWaitSemaphores[i], nullptr);
+        vkDestroyFence(device, m_frameFences[i], nullptr);
     }
 }
 } // Recluse

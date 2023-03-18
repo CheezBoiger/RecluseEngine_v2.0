@@ -208,7 +208,6 @@ struct BlendState
     B32     logicOpEnable;
     LogicOp logicOp;
     F32     blendConstants[4];
-    U32     numAttachments;
     RenderTargetBlendState attachments[8];
 };
 

@@ -72,21 +72,11 @@ DescriptorAllocatorInstance* VulkanContext::currentDescriptorAllocator()
 
 
 void VulkanContext::begin()
-{
-    incrementBufferIndex();
-
-    VkFence frameFence  = getCurrentFence();
-    VkResult result     = vkWaitForFences(m_pDevice->get(), 1, &frameFence, VK_TRUE, UINT64_MAX);
-
-    if (result != RecluseResult_Ok)
-    {
-        R_WARN(R_CHANNEL_VULKAN, "Fence wait failed...");
-    }
-
-    vkResetFences(m_pDevice->get(), 1, &frameFence);
-
+{    
     R_ASSERT(getBufferCount() > 0);
-
+    VulkanSwapchain* pSwapchain = getNativeDevice()->getSwapchain()->castTo<VulkanSwapchain>();
+    
+    pSwapchain->prepareFrame();
     prepare();
 
     m_primaryCommandList.use(getCurrentBufferIndex());
@@ -102,7 +92,13 @@ void VulkanContext::end()
     VkFence fence               = getCurrentFence();
     VulkanDevice* pDevice       = getNativeDevice();
     VulkanSwapchain* pSwapchain = pDevice->getSwapchain()->castTo<VulkanSwapchain>();
+
+    // Flush all copies down for this run.
+    m_pDevice->flushAllMappedRanges();
+    m_pDevice->invalidateAllMappedRanges();
+
     pSwapchain->submitFinalCommandBuffer(m_primaryCommandList.get(), fence);
+    incrementBufferIndex();
 }
 
 
