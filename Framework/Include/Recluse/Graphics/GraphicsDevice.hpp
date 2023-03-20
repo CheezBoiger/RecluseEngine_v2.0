@@ -73,6 +73,11 @@ public:
 
     virtual GraphicsDevice* getDevice() { return nullptr; }
     
+    // Sets up the number of buffers to use for rendering. These buffers are the resources that 
+    // essentially are used by the gpu per frame. Each buffer will usually correspond to each frame
+    // in order to avoid the cpu from waiting to record and utilize resources when ready. We can essentially
+    // have the cpu working on buffers that are ready to be used, while buffers that are pending are being used
+    // and displayed by the gpu.
     virtual ErrType setBuffers(U32 newBufferCount) { return RecluseResult_NoImpl; }
 
         // Not recommended, but submits a copy to this queue, and waits until the command has 
@@ -198,47 +203,47 @@ public:
     virtual ~GraphicsDevice() { }
 
     // Reserve memory to be used for graphics resources.
-    virtual ErrType reserveMemory(const MemoryReserveDesc& desc) { return RecluseResult_NoImpl; }
+    virtual ErrType             reserveMemory(const MemoryReserveDesc& desc) { return RecluseResult_NoImpl; }
 
     //< Create graphics resource.
     //<
-    virtual ErrType createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc, ResourceState initState) 
+    virtual ErrType             createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc, ResourceState initState) 
         { return RecluseResult_NoImpl; }
 
-    virtual ErrType createResourceView(GraphicsResourceView** ppView, const ResourceViewDescription& desc) 
+    virtual ErrType             createResourceView(GraphicsResourceView** ppView, const ResourceViewDescription& desc) 
         { return RecluseResult_NoImpl; }
 
-    virtual ErrType createSampler(GraphicsSampler** ppSampler, const SamplerCreateDesc& desc) 
+    virtual ErrType             createSampler(GraphicsSampler** ppSampler, const SamplerCreateDesc& desc) 
         { return RecluseResult_NoImpl; }
 
-    virtual ErrType destroySampler(GraphicsSampler* pSampler) { return RecluseResult_NoImpl; }
-    virtual ErrType destroyResource(GraphicsResource* pResource) { return RecluseResult_NoImpl; }
-    virtual ErrType destroyResourceView(GraphicsResourceView* pResourceView) { return RecluseResult_NoImpl; }
+    virtual ErrType             destroySampler(GraphicsSampler* pSampler) { return RecluseResult_NoImpl; }
+    virtual ErrType             destroyResource(GraphicsResource* pResource) { return RecluseResult_NoImpl; }
+    virtual ErrType             destroyResourceView(GraphicsResourceView* pResourceView) { return RecluseResult_NoImpl; }
 
     // Makes a vertex layout, will return a layout id if one already exists.
-    virtual Bool makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout) { return false; }
-    virtual Bool destroyVertexLayout(VertexInputLayoutId id) { return false; }
+    virtual Bool                makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout) { return false; }
+    virtual Bool                destroyVertexLayout(VertexInputLayoutId id) { return false; }
 
-    virtual GraphicsContext* createContext() { return nullptr; }
-    virtual ErrType releaseContext(GraphicsContext* pContext) { return RecluseResult_NoImpl; }
+    virtual GraphicsContext*    createContext() { return nullptr; }
+    virtual ErrType             releaseContext(GraphicsContext* pContext) { return RecluseResult_NoImpl; }
     
-    virtual GraphicsSwapchain* getSwapchain() { return nullptr; }
+    virtual GraphicsSwapchain*  getSwapchain() { return nullptr; }
 
     // Load up shader programs to be created on the native api.
-    virtual ErrType loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition) { return RecluseResult_NoImpl; }
+    virtual ErrType             loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition) { return RecluseResult_NoImpl; }
     
     // Unload a shader program, as well as it's permutations, created by this device.
-    virtual ErrType unloadShaderProgram(ShaderProgramId program) { return RecluseResult_NoImpl; }
+    virtual ErrType             unloadShaderProgram(ShaderProgramId program) { return RecluseResult_NoImpl; }
     // Unload all shader programs, as well as their permutations.
-    virtual void unloadAllShaderPrograms() { return; }
+    virtual void                unloadAllShaderPrograms() { return; }
 
-    Bool hasFeaturesSupport(LayerFeatureFlags features) { return (m_supportedFeatures & features); }
+    Bool                        hasFeaturesSupport(LayerFeatureFlags features) { return (m_supportedFeatures & features); }
 protected:
     // Implementation should set this flag in order to be queried by users. This checks if the device is capable of 
     // supporting features requested.
-    void setSupportedFeatures(LayerFeatureFlags flags) { m_supportedFeatures = flags; }
+    void                        setSupportedFeatures(LayerFeatureFlags flags) { m_supportedFeatures = flags; }
 private:
-    LayerFeatureFlags m_supportedFeatures;
+    LayerFeatureFlags           m_supportedFeatures;
 };
 
 
@@ -253,8 +258,7 @@ public:
         // Skip the presentation of the frame, which will not present the frame.
         PresentConfig_SkipPresent   = (1<<0),
         // Delay the presentation of the frame. This will effectly not bump the frame index,
-        // instead will skip the whole presenting process. Beware, this will require having to rerecord your 
-        // command list, as it will not be submitted to the graphics queue.
+        // instead will skip the whole presenting process.
         PresentConfig_DelayPresent  = (1 << 1)
     };
 
@@ -265,27 +269,26 @@ public:
 
     // Rebuild the swapchain if need be. Pass in NULL to rebuild the swapchain as is.
     // Be sure to update any new frame info and handles that are managed by the front engine!
-    R_PUBLIC_API ErrType rebuild(const SwapchainCreateDescription& desc) 
+    R_PUBLIC_API ErrType                rebuild(const SwapchainCreateDescription& desc) 
     { 
         m_desc = desc;
         return onRebuild(); 
     }
 
     // Present the current image.
-    R_PUBLIC_API virtual ErrType present(PresentConfig config = PresentConfig_Present) { return RecluseResult_NoImpl; }
+    R_PUBLIC_API virtual ErrType        present(PresentConfig config = PresentConfig_Present) { return RecluseResult_NoImpl; }
 
     // Get the current frame index, updates after every present call.
-    R_PUBLIC_API virtual U32 getCurrentFrameIndex() { return RecluseResult_NoImpl; }
+    R_PUBLIC_API virtual U32            getCurrentFrameIndex() { return RecluseResult_NoImpl; }
 
-    virtual GraphicsResource* getFrame(U32 idx) = 0;
-    virtual GraphicsResourceView* getFrameView(U32 idx) = 0;
+    virtual GraphicsResource*           getFrame(U32 idx) = 0;
+    virtual GraphicsResourceView*       getFrameView(U32 idx) = 0;
 
-    const SwapchainCreateDescription& getDesc() const { return m_desc; }
+    const SwapchainCreateDescription&   getDesc() const { return m_desc; }
 
 private:
+    virtual ErrType                     onRebuild() { return RecluseResult_NoImpl; }
 
-    virtual ErrType onRebuild() { return RecluseResult_NoImpl; }
-
-    SwapchainCreateDescription m_desc;
+    SwapchainCreateDescription          m_desc;
 };
 } // Recluse

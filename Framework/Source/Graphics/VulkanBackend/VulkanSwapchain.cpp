@@ -202,9 +202,6 @@ ErrType VulkanSwapchain::present(PresentConfig config)
 
     if (config & PresentConfig_DelayPresent)
     {
-        VkSubmitInfo info       = { };
-        info.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        vkQueueSubmit(m_pBackbufferQueue->get(), 1, &info, frameFence);
         return RecluseResult_Ok;
     }
 

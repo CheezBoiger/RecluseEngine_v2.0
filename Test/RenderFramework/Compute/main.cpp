@@ -20,6 +20,8 @@
 #include "Recluse/Filesystem/Filesystem.hpp"
 #include "Recluse/Messaging.hpp"
 
+#include "Recluse/System/Limiter.hpp"
+
 #include <cmath>
 
 using namespace Recluse;
@@ -197,8 +199,8 @@ int main(int c, char* argv[])
 
     pWindow->open();
 
-    F32 counterFps = 0.f;
-    F32 desiredFps = 1.f / 60.f;
+    const F32 desiredFps = 60.0f;
+    F32 desiredMs = 1.f / desiredFps;
     pContext = pDevice->createContext();
     pContext->setBuffers(3);
 
@@ -216,18 +218,11 @@ int main(int c, char* argv[])
             context->setShaderProgram(0);
             context->dispatch(pWindow->getWidth() / 8 + 1, pWindow->getHeight() / 8 + 1, 1);
         context->end();
-        F32 deltaFrameRate = 1.0f / tick.delta();
-        counterFps += tick.delta();
 
-        GraphicsSwapchain::PresentConfig conf = GraphicsSwapchain::PresentConfig_SkipPresent;
-        if (counterFps >= desiredFps)
-        {
-            //R_VERBOSE("Test", "Frame Rate: %f fps", 1.0f / counterFps);
-            counterFps = 0.f;
-            conf = GraphicsSwapchain::PresentConfig_Present;
-        }
-        R_VERBOSE("Test", "Frame Rage: %f fps", deltaFrameRate);
-        pSwapchain->present(conf);
+        
+        F32 frameMs = Limiter::limit(desiredMs, 1ull, 0);
+        R_VERBOSE("Test", "Frame: %f fps", 1.0f / frameMs);
+        pSwapchain->present();
 
         pollEvents();
     
@@ -245,5 +240,3 @@ int main(int c, char* argv[])
     Log::destroyLoggingSystem();
     return 0;
 }
-
-
