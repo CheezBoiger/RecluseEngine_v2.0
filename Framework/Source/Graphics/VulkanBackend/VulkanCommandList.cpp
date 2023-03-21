@@ -177,6 +177,9 @@ void VulkanContext::resetBinds()
     m_constantBufferShaderAccessMap.clear();
     m_samplerShaderAccessMap.clear();
     m_pipelineState.pipeline = VK_NULL_HANDLE;
+    m_newRenderPass = nullptr;
+    m_boundRenderPass = VK_NULL_HANDLE;
+    m_boundDescriptorSet = VK_NULL_HANDLE;
 }
 
 
@@ -224,8 +227,11 @@ void VulkanContext::bindPipelineState(const VulkanDescriptorAllocation& set)
         m_pipelineState = pipelineState;
     }
 
-    setRenderPass(m_newRenderPass);
-    m_boundRenderPass = m_newRenderPass->get();
+    if (m_newRenderPass)
+    {
+        setRenderPass(m_newRenderPass);
+        m_boundRenderPass = m_newRenderPass->get();
+    }
 }
 
 

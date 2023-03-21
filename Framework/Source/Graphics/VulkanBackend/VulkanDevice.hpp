@@ -44,6 +44,7 @@ public:
         : m_bufferCount(0)
         , m_currentBufferIndex(0)
         , m_boundRenderPass(nullptr)
+        , m_newRenderPass(nullptr)
         , m_pDevice(pDevice) 
     { 
     }
@@ -126,8 +127,7 @@ public:
                 (
                     U32 rtIndex, 
                     BlendFactor srcColorFactor, BlendFactor dstColorFactor, BlendOp colorBlendOp,
-                    BlendFactor srcAlphaFactor, BlendFactor dstAlphaFactor, BlendOp alphaOp,
-                    ColorComponentMaskFlags writeMask
+                    BlendFactor srcAlphaFactor, BlendFactor dstAlphaFactor, BlendOp alphaOp
                 ) override
     {
         BlendState& blendState = currentState().m_pipelineStructure.state.graphics.blendState;
@@ -137,11 +137,15 @@ public:
         blendState.attachments[rtIndex].srcAlphaBlendFactor = srcAlphaFactor;
         blendState.attachments[rtIndex].dstAlphaBlendFactor = dstAlphaFactor;
         blendState.attachments[rtIndex].alphaBlendOp        = alphaOp;
-        blendState.attachments[rtIndex].colorWriteMask      = writeMask;
         currentState().markPipelineDirty();
     }
                                 
-    
+    void setColorWriteMask(U32 rtIndex, ColorComponentMaskFlags writeMask) override
+    {
+        BlendState& blendState = currentState().m_pipelineStructure.state.graphics.blendState;
+        blendState.attachments[rtIndex].colorWriteMask      = writeMask;
+        currentState().markPipelineDirty();
+    }
     
     void setShaderProgram(ShaderProgramId program, U32 permutation) override 
     { 

@@ -78,6 +78,7 @@ static void destroyFbo(Hash64 fboId, VkDevice device)
     {
         VkFramebuffer fbo = g_fboCache[fboId]();
         vkDestroyFramebuffer(device, fbo, nullptr);
+        g_fboCache.erase(fboId);
     }
 }
 
@@ -330,7 +331,17 @@ void clearCache(VulkanDevice* pDevice)
     {
         iter.second.release(pDevice);
     }
+    for (auto iter : g_fboCache)
+    {
+        // Release all fbo references.
+        while (iter.second.release())
+        {
+        }
+        
+        vkDestroyFramebuffer(pDevice->get(), *iter.second, nullptr);
+    }
     g_rpCache.clear();
+    g_fboCache.clear();
 }
 } // RenderPass
 } // Recluse

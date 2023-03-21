@@ -123,9 +123,14 @@ public:
 
     virtual ~ReferenceCounter()
     {
+        if (hasNoReferences())
+        {
+            delete m_count;
+            m_count = nullptr;
+        }
     }
 
-    U32 getCount() const { return *m_count;  }
+    U32 getCount() const { return (m_count ? *m_count : 0);  }
     U32 operator()() const { return getCount(); }
 
     // Add a reference to the counter. Increments the counter value by one.
@@ -142,13 +147,7 @@ public:
     { 
         if (!m_count) return 0;
         decrement();
-        U32 count = getCount();
-        if (hasNoReferences())
-        {
-            delete m_count;
-            m_count = nullptr;
-        }
-        return count; 
+        return getCount(); 
     }
 
     Bool hasReferences() const { return m_count ? (getCount() > 0) : false; }
@@ -254,6 +253,9 @@ public:
     //Bool operator==(const SmartPtr<ClassT>& rh) const { return (m_pData == rh.m_pData); }
     //Bool operator!=(const SmartPtr<ClassT>& rh) const { return (m_pData != rh.m_pData); }
 
+    ClassT& operator*() { return *m_pData; }
+    const ClassT& operator*() const { return *m_pData; }
+
     operator ClassT* () { return m_pData; }
     operator const ClassT* () const { return m_pData; }
 
@@ -347,6 +349,8 @@ public:
 
     const ClassT& operator()() const { return m_dat; }
     ClassT& operator()() { return m_dat; }
+    const ClassT& operator*() const { return m_dat; }
+    ClassT& operator*() { return m_dat; }
 
 private:
     ClassT m_dat;

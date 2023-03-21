@@ -234,12 +234,12 @@ ErrType VulkanSwapchain::present(PresentConfig config)
 }
 
 
-ErrType VulkanSwapchain::prepareFrame()
+ErrType VulkanSwapchain::prepareFrame(VkFence cpuFence)
 {
     R_ASSERT(m_pBackbufferQueue != NULL);
     VkResult result                 = VK_SUCCESS;
     const U32 currentFrameIndex     = getCurrentFrameIndex();
-    VkFence frameFence              = m_frameResources.getFence(currentFrameIndex);
+    VkFence frameFence              = cpuFence ? cpuFence : m_frameResources.getFence(currentFrameIndex);
     VkSemaphore imageAvailableSema  = getWaitSemaphore(currentFrameIndex);
     ErrType err = RecluseResult_Ok;
 
@@ -365,7 +365,7 @@ ErrType VulkanSwapchain::submitFinalCommandBuffer(VkCommandBuffer commandBuffer,
     VkImageSubresourceRange range       = { };
     VkCommandBuffer primaryCmdBuf       = commandBuffer;
     VkCommandBuffer singleUseCmdBuf     = m_commandbuffers[m_currentFrameIndex];
-    VkFence fence                       = m_frameResources.getFence(m_currentFrameIndex);
+    VkFence fence                       = cpuFence ? cpuFence : m_frameResources.getFence(m_currentFrameIndex);
     VkSemaphore signalSemaphore         = m_frameResources.getSignalSemaphore(m_currentFrameIndex);
     VkSemaphore waitSemaphore           = m_frameResources.getWaitSemaphore(m_currentFrameIndex);
 

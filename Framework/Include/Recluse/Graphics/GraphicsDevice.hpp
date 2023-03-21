@@ -76,7 +76,9 @@ public:
     // essentially are used by the gpu per frame. Each buffer will usually correspond to each frame
     // in order to avoid the cpu from waiting to record and utilize resources when ready. We can essentially
     // have the cpu working on buffers that are ready to be used, while buffers that are pending are being used
-    // and displayed by the gpu.
+    // and displayed by the gpu. 
+    // Note: You can not have less buffers than there are frames! Doing so will cause undefinted behavior, and potential
+    //       overwrite of existing buffers inflight.
     virtual ErrType setBuffers(U32 newBufferCount) { return RecluseResult_NoImpl; }
 
     // Not recommended, but submits a copy to this queue.
@@ -171,9 +173,9 @@ public:
                     (
                         U32 rtIndex, 
                         BlendFactor srcColorFactor, BlendFactor dstColorFactor, BlendOp colorBlendOp, 
-                        BlendFactor srcAlphaFactor, BlendFactor dstAlphaFactor, BlendOp alphaOp, 
-                        ColorComponentMaskFlags writeMask
+                        BlendFactor srcAlphaFactor, BlendFactor dstAlphaFactor, BlendOp alphaOp
                     ) { }
+    virtual void setColorWriteMask(U32 rtIndex, ColorComponentMaskFlags writeMask) { }
 
     // Pop the current pipeline state, resorting to previous pipeline state.
     virtual void popState() { }

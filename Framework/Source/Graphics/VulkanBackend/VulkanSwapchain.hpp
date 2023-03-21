@@ -41,13 +41,17 @@ public:
     ErrType                 present(PresentConfig config = PresentConfig_Present) override; 
 
     U32                     getCurrentFrameIndex() override { return m_currentFrameIndex; }
+    U32                     getFrameCount() const { return m_frameResources.getNumMaxFrames(); }
 
     GraphicsResource*       getFrame(U32 idx) override;
     GraphicsResourceView*   getFrameView(U32 idx) override;
 
     // Call this function before the start of a primary command buffer record!
     // Prepares the frame for the next image to draw onto.
-    ErrType                 prepareFrame();
+    // Pass a manual override of a fence object, if we need to wait for another fence,
+    // this will override the frame fence wait, and can potentially cause a hang if we lose that
+    // fence!
+    ErrType                 prepareFrame(VkFence cpuFence = VK_NULL_HANDLE);
     
     VkSwapchainKHR operator()() {
         return m_swapchain;
@@ -68,7 +72,9 @@ public:
     VulkanQueue*    getPresentationQueue() const { return m_pBackbufferQueue; }
 
     // Submit the final command buffer, which will utilize the wait and signal semphores for the current frame.
-    ErrType         submitFinalCommandBuffer(VkCommandBuffer commandBuffer, VkFence cpuFence);
+    // Can optionally override the frame inflight fence with your own fence if needed. Keep in mind this can be 
+    // dangerous!
+    ErrType         submitFinalCommandBuffer(VkCommandBuffer commandBuffer, VkFence cpuFence = VK_NULL_HANDLE);
 
 private:
 

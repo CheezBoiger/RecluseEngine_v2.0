@@ -75,8 +75,10 @@ void VulkanContext::begin()
 {    
     R_ASSERT(getBufferCount() > 0);
     VulkanSwapchain* pSwapchain = getNativeDevice()->getSwapchain()->castTo<VulkanSwapchain>();
-    
-    pSwapchain->prepareFrame();
+    const U32 numFrames         = pSwapchain->getFrameCount();
+    const U32 bufferCount       = getBufferCount();
+
+    pSwapchain->prepareFrame((numFrames > bufferCount ? getCurrentFence() : VK_NULL_HANDLE));
     prepare();
 
     m_primaryCommandList.use(getCurrentBufferIndex());
@@ -90,9 +92,11 @@ void VulkanContext::end()
     endRenderPass(m_primaryCommandList.get());
     m_primaryCommandList.end();
     // This performance our submittal.
-    VkFence fence               = getCurrentFence();
     VulkanDevice* pDevice       = getNativeDevice();
     VulkanSwapchain* pSwapchain = pDevice->getSwapchain()->castTo<VulkanSwapchain>();
+    const U32 frameCount        = pSwapchain->getFrameCount();
+    const U32 bufferCount       = getBufferCount();
+    VkFence fence               = (frameCount > bufferCount ? getCurrentFence() : VK_NULL_HANDLE);
 
     // Flush all copies down for this run.
     m_pDevice->flushAllMappedRanges();

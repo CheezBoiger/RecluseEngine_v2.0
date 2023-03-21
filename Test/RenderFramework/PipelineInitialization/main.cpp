@@ -96,7 +96,7 @@ int main(int c, char* argv[])
         app.engineName = "Cat";
         app.appName = "PipelineInitialization";
 
-        LayerFeatureFlags flags = 0;//LayerFeatureFlag_DebugValidation;
+        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation;
 
         result = pInstance->initialize(app, flags);
     }
@@ -113,7 +113,7 @@ int main(int c, char* argv[])
         info.buffering = 3;
         info.winHandle = pWindow->getNativeHandle();
         info.swapchainDescription = { };
-        info.swapchainDescription.buffering = FrameBuffering_Double;
+        info.swapchainDescription.buffering = FrameBuffering_Triple;
         info.swapchainDescription.desiredFrames = 3;
         info.swapchainDescription.renderWidth = pWindow->getWidth();
         info.swapchainDescription.renderHeight = pWindow->getHeight();
@@ -295,14 +295,14 @@ int main(int c, char* argv[])
             context->setInputVertexLayout(0);
             context->setShaderProgram(0);
             GraphicsResourceView* pView = pSwapchain->getFrameView(pSwapchain->getCurrentFrameIndex());
-            context->setBlend(0, BlendFactor_One, BlendFactor_One, BlendOp_Add, BlendFactor_One, BlendFactor_One, BlendOp_Add, Color_Rgba);
+            context->setColorWriteMask(0, Color_Rgba);
             context->bindRenderTargets(1, &pView, nullptr);
             context->bindConstantBuffers(ShaderType_Vertex, 0, 1, &pData);
             context->bindVertexBuffers(1, &pVertexBuffer, &offset);
             context->drawInstanced(3, 1, 0, 0);
         context->end();
 
-        F32 ms = Limiter::limit(1.0f / 60.0f, 1ull, 0);
+        F32 ms = Limiter::limit(1.0f / 175.0f, 1ull, 0);
         R_VERBOSE("Game", "%f fps", 1.0f / ms);
         pSwapchain->present();
 
@@ -314,6 +314,7 @@ int main(int c, char* argv[])
 
     pDevice->destroyResource(pVertexBuffer);
     pDevice->destroyResource(pData);
+    pDevice->releaseContext(pContext);
     pAdapter->destroyDevice(pDevice);
     GraphicsInstance::destroyInstance(pInstance);
     Window::destroy(pWindow);
