@@ -67,7 +67,7 @@ public:
     // Submits copy of regions from src resource to dst resource. Generally the caller thread will
     // be blocked until this function returns, so be sure to use when needed.
     void                copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, 
-                            CopyBufferRegion* pRegions, U32 numRegions) override;
+                            const CopyBufferRegion* pRegions, U32 numRegions) override;
 
     GraphicsDevice*     getDevice() override;
 
@@ -101,23 +101,60 @@ public:
     void bindRenderTargets(U32 count, GraphicsResourceView** ppResources, GraphicsResourceView* pDepthStencil) override;
     void bindSamplers(ShaderType type, U32 count, GraphicsSampler** ppSampler) override;
     void bindRasterizerState(const RasterState& state) override { }
-    void bindBlendState(const BlendState& state) override { currentState().m_pipelineStructure.state.graphics.blendState = state; markPipelineDirty(); }
-    void setTopology(PrimitiveTopology topology) override { currentState().m_pipelineStructure.state.graphics.primitiveTopology = topology; markPipelineDirty(); }
-    void setPolygonMode(PolygonMode polygonMode) override { currentState().m_pipelineStructure.state.graphics.raster.polygonMode = polygonMode; markPipelineDirty(); }
-    void setDepthCompareOp(CompareOp compareOp) override { currentState().m_pipelineStructure.state.graphics.depthStencil.depthCompareOp = compareOp; markPipelineDirty(); }
-    void enableDepth(Bool enable) override { currentState().m_pipelineStructure.state.graphics.depthStencil.depthTestEnable = enable; markPipelineDirty(); }
-    void enableStencil(Bool enable) override { currentState().m_pipelineStructure.state.graphics.depthStencil.stencilTestEnable = enable; markPipelineDirty(); }
-    void setFrontFace(FrontFace frontFace) override { currentState().m_pipelineStructure.state.graphics.raster.frontFace = frontFace; markPipelineDirty(); }
-    void setCullMode(CullMode cullMode) override { currentState().m_pipelineStructure.state.graphics.raster.cullMode = cullMode; markPipelineDirty(); }
-    void setLineWidth(F32 width) override { currentState().m_pipelineStructure.state.graphics.raster.lineWidth = width; markPipelineDirty(); }
+    void bindBlendState(const BlendState& state) override { currentState().m_pipelineStructure.state.graphics.blendState = state; currentState().markPipelineDirty(); }
+    void setTopology(PrimitiveTopology topology) override { currentState().m_pipelineStructure.state.graphics.primitiveTopology = topology; currentState().markPipelineDirty(); }
+    void setPolygonMode(PolygonMode polygonMode) override { currentState().m_pipelineStructure.state.graphics.raster.polygonMode = polygonMode; currentState().markPipelineDirty(); }
+    void setDepthCompareOp(CompareOp compareOp) override { currentState().m_pipelineStructure.state.graphics.depthStencil.depthCompareOp = compareOp; currentState().markPipelineDirty(); }
+    void enableDepth(Bool enable) override { currentState().m_pipelineStructure.state.graphics.depthStencil.depthTestEnable = enable; currentState().markPipelineDirty(); }
+    void enableStencil(Bool enable) override { currentState().m_pipelineStructure.state.graphics.depthStencil.stencilTestEnable = enable; currentState().markPipelineDirty(); }
+    void setFrontFace(FrontFace frontFace) override { currentState().m_pipelineStructure.state.graphics.raster.frontFace = frontFace; currentState().markPipelineDirty(); }
+    void setCullMode(CullMode cullMode) override { currentState().m_pipelineStructure.state.graphics.raster.cullMode = cullMode; currentState().markPipelineDirty(); }
+    void setLineWidth(F32 width) override { currentState().m_pipelineStructure.state.graphics.raster.lineWidth = width; currentState().markPipelineDirty(); }
+    void setBlendEnable(U32 rtIndex, Bool enable) override { currentState().m_pipelineStructure.state.graphics.blendState.attachments[rtIndex].blendEnable = enable; currentState().markPipelineDirty(); }
+    void setBlendLogicOpEnable(Bool enable) override { currentState().m_pipelineStructure.state.graphics.blendState.logicOpEnable = enable; }
+    void setBlendLogicOp(LogicOp logicOp) override { currentState().m_pipelineStructure.state.graphics.blendState.logicOp = logicOp; }
+    void setBlendConstants(F32 blendConstants[4]) override 
+    { 
+        F32* blendStateConstants = currentState().m_pipelineStructure.state.graphics.blendState.blendConstants;
+        blendStateConstants[0] = blendConstants[0]; 
+        blendStateConstants[1] = blendConstants[1];
+        blendStateConstants[2] = blendConstants[2];
+        blendStateConstants[3] = blendConstants[3];
+        currentState().markPipelineDirty();
+    }
+    void setBlend
+                (
+                    U32 rtIndex, 
+                    BlendFactor srcColorFactor, BlendFactor dstColorFactor, BlendOp colorBlendOp,
+                    BlendFactor srcAlphaFactor, BlendFactor dstAlphaFactor, BlendOp alphaOp,
+                    ColorComponentMaskFlags writeMask
+                ) override
+    {
+        BlendState& blendState = currentState().m_pipelineStructure.state.graphics.blendState;
+        blendState.attachments[rtIndex].srcColorBlendFactor = srcColorFactor;
+        blendState.attachments[rtIndex].dstColorBlendFactor = dstColorFactor;
+        blendState.attachments[rtIndex].colorBlendOp        = colorBlendOp;
+        blendState.attachments[rtIndex].srcAlphaBlendFactor = srcAlphaFactor;
+        blendState.attachments[rtIndex].dstAlphaBlendFactor = dstAlphaFactor;
+        blendState.attachments[rtIndex].alphaBlendOp        = alphaOp;
+        blendState.attachments[rtIndex].colorWriteMask      = writeMask;
+        currentState().markPipelineDirty();
+    }
+                                
+    
     
     void setShaderProgram(ShaderProgramId program, U32 permutation) override 
     { 
         currentState().m_pipelineStructure.state.shaderProgramId = program; 
         currentState().m_pipelineStructure.state.shaderPermutation = permutation; 
+        currentState().markPipelineDirty();
     }
 
-    void setInputVertexLayout(VertexInputLayoutId inputLayoutId) override { currentState().m_pipelineStructure.state.graphics.ia = inputLayoutId; markPipelineDirty(); }
+    void setInputVertexLayout(VertexInputLayoutId inputLayoutId) override 
+    { 
+        currentState().m_pipelineStructure.state.graphics.ia = inputLayoutId; 
+        currentState().markPipelineDirty(); 
+    }
 
     inline void endRenderPass(VkCommandBuffer buffer);
     void resetBinds();
@@ -146,6 +183,15 @@ public:
     U32 getNumCommandPools() const { return static_cast<U32>(m_commandPools.size()); }
 
 private:
+    enum ContextDirtyFlag
+    {
+        ContextDirtyFlag_Clean = (0),
+        ContextDirtyFlag_Resources = (1 << 0),
+        ContextDirtyFlag_Pipeline = (1 << 1)
+    };
+
+    typedef U32 ContextDirtyFlags;
+
     struct ContextState
     {
         Pipelines::Structure                                            m_pipelineStructure;
@@ -154,6 +200,14 @@ private:
         std::vector<VulkanResourceView*>                                m_uavs;
         std::vector<VulkanBuffer*>                                      m_cbvs;
         std::vector<VulkanSampler*>                                     m_samplers;
+        ContextDirtyFlags                                               m_dirtyFlags;
+
+        void setDirty(ContextDirtyFlags flags) { m_dirtyFlags = flags; }
+        void markPipelineDirty() { m_dirtyFlags |= ContextDirtyFlag_Pipeline; }
+        void markResourcesDirty() { m_dirtyFlags |= ContextDirtyFlag_Resources; };
+        Bool isPipelineDirty() const { return (m_dirtyFlags & ContextDirtyFlag_Pipeline); }
+        Bool areResourcesDirty() const { return (m_dirtyFlags & ContextDirtyFlag_Resources); }
+        void proposeClean() { m_dirtyFlags = ContextDirtyFlag_Clean; }
     };
 
     void prepare();
@@ -166,9 +220,6 @@ private:
     void flushBarrierTransitions(VkCommandBuffer cmdBuffer);
     void setRenderPass(VulkanRenderPass* pPass);
     void bindDescriptorSet(const VulkanDescriptorAllocation& set);
-    void markPipelineDirty() { m_pipelineDirty = true; }
-    Bool isPipelineDirty() const { return m_pipelineDirty; }
-    void unmarkPipelineDirty() { m_pipelineDirty = false; }
     
     inline void incrementBufferIndex() 
     { 
@@ -176,7 +227,7 @@ private:
     }
 
     // The current context state, that is pushed to this context.
-    ContextState& currentState() { return m_contextStates.back(); }    
+    ContextState& currentState() { return m_contextStates.back(); }
 
     ErrType createCommandPools(U32 buffered);
     void destroyCommandPools();
@@ -189,7 +240,8 @@ private:
     VulkanDevice*                                                       m_pDevice;
     ::std::vector<VkBufferMemoryBarrier>                                m_bufferMemoryBarriers;
     ::std::vector<VkImageMemoryBarrier>                                 m_imageMemoryBarriers;
-    VulkanRenderPass*                                                   m_boundRenderPass;
+    VulkanRenderPass*                                                   m_newRenderPass;
+    VkRenderPass                                                        m_boundRenderPass;
     VulkanPrimaryCommandList                                            m_primaryCommandList;
     Pipelines::PipelineState                                            m_pipelineState;
     PipelineId                                                          m_pipelineId;
@@ -199,7 +251,6 @@ private:
     std::vector<VkCommandPool>                                          m_commandPools;
     std::vector<ContextState>                                           m_contextStates;
     VkDescriptorSet                                                     m_boundDescriptorSet;
-    Bool                                                                m_pipelineDirty;
     U32                                                                 m_currentStateIdx;
     U32                                                                 m_queueFamilyIndex;
 };
@@ -248,6 +299,7 @@ public:
     Bool        destroyVertexLayout(VertexInputLayoutId id) override;
     void        release(VkInstance instance);
     ErrType     destroyResourceView(GraphicsResourceView* pResourceView) override;
+    void        copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, const CopyBufferRegion* regions, U32 numRegions) override;
 
     DescriptorAllocatorInstance* getDescriptorAllocatorInstance(U32 bufferIndex)
     {

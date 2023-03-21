@@ -38,7 +38,7 @@ public:
     ErrType copyResource(GraphicsResource* dst, GraphicsResource* src);
 
     ErrType copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, 
-        CopyBufferRegion* pRegions, U32 numRegions);
+        const CopyBufferRegion* pRegions, U32 numRegions);
 
     void wait();
 

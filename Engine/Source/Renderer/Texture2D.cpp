@@ -49,9 +49,8 @@ ErrType Texture2D::initialize(Renderer* pRenderer, ResourceFormat format, U32 wi
 
     desc.memoryUsage    = ResourceMemoryUsage_GpuOnly;
     desc.usage          = ResourceUsage_TransferDestination | ResourceUsage_ShaderResource;
-    desc.arrayLevels    = arrayLevel;
+    desc.depthOrArraySize = arrayLevel;
     desc.mipLevels      = mips;
-    desc.depth          = 1;
     desc.width          = width;
     desc.height         = height;
     desc.dimension      = ResourceDimension_2d;

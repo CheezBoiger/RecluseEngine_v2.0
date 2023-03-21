@@ -14,10 +14,16 @@
 namespace Recluse {
 
 
-Hash64 recluseHash(void* dat, U64 szBytes)
+Hash64 recluseHash(const void* dat, U64 szBytes)
 {
-    meow_u128 meowHash = MeowHash(MeowDefaultSeed, szBytes, dat);
-    Hash64 hash = MeowU64From(meowHash, 0);
+    Hash64 hash;
+#if R_USE_XXHASH
+    XXH64_hash_t hashSeed = 0;
+    hash = XXH64(dat, szBytes, hashSeed); 
+#else
+    meow_u128 meowHash = MeowHash(MeowDefaultSeed, szBytes, const_cast<void*>(dat));
+    hash = MeowU64From(meowHash, 0);
+#endif
     return hash;
 }
 } // Recluse

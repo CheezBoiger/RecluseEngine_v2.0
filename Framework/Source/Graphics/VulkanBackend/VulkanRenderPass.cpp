@@ -6,6 +6,7 @@
 
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Serialization/Hasher.hpp"
+#include "Recluse/Math/MathCommons.hpp"
 #include <vector>
 
 namespace Recluse {
@@ -205,7 +206,7 @@ ErrType VulkanRenderPass::initialize(VulkanDevice* pDevice, const VulkanRenderPa
     fboIf.height            = desc.height;
     fboIf.pAttachments      = viewAttachments;
     fboIf.attachmentCount   = totalNumAttachments;
-    fboIf.layers            = 1; // For future use.
+    fboIf.layers            = desc.layers;
 
     // Find a proper framebuffer object in the cache, otherwise if miss, create a new fbo.
     Hash64 fboId = serialize(fboIf);
@@ -275,15 +276,24 @@ VulkanRenderPass* makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, Gr
 
     U32 count = 0;
     ResourceViewId ids[9];
-
+    U32 targetWidth = 0;
+    U32 targetHeight = 0;
+    U32 targetLayers = 0;
+    
     for (U32 i = 0; i < numRenderTargets; ++i)
     {
-        ids[count++] = ppRenderTargetViews[i]->getId();
+        ids[count++]    = ppRenderTargetViews[i]->getId();
+        targetWidth     = Math::maximum(targetWidth, ppRenderTargetViews[i]->getDesc().pResource->getDesc().width);
+        targetHeight    = Math::maximum(targetHeight, ppRenderTargetViews[i]->getDesc().pResource->getDesc().height);
+        targetLayers    = Math::maximum(targetLayers, ppRenderTargetViews[i]->getDesc().pResource->getDesc().depthOrArraySize);
     }
 
     if (pDepthStencil)
     {
         ids[count++] = pDepthStencil->getId();
+        targetWidth     = Math::maximum(targetWidth, pDepthStencil->getDesc().pResource->getDesc().width);
+        targetHeight    = Math::maximum(targetHeight, pDepthStencil->getDesc().pResource->getDesc().height);
+        targetLayers    = Math::maximum(targetLayers, pDepthStencil->getDesc().pResource->getDesc().depthOrArraySize);
     }
 
     RenderPassId id = recluseHash(ids, sizeof(ResourceViewId) * count);
@@ -298,7 +308,11 @@ VulkanRenderPass* makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, Gr
         desc.numRenderTargets       = numRenderTargets;
         desc.pDepthStencil          = pDepthStencil;
         desc.ppRenderTargetViews    = ppRenderTargetViews;
+        desc.width                  = targetWidth;
+        desc.height                 = targetHeight;
+        desc.layers                 = targetLayers;
         pass.initialize(pDevice, desc);
+        pPass = &pass;
     }
     else
     {

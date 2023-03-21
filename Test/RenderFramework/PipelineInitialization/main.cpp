@@ -20,6 +20,8 @@
 #include "Recluse/Messaging.hpp"
 #include "Recluse/System/Mouse.hpp"
 
+#include "Recluse/System/Limiter.hpp"
+
 #include <cmath>
 
 using namespace Recluse;
@@ -72,7 +74,6 @@ int main(int c, char* argv[])
     GraphicsResource* pData         = nullptr;
     GraphicsContext* pContext       = nullptr;
     GraphicsResource* pVertexBuffer = nullptr;
-    GraphicsResourceView* pView     = nullptr;
     PipelineState* pPipeline        = nullptr;
     GraphicsSwapchain* pSwapchain   = nullptr;
     Window* pWindow                 = Window::create("PipelineInitialization", 0, 0, 512, 512);
@@ -95,7 +96,7 @@ int main(int c, char* argv[])
         app.engineName = "Cat";
         app.appName = "PipelineInitialization";
 
-        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation;
+        LayerFeatureFlags flags = 0;//LayerFeatureFlag_DebugValidation;
 
         result = pInstance->initialize(app, flags);
     }
@@ -126,6 +127,7 @@ int main(int c, char* argv[])
     }
 
     pContext = pDevice->createContext();
+    pContext->setBuffers(2);
 
     {
         MemoryReserveDesc desc = { };
@@ -197,7 +199,7 @@ int main(int c, char* argv[])
         desc.width = sizeof(vertices);
         desc.dimension = ResourceDimension_Buffer;
         desc.memoryUsage = ResourceMemoryUsage_GpuOnly;
-        desc.depth = 1;
+        desc.depthOrArraySize = 1;
         pDevice->createResource(&pVertexBuffer, desc, ResourceState_VertexBuffer);
     
         desc.memoryUsage = ResourceMemoryUsage_CpuOnly;
@@ -219,8 +221,7 @@ int main(int c, char* argv[])
         region.srcOffsetBytes = 0;
         region.dstOffsetBytes = 0;
         region.szBytes = sizeof(vertices);
-        pContext->copyBufferRegions(pVertexBuffer, pTemp, &region, 1);
-
+        pDevice->copyBufferRegions(pVertexBuffer, pTemp, &region, 1);
         pDevice->destroyResource(pTemp);
     }
 
@@ -236,6 +237,10 @@ int main(int c, char* argv[])
         
         description.graphics.ps = fsSource.c_str();
         description.graphics.psName = "main";
+
+        description.graphics.ds = nullptr;
+        description.graphics.gs = nullptr;
+        description.graphics.hs = nullptr;
 
         Builder::buildShaderProgramDefinitions(description, 0, ShaderIntermediateCode_Spirv);
         Builder::Runtime::buildShaderProgram(pDevice, 0);
@@ -254,6 +259,8 @@ int main(int c, char* argv[])
         layout.vertexBindings[0].numVertexAttributes = 1;
         layout.vertexBindings[0].pVertexAttributes = &attrib;
         layout.vertexBindings[0].stride = 8; // 1 float == 4 bytes.
+
+        layout.numVertexBindings = 1;
 
         Builder::Runtime::buildVertexInputLayout(pDevice, layout, 0);
     }
@@ -276,7 +283,6 @@ int main(int c, char* argv[])
     {
         RealtimeTick::updateWatch(1ull, 0);
         RealtimeTick tick = RealtimeTick::getTick(0);
-        R_VERBOSE("Game", "%f", tick.delta());
         updateConstData(pData, tick);
         context->begin();
             context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
@@ -288,9 +294,16 @@ int main(int c, char* argv[])
             context->setScissors(1, &scissor);
             context->setInputVertexLayout(0);
             context->setShaderProgram(0);
+            GraphicsResourceView* pView = pSwapchain->getFrameView(pSwapchain->getCurrentFrameIndex());
+            context->setBlend(0, BlendFactor_One, BlendFactor_One, BlendOp_Add, BlendFactor_One, BlendFactor_One, BlendOp_Add, Color_Rgba);
+            context->bindRenderTargets(1, &pView, nullptr);
+            context->bindConstantBuffers(ShaderType_Vertex, 0, 1, &pData);
             context->bindVertexBuffers(1, &pVertexBuffer, &offset);
             context->drawInstanced(3, 1, 0, 0);
         context->end();
+
+        F32 ms = Limiter::limit(1.0f / 60.0f, 1ull, 0);
+        R_VERBOSE("Game", "%f fps", 1.0f / ms);
         pSwapchain->present();
 
         pollEvents();

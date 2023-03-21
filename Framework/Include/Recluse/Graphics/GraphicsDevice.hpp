@@ -26,8 +26,7 @@ struct GraphicsResourceDescription
 {
     U32                 width;
     U32                 height;
-    U32                 depth;
-    U32                 arrayLevels;
+    U32                 depthOrArraySize;
     U32                 mipLevels;
     ResourceDimension   dimension;
     ResourceFormat      format;
@@ -80,18 +79,16 @@ public:
     // and displayed by the gpu.
     virtual ErrType setBuffers(U32 newBufferCount) { return RecluseResult_NoImpl; }
 
-        // Not recommended, but submits a copy to this queue, and waits until the command has 
-    // completed.
+    // Not recommended, but submits a copy to this queue.
     virtual void copyResource(GraphicsResource* dst, GraphicsResource* src) 
         { }
 
-    // Submits copy of regions from src resource to dst resource. Generally the caller thread will
-    // be blocked until this function returns, so be sure to use when needed.
+    // Submits copy of regions from src resource to dst resource.
     virtual void  copyBufferRegions
                         (
                             GraphicsResource* dst, 
                             GraphicsResource* src, 
-                            CopyBufferRegion* pRegions, 
+                            const CopyBufferRegion* pRegions, 
                             U32 numRegions
                         )
         { }
@@ -103,7 +100,7 @@ public:
                         (
                             GraphicsResource* dst,
                             GraphicsResource* src,
-                            CopyBufferRegion* pRegions,
+                            const CopyBufferRegion* pRegions,
                             U32 numRegions,
                             Bool* isFinished
                         ) 
@@ -238,6 +235,21 @@ public:
     virtual void                unloadAllShaderPrograms() { return; }
 
     Bool                        hasFeaturesSupport(LayerFeatureFlags features) { return (m_supportedFeatures & features); }
+
+    // Not recommended, but submits a copy to this queue.
+    virtual void copyResource(GraphicsResource* dst, GraphicsResource* src) 
+        { }
+
+    // Submits copy of regions from src resource to dst resource.
+    virtual void  copyBufferRegions
+                        (
+                            GraphicsResource* dst, 
+                            GraphicsResource* src, 
+                            const CopyBufferRegion* pRegions, 
+                            U32 numRegions
+                        )
+        { }
+
 protected:
     // Implementation should set this flag in order to be queried by users. This checks if the device is capable of 
     // supporting features requested.

@@ -10,12 +10,10 @@ layout (set = 0, binding = 0) uniform Test
     vec4 offset;
 } test;
 
-out FragIn {
-    vec4 color;
-} fragIn;
+layout (location = 0) out vec4 triColor;
 
 void main()
 {
-    fragIn.color = test.color;
+    triColor = test.color;
     gl_Position = vec4(position + test.offset.zw, 0.0, 1.0);
 }

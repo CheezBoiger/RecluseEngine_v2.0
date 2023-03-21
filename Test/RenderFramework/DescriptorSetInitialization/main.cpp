@@ -162,7 +162,7 @@ int main(int c, char* argv[])
         desc.usage = ResourceUsage_ConstantBuffer;
         desc.dimension = ResourceDimension_Buffer;
         desc.width = sizeof(VertexData);
-        desc.depth = 1;
+        desc.depthOrArraySize = 1;
         desc.height = 1;
         desc.memoryUsage = ResourceMemoryUsage_CpuOnly;
         desc.samples = 1;

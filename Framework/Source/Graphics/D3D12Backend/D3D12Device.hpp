@@ -65,7 +65,7 @@ public:
                             (
                                 GraphicsResource* dst, 
                                 GraphicsResource* src, 
-                                CopyBufferRegion* pRegions, 
+                                const CopyBufferRegion* pRegions, 
                                 U32 numRegions
                             ) override;
 

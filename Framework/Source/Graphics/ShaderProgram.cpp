@@ -163,6 +163,7 @@ static Shader* compileShader(ShaderBuilder* shaderBuilder, const char* entryPoin
                 Shader::destroy(shader);
                 shader = nullptr;
             }
+            shader->setName(shaderPath.c_str());
         }
         errorOut |= error;
     }
@@ -178,21 +179,23 @@ static ShaderProgramDefinition makeShaderProgramDefinition(const ShaderProgramDe
     switch (definition.pipelineType)
     {
     case BindType_Compute:
+        R_ASSERT_MSG(description.compute.cs, "Must have a valid compute shader, in order to build a ShaderProgram!");
         definition.compute.cs = compileShader(shaderBuilder, description.compute.csName, description.compute.cs, language, ShaderType_Compute, errorOut);
         break;
     case BindType_Graphics:
+        R_ASSERT_MSG(description.graphics.vs, "Must have at least a valid vertex shader, in order to build a ShaderProgram!");
         definition.graphics.vs = compileShader(shaderBuilder, description.graphics.vsName, description.graphics.vs, language, ShaderType_Vertex, errorOut);
-        definition.graphics.ps = compileShader(shaderBuilder, description.graphics.psName, description.graphics.ps, language, ShaderType_Pixel, errorOut);
-        definition.graphics.gs = compileShader(shaderBuilder, description.graphics.gsName, description.graphics.gs, language, ShaderType_Geometry, errorOut);
-        definition.graphics.hs = compileShader(shaderBuilder, description.graphics.hsName, description.graphics.hs, language, ShaderType_Hull, errorOut);
-        definition.graphics.ds = compileShader(shaderBuilder, description.graphics.dsName, description.graphics.ds, language, ShaderType_Domain, errorOut);
+        definition.graphics.ps = description.graphics.ps ? compileShader(shaderBuilder, description.graphics.psName, description.graphics.ps, language, ShaderType_Pixel, errorOut) : nullptr;
+        definition.graphics.gs = description.graphics.gs ? compileShader(shaderBuilder, description.graphics.gsName, description.graphics.gs, language, ShaderType_Geometry, errorOut) : nullptr;
+        definition.graphics.hs = description.graphics.hs ? compileShader(shaderBuilder, description.graphics.hsName, description.graphics.hs, language, ShaderType_Hull, errorOut) : nullptr;
+        definition.graphics.ds = description.graphics.ds ? compileShader(shaderBuilder, description.graphics.dsName, description.graphics.ds, language, ShaderType_Domain, errorOut) : nullptr;
         break;
     case BindType_RayTrace:
-        definition.raytrace.rany = compileShader(shaderBuilder, description.raytrace.ranyName, description.raytrace.rany, language, ShaderType_RayAnyHit, errorOut);
-        definition.raytrace.rclosest = compileShader(shaderBuilder, description.raytrace.rclosestName, description.raytrace.rclosest, language, ShaderType_RayClosestHit, errorOut);
-        definition.raytrace.rgen = compileShader(shaderBuilder, description.raytrace.rgenName, description.raytrace.rgen, language, ShaderType_RayGeneration, errorOut);
-        definition.raytrace.rintersect = compileShader(shaderBuilder, description.raytrace.rintersectName, description.raytrace.rintersect, language, ShaderType_RayIntersect, errorOut);
-        definition.raytrace.rmiss = compileShader(shaderBuilder, description.raytrace.rmissName, description.raytrace.rmiss, language, ShaderType_RayMiss, errorOut);
+        definition.raytrace.rany = description.raytrace.rany ? compileShader(shaderBuilder, description.raytrace.ranyName, description.raytrace.rany, language, ShaderType_RayAnyHit, errorOut) : nullptr;
+        definition.raytrace.rclosest = description.raytrace.rclosest ? compileShader(shaderBuilder, description.raytrace.rclosestName, description.raytrace.rclosest, language, ShaderType_RayClosestHit, errorOut) : nullptr;
+        definition.raytrace.rgen = description.raytrace.rgen ? compileShader(shaderBuilder, description.raytrace.rgenName, description.raytrace.rgen, language, ShaderType_RayGeneration, errorOut) : nullptr;
+        definition.raytrace.rintersect = description.raytrace.rintersect ? compileShader(shaderBuilder, description.raytrace.rintersectName, description.raytrace.rintersect, language, ShaderType_RayIntersect, errorOut) : nullptr;
+        definition.raytrace.rmiss = description.raytrace.rmiss ? compileShader(shaderBuilder, description.raytrace.rmissName, description.raytrace.rmiss, language, ShaderType_RayMiss, errorOut) : nullptr;
         break;
     }
 
@@ -387,15 +390,19 @@ ErrType buildVertexInputLayout(GraphicsDevice* pDevice, const VertexInputLayout&
     auto it = g_vertexLayoutIds.find(inputLayoutId);
     if (it != g_vertexLayoutIds.end())
     { 
-        if (pDevice->makeVertexLayout(inputLayoutId, layout))
-            return RecluseResult_Ok;
-        else
-            return RecluseResult_Failed;
+        return RecluseResult_Ok;
     }
     else
     {
-        return RecluseResult_Ok;
+        if (pDevice->makeVertexLayout(inputLayoutId, layout))
+        {
+            g_vertexLayoutIds.insert(inputLayoutId);
+            return RecluseResult_Ok;
+        }
+        else
+            return RecluseResult_Failed;
     }
+    return RecluseResult_Unexpected;
 }
 
 

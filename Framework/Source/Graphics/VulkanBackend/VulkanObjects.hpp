@@ -24,6 +24,7 @@ struct VulkanRenderPassDesc
     U32                     numRenderTargets;
     U32                     width;
     U32                     height;
+    U32                     layers;
     GraphicsResourceView*   pDepthStencil;
 };
 

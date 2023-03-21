@@ -80,6 +80,9 @@ static ShaderStageFlags shaderTypeToShaderStageFlags(ShaderType type)
     return (1<<type);
 }
 
+
+typedef U64 ShaderPermutationId;
+
 // Shader is a container that uses the crc
 class Shader final
 {
@@ -94,8 +97,12 @@ private:
     Shader()
         : m_intermediateCode(ShaderIntermediateCode_Unknown)
         , m_shaderType(ShaderType_None)
-        , m_uniqueId(~0u)
-        , m_entryPoint(nullptr) { }
+        , m_shaderNameHash(~0u)
+        , m_permutation(0)
+        , m_entryPoint(nullptr) 
+    {
+        m_shaderName[0] = '\0'; 
+    }
 
 public:
 
@@ -117,7 +124,21 @@ public:
     
     U64 getSzBytes() const { return m_byteCode.size(); }
 
-    ShaderId getId() const { return m_uniqueId; }
+    // Obtain the shader hash id, this is usually equal across the same shader with different permutations.
+    // PermutationId defines the unique id between similar shaders, in order to distinguish from other combinations.
+    ShaderId getHashId() const { return m_shaderNameHash; }
+    
+    void setName(const char* name) 
+    {
+        m_shaderName = name;
+        m_shaderNameHash = recluseHash(m_shaderName.data(), m_shaderName.size());
+    }
+
+    const char* getName() const { return m_shaderName.c_str(); }
+    U64 getNameSize() const { return static_cast<U64>(m_shaderName.size()); }
+
+    void setPermutationId(ShaderPermutationId permutation) { m_permutation = permutation; }
+    ShaderPermutationId getPermutationId() const { return m_permutation; }
 
 private:
 
@@ -125,9 +146,11 @@ private:
     void genHashId();
 
     ShaderIntermediateCode  m_intermediateCode;
-    ShaderType             m_shaderType;
+    ShaderType              m_shaderType;
     std::vector<char>       m_byteCode;
-    ShaderId                m_uniqueId;
+    ShaderId                m_shaderNameHash;
     const char*             m_entryPoint;
+    std::string             m_shaderName;
+    ShaderPermutationId     m_permutation;
 };
 } // Recluse

@@ -133,13 +133,10 @@ void VulkanContext::setRenderPass(VulkanRenderPass* pPass)
 {
     R_ASSERT(pPass != NULL);
 
-    if (m_boundRenderPass == pPass)
-        return;
-
     flushBarrierTransitions(m_primaryCommandList.get());
 
     // End current render pass if it doesn't match this one...
-    if (m_boundRenderPass != pPass) 
+    if (m_boundRenderPass != pPass->get()) 
     {
         endRenderPass(m_primaryCommandList.get());   
     }
@@ -153,8 +150,6 @@ void VulkanContext::setRenderPass(VulkanRenderPass* pPass)
     beginInfo.renderArea            = pPass->getRenderArea();
 
     vkCmdBeginRenderPass(m_primaryCommandList.get(), &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    
-    m_boundRenderPass = pPass;
 }
 
 
@@ -215,7 +210,7 @@ void VulkanContext::bindPipelineState(const VulkanDescriptorAllocation& set)
     currentState().m_pipelineStructure.state.descriptorLayout = set.getDescriptorSet(0).layout;
     flushBarrierTransitions(m_primaryCommandList.get());
 
-    if (!isPipelineDirty())
+    if (!currentState().isPipelineDirty())
     {
         return;
     }
@@ -228,6 +223,9 @@ void VulkanContext::bindPipelineState(const VulkanDescriptorAllocation& set)
         vkCmdBindPipeline(m_primaryCommandList.get(), bindPoint, pipeline);
         m_pipelineState = pipelineState;
     }
+
+    setRenderPass(m_newRenderPass);
+    m_boundRenderPass = m_newRenderPass->get();
 }
 
 
@@ -275,6 +273,7 @@ void VulkanContext::drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstV
 {
     const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure);
     
+    bindPipelineState(set);
     bindDescriptorSet(set);
     flushBarrierTransitions(m_primaryCommandList.get());
     
@@ -359,9 +358,13 @@ void VulkanContext::setScissors(U32 numScissors, Rect* pRects)
 void VulkanContext::dispatch(U32 x, U32 y, U32 z)
 {
     endRenderPass(m_primaryCommandList.get());
-    const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure);
-    bindPipelineState(set);
-    bindDescriptorSet(set);
+    if (currentState().areResourcesDirty())
+    {
+        const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure);
+        bindPipelineState(set);
+        bindDescriptorSet(set);
+    }
+    currentState().proposeClean();
     flushBarrierTransitions(m_primaryCommandList.get());
     vkCmdDispatch(m_primaryCommandList.get(), x, y, z);
 }
@@ -396,7 +399,7 @@ void VulkanContext::transition(GraphicsResource* pResource, ResourceState dstSta
         
         range.baseArrayLayer                = 0;
         range.baseMipLevel                  = 0;
-        range.layerCount                    = description.arrayLevels;
+        range.layerCount                    = description.depthOrArraySize;
         range.levelCount                    = description.mipLevels;
         range.aspectMask                    = VK_IMAGE_ASPECT_COLOR_BIT;
         
@@ -434,8 +437,13 @@ void VulkanContext::bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBy
 void VulkanContext::drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 firstIndex, U32 vertexOffset, U32 firstInstance)
 {
     flushBarrierTransitions(m_primaryCommandList.get());
-    const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure);
-    bindDescriptorSet(set);
+    if (currentState().areResourcesDirty())
+    {
+        const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure);
+        bindPipelineState(set);
+        bindDescriptorSet(set);
+    }
+    currentState().proposeClean();
     vkCmdDrawIndexed(m_primaryCommandList.get(), indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
 }
 
@@ -452,7 +460,7 @@ void VulkanContext::clearDepthStencil(F32 clearDepth, U8 clearStencil, const Rec
     attachment.aspectMask                       = VK_IMAGE_ASPECT_DEPTH_BIT;
     attachment.clearValue.depthStencil.depth    = clearDepth;
     attachment.clearValue.depthStencil.stencil  = clearStencil;
-    attachment.colorAttachment                  = m_boundRenderPass->getNumRenderTargets(); // usually the last one.
+    attachment.colorAttachment                  = m_newRenderPass->getNumRenderTargets(); // usually the last one.
 
     clearRect.baseArrayLayer    = 0;
     clearRect.layerCount        = 1;
@@ -471,10 +479,13 @@ void VulkanContext::drawIndexedInstancedIndirect(GraphicsResource* pParams, U32 
     R_ASSERT(pParams->getApi() == GraphicsApi_Vulkan);
 
     flushBarrierTransitions(m_primaryCommandList.get());
-    const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure);
-    bindPipelineState(set);
-    bindDescriptorSet(set);
-    
+    if (currentState().areResourcesDirty())
+    {
+        const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure);
+        bindPipelineState(set);
+        bindDescriptorSet(set);
+    }
+    currentState().proposeClean();
     VulkanResource* pResource = pParams->castTo<VulkanResource>();
 
     if (!pResource->isBuffer())
@@ -495,8 +506,12 @@ void VulkanContext::drawInstancedIndirect(GraphicsResource* pParams, U32 offset,
     R_ASSERT(pParams->getApi() == GraphicsApi_Vulkan);
 
     flushBarrierTransitions(m_primaryCommandList.get());
-    bindDescriptorSet(DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure));
+    if (currentState().areResourcesDirty())
+    {
+        bindDescriptorSet(DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure));
+    }
     VulkanResource* pResource = static_cast<VulkanResource*>(pParams);
+    currentState().proposeClean();
 
     if (!pResource->isBuffer())
     {
@@ -516,7 +531,10 @@ void VulkanContext::dispatchIndirect(GraphicsResource* pParams, U64 offset)
     R_ASSERT(pParams->getApi() == GraphicsApi_Vulkan);
 
     flushBarrierTransitions(m_primaryCommandList.get());
-    bindDescriptorSet(DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure));
+    if (currentState().areResourcesDirty())
+    {
+        bindDescriptorSet(DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure));
+    }
     VulkanResource* pResource = pParams->castTo<VulkanResource>();
     
     if (pResource->isBuffer())
@@ -560,11 +578,10 @@ void VulkanContext::bindRenderTargets(U32 count, GraphicsResourceView** ppResour
 {
     // Obtain the given render pass for the following resources. If one is already available, don't set it again!
     VulkanRenderPass* pPass = RenderPasses::makeRenderPass(m_pDevice, count, ppResourceViews, pDepthStencil);
-    if (pPass == m_boundRenderPass)
-        return;
-    m_boundRenderPass = pPass;
     currentState().m_pipelineStructure.state.graphics.numRenderTargets = count;
-    setRenderPass(m_boundRenderPass);
+    currentState().m_pipelineStructure.state.graphics.renderPass = pPass->get();
+    m_newRenderPass = pPass;
+    currentState().markPipelineDirty();
 }
 
 
@@ -572,7 +589,7 @@ void VulkanContext::copyBufferRegions
     (
         GraphicsResource* dst, 
         GraphicsResource* src, 
-        CopyBufferRegion* pRegions, 
+        const CopyBufferRegion* pRegions, 
         U32 numRegions
     )
 {
@@ -607,6 +624,7 @@ void VulkanContext::bindConstantBuffers(ShaderType type, U32 offset, U32 count, 
     currentState().m_boundDescriptorSetStructure.key.value.shaderTypeFlags |= shaderFlags;
     currentState().m_boundDescriptorSetStructure.ppConstantBuffers         = currentState().m_cbvs.data();
     currentState().m_boundDescriptorSetStructure.key.value.constantBuffers = currentState().m_cbvs.size();
+    currentState().markResourcesDirty();
 }
 
 
@@ -623,6 +641,7 @@ void VulkanContext::bindShaderResources(ShaderType type, U32 offset, U32 count, 
     currentState().m_boundDescriptorSetStructure.key.value.shaderTypeFlags     |= shaderFlags;
     currentState().m_boundDescriptorSetStructure.ppShaderResources             = currentState().m_srvs.data();
     currentState().m_boundDescriptorSetStructure.key.value.srvs                = currentState().m_srvs.size();
+    currentState().markResourcesDirty();
 }
 
 
@@ -639,6 +658,7 @@ void VulkanContext::bindUnorderedAccessViews(ShaderType type, U32 offset, U32 co
     currentState().m_boundDescriptorSetStructure.key.value.shaderTypeFlags     |= shaderFlags;
     currentState().m_boundDescriptorSetStructure.ppUnorderedAccesses           = currentState().m_uavs.data();
     currentState().m_boundDescriptorSetStructure.key.value.uavs                = currentState().m_uavs.size();
+    currentState().markResourcesDirty();
 }
 
 
@@ -655,6 +675,7 @@ void VulkanContext::bindSamplers(ShaderType type, U32 count, GraphicsSampler** p
     currentState().m_boundDescriptorSetStructure.key.value.shaderTypeFlags |= shaderFlags;
     currentState().m_boundDescriptorSetStructure.ppSamplers                = currentState().m_samplers.data();
     currentState().m_boundDescriptorSetStructure.key.value.samplers        = currentState().m_samplers.size();
+    currentState().markResourcesDirty();
 }
 
 

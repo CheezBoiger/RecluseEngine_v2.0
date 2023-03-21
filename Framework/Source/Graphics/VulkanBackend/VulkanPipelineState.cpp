@@ -182,7 +182,7 @@ static VkPipelineRasterizationStateCreateInfo getRasterInfo(const RasterState& r
     info.depthBiasSlopeFactor       = rs.depthBiasSlopFactor;
     info.depthClampEnable           = rs.depthClampEnable;
     info.frontFace                  = getNativeFrontFace(rs.frontFace);
-    info.lineWidth                  = rs.lineWidth;
+    info.lineWidth                  = 1.0f;//rs.lineWidth;
     info.polygonMode                = getNativePolygonMode(rs.polygonMode);
     info.rasterizerDiscardEnable    = VK_FALSE;
     return info;

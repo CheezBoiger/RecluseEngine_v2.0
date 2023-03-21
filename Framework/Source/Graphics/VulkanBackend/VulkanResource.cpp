@@ -239,10 +239,10 @@ ErrType VulkanImage::onCreate(VulkanDevice* pDevice, const GraphicsResourceDescr
     
     VkImageCreateInfo info  = { };
     info.sType              = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    info.arrayLayers        = desc.arrayLevels;
+    info.arrayLayers        = (info.imageType != ResourceDimension_3d) ? desc.depthOrArraySize : 1;
     info.extent.width       = desc.width;   
     info.extent.height      = desc.height;
-    info.extent.depth       = desc.depth;
+    info.extent.depth       = (info.imageType == ResourceDimension_3d) ? desc.depthOrArraySize : 1;
     info.initialLayout      = Vulkan::getVulkanImageLayout(initState);
     info.mipLevels          = desc.mipLevels;
     info.imageType          = VK_IMAGE_TYPE_2D;         

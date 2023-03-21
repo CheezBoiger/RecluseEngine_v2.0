@@ -1,6 +1,7 @@
 //
 #include "VulkanShaderCache.hpp"
 #include "VulkanDevice.hpp"
+#include "VulkanAdapter.hpp"
 
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Graphics/Shader.hpp"
@@ -14,7 +15,8 @@ namespace Recluse {
 namespace ShaderPrograms {
 
 // Cache holds all system cache info.
-::std::unordered_map<ShaderProgramId, std::unordered_map<ShaderProgramPermutation, VulkanShaderProgram>> cache;
+std::unordered_map<ShaderId, std::unordered_map<ShaderPermutationId, VkShaderModule>>                       shaderCache;
+::std::unordered_map<ShaderProgramId, std::unordered_map<ShaderProgramPermutation, VulkanShaderProgram>>    cache;
 
 static VkResult createShaderModule(VkDevice device, Shader* pShader, VkShaderModule* pModule)
 {
@@ -28,6 +30,15 @@ static VkResult createShaderModule(VkDevice device, Shader* pShader, VkShaderMod
     {
         R_ERR(__FUNCTION__, "Either module or device were passed as NULL!! Can not create a VkShaderModule!");
         return VK_ERROR_INITIALIZATION_FAILED;
+    }
+
+    if (shaderCache.find(pShader->getHashId()) != shaderCache.end())
+    {
+        if (shaderCache[pShader->getHashId()].find(pShader->getPermutationId()) != shaderCache[pShader->getHashId()].end())
+        {
+            *pModule = shaderCache[pShader->getHashId()][pShader->getPermutationId()];
+            return VK_SUCCESS;
+        }
     }
 
     VkShaderModule shaderModule     = VK_NULL_HANDLE;
@@ -48,6 +59,21 @@ static VkResult createShaderModule(VkDevice device, Shader* pShader, VkShaderMod
         *pModule = shaderModule;
     }
 
+    if (pfn_vkSetDebugUtilsObjectNameEXT)
+    {
+        std::string strName = pShader->getName();
+        strName += std::to_string(pShader->getPermutationId());
+
+        VkDebugUtilsObjectNameInfoEXT nameInfo  = { };
+        nameInfo.sType                          = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+        nameInfo.objectType                     = VK_OBJECT_TYPE_SHADER_MODULE;
+        nameInfo.pNext                          = nullptr;
+        nameInfo.pObjectName                    = strName.c_str();
+        nameInfo.objectHandle                   = reinterpret_cast<uint64_t>(shaderModule);
+        result = pfn_vkSetDebugUtilsObjectNameEXT(device, &nameInfo);
+        R_ASSERT(result == VK_SUCCESS);
+    }
+
     return result;
 }
 
@@ -60,19 +86,21 @@ VulkanShaderProgram createShaderProgram(VkDevice device, const Builder::ShaderPr
     {
     case BindType_Graphics: 
         programOut.bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+        R_ASSERT_MSG(definition.graphics.vs, "Must be able to have at least a vertex shader in order to build shader program for Vulkan!");
         createShaderModule(device, definition.graphics.vs, &programOut.graphics.vs);
         createShaderModule(device, definition.graphics.ps, &programOut.graphics.ps);
         createShaderModule(device, definition.graphics.gs, &programOut.graphics.gs);
         createShaderModule(device, definition.graphics.hs, &programOut.graphics.hs);
         createShaderModule(device, definition.graphics.ds, &programOut.graphics.ds);
         programOut.graphics.vsEntry = definition.graphics.vs->getEntryPointName();
-        programOut.graphics.psEntry = definition.graphics.ps->getEntryPointName();
-        programOut.graphics.gsEntry = definition.graphics.gs->getEntryPointName();
-        programOut.graphics.dsEntry = definition.graphics.ds->getEntryPointName();
-        programOut.graphics.hsEntry = definition.graphics.hs->getEntryPointName();
+        programOut.graphics.psEntry = definition.graphics.ps ? definition.graphics.ps->getEntryPointName() : nullptr;
+        programOut.graphics.gsEntry = definition.graphics.gs ? definition.graphics.gs->getEntryPointName() : nullptr;
+        programOut.graphics.dsEntry = definition.graphics.ds ? definition.graphics.ds->getEntryPointName() : nullptr;
+        programOut.graphics.hsEntry = definition.graphics.hs ? definition.graphics.hs->getEntryPointName() : nullptr;
         break;
     case BindType_Compute: 
         programOut.bindPoint = VK_PIPELINE_BIND_POINT_COMPUTE; 
+        R_ASSERT_MSG(definition.compute.cs, "Must have at least a compute shader in order to build shader program for Vulkan!");
         createShaderModule(device, definition.compute.cs, &programOut.compute.cs);
         programOut.compute.csEntry = definition.compute.cs->getEntryPointName();
         break;
@@ -83,11 +111,11 @@ VulkanShaderProgram createShaderProgram(VkDevice device, const Builder::ShaderPr
         createShaderModule(device, definition.raytrace.rgen, &programOut.raytrace.rayGen);
         createShaderModule(device, definition.raytrace.rintersect, &programOut.raytrace.rayIntersect);
         createShaderModule(device, definition.raytrace.rmiss, &programOut.raytrace.rayMiss);
-        programOut.raytrace.rayAnyHitEntry = definition.raytrace.rany->getEntryPointName();
-        programOut.raytrace.rayClosestEntry = definition.raytrace.rclosest->getEntryPointName();
-        programOut.raytrace.rayGenEntry = definition.raytrace.rgen->getEntryPointName();
-        programOut.raytrace.rayIntersectEntry = definition.raytrace.rintersect->getEntryPointName();
-        programOut.raytrace.rayMissEntry = definition.raytrace.rmiss->getEntryPointName();
+        programOut.raytrace.rayAnyHitEntry = definition.raytrace.rany ? definition.raytrace.rany->getEntryPointName() : nullptr;
+        programOut.raytrace.rayClosestEntry = definition.raytrace.rclosest ? definition.raytrace.rclosest->getEntryPointName() : nullptr;
+        programOut.raytrace.rayGenEntry = definition.raytrace.rgen ? definition.raytrace.rgen->getEntryPointName() : nullptr;
+        programOut.raytrace.rayIntersectEntry = definition.raytrace.rintersect ? definition.raytrace.rintersect->getEntryPointName() : nullptr;
+        programOut.raytrace.rayMissEntry = definition.raytrace.rmiss ? definition.raytrace.rmiss->getEntryPointName() : nullptr;
         break;
     }
 
@@ -112,6 +140,16 @@ VulkanShaderProgram* obtainShaderProgram(ShaderProgramId shaderProgram, ShaderPr
         return &cache[shaderProgram][permutation];
     }
     return nullptr;
+}
+
+ErrType createDebugShaderNames(VulkanDevice* pDevice, const VulkanShaderProgram& program)
+{
+    Bool supportsDebugMarking = pDevice->getAdapter()->getInstance()->supportsDebugMarking();
+    if (supportsDebugMarking)
+    {
+        ;
+    }
+    return RecluseResult_Ok;
 }
 
 

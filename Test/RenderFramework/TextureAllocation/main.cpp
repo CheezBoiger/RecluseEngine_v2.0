@@ -81,8 +81,7 @@ int main(int c, char* argv[])
     desc.memoryUsage    = ResourceMemoryUsage_GpuOnly;
     desc.width          = 128;
     desc.height         = 128;
-    desc.depth          = 1;
-    desc.arrayLevels    = 1;
+    desc.depthOrArraySize = 1;
     desc.mipLevels      = 8;
     desc.dimension      = ResourceDimension_2d;
     desc.samples        = 1;

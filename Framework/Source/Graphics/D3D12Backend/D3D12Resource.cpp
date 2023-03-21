@@ -36,7 +36,7 @@ ErrType D3D12Resource::initialize
     HRESULT sResult                         = S_OK;
 
     d3d12desc.Dimension         = getDimension(desc.dimension);
-    d3d12desc.DepthOrArraySize  = desc.depth;
+    d3d12desc.DepthOrArraySize  = desc.depthOrArraySize;
     d3d12desc.Width             = desc.width;
     d3d12desc.Height            = desc.height;
     d3d12desc.MipLevels         = desc.mipLevels;

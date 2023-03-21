@@ -87,6 +87,7 @@ void VulkanContext::begin()
 
 void VulkanContext::end()
 {
+    endRenderPass(m_primaryCommandList.get());
     m_primaryCommandList.end();
     // This performance our submittal.
     VkFence fence               = getCurrentFence();
@@ -969,5 +970,11 @@ ErrType VulkanDevice::releaseContext(GraphicsContext* pContext)
     pVc->release();
     delete pVc;
     return RecluseResult_Ok;
+}
+
+
+void VulkanDevice::copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, const CopyBufferRegion* regions, U32 numRegions)
+{
+    m_swapchain->getPresentationQueue()->copyBufferRegions(dst, src, regions, numRegions);
 }
 } // Recluse

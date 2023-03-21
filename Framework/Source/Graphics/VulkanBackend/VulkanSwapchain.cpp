@@ -289,15 +289,15 @@ void VulkanSwapchain::buildFrameResources(ResourceFormat resourceFormat)
         desc.width          = swapchainDesc.renderWidth;
         desc.height         = swapchainDesc.renderHeight;
         desc.dimension      = ResourceDimension_2d;
-        desc.depth          = 1;
         desc.format         = resourceFormat;
         desc.memoryUsage    = ResourceMemoryUsage_GpuOnly;
         desc.mipLevels      = 1;
         desc.usage          = ResourceUsage_RenderTarget;
         desc.samples        = 1;
-        desc.arrayLevels    = 1;
+        desc.depthOrArraySize    = 1;
 
         m_frameImages[i] = new VulkanImage(desc, frame, VK_IMAGE_LAYOUT_UNDEFINED);
+        m_frameImages[i]->generateId();
 
         ResourceViewDescription viewDesc = { };
         viewDesc.format         = resourceFormat;
@@ -311,6 +311,7 @@ void VulkanSwapchain::buildFrameResources(ResourceFormat resourceFormat)
         
         m_frameViews[i] = new VulkanResourceView(viewDesc);
         m_frameViews[i]->initialize(m_pDevice);
+        m_frameViews[i]->generateId();
     }
 }
 

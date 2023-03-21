@@ -15,10 +15,9 @@ ErrType GPUBuffer::initialize(GraphicsDevice* pDevice, U64 totalSzBytes, Resourc
     desc.usage                          = usage | ResourceUsage_TransferDestination;
     desc.memoryUsage                    = ResourceMemoryUsage_GpuOnly;
     desc.dimension                      = ResourceDimension_Buffer;
-    desc.arrayLevels                    = 1;
+    desc.depthOrArraySize             = 1;
     desc.mipLevels                      = 1;
     desc.height                         = 1;
-    desc.depth                          = 1;
     desc.width                          = totalSzBytes;
     
     result = pDevice->createResource(&m_pResource, desc, ResourceState_CopyDestination);
@@ -40,7 +39,7 @@ ErrType GPUBuffer::stream(GraphicsContext* pContext, void* ptr, U64 offsetBytes,
     stageDesc.memoryUsage   = ResourceMemoryUsage_CpuToGpu;
     stageDesc.width         = szBytes;
     stageDesc.usage         = ResourceUsage_TransferSource;
-    stageDesc.arrayLevels   = 1;
+    stageDesc.depthOrArraySize = 1;
     stageDesc.mipLevels     = 1;
     stageDesc.height        = 1;
 

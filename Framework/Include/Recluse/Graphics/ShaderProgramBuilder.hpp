@@ -84,7 +84,7 @@ struct R_PUBLIC_API ShaderProgramDescription
     ShaderLang language;
     BindType pipelineType;
 
-    ShaderProgramDescription() { }
+    ShaderProgramDescription() { memset(this, 0, sizeof(graphics)); }
     ShaderProgramDescription(const ShaderProgramDescription& description);
     ShaderProgramDescription(ShaderProgramDescription&& description);
     ~ShaderProgramDescription() { }
@@ -118,7 +118,7 @@ public:
         } raytrace;
     };
 
-    ShaderProgramDefinition() { }
+    ShaderProgramDefinition() { memset(this, 0, sizeof(ShaderProgramDefinition)); }
     ShaderProgramDefinition(const ShaderProgramDefinition& def);
     ShaderProgramDefinition(ShaderProgramDefinition&& def);
 

@@ -34,7 +34,7 @@ void Shader::genHashId()
     if (kShaderCounter == ~0)
     { 
         ScopedLock _(kShaderCounterMutex);
-        m_uniqueId = kShaderCounter++;
+        m_shaderNameHash = kShaderCounter++;
     }
 }
 
