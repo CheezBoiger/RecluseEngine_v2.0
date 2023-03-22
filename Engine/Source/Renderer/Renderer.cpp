@@ -219,7 +219,6 @@ void Renderer::determineAdapter(std::vector<GraphicsAdapter*>& adapters)
 void Renderer::createDevice(const RendererConfigs& configs)
 {
     DeviceCreateInfo info                   = { };
-    info.buffering                          = configs.buffering;
     info.winHandle                          = m_windowHandle;
     info.swapchainDescription.buffering     = FrameBuffering_Single;
     info.swapchainDescription.desiredFrames = 3;

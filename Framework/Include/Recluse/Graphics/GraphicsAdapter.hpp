@@ -32,7 +32,6 @@ struct R_PUBLIC_API DeviceCreateInfo
 {
     void*                       winHandle;
     SwapchainCreateDescription  swapchainDescription; // Swapchain description, if a window handle is present.
-    U32                         buffering; // buffered resources count. 
 };
 
 class GraphicsDevice;

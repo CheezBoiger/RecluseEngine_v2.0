@@ -110,10 +110,9 @@ int main(int c, char* argv[])
 
     {
         DeviceCreateInfo info = { };
-        info.buffering = 3;
         info.winHandle = pWindow->getNativeHandle();
         info.swapchainDescription = { };
-        info.swapchainDescription.buffering = FrameBuffering_Triple;
+        info.swapchainDescription.buffering = FrameBuffering_Single;
         info.swapchainDescription.desiredFrames = 3;
         info.swapchainDescription.renderWidth = pWindow->getWidth();
         info.swapchainDescription.renderHeight = pWindow->getHeight();

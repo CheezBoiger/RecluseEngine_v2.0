@@ -93,7 +93,6 @@ int main(int c, char* argv[])
 
     {
         DeviceCreateInfo info = { };
-        info.buffering = 3;
         info.winHandle = pWindow->getNativeHandle();
         info.swapchainDescription = { };
         info.swapchainDescription.buffering = FrameBuffering_Triple;

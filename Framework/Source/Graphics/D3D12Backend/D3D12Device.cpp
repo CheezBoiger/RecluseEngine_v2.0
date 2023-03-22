@@ -89,10 +89,6 @@ ErrType D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo& i
         createSwapchain(&m_swapchain, info.swapchainDescription);
     }
 
-
-    m_context = new D3D12Context(this, info.buffering);
-    m_context->initialize();
-
     return RecluseResult_Ok;
 }
 

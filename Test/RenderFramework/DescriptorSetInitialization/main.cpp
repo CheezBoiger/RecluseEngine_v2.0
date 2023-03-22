@@ -116,9 +116,8 @@ int main(int c, char* argv[])
 
     {
         DeviceCreateInfo info = { };
-        info.buffering = 2;
         info.winHandle = pWindow->getNativeHandle();
-        info.swapchainDescription.buffering = FrameBuffering_Double;
+        info.swapchainDescription.buffering = FrameBuffering_Triple;
         info.swapchainDescription.desiredFrames = 2;
         info.swapchainDescription.renderWidth = 1024;
         info.swapchainDescription.renderHeight = 1024;
@@ -258,18 +257,18 @@ int main(int c, char* argv[])
     context->setBuffers(3);
     F32 index = 200;
     F32 counterFps = 0.f;
-    F32 desiredFps = 1.f / 15.f;
+    F32 desiredFps = 0.f / 144.f;
     while (!pWindow->shouldClose()) 
     {
         RealtimeTick::updateWatch(1ull, 0);
-        RealtimeTick tick = RealtimeTick::getTick(0);
-        F32 ms = Limiter::limit(desiredFps, 1ull, 0);
+        RealtimeTick tick   = RealtimeTick::getTick(0);
+        F32 ms              = Limiter::limit(desiredFps, 1ull, 0);
         //R_TRACE("TEST", "FPS: %f", 1.0f / tick.getDeltaTimeS());
-        F32 color[]     = { 0.0f, 1.0f, 0.0f, 1.0f };
-        F32 color2[]    = { 0.0f, 0.0f, 1.0f, 1.0f };
-        index           = Math::clamp(index - 100.f * ms, 0.f, 200.0f);
-        Rect rect       = { (F32)index, 200.f, 1024.f/2.f, 1024.f/2.f };
-        Rect rect2      = { 0.f, 0.f, 1024.f, 1024.f };
+        F32 color[]         = { 0.0f, 1.0f, 0.0f, 1.0f };
+        F32 color2[]        = { 0.0f, 0.0f, 1.0f, 1.0f };
+        index               = Math::clamp(index - 100.f * ms, 0.f, 200.0f);
+        Rect rect           = { (F32)index, 200.f, 1024.f/2.f, 1024.f/2.f };
+        Rect rect2          = { 0.f, 0.f, 1024.f, 1024.f };
 
         context->begin();
             GraphicsResourceView* pView = pSwapchain->getFrameView(pSwapchain->getCurrentFrameIndex());

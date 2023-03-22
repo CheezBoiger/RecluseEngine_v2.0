@@ -242,7 +242,7 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
     {
         VulkanAllocationManager::UpdateConfig config;
         config.flags = VulkanAllocationManager::Flag_GarbageResize;
-        config.garbageBufferCount = info.buffering;
+        config.garbageBufferCount = info.swapchainDescription.desiredFrames;
         config.frameIndex = 0; 
         m_allocationManager->update(config);
     }

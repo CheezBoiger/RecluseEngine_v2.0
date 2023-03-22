@@ -63,7 +63,6 @@ int main(int c, char* argv[])
     deviceCreate.swapchainDescription.desiredFrames                = 3;
     deviceCreate.swapchainDescription.renderHeight                 = 128;
     deviceCreate.swapchainDescription.renderWidth                  = 128;
-    deviceCreate.buffering = 2;
 
     result = adapters[0]->createDevice(deviceCreate, &pDevice);
 

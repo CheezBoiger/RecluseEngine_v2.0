@@ -51,7 +51,6 @@ int main(int c, char* argv[])
     }
 
     DeviceCreateInfo deviceCreate   = { };
-    deviceCreate.buffering          = 3;
     GraphicsDevice* pDevice         = nullptr;
 
     result = adapters[0]->createDevice(deviceCreate, &pDevice);

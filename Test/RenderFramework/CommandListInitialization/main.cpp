@@ -52,8 +52,6 @@ int main(int c, char* argv[])
     GraphicsDevice* pDevice         = nullptr;
     GraphicsContext* pContext       = nullptr;
 
-    deviceCreate.buffering = 1;
-
     result = adapters[0]->createDevice(deviceCreate, &pDevice);
 
     if (result != RecluseResult_Ok) {

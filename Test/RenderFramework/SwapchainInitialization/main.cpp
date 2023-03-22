@@ -58,7 +58,6 @@ int main(int c, char* argv[])
 
     DeviceCreateInfo deviceCreate   = { };
     deviceCreate.winHandle = pWindow->getNativeHandle();
-    deviceCreate.buffering = 2;
     deviceCreate.swapchainDescription.buffering                    = FrameBuffering_Triple;
     deviceCreate.swapchainDescription.desiredFrames                = 3;
     deviceCreate.swapchainDescription.renderHeight                 = 128;
