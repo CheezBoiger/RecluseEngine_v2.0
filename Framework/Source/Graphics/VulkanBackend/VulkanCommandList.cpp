@@ -131,25 +131,25 @@ VkCommandBuffer VulkanPrimaryCommandList::get() const
 
 void VulkanContext::setRenderPass(VulkanRenderPass* pPass)
 {
-    R_ASSERT(pPass != NULL);
+    R_ASSERT_MSG(pPass != NULL, "Null renderpass was set prior to render pass binding call!");
 
     flushBarrierTransitions(m_primaryCommandList.get());
 
-    // End current render pass if it doesn't match this one...
+    // End current render pass if it doesn't match this one. And begin the new pass.
     if (m_boundRenderPass != pPass->get()) 
     {
         endRenderPass(m_primaryCommandList.get());   
+        VkRenderPassBeginInfo beginInfo = { };
+        beginInfo.sType                 = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        beginInfo.framebuffer           = pPass->getFbo();
+        beginInfo.renderPass            = pPass->get();
+        beginInfo.clearValueCount       = 0;
+        beginInfo.pClearValues          = nullptr;
+        beginInfo.renderArea            = pPass->getRenderArea();
+
+        vkCmdBeginRenderPass(m_primaryCommandList.get(), &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        m_boundRenderPass               = pPass->get();
     }
-
-    VkRenderPassBeginInfo beginInfo = { };
-    beginInfo.sType                 = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    beginInfo.framebuffer           = pPass->getFbo();
-    beginInfo.renderPass            = pPass->get();
-    beginInfo.clearValueCount       = 0;
-    beginInfo.pClearValues          = nullptr;
-    beginInfo.renderArea            = pPass->getRenderArea();
-
-    vkCmdBeginRenderPass(m_primaryCommandList.get(), &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
 
@@ -176,16 +176,16 @@ void VulkanContext::resetBinds()
     m_resourceViewShaderAccessMap.clear();
     m_constantBufferShaderAccessMap.clear();
     m_samplerShaderAccessMap.clear();
-    m_pipelineState.pipeline = VK_NULL_HANDLE;
-    m_newRenderPass = nullptr;
-    m_boundRenderPass = VK_NULL_HANDLE;
-    m_boundDescriptorSet = VK_NULL_HANDLE;
+    m_pipelineState.pipeline    = VK_NULL_HANDLE;
+    m_newRenderPass             = nullptr;
+    m_boundRenderPass           = VK_NULL_HANDLE;
+    m_boundDescriptorSet        = VK_NULL_HANDLE;
 }
 
 
 void VulkanContext::clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect)
 {
-    R_ASSERT(m_boundRenderPass != NULL);
+    setRenderPass(m_newRenderPass);
 
     VkClearAttachment attachment    = { };
     VkClearValue color              = { };

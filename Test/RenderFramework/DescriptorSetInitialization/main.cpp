@@ -15,6 +15,8 @@
 
 #include "Recluse/System/Window.hpp"
 #include "Recluse/System/Input.hpp"
+#include "Recluse/System/Limiter.hpp"
+#include "Recluse/Math/MathCommons.hpp"
 
 using namespace Recluse;
 
@@ -251,53 +253,45 @@ int main(int c, char* argv[])
     // Enter game loop.
     R_TRACE("TEST", "Entering game loop...");
 
+    pSwapchain = pDevice->getSwapchain();
     context = pContext;
+    context->setBuffers(3);
     F32 index = 200;
     F32 counterFps = 0.f;
-    F32 desiredFps = 1.f / 144.f;
+    F32 desiredFps = 1.f / 15.f;
     while (!pWindow->shouldClose()) 
     {
         RealtimeTick::updateWatch(1ull, 0);
         RealtimeTick tick = RealtimeTick::getTick(0);
+        F32 ms = Limiter::limit(desiredFps, 1ull, 0);
         //R_TRACE("TEST", "FPS: %f", 1.0f / tick.getDeltaTimeS());
-        F32 color[] = { 0.0f, 1.0f, 0.0f, 1.0f };
-        F32 color2[] = { 0.0f, 0.0f, 1.0f, 1.0f };
-        if (index != 0) index -= 50.f * tick.delta();
-        Rect rect = { 200.f + (F32)index, 200.f, 1024.f/2.f, 1024.f/2.f };
-        Rect rect2 = { 0.f, 0.f, 1024.f, 1024.f };
+        F32 color[]     = { 0.0f, 1.0f, 0.0f, 1.0f };
+        F32 color2[]    = { 0.0f, 0.0f, 1.0f, 1.0f };
+        index           = Math::clamp(index - 100.f * ms, 0.f, 200.0f);
+        Rect rect       = { (F32)index, 200.f, 1024.f/2.f, 1024.f/2.f };
+        Rect rect2      = { 0.f, 0.f, 1024.f, 1024.f };
 
         context->begin();
-            //pList->begin();
-                GraphicsResourceView* pView = pSwapchain->getFrameView(pSwapchain->getCurrentFrameIndex());
-                context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
-                context->bindRenderTargets(1, &pView, nullptr);
-                context->clearRenderTarget(0, color2, rect2);
-                context->clearRenderTarget(0, color, rect);
-                context->bindRenderTargets(1, &pView, nullptr);
-                context->clearRenderTarget(0, color2, rect2);
-                context->clearRenderTarget(0, color, rect);
-                context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
-                context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
-            //pList->end();
-                context->end();
-        F32 deltaFrameRate = 1.0f / tick.delta();
-        counterFps += tick.delta();
-
-        GraphicsSwapchain::PresentConfig conf = GraphicsSwapchain::PresentConfig_DelayPresent;
-        if (counterFps >= desiredFps)
-        {
-            R_VERBOSE("Test", "Frame Rate: %f fps, time: %f", 1.0f / counterFps, tick.getCurrentTimeS());
-            counterFps = 0.f;
-            conf = GraphicsSwapchain::PresentConfig_Present;
-        }
-
-        pSwapchain->present(conf);
+            GraphicsResourceView* pView = pSwapchain->getFrameView(pSwapchain->getCurrentFrameIndex());
+            context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
+            context->bindRenderTargets(1, &pView, nullptr);
+            context->clearRenderTarget(0, color2, rect2);
+            context->clearRenderTarget(0, color, rect);
+            context->bindRenderTargets(1, &pView, nullptr);
+            context->clearRenderTarget(0, color2, rect2);
+            context->clearRenderTarget(0, color, rect);
+            context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
+            context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
+            context->end();
+        R_TRACE("TEST", "%f Fps", 1.0f / ms);
+        pSwapchain->present();
         pollEvents();
     }
 
     R_TRACE("TEST", "Exited game loop...");
     pContext->wait();    
     pDevice->destroyResource(pData); 
+    pDevice->releaseContext(context);
     pAdapter->destroyDevice(pDevice);
     Window::destroy(pWindow);
     GraphicsInstance::destroyInstance(pInstance);
