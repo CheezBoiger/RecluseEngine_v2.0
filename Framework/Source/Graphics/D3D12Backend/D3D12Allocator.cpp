@@ -191,7 +191,7 @@ ErrType D3D12ResourceAllocationManager::cleanGarbage(U32 index)
 }
 
 
-ErrType D3D12ResourceAllocationManager::reserveMemory(const MemoryReserveDesc& description)
+ErrType D3D12ResourceAllocationManager::reserveMemory(const MemoryReserveDescription& description)
 {
     m_description = description;
     return RecluseResult_Ok;

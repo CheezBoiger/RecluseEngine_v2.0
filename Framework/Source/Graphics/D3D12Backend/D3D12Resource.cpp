@@ -52,7 +52,7 @@ ErrType D3D12Resource::initialize
     } 
     else 
     {   
-        R_ASSERT_MSG(pAllocator, "No allocator exists for the given dimension! Is the resource unknown?");
+        R_ASSERT_FORMAT(pAllocator, "No allocator exists for the given dimension! Is the resource unknown?");
 
         ErrType result  = pAllocator->allocate(&m_memObj, d3d12desc, state);
 

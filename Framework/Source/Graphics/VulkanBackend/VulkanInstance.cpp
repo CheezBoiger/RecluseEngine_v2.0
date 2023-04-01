@@ -22,7 +22,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL recluseDebugCallback
     )
 {
     R_DEBUG(R_CHANNEL_VULKAN, "Validation layer: %s\n", msg);
-    R_ASSERT_MSG(!(flags & VK_DEBUG_REPORT_ERROR_BIT_EXT), "Vulkan Error.");
+    R_ASSERT_FORMAT(!(flags & VK_DEBUG_REPORT_ERROR_BIT_EXT), "Vulkan Error.");
     return VK_FALSE;
 }
 

@@ -47,6 +47,17 @@ struct ConstData
     float offset[2];
 };
 
+enum VertexLayoutKey
+{
+    VertexLayoutKey_PositionOnly
+};
+
+
+enum ShaderKey
+{
+    ShaderKey_SimpleColor
+};
+
 void updateConstData(GraphicsResource* pData, RealtimeTick& tick)
 {
     ConstData dat = { };
@@ -129,7 +140,7 @@ int main(int c, char* argv[])
     pContext->setBuffers(2);
 
     {
-        MemoryReserveDesc desc = { };
+        MemoryReserveDescription desc = { };
         desc.bufferPools[ResourceMemoryUsage_CpuOnly] = 1 * R_1MB;
         desc.bufferPools[ResourceMemoryUsage_CpuToGpu] = 1 * R_1MB;
         desc.bufferPools[ResourceMemoryUsage_GpuOnly] = 1 * R_1MB;
@@ -241,17 +252,18 @@ int main(int c, char* argv[])
         description.graphics.gs = nullptr;
         description.graphics.hs = nullptr;
 
-        Builder::buildShaderProgramDefinitions(description, 0, ShaderIntermediateCode_Spirv);
+        Builder::buildShaderProgramDefinitions(description, ShaderKey_SimpleColor, ShaderIntermediateCode_Spirv);
         Builder::Runtime::buildShaderProgram(pDevice, 0);
         Builder::releaseShaderProgramDefinition(0);
 
 
-        VertexInputLayout layout = { };
-        VertexAttribute attrib = { };
-        attrib.format = ResourceFormat_R32G32_Float;
-        attrib.loc = 0;
-        attrib.offset = 0;
-        attrib.semantic = "POSITION";
+        VertexInputLayout layout    = { };
+        VertexAttribute attrib      = { };
+        attrib.format               = ResourceFormat_R32G32_Float;
+        attrib.location             = 0;
+        attrib.offsetBytes          = 0;
+        attrib.semantic             = Semantic_Position;
+        attrib.semanticIndex        = 0;
 
         layout.vertexBindings[0].binding = 0;
         layout.vertexBindings[0].inputRate = InputRate_PerVertex;
@@ -261,7 +273,7 @@ int main(int c, char* argv[])
 
         layout.numVertexBindings = 1;
 
-        Builder::Runtime::buildVertexInputLayout(pDevice, layout, 0);
+        Builder::Runtime::buildVertexInputLayout(pDevice, layout, VertexLayoutKey_PositionOnly);
     }
     
     pWindow->open();
@@ -280,10 +292,12 @@ int main(int c, char* argv[])
     GraphicsContext* context = pContext;
     while (!pWindow->shouldClose()) 
     {
+        F32 ms = Limiter::limit(1.0f / 160.0f, 1ull, 0);
         RealtimeTick::updateWatch(1ull, 0);
         RealtimeTick tick = RealtimeTick::getTick(0);
         updateConstData(pData, tick);
         context->begin();
+            context->pushState();
             context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
             context->setCullMode(CullMode_None);
             context->setFrontFace(FrontFace_CounterClockwise);
@@ -291,17 +305,16 @@ int main(int c, char* argv[])
             context->setTopology(PrimitiveTopology_TriangleList);
             context->setViewports(1, &viewport);
             context->setScissors(1, &scissor);
-            context->setInputVertexLayout(0);
-            context->setShaderProgram(0);
+            context->setInputVertexLayout(VertexLayoutKey_PositionOnly);
+            context->setShaderProgram(ShaderKey_SimpleColor);
             GraphicsResourceView* pView = pSwapchain->getFrameView(pSwapchain->getCurrentFrameIndex());
             context->setColorWriteMask(0, Color_Rgba);
             context->bindRenderTargets(1, &pView, nullptr);
             context->bindConstantBuffers(ShaderType_Vertex, 0, 1, &pData);
             context->bindVertexBuffers(1, &pVertexBuffer, &offset);
             context->drawInstanced(3, 1, 0, 0);
+            context->popState();
         context->end();
-
-        F32 ms = Limiter::limit(1.0f / 175.0f, 1ull, 0);
         R_VERBOSE("Game", "%f fps", 1.0f / ms);
         pSwapchain->present();
 

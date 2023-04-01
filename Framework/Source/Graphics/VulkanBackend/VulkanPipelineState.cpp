@@ -366,8 +366,8 @@ static VulkanVertexLayout createVertexInput(const VertexInputLayout& vi)
             VkVertexInputAttributeDescription attribute = { };
             attribute.binding                           = binding;
             attribute.format                            = Vulkan::getVulkanFormat(attrib.format);
-            attribute.location                          = attrib.loc;
-            attribute.offset                            = attrib.offset;
+            attribute.location                          = attrib.location;
+            attribute.offset                            = attrib.offsetBytes;
             layout.descriptions.push_back(attribute);   
         }
     }

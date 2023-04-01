@@ -58,7 +58,7 @@ ErrType D3D12GraphicsResourceView::initialize(D3D12Device* pDevice)
 }
 
 
-ErrType D3D12Sampler::initialize(D3D12Device* pDevice, const SamplerCreateDesc& desc)
+ErrType D3D12Sampler::initialize(D3D12Device* pDevice, const SamplerDescription& desc)
 {
     R_ASSERT(pDevice != NULL);
 

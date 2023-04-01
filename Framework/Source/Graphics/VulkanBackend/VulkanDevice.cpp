@@ -27,6 +27,12 @@ void checkAvailableDeviceExtensions(const VulkanAdapter* adapter, std::vector<co
 }
 
 
+VulkanContext::~VulkanContext()
+{
+    R_ASSERT_FORMAT((m_bufferCount == 0), "Vulkan context was not properly released! Memory handle still active until end of application life!");
+}
+
+
 void VulkanContext::initialize(U32 bufferCount)
 {    
     VulkanDevice* pDevice = m_pDevice;
@@ -56,6 +62,8 @@ void VulkanContext::release()
     destroyPrimaryCommandList();
     destroyCommandPools();
     destroyFences();
+    // Ensure we no longer have any buffers.
+    m_bufferCount = 0;
 }
 
 
@@ -404,7 +412,7 @@ ErrType VulkanDevice::createSurface(VkInstance instance, void* handle)
 }
 
 
-ErrType VulkanDevice::reserveMemory(const MemoryReserveDesc& desc)
+ErrType VulkanDevice::reserveMemory(const MemoryReserveDescription& desc)
 {
     VkMemoryRequirements memoryRequirements = { };
     R_DEBUG
@@ -900,7 +908,7 @@ ErrType VulkanContext::wait()
 }
 
 
-ErrType VulkanDevice::createSampler(GraphicsSampler** ppSampler, const SamplerCreateDesc& desc)
+ErrType VulkanDevice::createSampler(GraphicsSampler** ppSampler, const SamplerDescription& desc)
 {
     VulkanSampler* pVSampler    = ResourceViews::makeSampler(this, desc);
     if (!pVSampler) return RecluseResult_Failed;

@@ -62,7 +62,7 @@ int main(int c, char* argv[])
 
     }
     
-    MemoryReserveDesc memReserves = { };
+    MemoryReserveDescription memReserves = { };
     memReserves.bufferPools[ResourceMemoryUsage_CpuToGpu] = 32ull * R_1KB;
     memReserves.bufferPools[ResourceMemoryUsage_GpuToCpu] = 32ull * R_1KB;
     memReserves.bufferPools[ResourceMemoryUsage_CpuOnly] = 256 * R_1MB;

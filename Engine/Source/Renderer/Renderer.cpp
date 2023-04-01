@@ -39,7 +39,7 @@ Renderer::~Renderer()
 
 void Renderer::initialize()
 {
-    R_ASSERT_MSG(m_newRendererConfigs.buffering >= 1, "Must at least be one buffer count!");
+    R_ASSERT_FORMAT(m_newRendererConfigs.buffering >= 1, "Must at least be one buffer count!");
     // Immediately initialize the render configs to the current.
     m_currentRendererConfigs = m_newRendererConfigs;
 
@@ -79,7 +79,7 @@ void Renderer::initialize()
     m_pSwapchain = m_pDevice->getSwapchain();
 
     {
-        MemoryReserveDesc reserveDesc = { };
+        MemoryReserveDescription reserveDesc = { };
         reserveDesc.bufferPools[ResourceMemoryUsage_CpuOnly]     = R_1MB * 32ull;
         reserveDesc.bufferPools[ResourceMemoryUsage_CpuToGpu]   = R_1MB * 16ull;
         reserveDesc.bufferPools[ResourceMemoryUsage_GpuToCpu]   = R_1MB * 16ull;

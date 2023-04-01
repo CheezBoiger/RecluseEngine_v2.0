@@ -72,7 +72,7 @@ void VulkanPrimaryCommandList::reset()
 {
     // If we are allowed to reset command lists.
     //vkResetCommandBuffer()
-    R_ASSERT_MSG(m_status != CommandList_Reset, "Command list was already reset!");
+    R_ASSERT_FORMAT(m_status != CommandList_Reset, "Command list was already reset!");
     m_status = CommandList_Reset;
 }
 
@@ -94,7 +94,7 @@ void VulkanPrimaryCommandList::beginCommandList(U32 idx)
 
 void VulkanPrimaryCommandList::begin()
 {
-    R_ASSERT_MSG(m_status != CommandList_Recording, "Primary command list already begun recording! Only call GraphicsContext->begin() to begin the primary command list!");
+    R_ASSERT_FORMAT(m_status != CommandList_Recording, "Primary command list already begun recording! Only call GraphicsContext->begin() to begin the primary command list!");
     const U32 bufferIdx = m_currentIdx;
     m_currentCmdBuffer  = m_buffers[bufferIdx];
     m_currentIdx        = bufferIdx;
@@ -107,7 +107,7 @@ void VulkanPrimaryCommandList::begin()
 
 void VulkanPrimaryCommandList::end()
 {
-    R_ASSERT_MSG(m_status == CommandList_Recording, "Primary command list has already ended! Only call GraphicsContext->end() to end the primary command list!");
+    R_ASSERT_FORMAT(m_status == CommandList_Recording, "Primary command list has already ended! Only call GraphicsContext->end() to end the primary command list!");
     endCommandList(m_currentIdx);
     m_status = CommandList_Ready;
 }
@@ -131,7 +131,7 @@ VkCommandBuffer VulkanPrimaryCommandList::get() const
 
 void VulkanContext::setRenderPass(VulkanRenderPass* pPass)
 {
-    R_ASSERT_MSG(pPass != NULL, "Null renderpass was set prior to render pass binding call!");
+    R_ASSERT_FORMAT(pPass != NULL, "Null renderpass was set prior to render pass binding call!");
 
     flushBarrierTransitions(m_primaryCommandList.get());
 
@@ -702,7 +702,7 @@ void VulkanContext::pushState(ContextFlags flags)
 
 void VulkanContext::popState()
 {
-    R_ASSERT_MSG(!m_contextStates.empty(), "We can not have 0 context states. Must at least be one context state!");
+    R_ASSERT_FORMAT(!m_contextStates.empty(), "We can not have 0 context states. Must at least be one context state!");
     if (m_contextStates.size() > 1)
     {
         m_contextStates.pop_back();

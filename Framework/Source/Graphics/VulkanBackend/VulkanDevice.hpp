@@ -48,6 +48,8 @@ public:
         , m_pDevice(pDevice) 
     { 
     }
+
+    ~VulkanContext();
     
     void                release();
     void                begin() override;
@@ -114,6 +116,7 @@ public:
     void setBlendEnable(U32 rtIndex, Bool enable) override { currentState().m_pipelineStructure.state.graphics.blendState.attachments[rtIndex].blendEnable = enable; currentState().markPipelineDirty(); }
     void setBlendLogicOpEnable(Bool enable) override { currentState().m_pipelineStructure.state.graphics.blendState.logicOpEnable = enable; }
     void setBlendLogicOp(LogicOp logicOp) override { currentState().m_pipelineStructure.state.graphics.blendState.logicOp = logicOp; }
+    
     void setBlendConstants(F32 blendConstants[4]) override 
     { 
         F32* blendStateConstants = currentState().m_pipelineStructure.state.graphics.blendState.blendConstants;
@@ -123,6 +126,7 @@ public:
         blendStateConstants[3] = blendConstants[3];
         currentState().markPipelineDirty();
     }
+    
     void setBlend
                 (
                     U32 rtIndex, 
@@ -292,7 +296,7 @@ public:
 
     ErrType     destroySwapchain(VulkanSwapchain* pSwapchain);
     ErrType     createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc, ResourceState initState) override;
-    ErrType     createSampler(GraphicsSampler** ppSampler, const SamplerCreateDesc& desc) override;
+    ErrType     createSampler(GraphicsSampler** ppSampler, const SamplerDescription& desc) override;
     ErrType     destroySampler(GraphicsSampler* pSampler) override;
     ErrType     destroyResource(GraphicsResource* pResource) override;
     ErrType     createResourceView(GraphicsResourceView** ppView, const ResourceViewDescription& desc) override;
@@ -324,7 +328,7 @@ public:
 
     VkSurfaceKHR getSurface() const { return m_surface; }
 
-    ErrType reserveMemory(const MemoryReserveDesc& desc) override;
+    ErrType reserveMemory(const MemoryReserveDescription& desc) override;
 
     VulkanAdapter* getAdapter() const { return m_adapter; }
 

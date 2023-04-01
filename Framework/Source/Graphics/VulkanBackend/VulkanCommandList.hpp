@@ -44,26 +44,24 @@ public:
                 );
 
     //! Release the Vulkan handle of this command buffer.
-    void release(VulkanContext* pContext);
-
-    void reset() override;
+    void                release(VulkanContext* pContext);
+    void                reset() override;
 
     // Shift the primary command list to use a command buffer from the given index.
-    void use(U32 idx) { m_currentIdx = idx; }
+    void                use(U32 idx) { m_currentIdx = idx; }
 
     //! Get the native handle of this command buffer. Vulkan specific.
-    VkCommandBuffer get() const;
+    VkCommandBuffer     get() const;
 
-    void begin();
-    void end();
+    void                begin();
+    void                end();
 
-    CommandListStatus getStatus() const { return m_status; }
-
-    void setStatus(CommandListStatus status) { m_status = status; }
+    CommandListStatus   getStatus() const { return m_status; }
+    void                setStatus(CommandListStatus status) { m_status = status; }
 
 private:
-    void beginCommandList(U32 idx);
-    void endCommandList(U32 idx);
+    void                beginCommandList(U32 idx);
+    void                endCommandList(U32 idx);
 
     std::vector<VkCommandBuffer>        m_buffers;
     VkCommandBuffer                     m_currentCmdBuffer;

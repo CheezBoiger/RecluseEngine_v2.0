@@ -74,10 +74,18 @@ enum CullMode
 
 struct VertexAttribute 
 {
-    U32             loc;
-    U32             offset;             // offset within the vertex attribute.
+    // Location/input slot that defines the vertex attribute in the vertex shader.
+    union {
+        U32             location;
+        U32             slot;
+    };
+    U32             offsetBytes;             // offset within the vertex attribute.
     ResourceFormat  format;
-    char*           semantic;
+
+    // Semantics are more geared towards hlsl, which will need to be used.
+    // Ensure that you provide the proper semantic conventions.
+    Semantic        semantic;
+    U32             semanticIndex;
     
 };
 

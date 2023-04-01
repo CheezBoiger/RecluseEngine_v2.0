@@ -33,6 +33,7 @@ public:
 
     virtual DescriptorHeapAllocation    allocate(U32 numDescriptors) = 0;
     virtual void                        free(const DescriptorHeapAllocation& allocation) = 0;
+    virtual void                        reset();
 
     // Get the descriptor heap description.
     D3D12_DESCRIPTOR_HEAP_DESC          getDesc() const { return m_pHeap->GetDesc(); }
@@ -71,7 +72,7 @@ protected:
     U32                                     m_descriptorSize;
     U32                                     m_heapId;
     D3D12_DESCRIPTOR_HEAP_DESC              m_heapDesc;
-    SmartPtr<Allocator>                     m_pDescriptorHeapAllocator;
+    SmartPtr<Allocator>                     m_allocator;
     D3D12_CPU_DESCRIPTOR_HANDLE             m_baseCpuHandle;
     D3D12_GPU_DESCRIPTOR_HANDLE             m_baseGpuHandle;
 };
@@ -146,7 +147,7 @@ public:
     virtual SmartPtr<Allocator>         makeAllocator(ID3D12DescriptorHeap* pHeap, U64 numDescriptors, U64 descriptorSizeBytes) override;
 
 protected:
-    D3D12_DESCRIPTOR_HEAP_DESC makeDescriptorHeapDescription(U32 nodeMask, U32 numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type) override
+    D3D12_DESCRIPTOR_HEAP_DESC          makeDescriptorHeapDescription(U32 nodeMask, U32 numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type) override
     {
         D3D12_DESCRIPTOR_HEAP_DESC desc = DescriptorHeap::makeDescriptorHeapDescription(nodeMask, numDescriptors, type);
         desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
@@ -159,12 +160,21 @@ protected:
 class CpuDescriptorHeapManager
 {
 public:
-    ErrType                     initialize(ID3D12Device* pDevice, U32 nodeMask, U32 numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
-    DescriptorHeapAllocation    allocate(ID3D12Device* pDevice, U32 numberDescriptors);
-    void                        free(const DescriptorHeapAllocation& alloc);
+    ErrType                             initialize(ID3D12Device* pDevice, U32 nodeMask, U32 numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
+    DescriptorHeapAllocation            allocate(ID3D12Device* pDevice, U32 numberDescriptors);
+    void                                free(const DescriptorHeapAllocation& alloc);
+    void                                reset();
 private:
     std::vector<CpuDescriptorHeap> m_cpuHeaps;
 };
+
+
+enum DescriptorHeapUpdateFlag
+{
+    DescriptorHeapUpdateFlag_None,
+    DescriptorHeapUpdateFlag_Reset = (1 << 0)
+};
+typedef U32 DescriptorHeapUpdateFlags;
 
 
 class DescriptorHeapAllocationManager 
@@ -192,31 +202,32 @@ public:
 
     struct DescriptorCoreSize
     {
-        F32 rtvDescriptorCountFactor = 1.0f;
-        F32 dsvDescriptorCountFactor = 1.0f;
-        F32 cbvSrvUavDescriptorCountFactor = 1.0f;
-        F32 samplerDescriptorCountFactor = 1.0f;
+        F32 rtvDescriptorCountFactor        = 1.0f;
+        F32 dsvDescriptorCountFactor        = 1.0f;
+        F32 cbvSrvUavDescriptorCountFactor  = 1.0f;
+        F32 samplerDescriptorCountFactor    = 1.0f;
     };
 
     // Chunk size of each descriptor heap. When a chunk is fully filled with descriptors, we create a new sized chunk based on this
     // size value.
-    static const F32 kNumDescriptorsPageSize;
-    static const F32 kNumSamplerDescriptorsPageSize;
+    static const F32                kNumDescriptorsPageSize;
+    static const F32                kNumSamplerDescriptorsPageSize;
 
-    ErrType                     initialize(ID3D12Device* pDevice, const DescriptorCoreSize& descriptorSizes, U32 bufferCount);
-    ErrType                     release(ID3D12Device* pDevice);
+    ErrType                         initialize(ID3D12Device* pDevice, const DescriptorCoreSize& descriptorSizes, U32 bufferCount);
+    ErrType                         release(ID3D12Device* pDevice);
 
     // Allocate a table of descriptors. Uses device only if we run out of descriptor space... This shouldn't usually happen unless
     // we are overflowing with so many descriptors.
-    DescriptorHeapAllocation    allocate(ID3D12Device* pDevice, U32 numberDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
+    DescriptorHeapAllocation        allocate(ID3D12Device* pDevice, U32 numberDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
 
     // Free an allocation.
-    void                        free(const DescriptorHeapAllocation& descriptorAllocation);
+    void                            free(const DescriptorHeapAllocation& descriptorAllocation);
 
-    // Upload a section of cpu handles to the gpu descriptor heap.
-    void                        requestUpload(const DescriptorHeapAllocation& descriptor, GpuHeapType heapType);
-    void                        update(U32 index);
-    GpuDescriptorHeap*          getGpuDescriptorHeap(GpuHeapType heapType, U32 index);
+    // Upload a section of cpu handles to the gpu descriptor heap. 
+    // This returns the gpu descriptor allocation.
+    DescriptorHeapAllocation        requestUpload(ID3D12Device* pDevice, const DescriptorHeapAllocation& allocation, GpuHeapType heapType);
+    void                            update(U32 index, DescriptorHeapUpdateFlags updateFlags);
+    GpuDescriptorHeap*              getGpuDescriptorHeap(GpuHeapType heapType, U32 index);
 
 private:
 

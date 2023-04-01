@@ -50,7 +50,7 @@ public:
     D3D12Sampler() { }
     ~D3D12Sampler() { }
     
-    ErrType initialize(D3D12Device* pDevice, const SamplerCreateDesc& desc);
+    ErrType initialize(D3D12Device* pDevice, const SamplerDescription& desc);
     ErrType destroy(D3D12Device* pDevice);
 
     D3D12_SAMPLER_DESC get() { return m_samplerDesc; }

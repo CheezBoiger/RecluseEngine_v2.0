@@ -16,6 +16,8 @@ public:
     ErrType initialize(D3D12Context* pDevice, GraphicsQueueTypeFlags flags);
     ErrType destroy();
 
+    // Use the given commandlist index.
+    void use(U32 bufferIdx);
     void begin() override;
     void end() override;
 

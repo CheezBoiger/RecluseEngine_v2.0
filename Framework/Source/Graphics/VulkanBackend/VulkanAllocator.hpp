@@ -171,7 +171,7 @@ public:
     ErrType                 free(VulkanMemory* pOut, Bool immediate = false);
 
     void                    update(const UpdateConfig& config);
-    void                    setTotalMemory(const MemoryReserveDesc& desc) { }
+    void                    setTotalMemory(const MemoryReserveDescription& desc) { }
 
     U64                     getTotalAllocationSizeBytes() const { return m_totalAllocationSizeBytes; }    
 
@@ -191,7 +191,7 @@ private:
     std::vector<std::vector<VulkanMemory>>                                      m_frameGarbage;
     VulkanDevice*                                                               m_pDevice;
     U64                                                                         m_totalAllocationSizeBytes;
-    MemoryReserveDesc                                                           m_maxDedicatedMemoryDesc;
+    MemoryReserveDescription                                                           m_maxDedicatedMemoryDesc;
     VkDeviceSize                                                                m_bufferImageGranularityBytes;
 };
 } // Recluse

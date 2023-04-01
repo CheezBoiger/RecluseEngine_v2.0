@@ -86,7 +86,7 @@ VulkanShaderProgram createShaderProgram(VkDevice device, const Builder::ShaderPr
     {
     case BindType_Graphics: 
         programOut.bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-        R_ASSERT_MSG(definition.graphics.vs, "Must be able to have at least a vertex shader in order to build shader program for Vulkan!");
+        R_ASSERT_FORMAT(definition.graphics.vs, "Must be able to have at least a vertex shader in order to build shader program for Vulkan!");
         createShaderModule(device, definition.graphics.vs, &programOut.graphics.vs);
         createShaderModule(device, definition.graphics.ps, &programOut.graphics.ps);
         createShaderModule(device, definition.graphics.gs, &programOut.graphics.gs);
@@ -100,7 +100,7 @@ VulkanShaderProgram createShaderProgram(VkDevice device, const Builder::ShaderPr
         break;
     case BindType_Compute: 
         programOut.bindPoint = VK_PIPELINE_BIND_POINT_COMPUTE; 
-        R_ASSERT_MSG(definition.compute.cs, "Must have at least a compute shader in order to build shader program for Vulkan!");
+        R_ASSERT_FORMAT(definition.compute.cs, "Must have at least a compute shader in order to build shader program for Vulkan!");
         createShaderModule(device, definition.compute.cs, &programOut.compute.cs);
         programOut.compute.csEntry = definition.compute.cs->getEntryPointName();
         break;

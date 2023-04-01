@@ -27,26 +27,26 @@
 #define R_TRACE(chan, format, ...)      do { R_LOG(chan, Recluse::LogTrace, format, __VA_ARGS__)    } while (false)
  
 #if defined(RECLUSE_DEBUG) || defined(RECLUSE_DEVELOPER)
-namespace Recluse {
-namespace Asserts {
+    namespace Recluse {
+    namespace Asserts {
 
-enum Result 
-{
-    ASSERT_OK,
-    ASSERT_DEBUG,
-    ASSERT_IGNORE,
-    ASSERT_IGNORE_ALL,
-    ASSERT_TERMINATE
-};
+    enum Result 
+    {
+        ASSERT_OK,
+        ASSERT_DEBUG,
+        ASSERT_IGNORE,
+        ASSERT_IGNORE_ALL,
+        ASSERT_TERMINATE
+    };
 
-// Assert handler deals with info needed to ensure, check, and debug code.
-class AssertHandler 
-{
-public:
-    static Result check(Bool cond, const char* functionStr, const char* msg);
-};
-} // Asserts
-} // Recluse 
+    // Assert handler deals with info needed to ensure, check, and debug code.
+    class AssertHandler 
+    {
+    public:
+        static Result check(Bool cond, const char* functionStr, const char* msg);
+    };
+    } // Asserts
+    } // Recluse 
 
     // Debugging macros and definitions. To be ignored on building release.
     #include <assert.h>
@@ -54,16 +54,26 @@ public:
     #if !defined(R_IGNORE_ASSERT)
         #if defined(RECLUSE_WINDOWS)
             #define R_ASSERT(expression) do { _set_error_mode(_OUT_TO_MSGBOX); assert(expression); } while (0)
-            #define R_ASSERT_MSG(expression, msg) do { _set_error_mode(_OUT_TO_MSGBOX); (void)((!!(expression)) || (_wassert(_CRT_WIDE(#expression ## ", " ## #msg), _CRT_WIDE(__FILE__), (unsigned)(__LINE__)), 0)); } while (0)
+            #define R_ASSERT_FORMAT(expression, fmt, ...) \
+                do { \
+                    wchar_t werr[512]; { \
+                    char err[512]; \
+                    sprintf(err, #expression ## ", " ## #fmt, __VA_ARGS__); \
+                    MultiByteToWideChar(CP_UTF8, 0, err, 512, werr, 512); \
+                    } \
+                    _set_error_mode(_OUT_TO_MSGBOX); \
+                    (void)((!!(expression)) || (_wassert(werr, _CRT_WIDE(__FILE__), (unsigned)(__LINE__)), 0)); \
+                } while (0)
         #else
+            // TODO: For anything other than windows, we still need to improve this.
             #define R_ASSERT(expression) assert(expression)
-            #define R_ASSERT_MSG(expression, msg) assert(expression && msg)
+            #define R_ASSERT_MSG(expression, msg, ...) do { char err[512]; sprintf(err, #msg, __VA_ARGS__); assert(expression && err); } while (0)
         #endif
     #else
         #undef R_DEBUG_BREAK()
         #define R_DEBUG_BREAK()
         #define R_ASSERT(expression)
-        #define R_ASSERT_MSG(expression, msg)
+        #define R_ASSERT_MSG(expression, msg, ...)
     #endif // !defined(R_IGNORE_ASSERT)
     #define R_DEBUG(chan, str, ...) R_LOG(chan, Recluse::LogDebug, str, __VA_ARGS__)
     #define R_DEBUG_WRAP(cond) cond
@@ -93,7 +103,7 @@ public:
 // NOTE(): We should always be implementing a function when needed, but for development purposes,
 // we can simply place a warning assert to let us know it is not written. Otherwise, to 
 // the user, this is entirely ignored.
-#define R_NO_IMPL() R_ASSERT_MSG(false, "No implementation for %s", __FUNCTION__)
+#define R_NO_IMPL() R_ASSERT_FORMAT(false, "No implementation for %s", __FUNCTION__)
 #else
 #define R_ERR(chan, format, ...) R_LOG(chan, Recluse::LogError, format, __VA_ARGS__)
 #define R_FATAL_ERR(chan, format, ...)

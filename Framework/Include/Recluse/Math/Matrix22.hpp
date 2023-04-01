@@ -42,6 +42,8 @@ struct R_PUBLIC_API Matrix22
 
     F32             operator()(U32 row, U32 col) const { return get(row, col); }
     F32&            operator()(U32 row, U32 col) { return get(row, col); }
+
+    static Matrix22 identity();
 };
 
 

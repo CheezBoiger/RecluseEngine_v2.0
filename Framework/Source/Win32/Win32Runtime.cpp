@@ -311,6 +311,10 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
                     feedback.buttonStateFlags &= InputState_Down << 1;
                 if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_3_DOWN)
                     feedback.buttonStateFlags &= InputState_Down << 2;
+                if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_4_DOWN)
+                    feedback.buttonStateFlags &= InputState_Down << 3;
+                if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_5_DOWN)
+                    feedback.buttonStateFlags &= InputState_Down << 4;
             } 
 
             feedback.xRate = dx;

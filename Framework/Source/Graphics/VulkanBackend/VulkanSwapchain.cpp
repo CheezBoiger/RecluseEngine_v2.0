@@ -68,7 +68,7 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
                     getResourceFormatString(pDesc.format), 
                     getResourceFormatString(Vulkan::getResourceFormat(supportedFormats[0].format))
                 );
-            R_ASSERT_MSG(!supportedFormats.empty(), "No supported formats were found for this physical device!");
+            R_ASSERT_FORMAT(!supportedFormats.empty(), "No supported formats were found for this physical device!");
             vkFormat    = supportedFormats[0].format;
             colorSpace  = supportedFormats[0].colorSpace;
         }

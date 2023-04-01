@@ -80,6 +80,154 @@ Matrix33 Matrix33::operator-(const Matrix33& rh) const
 }
 
 
+void Matrix33::operator+=(const Matrix33& rh)
+{
+    m[0] += rh[0];
+    m[1] += rh[1];
+    m[2] += rh[2];
+    m[3] += rh[3];
+    m[4] += rh[4];
+    m[5] += rh[5];
+    m[6] += rh[6];
+    m[7] += rh[7];
+    m[8] += rh[8];
+}
+
+
+void Matrix33::operator-=(const Matrix33& rh)
+{
+    m[0] -= rh[0];
+    m[1] -= rh[1];
+    m[2] -= rh[2];
+    m[3] -= rh[3];
+    m[4] -= rh[4];
+    m[5] -= rh[5];
+    m[6] -= rh[6];
+    m[7] -= rh[7];
+    m[8] -= rh[8];
+}
+
+
+void Matrix33::operator*=(F32 scalar)
+{
+    m[0] *= scalar;
+    m[1] *= scalar;
+    m[2] *= scalar;
+    m[3] *= scalar;
+    m[4] *= scalar;
+    m[5] *= scalar;
+    m[6] *= scalar;
+    m[7] *= scalar;
+    m[8] *= scalar;
+}
+
+
+void Matrix33::operator+=(F32 scalar)
+{
+    m[0] += scalar;
+    m[1] += scalar;
+    m[2] += scalar;
+    m[3] += scalar;
+    m[4] += scalar;
+    m[5] += scalar;
+    m[6] += scalar;
+    m[7] += scalar;
+    m[8] += scalar;    
+}
+
+
+void Matrix33::operator-=(F32 scalar)
+{
+    m[0] -= scalar;
+    m[1] -= scalar;
+    m[2] -= scalar;
+    m[3] -= scalar;
+    m[4] -= scalar;
+    m[5] -= scalar;
+    m[6] -= scalar;
+    m[7] -= scalar;
+    m[8] -= scalar;    
+}
+
+
+void Matrix33::operator/=(F32 scalar)
+{
+    m[0] /= scalar;
+    m[1] /= scalar;
+    m[2] /= scalar;
+    m[3] /= scalar;
+    m[4] /= scalar;
+    m[5] /= scalar;
+    m[6] /= scalar;
+    m[7] /= scalar;
+    m[8] /= scalar;
+}
+
+
+Matrix33 Matrix33::operator+(F32 scalar) const
+{
+    Matrix33 ans;
+    ans[0] = m[0] + scalar;
+    ans[1] = m[1] + scalar;
+    ans[2] = m[2] + scalar;
+    ans[3] = m[3] + scalar;
+    ans[4] = m[4] + scalar;
+    ans[5] = m[5] + scalar;
+    ans[6] = m[6] + scalar;
+    ans[7] = m[6] + scalar;
+    ans[8] = m[8] + scalar;
+    return ans;
+}
+
+
+Matrix33 Matrix33::operator-(F32 scalar) const
+{
+    Matrix33 ans;
+    ans[0] = m[0] - scalar;
+    ans[1] = m[1] - scalar;
+    ans[2] = m[2] - scalar;
+    ans[3] = m[3] - scalar;
+    ans[4] = m[4] - scalar;
+    ans[5] = m[5] - scalar;
+    ans[6] = m[6] - scalar;
+    ans[7] = m[6] - scalar;
+    ans[8] = m[8] - scalar;
+    return ans;
+}
+
+
+Matrix33 Matrix33::operator*(F32 scalar) const
+{
+    Matrix33 ans;
+    ans[0] = m[0] * scalar;
+    ans[1] = m[1] * scalar;
+    ans[2] = m[2] * scalar;
+    ans[3] = m[3] * scalar;
+    ans[4] = m[4] * scalar;
+    ans[5] = m[5] * scalar;
+    ans[6] = m[6] * scalar;
+    ans[7] = m[6] * scalar;
+    ans[8] = m[8] * scalar;
+    return ans;
+}
+
+
+Matrix33 Matrix33::operator/(F32 scalar) const
+{
+    Matrix33 ans;
+    ans[0] = m[0] / scalar;
+    ans[1] = m[1] / scalar;
+    ans[2] = m[2] / scalar;
+    ans[3] = m[3] / scalar;
+    ans[4] = m[4] / scalar;
+    ans[5] = m[5] / scalar;
+    ans[6] = m[6] / scalar;
+    ans[7] = m[6] / scalar;
+    ans[8] = m[8] / scalar;
+    return ans;
+}
+
+
 F32 Matrix33::get(U32 row, U32 col) const
 {
     R_ASSERT(row < 3 && col < 3);
@@ -115,6 +263,17 @@ Matrix33 transpose(const Matrix33& m)
     t[6] = m[2];
     t[3] = m[1];
     return t;
+}
+
+
+Matrix33 Matrix33::identity()
+{
+    return Matrix33
+            (
+                1.f, 0.f, 0.f,
+                0.f, 1.f, 0.f,
+                0.f, 0.f, 1.f 
+            );
 }
 } // Math
 } // Recluse

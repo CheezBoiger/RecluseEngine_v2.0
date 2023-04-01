@@ -179,11 +179,11 @@ static ShaderProgramDefinition makeShaderProgramDefinition(const ShaderProgramDe
     switch (definition.pipelineType)
     {
     case BindType_Compute:
-        R_ASSERT_MSG(description.compute.cs, "Must have a valid compute shader, in order to build a ShaderProgram!");
+        R_ASSERT_FORMAT(description.compute.cs, "Must have a valid compute shader, in order to build a ShaderProgram!");
         definition.compute.cs = compileShader(shaderBuilder, description.compute.csName, description.compute.cs, language, ShaderType_Compute, errorOut);
         break;
     case BindType_Graphics:
-        R_ASSERT_MSG(description.graphics.vs, "Must have at least a valid vertex shader, in order to build a ShaderProgram!");
+        R_ASSERT_FORMAT(description.graphics.vs, "Must have at least a valid vertex shader, in order to build a ShaderProgram!");
         definition.graphics.vs = compileShader(shaderBuilder, description.graphics.vsName, description.graphics.vs, language, ShaderType_Vertex, errorOut);
         definition.graphics.ps = description.graphics.ps ? compileShader(shaderBuilder, description.graphics.psName, description.graphics.ps, language, ShaderType_Pixel, errorOut) : nullptr;
         definition.graphics.gs = description.graphics.gs ? compileShader(shaderBuilder, description.graphics.gsName, description.graphics.gs, language, ShaderType_Geometry, errorOut) : nullptr;

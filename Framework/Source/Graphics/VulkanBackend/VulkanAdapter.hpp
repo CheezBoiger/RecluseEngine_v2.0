@@ -24,6 +24,7 @@ public:
         m_supportedDeviceExtensions = std::move(a.m_supportedDeviceExtensions);
         m_phyDevice = a.m_phyDevice; 
         m_instance = a.m_instance;
+        m_id = a.m_id;
     }
 
     VulkanAdapter& operator=(VulkanAdapter&& a) noexcept
@@ -33,51 +34,47 @@ public:
         m_supportedDeviceExtensions = std::move(a.m_supportedDeviceExtensions);
         m_phyDevice = a.m_phyDevice;
         m_instance = a.m_instance;
+        m_id = a.m_id;
         return (*this);
     }
 
-    VulkanAdapter() 
+    VulkanAdapter(U32 id = 0) 
         : m_phyDevice(VK_NULL_HANDLE)
         , m_instance(nullptr)
-        , m_supportedDeviceExtensionFlags(LayerFeatureFlag_None) 
+        , m_supportedDeviceExtensionFlags(LayerFeatureFlag_None)
+        , m_id(id) 
     { }
 
     static std::vector<VulkanAdapter> getAvailablePhysicalDevices(VulkanInstance* ctx);
 
-    ErrType getAdapterInfo(AdapterInfo* out) const override;
+    ErrType                                 getAdapterInfo(AdapterInfo* out) const override;
+    ErrType                                 createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice) override;
+    ErrType                                 destroyDevice(GraphicsDevice* pDevice) override;
 
-    ErrType createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice) override;
+    U32                                     findMemoryType(U32 filter, ResourceMemoryUsage usage) const;
 
-    ErrType destroyDevice(GraphicsDevice* pDevice) override;
+    VkPhysicalDevice                        operator()() const { return m_phyDevice; }
 
-    U32 VulkanAdapter::findMemoryType(U32 filter, ResourceMemoryUsage usage) const;
+    VkPhysicalDevice                        get() const { return m_phyDevice; }
 
-    VkPhysicalDevice operator()() const { return m_phyDevice; }
+    VkPhysicalDeviceProperties              getProperties() const;
+    VkPhysicalDeviceMemoryProperties        getMemoryProperties() const;
+    VkPhysicalDeviceMemoryProperties2       getMemoryProperties2() const;
+    VkPhysicalDeviceFeatures                getFeatures() const;
+    VkPhysicalDeviceFeatures2               getFeatures2() const;
+    VkFormatProperties                      getFormatProperties(VkFormat format) const;
+    std::vector<VkQueueFamilyProperties>    getQueueFamilyProperties() const;
+    std::vector<VkExtensionProperties>      getDeviceExtensionProperties() const;
 
-    VkPhysicalDevice get() const { return m_phyDevice; }
-
-    VkPhysicalDeviceProperties getProperties() const;
-    VkPhysicalDeviceMemoryProperties getMemoryProperties() const;
-    VkPhysicalDeviceMemoryProperties2 getMemoryProperties2() const;
-    VkPhysicalDeviceFeatures getFeatures() const;
-    VkPhysicalDeviceFeatures2 getFeatures2() const;
-
-    VkFormatProperties getFormatProperties(VkFormat format) const;
-
-    std::vector<VkQueueFamilyProperties> getQueueFamilyProperties() const;
-
-    std::vector<VkExtensionProperties> getDeviceExtensionProperties() const;
-
-    B32 checkSurfaceSupport(U32 queueIndex, VkSurfaceKHR surface) const;
+    B32                                     checkSurfaceSupport(U32 queueIndex, VkSurfaceKHR surface) const;
+    U32                                     getId() const { return m_id; }
     
-    VulkanInstance* getInstance() const { return m_instance; }
+    VulkanInstance*                         getInstance() const { return m_instance; }
+    std::vector<VkSurfaceFormatKHR>         getSurfaceFormats(VkSurfaceKHR surface);
+    std::vector<const char*>                queryAvailableDeviceExtensions(LayerFeatureFlags requested) const;
 
-    std::vector<VkSurfaceFormatKHR> getSurfaceFormats(VkSurfaceKHR surface);
-
-    std::vector<const char*> queryAvailableDeviceExtensions(LayerFeatureFlags requested) const;
-
-    Bool checkSupportsExtension(LayerFeatureFlags flags) const { return (m_supportedDeviceExtensionFlags & flags); }
-    Bool supportsRayTracing() const { return checkSupportsExtension(LayerFeatureFlag_Raytracing); }
+    Bool                                    checkSupportsExtension(LayerFeatureFlags flags) const { return (m_supportedDeviceExtensionFlags & flags); }
+    Bool                                    supportsRayTracing() const { return checkSupportsExtension(LayerFeatureFlag_Raytracing); }
 
 private:
 
@@ -96,7 +93,12 @@ private:
     // All logical devices that were created by this adapter.
     std::list<VulkanDevice*> m_devices;
 
-    LayerFeatureFlags m_supportedDeviceExtensionFlags;
+    // Supported device extension flags, to be used by request of creation of logical devices from this physical device adapter.
+    LayerFeatureFlags   m_supportedDeviceExtensionFlags;
+
+    // This adapter id.
+    U32                 m_id;
+
     std::vector<std::tuple<LayerFeatureFlag, std::vector<const char*>>> m_supportedDeviceExtensions;
 };
 } // Recluse

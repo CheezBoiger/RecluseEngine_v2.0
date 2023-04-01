@@ -189,7 +189,7 @@ void DescriptorAllocatorInstance::resetPools()
 
 ErrType DescriptorAllocator::checkAndManageInstances(VulkanDevice* pDevice, U32 newBufferCount, VkDescriptorPoolCreateFlags flags)
 {
-    R_ASSERT_MSG(newBufferCount <= kMaxReservedBufferInstances, "newBufferCount is greater than the maximum reserved instances. Cancelling this resize.");
+    R_ASSERT_FORMAT(newBufferCount <= kMaxReservedBufferInstances, "newBufferCount is greater than the maximum reserved instances. Cancelling this resize.");
 
     if (newBufferCount > kMaxReservedBufferInstances)
         return RecluseResult_Failed;

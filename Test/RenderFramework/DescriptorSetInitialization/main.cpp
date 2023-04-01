@@ -58,7 +58,7 @@ void updateResource(GraphicsResource* pResource)
         R_ERR("TEST", "Failed to map to resource!");
     
     }
-
+    R_NO_IMPL();
     memcpy(ptr, &dat, sizeof(dat));
     pResource->unmap(&mapRange);
 }
@@ -100,7 +100,7 @@ int main(int c, char* argv[])
         appInfo.engineMinor = 0;
         appInfo.engineName = "DescriptorSetInitialization";
 
-        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation;
+        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation | LayerFeatureFlag_Raytracing;
 
         result = pInstance->initialize(appInfo, flags);
     }
@@ -121,6 +121,7 @@ int main(int c, char* argv[])
         info.swapchainDescription.desiredFrames = 2;
         info.swapchainDescription.renderWidth = 1024;
         info.swapchainDescription.renderHeight = 1024;
+        info.swapchainDescription.format = ResourceFormat_B8G8R8A8_Unorm;
         result = pAdapter->createDevice(info, &pDevice);
     }
 
@@ -133,7 +134,7 @@ int main(int c, char* argv[])
     pContext = pDevice->createContext();
 
     {
-        MemoryReserveDesc mem = { };
+        MemoryReserveDescription mem = { };
         mem.bufferPools[ResourceMemoryUsage_CpuOnly] = 1 * R_1MB;
         mem.bufferPools[ResourceMemoryUsage_GpuOnly] = 1 * R_1MB;
         mem.bufferPools[ResourceMemoryUsage_CpuToGpu] = 1 * R_1KB;
@@ -146,16 +147,6 @@ int main(int c, char* argv[])
     
         R_ERR("TEST", "Failed to reserve memory!");
     
-    }
-
-    {
-        SwapchainCreateDescription info = { };
-    }
-
-    if (result != RecluseResult_Ok) {
-
-        R_ERR("TEST", "FAILED TO CREATE SWAPCHAIN!!");    
-
     }
 
     {
@@ -257,7 +248,7 @@ int main(int c, char* argv[])
     context->setBuffers(3);
     F32 index = 200;
     F32 counterFps = 0.f;
-    F32 desiredFps = 0.f / 144.f;
+    F32 desiredFps = 1.f / 256.f;
     while (!pWindow->shouldClose()) 
     {
         RealtimeTick::updateWatch(1ull, 0);
@@ -281,7 +272,7 @@ int main(int c, char* argv[])
             context->clearRenderTarget(0, color, rect);
             context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
             context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
-            context->end();
+        context->end();
         R_TRACE("TEST", "%f Fps", 1.0f / ms);
         pSwapchain->present();
         pollEvents();

@@ -67,9 +67,15 @@ class R_PUBLIC_API GraphicsContext : public ICastableObject
 public:
     virtual ~GraphicsContext() { }
 
+    // Begin the rendering context recording. This must be called before you conduct drawcalls.
+    // Once finished, be sure to call end().
     virtual void begin() { }
+
+    // End the rendering context recording. This must be called after you call begin(). 
+    // Must also be called before present can be made.
     virtual void end() { }
 
+    // Get the current device associated with this context.
     virtual GraphicsDevice* getDevice() { return nullptr; }
     
     // Sets up the number of buffers to use for rendering. These buffers are the resources that 
@@ -202,7 +208,7 @@ public:
     virtual ~GraphicsDevice() { }
 
     // Reserve memory to be used for graphics resources.
-    virtual ErrType             reserveMemory(const MemoryReserveDesc& desc) { return RecluseResult_NoImpl; }
+    virtual ErrType             reserveMemory(const MemoryReserveDescription& desc) { return RecluseResult_NoImpl; }
 
     //< Create graphics resource.
     //<
@@ -212,7 +218,7 @@ public:
     virtual ErrType             createResourceView(GraphicsResourceView** ppView, const ResourceViewDescription& desc) 
         { return RecluseResult_NoImpl; }
 
-    virtual ErrType             createSampler(GraphicsSampler** ppSampler, const SamplerCreateDesc& desc) 
+    virtual ErrType             createSampler(GraphicsSampler** ppSampler, const SamplerDescription& desc) 
         { return RecluseResult_NoImpl; }
 
     virtual ErrType             destroySampler(GraphicsSampler* pSampler) { return RecluseResult_NoImpl; }

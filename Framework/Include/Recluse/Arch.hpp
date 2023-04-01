@@ -9,6 +9,9 @@
 
 #if defined(_WIN32)
     #include <vcruntime.h>
+    #define WIN32_LEAN_AND_MEAN 1
+    #define NOMINMAX 1
+    #include <Windows.h>
     #define RECLUSE_WINDOWS 1
     // Called to allow exporting to public api. This will then expose to external modules.
     #define R_PUBLIC_API __declspec(dllexport)

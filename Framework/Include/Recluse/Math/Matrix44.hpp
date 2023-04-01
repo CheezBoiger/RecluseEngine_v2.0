@@ -42,10 +42,10 @@ struct R_PUBLIC_API Matrix44
             const Float4& row3
         );
 
-    F32 get(U32 row, U32 col) const;
-    F32& get(U32 row, U32 col);
-    F32& operator[](U32 ix) { return m[ix]; }
-    F32 operator[](U32 ix) const { return m[ix]; }
+    F32             get(U32 row, U32 col) const;
+    F32&            get(U32 row, U32 col);
+    F32&            operator[](U32 ix) { return m[ix]; }
+    F32             operator[](U32 ix) const { return m[ix]; }
 
     inline Matrix44 operator+(const Matrix44& rh) const;
     inline Matrix44 operator-(const Matrix44& rh) const;
@@ -56,17 +56,17 @@ struct R_PUBLIC_API Matrix44
     inline Matrix44 operator*(F32 scalar) const;
     inline Matrix44 operator/(F32 scalar) const;  
 
-    inline void operator*=(const Matrix44& rh);
-    inline void operator+=(const Matrix44& rh);
-    inline void operator-=(const Matrix44& rh);
+    inline void     operator*=(const Matrix44& rh);
+    inline void     operator+=(const Matrix44& rh);
+    inline void     operator-=(const Matrix44& rh);
 
-    inline void operator*=(F32 scalar);
-    inline void operator+=(F32 scalar);
-    inline void operator-=(F32 scalar);
-    inline void operator/=(F32 scalar);
+    inline void     operator*=(F32 scalar);
+    inline void     operator+=(F32 scalar);
+    inline void     operator-=(F32 scalar);
+    inline void     operator/=(F32 scalar);
 
-    F32 operator()(U32 row, U32 col) const { return get(row, col); }
-    F32& operator()(U32 row, U32 col) { return get(row, col); }
+    F32             operator()(U32 row, U32 col) const { return get(row, col); }
+    F32&            operator()(U32 row, U32 col) { return get(row, col); }
 
     // Take the identity matrix.
     static Matrix44 identity();

@@ -81,6 +81,18 @@ enum ResourceViewType
 };
 
 
+enum Semantic
+{
+    Semantic_Position,
+    Semantic_Normal,
+    Semantic_Texcoord,
+    Semantic_Binormal,
+    Semantic_Tangent,
+    Semantic_Color,
+    Semantic_TessFactor
+};
+
+
 enum ResourceState 
 {
     ResourceState_Common,
@@ -235,7 +247,7 @@ enum CompareOp
 };
 
 
-struct SamplerCreateDesc 
+struct SamplerDescription 
 {
     SamplerAddressMode  addrModeU;
     SamplerAddressMode  addrModeV;
@@ -251,7 +263,7 @@ struct SamplerCreateDesc
 };
 
 
-struct MemoryReserveDesc 
+struct MemoryReserveDescription 
 {
     //< Memory resource amount, in bytes, per usage index.
     U64 bufferPools[ResourceMemoryUsage_Count];

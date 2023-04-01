@@ -469,6 +469,137 @@ F32& Matrix44::get(U32 row, U32 col)
     return m[4u * row + col];
 }
 
+void Matrix44::operator+=(const Matrix44& rh)
+{
+    m[0]  += rh[0];
+    m[1]  += rh[1];
+    m[2]  += rh[2];
+    m[3]  += rh[3];
+    m[4]  += rh[4];
+    m[5]  += rh[5];
+    m[6]  += rh[6];
+    m[7]  += rh[7];
+    m[8]  += rh[8];
+    m[9]  += rh[9];
+    m[10] += rh[10];
+    m[11] += rh[11];
+    m[12] += rh[12];
+    m[13] += rh[13];
+    m[14] += rh[14];
+    m[15] += rh[15];
+}
+
+
+void Matrix44::operator+=(F32 scalar)
+{
+    m[0]  += scalar;
+    m[1]  += scalar;
+    m[2]  += scalar;
+    m[3]  += scalar;
+    m[4]  += scalar;
+    m[5]  += scalar;
+    m[6]  += scalar;
+    m[7]  += scalar;
+    m[8]  += scalar;
+    m[9]  += scalar;
+    m[10] += scalar;
+    m[11] += scalar;
+    m[12] += scalar;
+    m[13] += scalar;
+    m[14] += scalar;
+    m[15] += scalar;
+}
+
+
+void Matrix44::operator-=(const Matrix44& rh)
+{
+    m[0]  -= rh[0];
+    m[1]  -= rh[1];
+    m[2]  -= rh[2];
+    m[3]  -= rh[3];
+    m[4]  -= rh[4];
+    m[5]  -= rh[5];
+    m[6]  -= rh[6];
+    m[7]  -= rh[7];
+    m[8]  -= rh[8];
+    m[9]  -= rh[9];
+    m[10] -= rh[10];
+    m[11] -= rh[11];
+    m[12] -= rh[12];
+    m[13] -= rh[13];
+    m[14] -= rh[14];
+    m[15] -= rh[15];
+}
+
+
+void Matrix44::operator-=(F32 scalar)
+{
+    m[0]  -= scalar;
+    m[1]  -= scalar;
+    m[2]  -= scalar;
+    m[3]  -= scalar;
+    m[4]  -= scalar;
+    m[5]  -= scalar;
+    m[6]  -= scalar;
+    m[7]  -= scalar;
+    m[8]  -= scalar;
+    m[9]  -= scalar;
+    m[10] -= scalar;
+    m[11] -= scalar;
+    m[12] -= scalar;
+    m[13] -= scalar;
+    m[14] -= scalar;
+    m[15] -= scalar;
+}
+
+
+void Matrix44::operator*=(F32 scalar)
+{
+    m[0]  *= scalar;
+    m[1]  *= scalar;
+    m[2]  *= scalar;
+    m[3]  *= scalar;
+    m[4]  *= scalar;
+    m[5]  *= scalar;
+    m[6]  *= scalar;
+    m[7]  *= scalar;
+    m[8]  *= scalar;
+    m[9]  *= scalar;
+    m[10] *= scalar;
+    m[11] *= scalar;
+    m[12] *= scalar;
+    m[13] *= scalar;
+    m[14] *= scalar;
+    m[15] *= scalar;
+}
+
+
+void Matrix44::operator/=(F32 scalar)
+{
+    m[0]  /= scalar;
+    m[1]  /= scalar;
+    m[2]  /= scalar;
+    m[3]  /= scalar;
+    m[4]  /= scalar;
+    m[5]  /= scalar;
+    m[6]  /= scalar;
+    m[7]  /= scalar;
+    m[8]  /= scalar;
+    m[9]  /= scalar;
+    m[10] /= scalar;
+    m[11] /= scalar;
+    m[12] /= scalar;
+    m[13] /= scalar;
+    m[14] /= scalar;
+    m[15] /= scalar;
+}
+
+
+void Matrix44::operator*=(const Matrix44& rh)
+{
+    R_NO_IMPL();
+}
+
 
 Matrix44 perspectiveLH_Aspect(F32 fov, F32 aspect, F32 ne, F32 fa)
 {

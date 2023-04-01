@@ -23,7 +23,7 @@ VulkanResourceView* makeResourceView(VulkanDevice* pDevice, const ResourceViewDe
 }
 
 
-VulkanSampler* makeSampler(VulkanDevice* pDevice, const SamplerCreateDesc& desc)
+VulkanSampler* makeSampler(VulkanDevice* pDevice, const SamplerDescription& desc)
 {
     VulkanSampler* pSampler         = new VulkanSampler();
     pSampler->initialize(pDevice, desc);
@@ -220,7 +220,7 @@ static VkSamplerMipmapMode getMipMapMode(SamplerMipMapMode mode)
 }
 
 
-ErrType VulkanSampler::initialize(VulkanDevice* pDevice, const SamplerCreateDesc& desc)
+ErrType VulkanSampler::initialize(VulkanDevice* pDevice, const SamplerDescription& desc)
 {
     R_ASSERT(pDevice != NULL);
 

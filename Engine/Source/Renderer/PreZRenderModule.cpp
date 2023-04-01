@@ -87,7 +87,7 @@ void generate(GraphicsContext* context, Engine::RenderCommandList* pMeshCommandL
         Engine::VertexAttribFlags flags = meshCmd->vertexTypeFlags;
         pipeline                        = pipelines[flags];
 
-        R_ASSERT_MSG(pipeline != NULL, "No pipeline exists for this mesh!");
+        R_ASSERT_FORMAT(pipeline != NULL, "No pipeline exists for this mesh!");
 
         context->setInputVertexLayout(VertexLayout_PositionOnly);
         context->bindVertexBuffers(meshCmd->numVertexBuffers, meshCmd->ppVertexBuffers, meshCmd->pOffsets);

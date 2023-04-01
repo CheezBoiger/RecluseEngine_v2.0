@@ -59,6 +59,27 @@ void D3D12Context::end()
 }
 
 
+void D3D12Context::pushState(ContextFlags flags)
+{
+    if (flags & ContextFlag_InheritPipelineState)
+    {
+        const ContextState& contextState = m_contextStates.back(); 
+        m_contextStates.push_back(contextState);
+    }
+    else
+    {
+        m_contextStates.push_back({ });
+    }
+}
+
+
+void D3D12Context::popState()
+{
+    R_ASSERT_FORMAT(!m_contextStates.empty(), "Context states must not be empty!");
+    m_contextStates.pop_back();
+}
+
+
 ErrType D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo& info)
 {
     R_DEBUG(R_CHANNEL_D3D12, "Creating D3D12 device...");
@@ -199,7 +220,7 @@ void D3D12Device::allocateMemoryPool(D3D12MemoryPool* pPool, ResourceMemoryUsage
 }
 
 
-ErrType D3D12Device::reserveMemory(const MemoryReserveDesc& desc)
+ErrType D3D12Device::reserveMemory(const MemoryReserveDescription& desc)
 {
     return m_resourceAllocationManager.reserveMemory(desc);
 }

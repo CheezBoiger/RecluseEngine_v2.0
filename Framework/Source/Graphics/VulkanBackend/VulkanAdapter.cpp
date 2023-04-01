@@ -36,7 +36,7 @@ std::vector<VulkanAdapter> VulkanAdapter::getAvailablePhysicalDevices(VulkanInst
 
         for (U32 i = 0; i < count; ++i) 
         {
-            VulkanAdapter device;
+            VulkanAdapter device(i);
             device.m_phyDevice = devices[i];
             device.m_instance = ctx;
             device.checkAvailableDeviceExtensions();
@@ -329,9 +329,10 @@ void VulkanAdapter::checkAvailableDeviceExtensions()
                     R_DEBUG
                         (
                             R_CHANNEL_VULKAN, 
-                            "Found %s Spec Version: %d", 
+                            "Found %s Spec Version: %d on device (id=%d)", 
                             deviceExtensions[j].extensionName,
-                            deviceExtensions[j].specVersion
+                            deviceExtensions[j].specVersion,
+                            m_id
                         );
 
                     found = true;
@@ -342,7 +343,13 @@ void VulkanAdapter::checkAvailableDeviceExtensions()
 
             if (!found) 
             {
-                R_WARN(R_CHANNEL_VULKAN, "%s not found. Removing extension.", std::get<1>(m_supportedDeviceExtensions[i])[extI]);
+                R_WARN
+                    (
+                        R_CHANNEL_VULKAN, 
+                        "%s not found for device (id=%d). Removing extension.", 
+                        std::get<1>(m_supportedDeviceExtensions[i])[extI],
+                        m_id
+                    );
                 m_supportedDeviceExtensionFlags &= ~(std::get<0>(m_supportedDeviceExtensions[i]));
                 m_supportedDeviceExtensions.erase(m_supportedDeviceExtensions.begin() + i);
                 --i;

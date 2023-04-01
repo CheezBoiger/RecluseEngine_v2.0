@@ -65,11 +65,11 @@ public:
 
     virtual ~VulkanSampler() { }
 
-    ErrType initialize(VulkanDevice* pDevice, const SamplerCreateDesc& desc);
+    ErrType initialize(VulkanDevice* pDevice, const SamplerDescription& desc);
     ErrType release(VulkanDevice* pDevice);
 
-    virtual SamplerCreateDesc getDesc() override {
-        return SamplerCreateDesc();
+    virtual SamplerDescription getDesc() override {
+        return SamplerDescription();
     }
 
     VkSampler get() { return m_sampler; }
@@ -95,7 +95,7 @@ private:
 
 namespace ResourceViews {
 VulkanResourceView* makeResourceView(VulkanDevice* pDevice, const ResourceViewDescription& desc);
-VulkanSampler*      makeSampler(VulkanDevice* pDevice, const SamplerCreateDesc& desc);
+VulkanSampler*      makeSampler(VulkanDevice* pDevice, const SamplerDescription& desc);
 ErrType             releaseResourceView(VulkanDevice* pDevice, ResourceViewId id);
 ErrType             releaseSampler(VulkanDevice* pDevice, SamplerId id);
 VulkanResourceView* obtainResourceView(ResourceViewId id);

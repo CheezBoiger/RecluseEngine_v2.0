@@ -66,7 +66,7 @@ Bool k_mainLoopInitialized  = false;
 
 ErrType loadApp(Application* pApp)
 {
-    R_ASSERT_MSG
+    R_ASSERT_FORMAT
         (
             k_mainLoopInitialized, 
             "Main Loop must be initialized first before calling this function!"
@@ -175,7 +175,7 @@ Bool isMainThread()
 
 MessageBus* getMessageBus()
 {
-    R_ASSERT_MSG(k_pMessageBus, "No message bus was initialized! NULL!!");
+    R_ASSERT_FORMAT(k_pMessageBus, "No message bus was initialized! NULL!!");
     return k_pMessageBus;
 }
 

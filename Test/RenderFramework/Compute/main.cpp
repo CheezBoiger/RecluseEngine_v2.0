@@ -110,7 +110,7 @@ int main(int c, char* argv[])
     }
 
     {
-        MemoryReserveDesc desc = { };
+        MemoryReserveDescription desc = { };
         desc.bufferPools[ResourceMemoryUsage_CpuOnly] = 1 * R_1MB;
         desc.bufferPools[ResourceMemoryUsage_CpuToGpu] = 1 * R_1MB;
         desc.bufferPools[ResourceMemoryUsage_GpuOnly] = 1 * R_1MB;

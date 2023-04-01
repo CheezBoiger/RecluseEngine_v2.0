@@ -62,7 +62,6 @@ ErrType D3D12RenderPass::initialize(D3D12Device* pDevice, U32 numRtvDescriptors,
         device->CreateDepthStencilView(pResource, &dsvDescription, dsvAllocation.getCpuDescriptor());
         m_dsvDhAllocation = dsvAllocation;
     }
-
     return RecluseResult_Ok;
 }
 

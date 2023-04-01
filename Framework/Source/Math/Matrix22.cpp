@@ -136,5 +136,15 @@ Matrix22 transpose(const Matrix22& m)
     t[2] = t[1];
     return t;
 }
+
+
+Matrix22 Matrix22::identity()
+{
+    return Matrix22
+        ( 
+            1.f, 0.f,
+            0.f, 1.f 
+        );
+}
 } // Math
 } // Recluse

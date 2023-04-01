@@ -54,7 +54,7 @@ public:
     ErrType allocate(D3D12MemoryObject* pOut, const D3D12_RESOURCE_DESC& desc, D3D12_RESOURCE_STATES initialState);
     ErrType free(D3D12MemoryObject* pObject);
     ErrType update();
-    ErrType reserveMemory(const MemoryReserveDesc& description);
+    ErrType reserveMemory(const MemoryReserveDescription& description);
 
 private:
     ErrType cleanGarbage(U32 index);
@@ -65,6 +65,6 @@ private:
     std::vector<ID3D12Resource*>            m_garbageToClean;
     U32                                     m_garbageIndex;
 
-    MemoryReserveDesc                       m_description;
+    MemoryReserveDescription                       m_description;
 };
 } // Recluse

@@ -10,6 +10,12 @@ namespace Recluse {
 
 class D3D12Context;
 
+
+extern const char* kHlslSemanticPosition;
+extern const char* kHlslSemanticNormal;
+extern const char* kHlslSemanticTexcoord;
+extern const char* kHlslSemanticTangent;
+
 namespace Pipelines {
 
 

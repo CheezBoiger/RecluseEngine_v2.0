@@ -69,13 +69,16 @@ public:
                                 U32 numRegions
                             ) override;
 
-    BufferResources*    getCurrentBufferResource() { return &m_bufferResources[m_currentBufferIndex]; }
-    U32                 getCurrentBufferIndex() const { return m_currentBufferIndex; }
+    BufferResources*                    getCurrentBufferResource() { return &m_bufferResources[m_currentBufferIndex]; }
+    U32                                 getCurrentBufferIndex() const { return m_currentBufferIndex; }
 
     const std::vector<BufferResources>& getBufferResources() const { return m_bufferResources; }
-    void        resetCurrentResources();
+    void                                resetCurrentResources();
 
-    ID3D12GraphicsCommandList* currentGraphicsCommandList() { return m_pPrimaryCommandList->get(); }
+    ID3D12GraphicsCommandList*          currentGraphicsCommandList() { return m_pPrimaryCommandList->get(); }
+    void                                pushState(ContextFlags flags = ContextFlag_None) override;
+    void                                popState() override;
+    
 
 private:
     struct ContextState
@@ -124,7 +127,7 @@ public:
     GraphicsContext* createContext() override { return m_context; }
     HWND getWindowHandle() const { return m_windowHandle; }
 
-    ErrType reserveMemory(const MemoryReserveDesc& desc) override;
+    ErrType reserveMemory(const MemoryReserveDescription& desc) override;
 
     D3D12Queue* getBackbufferQueue() const { return m_graphicsQueue; }
     GraphicsSwapchain* getSwapchain() override;

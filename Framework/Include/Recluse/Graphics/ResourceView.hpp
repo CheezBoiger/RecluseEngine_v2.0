@@ -40,7 +40,7 @@ public:
     virtual ~GraphicsSampler() { }
 
     // Get a copy.
-    virtual SamplerCreateDesc   getDesc() = 0;
+    virtual SamplerDescription   getDesc() = 0;
 
 };
 } // Recluse
