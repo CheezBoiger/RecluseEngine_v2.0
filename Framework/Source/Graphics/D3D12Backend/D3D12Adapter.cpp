@@ -47,7 +47,7 @@ void D3D12Adapter::destroy()
 }
 
 
-ErrType D3D12Adapter::getAdapterInfo(AdapterInfo* out) const 
+ResultCode D3D12Adapter::getAdapterInfo(AdapterInfo* out) const 
 {
     DXGI_ADAPTER_DESC desc = { };
     m_pAdapter->GetDesc(&desc);
@@ -72,16 +72,16 @@ ErrType D3D12Adapter::getAdapterInfo(AdapterInfo* out) const
 }
 
 
-ErrType D3D12Adapter::createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice)
+ResultCode D3D12Adapter::createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice)
 {
     D3D12Device* pDevice    = new D3D12Device();
-    ErrType result          = RecluseResult_Ok;
+    ResultCode result          = RecluseResult_Ok;
     
     result = pDevice->initialize(this, info);
     
     if (result != RecluseResult_Ok) 
     {
-        R_ERR(R_CHANNEL_D3D12, "Failed to create a d3d12 device!");
+        R_ERROR(R_CHANNEL_D3D12, "Failed to create a d3d12 device!");
 
         pDevice->destroy();
         delete pDevice;
@@ -97,7 +97,7 @@ ErrType D3D12Adapter::createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDe
 }
 
 
-ErrType D3D12Adapter::destroyDevice(GraphicsDevice* pDevice)
+ResultCode D3D12Adapter::destroyDevice(GraphicsDevice* pDevice)
 {
     if (!pDevice) return RecluseResult_NullPtrExcept;
 

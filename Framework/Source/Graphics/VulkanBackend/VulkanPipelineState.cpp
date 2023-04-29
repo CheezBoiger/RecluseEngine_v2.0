@@ -98,23 +98,23 @@ static VkLogicOp getLogicOp(LogicOp op)
 {
     switch (op) 
     {
-        case LogicOp_Clear: return VK_LOGIC_OP_CLEAR;
-        case LogicOp_And: return VK_LOGIC_OP_AND;
-        case LogicOp_AndReverse: return VK_LOGIC_OP_AND_REVERSE;
-        case LogicOp_Copy: return VK_LOGIC_OP_COPY;
-        case LogicOp_AndInverted: return VK_LOGIC_OP_AND_INVERTED;
-        case LogicOp_NoOp: return VK_LOGIC_OP_NO_OP;
-        case LogicOp_Xor: return VK_LOGIC_OP_XOR;
-        case LogicOp_Or: return VK_LOGIC_OP_OR;
-        case LogicOp_Nor: return VK_LOGIC_OP_NOR;
-        case LogicOp_Equivalent: return VK_LOGIC_OP_EQUIVALENT;
-        case LogicOp_Invert: return VK_LOGIC_OP_INVERT;
-        case LogicOp_OrReverse: return VK_LOGIC_OP_OR_REVERSE;
-        case LogicOp_CopyInverted: return VK_LOGIC_OP_COPY_INVERTED;
-        case LogicOp_OrInverted: return VK_LOGIC_OP_OR_INVERTED;
-        case LogicOp_Nand: return VK_LOGIC_OP_NAND;
-        case LogicOp_Set: return VK_LOGIC_OP_SET;
-        default: return VK_LOGIC_OP_NO_OP;
+        case LogicOp_Clear:         return VK_LOGIC_OP_CLEAR;
+        case LogicOp_And:           return VK_LOGIC_OP_AND;
+        case LogicOp_AndReverse:    return VK_LOGIC_OP_AND_REVERSE;
+        case LogicOp_Copy:          return VK_LOGIC_OP_COPY;
+        case LogicOp_AndInverted:   return VK_LOGIC_OP_AND_INVERTED;
+        case LogicOp_NoOp:          return VK_LOGIC_OP_NO_OP;
+        case LogicOp_Xor:           return VK_LOGIC_OP_XOR;
+        case LogicOp_Or:            return VK_LOGIC_OP_OR;
+        case LogicOp_Nor:           return VK_LOGIC_OP_NOR;
+        case LogicOp_Equivalent:    return VK_LOGIC_OP_EQUIVALENT;
+        case LogicOp_Invert:        return VK_LOGIC_OP_INVERT;
+        case LogicOp_OrReverse:     return VK_LOGIC_OP_OR_REVERSE;
+        case LogicOp_CopyInverted:  return VK_LOGIC_OP_COPY_INVERTED;
+        case LogicOp_OrInverted:    return VK_LOGIC_OP_OR_INVERTED;
+        case LogicOp_Nand:          return VK_LOGIC_OP_NAND;
+        case LogicOp_Set:           return VK_LOGIC_OP_SET;
+        default:                    return VK_LOGIC_OP_NO_OP;
     }
 }
 
@@ -123,26 +123,26 @@ static VkBlendFactor getBlendFactor(BlendFactor op)
 {
     switch (op) 
     {
-        case BlendFactor_Zero: return VK_BLEND_FACTOR_ZERO;
-        case BlendFactor_One: return VK_BLEND_FACTOR_ONE;
-        case BlendFactor_SourceColor: return VK_BLEND_FACTOR_SRC_COLOR;
-        case BlendFactor_OneMinusSourceColor: return VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
-        case BlendFactor_DestinationColor: return VK_BLEND_FACTOR_DST_COLOR;
-        case BlendFactor_OneMinusDestinationColor: return VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR;
-        case BlendFactor_SourceAlpha: return VK_BLEND_FACTOR_SRC_ALPHA;
-        case BlendFactor_OneMinusSourceAlpha: return VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-        case BlendFactor_DestinationAlpha: return VK_BLEND_FACTOR_DST_ALPHA;
-        case BlendFactor_OneMinusDestinationAlpha: return VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
-        case BlendFactor_ConstantColor: return VK_BLEND_FACTOR_CONSTANT_COLOR;
-        case BlendFactor_OneMinusConstantColor: return VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR;
-        case BlendFactor_ConstantAlpha: return VK_BLEND_FACTOR_CONSTANT_ALPHA;
-        case BlendFactor_OneMinusConstantAlpha: return VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA;
-        case BlendFactor_SourceAlphaSaturate: return VK_BLEND_FACTOR_SRC_ALPHA_SATURATE;
-        case BlendFactor_SourceOneColor: return VK_BLEND_FACTOR_SRC1_COLOR;
-        case BlendFactor_OneMinusSourceOneColor: return VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR;
-        case BlendFactor_SourceOneAlpha: return VK_BLEND_FACTOR_SRC1_ALPHA;
-        case BlendFactor_OneMinusSourceOneAlpha: return VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA;
-        default: return VK_BLEND_FACTOR_ZERO;
+        case BlendFactor_Zero:                      return VK_BLEND_FACTOR_ZERO;
+        case BlendFactor_One:                       return VK_BLEND_FACTOR_ONE;
+        case BlendFactor_SourceColor:               return VK_BLEND_FACTOR_SRC_COLOR;
+        case BlendFactor_OneMinusSourceColor:       return VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+        case BlendFactor_DestinationColor:          return VK_BLEND_FACTOR_DST_COLOR;
+        case BlendFactor_OneMinusDestinationColor:  return VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR;
+        case BlendFactor_SourceAlpha:               return VK_BLEND_FACTOR_SRC_ALPHA;
+        case BlendFactor_OneMinusSourceAlpha:       return VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        case BlendFactor_DestinationAlpha:          return VK_BLEND_FACTOR_DST_ALPHA;
+        case BlendFactor_OneMinusDestinationAlpha:  return VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
+        case BlendFactor_ConstantColor:             return VK_BLEND_FACTOR_CONSTANT_COLOR;
+        case BlendFactor_OneMinusConstantColor:     return VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR;
+        case BlendFactor_ConstantAlpha:             return VK_BLEND_FACTOR_CONSTANT_ALPHA;
+        case BlendFactor_OneMinusConstantAlpha:     return VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA;
+        case BlendFactor_SourceAlphaSaturate:       return VK_BLEND_FACTOR_SRC_ALPHA_SATURATE;
+        case BlendFactor_SourceOneColor:            return VK_BLEND_FACTOR_SRC1_COLOR;
+        case BlendFactor_OneMinusSourceOneColor:    return VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR;
+        case BlendFactor_SourceOneAlpha:            return VK_BLEND_FACTOR_SRC1_ALPHA;
+        case BlendFactor_OneMinusSourceOneAlpha:    return VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA;
+        default:                                    return VK_BLEND_FACTOR_ZERO;
     }
 }
 
@@ -431,7 +431,7 @@ VkPipeline createGraphicsPipeline(VulkanDevice* pDevice, const Structure& struct
 
     if (!program)
     {
-        R_FATAL_ERR(R_CHANNEL_VULKAN, "Failed to obtain native vulkan program. ShaderProgramId=%llu, Permutation=%llu", structure.state.shaderProgramId, structure.state.shaderPermutation);
+        R_FATAL_ERROR(R_CHANNEL_VULKAN, "Failed to obtain native vulkan program. ShaderProgramId=%llu, Permutation=%llu", structure.state.shaderProgramId, structure.state.shaderPermutation);
         return VK_NULL_HANDLE;
     }
 
@@ -464,7 +464,7 @@ VkPipeline createGraphicsPipeline(VulkanDevice* pDevice, const Structure& struct
     
     if (result != VK_SUCCESS) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to create pipeline state layout.");
+        R_ERROR(R_CHANNEL_VULKAN, "Failed to create pipeline state layout.");
 
         destroyPipelineLayout(pDevice, pipelineLayout);
 
@@ -530,7 +530,7 @@ VkPipeline createGraphicsPipeline(VulkanDevice* pDevice, const Structure& struct
    
     if (result != VK_SUCCESS) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to create vulkan pipeline state.");
+        R_ERROR(R_CHANNEL_VULKAN, "Failed to create vulkan pipeline state.");
         
         destroyPipeline(pDevice, pipeline);
         
@@ -551,7 +551,7 @@ VkPipeline createComputePipeline(VulkanDevice* pDevice, const Structure& structu
 
     if (result != VK_SUCCESS) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to create pipeline layout for Compute pipelinestate...");
+        R_ERROR(R_CHANNEL_VULKAN, "Failed to create pipeline layout for Compute pipelinestate...");
         
         destroyPipelineLayout(pDevice, pipelineLayout);
         
@@ -570,7 +570,7 @@ VkPipeline createComputePipeline(VulkanDevice* pDevice, const Structure& structu
 
     if (result != VK_SUCCESS) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to create compute pipeline state!");
+        R_ERROR(R_CHANNEL_VULKAN, "Failed to create compute pipeline state!");
 
         destroyPipeline(pDevice, pipeline);
 
@@ -583,14 +583,21 @@ VkPipeline createComputePipeline(VulkanDevice* pDevice, const Structure& structu
 
 PipelineId makePipelineId(const Structure& structure)
 {
-    return recluseHash((void*)&structure, sizeof(Structure));
+    return recluseHashFast(&structure, sizeof(Structure));
 }
 
 
 PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure)
 {
-    PipelineId id = makePipelineId(structure);
     return makePipeline(pDevice, structure, makePipelineId(structure));
+}
+
+
+static VkPipeline createRayTracingPipeline()
+{
+    VkRayTracingPipelineCreateInfoKHR rayTracingInfo = { };
+    rayTracingInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR;
+    return nullptr;
 }
 
 
@@ -611,7 +618,8 @@ PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure, Pi
             pipeline.pipeline = createComputePipeline(pDevice, structure, program);
             break;
         case VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR:
-            R_ERR(R_CHANNEL_VULKAN, "Ray tracing pipelines are not supported currently!");
+            R_ERROR(R_CHANNEL_VULKAN, "Ray tracing pipelines are not supported currently!");
+            pipeline.pipeline = createRayTracingPipeline();
             break;
         }
 
@@ -628,7 +636,7 @@ PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure, Pi
 }
 
 
-ErrType clearPipelineCache(VulkanDevice* pDevice)
+ResultCode clearPipelineCache(VulkanDevice* pDevice)
 {
     for (auto pipelineLayoutIt : g_pipelineLayoutMap)
     {

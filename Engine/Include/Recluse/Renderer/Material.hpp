@@ -42,7 +42,7 @@ public:
     Texture2D() 
         : m_resource(nullptr) { }
 
-    ErrType initialize(Renderer* pRenderer, ResourceFormat format, U32 width, U32 height, U32 arrayLevel, U32 mips);
+    ResultCode initialize(Renderer* pRenderer, ResourceFormat format, U32 width, U32 height, U32 arrayLevel, U32 mips);
     void destroy(Renderer* pRenderer);
 
     // Load texture data to this resource handle.
@@ -65,10 +65,10 @@ public:
         , m_view(nullptr) { }
 
     // initializes and stores the texture view into the texture database.
-    ErrType initialize(Renderer* pRenderer, Texture2D* pTexture, ResourceViewDescription& desc);
+    ResultCode initialize(Renderer* pRenderer, Texture2D* pTexture, ResourceViewDescription& desc);
 
     // destroys this texture view, along with the lookup from the texture database.
-    ErrType destroy(Renderer* pRenderer);
+    ResultCode destroy(Renderer* pRenderer);
 
     Texture2D* getTexture() const { return m_texture; }
     GraphicsResourceView* getView() const { return m_view; }
@@ -187,7 +187,7 @@ R_PUBLIC_API void           initializeTextureLUT();
 R_PUBLIC_API void           cleanupTextureLUT();
 
 R_PUBLIC_API TextureView*   lookupTextureView(const TextureViewID& id);
-R_PUBLIC_API ErrType        addTextureView(const TextureViewID& id);
-R_PUBLIC_API ErrType        removeTextureView(const TextureViewID& id);
+R_PUBLIC_API ResultCode        addTextureView(const TextureViewID& id);
+R_PUBLIC_API ResultCode        removeTextureView(const TextureViewID& id);
 } // Engine
 } // Recluse

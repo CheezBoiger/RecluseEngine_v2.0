@@ -58,9 +58,9 @@ public:
     inline U32          getBufferCount() const { return m_bufferCount; }
     inline U32          getCurrentBufferIndex() const { return m_currentBufferIndex; }
     inline VkFence      getCurrentFence() const { return m_fences[m_currentBufferIndex]; }
-    ErrType             createPrimaryCommandList(VkQueueFlags flags);
-    ErrType             destroyPrimaryCommandList();
-    ErrType             setBuffers(U32 newBufferCount);
+    ResultCode             createPrimaryCommandList(VkQueueFlags flags);
+    ResultCode             destroyPrimaryCommandList();
+    ResultCode             setBuffers(U32 newBufferCount);
     DescriptorAllocatorInstance* currentDescriptorAllocator();
 
     // Not recommended, but submits a copy to this queue, and waits until the command has 
@@ -76,7 +76,7 @@ public:
 
     VulkanPrimaryCommandList* getPrimaryCommandList() { return &m_primaryCommandList; }
 
-    ErrType             wait() override;
+    ResultCode             wait() override;
 
     VkRenderPass        getRenderPass();
 
@@ -164,7 +164,7 @@ public:
         currentState().markPipelineDirty(); 
     }
 
-    inline void endRenderPass(VkCommandBuffer buffer);
+    void endRenderPass(VkCommandBuffer buffer);
     void resetBinds();
 
     ShaderStageFlags obtainResourceViewShaderFlags(ResourceViewId id)
@@ -237,7 +237,7 @@ private:
     // The current context state, that is pushed to this context.
     ContextState& currentState() { return m_contextStates.back(); }
 
-    ErrType createCommandPools(U32 buffered);
+    ResultCode createCommandPools(U32 buffered);
     void destroyCommandPools();
     void resetCommandPool(U32 bufferIdx, Bool resetAllResources);
 
@@ -279,34 +279,34 @@ public:
     { 
     }
 
-    ErrType initialize(VulkanAdapter* iadapter, DeviceCreateInfo& info);
+    ResultCode initialize(VulkanAdapter* iadapter, DeviceCreateInfo& info);
     VulkanQueue* getBackbufferQueue() { return m_pGraphicsQueue; }
-    ErrType createQueues();
+    ResultCode createQueues();
     const std::vector<QueueFamily>& getQueueFamilies() const { return m_queueFamilies; }    
 
 
-    ErrType createQueue(VulkanQueue** ppQueue, VkQueueFlags flags, B32 isPresentable);
-    ErrType destroyQueues();
+    ResultCode createQueue(VulkanQueue** ppQueue, VkQueueFlags flags, B32 isPresentable);
+    ResultCode destroyQueues();
 
-    ErrType createSwapchain(VulkanSwapchain** ppSwapchain, 
+    ResultCode createSwapchain(VulkanSwapchain** ppSwapchain, 
         const SwapchainCreateDescription& pDesc, VulkanQueue* pPresentationQueue);
 
     GraphicsContext* createContext() override;
-    ErrType releaseContext(GraphicsContext* pContext) override;
+    ResultCode releaseContext(GraphicsContext* pContext) override;
 
-    ErrType     destroySwapchain(VulkanSwapchain* pSwapchain);
-    ErrType     createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc, ResourceState initState) override;
-    ErrType     createSampler(GraphicsSampler** ppSampler, const SamplerDescription& desc) override;
-    ErrType     destroySampler(GraphicsSampler* pSampler) override;
-    ErrType     destroyResource(GraphicsResource* pResource) override;
-    ErrType     createResourceView(GraphicsResourceView** ppView, const ResourceViewDescription& desc) override;
-    ErrType     loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition) override;
-    ErrType     unloadShaderProgram(ShaderProgramId program) override;
+    ResultCode     destroySwapchain(VulkanSwapchain* pSwapchain);
+    ResultCode     createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc, ResourceState initState) override;
+    ResultCode     createSampler(GraphicsSampler** ppSampler, const SamplerDescription& desc) override;
+    ResultCode     destroySampler(GraphicsSampler* pSampler) override;
+    ResultCode     destroyResource(GraphicsResource* pResource) override;
+    ResultCode     createResourceView(GraphicsResourceView** ppView, const ResourceViewDescription& desc) override;
+    ResultCode     loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition) override;
+    ResultCode     unloadShaderProgram(ShaderProgramId program) override;
     void        unloadAllShaderPrograms() override;
     Bool        makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout) override;
     Bool        destroyVertexLayout(VertexInputLayoutId id) override;
     void        release(VkInstance instance);
-    ErrType     destroyResourceView(GraphicsResourceView* pResourceView) override;
+    ResultCode     destroyResourceView(GraphicsResourceView* pResourceView) override;
     void        copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, const CopyBufferRegion* regions, U32 numRegions) override;
 
     DescriptorAllocatorInstance* getDescriptorAllocatorInstance(U32 bufferIndex)
@@ -328,7 +328,7 @@ public:
 
     VkSurfaceKHR getSurface() const { return m_surface; }
 
-    ErrType reserveMemory(const MemoryReserveDescription& desc) override;
+    ResultCode reserveMemory(const MemoryReserveDescription& desc) override;
 
     VulkanAdapter* getAdapter() const { return m_adapter; }
 
@@ -352,7 +352,7 @@ public:
 
 private:
 
-    ErrType createSurface(VkInstance instance, void* handle);
+    ResultCode createSurface(VkInstance instance, void* handle);
     void allocateMemCache();
     void createDescriptorHeap();
 

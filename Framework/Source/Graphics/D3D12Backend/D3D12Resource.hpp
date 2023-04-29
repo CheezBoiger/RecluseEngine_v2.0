@@ -20,7 +20,7 @@ public:
         , m_isCommitted(false) { }
 
     // Initialize the resource.
-    ErrType                 initialize
+    ResultCode                 initialize
                                 (
                                     // The logical device to use and manage our resource.
                                     D3D12Device* pDevice, 
@@ -34,11 +34,11 @@ public:
                                 );
 
     // Destroy the resource.
-    ErrType                 destroy();
+    ResultCode                 destroy();
 
     // Get the memory object.
-    ID3D12Resource*         get() { return m_memObj.pResource; }
-    const ID3D12Resource*   get() const { return m_memObj.pResource; }
+    ID3D12Resource*         get() {         return m_memObj.pResource; }
+    const ID3D12Resource*   get() const {   return m_memObj.pResource; }
 
     // Is the resource committed.
     Bool                    isCommitted() const { return m_isCommitted; }
@@ -47,7 +47,7 @@ public:
     D3D12_RESOURCE_BARRIER  transition(ResourceState newState);
 
 private:
-    Bool isSupportedTransitionState(ResourceState state);
+    Bool                    isSupportedTransitionState(ResourceState state);
 
     D3D12MemoryObject       m_memObj;
     Bool                    m_isCommitted;

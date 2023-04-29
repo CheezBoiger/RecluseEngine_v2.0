@@ -27,30 +27,30 @@ struct R_PUBLIC_API File
     // to read/write to a buffer.
 
     // Read from a filepath.
-    static ErrType readFrom(FileBufferData* pData, const std::string& filePath);
+    static ResultCode readFrom(FileBufferData* pData, const std::string& filePath);
 
     // Write to a filepath.
-    static ErrType writeTo(FileBufferData* pData, const std::string& filePath);
+    static ResultCode writeTo(FileBufferData* pData, const std::string& filePath);
 
     // Read from a filepath asyncronously. This will immediately return back to the caller.
     // Updates the FileBufferDataAsync object when the separate run finishes.
-    static ErrType readFromAsync(FileBufferDataAsync* pBuffer, const std::string& filePath);
+    static ResultCode readFromAsync(FileBufferDataAsync* pBuffer, const std::string& filePath);
 
     // Write to a filepath asyncronously. This will immediately return back to the caller.
     // Updates the FileBufferDataAsync object when the separate run finishes.
-    static ErrType writeToAsync(FileBufferDataAsync* pBuffer, const std::string& filePath);
+    static ResultCode writeToAsync(FileBufferDataAsync* pBuffer, const std::string& filePath);
 
     // Opens the file with the given access permissions.
-    ErrType open(const std::string& filePath, char* access);
+    ResultCode open(const std::string& filePath, char* access);
 
     // Closes the file handle, this is required, otherwise the handle remains open!
     void    close();
 
     // Writes to the file handle, you must call open() in order to write!
-    ErrType write(void* ptr, U64 szBytes);
+    ResultCode write(void* ptr, U64 szBytes);
 
     // Reads from the file handle, you must call open() in order to write!
-    ErrType read(void* ptr, U64 szBytes);
+    ResultCode read(void* ptr, U64 szBytes);
 
     // Get the total file size!
     U64     getFileSz() const;

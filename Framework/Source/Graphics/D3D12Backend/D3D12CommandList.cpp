@@ -9,7 +9,7 @@
 namespace Recluse {
 
 
-ErrType D3D12PrimaryCommandList::initialize(D3D12Context* pDeviceContext, GraphicsQueueTypeFlags flags)
+ResultCode D3D12PrimaryCommandList::initialize(D3D12Context* pDeviceContext, GraphicsQueueTypeFlags flags)
 {
     flags;
 
@@ -36,7 +36,7 @@ ErrType D3D12PrimaryCommandList::initialize(D3D12Context* pDeviceContext, Graphi
 
         if (FAILED(result)) 
         {    
-            R_ERR(R_CHANNEL_D3D12, "Failed to create d3d12 graphics command list!");
+            R_ERROR(R_CHANNEL_D3D12, "Failed to create d3d12 graphics command list!");
             
             return destroy();
         }
@@ -52,7 +52,7 @@ ErrType D3D12PrimaryCommandList::initialize(D3D12Context* pDeviceContext, Graphi
 }
 
 
-ErrType D3D12PrimaryCommandList::destroy()
+ResultCode D3D12PrimaryCommandList::destroy()
 {
     return RecluseResult_Ok;
 }

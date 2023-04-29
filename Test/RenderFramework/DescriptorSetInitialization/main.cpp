@@ -51,14 +51,14 @@ void updateResource(GraphicsResource* pResource)
     mapRange.sizeBytes      = sizeof(VertexData);
 
     void* ptr           = nullptr;
-    ErrType result      = pResource->map(&ptr, &mapRange);
+    ResultCode result      = pResource->map(&ptr, &mapRange);
     
     if (result != RecluseResult_Ok) {
     
-        R_ERR("TEST", "Failed to map to resource!");
+        R_ERROR("TEST", "Failed to map to resource!");
     
     }
-    R_NO_IMPL();
+
     memcpy(ptr, &dat, sizeof(dat));
     pResource->unmap(&mapRange);
 }
@@ -68,7 +68,6 @@ int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
     RealtimeTick::initializeWatch(1ull, 0);
-
     GraphicsInstance* pInstance     = nullptr;
     GraphicsAdapter* pAdapter       = nullptr;
     GraphicsDevice* pDevice         = nullptr;
@@ -78,7 +77,7 @@ int main(int c, char* argv[])
     GraphicsSwapchain* pSwapchain   = nullptr;
     GraphicsContext* context        = nullptr;
     std::vector<RenderPass*> renderPasses;
-    ErrType result                  = RecluseResult_Ok;
+    ResultCode result                  = RecluseResult_Ok;
 
     pWindow = Window::create(u8"DescriptorSetInitialization", 0, 0, 1024, 1024);
 
@@ -86,7 +85,7 @@ int main(int c, char* argv[])
 
     if (!pInstance) {
 
-        R_ERR("TEST", "Failed to create graphics context!");
+        R_ERROR("TEST", "Failed to create graphics context!");
 
     }
 
@@ -107,7 +106,7 @@ int main(int c, char* argv[])
 
     if (result != RecluseResult_Ok) {
     
-        R_ERR("TEST", "Failed to initialize context!");    
+        R_ERROR("TEST", "Failed to initialize context!");    
 
     }
 
@@ -127,7 +126,7 @@ int main(int c, char* argv[])
 
     if (result != RecluseResult_Ok) {
     
-        R_ERR("TEST", "Failed to create device from adapter!");
+        R_ERROR("TEST", "Failed to create device from adapter!");
     
     }
 
@@ -145,7 +144,7 @@ int main(int c, char* argv[])
 
     if (result != RecluseResult_Ok) {
     
-        R_ERR("TEST", "Failed to reserve memory!");
+        R_ERROR("TEST", "Failed to reserve memory!");
     
     }
 
@@ -163,7 +162,7 @@ int main(int c, char* argv[])
 
     if (result != RecluseResult_Ok) {
     
-        R_ERR("TEST", "Failed to create resource!");
+        R_ERROR("TEST", "Failed to create resource!");
     
     }
 
@@ -273,12 +272,13 @@ int main(int c, char* argv[])
             context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
             context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
         context->end();
-        R_TRACE("TEST", "%f Fps", 1.0f / ms);
+        R_FATAL_ERROR("TEST", "%f Fps", 1.0f / ms);
         pSwapchain->present();
         pollEvents();
     }
 
     R_TRACE("TEST", "Exited game loop...");
+
     pContext->wait();    
     pDevice->destroyResource(pData); 
     pDevice->releaseContext(context);

@@ -15,12 +15,12 @@ public:
 
     virtual         ~RendererSystem() { }
 
-    virtual ErrType allocateComponent(RendererComponent** pOut) override;
-    virtual ErrType freeComponent(RendererComponent** pOut)     override;
+    virtual ResultCode allocateComponent(RendererComponent** pOut) override;
+    virtual ResultCode freeComponent(RendererComponent** pOut)     override;
     
-    virtual ErrType onInitialize()                              override;
-    virtual ErrType onCleanUp()                                 override;
+    virtual ResultCode onInitialize()                              override;
+    virtual ResultCode onCleanUp()                                 override;
     virtual void    updateComponents(F32 deltaTime)             override;
-    virtual ErrType clearAll()                                  override;
+    virtual ResultCode clearAll()                                  override;
 };
 } // Recluse

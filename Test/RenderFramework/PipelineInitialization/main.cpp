@@ -89,7 +89,7 @@ int main(int c, char* argv[])
     GraphicsSwapchain* pSwapchain   = nullptr;
     Window* pWindow                 = Window::create("PipelineInitialization", 0, 0, 512, 512);
     Mouse* pMouse                   = new Mouse();
-    ErrType result                  = RecluseResult_Ok;
+    ResultCode result                  = RecluseResult_Ok;
 
     pMouse->initialize("Mouse1");
     pWindow->setMouseHandle(pMouse);
@@ -98,7 +98,7 @@ int main(int c, char* argv[])
 
     if (!pInstance) 
     { 
-        R_ERR("TEST", "Failed to create instance!");
+        R_ERROR("TEST", "Failed to create instance!");
         return -1;
     }
 
@@ -114,7 +114,7 @@ int main(int c, char* argv[])
     
     if (result != RecluseResult_Ok) 
     {
-        R_ERR("TEST", "Failed to initialize context!");   
+        R_ERROR("TEST", "Failed to initialize context!");   
     }
 
     pAdapter = pInstance->getGraphicsAdapters()[0];
@@ -133,7 +133,7 @@ int main(int c, char* argv[])
 
     if (result != RecluseResult_Ok) 
     {
-        R_ERR("TEST", "Failed to create device!");
+        R_ERROR("TEST", "Failed to create device!");
     }
 
     pContext = pDevice->createContext();
@@ -152,17 +152,17 @@ int main(int c, char* argv[])
 
     if (result != RecluseResult_Ok) 
     {
-        R_ERR("TEST", "Failed to reserve memory on device!");
+        R_ERROR("TEST", "Failed to reserve memory on device!");
     }
 
     if (result != RecluseResult_Ok) 
     {
-        R_ERR("TEST", "Failed to create swapchain!");
+        R_ERROR("TEST", "Failed to create swapchain!");
     }
 
     if (result != RecluseResult_Ok) 
     { 
-        R_ERR("TEST", "Failed to create descriptor set layout...");
+        R_ERROR("TEST", "Failed to create descriptor set layout...");
     }
     
     pSwapchain = pDevice->getSwapchain();
@@ -179,7 +179,7 @@ int main(int c, char* argv[])
 
     if (result != RecluseResult_Ok) 
     {
-        R_ERR("TEST", "Failed to create data resource!");    
+        R_ERROR("TEST", "Failed to create data resource!");    
     } 
     else 
     {

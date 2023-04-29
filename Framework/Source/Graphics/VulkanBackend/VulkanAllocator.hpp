@@ -35,7 +35,7 @@ public:
 
     ~VulkanPagedAllocator() { }
 
-    ErrType initialize
+    ResultCode initialize
                 (
                     VkDevice device,
                     Allocator* pAllocator,
@@ -90,7 +90,7 @@ public:
     // 
     // @return ErrType The result of the allocation, whether successful or not. If successful, returns pOut with filled data about the allocation. A failure
     //                 will give out the reason for the failure, along with no data fill in pOut.
-    ErrType     allocate
+    ResultCode     allocate
                     (
                         VulkanMemory* pOut, 
                         const VkMemoryRequirements& requirements, 
@@ -100,7 +100,7 @@ public:
 
     // Free up memory, handles throwing memory into the garbage.
     // Immediate free can be done if we know we are in the same frame index.
-    ErrType     free(VulkanMemory* pOut);
+    ResultCode     free(VulkanMemory* pOut);
 
     // Destroy this allocation manager from the inside!
     void        release(VkDevice device);
@@ -162,13 +162,13 @@ public:
     {
     }
 
-    ErrType                 initialize(VulkanDevice* pDevice);
+    ResultCode                 initialize(VulkanDevice* pDevice);
     void                    clear();
-    ErrType                 release();
+    ResultCode                 release();
 
-    ErrType                 allocateBuffer(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements);
-    ErrType                 allocateImage(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements, VkImageTiling tiling);
-    ErrType                 free(VulkanMemory* pOut, Bool immediate = false);
+    ResultCode                 allocateBuffer(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements);
+    ResultCode                 allocateImage(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements, VkImageTiling tiling);
+    ResultCode                 free(VulkanMemory* pOut, Bool immediate = false);
 
     void                    update(const UpdateConfig& config);
     void                    setTotalMemory(const MemoryReserveDescription& desc) { }
@@ -182,7 +182,7 @@ private:
     VulkanPagedAllocator*   getAllocator(ResourceMemoryUsage usage, MemoryTypeIndex memoryTypeIndex, VkDeviceSize sizeBytes, VkDeviceSize alignment);
     // Allocate a page of memory if required.
     VulkanPagedAllocator*   allocateMemoryPage(MemoryTypeIndex memoryTypeIndex, ResourceMemoryUsage usage);
-    ErrType                 allocate(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements, VkImageTiling tiling = VK_IMAGE_TILING_LINEAR);
+    ResultCode                 allocate(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements, VkImageTiling tiling = VK_IMAGE_TILING_LINEAR);
 
     std::map<MemoryTypeIndex, std::vector<SmartPtr<VulkanPagedAllocator>>>      m_resourceAllocators;
     std::map<MemoryTypeIndex, U64>                                              m_pagedMemoryTotalSizeBytes;

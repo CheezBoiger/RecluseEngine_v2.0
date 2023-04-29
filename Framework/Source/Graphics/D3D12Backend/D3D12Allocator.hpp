@@ -19,10 +19,10 @@ class D3D12ResourcePagedAllocator
 public:
     D3D12ResourcePagedAllocator();
 
-    ErrType initialize(ID3D12Device* pDevice, Allocator* pAllocator, U64 totalSizeBytes, ResourceMemoryUsage usage);
-    ErrType release();
+    ResultCode initialize(ID3D12Device* pDevice, Allocator* pAllocator, U64 totalSizeBytes, ResourceMemoryUsage usage);
+    ResultCode release();
 
-    ErrType allocate
+    ResultCode allocate
                 (
                     ID3D12Device* pDevice, 
                     D3D12MemoryObject* pOut, 
@@ -30,7 +30,7 @@ public:
                     D3D12_RESOURCE_STATES initialState
                 );
 
-    ErrType free(D3D12MemoryObject* pObject);
+    ResultCode free(D3D12MemoryObject* pObject);
     
     void    clear();
     
@@ -49,15 +49,15 @@ public:
         : m_pDevice(nullptr) 
     { }
 
-    ErrType initialize(ID3D12Device* pDevice);
+    ResultCode initialize(ID3D12Device* pDevice);
     
-    ErrType allocate(D3D12MemoryObject* pOut, const D3D12_RESOURCE_DESC& desc, D3D12_RESOURCE_STATES initialState);
-    ErrType free(D3D12MemoryObject* pObject);
-    ErrType update();
-    ErrType reserveMemory(const MemoryReserveDescription& description);
+    ResultCode allocate(D3D12MemoryObject* pOut, const D3D12_RESOURCE_DESC& desc, D3D12_RESOURCE_STATES initialState);
+    ResultCode free(D3D12MemoryObject* pObject);
+    ResultCode update();
+    ResultCode reserveMemory(const MemoryReserveDescription& description);
 
 private:
-    ErrType cleanGarbage(U32 index);
+    ResultCode cleanGarbage(U32 index);
 
     ID3D12Device* m_pDevice;
     std::vector<D3D12ResourcePagedAllocator*>    m_pagedAllocators;

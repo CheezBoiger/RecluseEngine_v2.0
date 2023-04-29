@@ -6,11 +6,16 @@
 
 #include "Recluse/Filesystem/Archive.hpp"
 
+#include <unordered_set>
+
 namespace Recluse {
 
-static LoggingQueue*    loggingQueue = nullptr;
-static Thread           displayThread;
-static volatile B32     isLogging           = true;
+static LoggingQueue*            loggingQueue        = nullptr;
+static Thread                   displayThread;
+static volatile B32             isLogging           = true;
+static volatile LogTypeFlags    logTypeFlags        = LogTypeFlags(0xFFFFFFFF);
+
+static std::unordered_set<std::string> g_disabledChannels;
 
 // TODO: Check if these colors work for most windows machines.
 // TODO: Maybe a binary semaphore would be better, to order the display process?
@@ -21,6 +26,7 @@ static volatile B32     isLogging           = true;
 #define R_COLOR_BLUE    "\x1b[34m"
 #define R_COLOR_MAGENTA "\x1b[35m"
 #define R_COLOR_CYAN    "\x1b[36m"
+#define R_COLOR_BABY_BLUE "\x1b[38;5;33m"
 
 #define R_COLOR_BRIGHT  "\x1b[1m"
 #define R_COLOR_RESET   "\x1b[0m"
@@ -37,44 +43,48 @@ static void printLog(const LogMessage* log)
         case LogVerbose:    color = R_COLOR_CYAN;       logStr = "Verbose"; break;
         case LogError:      color = R_COLOR_RED;        logStr = "Error"; break;        
         case LogTrace:      color = R_COLOR_GREEN;      logStr = "Trace"; break;
-        case LogInfo:                                   logStr = "Info"; break;
+        case LogInfo:       /* Use default color */     logStr = "Info"; break;
         case LogFatal:      color = R_COLOR_RED;        logStr = "FATAL"; break;
+        case LogNotify:     color = R_COLOR_BABY_BLUE;       logStr = "Notify"; break;
         case LogMsg:
         default: break;
     }
 
-    if (!log->time.empty())
+    if ((log->type & logTypeFlags))
     {
-        printf
-            (
-                "%s " R_COLOR_RESET "[%s%s" R_COLOR_RESET  "][" "%s%s" R_COLOR_RESET "] %s: %s%s" R_COLOR_RESET "\n",
-                color,
-                color,
-                logStr,
-                color,
-                log->time.c_str(),
-                log->channel.c_str(),
-                color,
-                log->msg.c_str()
-            );
-    }
-    else
-    {
-        printf
-            (
-                "%s " R_COLOR_RESET "[%s%s" R_COLOR_RESET  "] %s: %s%s" R_COLOR_RESET "\n",
-                color,
-                color,
-                logStr,
-                log->channel.c_str(),
-                color,
-                log->msg.c_str()
-            );
+        if (!log->time.empty())
+        {
+            printf
+                (
+                    "%s " R_COLOR_RESET "[%s%s" R_COLOR_RESET  "][" "%s%s" R_COLOR_RESET "] %s: %s%s" R_COLOR_RESET "\n",
+                    color,
+                    color,
+                    logStr,
+                    color,
+                    log->time.c_str(),
+                    log->channel.c_str(),
+                    color,
+                    log->msg.c_str()
+                );
+        }
+        else
+        {
+            printf
+                (
+                    "%s " R_COLOR_RESET "[%s%s" R_COLOR_RESET  "] %s: %s%s" R_COLOR_RESET "\n",
+                    color,
+                    color,
+                    logStr,
+                    log->channel.c_str(),
+                    color,
+                    log->msg.c_str()
+                );
+        }
     }
 }
 
 
-static ErrType displayFunction(void* data)
+static ResultCode displayFunction(void* data)
 {
     (void)data;
 
@@ -103,11 +113,19 @@ static ErrType displayFunction(void* data)
     return RecluseResult_Ok;
 }
 
+static Bool isDisabledChannel(const std::string& channel)
+{
+    return (g_disabledChannels.find(channel) != g_disabledChannels.end());
+}
+
 Log::~Log()
 {
     if (loggingQueue && isLogging) 
     {
-        loggingQueue->store(*this);
+        if (!isDisabledChannel(data.channel))
+        {
+            loggingQueue->store(*this);
+        }
     }
 }
 
@@ -144,8 +162,8 @@ void LoggingQueue::store(const Log& log)
     } 
     else 
     {
-        PtrType addrHead    = (PtrType)m_head;
-        PtrType temp        = m_cursor + alignedSzBytes;
+        UPtr addrHead    = (UPtr)m_head;
+        UPtr temp        = m_cursor + alignedSzBytes;
 
         if (temp >= (m_pool->getBaseAddress() + poolSzBytes)) 
         {
@@ -195,8 +213,8 @@ void LoggingQueue::initialize(U64 maxLogs)
 {
     m_mutex = createMutex();
 
-    U64 szTotalBytes    = R_ALLOC_MASK((sizeof(LogNode) * maxLogs), ARCH_PTR_SZ_BYTES);
-    U64 szLogNode       = R_ALLOC_MASK(sizeof(LogNode), ARCH_PTR_SZ_BYTES);
+    U64 szTotalBytes    = align((sizeof(LogNode) * maxLogs), pointerSizeBytes());
+    U64 szLogNode       = align(sizeof(LogNode), pointerSizeBytes());
     // TODO: Not sure if we want to allocate our logging queue on heap...
     m_pool              = new MemoryPool(szTotalBytes);
 
@@ -226,7 +244,7 @@ void LoggingQueue::cleanup()
     {
         // We need to individually delete all LogNodes, due to strings being allocated separately.
         // Without this, we will have memory leaks.
-        const U64 szLogNode = R_ALLOC_MASK(sizeof(LogNode), ARCH_PTR_SZ_BYTES);
+        const U64 szLogNode = align(sizeof(LogNode), pointerSizeBytes());
         for (U64 i = 0; i < m_pool->getTotalSizeBytes(); i += szLogNode)
         {
             U64 addr = m_pool->getBaseAddress() + i;
@@ -280,6 +298,37 @@ LogMessage* LoggingQueue::getHead() const
 
     pLog = (m_head) ? &m_head->logMessage : nullptr;
     return pLog;    
+}
+
+
+void setLogMask(LogTypeFlags flags)
+{
+    logTypeFlags = flags;
+}
+
+
+void enableLogTypes(LogTypeFlags flags)
+{
+    logTypeFlags |= flags;
+}
+
+
+void disableLogTypes(LogTypeFlags flags)
+{
+    logTypeFlags = logTypeFlags & (~flags);
+}
+
+
+void setLogChannel(const std::string& channel, B8 enable)
+{
+    if (enable && (g_disabledChannels.find(channel) != g_disabledChannels.end()))
+    {
+        g_disabledChannels.erase(channel);
+    }
+    else if (!enable && (g_disabledChannels.find(channel) == g_disabledChannels.end()))
+    {
+        g_disabledChannels.insert(channel);
+    }
 }
 
 

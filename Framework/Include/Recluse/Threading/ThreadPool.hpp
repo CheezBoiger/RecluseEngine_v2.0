@@ -33,10 +33,9 @@ public:
     R_PUBLIC_API ThreadPool(U32 numWorkers = 2);
     R_PUBLIC_API ~ThreadPool();
 
-    R_PUBLIC_API ErrType submitJob(ThreadJob job);
-    R_PUBLIC_API ErrType execute();
+    R_PUBLIC_API ResultCode submitJob(ThreadJob job);
     
-    R_PUBLIC_API ErrType waitFinished();
+    R_PUBLIC_API ResultCode waitFinished();
 
     R_PUBLIC_API Bool isExecuting();
 

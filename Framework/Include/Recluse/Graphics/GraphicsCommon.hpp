@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Recluse/Types.hpp"
+#include "Recluse/Utility.hpp"
 #include "Recluse/Graphics/Format.hpp"
 #include "Recluse/Threading/Threading.hpp"
 
@@ -54,22 +55,34 @@ enum ResourceMemoryUsage
 
 enum ResourceUsage 
 {
-    ResourceUsage_VertexBuffer            = (1 << 0),
-    ResourceUsage_IndexBuffer             = (1 << 1),
-    ResourceUsage_RenderTarget            = (1 << 2),
-    ResourceUsage_ShaderResource          = (1 << 3),
-    ResourceUsage_ConstantBuffer          = (1 << 4),
-    ResourceUsage_TransferDestination     = (1 << 5),
-    ResourceUsage_CopyDestination         = ResourceUsage_TransferDestination,
-    ResourceUsage_TransferSource          = (1 << 6),
-    ResourceUsage_CopySource              = ResourceUsage_TransferSource,
-    ResourceUsage_IndirectBuffer          = (1 << 7),
-    ResourceUsage_DepthStencil            = (1 << 8),
-    ResourceUsage_UnorderedAccess         = (1 << 9)
+    ResourceUsage_VertexBuffer          = (1 << 0),
+    ResourceUsage_IndexBuffer           = (1 << 1),
+    ResourceUsage_RenderTarget          = (1 << 2),
+    ResourceUsage_ShaderResource        = (1 << 3),
+    ResourceUsage_ConstantBuffer        = (1 << 4),
+    ResourceUsage_TransferDestination   = (1 << 5),
+    ResourceUsage_CopyDestination       = ResourceUsage_TransferDestination,
+    ResourceUsage_TransferSource        = (1 << 6),
+    ResourceUsage_CopySource            = ResourceUsage_TransferSource,
+    ResourceUsage_IndirectBuffer        = (1 << 7),
+    ResourceUsage_DepthStencil          = (1 << 8),
+    ResourceUsage_UnorderedAccess       = (1 << 9)
+};
+
+
+// Additional miscelleneous flags that might be API specific.
+// Some of these flags may not be supported on different APIs, so 
+// Use them sparingly.
+enum ResourceMiscFlag
+{
+    ResourceMiscFlag_None               = (0),
+    ResourceMiscFlag_StructuredBuffer   = (1 << 0), 
+    ResourceMiscFlag_RawBuffer          = (1 << 1)
 };
 
 
 typedef U32 ResourceUsageFlags;
+typedef U32 ResourceMiscFlags;
 
 
 enum ResourceViewType 

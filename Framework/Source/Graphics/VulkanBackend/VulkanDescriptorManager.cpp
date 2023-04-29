@@ -4,6 +4,8 @@
 #include "VulkanAdapter.hpp"
 #include "Recluse/Messaging.hpp"
 
+#include "Recluse/Memory/LinearAllocator.hpp"
+
 #include <array>
 #include <math.h>
 
@@ -20,6 +22,16 @@ void DescriptorAllocatorInstance::initialize(VulkanDevice* pDevice, VkDescriptor
 {
     R_ASSERT(pDevice != NULL);
 
+    m_descriptorSetArena.preAllocate(sizeof(VkDescriptorSet) * kMaxSetsPerPool);
+    m_descriptorSetLayoutArena.preAllocate(sizeof(VkDescriptorSetLayout) * kMaxSetsPerPool);
+
+    m_descriptorSetAllocator = new LinearAllocator();
+    m_descriptorSetLayoutAllocator = new LinearAllocator();
+    
+    m_descriptorSetAllocator->initialize(m_descriptorSetArena.getBaseAddress(), m_descriptorSetArena.getTotalSizeBytes());
+    m_descriptorSetLayoutAllocator->initialize(m_descriptorSetLayoutArena.getBaseAddress(), m_descriptorSetLayoutArena.getTotalSizeBytes());
+
+    m_allocatorCs.initialize();
     m_device = pDevice->get();
     m_flags = flags;
 }
@@ -40,6 +52,14 @@ void DescriptorAllocatorInstance::release(VulkanDevice* pDevice)
         R_DEBUG(R_CHANNEL_VULKAN, "Destroying vulkan descriptor pool...");
         vkDestroyDescriptorPool(device, pool, nullptr);
     }
+
+    m_descriptorSetArena.release();
+    m_descriptorSetLayoutArena.release();
+
+    m_descriptorSetAllocator.release();
+    m_descriptorSetLayoutAllocator.release();
+
+    m_allocatorCs.free();
 }
 
 
@@ -75,7 +95,7 @@ VkDescriptorPool DescriptorAllocatorInstance::createDescriptorPool(const Descrip
 
     if (result != VK_SUCCESS) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to create vulkan descriptor pool!");
+        R_ERROR(R_CHANNEL_VULKAN, "Failed to create vulkan descriptor pool!");
     }
 
     return resultingPool;
@@ -88,7 +108,22 @@ VulkanDescriptorAllocation DescriptorAllocatorInstance::allocate(U32 numberSetsT
     VkDescriptorSetAllocateInfo allocateInfo    = { };
     VulkanDescriptorAllocation allocation       = { };
     Bool needReallocate                         = false;
-    std::vector<VkDescriptorSet> sets;
+    VkDescriptorSet* pAllocatedSets             = nullptr;
+    VkDescriptorSetLayout* pAllocatedLayouts     = nullptr;
+
+    {
+        ScopedCriticalSection sc(m_allocatorCs);
+
+        Allocation alloc = { };
+        m_descriptorSetAllocator->allocate(&alloc, sizeof(VkDescriptorSet) * numberSetsToAlloc, 0);
+        pAllocatedSets = (VkDescriptorSet*)alloc.baseAddress;
+
+        m_descriptorSetLayoutAllocator->allocate(&alloc, sizeof(VkDescriptorSetLayout) * numberSetsToAlloc, 0);
+        pAllocatedLayouts = (VkDescriptorSetLayout*)alloc.baseAddress;
+    }
+
+    const SizeT descriptorSetLayoutBytes = sizeof(VkDescriptorSetLayout) * numberSetsToAlloc;
+    memcpy(pAllocatedLayouts, layouts, descriptorSetLayoutBytes);
 
     if (m_currentPool == VK_NULL_HANDLE)
     {
@@ -100,9 +135,7 @@ VulkanDescriptorAllocation DescriptorAllocatorInstance::allocate(U32 numberSetsT
     allocateInfo.pSetLayouts                    = layouts;
     allocateInfo.sType                          = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 
-    sets.resize(numberSetsToAlloc);
-
-    result = vkAllocateDescriptorSets(m_device, &allocateInfo, sets.data());
+    result = vkAllocateDescriptorSets(m_device, &allocateInfo, pAllocatedSets);
 
     switch (result)
     {
@@ -125,13 +158,13 @@ VulkanDescriptorAllocation DescriptorAllocatorInstance::allocate(U32 numberSetsT
         m_currentPool               = getPool();
         allocateInfo.descriptorPool = m_currentPool;
 
-        result = vkAllocateDescriptorSets(m_device, &allocateInfo, sets.data());
+        result = vkAllocateDescriptorSets(m_device, &allocateInfo, pAllocatedSets);
 
         if (result != VK_SUCCESS)
             return allocation;
     }
 
-    allocation = VulkanDescriptorAllocation(m_currentPool, numberSetsToAlloc, sets.data(), layouts);
+    allocation = VulkanDescriptorAllocation(m_currentPool, numberSetsToAlloc, pAllocatedSets, pAllocatedLayouts);
 
     return allocation;
 }
@@ -155,7 +188,7 @@ VkDescriptorPool DescriptorAllocatorInstance::getPool()
 }
 
 
-ErrType DescriptorAllocatorInstance::free(const VulkanDescriptorAllocation& allocation)
+ResultCode DescriptorAllocatorInstance::free(const VulkanDescriptorAllocation& allocation)
 {
     VkResult result = VK_SUCCESS;
 
@@ -182,12 +215,14 @@ void DescriptorAllocatorInstance::resetPools()
     }
 
     m_usedPools.clear();
+    m_descriptorSetAllocator->reset();
+    m_descriptorSetLayoutAllocator->reset();
 
     m_currentPool = VK_NULL_HANDLE;
 }
 
 
-ErrType DescriptorAllocator::checkAndManageInstances(VulkanDevice* pDevice, U32 newBufferCount, VkDescriptorPoolCreateFlags flags)
+ResultCode DescriptorAllocator::checkAndManageInstances(VulkanDevice* pDevice, U32 newBufferCount, VkDescriptorPoolCreateFlags flags)
 {
     R_ASSERT_FORMAT(newBufferCount <= kMaxReservedBufferInstances, "newBufferCount is greater than the maximum reserved instances. Cancelling this resize.");
 
@@ -231,6 +266,7 @@ void DescriptorAllocator::initialize(VulkanDevice* pDevice, U32 bufferCount, VkD
     // Reserve a max of 16 buffer instances. We should not have that many buffered resources.
     m_bufferedInstances.reserve(kMaxReservedBufferInstances);
     checkAndManageInstances(pDevice, bufferCount, flags);
+
     m_flags = flags;
 }
 

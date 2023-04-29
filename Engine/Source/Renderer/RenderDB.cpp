@@ -36,7 +36,7 @@ GPUBuffer* getGPUBuffer(RenderID id)
 }
 
 
-ErrType cacheGPUBuffer(RenderID id, GPUBuffer* pBuffer)
+ResultCode cacheGPUBuffer(RenderID id, GPUBuffer* pBuffer)
 {
     if (isCachedGPUBuffer(id) && k_gpuBufferMap[id] != nullptr) 
     {
@@ -49,7 +49,7 @@ ErrType cacheGPUBuffer(RenderID id, GPUBuffer* pBuffer)
 }
 
 
-ErrType cacheTexture2D(RenderID id, Texture2D* pTexture)
+ResultCode cacheTexture2D(RenderID id, Texture2D* pTexture)
 {
     if (isCachedTexture2D(id) && k_textureMap[id] != nullptr)
         return RecluseResult_Failed;

@@ -4,7 +4,7 @@
 
 namespace Recluse {
 
-ErrType Mouse::integrateInput(const IInputFeedback& feedback) 
+ResultCode Mouse::integrateInput(const IInputFeedback& feedback) 
 {
     
     I32 xPosition = m_xPosition + feedback.xRate;
@@ -25,25 +25,25 @@ ErrType Mouse::integrateInput(const IInputFeedback& feedback)
 }
 
 
-ErrType Mouse::initialize(const std::string& controllerName)
+ResultCode Mouse::initialize(const std::string& controllerName)
 {
     return RecluseResult_NoImpl;
 }
 
 
-ErrType Mouse::destroy()
+ResultCode Mouse::destroy()
 {
     return RecluseResult_NoImpl;
 }
 
 
-ErrType Mouse::getInput(IInputFeedback& feedback)
+ResultCode Mouse::getInput(IInputFeedback& feedback)
 {
     return RecluseResult_NoImpl;
 }
 
 
-ErrType Mouse::setIconPath(const std::string& iconPath)
+ResultCode Mouse::setIconPath(const std::string& iconPath)
 {
     return RecluseResult_NoImpl;
 }

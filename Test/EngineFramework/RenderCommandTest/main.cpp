@@ -19,7 +19,7 @@ InstancedSubMesh submeshes[12];
 
 void fillList(RenderCommandList& list)
 {
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
     DrawRenderCommand rcmd = { };
     DrawIndexedRenderCommand icmd = { };
 
@@ -58,7 +58,7 @@ void fillList(RenderCommandList& list)
     }
 
     if (result != RecluseResult_Ok) {
-        R_ERR("TEST", "Failed to push some commands!");
+        R_ERROR("TEST", "Failed to push some commands!");
     }
 }
 

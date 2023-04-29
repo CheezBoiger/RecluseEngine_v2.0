@@ -38,7 +38,7 @@ void VulkanInstance::setDebugCallback()
         vkGetInstanceProcAddr(m_instance, "vkCreateDebugReportCallbackEXT");
     if (!vkCreateDebugReportCallbackEXT) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to initialize our vulkan reporting.");
+        R_ERROR(R_CHANNEL_VULKAN, "Failed to initialize our vulkan reporting.");
         return;
     }
 
@@ -46,7 +46,7 @@ void VulkanInstance::setDebugCallback()
 
     if (result != VK_SUCCESS) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to create debug report callback!");
+        R_ERROR(R_CHANNEL_VULKAN, "Failed to create debug report callback!");
     }
 }
 
@@ -92,7 +92,7 @@ static void checkForValidExtensions(std::vector<const char*>& wantedExtensions, 
 
     if (result != VK_SUCCESS) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to query for vulkan instance extensions!");
+        R_ERROR(R_CHANNEL_VULKAN, "Failed to query for vulkan instance extensions!");
         return;
     }
 
@@ -191,7 +191,7 @@ void checkForValidLayers(std::vector<const char*>& wantedLayers, std::vector<Lay
 }
 
 
-ErrType VulkanInstance::onInitialize(const ApplicationInfo& appInfo, LayerFeatureFlags flags)
+ResultCode VulkanInstance::onInitialize(const ApplicationInfo& appInfo, LayerFeatureFlags flags)
 {
     std::vector<LayerFeatureFlag> wantedLayerBits   = { };
     std::vector<LayerFeatureFlag> wantedExtBits     = { };

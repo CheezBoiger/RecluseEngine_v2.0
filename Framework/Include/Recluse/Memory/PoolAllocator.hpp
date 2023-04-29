@@ -11,12 +11,12 @@ namespace Recluse {
 class R_PUBLIC_API PoolAllocator : public Allocator
 {
 public:
-    ErrType onInitialize() override
+    ResultCode onInitialize() override
     {
         return RecluseResult_NoImpl;
     }
 
-    ErrType onCleanUp() override
+    ResultCode onCleanUp() override
     {
         return RecluseResult_NoImpl;
     }

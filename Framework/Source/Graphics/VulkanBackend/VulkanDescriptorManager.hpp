@@ -2,6 +2,8 @@
 #pragma once
 
 #include "VulkanCommons.hpp"
+#include "Recluse/Memory/MemoryPool.hpp"
+#include "Recluse/Memory/Allocator.hpp"
 #include "Recluse/Messaging.hpp"
 #include <vector>
 
@@ -71,18 +73,8 @@ public:
         // Do not attempt to allocate if we don't have anything to allocate.
         if (numberAllocs == 0)
             return;
-
-        //pSets       = makeSmartPtr(new VkDescriptorSet[numberAllocs], DefaultDeleter<VkDescriptorSet[]>());
-        //pLayouts    = makeSmartPtr(new VkDescriptorSetLayout[numberAllocs], DefaultDeleter<VkDescriptorSetLayout[]>());
-        pSets.resize(numberAllocs);
-        pLayouts.resize(numberAllocs);
-        for (U32 i = 0; i < numberAllocs; ++i)
-        {
-            pSets[i]    = sets[i];
-            pLayouts[i] = layouts[i];
-            R_ASSERT(pSets[i] == sets[i]);
-            R_ASSERT(pLayouts[i] == layouts[i]);
-        }
+        pSets = sets;
+        pLayouts = layouts;
     }
 
     VulkanDescriptorAllocation(VulkanDescriptorAllocation&& alloc) noexcept
@@ -141,19 +133,19 @@ public:
         //pLayouts.release();
         //pSets = nullptr;
         //pLayouts = nullptr;
-        pSets.clear();
-        pLayouts.clear();
+        //pSets.clear();
+        //pLayouts.clear();
         size = 0;
     }
 
     const DescriptorSet getDescriptorSet(U32 idx) const { return DescriptorSet{pLayouts[idx], pSets[idx]}; }
-    const VkDescriptorSet* getNativeDescriptorSets() const { return pSets.data(); }
-    const VkDescriptorSetLayout* getNativeDescriptorSetLayout() const { return pLayouts.data(); }
+    const VkDescriptorSet* getNativeDescriptorSets() const { return pSets; }
+    const VkDescriptorSetLayout* getNativeDescriptorSetLayout() const { return pLayouts; }
 
 private:
     VkDescriptorPool                    pool;
-    std::vector<VkDescriptorSet>        pSets;
-    std::vector<VkDescriptorSetLayout>  pLayouts;
+    VkDescriptorSet*                    pSets;
+    VkDescriptorSetLayout*              pLayouts;
     U32                                 size;
 };
 
@@ -181,7 +173,7 @@ public:
 
     // Optionally, we can free the descriptor sets. Keep in mind that we don't need to call this, as 
     // destroy(), or reset(), will automatically clean up our allocations.
-    ErrType                     free(const VulkanDescriptorAllocation& allocation);
+    ResultCode                     free(const VulkanDescriptorAllocation& allocation);
 
     // Reset the pools once we finish using. Will fully clear out all descriptor pools in this instance, which is a fast way to 
     // clear descriptor sets for the next frame. This will, however, require needing to re-allocate the needed descriptor sets for 
@@ -197,6 +189,14 @@ private:
     std::vector<VkDescriptorPool>   m_usedPools;
     VkDevice                        m_device;
     VkDescriptorPoolCreateFlags     m_flags;
+
+    // TODO: For now we need to keep these here, but we want to make them global per frame, not once per descriptor allocator instance!
+    CriticalSection                 m_allocatorCs;
+
+    SmartPtr<Allocator>             m_descriptorSetAllocator;
+    SmartPtr<Allocator>             m_descriptorSetLayoutAllocator;
+    MemoryArena                     m_descriptorSetArena;
+    MemoryArena                     m_descriptorSetLayoutArena;
 };
 
 
@@ -218,9 +218,9 @@ public:
     U32                             getBufferCount() const { return m_bufferedInstances.size(); }  
 
 private:
-    ErrType                         checkAndManageInstances(VulkanDevice* pDevice, U32 newbufferCount, VkDescriptorPoolCreateFlags flags);
+    ResultCode                         checkAndManageInstances(VulkanDevice* pDevice, U32 newbufferCount, VkDescriptorPoolCreateFlags flags);
 
-    std::vector<DescriptorAllocatorInstance> m_bufferedInstances;
-    VkDescriptorPoolCreateFlags             m_flags;
+    std::vector<DescriptorAllocatorInstance>    m_bufferedInstances;
+    VkDescriptorPoolCreateFlags                 m_flags;
 };
 } // Recluse

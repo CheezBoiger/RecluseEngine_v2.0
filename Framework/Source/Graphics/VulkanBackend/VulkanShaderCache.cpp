@@ -28,7 +28,7 @@ static VkResult createShaderModule(VkDevice device, Shader* pShader, VkShaderMod
 
     if (!pModule || !device)
     {
-        R_ERR(__FUNCTION__, "Either module or device were passed as NULL!! Can not create a VkShaderModule!");
+        R_ERROR(__FUNCTION__, "Either module or device were passed as NULL!! Can not create a VkShaderModule!");
         return VK_ERROR_INITIALIZATION_FAILED;
     }
 
@@ -52,7 +52,7 @@ static VkResult createShaderModule(VkDevice device, Shader* pShader, VkShaderMod
 
     if (result != VK_SUCCESS)
     {
-        R_ERR("VulkanShaderCache", "Failed (result = %d)", result);
+        R_ERROR("VulkanShaderCache", "Failed (result = %d)", result);
     }
     else
     {
@@ -142,7 +142,7 @@ VulkanShaderProgram* obtainShaderProgram(ShaderProgramId shaderProgram, ShaderPr
     return nullptr;
 }
 
-ErrType createDebugShaderNames(VulkanDevice* pDevice, const VulkanShaderProgram& program)
+ResultCode createDebugShaderNames(VulkanDevice* pDevice, const VulkanShaderProgram& program)
 {
     Bool supportsDebugMarking = pDevice->getAdapter()->getInstance()->supportsDebugMarking();
     if (supportsDebugMarking)
@@ -153,7 +153,7 @@ ErrType createDebugShaderNames(VulkanDevice* pDevice, const VulkanShaderProgram&
 }
 
 
-ErrType loadNativeShaderProgramPermutation(VulkanDevice* pDevice, ShaderProgramId shaderProgram, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition)
+ResultCode loadNativeShaderProgramPermutation(VulkanDevice* pDevice, ShaderProgramId shaderProgram, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition)
 {
     auto& it = cache[shaderProgram].find(permutation);
     if (it != cache[shaderProgram].end())
@@ -227,7 +227,7 @@ void unloadAll(VulkanDevice* pDevice)
 }
 
 
-ErrType unloadProgram(VulkanDevice* pDevice, ShaderProgramId program)
+ResultCode unloadProgram(VulkanDevice* pDevice, ShaderProgramId program)
 {
     auto it = cache.find(program);
     if (it == cache.end())

@@ -19,7 +19,7 @@ using namespace Recluse::Engine;
 
 class GameWorldScene : public Engine::Scene {
 public:
-    ErrType serialize(Archive* pArchive) override {
+    ResultCode serialize(Archive* pArchive) override {
         std::queue<ECS::GameEntity*> objects;
         const std::vector<ECS::GameEntity*>& gameObjects = getEntities();
         for (auto gameObject : gameObjects) {
@@ -47,9 +47,9 @@ public:
         return RecluseResult_Ok;
     }
 
-    ErrType deserialize(Archive* pArchive) override {
+    ResultCode deserialize(Archive* pArchive) override {
 
-        ErrType result = RecluseResult_Ok;
+        ResultCode result = RecluseResult_Ok;
         while (result == RecluseResult_Ok) {
             RGUID rguid;
             U32 numChilren  = 0;

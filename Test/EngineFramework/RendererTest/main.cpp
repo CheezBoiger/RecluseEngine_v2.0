@@ -36,7 +36,7 @@ public:
         R_VERBOSE("GameLoop", "renderTime=%f fps", 1.f / RealtimeTick::getTick(JOB_TYPE_RENDERER).delta());
     }
 
-    virtual ErrType onInit() override
+    virtual ResultCode onInit() override
     {
         Log::initializeLoggingSystem();
         Renderer::initializeModule(this);
@@ -54,7 +54,7 @@ public:
         return RecluseResult_Ok;
     }
 
-    virtual ErrType onCleanUp() override
+    virtual ResultCode onCleanUp() override
     {
         MessageBus::fireEvent(getMessageBus(), RenderEvent_Shutdown);
         Renderer::cleanUpModule(this);

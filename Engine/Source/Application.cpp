@@ -16,10 +16,10 @@ namespace Recluse {
                 jobThreadADT[jobType] = thread; \
     }
 
-ErrType Application::loadJobThread(JobTypeFlags flags, ThreadFunction func)
+ResultCode Application::loadJobThread(JobTypeFlags flags, ThreadFunction func)
 {
     Thread pThread;
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
     result = createThread(&pThread, func);
 
     if (result == RecluseResult_Ok) 
@@ -64,7 +64,7 @@ Mutex k_pMessageMutex       = MutexValue::kNull;
 F32 k_fixedTickRateSeconds  = 1.0f / 60.0f;
 Bool k_mainLoopInitialized  = false;
 
-ErrType loadApp(Application* pApp)
+ResultCode loadApp(Application* pApp)
 {
     R_ASSERT_FORMAT
         (
@@ -72,7 +72,7 @@ ErrType loadApp(Application* pApp)
             "Main Loop must be initialized first before calling this function!"
         );
 
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
 
     if (!pApp->isInitialized())
         result = pApp->init(k_pWindow, k_pMessageBus);
@@ -84,7 +84,7 @@ ErrType loadApp(Application* pApp)
 }
 
 
-ErrType initialize() 
+ResultCode initialize() 
 {
     R_ASSERT(k_pMessageMutex == MutexValue::kNull);
 
@@ -104,7 +104,7 @@ ErrType initialize()
 }
 
 
-ErrType MainThreadLoop::run()
+ResultCode MainThreadLoop::run()
 {
     R_ASSERT(k_pWindow          != NULL);
     R_ASSERT(k_pMessageBus      != NULL);
@@ -137,9 +137,9 @@ ErrType MainThreadLoop::run()
 }
 
 
-ErrType cleanUp()
+ResultCode cleanUp()
 {
-    ErrType result = RecluseResult_Ok; 
+    ResultCode result = RecluseResult_Ok; 
 
     if (k_pApp)
     {

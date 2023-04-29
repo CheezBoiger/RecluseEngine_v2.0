@@ -13,8 +13,8 @@ class D3D12PrimaryCommandList : public GraphicsCommandList
 {
 public:
     
-    ErrType initialize(D3D12Context* pDevice, GraphicsQueueTypeFlags flags);
-    ErrType destroy();
+    ResultCode initialize(D3D12Context* pDevice, GraphicsQueueTypeFlags flags);
+    ResultCode destroy();
 
     // Use the given commandlist index.
     void use(U32 bufferIdx);

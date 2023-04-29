@@ -64,13 +64,13 @@ int main(int c, char* argv[])
     GraphicsSwapchain* pSwapchain   = nullptr;
     GraphicsContext* pContext       = nullptr;
     Window* pWindow                 = Window::create("Compute", 0, 0, 1024, 1024);
-    ErrType result                  = RecluseResult_Ok;
+    ResultCode result                  = RecluseResult_Ok;
 
     std::vector<GraphicsResourceView*> views;
 
     if (!pInstance) 
     { 
-        R_ERR("TEST", "Failed to create context!");
+        R_ERROR("TEST", "Failed to create context!");
         return -1;
     }
 
@@ -86,7 +86,7 @@ int main(int c, char* argv[])
     
     if (result != RecluseResult_Ok) 
     {
-        R_ERR("TEST", "Failed to initialize context!");   
+        R_ERROR("TEST", "Failed to initialize context!");   
     }
 
     pAdapter = pInstance->getGraphicsAdapters()[0];
@@ -106,7 +106,7 @@ int main(int c, char* argv[])
 
     if (result != RecluseResult_Ok) 
     {
-        R_ERR("TEST", "Failed to create device!");
+        R_ERROR("TEST", "Failed to create device!");
     }
 
     {
@@ -122,7 +122,7 @@ int main(int c, char* argv[])
 
     if (result != RecluseResult_Ok) 
     {
-        R_ERR("TEST", "Failed to reserve memory on device!");
+        R_ERROR("TEST", "Failed to reserve memory on device!");
     }
 
     {
@@ -138,7 +138,7 @@ int main(int c, char* argv[])
 
     if (result != RecluseResult_Ok) 
     {
-        R_ERR("TEST", "Failed to create data resource!");
+        R_ERROR("TEST", "Failed to create data resource!");
     }
 
     pSwapchain = pDevice->getSwapchain();

@@ -13,7 +13,7 @@ U64 D3D12GraphicsResourceView::kViewCreationCounter = 0;
 MutexGuard D3D12GraphicsResourceView::kViewMutex = MutexGuard("D3D12GraphicsResourceViewMutex");
 
 
-ErrType D3D12GraphicsResourceView::initialize(D3D12Device* pDevice)
+ResultCode D3D12GraphicsResourceView::initialize(D3D12Device* pDevice)
 {
     R_ASSERT(pDevice != NULL);
     ID3D12Device* pNative = pDevice->get();
@@ -58,7 +58,7 @@ ErrType D3D12GraphicsResourceView::initialize(D3D12Device* pDevice)
 }
 
 
-ErrType D3D12Sampler::initialize(D3D12Device* pDevice, const SamplerDescription& desc)
+ResultCode D3D12Sampler::initialize(D3D12Device* pDevice, const SamplerDescription& desc)
 {
     R_ASSERT(pDevice != NULL);
 
@@ -70,7 +70,7 @@ ErrType D3D12Sampler::initialize(D3D12Device* pDevice, const SamplerDescription&
 }
 
 
-ErrType D3D12Sampler::destroy(D3D12Device* pDevice)
+ResultCode D3D12Sampler::destroy(D3D12Device* pDevice)
 {
     R_ASSERT(pDevice != NULL);
     ID3D12Device* device = pDevice->get();

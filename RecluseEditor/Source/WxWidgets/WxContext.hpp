@@ -25,8 +25,8 @@ namespace Recluse {
 class WxGuiContext : public Editor::IGUIContext
 {
 public:
-    virtual ErrType onRun(int c, char* argv[]) override;
-    virtual ErrType onSetUp() override;
-    virtual ErrType onTearDown() override;
+    virtual ResultCode onRun(int c, char* argv[]) override;
+    virtual ResultCode onSetUp() override;
+    virtual ResultCode onTearDown() override;
 };
 } // Recluse

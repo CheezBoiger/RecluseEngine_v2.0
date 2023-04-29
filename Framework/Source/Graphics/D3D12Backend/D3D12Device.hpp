@@ -44,30 +44,29 @@ public:
 
     }
 
-    void initialize();
-    void release();
+    void                                initialize();
+    void                                release();
+    virtual void                        begin() override;
+    virtual void                        end() override;
 
-    virtual void begin() override;
-    virtual void end() override;
-
-    inline void incrementBufferIndex() 
+    inline void                         incrementBufferIndex() 
     { 
         m_currentBufferIndex = (m_currentBufferIndex + 1) % m_bufferCount; 
     }
 
     // Not recommended, but submits a copy to this queue, and waits until the command has 
     // completed.
-    void copyResource(GraphicsResource* dst, GraphicsResource* src) override;
+    void                                copyResource(GraphicsResource* dst, GraphicsResource* src) override;
 
     // Submits copy of regions from src resource to dst resource. Generally the caller thread will
     // be blocked until this function returns, so be sure to use when needed.
-    void                copyBufferRegions
-                            (
-                                GraphicsResource* dst, 
-                                GraphicsResource* src, 
-                                const CopyBufferRegion* pRegions, 
-                                U32 numRegions
-                            ) override;
+    void                                copyBufferRegions
+                                            (
+                                                GraphicsResource* dst, 
+                                                GraphicsResource* src, 
+                                                const CopyBufferRegion* pRegions, 
+                                                U32 numRegions
+                                            ) override;
 
     BufferResources*                    getCurrentBufferResource() { return &m_bufferResources[m_currentBufferIndex]; }
     U32                                 getCurrentBufferIndex() const { return m_currentBufferIndex; }
@@ -86,12 +85,12 @@ private:
         Pipelines::PipelineStateObject  m_pipelineStateObject;
     };
 
-    void            initializeBufferResources(U32 buffering);
-    void            destroyBufferResources();
-    ContextState&   currentState() { return *m_contextStates.end(); }
+    void                                initializeBufferResources(U32 buffering);
+    void                                destroyBufferResources();
+    ContextState&                       currentState() { return *m_contextStates.end(); }
 
-    ErrType         createCommandList(D3D12PrimaryCommandList** ppList, GraphicsQueueTypeFlags flags);
-    ErrType         destroyCommandList(D3D12PrimaryCommandList* pList);
+    ResultCode                             createCommandList(D3D12PrimaryCommandList** ppList, GraphicsQueueTypeFlags flags);
+    ResultCode                             destroyCommandList(D3D12PrimaryCommandList* pList);
 
     D3D12Device*                        m_pDevice;
     std::vector<BufferResources>        m_bufferResources;
@@ -111,62 +110,65 @@ public:
         , m_graphicsQueue(nullptr)
         , m_swapchain(nullptr) { }
 
-    ErrType initialize(D3D12Adapter* adapter, const DeviceCreateInfo& info);
-    void destroy();
+    ResultCode                             initialize(D3D12Adapter* adapter, const DeviceCreateInfo& info);
+    void                                destroy();
 
-    ID3D12Device* get() const { return m_device; }
-    
-    D3D12Adapter* getAdapter() const { return m_pAdapter; }
+    ID3D12Device*                       get() const { return m_device; }
+    D3D12Adapter*                       getAdapter() const { return m_pAdapter; }
 
-    ErrType createSwapchain(D3D12Swapchain** ppSwapchain, const SwapchainCreateDescription& desc);
-    ErrType destroySwapchain(D3D12Swapchain* pSwapchain);
+    ResultCode                             createSwapchain(D3D12Swapchain** ppSwapchain, const SwapchainCreateDescription& desc);
+    ResultCode                             destroySwapchain(D3D12Swapchain* pSwapchain);
 
-    ErrType createCommandQueue(D3D12Queue** ppQueue, GraphicsQueueTypeFlags type);
-    ErrType destroyCommandQueue(D3D12Queue* pQueue);
+    ResultCode                             createCommandQueue(D3D12Queue** ppQueue, GraphicsQueueTypeFlags type);
+    ResultCode                             destroyCommandQueue(D3D12Queue* pQueue);
 
-    GraphicsContext* createContext() override { return m_context; }
-    HWND getWindowHandle() const { return m_windowHandle; }
+    GraphicsContext*                    createContext() override { return m_context; }
+    HWND                                getWindowHandle() const { return m_windowHandle; }
 
-    ErrType reserveMemory(const MemoryReserveDescription& desc) override;
-
-    D3D12Queue* getBackbufferQueue() const { return m_graphicsQueue; }
-    GraphicsSwapchain* getSwapchain() override;
+    ResultCode                             reserveMemory(const MemoryReserveDescription& desc) override;
+    D3D12Queue*                         getBackbufferQueue() const { return m_graphicsQueue; }
+    GraphicsSwapchain*                  getSwapchain() override;
 
     // Helper descriptor creators for the device.
-    void createSampler(const D3D12_SAMPLER_DESC& desc);
-    void createRenderTargetView(D3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC& desc, D3D12_CPU_DESCRIPTOR_HANDLE destDescriptorHandle);
-    void createDepthStencilView(D3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& desc, D3D12_CPU_DESCRIPTOR_HANDLE destDescriptorHandle);
-    void createShaderResourceView(const D3D12_SHADER_RESOURCE_VIEW_DESC& desc);
-    void createUnorderedAccessView(const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc);
+    void                                createSampler(const D3D12_SAMPLER_DESC& desc);
+    void                                createRenderTargetView(D3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC& desc, D3D12_CPU_DESCRIPTOR_HANDLE destDescriptorHandle);
+    void                                createDepthStencilView(D3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& desc, D3D12_CPU_DESCRIPTOR_HANDLE destDescriptorHandle);
+    void                                createShaderResourceView(const D3D12_SHADER_RESOURCE_VIEW_DESC& desc);
+    void                                createUnorderedAccessView(const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc);
 
-    D3D12_FEATURE_DATA_FORMAT_SUPPORT checkFormatSupport(ResourceFormat format);
+    D3D12_FEATURE_DATA_FORMAT_SUPPORT   checkFormatSupport(ResourceFormat format);
+    DescriptorHeapAllocationManager*    getDescriptorHeapManager() { return &m_descHeapManager; }
 
-    DescriptorHeapAllocationManager* getDescriptorHeapManager() { return &m_descHeapManager; }
+    ResultCode                             loadShaderProgram
+                                            (
+                                                ShaderProgramId program, 
+                                                ShaderProgramPermutation permutation, 
+                                                const Builder::ShaderProgramDefinition& definition
+                                            ) override;
 
-    ErrType loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition) override;
-    ErrType unloadShaderProgram(ShaderProgramId program) override;
-    void unloadAllShaderPrograms() override;
+    ResultCode                             unloadShaderProgram(ShaderProgramId program) override;
+    void                                unloadAllShaderPrograms() override;
 
-    Bool makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout) override;
-    Bool destroyVertexLayout(VertexInputLayoutId id) override;
+    Bool                                makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout) override;
+    Bool                                destroyVertexLayout(VertexInputLayoutId id) override;
 
-    D3D12ResourceAllocationManager* resourceAllocationManager() { return &m_resourceAllocationManager; }
+    D3D12ResourceAllocationManager*     resourceAllocationManager() { return &m_resourceAllocationManager; }
 
 private:
 
-    void initializeAllocators();
-    void destroyAllocators();
-    void allocateMemoryPool(D3D12MemoryPool* pPool, ResourceMemoryUsage memUsage);
+    void                                initializeAllocators();
+    void                                destroyAllocators();
+    void                                allocateMemoryPool(D3D12MemoryPool* pPool, ResourceMemoryUsage memUsage);
 
     // Resource pools.
-    D3D12ResourceAllocationManager  m_resourceAllocationManager;
-    ID3D12Device*                   m_device;
-    D3D12Adapter*                   m_pAdapter;
-    D3D12Queue*                     m_graphicsQueue;
-    D3D12Swapchain*                 m_swapchain;
+    D3D12ResourceAllocationManager      m_resourceAllocationManager;
+    ID3D12Device*                       m_device;
+    D3D12Adapter*                       m_pAdapter;
+    D3D12Queue*                         m_graphicsQueue;
+    D3D12Swapchain*                     m_swapchain;
 
-    DescriptorHeapAllocationManager m_descHeapManager;
-    D3D12Context*                   m_context;
+    DescriptorHeapAllocationManager     m_descHeapManager;
+    D3D12Context*                       m_context;
 
     HWND m_windowHandle;
 };

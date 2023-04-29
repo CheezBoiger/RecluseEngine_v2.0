@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Recluse/Types.hpp"
+#include "Recluse/Utility.hpp"
 #include "Recluse/Memory/Allocator.hpp"
 #include "D3D12Commons.hpp"
 
@@ -16,7 +17,7 @@ class DescriptorHeapAllocation;
 
 
 // Descriptor heap handle, which holds onto several descriptor heaps available for allocation/freeing.
-//
+// Each descriptor allocation needs to be reallocated every new frame, as old descriptors will be freed.
 class DescriptorHeap
 {
 public:
@@ -28,8 +29,8 @@ public:
     DescriptorHeap();
     virtual ~DescriptorHeap() { }
 
-    ErrType                             initialize(ID3D12Device* pDevice, U32 nodeMask, U32 numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
-    ErrType                             release(ID3D12Device* pDevice);
+    ResultCode                             initialize(ID3D12Device* pDevice, U32 nodeMask, U32 numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
+    ResultCode                             release(ID3D12Device* pDevice);
 
     virtual DescriptorHeapAllocation    allocate(U32 numDescriptors) = 0;
     virtual void                        free(const DescriptorHeapAllocation& allocation) = 0;
@@ -160,7 +161,7 @@ protected:
 class CpuDescriptorHeapManager
 {
 public:
-    ErrType                             initialize(ID3D12Device* pDevice, U32 nodeMask, U32 numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
+    ResultCode                             initialize(ID3D12Device* pDevice, U32 nodeMask, U32 numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
     DescriptorHeapAllocation            allocate(ID3D12Device* pDevice, U32 numberDescriptors);
     void                                free(const DescriptorHeapAllocation& alloc);
     void                                reset();
@@ -213,8 +214,8 @@ public:
     static const F32                kNumDescriptorsPageSize;
     static const F32                kNumSamplerDescriptorsPageSize;
 
-    ErrType                         initialize(ID3D12Device* pDevice, const DescriptorCoreSize& descriptorSizes, U32 bufferCount);
-    ErrType                         release(ID3D12Device* pDevice);
+    ResultCode                         initialize(ID3D12Device* pDevice, const DescriptorCoreSize& descriptorSizes, U32 bufferCount);
+    ResultCode                         release(ID3D12Device* pDevice);
 
     // Allocate a table of descriptors. Uses device only if we run out of descriptor space... This shouldn't usually happen unless
     // we are overflowing with so many descriptors.

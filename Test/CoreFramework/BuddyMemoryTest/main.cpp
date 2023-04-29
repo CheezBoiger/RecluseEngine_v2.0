@@ -24,7 +24,7 @@ int main()
 
     R_DEBUG("Core", "Initialize buddy memory allocator.");
     BuddyAllocator* pAllocator = new BuddyAllocator();
-    pAllocator->initialize(0, R_ALLOC_MASK(R_1MB, 4));
+    pAllocator->initialize(0, align(R_1MB, 4));
     Allocation alloc    = { };
     Allocation alloc2   = { };
 

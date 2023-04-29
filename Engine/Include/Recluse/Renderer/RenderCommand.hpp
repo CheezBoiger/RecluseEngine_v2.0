@@ -132,7 +132,7 @@ public:
     void initialize();
     void destroy();
 
-    inline ErrType push(const RenderCommand& renderCommand);
+    inline ResultCode push(const RenderCommand& renderCommand);
     inline void reset();
 
     RenderCommand** getRenderCommands() const { return (RenderCommand**)m_pointerPool->getBaseAddress(); }    

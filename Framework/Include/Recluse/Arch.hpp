@@ -55,3 +55,7 @@
 
 #define R_INTERNAL static
 #define R_GLOBAL static
+
+#if defined(R_DEVELOPER)
+    #define RECLUSE_DEVELOPER 1
+#endif

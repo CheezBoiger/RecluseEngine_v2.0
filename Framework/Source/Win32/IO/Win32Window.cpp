@@ -28,7 +28,7 @@ static void setRawInputDevices(HWND hwnd)
 
     if (!RegisterRawInputDevices(&rid, 1, sizeof(RAWINPUTDEVICE))) 
     {
-        R_ERR(R_CHANNEL_WIN32, "Failed to register raw input device to this window handle.");
+        R_ERROR(R_CHANNEL_WIN32, "Failed to register raw input device to this window handle.");
     }
 }
 
@@ -48,7 +48,7 @@ static B32 checkWindowRegistered()
         
         if (!RegisterClassExW(&winClass)) 
         {
-            R_ERR(R_CHANNEL_WIN32, "Failed to initialize native Win32 window system!");
+            R_ERROR(R_CHANNEL_WIN32, "Failed to initialize native Win32 window system!");
             
             return win32WindowFunctionality.initialized;
         }
@@ -76,7 +76,7 @@ Window* Window::create(const std::string& title, U32 x, U32 y, U32 width, U32 he
 
     if (!checkWindowRegistered()) 
     {
-        R_ERR(R_CHANNEL_WIN32, "Failed to create window handle.");
+        R_ERROR(R_CHANNEL_WIN32, "Failed to create window handle.");
         
         return nullptr;
     }
@@ -110,7 +110,7 @@ Window* Window::create(const std::string& title, U32 x, U32 y, U32 width, U32 he
 
     if (!hwnd) 
     {
-        R_ERR(R_CHANNEL_WIN32, "Failed to creat window handle!");
+        R_ERROR(R_CHANNEL_WIN32, "Failed to creat window handle!");
         
         return nullptr;
     }
@@ -165,7 +165,7 @@ void Window::close()
 
     if (result == FALSE) 
     {
-        R_ERR(R_CHANNEL_WIN32, "Failed to close window handle! Error: %d", GetLastError());
+        R_ERROR(R_CHANNEL_WIN32, "Failed to close window handle! Error: %d", GetLastError());
         return;
     }
 
@@ -176,7 +176,7 @@ void Window::close()
 }
 
 
-ErrType Window::destroy(Window* pWindow)
+ResultCode Window::destroy(Window* pWindow)
 {
     R_DEBUG(R_CHANNEL_WIN32, "Destroying window...");
 

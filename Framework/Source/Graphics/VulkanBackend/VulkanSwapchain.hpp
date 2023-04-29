@@ -34,11 +34,11 @@ public:
 
     // Build the vulkan swapchain. This will return the total number of frames that 
     // were created.
-    ErrType                 build(VulkanDevice* pDevice);
+    ResultCode                 build(VulkanDevice* pDevice);
 
-    ErrType                 onRebuild() override;
+    ResultCode                 onRebuild() override;
     
-    ErrType                 present(PresentConfig config = PresentConfig_Present) override; 
+    ResultCode                 present(PresentConfig config = PresentConfig_Present) override; 
 
     U32                     getCurrentFrameIndex() override { return m_currentFrameIndex; }
     U32                     getFrameCount() const { return m_frameResources.getNumMaxFrames(); }
@@ -51,7 +51,7 @@ public:
     // Pass a manual override of a fence object, if we need to wait for another fence,
     // this will override the frame fence wait, and can potentially cause a hang if we lose that
     // fence!
-    ErrType                 prepareFrame(VkFence cpuFence = VK_NULL_HANDLE);
+    ResultCode                 prepareFrame(VkFence cpuFence = VK_NULL_HANDLE);
     
     VkSwapchainKHR operator()() {
         return m_swapchain;
@@ -60,7 +60,7 @@ public:
     VkSwapchainKHR  get() const { return m_swapchain; }
 
     // Destroy the vulkan swapchain, including surface.
-    ErrType         destroy();
+    ResultCode         destroy();
 
     VulkanDevice*   getDevice() const { return m_pDevice; }
 
@@ -74,7 +74,7 @@ public:
     // Submit the final command buffer, which will utilize the wait and signal semphores for the current frame.
     // Can optionally override the frame inflight fence with your own fence if needed. Keep in mind this can be 
     // dangerous!
-    ErrType         submitFinalCommandBuffer(VkCommandBuffer commandBuffer, VkFence cpuFence = VK_NULL_HANDLE);
+    ResultCode         submitFinalCommandBuffer(VkCommandBuffer commandBuffer, VkFence cpuFence = VK_NULL_HANDLE);
 
 private:
 

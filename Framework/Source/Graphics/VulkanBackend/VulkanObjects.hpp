@@ -38,8 +38,8 @@ public:
         , m_numRenderTargets(0)
         , m_fboId(0ull) { }
 
-    ErrType         initialize(VulkanDevice* pDevice, const VulkanRenderPassDesc& desc);
-    ErrType         release(VulkanDevice* pDevice);
+    ResultCode         initialize(VulkanDevice* pDevice, const VulkanRenderPassDesc& desc);
+    ResultCode         release(VulkanDevice* pDevice);
 
     VkRenderPass    get() const { return m_renderPass; }
     VkFramebuffer   getFbo() const { return m_fbo; }
@@ -114,8 +114,8 @@ typedef Hash64 DescriptorSetId;
 
 VkDescriptorSetLayout       makeLayout(VulkanContext* pContext, const Structure& structure);
 const VulkanDescriptorAllocation& makeDescriptorSet(VulkanContext* pContext, const Structure& structure);
-ErrType                     releaseLayout(VulkanContext* pContext, const Structure& structure);
-ErrType                     releaseDescriptorSet(VulkanContext* pContext, const Structure& structure);
+ResultCode                     releaseLayout(VulkanContext* pContext, const Structure& structure);
+ResultCode                     releaseDescriptorSet(VulkanContext* pContext, const Structure& structure);
 DescriptorSetLayoutId       obtainDescriptorLayoutKey(const Structure& structure);
 void                        clearDescriptorSetCache(VulkanContext* pContext, ClearCacheFlag flag = ClearCacheFlag_DescriptorPoolFastClear);
 void                        clearDescriptorLayoutCache(VulkanDevice* pContext);

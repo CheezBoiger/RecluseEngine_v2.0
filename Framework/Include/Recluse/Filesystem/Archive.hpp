@@ -16,17 +16,17 @@ public:
         , m_cursor(0ull) { }
 
     void writeHeader(void* dat, SizeT szBytes);
-    ErrType readHeader(SizeT szBytes, void** pOutput);
+    ResultCode readHeader(SizeT szBytes, void** pOutput);
 
-    ErrType R_PUBLIC_API write(void* ptr, U64 sz);
-    ErrType R_PUBLIC_API read(void* ptr, U64 sz);
+    ResultCode R_PUBLIC_API write(void* ptr, U64 sz);
+    ResultCode R_PUBLIC_API read(void* ptr, U64 sz);
 
-    ErrType R_PUBLIC_API open(char* access);
-    ErrType R_PUBLIC_API close();
+    ResultCode R_PUBLIC_API open(char* access);
+    ResultCode R_PUBLIC_API close();
 
 private:
     File    m_file;
-    PtrType m_cursor;
+    UPtr m_cursor;
     std::string m_filepath;
 };
 } // Recluse

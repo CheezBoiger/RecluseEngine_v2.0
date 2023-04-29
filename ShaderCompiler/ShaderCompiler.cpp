@@ -127,7 +127,7 @@ void replaceLine(std::string& in, size_t currentPos, const std::string& from, co
 
 static std::string generateShaderSceneView(ShaderLang lang)
 {
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
     // Scene view buffer string to be passed.
     std::string sceneViewBufferStr  = "#ifndef _RECLUSE_SCENE_BUFFER_H_\n#define _RECLUSE_SCENE_BUFFER_H_\n";
     // Start at this file and navigate to the Engine scene view file.
@@ -143,7 +143,7 @@ static std::string generateShaderSceneView(ShaderLang lang)
 
     if (result != RecluseResult_Ok) 
     {    
-        R_ERR("ShaderCompiler", "Failed to read from file: %s", pathToSceneViewFile.c_str());
+        R_ERROR("ShaderCompiler", "Failed to read from file: %s", pathToSceneViewFile.c_str());
         return "";
     }
 
@@ -170,7 +170,7 @@ static std::string generateShaderSceneView(ShaderLang lang)
 
             if (sz == 0) 
             {
-                R_ERR("ShaderCompiler", "Variable syntax declared, but no name found!");
+                R_ERROR("ShaderCompiler", "Variable syntax declared, but no name found!");
             }
 
             std::string varName = line.substr(start, sz);
@@ -180,7 +180,7 @@ static std::string generateShaderSceneView(ShaderLang lang)
 
             if (sz == 0) 
             {
-                R_ERR("ShaderCompiler", "Data type not written!");
+                R_ERROR("ShaderCompiler", "Data type not written!");
             }
 
             std::string varDataType = line.substr(start, sz);
@@ -218,7 +218,7 @@ static std::string generateShaderSceneView(ShaderLang lang)
 
             if (start == std::string::npos || end == std::string::npos) 
             {
-                R_ERR("ShaderCompiler", "No struct name provided for scene buffer!");
+                R_ERROR("ShaderCompiler", "No struct name provided for scene buffer!");
             }
 
             structName = line.substr(start, sz);
@@ -271,7 +271,7 @@ ShaderBuilder* createBuilder(Allocator* scratch, ShaderLang lang, ShaderIntermed
     return pBuilder;
 }
 
-ErrType compileShaders(ShaderLang lang)
+ResultCode compileShaders(ShaderLang lang)
 {
     R_ASSERT(gConfigs.pCompilerState != NULL);
 
@@ -313,11 +313,11 @@ ErrType compileShaders(ShaderLang lang)
             sourceFilePath = sourceFilePath + "." + gConfigs.pCompilerState->input.ext;
         }
 
-        ErrType result = File::readFrom(&buffer, sourceFilePath);
+        ResultCode result = File::readFrom(&buffer, sourceFilePath);
 
         if (result != RecluseResult_Ok) 
         {
-            R_ERR("ShaderCompiler", "Failed to read shader %s...", shaderMetadata->relativefilePath.c_str());
+            R_ERROR("ShaderCompiler", "Failed to read shader %s...", shaderMetadata->relativefilePath.c_str());
             Shader::destroy(pShader);
             continue;
         } 
@@ -383,7 +383,7 @@ ErrType compileShaders(ShaderLang lang)
                 } 
                 else 
                 {
-                    R_ERR
+                    R_ERROR
                         (
                             "ShaderCompiler", 
                             "Failed to compile shader! %s", 
@@ -404,7 +404,7 @@ ErrType compileShaders(ShaderLang lang)
 }
 
 
-ErrType addShaderToCompile(const std::string& filePath, const char* entryPoint, const std::string& config, ShaderType shaderType)
+ResultCode addShaderToCompile(const std::string& filePath, const char* entryPoint, const std::string& config, ShaderType shaderType)
 {
     ShaderMetaData metadata     = { };
     metadata.configs            = config;
@@ -418,16 +418,16 @@ ErrType addShaderToCompile(const std::string& filePath, const char* entryPoint, 
 }
 
 
-ErrType setConfigs(const std::string& configPath, U32 compilerIndex)
+ResultCode setConfigs(const std::string& configPath, U32 compilerIndex)
 {
     json jfile;
     {
         Recluse::FileBufferData dat;
-        Recluse::ErrType result = Recluse::File::readFrom(&dat, configPath);
+        Recluse::ResultCode result = Recluse::File::readFrom(&dat, configPath);
 
         if (result != Recluse::RecluseResult_Ok) 
         {
-            R_ERR("ShaderCompiler", "Failed to find config file!");
+            R_ERROR("ShaderCompiler", "Failed to find config file!");
             return result;
         }
 
@@ -439,7 +439,7 @@ ErrType setConfigs(const std::string& configPath, U32 compilerIndex)
         } 
         catch (std::exception& e) 
         {
-            R_ERR("ShaderCompiler", "%s", e.what());
+            R_ERROR("ShaderCompiler", "%s", e.what());
             return RecluseResult_Failed;
         }
     }
@@ -474,7 +474,7 @@ ErrType setConfigs(const std::string& configPath, U32 compilerIndex)
             } 
             else 
             {
-                R_ERR("ShaderCompiler", "Could not find the proper output parameters for this compiler info!");
+                R_ERROR("ShaderCompiler", "Could not find the proper output parameters for this compiler info!");
             }
 
             if (compiler.find("input") != compiler.end()) 
@@ -527,24 +527,24 @@ ErrType setConfigs(const std::string& configPath, U32 compilerIndex)
     } 
     else 
     {
-        R_ERR("ShaderCompiler", "No compilers defined in config file!!");
+        R_ERROR("ShaderCompiler", "No compilers defined in config file!!");
     }
 
     return RecluseResult_Ok;
 }
 
 
-ErrType setShaderFiles(const std::string& shadersPath)
+ResultCode setShaderFiles(const std::string& shadersPath)
 {
     json jfile;
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
     {
         FileBufferData bufferData = { };
         result = File::readFrom(&bufferData, shadersPath);
 
         if (result != RecluseResult_Ok) 
         {
-            R_ERR("ShaderCompiler", "Failed to open shaders path!");
+            R_ERROR("ShaderCompiler", "Failed to open shaders path!");
             return result;        
         }
 
@@ -555,7 +555,7 @@ ErrType setShaderFiles(const std::string& shadersPath)
         } 
         catch (const std::exception& e) 
         {
-            R_ERR("ShaderCompiler", "%s", e.what());
+            R_ERROR("ShaderCompiler", "%s", e.what());
             return RecluseResult_Failed;
         }
     }

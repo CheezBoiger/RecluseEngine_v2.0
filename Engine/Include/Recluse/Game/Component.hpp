@@ -28,9 +28,9 @@ enum ComponentUpdateFlag
     private: \
     static Recluse::ECS::System<_class>* k ## _class ## System; \
     public: \
-    static Recluse::ECS::ComponentUUID classGUID() { return recluseHash(#_class, sizeof(#_class)); } \
+    static Recluse::ECS::ComponentUUID classGUID() { return recluseHashFast(#_class, sizeof(#_class)); } \
     static R_PUBLIC_API _class* instantiate(const RGUID& owner); \
-    static R_PUBLIC_API ErrType free(_class* ); \
+    static R_PUBLIC_API ResultCode free(_class* ); \
     virtual Recluse::ECS::ComponentUUID getClassGUID() const override { return _class::classGUID(); } \
     static R_PUBLIC_API Recluse::ECS::AbstractSystem* getSystem(); \
     static R_PUBLIC_API void systemInit();
@@ -43,11 +43,11 @@ enum ComponentUpdateFlag
     Recluse::ECS::System<_class>* _class :: k ## _class ## System = nullptr; \
     _class* _class::instantiate(const Recluse::RGUID& owner) { \
         _class* pAllocatedComp = nullptr; \
-        ErrType err = k ## _class ## System->allocateComponent(&pAllocatedComp, owner); \
+        ResultCode err = k ## _class ## System->allocateComponent(&pAllocatedComp, owner); \
         if (err != RecluseResult_Ok) return nullptr; \
         return pAllocatedComp; \
     } \
-    ErrType _class::free(_class* pComponent) { \
+    ResultCode _class::free(_class* pComponent) { \
         return k ## _class ## System->freeComponent(&pComponent); \
     } \
     void _class::systemInit() { if (!k ## _class ## System) k ## _class ## System = _game_system::create(); } \
@@ -68,9 +68,9 @@ public:
 
     virtual ~Component() { }
 
-    virtual ErrType serialize(Archive* pArchive) override { return RecluseResult_NoImpl; }
+    virtual ResultCode serialize(Archive* pArchive) override { return RecluseResult_NoImpl; }
 
-    virtual ErrType deserialize(Archive* pArchive) override { return RecluseResult_NoImpl; }
+    virtual ResultCode deserialize(Archive* pArchive) override { return RecluseResult_NoImpl; }
 
     // Get the component owner.
     RGUID     getOwner() const { return m_ownerGuid; }

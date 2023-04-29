@@ -65,7 +65,7 @@ public:
     // Create the window.
     static R_OS_CALL R_PUBLIC_API Window* create(const std::string& title, U32 x, U32 y, U32 width, U32 height);
     // Destroy the window.
-    static R_OS_CALL R_PUBLIC_API ErrType destroy(Window* pWindow);
+    static R_OS_CALL R_PUBLIC_API ResultCode destroy(Window* pWindow);
     static R_OS_CALL R_PUBLIC_API Window* getActiveFocusedWindow();
 
     // close the window.

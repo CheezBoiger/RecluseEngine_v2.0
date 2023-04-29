@@ -12,7 +12,7 @@ void* operator new (size_t sizeBytes, Recluse::Allocator* alloc, Recluse::Alloca
     R_ASSERT(alloc != NULL);
 
     Recluse::Allocation allocationOutput    = { 0ull, 0ull };
-    Recluse::ErrType err                    = alloc->allocate(&allocationOutput, sizeBytes, Recluse::pointerSizeBytes());
+    Recluse::ResultCode err                    = alloc->allocate(&allocationOutput, sizeBytes, Recluse::pointerSizeBytes());
 
     if (pOutput)
     {
@@ -31,7 +31,7 @@ void* operator new (size_t sizeBytes, Recluse::Allocator* alloc)
     R_ASSERT(alloc != NULL);
 
     Recluse::Allocation allocationOutput    = { 0ull, 0ull };
-    Recluse::ErrType err                    = alloc->allocate(&allocationOutput, sizeBytes, Recluse::pointerSizeBytes());
+    Recluse::ResultCode err                    = alloc->allocate(&allocationOutput, sizeBytes, Recluse::pointerSizeBytes());
 
     R_ASSERT(err == Recluse::RecluseResult_Ok);
 
@@ -46,10 +46,10 @@ void operator delete(void* ptr, Recluse::Allocator* alloc)
     // Most allocators will accept just this.
     Recluse::Allocation allocation;
 
-    allocation.baseAddress  = (Recluse::PtrType)ptr;
+    allocation.baseAddress  = (Recluse::UPtr)ptr;
     allocation.sizeBytes    = 0ull;
 
-    Recluse::ErrType err = alloc->free(&allocation);
+    Recluse::ResultCode err = alloc->free(&allocation);
 
     R_ASSERT(err == Recluse::RecluseResult_Ok);
 }

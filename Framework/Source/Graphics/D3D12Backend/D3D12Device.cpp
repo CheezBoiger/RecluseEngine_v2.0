@@ -80,7 +80,7 @@ void D3D12Context::popState()
 }
 
 
-ErrType D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo& info)
+ResultCode D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo& info)
 {
     R_DEBUG(R_CHANNEL_D3D12, "Creating D3D12 device...");
 
@@ -141,16 +141,16 @@ void D3D12Device::destroy()
 }
 
 
-ErrType D3D12Device::createSwapchain(D3D12Swapchain** ppSwapchain, const SwapchainCreateDescription& desc)
+ResultCode D3D12Device::createSwapchain(D3D12Swapchain** ppSwapchain, const SwapchainCreateDescription& desc)
 {
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
     D3D12Swapchain* pSwapchain = new D3D12Swapchain(desc, m_graphicsQueue);
 
     result = pSwapchain->initialize(this);
 
     if (result != RecluseResult_Ok) 
     {
-        R_ERR(R_CHANNEL_D3D12, "Failed to create d3d swapchain!");
+        R_ERROR(R_CHANNEL_D3D12, "Failed to create d3d swapchain!");
 
         pSwapchain->destroy();
         delete pSwapchain;
@@ -163,9 +163,9 @@ ErrType D3D12Device::createSwapchain(D3D12Swapchain** ppSwapchain, const Swapcha
 }
 
 
-ErrType D3D12Device::destroySwapchain(D3D12Swapchain* pSwapchain)
+ResultCode D3D12Device::destroySwapchain(D3D12Swapchain* pSwapchain)
 {
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
 
     pSwapchain->destroy();
     delete pSwapchain;
@@ -174,16 +174,16 @@ ErrType D3D12Device::destroySwapchain(D3D12Swapchain* pSwapchain)
 }
 
 
-ErrType D3D12Device::createCommandQueue(D3D12Queue** ppQueue, GraphicsQueueTypeFlags type)
+ResultCode D3D12Device::createCommandQueue(D3D12Queue** ppQueue, GraphicsQueueTypeFlags type)
 {
     D3D12Queue* pD3D12Queue = new D3D12Queue(type);
-    ErrType result          = RecluseResult_Ok;
+    ResultCode result          = RecluseResult_Ok;
 
     result = pD3D12Queue->initialize(this);
 
     if (result != RecluseResult_Ok) 
     {
-        R_ERR(R_CHANNEL_D3D12, "Failed to create d3d12 queue!");
+        R_ERROR(R_CHANNEL_D3D12, "Failed to create d3d12 queue!");
 
         pD3D12Queue->destroy();
         delete pD3D12Queue;
@@ -197,7 +197,7 @@ ErrType D3D12Device::createCommandQueue(D3D12Queue** ppQueue, GraphicsQueueTypeF
 }
 
 
-ErrType D3D12Device::destroyCommandQueue(D3D12Queue* pQueue)
+ResultCode D3D12Device::destroyCommandQueue(D3D12Queue* pQueue)
 {
     if (!pQueue) 
     {
@@ -220,7 +220,7 @@ void D3D12Device::allocateMemoryPool(D3D12MemoryPool* pPool, ResourceMemoryUsage
 }
 
 
-ErrType D3D12Device::reserveMemory(const MemoryReserveDescription& desc)
+ResultCode D3D12Device::reserveMemory(const MemoryReserveDescription& desc)
 {
     return m_resourceAllocationManager.reserveMemory(desc);
 }
@@ -235,7 +235,7 @@ void D3D12Context::resetCurrentResources()
 
     if (FAILED(result)) 
     {
-        R_ERR(R_CHANNEL_WIN32, "Failed to properly reset allocators.");
+        R_ERROR(R_CHANNEL_WIN32, "Failed to properly reset allocators.");
     }
 
 }
@@ -272,7 +272,7 @@ void D3D12Context::initializeBufferResources(U32 buffering)
 
         if (FAILED(result)) 
         {
-            R_ERR(R_CHANNEL_D3D12, "Failed to initialize a fence for frame resource: %d", i);
+            R_ERROR(R_CHANNEL_D3D12, "Failed to initialize a fence for frame resource: %d", i);
         }
     }
 }
@@ -301,16 +301,16 @@ void D3D12Context::destroyBufferResources()
 }
 
 
-ErrType D3D12Context::createCommandList(D3D12PrimaryCommandList** ppList, GraphicsQueueTypeFlags flags)
+ResultCode D3D12Context::createCommandList(D3D12PrimaryCommandList** ppList, GraphicsQueueTypeFlags flags)
 {
     D3D12PrimaryCommandList* pList = new D3D12PrimaryCommandList();
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
 
     result = pList->initialize(this, flags);
 
     if (result != RecluseResult_Ok) 
     {
-        R_ERR(R_CHANNEL_D3D12, "Failed to create command list!");
+        R_ERROR(R_CHANNEL_D3D12, "Failed to create command list!");
         pList->destroy();
 
         return result;
@@ -322,11 +322,11 @@ ErrType D3D12Context::createCommandList(D3D12PrimaryCommandList** ppList, Graphi
 }
 
 
-ErrType D3D12Context::destroyCommandList(D3D12PrimaryCommandList* pList)
+ResultCode D3D12Context::destroyCommandList(D3D12PrimaryCommandList* pList)
 {
     R_ASSERT(pList != NULL);
     
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
     result = pList->destroy();
 
     delete pList;
@@ -411,20 +411,20 @@ D3D12_FEATURE_DATA_FORMAT_SUPPORT D3D12Device::checkFormatSupport(ResourceFormat
                 )
         )
     {
-        R_ERR(R_CHANNEL_D3D12, "Failed to query for proper format support on device!");
+        R_ERROR(R_CHANNEL_D3D12, "Failed to query for proper format support on device!");
     }
 
     return formatSupport;
 }
 
 
-ErrType D3D12Device::loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition)
+ResultCode D3D12Device::loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition)
 {
     return RecluseResult_NoImpl;
 }
 
 
-ErrType D3D12Device::unloadShaderProgram(ShaderProgramId program)
+ResultCode D3D12Device::unloadShaderProgram(ShaderProgramId program)
 {
     return RecluseResult_NoImpl;
 }

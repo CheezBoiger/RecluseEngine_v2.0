@@ -24,21 +24,21 @@ public:
         , m_currentFrameIndex(0)
         , m_pBackbufferQueue(pBackbufferQueue) { }
 
-    ErrType initialize(D3D12Device* pDevice);
+    ResultCode initialize(D3D12Device* pDevice);
     void destroy();
 
     // Present to our window display.
-    ErrType present(PresentConfig config = PresentConfig_Present) override;
+    ResultCode present(PresentConfig config = PresentConfig_Present) override;
 
     GraphicsResource*       getFrame(U32 idx) override;
     GraphicsResourceView*   getFrameView(U32 idx) override;
 
 private:
 
-    ErrType initializeFrameResources();
-    ErrType destroyFrameResources();
+    ResultCode initializeFrameResources();
+    ResultCode destroyFrameResources();
     
-    ErrType flushFinishedCommandLists();
+    ResultCode flushFinishedCommandLists();
     
     IDXGISwapChain3*            m_pSwapchain;
     D3D12Device*                m_pDevice;

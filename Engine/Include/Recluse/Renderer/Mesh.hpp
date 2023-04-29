@@ -59,7 +59,7 @@ public:
         : m_pVertexBuffer(nullptr)
         , m_pIndexBuffer(nullptr) { }
 
-    R_PUBLIC_API ErrType initialize(VertexBuffer* pVertexBuffer, IndexBuffer* pIndexBuffer);
+    R_PUBLIC_API ResultCode initialize(VertexBuffer* pVertexBuffer, IndexBuffer* pIndexBuffer);
 
     R_PUBLIC_API VertexBuffer* getVertexBuffer() { return m_pVertexBuffer; }
     R_PUBLIC_API IndexBuffer* getIndexBuffer() { return m_pIndexBuffer; }
@@ -115,7 +115,7 @@ class MeshInstanced
 {
 public:
     
-    R_PUBLIC_API ErrType initializeInstanced();
+    R_PUBLIC_API ResultCode initializeInstanced();
 
 private:
     InstancedMeshHandler* m_instancedMeshHandler;

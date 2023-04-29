@@ -20,9 +20,14 @@ struct R_PUBLIC_API DualQuaternion
     {
     }
 
-    inline DualQuaternion operator+(const DualQuaternion& rh)
+    inline DualQuaternion operator+(const DualQuaternion& rh) const
     {
         return DualQuaternion(real + rh.real, dual + rh.dual);
+    }
+
+    inline DualQuaternion operator-(const DualQuaternion& rh) const
+    {
+        return DualQuaternion(real - rh.real, dual - rh.dual);
     }
     
 };

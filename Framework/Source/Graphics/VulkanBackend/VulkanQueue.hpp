@@ -27,7 +27,7 @@ public:
 
     ~VulkanQueue();
 
-    ErrType initialize(VulkanDevice* device, QueueFamily* pFamily, U32 queueFamilyIndex, U32 queueIndex);
+    ResultCode initialize(VulkanDevice* device, QueueFamily* pFamily, U32 queueFamilyIndex, U32 queueIndex);
     
     void destroy();
 
@@ -35,9 +35,9 @@ public:
 
     void setTemporaryCommandPoolUse(VkCommandPool pool) { m_tempCommandPool = pool; }
 
-    ErrType copyResource(GraphicsResource* dst, GraphicsResource* src);
+    ResultCode copyResource(GraphicsResource* dst, GraphicsResource* src);
 
-    ErrType copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, 
+    ResultCode copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, 
         const CopyBufferRegion* pRegions, U32 numRegions);
 
     void wait();

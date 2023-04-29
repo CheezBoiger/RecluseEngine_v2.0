@@ -12,7 +12,7 @@
 
 using namespace Recluse;
 
-ErrType printHello(void* data)
+ResultCode printHello(void* data)
 {
     I32 uid = *(I32*)data;
 
@@ -28,7 +28,7 @@ ErrType printHello(void* data)
 
     R_DEBUG("TestFramework", "Can we see this message? uid=%d", uid);
 
-    R_ERR("ERROR", "You are an error message!! uid=%d", uid);
+    R_ERROR("ERROR", "You are an error message!! uid=%d", uid);
 
     R_WARN("WARN", "Issuing a warning...!! uid=%d", uid);
 

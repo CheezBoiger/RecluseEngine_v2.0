@@ -18,7 +18,7 @@ std::vector<VulkanAdapter> VulkanAdapter::getAvailablePhysicalDevices(VulkanInst
     
     if (count == 0) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "No physical devices that support vulkan!");
+        R_ERROR(R_CHANNEL_VULKAN, "No physical devices that support vulkan!");
 
         return physicalDevices;
     }
@@ -88,7 +88,7 @@ VkPhysicalDeviceFeatures2 VulkanAdapter::getFeatures2() const
 }
 
 
-ErrType VulkanAdapter::getAdapterInfo(AdapterInfo* out) const
+ResultCode VulkanAdapter::getAdapterInfo(AdapterInfo* out) const
 {
     VkPhysicalDeviceProperties properties = getProperties();
     memcpy(out->deviceName, properties.deviceName, 256);
@@ -112,17 +112,17 @@ ErrType VulkanAdapter::getAdapterInfo(AdapterInfo* out) const
 }
 
 
-ErrType VulkanAdapter::createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice) 
+ResultCode VulkanAdapter::createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice) 
 {
 
     R_DEBUG(R_CHANNEL_VULKAN, "Creating device!");
 
     VulkanDevice* pDevice = new VulkanDevice();
-    ErrType err = pDevice->initialize(this, info);
+    ResultCode err = pDevice->initialize(this, info);
     
     if (err != RecluseResult_Ok) 
     {    
-        R_ERR(R_CHANNEL_VULKAN, "Failed to initialize device!");
+        R_ERROR(R_CHANNEL_VULKAN, "Failed to initialize device!");
 
         delete pDevice;
         return RecluseResult_Failed;
@@ -135,7 +135,7 @@ ErrType VulkanAdapter::createDevice(DeviceCreateInfo& info, GraphicsDevice** ppD
 }
 
 
-ErrType VulkanAdapter::destroyDevice(GraphicsDevice* pDevice)
+ResultCode VulkanAdapter::destroyDevice(GraphicsDevice* pDevice)
 {
     VulkanInstance* pVc = m_instance;
 
@@ -154,7 +154,7 @@ ErrType VulkanAdapter::destroyDevice(GraphicsDevice* pDevice)
         }
     }
 
-    R_ERR(R_CHANNEL_VULKAN, "Device does not belong to this adapter!");   
+    R_ERROR(R_CHANNEL_VULKAN, "Device does not belong to this adapter!");   
  
     return RecluseResult_Ok;
 }
@@ -168,7 +168,7 @@ std::vector<VkQueueFamilyProperties> VulkanAdapter::getQueueFamilyProperties() c
 
     if (count == 0) 
     { 
-        R_ERR(R_CHANNEL_VULKAN, "No queue families reported by the driver!");
+        R_ERROR(R_CHANNEL_VULKAN, "No queue families reported by the driver!");
         
         return properties;
     }

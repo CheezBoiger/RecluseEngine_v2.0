@@ -23,11 +23,11 @@ public:
         , m_isClamped(false)
         , m_isEnabled(false) { }
 
-    virtual R_PUBLIC_API ErrType    integrateInput(const IInputFeedback& feedback) override;
-    virtual R_PUBLIC_API ErrType    initialize(const std::string& controllerName) override;
-    virtual R_PUBLIC_API ErrType    destroy() override;
-    virtual R_PUBLIC_API ErrType    getInput(IInputFeedback& feedback) override;
-    R_PUBLIC_API ErrType            setIconPath(const std::string& iconPath);
+    virtual R_PUBLIC_API ResultCode    integrateInput(const IInputFeedback& feedback) override;
+    virtual R_PUBLIC_API ResultCode    initialize(const std::string& controllerName) override;
+    virtual R_PUBLIC_API ResultCode    destroy() override;
+    virtual R_PUBLIC_API ResultCode    getInput(IInputFeedback& feedback) override;
+    R_PUBLIC_API ResultCode            setIconPath(const std::string& iconPath);
 
     I32                             getXPos() const { return m_xPosition; }
     I32                             getYPos() const { return m_yPosition; }

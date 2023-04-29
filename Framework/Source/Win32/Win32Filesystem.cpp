@@ -20,10 +20,10 @@ U64 File::getFileSz() const
 }
 
 
-ErrType File::readFrom(FileBufferData* pFile, const std::string& filePath)
+ResultCode File::readFrom(FileBufferData* pFile, const std::string& filePath)
 {
     File file;
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
 
     result = file.open(filePath, "r");
 
@@ -42,9 +42,9 @@ ErrType File::readFrom(FileBufferData* pFile, const std::string& filePath)
 }
 
 
-ErrType File::writeTo(FileBufferData* pFile, const std::string& filePath)
+ResultCode File::writeTo(FileBufferData* pFile, const std::string& filePath)
 {
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
     File file;
     
     result = file.open(filePath, "w");
@@ -64,17 +64,17 @@ typedef struct
 {
     FileBufferDataAsync*    pAsyncBuffer;
     std::string             filePath;
-    ErrType                 (*taskFn)       (FileBufferData*, const std::string&);
+    ResultCode                 (*taskFn)       (FileBufferData*, const std::string&);
 } FileBufferTemporary;
 
 
-static ErrType runFileAsyncTask(void* pData)
+static ResultCode runFileAsyncTask(void* pData)
 {
     R_ASSERT(pData != NULL);
 
     FileBufferTemporary* pTemporary = reinterpret_cast<FileBufferTemporary*>(pData);
     
-    ErrType result = pTemporary->taskFn(&pTemporary->pAsyncBuffer->data, pTemporary->filePath);
+    ResultCode result = pTemporary->taskFn(&pTemporary->pAsyncBuffer->data, pTemporary->filePath);
 
     pTemporary->pAsyncBuffer->isFinished = true;
     
@@ -85,7 +85,7 @@ static ErrType runFileAsyncTask(void* pData)
 
     return result;
 }
-ErrType File::readFromAsync(FileBufferDataAsync* pBuffer, const std::string& filePath
+ResultCode File::readFromAsync(FileBufferDataAsync* pBuffer, const std::string& filePath
 )
 {
     static MemoryPool memPool = MemoryPool(sizeof(Thread) * 64ull);
@@ -104,14 +104,14 @@ ErrType File::readFromAsync(FileBufferDataAsync* pBuffer, const std::string& fil
 
     pBuffer->isFinished = false;
 
-    ErrType error = createThread(&thr, runFileAsyncTask);
+    ResultCode error = createThread(&thr, runFileAsyncTask);
 
     //return error;
     return RecluseResult_NoImpl;
 }
 
 
-ErrType File::writeToAsync(FileBufferDataAsync* pBuffer, const std::string& filePath)
+ResultCode File::writeToAsync(FileBufferDataAsync* pBuffer, const std::string& filePath)
 {
     R_ASSERT(pBuffer != NULL);
 
@@ -127,17 +127,17 @@ ErrType File::writeToAsync(FileBufferDataAsync* pBuffer, const std::string& file
 
     pBuffer->isFinished = false;
 
-    ErrType error = createThread(&thr, runFileAsyncTask);
+    ResultCode error = createThread(&thr, runFileAsyncTask);
 
     return RecluseResult_NoImpl;
 }
 
 
-ErrType File::open(const std::string& filePath, char* access)
+ResultCode File::open(const std::string& filePath, char* access)
 {
     if (m_isOpen) 
     {
-        R_ERR(R_CHANNEL_WIN32, "This File is already open...");
+        R_ERROR(R_CHANNEL_WIN32, "This File is already open...");
 
         return RecluseResult_Ok;
     }
@@ -181,7 +181,7 @@ ErrType File::open(const std::string& filePath, char* access)
 
     if (handle == INVALID_HANDLE_VALUE) 
     {
-        R_ERR(R_CHANNEL_WIN32, "Failed to open file: %s", filePath.c_str());
+        R_ERROR(R_CHANNEL_WIN32, "Failed to open file: %s", filePath.c_str());
         return RecluseResult_Failed;
     }
 
@@ -204,20 +204,20 @@ void File::close()
         } 
         else 
         {
-            R_ERR(R_CHANNEL_WIN32, "Failed to close file!");
+            R_ERROR(R_CHANNEL_WIN32, "Failed to close file!");
         }
     }
 }
 
 
-ErrType File::write(void* ptr, U64 szBytes)
+ResultCode File::write(void* ptr, U64 szBytes)
 {
     DWORD numBytesWritten   = 0;
     BOOL isWritten          = WriteFile(m_fileHandle, ptr, (DWORD)szBytes, &numBytesWritten, 0);
 
     if (!isWritten) 
     {
-        R_ERR(R_CHANNEL_WIN32, "Failed to write to file...");
+        R_ERROR(R_CHANNEL_WIN32, "Failed to write to file...");
 
         return RecluseResult_Failed;
     }
@@ -226,7 +226,7 @@ ErrType File::write(void* ptr, U64 szBytes)
 }
 
 
-ErrType File::read(void* ptr, U64 szBytes)
+ResultCode File::read(void* ptr, U64 szBytes)
 {
     // Return invalid if we are requesting to read nothing...
     if (szBytes == 0) 
@@ -239,7 +239,7 @@ ErrType File::read(void* ptr, U64 szBytes)
 
     if (!isRead) 
     {
-        R_ERR(R_CHANNEL_WIN32, "Failed to read to file!");
+        R_ERROR(R_CHANNEL_WIN32, "Failed to read to file!");
 
         return RecluseResult_Failed;
     }

@@ -65,9 +65,9 @@ public:
     // System update.
     virtual void    update(const RealtimeTick& tick);
 
-    ErrType cleanUp() 
+    ResultCode cleanUp() 
     { 
-        ErrType result = onCleanUp();
+        ResultCode result = onCleanUp();
         if (result == RecluseResult_Ok)
         {
             // Do no destroy window, this should be handled externally.
@@ -77,17 +77,17 @@ public:
         return result;
     }
 
-    ErrType init(Window* pWindowHandle, MessageBus* pMessageBus) 
+    ResultCode init(Window* pWindowHandle, MessageBus* pMessageBus) 
     { 
         m_pWindowRef        = pWindowHandle;
         m_pMessageBusRef    = pMessageBus;
-        ErrType result = onInit();
+        ResultCode result = onInit();
         if (result == RecluseResult_Ok)
             markInitialized();
         return result;
     }
 
-    ErrType         loadJobThread(JobTypeFlags flags, ThreadFunction func);
+    ResultCode         loadJobThread(JobTypeFlags flags, ThreadFunction func);
     Thread*         getJobThread(JobType jobType);
 
     Engine::Scene*  getScene() { return m_pScene; }
@@ -108,11 +108,11 @@ protected:
     //! Application specific initialization. This requires 
     //! individual app owners to initialize each module for their 
     //! game system.
-    virtual ErrType onInit() = 0;
+    virtual ResultCode onInit() = 0;
     
     //! Like onInit(), cleans up all application defined resources.
     //! Requires all modules initialized, to be cleaned up manually as well.
-    virtual ErrType onCleanUp() = 0;
+    virtual ResultCode onCleanUp() = 0;
 
     void markInitialized() { m_initialized = true; } 
 
@@ -141,10 +141,10 @@ private:
 namespace MainThreadLoop {
 
 
-R_PUBLIC_API ErrType        loadApp(Application* pApp);
-R_PUBLIC_API ErrType        run();
-R_PUBLIC_API ErrType        initialize();
-R_PUBLIC_API ErrType        cleanUp();
+R_PUBLIC_API ResultCode        loadApp(Application* pApp);
+R_PUBLIC_API ResultCode        run();
+R_PUBLIC_API ResultCode        initialize();
+R_PUBLIC_API ResultCode        cleanUp();
 R_PUBLIC_API void           setFixedTickRate(F32 tickRateSeconds);
 
 R_PUBLIC_API Application*   getApp();

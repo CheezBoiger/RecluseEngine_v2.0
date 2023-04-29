@@ -28,7 +28,7 @@ U32 D3D12RenderPass::getNumRenderTargets() const
 }
 
 
-ErrType D3D12RenderPass::initialize(D3D12Device* pDevice, U32 numRtvDescriptors, const D3D12GraphicsResourceView** rtvDescriptors, const D3D12GraphicsResourceView* dsvDescriptor)
+ResultCode D3D12RenderPass::initialize(D3D12Device* pDevice, U32 numRtvDescriptors, const D3D12GraphicsResourceView** rtvDescriptors, const D3D12GraphicsResourceView* dsvDescriptor)
 {
     R_ASSERT(pDevice != NULL);
     R_ASSERT(numRtvDescriptors <= 8);
@@ -66,7 +66,7 @@ ErrType D3D12RenderPass::initialize(D3D12Device* pDevice, U32 numRtvDescriptors,
 }
 
 
-ErrType D3D12RenderPass::release(D3D12Device* pDevice)
+ResultCode D3D12RenderPass::release(D3D12Device* pDevice)
 {
     R_ASSERT(pDevice != NULL);
 

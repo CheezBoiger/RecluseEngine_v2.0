@@ -26,6 +26,11 @@ set ( RECLUSE_CORE_SOURCE_HASH ${RECLUSE_CORE_SOURCE}/Hash )
 # Need to handle Operating system environments.
 set ( RECLUSE_CORE_SOURCE_SYSTEM )
 
+
+if (R_USE_XXHASH)
+	add_definitions(-DR_USE_XXHASH=1)
+endif()
+
 if (WIN32)
     set ( RECLUSE_WIN32 ${RECLUSE_CORE_SOURCE}/Win32 )
     set ( RECLUSE_WIN32_IO ${RECLUSE_WIN32}/IO )
@@ -96,6 +101,7 @@ set ( RECLUSE_CORE_BUILD
 	${RECLUSE_CORE_SOURCE_MEMORY}/AllocatorCommon.cpp
     ${RECLUSE_CORE_INCLUDE_THREADING}/Threading.hpp
     ${RECLUSE_CORE_INCLUDE_THREADING}/ThreadPool.hpp
+	${RECLUSE_CORE_INCLUDE}/Utility.hpp
     ${RECLUSE_CORE_INCLUDE}/Types.hpp
     ${RECLUSE_CORE_INCLUDE}/Array.hpp
     ${RECLUSE_CORE_INCLUDE}/Async.hpp

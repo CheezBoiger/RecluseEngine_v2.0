@@ -25,14 +25,14 @@ public:
     virtual ~ShaderBuilder() { }
     
     // Set up the shader builder. Should be the warm up setup.
-    virtual ErrType setUp() { return RecluseResult_NoImpl; }
+    virtual ResultCode setUp() { return RecluseResult_NoImpl; }
 
     // Tear down the shader builder, that was initialized. Everything 
     // that is initialized by the shaderbuilder should be cleaned up.
-    virtual ErrType tearDown() { return RecluseResult_NoImpl; }
+    virtual ResultCode tearDown() { return RecluseResult_NoImpl; }
 
     // compiler the shader and return the bytecode.
-    ErrType compile
+    ResultCode compile
         (
             Shader* pShader,
             const char* entryPoint,
@@ -43,13 +43,13 @@ public:
             const std::vector<PreprocessDefine>& defines = std::vector<PreprocessDefine>()
         );
 
-    virtual ErrType disassemble(std::vector<char>& output) { return RecluseResult_NoImpl; }
+    virtual ResultCode disassemble(std::vector<char>& output) { return RecluseResult_NoImpl; }
 
     ShaderIntermediateCode getIntermediateCode() const { return m_imm; }
 
 private:
 
-    virtual ErrType onCompile
+    virtual ResultCode onCompile
                         (
                             const std::vector<char>& srcCode,
                             std::vector<char>& byteCode, 

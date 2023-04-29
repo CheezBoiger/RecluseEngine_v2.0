@@ -32,12 +32,12 @@ public:
         m_memBlocks.clear();
     }
 
-    virtual ErrType onInitialize() override;
-    virtual ErrType onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override;
-    virtual ErrType onFree(Allocation* pOutput) override;
+    virtual ResultCode onInitialize() override;
+    virtual ResultCode onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override;
+    virtual ResultCode onFree(Allocation* pOutput) override;
     
-    virtual ErrType onReset() override;
-    virtual ErrType onCleanUp() override;
+    virtual ResultCode onReset() override;
+    virtual ResultCode onCleanUp() override;
 
 private:
     

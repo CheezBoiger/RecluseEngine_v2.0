@@ -147,14 +147,14 @@ ShaderProgramDefinition::ShaderProgramDefinition(ShaderProgramDefinition&& def)
 }
 
 
-static Shader* compileShader(ShaderBuilder* shaderBuilder, const char* entryPoint, const std::string& shaderPath, ShaderLang language, ShaderType shaderType, ErrType& errorOut)
+static Shader* compileShader(ShaderBuilder* shaderBuilder, const char* entryPoint, const std::string& shaderPath, ShaderLang language, ShaderType shaderType, ResultCode& errorOut)
 {
     Shader* shader = nullptr;
     if (!shaderPath.empty())
     { 
         shader = Shader::create();
         FileBufferData file = { };
-        ErrType error = File::readFrom(&file, shaderPath);
+        ResultCode error = File::readFrom(&file, shaderPath);
         if (error == RecluseResult_Ok)
         { 
             error = shaderBuilder->compile(shader, entryPoint, file.data(), file.size(), language, shaderType);
@@ -170,7 +170,7 @@ static Shader* compileShader(ShaderBuilder* shaderBuilder, const char* entryPoin
     return shader;
 }
 
-static ShaderProgramDefinition makeShaderProgramDefinition(const ShaderProgramDescription& description, ShaderBuilder* shaderBuilder, ErrType& errorOut)
+static ShaderProgramDefinition makeShaderProgramDefinition(const ShaderProgramDescription& description, ShaderBuilder* shaderBuilder, ResultCode& errorOut)
 {
     ShaderProgramDefinition definition;
     definition.pipelineType = description.pipelineType;
@@ -180,22 +180,22 @@ static ShaderProgramDefinition makeShaderProgramDefinition(const ShaderProgramDe
     {
     case BindType_Compute:
         R_ASSERT_FORMAT(description.compute.cs, "Must have a valid compute shader, in order to build a ShaderProgram!");
-        definition.compute.cs = compileShader(shaderBuilder, description.compute.csName, description.compute.cs, language, ShaderType_Compute, errorOut);
+        definition.compute.cs               = compileShader(shaderBuilder, description.compute.csName, description.compute.cs, language, ShaderType_Compute, errorOut);
         break;
     case BindType_Graphics:
         R_ASSERT_FORMAT(description.graphics.vs, "Must have at least a valid vertex shader, in order to build a ShaderProgram!");
-        definition.graphics.vs = compileShader(shaderBuilder, description.graphics.vsName, description.graphics.vs, language, ShaderType_Vertex, errorOut);
-        definition.graphics.ps = description.graphics.ps ? compileShader(shaderBuilder, description.graphics.psName, description.graphics.ps, language, ShaderType_Pixel, errorOut) : nullptr;
-        definition.graphics.gs = description.graphics.gs ? compileShader(shaderBuilder, description.graphics.gsName, description.graphics.gs, language, ShaderType_Geometry, errorOut) : nullptr;
-        definition.graphics.hs = description.graphics.hs ? compileShader(shaderBuilder, description.graphics.hsName, description.graphics.hs, language, ShaderType_Hull, errorOut) : nullptr;
-        definition.graphics.ds = description.graphics.ds ? compileShader(shaderBuilder, description.graphics.dsName, description.graphics.ds, language, ShaderType_Domain, errorOut) : nullptr;
+        definition.graphics.vs              = compileShader(shaderBuilder, description.graphics.vsName, description.graphics.vs, language, ShaderType_Vertex, errorOut);
+        definition.graphics.ps              = description.graphics.ps ? compileShader(shaderBuilder, description.graphics.psName, description.graphics.ps, language, ShaderType_Pixel, errorOut) : nullptr;
+        definition.graphics.gs              = description.graphics.gs ? compileShader(shaderBuilder, description.graphics.gsName, description.graphics.gs, language, ShaderType_Geometry, errorOut) : nullptr;
+        definition.graphics.hs              = description.graphics.hs ? compileShader(shaderBuilder, description.graphics.hsName, description.graphics.hs, language, ShaderType_Hull, errorOut) : nullptr;
+        definition.graphics.ds              = description.graphics.ds ? compileShader(shaderBuilder, description.graphics.dsName, description.graphics.ds, language, ShaderType_Domain, errorOut) : nullptr;
         break;
     case BindType_RayTrace:
-        definition.raytrace.rany = description.raytrace.rany ? compileShader(shaderBuilder, description.raytrace.ranyName, description.raytrace.rany, language, ShaderType_RayAnyHit, errorOut) : nullptr;
-        definition.raytrace.rclosest = description.raytrace.rclosest ? compileShader(shaderBuilder, description.raytrace.rclosestName, description.raytrace.rclosest, language, ShaderType_RayClosestHit, errorOut) : nullptr;
-        definition.raytrace.rgen = description.raytrace.rgen ? compileShader(shaderBuilder, description.raytrace.rgenName, description.raytrace.rgen, language, ShaderType_RayGeneration, errorOut) : nullptr;
-        definition.raytrace.rintersect = description.raytrace.rintersect ? compileShader(shaderBuilder, description.raytrace.rintersectName, description.raytrace.rintersect, language, ShaderType_RayIntersect, errorOut) : nullptr;
-        definition.raytrace.rmiss = description.raytrace.rmiss ? compileShader(shaderBuilder, description.raytrace.rmissName, description.raytrace.rmiss, language, ShaderType_RayMiss, errorOut) : nullptr;
+        definition.raytrace.rany            = description.raytrace.rany ? compileShader(shaderBuilder, description.raytrace.ranyName, description.raytrace.rany, language, ShaderType_RayAnyHit, errorOut) : nullptr;
+        definition.raytrace.rclosest        = description.raytrace.rclosest ? compileShader(shaderBuilder, description.raytrace.rclosestName, description.raytrace.rclosest, language, ShaderType_RayClosestHit, errorOut) : nullptr;
+        definition.raytrace.rgen            = description.raytrace.rgen ? compileShader(shaderBuilder, description.raytrace.rgenName, description.raytrace.rgen, language, ShaderType_RayGeneration, errorOut) : nullptr;
+        definition.raytrace.rintersect      = description.raytrace.rintersect ? compileShader(shaderBuilder, description.raytrace.rintersectName, description.raytrace.rintersect, language, ShaderType_RayIntersect, errorOut) : nullptr;
+        definition.raytrace.rmiss           = description.raytrace.rmiss ? compileShader(shaderBuilder, description.raytrace.rmissName, description.raytrace.rmiss, language, ShaderType_RayMiss, errorOut) : nullptr;
         break;
     }
 
@@ -239,7 +239,7 @@ void destroyShaderProgramDefinition(ShaderProgramDefinition& definition)
     }
 }
 
-ErrType buildShaderProgramDefinitions(const ShaderProgramDescription& description, ShaderProgramId outId, ShaderIntermediateCode imm)
+ResultCode buildShaderProgramDefinitions(const ShaderProgramDescription& description, ShaderProgramId outId, ShaderIntermediateCode imm)
 {
     if (g_shaderBuilderMap.find(imm) == g_shaderBuilderMap.end())
     {
@@ -247,13 +247,13 @@ ErrType buildShaderProgramDefinitions(const ShaderProgramDescription& descriptio
         g_shaderBuilderMap[imm]->setUp();
     }
 
-    ErrType result                  = RecluseResult_Ok;
+    ResultCode result                  = RecluseResult_Ok;
     ShaderBuilder* shaderBuilder    = g_shaderBuilderMap[imm];
     R_ASSERT(shaderBuilder != NULL);
 
-    auto makeInstanceFunc = [&description, shaderBuilder, outId] (ShaderProgramPermutation permutation) -> ErrType
+    auto makeInstanceFunc = [&description, shaderBuilder, outId] (ShaderProgramPermutation permutation) -> ResultCode
     {
-        ErrType result = RecluseResult_Ok;
+        ResultCode result = RecluseResult_Ok;
         ShaderProgramDefinition definition = makeShaderProgramDefinition(description, shaderBuilder, result);
         if (result != RecluseResult_Ok)
         {
@@ -314,7 +314,7 @@ ShaderProgramDefinition* obtainShaderProgramDefinition(ShaderProgramId shaderPro
 }
 
 
-ErrType releaseShaderProgramDefinition(ShaderProgramId program)
+ResultCode releaseShaderProgramDefinition(ShaderProgramId program)
 {
     auto& iter = g_shaderProgramMetaMap.find(program);
     if (iter != g_shaderProgramMetaMap.end())
@@ -342,9 +342,9 @@ void clearShaderProgramDefinitions()
 
 namespace Runtime {
 
-ErrType buildShaderProgram(GraphicsDevice* pDevice, ShaderProgramId shaderProgram)
+ResultCode buildShaderProgram(GraphicsDevice* pDevice, ShaderProgramId shaderProgram)
 {
-    ErrType e = RecluseResult_Ok;
+    ResultCode e = RecluseResult_Ok;
     for (auto& definition : g_shaderProgramMetaMap[shaderProgram])
     {
         e = pDevice->loadShaderProgram(shaderProgram, definition.first, definition.second);
@@ -358,9 +358,9 @@ ErrType buildShaderProgram(GraphicsDevice* pDevice, ShaderProgramId shaderProgra
 }
 
 
-ErrType buildAllShaderPrograms(GraphicsDevice* pDevice)
+ResultCode buildAllShaderPrograms(GraphicsDevice* pDevice)
 {
-    ErrType e = RecluseResult_Ok;
+    ResultCode e = RecluseResult_Ok;
     for (auto definitions : g_shaderProgramMetaMap)
     {
         e = buildShaderProgram(pDevice, definitions.first);
@@ -372,20 +372,20 @@ ErrType buildAllShaderPrograms(GraphicsDevice* pDevice)
     return e;
 }
 
-ErrType releaseShaderProgram(GraphicsDevice* pDevice, ShaderProgramId shaderProgram)
+ResultCode releaseShaderProgram(GraphicsDevice* pDevice, ShaderProgramId shaderProgram)
 {
     return pDevice->unloadShaderProgram(shaderProgram);
 }
 
 
-ErrType releaseAllShaderPrograms(GraphicsDevice* pDevice)
+ResultCode releaseAllShaderPrograms(GraphicsDevice* pDevice)
 {
     pDevice->unloadAllShaderPrograms();
     return RecluseResult_Ok;
 }
 
 
-ErrType buildVertexInputLayout(GraphicsDevice* pDevice, const VertexInputLayout& layout, VertexInputLayoutId inputLayoutId)
+ResultCode buildVertexInputLayout(GraphicsDevice* pDevice, const VertexInputLayout& layout, VertexInputLayoutId inputLayoutId)
 {
     auto it = g_vertexLayoutIds.find(inputLayoutId);
     if (it != g_vertexLayoutIds.end())
@@ -406,7 +406,7 @@ ErrType buildVertexInputLayout(GraphicsDevice* pDevice, const VertexInputLayout&
 }
 
 
-ErrType releaseVertexInputLayout(GraphicsDevice* pDevice, VertexInputLayoutId inputLayoutId)
+ResultCode releaseVertexInputLayout(GraphicsDevice* pDevice, VertexInputLayoutId inputLayoutId)
 {
     auto it = g_vertexLayoutIds.find(inputLayoutId);
     if (it != g_vertexLayoutIds.end())
@@ -422,9 +422,9 @@ ErrType releaseVertexInputLayout(GraphicsDevice* pDevice, VertexInputLayoutId in
     return RecluseResult_NotFound;
 }
 
-ErrType releaseAllVertexInputLayouts(GraphicsDevice* pDevice)
+ResultCode releaseAllVertexInputLayouts(GraphicsDevice* pDevice)
 {
-    ErrType err = RecluseResult_Ok;
+    ResultCode err = RecluseResult_Ok;
     for (auto id : g_vertexLayoutIds)
     {
         err |= releaseVertexInputLayout(pDevice, id);

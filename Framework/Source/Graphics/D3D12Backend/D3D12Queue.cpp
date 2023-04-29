@@ -8,7 +8,7 @@
 namespace Recluse {
 
 
-ErrType D3D12Queue::initialize(D3D12Device* pDevice)
+ResultCode D3D12Queue::initialize(D3D12Device* pDevice)
 {
     R_DEBUG(R_CHANNEL_D3D12, "Creating command queue...");
 
@@ -31,7 +31,7 @@ ErrType D3D12Queue::initialize(D3D12Device* pDevice)
 
     if (result != S_OK) 
     {
-        R_ERR(R_CHANNEL_D3D12, "Failed to create command queue!");
+        R_ERROR(R_CHANNEL_D3D12, "Failed to create command queue!");
 
         return RecluseResult_Failed;        
     }    

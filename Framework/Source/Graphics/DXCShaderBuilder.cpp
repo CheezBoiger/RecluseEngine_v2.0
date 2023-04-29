@@ -29,14 +29,14 @@ public:
     DXCShaderBuilder(ShaderIntermediateCode imm)
         : ShaderBuilder(imm) { }
 
-    ErrType setUp() override
+    ResultCode setUp() override
     {
         HRESULT hr = S_OK;
         hr = DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&m_library));
         
         if (FAILED(hr))
         {
-            R_ERR("DXC", "Failed to create library for parsing!");
+            R_ERROR("DXC", "Failed to create library for parsing!");
             return RecluseResult_Failed;
         }
 
@@ -44,14 +44,14 @@ public:
 
         if (FAILED(hr))
         {
-            R_ERR("DXC", "Failed to create dxc compiler!");
+            R_ERROR("DXC", "Failed to create dxc compiler!");
             return RecluseResult_Failed;
         }
 
         return RecluseResult_Ok;
     }
 
-    ErrType tearDown() override
+    ResultCode tearDown() override
     {
         if (m_compiler)
             m_compiler.Release();
@@ -60,7 +60,7 @@ public:
         return RecluseResult_Ok;
     }
 
-    ErrType onCompile(const std::vector<char>& srcCode, std::vector<char>& byteCode,  const char* entryPoint,
+    ResultCode onCompile(const std::vector<char>& srcCode, std::vector<char>& byteCode,  const char* entryPoint,
         ShaderLang lang, ShaderType shaderType, const std::vector<PreprocessDefine>& defines) override 
     {
         R_ASSERT(m_library != NULL);
@@ -81,7 +81,7 @@ public:
         
         if (FAILED(hr)) 
         {
-            R_ERR("DXC", "Failed to create a blob!!");
+            R_ERROR("DXC", "Failed to create a blob!!");
         }
 
         if (getIntermediateCode() == ShaderIntermediateCode_Spirv) 
@@ -113,7 +113,7 @@ public:
 
             if (SUCCEEDED(hr) && errorBlob) 
             {
-                R_ERR("DXC", "Errors found: \n%s", (const char*)errorBlob->GetBufferPointer());   
+                R_ERROR("DXC", "Errors found: \n%s", (const char*)errorBlob->GetBufferPointer());   
             }   
         
             return RecluseResult_Failed;

@@ -10,14 +10,14 @@
 namespace Recluse {
 
 
-ErrType D3D12Swapchain::initialize(D3D12Device* pDevice)
+ResultCode D3D12Swapchain::initialize(D3D12Device* pDevice)
 {
     R_DEBUG(R_CHANNEL_D3D12, "Creating dxgi swapchain...");
     HWND windowHandle = pDevice->getWindowHandle();
 
     if (!windowHandle) 
     {
-        R_ERR(R_CHANNEL_D3D12, "Can not create swapchain without a window handle!");
+        R_ERROR(R_CHANNEL_D3D12, "Can not create swapchain without a window handle!");
 
         return RecluseResult_Failed;
     }
@@ -65,7 +65,7 @@ ErrType D3D12Swapchain::initialize(D3D12Device* pDevice)
 
     if (result != S_OK) 
     {
-        R_ERR(R_CHANNEL_D3D12, "Failed to create d3d12 swapchain!");
+        R_ERROR(R_CHANNEL_D3D12, "Failed to create d3d12 swapchain!");
         
         return RecluseResult_Failed;
     }
@@ -75,7 +75,7 @@ ErrType D3D12Swapchain::initialize(D3D12Device* pDevice)
 
     if (FAILED(result)) 
     {    
-        R_ERR(R_CHANNEL_D3D12, "Could not query for swapchain3 interface!");
+        R_ERROR(R_CHANNEL_D3D12, "Could not query for swapchain3 interface!");
 
         destroy();
 
@@ -119,7 +119,7 @@ GraphicsResourceView* D3D12Swapchain::getFrameView(U32 idx)
 }
 
 
-ErrType D3D12Swapchain::present(PresentConfig config)
+ResultCode D3D12Swapchain::present(PresentConfig config)
 {
     //D3D12Context* pContext      = staticCast<D3D12Context*>(m_pDevice->getContext());
     ID3D12CommandQueue* pQueue  = m_pBackbufferQueue->get();
@@ -135,7 +135,7 @@ ErrType D3D12Swapchain::present(PresentConfig config)
     
     if (FAILED(result)) 
     {
-        R_ERR(R_CHANNEL_D3D12, "Failed to present current frame: %d", getCurrentFrameIndex());        
+        R_ERROR(R_CHANNEL_D3D12, "Failed to present current frame: %d", getCurrentFrameIndex());        
     }
 
     pBR->fenceValue     = pBR->fenceValue + 1;
@@ -151,7 +151,7 @@ ErrType D3D12Swapchain::present(PresentConfig config)
 }
 
 
-ErrType D3D12Swapchain::initializeFrameResources()
+ResultCode D3D12Swapchain::initializeFrameResources()
 {
     HRESULT result          = S_OK;
     ID3D12Device* pDevice   = m_pDevice->get();
@@ -170,7 +170,7 @@ ErrType D3D12Swapchain::initializeFrameResources()
 }
 
 
-ErrType D3D12Swapchain::destroyFrameResources()
+ResultCode D3D12Swapchain::destroyFrameResources()
 {
     if (!m_frameResources.empty()) 
     {
@@ -186,7 +186,7 @@ ErrType D3D12Swapchain::destroyFrameResources()
 }
 
 
-ErrType D3D12Swapchain::flushFinishedCommandLists()
+ResultCode D3D12Swapchain::flushFinishedCommandLists()
 {
     //D3D12Context* pContext              = staticCast<D3D12Context*>(m_pDevice->getContext());
     //ID3D12CommandQueue* pQueue          = m_pBackbufferQueue->get();

@@ -16,7 +16,7 @@ VulkanQueue::~VulkanQueue()
 }
 
 
-ErrType VulkanQueue::initialize(VulkanDevice* device, QueueFamily* pFamily, U32 queueFamilyIndex, U32 queueIndex)
+ResultCode VulkanQueue::initialize(VulkanDevice* device, QueueFamily* pFamily, U32 queueFamilyIndex, U32 queueIndex)
 {
     vkGetDeviceQueue(device->get(), queueFamilyIndex, queueIndex, &m_queue);
 
@@ -90,7 +90,7 @@ ErrType VulkanQueue::submit(const QueueSubmit* payload)
 }
 */
 
-ErrType VulkanQueue::copyResource(GraphicsResource* dst, GraphicsResource* src)
+ResultCode VulkanQueue::copyResource(GraphicsResource* dst, GraphicsResource* src)
 {
     const GraphicsResourceDescription& dstDesc = dst->getDesc();
     const GraphicsResourceDescription& srcDesc = src->getDesc();
@@ -183,7 +183,7 @@ VkCommandBuffer VulkanQueue::beginOneTimeCommandBuffer()
 }
 
 
-ErrType VulkanQueue::copyBufferRegions
+ResultCode VulkanQueue::copyBufferRegions
     (
         GraphicsResource* dst, 
         GraphicsResource* src, 

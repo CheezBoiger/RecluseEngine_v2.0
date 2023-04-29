@@ -34,13 +34,13 @@ static B32 areMemoryResourcesOnSeparatePages
 }
 
 
-ErrType VulkanPagedAllocator::allocate(VulkanMemory* pOut, const VkMemoryRequirements& requirements, VkDeviceSize granularityBytes, VkImageTiling tiling)
+ResultCode VulkanPagedAllocator::allocate(VulkanMemory* pOut, const VkMemoryRequirements& requirements, VkDeviceSize granularityBytes, VkImageTiling tiling)
 {
      R_ASSERT(m_allocator != NULL);
     
     Allocation allocation   = { };
-    ErrType result          = RecluseResult_Ok;
-    PtrType baseAddr        = m_allocator->getBaseAddr();
+    ResultCode result          = RecluseResult_Ok;
+    UPtr baseAddr        = m_allocator->getBaseAddr();
 
     // Obtain the max alignment between granularity and memory requirement.
     // If the previous block contains a non-linear resource while the current one is linear or vice versa 
@@ -59,7 +59,7 @@ ErrType VulkanPagedAllocator::allocate(VulkanMemory* pOut, const VkMemoryRequire
 
     if (result != RecluseResult_Ok) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to allocate memory!");
+        R_ERROR(R_CHANNEL_VULKAN, "Failed to allocate memory!");
 
         return result;
     }
@@ -73,11 +73,11 @@ ErrType VulkanPagedAllocator::allocate(VulkanMemory* pOut, const VkMemoryRequire
 }
 
 
-ErrType VulkanPagedAllocator::free(VulkanMemory* pOut)
+ResultCode VulkanPagedAllocator::free(VulkanMemory* pOut)
 {
     R_ASSERT(m_allocator != NULL);
     
-    ErrType result = RecluseResult_Ok;    
+    ResultCode result = RecluseResult_Ok;    
 
     if (!pOut) 
     {
@@ -124,7 +124,7 @@ void VulkanPagedAllocator::release(VkDevice device)
 }
 
 
-ErrType VulkanAllocationManager::release()
+ResultCode VulkanAllocationManager::release()
 {
     VkDevice device = m_pDevice->get();
     // Perform a full garbage cleanup.
@@ -148,7 +148,7 @@ ErrType VulkanAllocationManager::release()
 void VulkanAllocationManager::emptyGarbage(U32 index)
 {
     std::vector<VulkanMemory>& garbage = m_frameGarbage[index];
-    ErrType result;
+    ResultCode result;
 
     for (U32 i = 0; i < garbage.size(); ++i) 
     {
@@ -166,7 +166,7 @@ void VulkanAllocationManager::emptyGarbage(U32 index)
         if (result != RecluseResult_Ok) 
         {
             const U64 baseAddress = reinterpret_cast<U64>(mrange.baseAddr);
-            R_ERR
+            R_ERROR
                 (
                     "Allocator", 
                     "Failed to free garbage addr=%llu, at base addr=%llu", 
@@ -206,7 +206,7 @@ void VulkanAllocationManager::update(const UpdateConfig& config)
     {
         if (config.frameIndex >= garbageSize) 
         {
-            R_ERR
+            R_ERROR
                 (
                     "VulkanAllocator", 
                     "frameIndex to set (=%d), is larger than the number "
@@ -240,7 +240,7 @@ void VulkanPagedAllocator::clear()
 }
 
 
-ErrType VulkanAllocationManager::initialize(VulkanDevice* device)
+ResultCode VulkanAllocationManager::initialize(VulkanDevice* device)
 {
     m_pDevice = device;
     VkPhysicalDeviceProperties properties = m_pDevice->getAdapter()->getProperties();
@@ -281,12 +281,12 @@ VulkanPagedAllocator* VulkanAllocationManager::getAllocator(ResourceMemoryUsage 
 }
 
 
-ErrType VulkanAllocationManager::allocate(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements, VkImageTiling tiling)
+ResultCode VulkanAllocationManager::allocate(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements, VkImageTiling tiling)
 {
     VulkanAdapter* pAdapter                 = m_pDevice->getAdapter();
     MemoryTypeIndex memoryTypeIndex         = pAdapter->findMemoryType(requirements.memoryTypeBits, usage);
     VulkanPagedAllocator* pagedAllocator    = getAllocator(usage, memoryTypeIndex, requirements.size, requirements.alignment);
-    ErrType result                          = RecluseResult_Ok;
+    ResultCode result                          = RecluseResult_Ok;
 
     if (!pagedAllocator)
     {
@@ -307,19 +307,19 @@ ErrType VulkanAllocationManager::allocate(VulkanMemory* pOut, ResourceMemoryUsag
 }
 
 
-ErrType VulkanAllocationManager::allocateBuffer(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements)
+ResultCode VulkanAllocationManager::allocateBuffer(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements)
 {
     return allocate(pOut, usage, requirements);
 }
 
 
-ErrType VulkanAllocationManager::allocateImage(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements, VkImageTiling tiling)
+ResultCode VulkanAllocationManager::allocateImage(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements, VkImageTiling tiling)
 {
     return allocate(pOut, usage, requirements, tiling);
 }
 
 
-ErrType VulkanAllocationManager::free(VulkanMemory* pOut, Bool immediate)
+ResultCode VulkanAllocationManager::free(VulkanMemory* pOut, Bool immediate)
 {
     std::vector<VulkanMemory>& garbageChute = m_frameGarbage[m_garbageIndex];
     garbageChute.push_back(*pOut);

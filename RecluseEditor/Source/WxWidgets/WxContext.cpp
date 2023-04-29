@@ -98,20 +98,20 @@ int RecluseEditorApp::OnExit()
 
 wxIMPLEMENT_APP_NO_MAIN(RecluseEditorApp);
 #endif
-ErrType WxGuiContext::onRun(int c, char* argv[])
+ResultCode WxGuiContext::onRun(int c, char* argv[])
 {
     I32 result = wxEntry(c, argv);
     return result;
 }
 
 
-ErrType WxGuiContext::onSetUp()
+ResultCode WxGuiContext::onSetUp()
 {
     return 0;
 }
 
 
-ErrType WxGuiContext::onTearDown()
+ResultCode WxGuiContext::onTearDown()
 {
     return 0;
 }

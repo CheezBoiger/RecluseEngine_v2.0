@@ -37,14 +37,14 @@ public:
     
     virtual ~EngineModule() { }
 
-    static ErrType initializeModule(Application* pApp)
+    static ResultCode initializeModule(Application* pApp)
     {
         return getMain()->initializeInstance(pApp);
     }
 
-    static ErrType cleanUpModule(Application* pApp)
+    static ResultCode cleanUpModule(Application* pApp)
     {
-        ErrType result = getMain()->cleanUpInstance(pApp);
+        ResultCode result = getMain()->cleanUpInstance(pApp);
         return result;
     }
 
@@ -54,21 +54,21 @@ protected:
 private:
 
     //! On initialize.
-    virtual ErrType onInitializeModule(Application* pApp) { return RecluseResult_NoImpl; }
+    virtual ResultCode onInitializeModule(Application* pApp) { return RecluseResult_NoImpl; }
     //! On clean up.
-    virtual ErrType onCleanUpModule(Application* pApp) { return RecluseResult_NoImpl; }
+    virtual ResultCode onCleanUpModule(Application* pApp) { return RecluseResult_NoImpl; }
     
     //! Member function that is used to begin instantiating the object.
-    ErrType initializeInstance(Application* pApp) 
+    ResultCode initializeInstance(Application* pApp) 
     {
         m_sync = createMutex(R_STRINGIFY(ModuleImpl));
         m_isActive = true;
         return onInitializeModule(pApp); 
     }
 
-    ErrType cleanUpInstance(Application* pApp) 
+    ResultCode cleanUpInstance(Application* pApp) 
     { 
-        ErrType result = onCleanUpModule(pApp);
+        ResultCode result = onCleanUpModule(pApp);
         if (result == RecluseResult_Ok) 
         {
             m_isActive = false;

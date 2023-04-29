@@ -111,7 +111,7 @@ VkDescriptorSetLayout createDescriptorSetLayout(VulkanContext* pContext, const D
 
     if (result != VK_SUCCESS) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to create Vulkan descriptor set layout!");
+        R_ERROR(R_CHANNEL_VULKAN, "Failed to create Vulkan descriptor set layout!");
         return VK_NULL_HANDLE;
     }
 
@@ -125,16 +125,16 @@ static VulkanDescriptorAllocation allocateDescriptorSet(VulkanContext* pContext,
     VulkanDescriptorAllocation allocation   = instance->allocate(1, &layout);
     if (!allocation.isValid()) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to allocate vulkan descriptor set!!");
+        R_ERROR(R_CHANNEL_VULKAN, "Failed to allocate vulkan descriptor set!!");
     }
     return allocation;
 }
 
 
-static ErrType freeDescriptorSet(VulkanContext* pContext, const VulkanDescriptorAllocation& allocation)
+static ResultCode freeDescriptorSet(VulkanContext* pContext, const VulkanDescriptorAllocation& allocation)
 {
     DescriptorAllocatorInstance* pManager   = pContext->currentDescriptorAllocator();
-    ErrType result                          = RecluseResult_Ok;
+    ResultCode result                          = RecluseResult_Ok;
 
     if (allocation.isValid()) 
     {
@@ -144,7 +144,7 @@ static ErrType freeDescriptorSet(VulkanContext* pContext, const VulkanDescriptor
         
         if (result != RecluseResult_Ok) 
         {
-            R_ERR(R_CHANNEL_VULKAN, "Failed to free vulkan native descriptor set!");
+            R_ERROR(R_CHANNEL_VULKAN, "Failed to free vulkan native descriptor set!");
         }
 
     }
@@ -179,7 +179,7 @@ static VkDescriptorImageInfo makeDescriptorImageInfo(VulkanResourceView* pView)
 
 
 // Call only needs to really be done once, but if there is a need to update, this can be called again.
-static ErrType updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet set, const Structure& structure)
+static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet set, const Structure& structure)
 {
     VkDevice device     = pContext->getDevice()->castTo<VulkanDevice>()->get();
     U32 bindingCount    = structure.key.value.constantBuffers 
@@ -306,11 +306,11 @@ class DescriptorSetKeyHasher
 public:
     size_t operator()(const Structure& key) const
     {
-        Hash64 hh   = recluseHash((void*)&key.key.hash, sizeof(U64) * 2u);
-        hh          ^= recluseHash(key.ppShaderResources, sizeof(VulkanResourceView*) * key.key.value.srvs);
-        hh          ^= recluseHash(key.ppConstantBuffers, sizeof(VulkanBuffer*) * key.key.value.constantBuffers);
-        hh          ^= recluseHash(key.ppUnorderedAccesses, sizeof(VulkanResourceView*) * key.key.value.uavs);
-        hh          ^= recluseHash(key.ppSamplers, sizeof(VulkanSampler*) * key.key.value.samplers);
+        Hash64 hh   = recluseHashFast(&key.key.hash, sizeof(U64) * 2u);
+        hh          ^= recluseHashFast(key.ppShaderResources, sizeof(VulkanResourceView*) * key.key.value.srvs);
+        hh          ^= recluseHashFast(key.ppConstantBuffers, sizeof(VulkanBuffer*) * key.key.value.constantBuffers);
+        hh          ^= recluseHashFast(key.ppUnorderedAccesses, sizeof(VulkanResourceView*) * key.key.value.uavs);
+        hh          ^= recluseHashFast(key.ppSamplers, sizeof(VulkanSampler*) * key.key.value.samplers);
         return staticCast<size_t>(hh);
     }
 };
@@ -321,7 +321,7 @@ class DescriptorSetLayoutKeyHasher
 public:
     size_t operator()(const Structure& key) const
     {
-        Hash64 hh = recluseHash((void*)&key.key.hash, sizeof(U64) * 2u);
+        Hash64 hh = recluseHashFast(&key.key.hash, sizeof(U64) * 2u);
         // TODO: This hasher needs to be quick. So we need to ensure we don't have too many loops here.
 
         return staticCast<size_t>(hh);
@@ -379,14 +379,14 @@ const VulkanDescriptorAllocation& makeDescriptorSet(VulkanContext* pContext, con
 }
 
 
-static ErrType releaseDescriptorSetHelper(VulkanContext* pContext, const VulkanDescriptorAllocation& allocation)
+static ResultCode releaseDescriptorSetHelper(VulkanContext* pContext, const VulkanDescriptorAllocation& allocation)
 {
     DescriptorAllocatorInstance* pDescriptorManager = pContext->currentDescriptorAllocator();
     return pDescriptorManager->free(allocation);
 }
 
 
-ErrType releaseDescriptorSet(VulkanContext* pContext, const Structure& structure)
+ResultCode releaseDescriptorSet(VulkanContext* pContext, const Structure& structure)
 {
     DescriptorSetId id = DescriptorSetKeyHasher()(structure);
     auto& iter = g_descriptorSetMap.find(id);
@@ -394,7 +394,7 @@ ErrType releaseDescriptorSet(VulkanContext* pContext, const Structure& structure
     {
         VulkanDevice* pDevice                           = pContext->getDevice()->castTo<VulkanDevice>();
         VulkanDescriptorAllocation allocation           = iter->second;
-        ErrType error = releaseDescriptorSetHelper(pContext, allocation);
+        ResultCode error = releaseDescriptorSetHelper(pContext, allocation);
         
         if (error == RecluseResult_Ok)
         { 
@@ -407,7 +407,7 @@ ErrType releaseDescriptorSet(VulkanContext* pContext, const Structure& structure
     return RecluseResult_NotFound;
 }
 
-ErrType releaseLayout(VulkanContext* pContext, const Structure& structure)
+ResultCode releaseLayout(VulkanContext* pContext, const Structure& structure)
 {
     auto& iter = g_layoutMap.find(structure);
     if (iter != g_layoutMap.end())
@@ -431,7 +431,7 @@ void clearDescriptorSetCache(VulkanContext* pContext, ClearCacheFlag flag)
 {
     if (flag == ClearCacheFlag_IndividualDescriptorSetClear)
     {
-        ErrType err = RecluseResult_Ok;
+        ResultCode err = RecluseResult_Ok;
         for (auto& descriptor : g_descriptorSetMap)
         {
             err = releaseDescriptorSetHelper(pContext, descriptor.second);

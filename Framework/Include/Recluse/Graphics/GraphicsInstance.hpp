@@ -39,11 +39,11 @@ public:
     virtual ~GraphicsInstance() { }
     
     static R_PUBLIC_API GraphicsInstance* createInstance(enum GraphicsAPI api = GraphicsApi_Vulkan);
-    static R_PUBLIC_API ErrType destroyInstance(GraphicsInstance* pInstance);
+    static R_PUBLIC_API ResultCode destroyInstance(GraphicsInstance* pInstance);
 
-    R_PUBLIC_API ErrType initialize(const ApplicationInfo& appInfo, LayerFeatureFlags flags) 
+    R_PUBLIC_API ResultCode initialize(const ApplicationInfo& appInfo, LayerFeatureFlags flags) 
     { 
-        ErrType err = onInitialize(appInfo, flags);
+        ResultCode err = onInitialize(appInfo, flags);
         queryGraphicsAdapters();
         return err;
     }
@@ -62,7 +62,7 @@ protected:
     virtual void freeGraphicsAdapters() = 0;
 
     // Called in initialize.
-    virtual ErrType onInitialize(const ApplicationInfo& appInfo, LayerFeatureFlags flags) = 0;
+    virtual ResultCode onInitialize(const ApplicationInfo& appInfo, LayerFeatureFlags flags) = 0;
     
     // Called in destroy.
     virtual void onDestroy() = 0;

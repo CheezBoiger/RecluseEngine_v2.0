@@ -90,7 +90,7 @@ class SimpleUpdaterSystem : public ECS::System<MoverComponent>
 public:
     R_DECLARE_GAME_SYSTEM(SimpleUpdaterSystem(), MoverComponent);
 
-    virtual ErrType onInitialize() override
+    virtual ResultCode onInitialize() override
     {
         g_bus.addReceiver("SimpleUpdaterSystem", [&](EventMessage* message) 
         {
@@ -127,7 +127,7 @@ public:
         MessageBus::fireEvent(&g_bus, UpdaterEvent_Update);
     }
 
-    virtual ErrType onAllocateComponent(MoverComponent** pOut) override 
+    virtual ResultCode onAllocateComponent(MoverComponent** pOut) override 
     {
         *pOut = new MoverComponent();
         m_movers.push_back(*pOut);
@@ -136,9 +136,9 @@ public:
         return RecluseResult_Ok;
     }
 
-    virtual ErrType onAllocateComponents(MoverComponent*** pOuts, U32 count) override { return RecluseResult_NoImpl; }
-    virtual ErrType onFreeComponent(MoverComponent** pIn) override { if (*pIn) delete *pIn; return RecluseResult_Ok; }
-    virtual ErrType onFreeComponents(MoverComponent*** pIns, U32 count) override { return RecluseResult_NoImpl; }
+    virtual ResultCode onAllocateComponents(MoverComponent*** pOuts, U32 count) override { return RecluseResult_NoImpl; }
+    virtual ResultCode onFreeComponent(MoverComponent** pIn) override { if (*pIn) delete *pIn; return RecluseResult_Ok; }
+    virtual ResultCode onFreeComponents(MoverComponent*** pIns, U32 count) override { return RecluseResult_NoImpl; }
 private:
     std::vector<MoverComponent*> m_movers;
     Bool m_shouldUpdate = true;

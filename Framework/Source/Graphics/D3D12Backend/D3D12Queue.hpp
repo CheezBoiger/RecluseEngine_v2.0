@@ -14,7 +14,7 @@ public:
     D3D12Queue(GraphicsQueueTypeFlags queueType)
         : m_queue(nullptr) { }
 
-    ErrType initialize(D3D12Device* pDevice);
+    ResultCode initialize(D3D12Device* pDevice);
     
     //ErrType submit(const QueueSubmit* payload);
 

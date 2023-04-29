@@ -7,7 +7,7 @@
 namespace Recluse {
 
 
-ErrType createThread(Thread* pThread, ThreadFunction startRoutine)
+ResultCode createThread(Thread* pThread, ThreadFunction startRoutine)
 {
     SetConsoleMode(nullptr, ENABLE_VIRTUAL_TERMINAL_PROCESSING);
     DWORD resultCode = 0;
@@ -16,7 +16,7 @@ ErrType createThread(Thread* pThread, ThreadFunction startRoutine)
     
     if (!pThread) 
     {
-        R_ERR(R_CHANNEL_WIN32, "pThread input passed is null! This is not valid!");
+        R_ERROR(R_CHANNEL_WIN32, "pThread input passed is null! This is not valid!");
 
         return RecluseResult_InvalidArgs;
     }
@@ -34,7 +34,7 @@ ErrType createThread(Thread* pThread, ThreadFunction startRoutine)
 
     if (handle == NULL) 
     {   
-        R_ERR(R_CHANNEL_WIN32, "Failed to create thread! Result: %d", GetLastError());
+        R_ERROR(R_CHANNEL_WIN32, "Failed to create thread! Result: %d", GetLastError());
 
         pThread->threadState = ThreadState_Unknown;
 
@@ -47,7 +47,7 @@ ErrType createThread(Thread* pThread, ThreadFunction startRoutine)
 }
 
 
-ErrType joinThread(Thread* pThread)
+ResultCode joinThread(Thread* pThread)
 {
     R_ASSERT(pThread != NULL);
 
@@ -61,7 +61,7 @@ ErrType joinThread(Thread* pThread)
 }
 
 
-ErrType killThread(Thread* pThread)
+ResultCode killThread(Thread* pThread)
 {
     R_ASSERT(pThread != NULL);
 
@@ -75,7 +75,7 @@ ErrType killThread(Thread* pThread)
 }
 
 
-ErrType stopThread(Thread* pThread)
+ResultCode stopThread(Thread* pThread)
 {
     R_ASSERT(pThread != NULL);
     R_ASSERT(pThread->threadState == ThreadState_Running); 
@@ -88,7 +88,7 @@ ErrType stopThread(Thread* pThread)
 }
 
 
-ErrType resumeThread(Thread* pThread)
+ResultCode resumeThread(Thread* pThread)
 {
     R_ASSERT(pThread != NULL);
     R_ASSERT(pThread->threadState == ThreadState_Suspended);
@@ -109,7 +109,7 @@ Mutex createMutex(const char* name)
 }
 
 
-ErrType destroyMutex(Mutex mutex)
+ResultCode destroyMutex(Mutex mutex)
 {
     if (!mutex) 
     {
@@ -122,31 +122,36 @@ ErrType destroyMutex(Mutex mutex)
 }
 
 
-ErrType lockMutex(Mutex mutex)
+ResultCode lockMutex(Mutex mutex, U64 waitMs)
 {
-    DWORD result = WaitForSingleObject(mutex, INFINITE);
+    DWORD waitTimeMs = (waitMs == kInfiniteMs) ? INFINITE : waitMs;
+    DWORD result = WaitForSingleObject(mutex, waitTimeMs);
 
     switch (result) 
     {
         case WAIT_OBJECT_0:
             return RecluseResult_Ok;
 
+        case WAIT_ABANDONED:
+
+        case WAIT_TIMEOUT:
+
         default: 
             return RecluseResult_Failed;
     }
 
-    return RecluseResult_Ok;
+    return RecluseResult_Failed;
 }
 
 
-ErrType unlockMutex(Mutex mutex)
+ResultCode unlockMutex(Mutex mutex)
 {
     ReleaseMutex(mutex);
     return RecluseResult_Ok;
 }
 
 
-ErrType waitMutex(Mutex mutex, U64 waitTimeMs)
+ResultCode waitMutex(Mutex mutex, U64 waitTimeMs)
 {
     DWORD result = WaitForSingleObject(mutex, (DWORD)waitTimeMs);
 
@@ -165,16 +170,16 @@ ErrType waitMutex(Mutex mutex, U64 waitTimeMs)
     return RecluseResult_Failed;
 }
 
-ErrType tryLockMutex(Mutex mutex)
+ResultCode tryLockMutex(Mutex mutex)
 {
     // Wait 10 milliseconds, perhaps shorter?
-    ErrType result = waitMutex(mutex, 12ull);
+    ResultCode result = lockMutex(mutex, 0ull);
     return result;
 }
 
-Semaphore createSemaphore()
+Semaphore createSemaphore(const char* name)
 {
-    HANDLE semaphoreHandle = CreateSemaphore(NULL, 0, 16, "RecluseSemaphore");
+    HANDLE semaphoreHandle = CreateSemaphore(NULL, 0, 16, name);
     return semaphoreHandle;
 }
 
@@ -188,5 +193,60 @@ U64 compareExchange(I64* dest, I64 ex, I64 comp)
 I16 compareExchange(I16* dest, I16 ex, I16 comp)
 {
     return InterlockedCompareExchange16((SHORT*)dest, ex, comp);
+}
+
+U128 compareExchange(U128* dest, U128 ex, U128 comp)
+{
+    R_NO_IMPL();
+    return U128();
+}
+
+
+Bool testAndSet(U32* ptr, U32 offset)
+{
+    return InterlockedBitTestAndSet((LONG*)ptr, (LONG)offset);
+}
+
+
+ResultCode CriticalSection::initialize()
+{
+    R_ASSERT_FORMAT(m_section == NULL, "Critical Section is not null prior to initialization! section=%d", m_section);
+    m_section = malloc(sizeof(CRITICAL_SECTION));
+    InitializeCriticalSection((LPCRITICAL_SECTION)m_section);
+    return RecluseResult_Ok;
+}
+
+
+ResultCode CriticalSection::free()
+{
+    R_ASSERT(m_section != NULL);
+    DeleteCriticalSection((LPCRITICAL_SECTION)m_section);
+    ::free(m_section);
+    m_section = NULL;
+    return RecluseResult_Ok;
+}
+
+
+ResultCode CriticalSection::enter()
+{
+    R_ASSERT(m_section != NULL);
+    EnterCriticalSection((LPCRITICAL_SECTION)m_section);
+    return RecluseResult_Ok;
+}
+
+
+ResultCode CriticalSection::tryEnter()
+{
+    R_ASSERT(m_section != NULL);
+    BOOL success = TryEnterCriticalSection((LPCRITICAL_SECTION)m_section);
+    return (success ? RecluseResult_Ok : RecluseResult_Failed);
+}
+
+
+ResultCode CriticalSection::leave()
+{
+    R_ASSERT(m_section != NULL);
+    LeaveCriticalSection((LPCRITICAL_SECTION)m_section);
+    return RecluseResult_Ok;
 }
 } // Recluse

@@ -3,7 +3,7 @@ cmake_minimum_required ( VERSION 3.16 )
 
 # Mostly third party configurations are set here.
 
-include ( ThirdParty/ThirdPartyIncludes.cmake )
+include ( ThirdParty/ThirdPartyModuleSetup.cmake )
 
 # The actual project should be set here.
 

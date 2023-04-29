@@ -35,7 +35,7 @@ public:
 
     //! Initialize the command buffer, using queue family and the command pools 
     //!
-    ErrType initialize
+    ResultCode initialize
                 (
                     VulkanContext* pContext, 
                     U32 queueFamilyIndex, 

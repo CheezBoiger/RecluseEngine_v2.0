@@ -8,9 +8,9 @@ namespace Recluse {
 namespace Engine {
 
 
-ErrType GPUBuffer::initialize(GraphicsDevice* pDevice, U64 totalSzBytes, ResourceUsageFlags usage)
+ResultCode GPUBuffer::initialize(GraphicsDevice* pDevice, U64 totalSzBytes, ResourceUsageFlags usage)
 {
-    ErrType result                      = RecluseResult_Ok;
+    ResultCode result                      = RecluseResult_Ok;
     GraphicsResourceDescription desc    = { };
     desc.usage                          = usage | ResourceUsage_TransferDestination;
     desc.memoryUsage                    = ResourceMemoryUsage_GpuOnly;
@@ -29,9 +29,9 @@ ErrType GPUBuffer::initialize(GraphicsDevice* pDevice, U64 totalSzBytes, Resourc
 }
 
 
-ErrType GPUBuffer::stream(GraphicsContext* pContext, void* ptr, U64 offsetBytes, U64 szBytes)
+ResultCode GPUBuffer::stream(GraphicsContext* pContext, void* ptr, U64 offsetBytes, U64 szBytes)
 {
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
     GraphicsResource* pStaging = nullptr;
 
     GraphicsResourceDescription stageDesc = { };
@@ -64,7 +64,7 @@ ErrType GPUBuffer::stream(GraphicsContext* pContext, void* ptr, U64 offsetBytes,
 }
 
 
-ErrType GPUBuffer::destroy()
+ResultCode GPUBuffer::destroy()
 {
     if (m_pResource) 
     {
@@ -76,7 +76,7 @@ ErrType GPUBuffer::destroy()
 }
 
 
-ErrType Mesh::initialize(VertexBuffer* pVertexBuffer, IndexBuffer* pIndexBuffer)
+ResultCode Mesh::initialize(VertexBuffer* pVertexBuffer, IndexBuffer* pIndexBuffer)
 {
     return RecluseResult_Ok;
 }

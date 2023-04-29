@@ -47,7 +47,7 @@ private:
     MemoryPool* m_pool;
     LogNode*    m_head;
     LogNode*    m_tail;
-    PtrType     m_cursor;
+    UPtr     m_cursor;
     void*       m_mutex;
 };
 
@@ -70,4 +70,13 @@ private:
 
 // Enable operating system color input.
 void enableOSColorInput();
+
+
+namespace LogDatabase {
+
+const LogMessage&   lookup(const std::string& channel, LogType logType);
+ResultCode             clear(const std::string& channel, LogType logType);
+ResultCode             clearAll();
+ResultCode             store(LogMessage& message);
+} // LogDatabase
 } // Recluse

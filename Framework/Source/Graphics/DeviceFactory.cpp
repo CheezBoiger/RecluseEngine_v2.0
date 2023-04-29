@@ -41,18 +41,18 @@ GraphicsInstance* GraphicsInstance::createInstance(enum GraphicsAPI api)
         case GraphicsApi_SoftwareRasterizer:
         case GraphicsApi_SoftwareRaytracer:
         default:
-            R_ERR("Graphics", "Unsupported graphics api. Can not create instance!");
+            R_ERROR("Graphics", "Unsupported graphics api. Can not create instance!");
 
     }
     return nullptr;
 }
 
 
-ErrType GraphicsInstance::destroyInstance(GraphicsInstance* pInstance)
+ResultCode GraphicsInstance::destroyInstance(GraphicsInstance* pInstance)
 {
     if (!pInstance) 
     {
-        R_ERR("Graphics", "Null pointer passed to %s", __FUNCTION__);
+        R_ERROR("Graphics", "Null pointer passed to %s", __FUNCTION__);
         return RecluseResult_NullPtrExcept;
     }
 

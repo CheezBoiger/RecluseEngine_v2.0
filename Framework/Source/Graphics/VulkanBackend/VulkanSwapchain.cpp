@@ -26,7 +26,7 @@ GraphicsResourceView* VulkanSwapchain::getFrameView(U32 idx)
 }
 
 
-ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
+ResultCode VulkanSwapchain::build(VulkanDevice* pDevice)
 {
     VkSwapchainCreateInfoKHR createInfo         = { };
     const SwapchainCreateDescription& pDesc     = getDesc();
@@ -37,7 +37,7 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
 
     if (pDesc.renderWidth <= 0 || pDesc.renderHeight <= 0) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Can not define a RenderWidth or Height less than 1!");
+        R_ERROR(R_CHANNEL_VULKAN, "Can not define a RenderWidth or Height less than 1!");
 
         return RecluseResult_InvalidArgs;    
     }
@@ -104,7 +104,7 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
 
     if (result != VK_SUCCESS) 
     {    
-        R_ERR(R_CHANNEL_VULKAN, "Failed to create swapchain!");
+        R_ERROR(R_CHANNEL_VULKAN, "Failed to create swapchain!");
 
         return RecluseResult_Failed;
     }    
@@ -140,7 +140,7 @@ ErrType VulkanSwapchain::build(VulkanDevice* pDevice)
 }
 
 
-ErrType VulkanSwapchain::onRebuild()
+ResultCode VulkanSwapchain::onRebuild()
 {
     // Destroy and rebuild the swapchain.
     destroy();
@@ -150,7 +150,7 @@ ErrType VulkanSwapchain::onRebuild()
 }
 
 
-ErrType VulkanSwapchain::destroy()
+ResultCode VulkanSwapchain::destroy()
 {
     VkDevice device     = m_pDevice->get();
     VkInstance instance = m_pDevice->getAdapter()->getInstance()->get();    
@@ -191,11 +191,11 @@ ErrType VulkanSwapchain::destroy()
 }
 
 
-ErrType VulkanSwapchain::present(PresentConfig config)
+ResultCode VulkanSwapchain::present(PresentConfig config)
 {
     R_ASSERT(m_pBackbufferQueue != NULL);
     VkResult result                 = VK_SUCCESS;
-    ErrType err                     = RecluseResult_Ok;
+    ResultCode err                     = RecluseResult_Ok;
 
     const U32 currentFrameIndex     = getCurrentFrameIndex();
     VkFence frameFence              = m_frameResources.getFence(currentFrameIndex);
@@ -234,14 +234,14 @@ ErrType VulkanSwapchain::present(PresentConfig config)
 }
 
 
-ErrType VulkanSwapchain::prepareFrame(VkFence cpuFence)
+ResultCode VulkanSwapchain::prepareFrame(VkFence cpuFence)
 {
     R_ASSERT(m_pBackbufferQueue != NULL);
     VkResult result                 = VK_SUCCESS;
     const U32 currentFrameIndex     = getCurrentFrameIndex();
     VkFence frameFence              = cpuFence ? cpuFence : m_frameResources.getFence(currentFrameIndex);
     VkSemaphore imageAvailableSema  = getWaitSemaphore(currentFrameIndex);
-    ErrType err = RecluseResult_Ok;
+    ResultCode err = RecluseResult_Ok;
 
     vkWaitForFences(m_pDevice->get(), 1, &frameFence, VK_TRUE, UINT64_MAX);
     vkResetFences(m_pDevice->get(), 1, &frameFence);
@@ -357,7 +357,7 @@ void VulkanSwapchain::queryCommandPools()
 }
 
 
-ErrType VulkanSwapchain::submitFinalCommandBuffer(VkCommandBuffer commandBuffer, VkFence cpuFence)
+ResultCode VulkanSwapchain::submitFinalCommandBuffer(VkCommandBuffer commandBuffer, VkFence cpuFence)
 {
     VulkanImage* frame                  = m_frameImages[m_currentFrameIndex];
     VkDevice device                     = m_pDevice->get();

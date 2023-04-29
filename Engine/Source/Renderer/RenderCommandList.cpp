@@ -64,13 +64,13 @@ void RenderCommandList::destroy()
     { \
         result = m_pAllocator->allocate(&allocation, sizeof(rClass), pointerSize()); \
         if (result == RecluseResult_OutOfMemory) { \
-            R_ERR("RenderCommandList", "Command list is out of memory! Can not push render command!"); \
+            R_ERROR("RenderCommandList", "Command list is out of memory! Can not push render command!"); \
             return result; \
         } \
         *((rClass*)allocation.baseAddress) = static_cast<const rClass&>(rcmd); \
     }
 
-ErrType RenderCommandList::push(const RenderCommand& renderCommand)
+ResultCode RenderCommandList::push(const RenderCommand& renderCommand)
 {
     Allocation allocation = { };
 
@@ -93,8 +93,8 @@ ErrType RenderCommandList::push(const RenderCommand& renderCommand)
         }
     }
 
-    PtrType p = allocation.baseAddress;
-    ErrType result = m_pointerAllocator->allocate(&allocation, pointerSizeBytes(), pointerSizeBytes());
+    UPtr p = allocation.baseAddress;
+    ResultCode result = m_pointerAllocator->allocate(&allocation, pointerSizeBytes(), pointerSizeBytes());
 
     if (result == RecluseResult_Ok) 
     {

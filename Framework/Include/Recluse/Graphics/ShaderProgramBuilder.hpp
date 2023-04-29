@@ -116,7 +116,7 @@ public:
             Shader* rclosest;
             Shader* rintersect;
         } raytrace;
-    };
+    }; 
 
     ShaderProgramDefinition() { memset(this, 0, sizeof(ShaderProgramDefinition)); }
     ShaderProgramDefinition(const ShaderProgramDefinition& def);
@@ -126,11 +126,12 @@ public:
 };
 
 // Build the needed shader program definitions in order to define how the programs should be built in runtime.
-R_PUBLIC_API ErrType                     buildShaderProgramDefinitions(const ShaderProgramDescription& description, ShaderProgramId outId, ShaderIntermediateCode imm);
-R_PUBLIC_API ErrType                     releaseShaderProgramDefinition(ShaderProgramId id);
+R_PUBLIC_API ResultCode                     buildShaderProgramDefinitions(const ShaderProgramDescription& description, ShaderProgramId outId, ShaderIntermediateCode imm);
+R_PUBLIC_API ResultCode                     releaseShaderProgramDefinition(ShaderProgramId id);
 
 // Function to allow saving program definitions on disk.
-R_PUBLIC_API ErrType                     saveProgramDefinitions(const std::string& dataPath);
+R_PUBLIC_API ResultCode                     saveProgramDefinitions(const std::string& dataPath);
+R_PUBLIC_API ResultCode                     loadProgramDefinitions(const std::string& dataPath);
 
 // Clear up shader program definitions to save space, if they are no longer needed.
 R_PUBLIC_API void                        clearShaderProgramDefinitions();
@@ -140,14 +141,14 @@ R_PUBLIC_API ShaderProgramDefinition*    obtainShaderProgramDefinition(ShaderPro
 namespace Runtime {
 // Build the actual shader program. This is the realtime runner that requires building the shaders and their respective permutations.
 //
-R_PUBLIC_API ErrType                     buildShaderProgram(GraphicsDevice* pDevice, ShaderProgramId shaderProgram);
-R_PUBLIC_API ErrType                     buildAllShaderPrograms(GraphicsDevice* pDevice);
-R_PUBLIC_API ErrType                     releaseShaderProgram(GraphicsDevice* pDevice, ShaderProgramId shaderProgram);
-R_PUBLIC_API ErrType                     releaseAllShaderPrograms(GraphicsDevice* pDevice);
+R_PUBLIC_API ResultCode                     buildShaderProgram(GraphicsDevice* pDevice, ShaderProgramId shaderProgram);
+R_PUBLIC_API ResultCode                     buildAllShaderPrograms(GraphicsDevice* pDevice);
+R_PUBLIC_API ResultCode                     releaseShaderProgram(GraphicsDevice* pDevice, ShaderProgramId shaderProgram);
+R_PUBLIC_API ResultCode                     releaseAllShaderPrograms(GraphicsDevice* pDevice);
 // Build all vertex input layouts, stores in their own register.
-R_PUBLIC_API ErrType                     buildVertexInputLayout(GraphicsDevice* pDevice, const VertexInputLayout& layout, VertexInputLayoutId inputLayoutId);
-R_PUBLIC_API ErrType                     releaseVertexInputLayout(GraphicsDevice* pDevice, VertexInputLayoutId inputLayoutId);
-R_PUBLIC_API ErrType                     releaseAllVertexInputLayouts(GraphicsDevice* pDevice);
+R_PUBLIC_API ResultCode                     buildVertexInputLayout(GraphicsDevice* pDevice, const VertexInputLayout& layout, VertexInputLayoutId inputLayoutId);
+R_PUBLIC_API ResultCode                     releaseVertexInputLayout(GraphicsDevice* pDevice, VertexInputLayoutId inputLayoutId);
+R_PUBLIC_API ResultCode                     releaseAllVertexInputLayouts(GraphicsDevice* pDevice);
 } // Runtime
 } // Builder
 } // Recluse

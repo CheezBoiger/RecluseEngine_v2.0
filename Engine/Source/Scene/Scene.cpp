@@ -16,19 +16,21 @@ struct SceneHeaderInfo
     U64     numLights;
 };
 
-void Scene::addEntity(ECS::GameEntity* obj)
+ResultCode Scene::addEntity(ECS::GameEntity* obj)
 {
-    if (!obj) return;
+    if (!obj) return RecluseResult_NullPtrExcept;
     
     auto iter = std::find(m_entities.begin(), m_entities.end(), obj);
     if (iter != m_entities.end()) 
     {
         R_WARN("Scene", "Game object already exists in scene! Ignoring %s", __FUNCTION__);
-        return;
+        return RecluseResult_AlreadyExists;
     }
     
     // Add in the object, otherwise.
     m_entities.push_back(obj);
+
+    return RecluseResult_Ok;
 }
 
 
@@ -48,12 +50,11 @@ void Scene::initialize()
 
 void Scene::destroy()
 {
+    unregisterSystems();
     for (U32 i = 0; i < m_entities.size(); ++i)
     {
         ECS::GameEntity::free(m_entities[i]);
     }
-
-    m_entities.clear();
 }
 
 
@@ -77,15 +78,22 @@ ECS::GameEntity* Scene::findEntity(const std::string& name)
 }
 
 
-void Scene::removeEntity(U32 idx)
+ResultCode Scene::removeEntity(U32 idx)
 {
+    if (idx >= m_entities.size())
+    {   
+        R_ASSERT_FORMAT(idx >= m_entities.size(), "Attempting to access entity array with idx=%d, which is out of bounds! (size=%d)", idx, static_cast<U32>(m_entities.size()));
+        return RecluseResult_OutOfBounds;
+    }
+
     m_entities.erase(m_entities.begin() + idx);
+    return RecluseResult_Ok;
 }
 
 
-ErrType Scene::save(Archive* pArchive)
+ResultCode Scene::save(Archive* pArchive)
 {
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
 
     // Save the scene header first!
     {
@@ -99,7 +107,7 @@ ErrType Scene::save(Archive* pArchive)
 
     if (result != RecluseResult_Ok) 
     {
-        R_ERR(m_name.c_str(), "Failed to write scene header to archive!");
+        R_ERROR(m_name.c_str(), "Failed to write scene header to archive!");
         return result;
     }
 
@@ -109,9 +117,9 @@ ErrType Scene::save(Archive* pArchive)
 }
 
 
-ErrType Scene::load(Archive* pArchive)
+ResultCode Scene::load(Archive* pArchive)
 {
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
 
     SceneHeaderInfo header = { };
     
@@ -136,13 +144,13 @@ void Scene::setName(const std::string& name)
 }
 
 
-ErrType Scene::serialize(Archive* pArchive) 
+ResultCode Scene::serialize(Archive* pArchive) 
 {
     return RecluseResult_NoImpl;
 }
 
 
-ErrType Scene::deserialize(Archive* pArchive)
+ResultCode Scene::deserialize(Archive* pArchive)
 {
     return RecluseResult_NoImpl;
 }
@@ -153,6 +161,18 @@ void Scene::registerSystem(ECS::AbstractSystem* pSystem)
     // Registering any system must Initialize first.
     pSystem->initialize(); 
     m_systems.push_back(pSystem); 
+}
+
+
+void Scene::unregisterSystems()
+{
+    for (auto& system : m_systems)
+    {
+        system->clearAll();
+        R_ASSERT_FORMAT(system->cleanUp() == RecluseResult_Ok, "cleanUp() failed for system.");
+    }
+
+    m_systems.clear();
 }
 } // Engine
 } // Recluse

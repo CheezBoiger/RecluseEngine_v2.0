@@ -47,9 +47,9 @@ public:
 
     static std::vector<VulkanAdapter> getAvailablePhysicalDevices(VulkanInstance* ctx);
 
-    ErrType                                 getAdapterInfo(AdapterInfo* out) const override;
-    ErrType                                 createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice) override;
-    ErrType                                 destroyDevice(GraphicsDevice* pDevice) override;
+    ResultCode                                 getAdapterInfo(AdapterInfo* out) const override;
+    ResultCode                                 createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice) override;
+    ResultCode                                 destroyDevice(GraphicsDevice* pDevice) override;
 
     U32                                     findMemoryType(U32 filter, ResourceMemoryUsage usage) const;
 

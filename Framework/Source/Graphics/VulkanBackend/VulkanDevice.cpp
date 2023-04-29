@@ -49,7 +49,7 @@ void VulkanContext::initialize(U32 bufferCount)
 }
 
 
-ErrType VulkanContext::setBuffers(U32 bufferCount)
+ResultCode VulkanContext::setBuffers(U32 bufferCount)
 {
     initialize(bufferCount);
     m_bufferCount = bufferCount;
@@ -95,6 +95,16 @@ void VulkanContext::begin()
 }
 
 
+void VulkanContext::endRenderPass(VkCommandBuffer buffer)
+{
+    if (m_boundRenderPass) 
+    {
+        vkCmdEndRenderPass(buffer);
+        m_boundRenderPass = nullptr;
+    }   
+}
+
+
 void VulkanContext::end()
 {
     endRenderPass(m_primaryCommandList.get());
@@ -115,7 +125,7 @@ void VulkanContext::end()
 }
 
 
-ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
+ResultCode VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
 {
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos; 
 
@@ -132,11 +142,11 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
         R_DEBUG(R_CHANNEL_VULKAN, "Creating surface handle.");
 
         // Create surface
-        ErrType builtSurface = createSurface(pVc->get(), info.winHandle);
+        ResultCode builtSurface = createSurface(pVc->get(), info.winHandle);
 
         if (builtSurface != RecluseResult_Ok) 
         {
-            R_ERR(R_CHANNEL_VULKAN, "Surface failed to create! Aborting build");
+            R_ERROR(R_CHANNEL_VULKAN, "Surface failed to create! Aborting build");
             return builtSurface;
         }
  
@@ -229,7 +239,7 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
 
     if (result != VK_SUCCESS) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to create vulkan device!");   
+        R_ERROR(R_CHANNEL_VULKAN, "Failed to create vulkan device!");   
         return -1;
     }
 
@@ -240,11 +250,11 @@ ErrType VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
     allocateMemCache();
 
     m_allocationManager = makeSmartPtr(new VulkanAllocationManager());
-    ErrType err = m_allocationManager->initialize(this);
+    ResultCode err = m_allocationManager->initialize(this);
 
     if (err != RecluseResult_Ok)
     {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to initialize the allocation manager!");
+        R_ERROR(R_CHANNEL_VULKAN, "Failed to initialize the allocation manager!");
     }
     
     {
@@ -305,7 +315,7 @@ void VulkanDevice::release(VkInstance instance)
 }
 
 
-ErrType VulkanDevice::createSwapchain
+ResultCode VulkanDevice::createSwapchain
     (
         VulkanSwapchain** ppSwapchain,
         const SwapchainCreateDescription& pDesc,
@@ -316,11 +326,11 @@ ErrType VulkanDevice::createSwapchain
     VulkanSwapchain* pSwapchain     = new VulkanSwapchain(pDesc, pPresentationQueue);
     VulkanInstance*   pNativeContext = m_adapter->getInstance();
 
-    ErrType result = pSwapchain->build(this);
+    ResultCode result = pSwapchain->build(this);
 
     if (result != 0) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Swapchain failed to create");
+        R_ERROR(R_CHANNEL_VULKAN, "Swapchain failed to create");
         return -1;
     }
 
@@ -330,13 +340,13 @@ ErrType VulkanDevice::createSwapchain
 }
 
 
-ErrType VulkanDevice::destroySwapchain(VulkanSwapchain* pSwapchain)
+ResultCode VulkanDevice::destroySwapchain(VulkanSwapchain* pSwapchain)
 {
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
 
     if (!pSwapchain) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Null pointer exception with either pContext or pSwapchain.");   
+        R_ERROR(R_CHANNEL_VULKAN, "Null pointer exception with either pContext or pSwapchain.");   
         return RecluseResult_NullPtrExcept;
     }
 
@@ -353,7 +363,7 @@ ErrType VulkanDevice::destroySwapchain(VulkanSwapchain* pSwapchain)
 
     if (result != RecluseResult_Ok) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to destroy vulkan swapchain!");
+        R_ERROR(R_CHANNEL_VULKAN, "Failed to destroy vulkan swapchain!");
     } 
     else 
     {
@@ -367,7 +377,7 @@ ErrType VulkanDevice::destroySwapchain(VulkanSwapchain* pSwapchain)
 }
 
 
-ErrType VulkanDevice::createSurface(VkInstance instance, void* handle)
+ResultCode VulkanDevice::createSurface(VkInstance instance, void* handle)
 {
     VkResult result             = VK_SUCCESS;
 
@@ -380,7 +390,7 @@ ErrType VulkanDevice::createSurface(VkInstance instance, void* handle)
 
     if (!handle) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Null window handle for surface creation.");
+        R_ERROR(R_CHANNEL_VULKAN, "Null window handle for surface creation.");
         return RecluseResult_NullPtrExcept;
     }
 
@@ -403,7 +413,7 @@ ErrType VulkanDevice::createSurface(VkInstance instance, void* handle)
     
     if (result != VK_SUCCESS) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to create win32 surface.");
+        R_ERROR(R_CHANNEL_VULKAN, "Failed to create win32 surface.");
         return RecluseResult_Failed;
     }
 #endif
@@ -412,7 +422,7 @@ ErrType VulkanDevice::createSurface(VkInstance instance, void* handle)
 }
 
 
-ErrType VulkanDevice::reserveMemory(const MemoryReserveDescription& desc)
+ResultCode VulkanDevice::reserveMemory(const MemoryReserveDescription& desc)
 {
     VkMemoryRequirements memoryRequirements = { };
     R_DEBUG
@@ -437,10 +447,10 @@ ErrType VulkanDevice::reserveMemory(const MemoryReserveDescription& desc)
 }
 
 
-ErrType VulkanDevice::createQueues()
+ResultCode VulkanDevice::createQueues()
 {
     // Lets create the primary queue.
-    ErrType result          = RecluseResult_Ok;
+    ResultCode result          = RecluseResult_Ok;
     VkQueueFlags flags      = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT;
     B32 isPresentSupported  = false;
 
@@ -453,14 +463,14 @@ ErrType VulkanDevice::createQueues()
 
     if (result != RecluseResult_Ok) 
     { 
-        R_ERR(R_CHANNEL_VULKAN, "Failed to create main RHI queue!");
+        R_ERROR(R_CHANNEL_VULKAN, "Failed to create main RHI queue!");
     }
 
     return result;
 }
 
 
-ErrType VulkanDevice::createQueue(VulkanQueue** ppQueue, VkQueueFlags flags, B32 isPresentable)
+ResultCode VulkanDevice::createQueue(VulkanQueue** ppQueue, VkQueueFlags flags, B32 isPresentable)
 {
     U32 queueFamilyIndex    = 0xFFFFFFFF;
     U32 queueIndex          = 0xFFFFFFFF;
@@ -494,14 +504,14 @@ ErrType VulkanDevice::createQueue(VulkanQueue** ppQueue, VkQueueFlags flags, B32
 
     if (queueFamilyIndex == 0xFFFFFFFF || queueIndex == 0xFFFFFFFF) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Could not find proper queue family! Can not create queue.");
+        R_ERROR(R_CHANNEL_VULKAN, "Could not find proper queue family! Can not create queue.");
 
         return RecluseResult_Failed;
     }
 
     pQueue = new VulkanQueue(flags, isPresentable);
 
-    ErrType err = pQueue->initialize(this, pFamily, queueFamilyIndex, queueIndex);
+    ResultCode err = pQueue->initialize(this, pFamily, queueFamilyIndex, queueIndex);
 
     if (err == RecluseResult_Ok) 
     {
@@ -512,7 +522,7 @@ ErrType VulkanDevice::createQueue(VulkanQueue** ppQueue, VkQueueFlags flags, B32
 }
 
 
-ErrType VulkanDevice::destroyQueues()
+ResultCode VulkanDevice::destroyQueues()
 {
     if (m_pGraphicsQueue) 
     {
@@ -524,7 +534,7 @@ ErrType VulkanDevice::destroyQueues()
 }
 
 
-ErrType VulkanDevice::createResource(GraphicsResource** ppResource, GraphicsResourceDescription& desc, ResourceState initState)
+ResultCode VulkanDevice::createResource(GraphicsResource** ppResource, GraphicsResourceDescription& desc, ResourceState initState)
 {
     VulkanResource* pResource = Resources::makeResource(this, desc, initState);
     *ppResource = pResource;
@@ -532,7 +542,7 @@ ErrType VulkanDevice::createResource(GraphicsResource** ppResource, GraphicsReso
 }
 
 
-ErrType VulkanDevice::destroyResource(GraphicsResource* pResource)
+ResultCode VulkanDevice::destroyResource(GraphicsResource* pResource)
 {
     if (pResource) 
     {
@@ -543,7 +553,7 @@ ErrType VulkanDevice::destroyResource(GraphicsResource* pResource)
 }
 
 
-ErrType VulkanContext::createCommandPools(U32 buffers)
+ResultCode VulkanContext::createCommandPools(U32 buffers)
 {
     R_DEBUG(R_CHANNEL_VULKAN, "Creating command pools...");
 
@@ -573,7 +583,7 @@ ErrType VulkanContext::createCommandPools(U32 buffers)
 
                 if (result != VK_SUCCESS) 
                 {
-                    R_ERR(R_CHANNEL_VULKAN, "Failed to create command pool for queue family...");
+                    R_ERROR(R_CHANNEL_VULKAN, "Failed to create command pool for queue family...");
                     destroyCommandPools();
                     break;
                 }
@@ -603,9 +613,9 @@ void VulkanContext::destroyCommandPools()
 }
 
 
-ErrType VulkanContext::createPrimaryCommandList(VkQueueFlags flags)
+ResultCode VulkanContext::createPrimaryCommandList(VkQueueFlags flags)
 {
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
     U32 queueFamilyIndex = m_queueFamilyIndex;
     R_DEBUG(R_CHANNEL_VULKAN, "Creating command list...");
     result = m_primaryCommandList.initialize
@@ -618,7 +628,7 @@ ErrType VulkanContext::createPrimaryCommandList(VkQueueFlags flags)
 
     if (result != RecluseResult_Ok) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Could not create CommandList...");
+        R_ERROR(R_CHANNEL_VULKAN, "Could not create CommandList...");
 
         m_primaryCommandList.release(this);
 
@@ -628,7 +638,7 @@ ErrType VulkanContext::createPrimaryCommandList(VkQueueFlags flags)
 }
 
 
-ErrType VulkanContext::destroyPrimaryCommandList()
+ResultCode VulkanContext::destroyPrimaryCommandList()
 {
     R_DEBUG(R_CHANNEL_VULKAN, "Destroying command list...");
     m_primaryCommandList.release(this);
@@ -699,7 +709,7 @@ void VulkanContext::destroyFences()
 }
 
 
-ErrType VulkanDevice::createResourceView(GraphicsResourceView** ppView, const ResourceViewDescription& desc)
+ResultCode VulkanDevice::createResourceView(GraphicsResourceView** ppView, const ResourceViewDescription& desc)
 {
     VulkanResourceView* pView = ResourceViews::makeResourceView(this, desc);
     if (!pView)
@@ -709,7 +719,7 @@ ErrType VulkanDevice::createResourceView(GraphicsResourceView** ppView, const Re
 }
 
 
-ErrType VulkanDevice::destroyResourceView(GraphicsResourceView* pView)
+ResultCode VulkanDevice::destroyResourceView(GraphicsResourceView* pView)
 {
     if (!pView) return RecluseResult_NullPtrExcept;
     return ResourceViews::releaseResourceView(this, pView->getId());
@@ -739,8 +749,8 @@ void VulkanDevice::allocateMemCache()
     m_memCache.invalid.pool         = new MemoryPool(cacheSizeBytes);
     m_memCache.flush.allocator      = new LinearAllocator();
     m_memCache.invalid.allocator    = new LinearAllocator();
-    PtrType alignedFlushAddress     = align(m_memCache.flush.pool->getBaseAddress(), pointerSizeBytes());
-    PtrType alignedInvalidAddress   = align(m_memCache.invalid.pool->getBaseAddress(), pointerSizeBytes());
+    UPtr alignedFlushAddress     = align(m_memCache.flush.pool->getBaseAddress(), pointerSizeBytes());
+    UPtr alignedInvalidAddress   = align(m_memCache.invalid.pool->getBaseAddress(), pointerSizeBytes());
 
     m_memCache.flush.allocator->initialize(alignedFlushAddress, cacheSizeBytes);
     m_memCache.invalid.allocator->initialize(alignedInvalidAddress, cacheSizeBytes);
@@ -793,7 +803,7 @@ void VulkanDevice::flushAllMappedRanges()
 
     if (result != VK_SUCCESS) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to flush memory ranges...");    
+        R_ERROR(R_CHANNEL_VULKAN, "Failed to flush memory ranges...");    
     }
 
     m_memCache.flush.allocator->reset();
@@ -816,7 +826,7 @@ void VulkanDevice::invalidateAllMappedRanges()
 
     if (result != VK_SUCCESS) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to invalidate memory ranges...");    
+        R_ERROR(R_CHANNEL_VULKAN, "Failed to invalidate memory ranges...");    
     }
 
     m_memCache.invalid.allocator->reset();
@@ -829,7 +839,7 @@ void VulkanDevice::pushFlushMemoryRange(const VkMappedMemoryRange& mappedRange)
     VkDeviceSize atomSz     = getNonCoherentSize();
     // Alignment of 0 since we want to pack these ranges together. We hope that 
     // the api struct itself will be aligned properly.
-    ErrType result          = m_memCache.flush.allocator->allocate
+    ResultCode result          = m_memCache.flush.allocator->allocate
                                 (
                                     &allocation, 
                                     sizeof(VkMappedMemoryRange), 
@@ -840,11 +850,11 @@ void VulkanDevice::pushFlushMemoryRange(const VkMappedMemoryRange& mappedRange)
     {
         if (result == RecluseResult_OutOfMemory) 
         {
-            R_ERR(R_CHANNEL_VULKAN, "Memory flush cache out of memory!");        
+            R_ERROR(R_CHANNEL_VULKAN, "Memory flush cache out of memory!");        
         } 
         else 
         {
-            R_ERR(R_CHANNEL_VULKAN, "Failed to push flush memory range!");        
+            R_ERROR(R_CHANNEL_VULKAN, "Failed to push flush memory range!");        
         }
     
         // Possible null ptr returned, breaking off.
@@ -864,7 +874,7 @@ void VulkanDevice::pushInvalidateMemoryRange(const VkMappedMemoryRange& mappedRa
     Allocation allocation   = { };
     VkDeviceSize atomSz     = getNonCoherentSize();
     // Alignement of 0 since we want to pack these ranges together. We hope that the api struct itself will be aligned properly.
-    ErrType result          = m_memCache.invalid.allocator->allocate
+    ResultCode result          = m_memCache.invalid.allocator->allocate
                                 (
                                     &allocation, 
                                     sizeof(VkMappedMemoryRange), 
@@ -875,12 +885,12 @@ void VulkanDevice::pushInvalidateMemoryRange(const VkMappedMemoryRange& mappedRa
     {
         if (result == RecluseResult_OutOfMemory) 
         {
-            R_ERR(R_CHANNEL_VULKAN, "Memory flush cache out of memory!");        
+            R_ERROR(R_CHANNEL_VULKAN, "Memory flush cache out of memory!");        
 
         } 
         else 
         {
-            R_ERR(R_CHANNEL_VULKAN, "Failed to push flush memory range!");        
+            R_ERROR(R_CHANNEL_VULKAN, "Failed to push flush memory range!");        
         }
 
         // Possible nullptr, break off.
@@ -901,14 +911,14 @@ GraphicsSwapchain* VulkanDevice::getSwapchain()
 }
 
 
-ErrType VulkanContext::wait()
+ResultCode VulkanContext::wait()
 {
     m_pDevice->getBackbufferQueue()->wait();
     return RecluseResult_Ok;
 }
 
 
-ErrType VulkanDevice::createSampler(GraphicsSampler** ppSampler, const SamplerDescription& desc)
+ResultCode VulkanDevice::createSampler(GraphicsSampler** ppSampler, const SamplerDescription& desc)
 {
     VulkanSampler* pVSampler    = ResourceViews::makeSampler(this, desc);
     if (!pVSampler) return RecluseResult_Failed;
@@ -916,14 +926,14 @@ ErrType VulkanDevice::createSampler(GraphicsSampler** ppSampler, const SamplerDe
     return RecluseResult_Ok;
 }
 
-ErrType VulkanDevice::destroySampler(GraphicsSampler* pSampler)
+ResultCode VulkanDevice::destroySampler(GraphicsSampler* pSampler)
 {
     if (!pSampler) return RecluseResult_NullPtrExcept;
     return ResourceViews::releaseSampler(this, pSampler->getId());
 }
 
 
-ErrType VulkanDevice::loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition)
+ResultCode VulkanDevice::loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition)
 {
     if (ShaderPrograms::isProgramCached(program, permutation))
     {
@@ -933,7 +943,7 @@ ErrType VulkanDevice::loadShaderProgram(ShaderProgramId program, ShaderProgramPe
 }
 
 
-ErrType VulkanDevice::unloadShaderProgram(ShaderProgramId program)
+ResultCode VulkanDevice::unloadShaderProgram(ShaderProgramId program)
 {
     if (!ShaderPrograms::isProgramCached(program))
     {
@@ -945,7 +955,9 @@ ErrType VulkanDevice::unloadShaderProgram(ShaderProgramId program)
 
 void VulkanDevice::unloadAllShaderPrograms()
 {
+    // Clear all shader programs and associated pipeline states as well.
     ShaderPrograms::unloadAll(this);
+    Pipelines::clearPipelineCache(this);
 }
 
 
@@ -966,7 +978,7 @@ GraphicsContext* VulkanDevice::createContext()
     m_allocatedContexts.reserve(kMaxGraphicsContexts);
     if (m_allocatedContexts.size() >= kMaxGraphicsContexts)
     {
-        R_ERR(R_CHANNEL_VULKAN, "Reached maximum allowable graphics contexts to create!");
+        R_ERROR(R_CHANNEL_VULKAN, "Reached maximum allowable graphics contexts to create!");
         return nullptr;
     }
 
@@ -976,7 +988,7 @@ GraphicsContext* VulkanDevice::createContext()
 }
 
 
-ErrType VulkanDevice::releaseContext(GraphicsContext* pContext)
+ResultCode VulkanDevice::releaseContext(GraphicsContext* pContext)
 {
     VulkanContext* pVc = static_cast<VulkanContext*>(pContext);
     pVc->release();

@@ -44,7 +44,7 @@ void D3D12Instance::freeGraphicsAdapters()
 }
 
 
-ErrType D3D12Instance::onInitialize(const ApplicationInfo& appInfo, LayerFeatureFlags flags)
+ResultCode D3D12Instance::onInitialize(const ApplicationInfo& appInfo, LayerFeatureFlags flags)
 {
     R_DEBUG(R_CHANNEL_D3D12, "Initializing D3D12 context...");
     HRESULT result = S_OK;
@@ -92,7 +92,7 @@ void D3D12Instance::enableDebugValidation()
 
     if (FAILED(result)) 
     {
-        R_ERR(R_CHANNEL_D3D12, "Failed to enable gpu validation!");    
+        R_ERROR(R_CHANNEL_D3D12, "Failed to enable gpu validation!");    
     }
 
     spDebugController0->EnableDebugLayer();

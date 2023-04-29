@@ -16,23 +16,25 @@ extern const char* kHlslSemanticNormal;
 extern const char* kHlslSemanticTexcoord;
 extern const char* kHlslSemanticTangent;
 
+typedef Hash64 PipelineStateId;
+
 namespace Pipelines {
 
 
 struct PipelineStateObject
 {
-    BindType pipelineType;
+    BindType                        pipelineType;
     union 
     {
         struct 
         {
-            U32                 numRenderTargets;
-            RasterState         raster;
-            BlendState          blendState;
-            DepthStencil        depthStencil;
-            VertexInputLayoutId ia;
-            TessellationState   tess;
-            PrimitiveTopology   primitiveTopology;
+            U32                     numRenderTargets;
+            RasterState             raster;
+            BlendState              blendState;
+            DepthStencil            depthStencil;
+            VertexInputLayoutId     ia;
+            TessellationState       tess;
+            PrimitiveTopology       primitiveTopology;
         } graphics;
         struct
         {
@@ -40,9 +42,9 @@ struct PipelineStateObject
             Bool                    usingLocalRootSignature;               //< If using local root signature, otherwise use global.
         } raytrace;
     };
-    ShaderProgramId             shaderProgramId;
-    ShaderProgramPermutation    permutation;
-    ID3D12RootSignature*        rootSignature; 
+    ShaderProgramId                 shaderProgramId;
+    ShaderProgramPermutation        permutation;
+    ID3D12RootSignature*            rootSignature; 
 };
 
 ID3D12PipelineState* makePipelineState(D3D12Context* pContext, const PipelineStateObject& pipelineState);

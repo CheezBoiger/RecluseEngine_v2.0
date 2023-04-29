@@ -20,9 +20,10 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="Parsable arguments for the Recluse build system.")
     parser.add_argument("-vulkan", dest="vulkan", action="store_true", help="Enable vulkan", default=False)
     parser.add_argument("-dx12", dest="dx12", action="store_true", help="Enable DX12", default=False)
-    parser.add_argument("-glsl", dest="glsl", action="store_true", help="Enable GLSL compilation.", default=False)
-    parser.add_argument("-dxil", dest="dxil", action="store_true", help="Enable DXIL compilation.", default=False)
+    parser.add_argument("-glsl", dest="glsl", action="store_true", help="Enable GLSlang compiler use.", default=False)
+    parser.add_argument("-dxc", dest="dxc", action="store_true", help="Enable DXC compiler use.", default=False)
     parser.add_argument("-test", dest="test", action="store_true", help="Enable tests.", default=False)
+    parser.add_argument("-developer", dest="developer", action="store_true", help="Enable Developer mode for the engine.", default=False)
     parser.add_argument("-xxhash", dest="xxhash", action="store_true", help="Use XXhashing instead of the default Meow Hash.", default=False)
     parser.add_argument("-first-time", dest="ft", action="store_true", help="Run first time set up.", default=False)
     args = parser.parse_args()
@@ -46,17 +47,22 @@ def add_additional_cmake_commands():
         cmds.append("-DRCL_GLSLANG=True")
     else:
         cmds.append("-DRCL_GLSLANG=False")
-        
-    if parsed_commands.dxil == True:
-        cmds.append("-DRCL_DXC=True")
-    else:
-        cmds.append("-DRCL_DXC=False")
-        
+
     if parsed_commands.xxhash == True:
         cmds.append("-DR_USE_XXHASH=True")
     else:
         cmds.append("-DR_USE_XXHASH=False")
+     
+    if parsed_commands.dxc == True:
+        cmds.append("-DRCL_DXC=True")
+    else:
+        cmds.append("-DRCL_DXC=False")
         
+    if parsed_commands.developer == True:
+        cmds.append("-DR_DEVELOPER=True")
+    else:
+        cmds.append("-DR_DEVELOPER=False")
+
     return cmds
 
 def check_install_package(package):
@@ -88,7 +94,7 @@ def main():
     
     cmake_commands.extend(additional_cmake_commands)
     cmake_commands.append("..")
-    
+    print(cmake_commands)
     subprocess.call(cmake_commands)
     
     # Call test params.

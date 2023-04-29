@@ -6,6 +6,7 @@
 #include "Recluse/Graphics/GraphicsAdapter.hpp"
 #include "Recluse/Memory/MemoryCommon.hpp"
 #include "Recluse/System/Window.hpp"
+#include "Recluse/System/Limiter.hpp"
 
 #include "Recluse/Messaging.hpp"
 
@@ -45,14 +46,14 @@ void Renderer::initialize()
 
     LayerFeatureFlags flags  = 0;
     ApplicationInfo info    = { };
-    ErrType result          = RecluseResult_Ok;
+    ResultCode result          = RecluseResult_Ok;
     m_windowHandle          = m_currentRendererConfigs.windowHandle;
 
     m_pInstance = GraphicsInstance::createInstance(m_currentRendererConfigs.api);
     
     if (!m_pInstance) 
     {
-        R_ERR("Renderer", "Failed to create graphics context, aborting...");
+        R_ERROR("Renderer", "Failed to create graphics context, aborting...");
 
         return;
     }
@@ -67,7 +68,7 @@ void Renderer::initialize()
 
     if (result != RecluseResult_Ok) 
     {
-        R_ERR("Renderer", "Failed to initialize instance!");        
+        R_ERROR("Renderer", "Failed to initialize instance!");        
     }
 
     std::vector<GraphicsAdapter*> adapters = m_pInstance->getGraphicsAdapters();
@@ -92,7 +93,7 @@ void Renderer::initialize()
 
     if (result != RecluseResult_Ok) 
     {
-        R_ERR("Renderer", "ReserveMemory call completed with result: %d", result);
+        R_ERROR("Renderer", "ReserveMemory call completed with result: %d", result);
     }
 
     allocateSceneBuffers(m_currentRendererConfigs);
@@ -117,7 +118,7 @@ void Renderer::cleanUp()
 
 void Renderer::present(Bool delayPresent)
 {
-    ErrType result = m_pSwapchain->present(delayPresent ? GraphicsSwapchain::PresentConfig_SkipPresent : GraphicsSwapchain::PresentConfig_Present);
+    ResultCode result = m_pSwapchain->present(delayPresent ? GraphicsSwapchain::PresentConfig_SkipPresent : GraphicsSwapchain::PresentConfig_Present);
 
     if (result != RecluseResult_Ok) 
     {
@@ -198,13 +199,13 @@ void Renderer::determineAdapter(std::vector<GraphicsAdapter*>& adapters)
         AdapterInfo info            = { };
         AdapterLimits limits        = { };
         GraphicsAdapter* pAdapter   = adapters[i];
-        ErrType result              = RecluseResult_Ok;
+        ResultCode result              = RecluseResult_Ok;
 
         result = pAdapter->getAdapterInfo(&info);
     
         if (result != RecluseResult_Ok) 
         {
-            R_ERR("Renderer", "Failed to query adapter info.");
+            R_ERROR("Renderer", "Failed to query adapter info.");
         }
 
         R_DEBUG("Adapter Name: %s\n\t\tVendor: %s", info.deviceName, info.vendorName);
@@ -226,13 +227,13 @@ void Renderer::createDevice(const RendererConfigs& configs)
     info.swapchainDescription.renderWidth   = configs.renderWidth;
     info.swapchainDescription.renderHeight  = configs.renderHeight;
 
-    ErrType result          = RecluseResult_Ok;
+    ResultCode result          = RecluseResult_Ok;
     
     result = m_pAdapter->createDevice(info, &m_pDevice);
 
     if (result != RecluseResult_Ok) 
     {
-        R_ERR("Renderer", "Failed to create device!");   
+        R_ERROR("Renderer", "Failed to create device!");   
     }
 }
 
@@ -261,7 +262,7 @@ void Renderer::cleanUpModules()
 
 VertexBuffer* Renderer::createVertexBuffer(U64 perVertexSzBytes, U64 totalVertices)
 {
-    ErrType result          = RecluseResult_Ok;
+    ResultCode result          = RecluseResult_Ok;
     VertexBuffer* pBuffer   = new VertexBuffer();
 
     result = pBuffer->initializeVertices(m_pDevice, perVertexSzBytes, totalVertices);
@@ -278,7 +279,7 @@ VertexBuffer* Renderer::createVertexBuffer(U64 perVertexSzBytes, U64 totalVertic
 
 IndexBuffer* Renderer::createIndexBuffer(IndexType indexType, U64 totalIndices)
 {
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
     IndexBuffer* pBuffer = new IndexBuffer();
     
     result = pBuffer->initializeIndices(m_pDevice, indexType, totalIndices);
@@ -293,9 +294,9 @@ IndexBuffer* Renderer::createIndexBuffer(IndexType indexType, U64 totalIndices)
 }
 
 
-ErrType Renderer::destroyGPUBuffer(GPUBuffer* pBuffer)
+ResultCode Renderer::destroyGPUBuffer(GPUBuffer* pBuffer)
 {
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
 
     if (!pBuffer) 
     {
@@ -442,7 +443,7 @@ void Renderer::freeSceneBuffers()
 Texture2D* Renderer::createTexture2D(U32 width, U32 height, U32 mips, U32 layers, ResourceFormat format)
 {
     Texture2D* pTexture = new Texture2D();
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
 
     result = pTexture->initialize(this, format, width, height, layers, mips);
 
@@ -456,7 +457,7 @@ Texture2D* Renderer::createTexture2D(U32 width, U32 height, U32 mips, U32 layers
 }
 
 
-ErrType Renderer::destroyTexture2D(Texture2D* pTexture)
+ResultCode Renderer::destroyTexture2D(Texture2D* pTexture)
 {
     R_ASSERT(pTexture != NULL);
 
@@ -467,7 +468,7 @@ ErrType Renderer::destroyTexture2D(Texture2D* pTexture)
 }
 
 
-static ErrType kRendererJob(void* pData)
+static ResultCode kRendererJob(void* pData)
 {
     Renderer* pRenderer                     = Renderer::getMain();
     Mutex renderMutex                       = pRenderer->getMutex();
@@ -492,25 +493,9 @@ static ErrType kRendererJob(void* pData)
             pRenderer->update(tick.getCurrentTimeS(), tick.delta());
             pRenderer->render();
 
-            // Check if we need to limit our frame rate.
-            GraphicsSwapchain::PresentConfig presentConfig = GraphicsSwapchain::PresentConfig_SkipPresent;
-
-            if (renderConfigs.maxFrameRate > 0)
-            {
-                const F32 desiredFramesMs = 1.0f / renderConfigs.maxFrameRate;
-                if (counterFrameMs >= desiredFramesMs)
-                {
-                    counterFrameMs = 0.f;
-                    presentConfig = GraphicsSwapchain::PresentConfig_Present;
-                }
-            }
-            else
-            {
-                // Not framerate limit, so we can present as fast as we can.
-                presentConfig = GraphicsSwapchain::PresentConfig_Present;
-            }
-
-            pRenderer->present(presentConfig);
+            const F32 desiredFrameRateMs = 1.0f / renderConfigs.maxFrameRate;
+            Limiter::limit(desiredFrameRateMs, threadId, JOB_TYPE_RENDERER);
+            pRenderer->present();
         }
     }
 
@@ -518,7 +503,7 @@ static ErrType kRendererJob(void* pData)
 }
 
 
-ErrType Renderer::onInitializeModule(Application* pApp)
+ResultCode Renderer::onInitializeModule(Application* pApp)
 {
     m_configLock = createMutex();
 
@@ -573,7 +558,7 @@ ErrType Renderer::onInitializeModule(Application* pApp)
 }
 
 
-ErrType Renderer::onCleanUpModule(Application* pApp)
+ResultCode Renderer::onCleanUpModule(Application* pApp)
 {
     ScopedLock lck(getMutex());
     cleanUp();

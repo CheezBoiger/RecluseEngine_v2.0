@@ -39,7 +39,7 @@ void Shader::genHashId()
 }
 
 
-ErrType Shader::load(const char* entryPoint, const char* pByteCode, U64 szBytes, ShaderIntermediateCode imm, ShaderType shaderType)
+ResultCode Shader::load(const char* entryPoint, const char* pByteCode, U64 szBytes, ShaderIntermediateCode imm, ShaderType shaderType)
 {
     m_byteCode.resize(szBytes);
     memcpy(m_byteCode.data(), pByteCode, szBytes);
@@ -54,7 +54,7 @@ ErrType Shader::load(const char* entryPoint, const char* pByteCode, U64 szBytes,
 }
 
 
-ErrType ShaderBuilder::compile
+ResultCode ShaderBuilder::compile
     (
         Shader* pShader, 
         const char* entryPoint,
@@ -65,7 +65,7 @@ ErrType ShaderBuilder::compile
         const std::vector<PreprocessDefine>& defines
     )
 {
-    ErrType result              = RecluseResult_Ok;
+    ResultCode result              = RecluseResult_Ok;
 
     std::vector<char> srcCodeString;
     std::vector<char> byteCodeString;
@@ -82,7 +82,7 @@ ErrType ShaderBuilder::compile
     } 
     else 
     {
-        R_ERR("Shader", "Failed to compile shader!");
+        R_ERROR("Shader", "Failed to compile shader!");
     }
 
     return result;
@@ -95,9 +95,9 @@ Shader* Shader::convertTo(ShaderIntermediateCode intermediateCode)
 }
 
 
-ErrType Shader::saveToFile(const char* filePath)
+ResultCode Shader::saveToFile(const char* filePath)
 {
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
     FileBufferData data = { };
     data.resize(m_byteCode.size());
     std::copy(m_byteCode.begin(), m_byteCode.end(), data.begin());

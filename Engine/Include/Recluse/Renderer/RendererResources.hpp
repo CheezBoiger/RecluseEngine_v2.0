@@ -50,11 +50,11 @@ public:
 
     virtual ~GPUBuffer() { }
     
-    ErrType             initialize(GraphicsDevice* pDevice, U64 totalSzBytes, ResourceUsageFlags usage);
-    ErrType             destroy();
+    ResultCode             initialize(GraphicsDevice* pDevice, U64 totalSzBytes, ResourceUsageFlags usage);
+    ResultCode             destroy();
 
     // Stream a staging resource back to the gpu.
-    ErrType             stream(GraphicsContext* pContext, void* ptr, U64 offsetBytes, U64 szBytes);
+    ResultCode             stream(GraphicsContext* pContext, void* ptr, U64 offsetBytes, U64 szBytes);
 
     // Obtain a staging buffer based on the offset of this gpu resource, and the total size bytes to work with.
     GpuToCpuBuffer      stage(U64 offsetBytes, U64 szBytes);
@@ -73,7 +73,7 @@ class R_PUBLIC_API IndexBuffer : public GPUBuffer
 public:
     IndexBuffer() { }
 
-    ErrType initializeIndices(GraphicsDevice* pDevice, IndexType type, U64 totalIndices) 
+    ResultCode initializeIndices(GraphicsDevice* pDevice, IndexType type, U64 totalIndices) 
     {
         U64 szIndex = 0;
         switch (type) 
@@ -101,7 +101,7 @@ class R_PUBLIC_API VertexBuffer : public GPUBuffer
 public:
     VertexBuffer() { }
 
-    ErrType initializeVertices(GraphicsDevice* pDevice, U64 perVertexSzBytes, U64 totalVertices) 
+    ResultCode initializeVertices(GraphicsDevice* pDevice, U64 perVertexSzBytes, U64 totalVertices) 
     {
         m_perVertexSzBytes  = perVertexSzBytes;
         m_totalVertices     = totalVertices;
@@ -143,8 +143,8 @@ extern R_PUBLIC_API Bool         isCachedTexture2D(RenderID id);
 extern R_PUBLIC_API Texture2D*   getTexture2D(RenderID id);
 extern R_PUBLIC_API GPUBuffer*   getGPUBuffer(RenderID id);
 
-extern R_PUBLIC_API ErrType      cacheGPUBuffer(RenderID id, GPUBuffer* pBuffer);
-extern R_PUBLIC_API ErrType      cacheTexture2D(RenderID id, Texture2D* pTexture);
+extern R_PUBLIC_API ResultCode      cacheGPUBuffer(RenderID id, GPUBuffer* pBuffer);
+extern R_PUBLIC_API ResultCode      cacheTexture2D(RenderID id, Texture2D* pTexture);
 
 extern R_PUBLIC_API Bool         removeTexture2D(RenderID id);
 extern R_PUBLIC_API Bool         removeGPUBuffer(RenderID id);

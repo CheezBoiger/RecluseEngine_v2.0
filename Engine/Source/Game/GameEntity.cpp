@@ -30,7 +30,7 @@ static GameEntity* defaultAlloc(U64 szBytes, GameEntityMemoryAllocationType type
     }
     else
     {
-        R_ERR("GameEntity", "Only Dynamic allocation is supported for default allocations!");
+        R_ERROR("GameEntity", "Only Dynamic allocation is supported for default allocations!");
     }
 
     // Return null if we can't allocate the specified allocation type.
@@ -84,7 +84,7 @@ GameEntity* GameEntity::findEntity(const RGUID& guid)
 }
 
 
-ErrType GameEntity::serialize(Archive* pArchive)
+ResultCode GameEntity::serialize(Archive* pArchive)
 {
     // TODO: Need to figure out how to obtain a proper rguid.
     //       Parent needs to also be included as well!
@@ -106,7 +106,7 @@ ErrType GameEntity::serialize(Archive* pArchive)
     return RecluseResult_Ok;
 }
 
-ErrType GameEntity::deserialize(Archive* pArchive)
+ResultCode GameEntity::deserialize(Archive* pArchive)
 {
     return RecluseResult_NoImpl;
 }

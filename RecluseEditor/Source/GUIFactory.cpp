@@ -27,7 +27,7 @@ IGUIDriver* getDriver()
 
 namespace GUIFactory {
 
-ErrType createContext(GUIContext ctx)
+ResultCode createContext(GUIContext ctx)
 {
     using namespace Recluse::Editor::GUIContext;
 
@@ -46,7 +46,7 @@ ErrType createContext(GUIContext ctx)
     }
 
 
-    R_ERR("Editor", "Contact and/or driver are already initialized!! Ignoring this call, passing null...");
+    R_ERROR("Editor", "Contact and/or driver are already initialized!! Ignoring this call, passing null...");
     return RecluseResult_Failed;
 }
 

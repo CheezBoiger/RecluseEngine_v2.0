@@ -19,14 +19,14 @@ class D3D12Adapter : public GraphicsAdapter
 public:
     static std::vector<IDXGIAdapter*> getAdapters(D3D12Instance* pInstance);
 
-    ErrType getAdapterInfo(AdapterInfo* out) const override;
+    ResultCode getAdapterInfo(AdapterInfo* out) const override;
     
     IDXGIAdapter* get() const { return m_pAdapter; }
 
     D3D12Instance* getInstance() const { return m_pInstance; }
 
-    ErrType createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice) override;
-    ErrType destroyDevice(GraphicsDevice* pDevice) override;
+    ResultCode createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice) override;
+    ResultCode destroyDevice(GraphicsDevice* pDevice) override;
 
     void destroy();
 

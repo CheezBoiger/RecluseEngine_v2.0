@@ -3,7 +3,7 @@
 
 namespace Recluse {
 
-ErrType TransformSystem::onAllocateComponent(Transform** pOut)
+ResultCode TransformSystem::onAllocateComponent(Transform** pOut)
 {
     // TODO: We are just testing it out. We would need to hold onto this handle!
     *pOut = new Transform();
@@ -12,7 +12,7 @@ ErrType TransformSystem::onAllocateComponent(Transform** pOut)
 }
 
 
-ErrType TransformSystem::onFreeComponent(Transform** pIn)
+ResultCode TransformSystem::onFreeComponent(Transform** pIn)
 {
     U32 i = 0;
     for (auto& it = m_transforms.begin(); it != m_transforms.end(); ++it)

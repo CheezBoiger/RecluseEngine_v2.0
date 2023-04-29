@@ -16,19 +16,19 @@ public:
     LinearAllocator()
         : m_top(0ull) { }
 
-    ErrType onInitialize() override 
+    ResultCode onInitialize() override 
     {
-        m_top = (PtrType)getBaseAddr();
+        m_top = (UPtr)getBaseAddr();
         return RecluseResult_Ok;
     }
 
-    ErrType onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override 
+    ResultCode onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override 
     {
         R_ASSERT(Math::isPowerOf2(alignment));
-        PtrType neededSzBytes   = requestSz + alignment;
+        UPtr neededSzBytes   = requestSz + alignment;
         U64 totalSzBytes        = getTotalSizeBytes();
-        PtrType szAddr          = getBaseAddr() + totalSzBytes;
-        PtrType endAddr         = m_top + neededSzBytes;
+        UPtr szAddr          = getBaseAddr() + totalSzBytes;
+        UPtr endAddr         = m_top + neededSzBytes;
     
         if (endAddr >= szAddr) 
         {
@@ -42,28 +42,28 @@ public:
         return RecluseResult_Ok;
     }
 
-    PtrType getTop() const 
+    UPtr getTop() const 
     {
         return m_top;
     }
 
-    ErrType onReset() override 
+    ResultCode onReset() override 
     { 
-        m_top = (PtrType)getBaseAddr();
+        m_top = (UPtr)getBaseAddr();
         return RecluseResult_Ok;
     }
 
-    ErrType onCleanUp() override 
+    ResultCode onCleanUp() override 
     {
         return RecluseResult_Ok;
     }
 
-    ErrType onFree(Allocation* pOutput) override
+    ResultCode onFree(Allocation* pOutput) override
     {
         return RecluseResult_Ok;
     }
 
 private:
-    PtrType m_top;
+    UPtr m_top;
 };
 } // Recluse

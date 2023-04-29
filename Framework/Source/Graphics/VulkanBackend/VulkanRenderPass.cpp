@@ -27,7 +27,7 @@ static U64 serialize(const VkFramebufferCreateInfo& info)
         uniqueId += reinterpret_cast<Hash64>(ref);
     }
 
-    uniqueId = recluseHash(&uniqueId, sizeof(Hash64));
+    uniqueId = recluseHashFast(&uniqueId, sizeof(Hash64));
     return uniqueId;
 }
 
@@ -83,7 +83,7 @@ static void destroyFbo(Hash64 fboId, VkDevice device)
 }
 
 
-ErrType VulkanRenderPass::initialize(VulkanDevice* pDevice, const VulkanRenderPassDesc& desc)
+ResultCode VulkanRenderPass::initialize(VulkanDevice* pDevice, const VulkanRenderPassDesc& desc)
 {
     R_DEBUG(R_CHANNEL_VULKAN, "Creating vulkan render pass...");
 
@@ -194,7 +194,7 @@ ErrType VulkanRenderPass::initialize(VulkanDevice* pDevice, const VulkanRenderPa
 
     if (result != VK_SUCCESS) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to create vulkan render pass!");
+        R_ERROR(R_CHANNEL_VULKAN, "Failed to create vulkan render pass!");
 
         release(pDevice);
 
@@ -225,7 +225,7 @@ ErrType VulkanRenderPass::initialize(VulkanDevice* pDevice, const VulkanRenderPa
         
         if (result != VK_SUCCESS) 
         {
-            R_ERR(R_CHANNEL_VULKAN, "Failed to create vulkan framebuffer object.!");
+            R_ERROR(R_CHANNEL_VULKAN, "Failed to create vulkan framebuffer object.!");
 
             release(pDevice);
 
@@ -244,7 +244,7 @@ ErrType VulkanRenderPass::initialize(VulkanDevice* pDevice, const VulkanRenderPa
 }
 
 
-ErrType VulkanRenderPass::release(VulkanDevice* pDevice)
+ResultCode VulkanRenderPass::release(VulkanDevice* pDevice)
 {
     R_DEBUG(R_CHANNEL_VULKAN, "Destroying render pass...");
 
@@ -272,14 +272,13 @@ VulkanRenderPass* makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, Gr
     // We never really have a max of 8 render targets in current hardware.
     R_ASSERT(numRenderTargets <= 8);
     R_ASSERT(pDevice != NULL);
+    thread_local ResourceViewId ids[9];    
     VulkanRenderPass* pPass = nullptr;
-    Hash64 accumulate = 0;
-
-    U32 count = 0;
-    ResourceViewId ids[9];
-    U32 targetWidth = 0;
-    U32 targetHeight = 0;
-    U32 targetLayers = 0;
+    Hash64 accumulate       = 0;
+    U32 count           = 0;
+    U32 targetWidth     = 0;
+    U32 targetHeight    = 0;
+    U32 targetLayers    = 0;
     
     for (U32 i = 0; i < numRenderTargets; ++i)
     {
@@ -291,13 +290,14 @@ VulkanRenderPass* makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, Gr
 
     if (pDepthStencil)
     {
-        ids[count++] = pDepthStencil->getId();
+        ids[count++]    = pDepthStencil->getId();
         targetWidth     = Math::maximum(targetWidth, pDepthStencil->getDesc().pResource->getDesc().width);
         targetHeight    = Math::maximum(targetHeight, pDepthStencil->getDesc().pResource->getDesc().height);
         targetLayers    = Math::maximum(targetLayers, pDepthStencil->getDesc().pResource->getDesc().depthOrArraySize);
     }
 
-    RenderPassId id = recluseHash(ids, sizeof(ResourceViewId) * count);
+    const U64 resourceViewBytes = sizeof(ResourceViewId) * (U64)count;
+    RenderPassId id = recluseHashFast(ids, resourceViewBytes);
 
     auto& iter = g_rpCache.find(id);
     // Failed to find a suitable render pass, make a new one.

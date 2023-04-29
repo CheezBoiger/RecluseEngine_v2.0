@@ -35,7 +35,7 @@ VulkanSampler* makeSampler(VulkanDevice* pDevice, const SamplerDescription& desc
 }
 
 
-ErrType releaseResourceView(VulkanDevice* pDevice, ResourceViewId id)
+ResultCode releaseResourceView(VulkanDevice* pDevice, ResourceViewId id)
 {
     auto& iter = g_resourceViewMap.find(id);
     if (iter == g_resourceViewMap.end())
@@ -46,7 +46,7 @@ ErrType releaseResourceView(VulkanDevice* pDevice, ResourceViewId id)
 }
 
 
-ErrType releaseSampler(VulkanDevice* pDevice, SamplerId id)
+ResultCode releaseSampler(VulkanDevice* pDevice, SamplerId id)
 {
     auto& iter = g_samplerMap.find(id);
     if (iter == g_samplerMap.end())
@@ -81,9 +81,9 @@ SamplerId VulkanSampler::kSamplerCreationCounter                = 0;
 MutexGuard VulkanResourceView::kResourceViewCreationMutex    = MutexGuard("VulkanResourceViewCreationMutex");
 MutexGuard VulkanSampler::kSamplerCreationMutex              = MutexGuard("VulkanSamplerCreationMutex");
 
-ErrType VulkanResourceView::initialize(VulkanDevice* pDevice)
+ResultCode VulkanResourceView::initialize(VulkanDevice* pDevice)
 {
-    ErrType result          = RecluseResult_Ok;
+    ResultCode result          = RecluseResult_Ok;
     ResourceViewDescription desc   = getDesc();
 
     VkImageViewCreateInfo info = { };
@@ -157,9 +157,9 @@ ErrType VulkanResourceView::initialize(VulkanDevice* pDevice)
 }
 
 
-ErrType VulkanResourceView::release(VulkanDevice* pDevice)
+ResultCode VulkanResourceView::release(VulkanDevice* pDevice)
 {
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
 
     if (m_view) 
     {
@@ -220,7 +220,7 @@ static VkSamplerMipmapMode getMipMapMode(SamplerMipMapMode mode)
 }
 
 
-ErrType VulkanSampler::initialize(VulkanDevice* pDevice, const SamplerDescription& desc)
+ResultCode VulkanSampler::initialize(VulkanDevice* pDevice, const SamplerDescription& desc)
 {
     R_ASSERT(pDevice != NULL);
 
@@ -253,7 +253,7 @@ ErrType VulkanSampler::initialize(VulkanDevice* pDevice, const SamplerDescriptio
 }
 
 
-ErrType VulkanSampler::release(VulkanDevice* pDevice)
+ResultCode VulkanSampler::release(VulkanDevice* pDevice)
 {
     R_ASSERT(pDevice != NULL);
 

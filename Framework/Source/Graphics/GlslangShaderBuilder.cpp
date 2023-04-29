@@ -139,14 +139,14 @@ public:
         : ShaderBuilder(imm)
         , m_isInitialized(false) { }
 
-    ErrType setUp() override 
+    ResultCode setUp() override 
     {
         glslang::InitializeProcess();
         m_isInitialized = true;
         return RecluseResult_Ok;
     }
 
-    ErrType tearDown() override
+    ResultCode tearDown() override
     {
         R_ASSERT(m_isInitialized == true);
         glslang::FinalizeProcess();
@@ -154,7 +154,7 @@ public:
         return RecluseResult_Ok;
     }
 
-    ErrType onCompile
+    ResultCode onCompile
         (
             const std::vector<char>& srcCode, 
             std::vector<char>& byteCode, 
@@ -206,7 +206,7 @@ public:
     
         if (!shader.parse(&DefaultTBuiltInResource, 450, false, messages)) 
         {
-            R_ERR("GLSLANG", "Compile Error: %s", shader.getInfoLog());
+            R_ERROR("GLSLANG", "Compile Error: %s", shader.getInfoLog());
 
             return RecluseResult_Failed;
         }
@@ -215,7 +215,7 @@ public:
     
         if (!program.link(messages)) 
         {
-            R_ERR("GLSLANG", "Failed to link shader program!");
+            R_ERROR("GLSLANG", "Failed to link shader program!");
 
             return RecluseResult_Failed;
         }
@@ -227,7 +227,7 @@ public:
     }
 
 private:
-    B32 m_isInitialized;
+    Bool m_isInitialized;
 };
 
 #endif

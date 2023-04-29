@@ -109,10 +109,10 @@ public:
     ShaderIntermediateCode getIntermediateCodeType() const { return m_intermediateCode; }
 
     // Load the bytecode data to the shader. This requires that the data be in bytecode, not source!
-    R_PUBLIC_API ErrType load(const char* entryPoint, const char* byteCode, U64 szBytes, ShaderIntermediateCode imm, ShaderType shaderType);
+    R_PUBLIC_API ResultCode load(const char* entryPoint, const char* byteCode, U64 szBytes, ShaderIntermediateCode imm, ShaderType shaderType);
 
     // Save the compilation to a file.
-    R_PUBLIC_API ErrType saveToFile(const char* filePath);
+    R_PUBLIC_API ResultCode saveToFile(const char* filePath);
 
     R_PUBLIC_API Shader* convertTo(ShaderIntermediateCode intermediateCode);
 
@@ -131,7 +131,7 @@ public:
     void setName(const char* name) 
     {
         m_shaderName = name;
-        m_shaderNameHash = recluseHash(m_shaderName.data(), m_shaderName.size());
+        m_shaderNameHash = recluseHashFast(m_shaderName.data(), m_shaderName.size());
     }
 
     const char* getName() const { return m_shaderName.c_str(); }

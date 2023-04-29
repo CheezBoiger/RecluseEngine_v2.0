@@ -15,7 +15,7 @@ public:
     SizeT operator()(const TextureViewID& h) const 
     {
         // Not idea, but we gotta...
-        return recluseHash((void*)&h, sizeof(TextureViewID));
+        return recluseHashFast(&h, sizeof(TextureViewID));
     }
 };
 
@@ -41,11 +41,11 @@ static std::unordered_map
         TextureViewIDComparer
     > gTextureViewLUT;
 
-ErrType Texture2D::initialize(Renderer* pRenderer, ResourceFormat format, U32 width, U32 height, U32 arrayLevel, U32 mips)
+ResultCode Texture2D::initialize(Renderer* pRenderer, ResourceFormat format, U32 width, U32 height, U32 arrayLevel, U32 mips)
 {
     GraphicsDevice* pDevice             = pRenderer->getDevice();
     GraphicsResourceDescription desc    = { };
-    ErrType result                      = RecluseResult_Ok;
+    ResultCode result                      = RecluseResult_Ok;
 
     desc.memoryUsage    = ResourceMemoryUsage_GpuOnly;
     desc.usage          = ResourceUsage_TransferDestination | ResourceUsage_ShaderResource;
@@ -70,7 +70,7 @@ ErrType Texture2D::initialize(Renderer* pRenderer, ResourceFormat format, U32 wi
 
     if (result != RecluseResult_Ok) 
     {
-        R_ERR("Texture2D", "Failed to create texture2D resource.");
+        R_ERROR("Texture2D", "Failed to create texture2D resource.");
         return result;
     }
 
@@ -83,7 +83,7 @@ ErrType Texture2D::initialize(Renderer* pRenderer, ResourceFormat format, U32 wi
 
 void TextureResource::genCrC(void* pUnique, U64 sz) 
 {
-    m_crc = recluseHash(pUnique, sz);
+    m_crc = recluseHashFast(pUnique, sz);
 }
 
 
@@ -103,10 +103,10 @@ void Texture2D::load(Renderer* pRenderer, void* pData, U64 szBytes)
 }
 
 
-ErrType TextureView::initialize(Renderer* pRenderer, Texture2D* pTexture, ResourceViewDescription& desc)
+ResultCode TextureView::initialize(Renderer* pRenderer, Texture2D* pTexture, ResourceViewDescription& desc)
 {
     GraphicsDevice* pDevice = pRenderer->getDevice();
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
 
     desc.pResource = pTexture->getResource();
 
@@ -120,7 +120,7 @@ ErrType TextureView::initialize(Renderer* pRenderer, Texture2D* pTexture, Resour
 }
 
 
-ErrType TextureView::destroy(Renderer* pRenderer)
+ResultCode TextureView::destroy(Renderer* pRenderer)
 {
     if (m_view) 
     {

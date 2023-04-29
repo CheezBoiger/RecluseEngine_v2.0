@@ -35,46 +35,51 @@ public:
 
     virtual ~AbstractSystem() { }
 
-    void setPriority(U32 priority) { m_priority = priority; }
-    U32 getPriority() const { return m_priority; }
+    void                                setPriority(U32 priority) { m_priority = priority; }
+    U32                                 getPriority() const { return m_priority; }
 
     // This system is required to update all components when necessary.
-    void    updateComponents(const RealtimeTick& tick) { onUpdateComponents(tick); }
+    void                                updateComponents(const RealtimeTick& tick) { onUpdateComponents(tick); }
 
     // Clear all components in the game object.
-    void   clearAll()                      { onClearAll(); }
+    void                                clearAll()                      { onClearAll(); }
 
     // Obtains the total number of allocated components in the 
     // system.
-    virtual U32     getTotalComponents() const      = 0;
+    virtual U32                         getTotalComponents() const      = 0;
 
-    ErrType         initialize()
+    ResultCode                             initialize()
     {
         return onInitialize();
     }
 
+    ResultCode         cleanUp()
+    {
+        return onCleanUp();
+    }
+
     // Serialize the system and its components.
-    virtual ErrType serialize(Archive* archive) override { return RecluseResult_NoImpl; }
+    virtual ResultCode     serialize(Archive* archive) override { return RecluseResult_NoImpl; }
 
     // Deserialize the system and its components.
-    virtual ErrType deserialize(Archive* archive) override { return RecluseResult_NoImpl; }
+    virtual ResultCode     deserialize(Archive* archive) override { return RecluseResult_NoImpl; }
 
 private:
     // Allows initializing the system before on intialize().
-    virtual ErrType onInitialize()                  { return RecluseResult_NoImpl; }
+    virtual ResultCode     onInitialize()                  { return RecluseResult_NoImpl; }
 
     // Allows cleaning up the system before releasing.
-    virtual ErrType onCleanUp()                     { return RecluseResult_NoImpl; }
+    virtual ResultCode     onCleanUp()                     { return RecluseResult_NoImpl; }
 
     // Intended to clear all components from the game world.
-    virtual void onClearAll()                       { }
+    virtual void        onClearAll()                       { }
 
     // To update all components in the world.
-    virtual void onUpdateComponents(const RealtimeTick& tick)  { }
+    virtual void        onUpdateComponents(const RealtimeTick& tick)  { }
 
     // Priority value of this abstract system. This will be used to determine the 
     // order of which this system will operate.
-    U32 m_priority;
+    U32                 m_priority;
 };
 
 // Required declare for the game system to be used. 
@@ -97,9 +102,9 @@ public:
 
     // Allocates a component from the system pool.
     // Returns R_RESULT_OK if the system successfully allocated the component instance.
-    ErrType allocateComponent(Comp** pOut, const RGUID& pOwner)  
+    ResultCode allocateComponent(Comp** pOut, const RGUID& pOwner)  
     {
-        ErrType err = onAllocateComponent(pOut);
+        ResultCode err = onAllocateComponent(pOut);
         if (err == RecluseResult_Ok) 
         {
             m_numberOfComponentsAllocated += 1;
@@ -110,9 +115,9 @@ public:
 
     // Frees up a component from the system pool.
     // Returns R_RESULT_OK if the system successfully freed the component instance.
-    ErrType freeComponent(Comp** pIn)
+    ResultCode freeComponent(Comp** pIn)
     {
-        ErrType err = onFreeComponent(pIn);
+        ResultCode err = onFreeComponent(pIn);
         if (err == RecluseResult_Ok) m_numberOfComponentsAllocated -= 1;
         return err;
     }
@@ -131,17 +136,17 @@ public:
 protected:
     // Allocation calls. These must be overridden, as they will be called by external systems,
     // when required. 
-    virtual ErrType onAllocateComponent(Comp** pOut) = 0;
+    virtual ResultCode onAllocateComponent(Comp** pOut) = 0;
 
     // Allocate a bulk of components. Must be overridden.
-    virtual ErrType onAllocateComponents(Comp*** pOuts, U32 count) = 0;
+    virtual ResultCode onAllocateComponents(Comp*** pOuts, U32 count) = 0;
 
     // Free calls. These must be overridden, as they will be called by external systems when
     // required.
-    virtual ErrType onFreeComponent(Comp** pIn) = 0;
+    virtual ResultCode onFreeComponent(Comp** pIn) = 0;
 
     // Free a bulk of components. Must be overridden.
-    virtual ErrType onFreeComponents(Comp*** pOuts, U32 count) = 0;
+    virtual ResultCode onFreeComponents(Comp*** pOuts, U32 count) = 0;
 
     U32     m_numberOfComponentsAllocated;
 };

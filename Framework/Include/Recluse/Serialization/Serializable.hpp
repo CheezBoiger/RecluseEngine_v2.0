@@ -12,8 +12,8 @@ class Serializable
 public:
     virtual ~Serializable() { }
 
-    virtual ErrType serialize(Archive* pArchive) = 0;
-    virtual ErrType deserialize(Archive* pArchive) = 0;
+    virtual ResultCode serialize(Archive* pArchive) = 0;
+    virtual ResultCode deserialize(Archive* pArchive) = 0;
 
 };
 } // Recluse

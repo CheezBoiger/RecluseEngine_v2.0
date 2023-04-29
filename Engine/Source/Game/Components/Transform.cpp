@@ -20,7 +20,7 @@ void Transform::onRelease()
     Transform::free(this);
 }
 
-ErrType Transform::serialize(Archive* pArchive)
+ResultCode Transform::serialize(Archive* pArchive)
 {
     pArchive->write(&position,      sizeof(Float3));
     pArchive->write(&localPosition, sizeof(Float3));
@@ -33,7 +33,7 @@ ErrType Transform::serialize(Archive* pArchive)
     return RecluseResult_NoImpl;
 }
 
-ErrType Transform::deserialize(Archive* pArchive)
+ResultCode Transform::deserialize(Archive* pArchive)
 {
     pArchive->read(&position,       sizeof(Float3));
     pArchive->read(&localPosition,  sizeof(Float3));

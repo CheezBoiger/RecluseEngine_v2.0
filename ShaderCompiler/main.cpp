@@ -41,12 +41,12 @@ int main(int c, char* argv[])
     } 
     catch (const exception& e) 
     {
-        R_ERR("ShaderCompiler", "%s", e.what());
+        R_ERROR("ShaderCompiler", "%s", e.what());
     }
 
     Recluse::setConfigs(configPath, compilerIndex);
 
-    Recluse::ErrType result = Recluse::RecluseResult_Ok;
+    Recluse::ResultCode result = Recluse::RecluseResult_Ok;
 
     // Collect our arguments.
     Recluse::setShaderFiles(compilePath);
@@ -54,7 +54,7 @@ int main(int c, char* argv[])
 
     if (result != Recluse::RecluseResult_Ok) 
     {
-        R_ERR("ShaderCompiler", "Failed to compile some or all shaders!");
+        R_ERROR("ShaderCompiler", "Failed to compile some or all shaders!");
 
         return -1;
     }    

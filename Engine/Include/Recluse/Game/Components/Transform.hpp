@@ -49,8 +49,8 @@ public:
     Matrix44                    getLocalToWorld() const { return static_cast<Matrix44>(m_localToWorld); }
     Matrix44                    getWorldToLocal() const { return m_worldToLocal; }
 
-    virtual ErrType             serialize(Archive* pArchive) override;
-    virtual ErrType             deserialize(Archive* pArchive) override;
+    virtual ResultCode             serialize(Archive* pArchive) override;
+    virtual ResultCode             deserialize(Archive* pArchive) override;
 
     void                        updateMatrices();
 

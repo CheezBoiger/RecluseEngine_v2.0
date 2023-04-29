@@ -9,10 +9,10 @@
 namespace Recluse {
 
 
-ErrType BuddyAllocator::onInitialize()
+ResultCode BuddyAllocator::onInitialize()
 {
     U64 totalSzBytes    = getTotalSizeBytes();
-    PtrType baseAddr    = getBaseAddr();
+    UPtr baseAddr    = getBaseAddr();
 
     // Size must be power of 2.
     R_ASSERT(Math::isPowerOf2(totalSzBytes));
@@ -35,10 +35,10 @@ ErrType BuddyAllocator::onInitialize()
 }
 
 
-ErrType BuddyAllocator::onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment)
+ResultCode BuddyAllocator::onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment)
 {
     R_ASSERT(Math::isPowerOf2(alignment));
-    PtrType baseAddr    = getBaseAddr();
+    UPtr baseAddr    = getBaseAddr();
     U64 neededSzBytes   = requestSz + (alignment - 1);
     
     U32 nthBit          = (U32)ceil(log2(neededSzBytes));
@@ -108,7 +108,7 @@ ErrType BuddyAllocator::onAllocate(Allocation* pOutput, U64 requestSz, U16 align
 }
 
 
-ErrType BuddyAllocator::onFree(Allocation* pOutput)
+ResultCode BuddyAllocator::onFree(Allocation* pOutput)
 {
     if (m_allocatedBlocks.find(pOutput->baseAddress) == m_allocatedBlocks.end()) 
     {
@@ -119,7 +119,7 @@ ErrType BuddyAllocator::onFree(Allocation* pOutput)
     // Get the block allocation using the aligned address.
     const BlockAllocation& blockAllocation = m_allocatedBlocks[pOutput->baseAddress];    
 
-    PtrType baseAddr    = getBaseAddr();
+    UPtr baseAddr    = getBaseAddr();
     U64 szBytes         = pOutput->sizeBytes;
     U32 nthBit          = (U32)ceil(log2(szBytes));
     U32 buddyNumber     = (U32)(blockAllocation.baseAddress / blockAllocation.sizeBytes);
@@ -175,13 +175,13 @@ ErrType BuddyAllocator::onFree(Allocation* pOutput)
 }
 
 
-ErrType BuddyAllocator::onReset()
+ResultCode BuddyAllocator::onReset()
 {
     return RecluseResult_NoImpl;
 }
 
 
-ErrType BuddyAllocator::onCleanUp()
+ResultCode BuddyAllocator::onCleanUp()
 {
     // Wipe out everything.
     m_freeList.clear();

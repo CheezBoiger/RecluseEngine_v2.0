@@ -19,7 +19,7 @@ public:
     D3D12RenderPass()
     { }
 
-    ErrType initialize
+    ResultCode initialize
         (
             D3D12Device* pDevice, 
             U32 numRtvDescriptors, 
@@ -27,7 +27,7 @@ public:
             const D3D12GraphicsResourceView* dsvDescriptor = nullptr
         );
 
-    ErrType release(D3D12Device* pDevice);
+    ResultCode release(D3D12Device* pDevice);
     
     U32                     getNumRenderTargets() const;
     GraphicsResourceView*   getRenderTarget(U32 idx);

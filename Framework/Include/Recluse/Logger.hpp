@@ -31,7 +31,8 @@ enum LogType
     LogInfo         = (1 << 4),
     LogDontStore    = (1 << 5),
     LogTrace        = (1 << 6),
-    LogFatal        = (1 << 7)
+    LogFatal        = (1 << 7),
+    LogNotify       = (1 << 8)
 };
 
 typedef U32 LogTypeFlags;
@@ -169,11 +170,17 @@ public:
 };
 
 
-R_PUBLIC_API extern void    setLogMask(LogTypeFlags enableFlags);
-R_PUBLIC_API extern void    setLogChannel(const std::string& channel, B8 enable);
+// Filter out any log types we want to listen to. By default, all log types are enabled.
+R_PUBLIC_API extern void        setLogMask(LogTypeFlags enableFlags);
+R_PUBLIC_API extern void        enableLogTypes(LogTypeFlags flags);
+R_PUBLIC_API extern void        disableLogTypes(LogTypeFlags flags);
+
+// Show which channels to filter out. By default, all channels are enabled, so show which channels 
+// we wish to store.
+R_PUBLIC_API extern void        setLogChannel(const std::string& channel, B8 enable);
 
 // Display logging info to standard output.
-R_PUBLIC_API extern void    enableStandardOutput(B32 enable);
+R_PUBLIC_API extern void        enableStandardOutput(B32 enable);
 
 // Log information into a file.
 R_PUBLIC_API extern void        enableLogFile(const std::string& logPath, B32 enable = false);

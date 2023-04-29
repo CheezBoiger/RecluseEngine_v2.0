@@ -27,7 +27,7 @@ MemoryPool::MemoryPool(void* ptr, U64 szBytes, U64 pageSz)
     , m_pScanStart(nullptr)
     , m_isMalloc(false)
 {
-    m_baseAddr = (PtrType)ptr;
+    m_baseAddr = (UPtr)ptr;
     m_pageSzBytes = pageSz;
     m_totalSzBytes = szBytes;
 }
@@ -80,7 +80,7 @@ void MemoryPool::preAllocate(U64 szBytes, U64 pageSz)
 
     }
 
-    m_baseAddr      = (PtrType)malloc(allocationSizeBytes);
+    m_baseAddr      = (UPtr)malloc(allocationSizeBytes);
     m_pageSzBytes   = pageSz;
     m_totalSzBytes  = allocationSizeBytes;
     m_isMalloc      = true;

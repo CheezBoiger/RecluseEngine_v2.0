@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Recluse/Types.hpp"
+#include "Recluse/Utility.hpp"
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Graphics/Format.hpp"
 #include "Recluse/Graphics/DescriptorSet.hpp"
@@ -33,6 +34,7 @@ struct GraphicsResourceDescription
     U32                 samples;
     ResourceMemoryUsage memoryUsage;
     ResourceUsageFlags  usage;
+    ResourceMiscFlags   miscFlags;
     const char*         name; // for debug purposes.
 };
 
@@ -85,7 +87,7 @@ public:
     // and displayed by the gpu. 
     // Note: You can not have less buffers than there are frames! Doing so will cause undefinted behavior, and potential
     //       overwrite of existing buffers inflight.
-    virtual ErrType setBuffers(U32 newBufferCount) { return RecluseResult_NoImpl; }
+    virtual ResultCode setBuffers(U32 newBufferCount) { return RecluseResult_NoImpl; }
 
     // Not recommended, but submits a copy to this queue.
     virtual void copyResource(GraphicsResource* dst, GraphicsResource* src) 
@@ -114,7 +116,7 @@ public:
                         ) 
         { }
 
-    virtual ErrType wait() { return RecluseResult_NoImpl; }
+    virtual ResultCode wait() { return RecluseResult_NoImpl; }
 
     virtual void bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* pOffsets) { }
     virtual void bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBytes, IndexType type) { }
@@ -208,37 +210,37 @@ public:
     virtual ~GraphicsDevice() { }
 
     // Reserve memory to be used for graphics resources.
-    virtual ErrType             reserveMemory(const MemoryReserveDescription& desc) { return RecluseResult_NoImpl; }
+    virtual ResultCode             reserveMemory(const MemoryReserveDescription& desc) { return RecluseResult_NoImpl; }
 
     //< Create graphics resource.
     //<
-    virtual ErrType             createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc, ResourceState initState) 
+    virtual ResultCode             createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc, ResourceState initState) 
         { return RecluseResult_NoImpl; }
 
-    virtual ErrType             createResourceView(GraphicsResourceView** ppView, const ResourceViewDescription& desc) 
+    virtual ResultCode             createResourceView(GraphicsResourceView** ppView, const ResourceViewDescription& desc) 
         { return RecluseResult_NoImpl; }
 
-    virtual ErrType             createSampler(GraphicsSampler** ppSampler, const SamplerDescription& desc) 
+    virtual ResultCode             createSampler(GraphicsSampler** ppSampler, const SamplerDescription& desc) 
         { return RecluseResult_NoImpl; }
 
-    virtual ErrType             destroySampler(GraphicsSampler* pSampler) { return RecluseResult_NoImpl; }
-    virtual ErrType             destroyResource(GraphicsResource* pResource) { return RecluseResult_NoImpl; }
-    virtual ErrType             destroyResourceView(GraphicsResourceView* pResourceView) { return RecluseResult_NoImpl; }
+    virtual ResultCode             destroySampler(GraphicsSampler* pSampler) { return RecluseResult_NoImpl; }
+    virtual ResultCode             destroyResource(GraphicsResource* pResource) { return RecluseResult_NoImpl; }
+    virtual ResultCode             destroyResourceView(GraphicsResourceView* pResourceView) { return RecluseResult_NoImpl; }
 
     // Makes a vertex layout, will return a layout id if one already exists.
     virtual Bool                makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout) { return false; }
     virtual Bool                destroyVertexLayout(VertexInputLayoutId id) { return false; }
 
     virtual GraphicsContext*    createContext() { return nullptr; }
-    virtual ErrType             releaseContext(GraphicsContext* pContext) { return RecluseResult_NoImpl; }
+    virtual ResultCode             releaseContext(GraphicsContext* pContext) { return RecluseResult_NoImpl; }
     
     virtual GraphicsSwapchain*  getSwapchain() { return nullptr; }
 
     // Load up shader programs to be created on the native api.
-    virtual ErrType             loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition) { return RecluseResult_NoImpl; }
+    virtual ResultCode             loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition) { return RecluseResult_NoImpl; }
     
     // Unload a shader program, as well as it's permutations, created by this device.
-    virtual ErrType             unloadShaderProgram(ShaderProgramId program) { return RecluseResult_NoImpl; }
+    virtual ResultCode             unloadShaderProgram(ShaderProgramId program) { return RecluseResult_NoImpl; }
     // Unload all shader programs, as well as their permutations.
     virtual void                unloadAllShaderPrograms() { return; }
 
@@ -289,14 +291,14 @@ public:
 
     // Rebuild the swapchain if need be. Pass in NULL to rebuild the swapchain as is.
     // Be sure to update any new frame info and handles that are managed by the front engine!
-    R_PUBLIC_API ErrType                rebuild(const SwapchainCreateDescription& desc) 
+    R_PUBLIC_API ResultCode                rebuild(const SwapchainCreateDescription& desc) 
     { 
         m_desc = desc;
         return onRebuild(); 
     }
 
     // Present the current image.
-    R_PUBLIC_API virtual ErrType        present(PresentConfig config = PresentConfig_Present) { return RecluseResult_NoImpl; }
+    R_PUBLIC_API virtual ResultCode        present(PresentConfig config = PresentConfig_Present) { return RecluseResult_NoImpl; }
 
     // Get the current frame index, updates after every present call.
     R_PUBLIC_API virtual U32            getCurrentFrameIndex() { return RecluseResult_NoImpl; }
@@ -307,7 +309,7 @@ public:
     const SwapchainCreateDescription&   getDesc() const { return m_desc; }
 
 private:
-    virtual ErrType                     onRebuild() { return RecluseResult_NoImpl; }
+    virtual ResultCode                     onRebuild() { return RecluseResult_NoImpl; }
 
     SwapchainCreateDescription          m_desc;
 };

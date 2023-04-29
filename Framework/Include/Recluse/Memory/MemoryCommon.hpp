@@ -33,14 +33,14 @@ T* rDynamicCast(S* obj)
 
 
 // Just a simple call that applies offset to our baseAddr.
-static PtrType offsetOf(PtrType baseAddr, PtrType offsetBytes)
+static UPtr offsetOf(UPtr baseAddr, UPtr offsetBytes)
 {
     return baseAddr + offsetBytes;
 }
 
 // Returns the aligned address of the base address.
 // If alignement is zero, then return the baseAddress as is.
-static R_FORCE_INLINE PtrType align(PtrType baseAddress, U64 alignment)
+static R_FORCE_INLINE UPtr align(UPtr baseAddress, U64 alignment)
 {
     return (alignment == 0) ? baseAddress : R_ALLOC_MASK(baseAddress, alignment);
 }

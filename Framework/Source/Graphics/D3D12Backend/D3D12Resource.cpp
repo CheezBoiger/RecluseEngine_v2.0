@@ -11,16 +11,16 @@ D3D12_RESOURCE_DIMENSION getDimension(ResourceDimension dim)
 {
     switch (dim) 
     {
-        case ResourceDimension_Buffer: return D3D12_RESOURCE_DIMENSION_BUFFER;
-        case ResourceDimension_1d: return D3D12_RESOURCE_DIMENSION_TEXTURE1D;
-        case ResourceDimension_2d: return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        case ResourceDimension_3d: return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
-        default: return D3D12_RESOURCE_DIMENSION_UNKNOWN;
+        case ResourceDimension_Buffer:  return D3D12_RESOURCE_DIMENSION_BUFFER;
+        case ResourceDimension_1d:      return D3D12_RESOURCE_DIMENSION_TEXTURE1D;
+        case ResourceDimension_2d:      return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+        case ResourceDimension_3d:      return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
+        default:                        return D3D12_RESOURCE_DIMENSION_UNKNOWN;
     }
 }
 
 
-ErrType D3D12Resource::initialize
+ResultCode D3D12Resource::initialize
                             (
                                 D3D12Device* pDevice, 
                                 const GraphicsResourceDescription& desc, 
@@ -54,11 +54,11 @@ ErrType D3D12Resource::initialize
     {   
         R_ASSERT_FORMAT(pAllocator, "No allocator exists for the given dimension! Is the resource unknown?");
 
-        ErrType result  = pAllocator->allocate(&m_memObj, d3d12desc, state);
+        ResultCode result  = pAllocator->allocate(&m_memObj, d3d12desc, state);
 
         if (result != RecluseResult_Ok)    
         {
-            R_ERR(R_CHANNEL_D3D12, "Failed to allocate a D3D12 resource!");
+            R_ERROR(R_CHANNEL_D3D12, "Failed to allocate a D3D12 resource!");
 
             // We will have to do a committed resource allocation instead!
             R_WARN(R_CHANNEL_D3D12, "Failed to perform a sub-allocation for the given resource request, resorting to committed allocation...");
@@ -73,7 +73,7 @@ ErrType D3D12Resource::initialize
 
     if (FAILED(sResult)) 
     {
-        R_ERR(R_CHANNEL_D3D12, "Failed to create resource!");
+        R_ERROR(R_CHANNEL_D3D12, "Failed to create resource!");
 
         return RecluseResult_Failed;
     }
@@ -87,7 +87,7 @@ ErrType D3D12Resource::initialize
 }
 
 
-ErrType D3D12Resource::destroy()
+ResultCode D3D12Resource::destroy()
 {
     if (m_memObj.pResource) 
     {
@@ -97,11 +97,11 @@ ErrType D3D12Resource::destroy()
             // Get the allocator from the device maybe?
             R_ASSERT(pAllocator != NULL);
             
-            ErrType result = pAllocator->free(&m_memObj);
+            ResultCode result = pAllocator->free(&m_memObj);
 
             if (result != RecluseResult_Ok) 
             {
-                R_ERR("D3D12Resource", "This placed resource failed to free prior to it's destruction!");
+                R_ERROR("D3D12Resource", "This placed resource failed to free prior to it's destruction!");
                 return result;
             }
         }

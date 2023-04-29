@@ -21,9 +21,9 @@ public:
         , m_subresourceRange({ })
         , m_id(~0) { }
 
-    ErrType initialize(VulkanDevice* pDevice);
+    ResultCode initialize(VulkanDevice* pDevice);
 
-    ErrType release(VulkanDevice* pDevice);
+    ResultCode release(VulkanDevice* pDevice);
 
     VkImageView get() const { return m_view; }
 
@@ -65,8 +65,8 @@ public:
 
     virtual ~VulkanSampler() { }
 
-    ErrType initialize(VulkanDevice* pDevice, const SamplerDescription& desc);
-    ErrType release(VulkanDevice* pDevice);
+    ResultCode initialize(VulkanDevice* pDevice, const SamplerDescription& desc);
+    ResultCode release(VulkanDevice* pDevice);
 
     virtual SamplerDescription getDesc() override {
         return SamplerDescription();
@@ -96,8 +96,8 @@ private:
 namespace ResourceViews {
 VulkanResourceView* makeResourceView(VulkanDevice* pDevice, const ResourceViewDescription& desc);
 VulkanSampler*      makeSampler(VulkanDevice* pDevice, const SamplerDescription& desc);
-ErrType             releaseResourceView(VulkanDevice* pDevice, ResourceViewId id);
-ErrType             releaseSampler(VulkanDevice* pDevice, SamplerId id);
+ResultCode             releaseResourceView(VulkanDevice* pDevice, ResourceViewId id);
+ResultCode             releaseSampler(VulkanDevice* pDevice, SamplerId id);
 VulkanResourceView* obtainResourceView(ResourceViewId id);
 VulkanSampler*      obtainSampler(SamplerId);
 } // ResourceViews

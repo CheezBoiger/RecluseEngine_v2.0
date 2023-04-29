@@ -106,16 +106,16 @@ public:
     IndexBuffer*                createIndexBuffer(IndexType indexType, U64 totalIndices);
     Texture2D*                  createTexture2D(U32 width, U32 height, U32 mips, U32 layers, ResourceFormat format);
 
-    ErrType                     destroyTexture2D(Texture2D* pTexture);
+    ResultCode                     destroyTexture2D(Texture2D* pTexture);
 
-    ErrType                     destroyGPUBuffer(GPUBuffer* pBuffer);
+    ResultCode                     destroyGPUBuffer(GPUBuffer* pBuffer);
 
     void                        update(F32 currentTime, F32 deltaTime);
 
 private:
 
-    virtual ErrType             onInitializeModule(Application* pApp) override;
-    virtual ErrType             onCleanUpModule(Application* pApp) override;
+    virtual ResultCode             onInitializeModule(Application* pApp) override;
+    virtual ResultCode             onCleanUpModule(Application* pApp) override;
 
     void                        determineAdapter(std::vector<GraphicsAdapter*>& adapters);
     void                        setUpModules();

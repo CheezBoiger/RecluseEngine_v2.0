@@ -50,40 +50,43 @@ constexpr Mutex kNull = nullptr;
 
 } // MutexVal
 
-R_PUBLIC_API R_OS_CALL ErrType createThread(Thread* thread, ThreadFunction startRoutine);
-R_PUBLIC_API R_OS_CALL ErrType resumeThread(Thread* thread);
-R_PUBLIC_API R_OS_CALL ErrType stopThread(Thread* thread);
-R_PUBLIC_API R_OS_CALL ErrType detachThread(Thread* thread);
-R_PUBLIC_API R_OS_CALL ErrType joinThread(Thread* thread);
-R_PUBLIC_API R_OS_CALL ErrType killThread(Thread* thread);
+constexpr U64 kInfiniteMs = ~0ull;
+
+R_PUBLIC_API R_OS_CALL ResultCode createThread(Thread* thread, ThreadFunction startRoutine);
+R_PUBLIC_API R_OS_CALL ResultCode resumeThread(Thread* thread);
+R_PUBLIC_API R_OS_CALL ResultCode stopThread(Thread* thread);
+R_PUBLIC_API R_OS_CALL ResultCode detachThread(Thread* thread);
+R_PUBLIC_API R_OS_CALL ResultCode joinThread(Thread* thread);
+R_PUBLIC_API R_OS_CALL ResultCode killThread(Thread* thread);
 
 R_PUBLIC_API R_OS_CALL Mutex   createMutex(const char* name = nullptr);
-R_PUBLIC_API R_OS_CALL ErrType lockMutex(Mutex mutex);
-R_PUBLIC_API R_OS_CALL ErrType unlockMutex(Mutex mutex);
-R_PUBLIC_API R_OS_CALL ErrType waitMutex(Mutex mutex, U64 waitTimeMs);
-R_PUBLIC_API R_OS_CALL ErrType destroyMutex(Mutex mutex);
-R_PUBLIC_API R_OS_CALL ErrType tryLockMutex(Mutex mutex);
+R_PUBLIC_API R_OS_CALL ResultCode lockMutex(Mutex mutex, U64 waitMs = kInfiniteMs);
+R_PUBLIC_API R_OS_CALL ResultCode unlockMutex(Mutex mutex);
+R_PUBLIC_API R_OS_CALL ResultCode waitMutex(Mutex mutex, U64 waitTimeMs);
+R_PUBLIC_API R_OS_CALL ResultCode destroyMutex(Mutex mutex);
+R_PUBLIC_API R_OS_CALL ResultCode tryLockMutex(Mutex mutex);
 
-R_PUBLIC_API R_OS_CALL ErrType atomicAdd();
-R_PUBLIC_API R_OS_CALL ErrType atomicSub();
+R_PUBLIC_API R_OS_CALL ResultCode atomicAdd();
+R_PUBLIC_API R_OS_CALL ResultCode atomicSub();
 R_PUBLIC_API R_OS_CALL U64     getMainThreadId();
 R_PUBLIC_API R_OS_CALL U64     getCurrentThreadId();
 
-R_PUBLIC_API R_OS_CALL Semaphore  createSemaphore();
-R_PUBLIC_API R_OS_CALL ErrType    destroySemaphore(Semaphore sema);
-R_PUBLIC_API R_OS_CALL ErrType    signalSemaphore(Semaphore sema);
-R_PUBLIC_API R_OS_CALL ErrType    waitSemaphore(Semaphore sema);
+R_PUBLIC_API R_OS_CALL Semaphore  createSemaphore(const char* name = nullptr);
+R_PUBLIC_API R_OS_CALL ResultCode    destroySemaphore(Semaphore sema);
+R_PUBLIC_API R_OS_CALL ResultCode    signalSemaphore(Semaphore sema);
+R_PUBLIC_API R_OS_CALL ResultCode    waitSemaphore(Semaphore sema);
 
 R_PUBLIC_API R_OS_CALL U64    compareExchange(I64* dest, I64 ex, I64 comp);
 R_PUBLIC_API R_OS_CALL I16    compareExchange(I16* dest, I16 ex, I16 comp);
 R_PUBLIC_API R_OS_CALL U128   compareExchange(U128* dest, U128 ex, U128 comp);
 
-R_PUBLIC_API R_OS_CALL U32 testAndSet(U32* ptr);
+R_PUBLIC_API R_OS_CALL Bool testAndSet(U32* ptr, U32 offset);
 
 // Causes this thread to sleep for some milliseconds.
-R_PUBLIC_API R_OS_CALL ErrType    sleep(U64 milliseconds);
+R_PUBLIC_API R_OS_CALL ResultCode    sleep(U64 milliseconds);
 
 // C++ RAII locking mechanism within a scope.
+// Intended for scope locking mutexes.
 class R_PUBLIC_API ScopedLock 
 {
 public:
@@ -114,5 +117,53 @@ public:
     Mutex& operator&() { return m_mutex; }
 private:
     Mutex m_mutex;
+};
+
+
+// Critical section is a way to internally handle concurrency. 
+// Microsoft may attempt to handle critical code sections in user-mode in order to 
+// prevent kernel level calls, which would be slower. Linux simply uses mutexes 
+// and spinlocks, which can provide about similar performance as well.
+class R_PUBLIC_API CriticalSection
+{
+public:
+    CriticalSection()
+        : m_section(nullptr)
+    { }
+    ~CriticalSection()
+    { if (m_section) free(); m_section = nullptr; }
+
+    ResultCode initialize();
+    ResultCode free();
+
+    R_OS_CALL ResultCode enter();
+
+    // Returns Ok if the critical section is owned by this thread. Returns fail, if 
+    // the attempt fails.
+    R_OS_CALL ResultCode tryEnter();
+
+    R_OS_CALL ResultCode leave();
+
+private:
+    void* m_section;
+};
+
+// C++ RAII critical section mechanism used for handling enter and exit
+// calls to the critical section. 
+class R_PUBLIC_API ScopedCriticalSection
+{
+public:
+    ScopedCriticalSection(CriticalSection& cs)
+        : m_cs(cs)
+    {
+        m_cs.enter();
+    }
+
+    ~ScopedCriticalSection()
+    {
+        m_cs.leave();
+    }
+private:
+    CriticalSection& m_cs;
 };
 } // Recluse

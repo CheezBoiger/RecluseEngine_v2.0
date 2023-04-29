@@ -27,12 +27,12 @@ class IInputController
 public:
     virtual ~IInputController() { }
     
-    virtual ErrType initialize(const std::string& controllerName) = 0;
-    virtual ErrType destroy() = 0;
+    virtual ResultCode initialize(const std::string& controllerName) = 0;
+    virtual ResultCode destroy() = 0;
 
-    virtual ErrType getInput(IInputFeedback& feedback) = 0;
+    virtual ResultCode getInput(IInputFeedback& feedback) = 0;
 
-    virtual ErrType integrateInput(const IInputFeedback& feedback) = 0;
+    virtual ResultCode integrateInput(const IInputFeedback& feedback) = 0;
 
     virtual void setButtonState(U32 buttonIx, InputState) = 0;
     virtual InputState getButtonState(U32 buttonIx) = 0;

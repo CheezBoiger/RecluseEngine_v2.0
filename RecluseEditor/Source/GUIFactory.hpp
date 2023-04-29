@@ -17,7 +17,7 @@ enum GUIContext
 };
 
 // Create a GUI context.
-R_PUBLIC_API ErrType         createContext(GUIContext ctx);
+R_PUBLIC_API ResultCode         createContext(GUIContext ctx);
 
 // Destroy the GUI context.
 R_PUBLIC_API void            destroyContext(IGUIContext* pCtx);

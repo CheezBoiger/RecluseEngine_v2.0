@@ -54,7 +54,7 @@ public:
     ~MemoryPool();
         
     // Get the starting address of the memory pool.
-    PtrType     getBaseAddress() const { return m_baseAddr; }
+    UPtr     getBaseAddress() const { return m_baseAddr; }
 
     // Get the total size of the pool, in bytes.
     U64         getTotalSizeBytes() const { return m_totalSzBytes; }
@@ -63,7 +63,7 @@ public:
     U64         getPageSzBytes() const { return m_pageSzBytes; }
 
     inline void*       getRawAddressAt(U64 sizeBytes) { return reinterpret_cast<void*>(m_baseAddr + sizeBytes); }
-    inline PtrType     getPtrAddressAt(U64 sizeBytes) { return (m_baseAddr + sizeBytes); }
+    inline UPtr     getPtrAddressAt(U64 sizeBytes) { return (m_baseAddr + sizeBytes); }
 
     // Add a memory leak scanner to the pool, to ensure there are no memory leaks.
     void        addScanner(MemoryScanner* scanner);
@@ -83,7 +83,7 @@ public:
 
 private:
 
-    PtrType m_baseAddr;
+    UPtr m_baseAddr;
     U64     m_totalSzBytes;
     U64     m_pageSzBytes;
     B32     m_isMalloc;

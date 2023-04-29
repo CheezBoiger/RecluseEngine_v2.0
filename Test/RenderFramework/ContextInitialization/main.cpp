@@ -28,10 +28,10 @@ int main(int c, char* argv[])
 
     LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation;
 
-    ErrType result = pInstance->initialize(appInfo, flags);
+    ResultCode result = pInstance->initialize(appInfo, flags);
 
     if (result != RecluseResult_Ok) {
-        R_ERR("Test", "Failed to create instance!");
+        R_ERROR("Test", "Failed to create instance!");
         goto Exit;
     }
 
@@ -54,7 +54,7 @@ int main(int c, char* argv[])
 
     if (result != RecluseResult_Ok) {
     
-        R_ERR("Graphics", "Failed to create device!");
+        R_ERROR("Graphics", "Failed to create device!");
 
     }
 

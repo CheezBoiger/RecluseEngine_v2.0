@@ -15,7 +15,7 @@ class MemoryPool;
 //! Recluse allocation struct. Contains info of the suballocation for the requested data.
 typedef struct Allocation 
 {
-    PtrType baseAddress;        //< Base address/ starting address of the allocated object.
+    UPtr    baseAddress;        //< Base address/ starting address of the allocated object.
     U64     sizeBytes;          //< The size of the allocated memory that represents this object.
 } *PAllocation, &RAllocation;
 
@@ -30,7 +30,7 @@ public:
     Allocator() : m_totalAllocations(0), m_totalSizeBytes(0), m_usedSizeBytes(0), m_pMemoryBaseAddr(0ull) { }
 
     //! Allocator mem size and page size (usually 4kb). 
-    void initialize(PtrType pBasePtr, U64 sizeBytes) 
+    void initialize(UPtr pBasePtr, U64 sizeBytes) 
     {
         m_totalSizeBytes    = sizeBytes;
         m_pMemoryBaseAddr   = pBasePtr;
@@ -39,9 +39,9 @@ public:
     }
 
     //! Allocation requirements.
-    ErrType allocate(Allocation* pOutput, U64 requestSz, U16 alignment) 
+    ResultCode allocate(Allocation* pOutput, U64 requestSz, U16 alignment) 
     {
-        ErrType err = onAllocate(pOutput, requestSz, alignment);
+        ResultCode err = onAllocate(pOutput, requestSz, alignment);
         if (err == RecluseResult_Ok) 
         {
             m_totalAllocations  += 1;
@@ -51,9 +51,9 @@ public:
         return err;
     }
 
-    ErrType free(Allocation* pOutput) 
+    ResultCode free(Allocation* pOutput) 
     {
-        ErrType err = onFree(pOutput);
+        ResultCode err = onFree(pOutput);
         if (err == RecluseResult_Ok) 
         {
             m_usedSizeBytes     -= pOutput->sizeBytes;
@@ -96,22 +96,22 @@ public:
         return m_totalAllocations; 
     }
 
-    inline PtrType getBaseAddr() 
+    inline UPtr getBaseAddr() 
     { 
         return m_pMemoryBaseAddr; 
     }
 
 protected:
 
-    virtual ErrType onInitialize() = 0;
-    virtual ErrType onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) = 0;
-    virtual ErrType onFree(Allocation* pOutput) = 0;
-    virtual ErrType onReset() = 0;
-    virtual ErrType onCleanUp() = 0;
+    virtual ResultCode onInitialize() = 0;
+    virtual ResultCode onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) = 0;
+    virtual ResultCode onFree(Allocation* pOutput) = 0;
+    virtual ResultCode onReset() = 0;
+    virtual ResultCode onCleanUp() = 0;
 
 private:
     U64     m_totalSizeBytes;
-    PtrType m_pMemoryBaseAddr;
+    UPtr m_pMemoryBaseAddr;
     U64     m_usedSizeBytes;
     U64     m_totalAllocations;
 };
@@ -121,24 +121,24 @@ class MallocAllocator : public Allocator
 {
 public:
 
-    virtual ErrType onInitialize() override 
+    virtual ResultCode onInitialize() override 
     { 
         return RecluseResult_Ok; 
     }
 
-    virtual ErrType onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override 
+    virtual ResultCode onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override 
     {
         U64 offset = alignment - 1 + sizeof(void*);
         U64 neededSzBytes = requestSz + offset;
         void* ptr = malloc(neededSzBytes);
-        void** ptrr = (void**)(((PtrType)(ptr) + offset) & ~(alignment - 1));
+        void** ptrr = (void**)(((UPtr)(ptr) + offset) & ~(alignment - 1));
         ptrr[-1] = ptr;
         pOutput->baseAddress = (U64)(void*)ptrr;
         pOutput->sizeBytes = requestSz;
         return RecluseResult_Ok;
     }
 
-    virtual ErrType onFree(Allocation* pOutput) override
+    virtual ResultCode onFree(Allocation* pOutput) override
     {
         void** ptrr = (void**)pOutput->baseAddress;
         ::free(ptrr[-1]);

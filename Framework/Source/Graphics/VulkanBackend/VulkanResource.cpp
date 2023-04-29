@@ -39,7 +39,7 @@ VulkanResource* makeResource(VulkanDevice* pDevice, const GraphicsResourceDescri
 }
 
 
-ErrType releaseResource(VulkanDevice* pDevice, ResourceId id)
+ResultCode releaseResource(VulkanDevice* pDevice, ResourceId id)
 {
     auto& iter = g_resourcesMap.find(id);
     if (iter != g_resourcesMap.end())
@@ -65,11 +65,11 @@ VulkanResource* obtainResource(ResourceId id)
 ResourceId VulkanResource::kResourceCreationCounter = 0;
 MutexGuard VulkanResource::kResourceCreationMutex        = MutexGuard("VulkanCreationMutex");
 
-ErrType VulkanResource::initialize(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState)
+ResultCode VulkanResource::initialize(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState)
 {
     VkMemoryRequirements memoryRequirements = { };
     VulkanAllocationManager* allocator      = pDevice->getAllocationManager();
-    ErrType result                          = RecluseResult_Ok;
+    ResultCode result                          = RecluseResult_Ok;
     m_pDevice                               = pDevice;
   
     setCurrentResourceState(initState);
@@ -78,7 +78,7 @@ ErrType VulkanResource::initialize(VulkanDevice* pDevice, const GraphicsResource
 
     if (result != RecluseResult_Ok) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Unable to create resource object!");
+        R_ERROR(R_CHANNEL_VULKAN, "Unable to create resource object!");
 
         release();
 
@@ -99,7 +99,7 @@ ErrType VulkanResource::initialize(VulkanDevice* pDevice, const GraphicsResource
 
     if (result != RecluseResult_Ok) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Unable to allocate memory for resource!");
+        R_ERROR(R_CHANNEL_VULKAN, "Unable to allocate memory for resource!");
 
         release();
 
@@ -116,7 +116,7 @@ void VulkanResource::release()
 {
     VulkanAllocationManager* allocator      = m_pDevice->getAllocationManager();
     const GraphicsResourceDescription& desc = getDesc();
-    ErrType result                          = RecluseResult_Ok;
+    ResultCode result                          = RecluseResult_Ok;
 
     onRelease(m_pDevice);
 
@@ -125,16 +125,16 @@ void VulkanResource::release()
         result = allocator->free(&m_memory);
         if (result != RecluseResult_Ok) 
         {
-            R_ERR(R_CHANNEL_VULKAN, "Vulkan resource memory failed to free!");
+            R_ERROR(R_CHANNEL_VULKAN, "Vulkan resource memory failed to free!");
         }
 
     }
 }
 
 
-ErrType VulkanBuffer::onCreate(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState) 
+ResultCode VulkanBuffer::onCreate(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState) 
 {
-    ErrType result                  = RecluseResult_Ok;
+    ResultCode result                  = RecluseResult_Ok;
     ResourceUsageFlags usageFlags   = desc.usage;
     VkResult vulkanResult           = VK_SUCCESS;
 
@@ -157,7 +157,7 @@ ErrType VulkanBuffer::onCreate(VulkanDevice* pDevice, const GraphicsResourceDesc
 
     if (vulkanResult != VK_SUCCESS) 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to create vulkan buffer!");
+        R_ERROR(R_CHANNEL_VULKAN, "Failed to create vulkan buffer!");
         
         result = RecluseResult_Failed;
     }
@@ -166,9 +166,9 @@ ErrType VulkanBuffer::onCreate(VulkanDevice* pDevice, const GraphicsResourceDesc
 }
 
 
-ErrType VulkanBuffer::onRelease(VulkanDevice* pDevice)
+ResultCode VulkanBuffer::onRelease(VulkanDevice* pDevice)
 {
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
 
     if (m_buffer) 
     {
@@ -227,9 +227,9 @@ VkFormatFeatureFlags VulkanImage::loadFormatFeatures(VkImageCreateInfo& info, Re
 }
 
 
-ErrType VulkanImage::onCreate(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState)
+ResultCode VulkanImage::onCreate(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState)
 {
-    ErrType result                      = RecluseResult_Ok;
+    ResultCode result                      = RecluseResult_Ok;
     ResourceUsageFlags usage            = desc.usage;
     VkResult vulkanResult               = VK_SUCCESS;
     VkFormat format                     = Vulkan::getVulkanFormat(desc.format);
@@ -270,7 +270,7 @@ ErrType VulkanImage::onCreate(VulkanDevice* pDevice, const GraphicsResourceDescr
     } 
     else 
     {
-        R_ERR(R_CHANNEL_VULKAN, "Could not find a proper tiling scheme for the given format!");
+        R_ERROR(R_CHANNEL_VULKAN, "Could not find a proper tiling scheme for the given format!");
     }
 
     switch (info.samples) 
@@ -283,7 +283,7 @@ ErrType VulkanImage::onCreate(VulkanDevice* pDevice, const GraphicsResourceDescr
 
     if (vulkanResult != VK_SUCCESS)
     {
-        R_ERR(R_CHANNEL_VULKAN, "Failed to create vulkan image!");
+        R_ERROR(R_CHANNEL_VULKAN, "Failed to create vulkan image!");
 
         result = RecluseResult_Failed;
     }
@@ -294,9 +294,9 @@ ErrType VulkanImage::onCreate(VulkanDevice* pDevice, const GraphicsResourceDescr
 }
 
 
-ErrType VulkanImage::onRelease(VulkanDevice* pDevice)
+ResultCode VulkanImage::onRelease(VulkanDevice* pDevice)
 {
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
 
     if (m_image) 
     {
@@ -311,9 +311,9 @@ ErrType VulkanImage::onRelease(VulkanDevice* pDevice)
 }
 
 
-ErrType VulkanBuffer::onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryRequirements& memRequirements)
+ResultCode VulkanBuffer::onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryRequirements& memRequirements)
 {
-    ErrType result = RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
     
     vkGetBufferMemoryRequirements(pDevice->get(), m_buffer, &memRequirements);
     
@@ -321,7 +321,7 @@ ErrType VulkanBuffer::onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryReq
 }
 
 
-ErrType VulkanImage::onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryRequirements& memRequirements)
+ResultCode VulkanImage::onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryRequirements& memRequirements)
 {
     vkGetImageMemoryRequirements(pDevice->get(), m_image, &memRequirements);
     
@@ -329,7 +329,7 @@ ErrType VulkanImage::onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryRequ
 }
 
 
-ErrType VulkanBuffer::onBind(VulkanDevice* pDevice)
+ResultCode VulkanBuffer::onBind(VulkanDevice* pDevice)
 {
     const VulkanMemory& memory = getMemory();
 
@@ -361,7 +361,7 @@ ErrType VulkanBuffer::onBind(VulkanDevice* pDevice)
 }
 
 
-ErrType VulkanImage::onBind(VulkanDevice* pDevice)
+ResultCode VulkanImage::onBind(VulkanDevice* pDevice)
 {
     const VulkanMemory& memory = getMemory();
     
@@ -393,9 +393,9 @@ ErrType VulkanImage::onBind(VulkanDevice* pDevice)
 }
 
 
-ErrType VulkanResource::map(void** ptr, MapRange* pReadRange)
+ResultCode VulkanResource::map(void** ptr, MapRange* pReadRange)
 {
-    ErrType result              = RecluseResult_Ok;
+    ResultCode result              = RecluseResult_Ok;
     VkResult vr                 = VK_SUCCESS;
 
     VkDeviceSize offsetBytes    = m_memory.offsetBytes;
@@ -407,7 +407,7 @@ ErrType VulkanResource::map(void** ptr, MapRange* pReadRange)
         sizeBytes    = pReadRange->sizeBytes;
     } 
 
-    *ptr = (void*)((PtrType)m_memory.baseAddr + offsetBytes);
+    *ptr = (void*)((UPtr)m_memory.baseAddr + offsetBytes);
 
     if (vr != VK_SUCCESS) 
     {    
@@ -418,11 +418,11 @@ ErrType VulkanResource::map(void** ptr, MapRange* pReadRange)
 }
 
 
-ErrType VulkanResource::unmap(MapRange* pWriteRange)
+ResultCode VulkanResource::unmap(MapRange* pWriteRange)
 {
     const GraphicsResourceDescription& desc = getDesc();
     VkMappedMemoryRange mappedRange         = { };
-    ErrType result                          = RecluseResult_Ok;
+    ResultCode result                          = RecluseResult_Ok;
     VkResult vr                             = VK_SUCCESS;
 
     VkDeviceMemory deviceMemory             = m_memory.deviceMemory;

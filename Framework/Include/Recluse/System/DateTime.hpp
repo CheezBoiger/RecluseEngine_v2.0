@@ -79,8 +79,8 @@ private:
 	{
 		std::string fmt				= cFormat;
 		std::string formattedString	= "";
-		U32 fmtSize					= fmt.size();
-		U32 i						= 0;
+		U64 fmtSize					= fmt.size();
+		U64 i						= 0;
 		for (; i < fmtSize; ++i)
 		{
 			if (fmt[i] == kDateTimeRegex && ((i+1) < fmtSize))

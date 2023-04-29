@@ -1,15 +1,15 @@
 //
 #include "Recluse/Types.hpp"
 
-#include "Recluse/Game/GameObject.hpp"
+#include "Recluse/Game/GameEntity.hpp"
 #include "Recluse/Serialization/Hasher.hpp"
 
 namespace Recluse {
 namespace Engine {
 
-struct GameObjectSerializer 
+struct GameEntitySerializer 
 {
-    ECS::GameObject* (*createGameObject)();    
+    ECS::GameEntity* (*createGameEntity)();    
 };
 
 
@@ -17,8 +17,8 @@ class SerializeManager
 {
 public:
 
-    static GameObjectSerializer* getObject();
-    static void cacheSerializer(Hash64 hash, GameObjectSerializer obj);
+    static GameEntitySerializer* getObject();
+    static void cacheSerializer(Hash64 hash, GameEntitySerializer& obj);
 };
 } // Engine
 } // Recluse

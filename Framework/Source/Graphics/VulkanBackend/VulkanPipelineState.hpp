@@ -24,6 +24,7 @@ struct VulkanVertexLayout
 
 
 Bool make(VertexInputLayoutId id, const VertexInputLayout& layout);
+Bool unloadLayout(VertexInputLayoutId id);
 Bool unloadAll();
 } // VertexLayout
 
@@ -69,7 +70,8 @@ PipelineState       makePipeline(VulkanDevice* pDevice, const Structure& structu
 PipelineState       makePipeline(VulkanDevice* pDevice, const Structure& structure, PipelineId pipelineId);
 
 // Clears the whole pipeline cache.
-ErrType             clearPipelineCache(VulkanDevice* pDevice);
+ResultCode             clearPipelineCache(VulkanDevice* pDevice);
+ResultCode             releasePipeline(VulkanDevice* pDevice, PipelineId pipelineId);
 
 // Creates a pipeline layout if one does not exist. Otherwise, returns an existing pipeline layout.
 VkPipelineLayout    makeLayout(VulkanDevice* pDevice, VkDescriptorSetLayout layout);

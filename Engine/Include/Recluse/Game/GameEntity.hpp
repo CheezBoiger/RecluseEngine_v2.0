@@ -161,8 +161,8 @@ public:
         m_status = GameEntityStatus_Destroyed;
     }
 
-    virtual R_PUBLIC_API ErrType        serialize(Archive* pArchive) override;
-    virtual R_PUBLIC_API ErrType        deserialize(Archive* pArchive) override;
+    virtual R_PUBLIC_API ResultCode        serialize(Archive* pArchive) override;
+    virtual R_PUBLIC_API ResultCode        deserialize(Archive* pArchive) override;
 
     // Get the game object name.
     R_PUBLIC_API const std::string&     getName() const { return m_name; }
@@ -283,10 +283,10 @@ public:
 protected:
 
     // Game Object tag.
-    std::string                 m_tag;
+    std::string                                             m_tag;
 
     // Game object name.
-   std::string                  m_name;
+   std::string                                              m_name;
 
 private:
 
@@ -298,28 +298,27 @@ private:
         }
     };
 
-
-    GameEntityStatus            m_status;
+    GameEntityStatus                                        m_status;
 
     // The Parent node that this game object may be associated to.
-    GameEntity*                 m_pParentNode;
+    GameEntity*                                             m_pParentNode;
 
     // All children game object nodes associated with this game object.
     // Keep in mind that any object children must also inherit the world transform from the 
     // game object parent.
-    std::vector<GameEntity*>    m_childrenNodes;
+    std::vector<GameEntity*>                                m_childrenNodes;
 
     // All component handles associated with this entity.
-    std::map<Recluse::ECS::ComponentUUID, ECS::Component*> m_components;
+    std::map<Recluse::ECS::ComponentUUID, ECS::Component*>  m_components;
 
     // Game Object uuid.
-    RGUID                       m_guuid;
+    RGUID                                                   m_guuid;
 
     // Reference to the scene.
-    Engine::Scene*              m_pSceneRef;
+    Engine::Scene*                                          m_pSceneRef;
 
     // The actual game object allocation.
-    GameEntityAllocation        m_allocation;
+    GameEntityAllocation                                    m_allocation;
 };
 } // ECS
 } // Recluse

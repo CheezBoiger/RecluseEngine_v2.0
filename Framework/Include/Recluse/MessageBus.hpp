@@ -7,6 +7,7 @@
 #include "Recluse/Types.hpp"
 #include "Recluse/RGUID.hpp"
 #include "Recluse/Serialization/Hasher.hpp"
+#include "Recluse/Threading/Threading.hpp"
 #include <queue>
 #include <functional>
 #include <map>
@@ -63,6 +64,7 @@ public:
     // Push an event
     void pushEvent(EventId eventId) 
     {   
+        ScopedLock _(m_messageQueueMutex);
         EventMessage* pMessage   = new (m_pMessageAllocator) EventMessage(eventId);
         m_messages.push(pMessage);
     }
@@ -94,6 +96,7 @@ public:
     }
 
 private:
+    MutexGuard                      m_messageQueueMutex;
     Allocator*                      m_pMessageAllocator;
     MemoryPool                      m_messageMemPool;
     std::queue<EventMessage*>       m_messages;

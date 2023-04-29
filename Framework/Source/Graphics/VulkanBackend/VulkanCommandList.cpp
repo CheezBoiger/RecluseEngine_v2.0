@@ -11,7 +11,7 @@
 namespace Recluse {
 
 
-ErrType VulkanPrimaryCommandList::initialize
+ResultCode VulkanPrimaryCommandList::initialize
                                 (
                                     VulkanContext* pContext, 
                                     U32 queueFamilyIndex, 
@@ -19,7 +19,7 @@ ErrType VulkanPrimaryCommandList::initialize
                                     U32 poolCount
                                 )
 {
-    ErrType result                                  = RecluseResult_Ok;
+    ResultCode result                                  = RecluseResult_Ok;
     VkDevice device                                 = static_cast<VulkanDevice*>(pContext->getDevice())->get();
 
     m_buffers.resize(poolCount);
@@ -41,7 +41,7 @@ ErrType VulkanPrimaryCommandList::initialize
 
         if (r != VK_SUCCESS) 
         {
-            R_ERR(R_CHANNEL_VULKAN, "Failed to allocate command buffer!");
+            R_ERROR(R_CHANNEL_VULKAN, "Failed to allocate command buffer!");
         }
     }
 
@@ -150,16 +150,6 @@ void VulkanContext::setRenderPass(VulkanRenderPass* pPass)
         vkCmdBeginRenderPass(m_primaryCommandList.get(), &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
         m_boundRenderPass               = pPass->get();
     }
-}
-
-
-void VulkanContext::endRenderPass(VkCommandBuffer buffer)
-{
-    if (m_boundRenderPass) 
-    {
-        vkCmdEndRenderPass(buffer);
-        m_boundRenderPass = nullptr;
-    }   
 }
 
 
@@ -496,7 +486,7 @@ void VulkanContext::drawIndexedInstancedIndirect(GraphicsResource* pParams, U32 
 
     if (!pResource->isBuffer())
     {
-        R_ERR("Vulkan", "Can not submit an indirect draw call if the resource is not a buffer! Ignoring call...");
+        R_ERROR("Vulkan", "Can not submit an indirect draw call if the resource is not a buffer! Ignoring call...");
         return;
     }
 
@@ -521,7 +511,7 @@ void VulkanContext::drawInstancedIndirect(GraphicsResource* pParams, U32 offset,
 
     if (!pResource->isBuffer())
     {
-        R_ERR("Vulkan", "Can not submit an indirect draw call if the resource is not a buffer! Ignoring call...");
+        R_ERROR("Vulkan", "Can not submit an indirect draw call if the resource is not a buffer! Ignoring call...");
         return;
     }
 
@@ -551,7 +541,7 @@ void VulkanContext::dispatchIndirect(GraphicsResource* pParams, U64 offset)
     }
     else
     {
-        R_ERR("Vulkan", "ERROR: Can not use an image resource as an indirect args resource! Skipping call...");
+        R_ERROR("Vulkan", "ERROR: Can not use an image resource as an indirect args resource! Skipping call...");
     }
 }
 

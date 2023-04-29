@@ -25,11 +25,11 @@ class R_PUBLIC_API BuddyAllocator : public Allocator
 private:
     typedef Allocation BlockAllocation;
 
-    ErrType onInitialize() override;
-    ErrType onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override;
-    ErrType onFree(Allocation* pOutput) override;
-    ErrType onReset() override;
-    ErrType onCleanUp() override;
+    ResultCode onInitialize() override;
+    ResultCode onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override;
+    ResultCode onFree(Allocation* pOutput) override;
+    ResultCode onReset() override;
+    ResultCode onCleanUp() override;
 
     inline BlockAllocation makeBlockAllocation(U64 blockAddress, U64 blockSzBytes)
     {

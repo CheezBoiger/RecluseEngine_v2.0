@@ -90,7 +90,7 @@ void enableOSColorInput()
 
     if (stdOutHandle == INVALID_HANDLE_VALUE) 
     {        
-        R_ERR(R_CHANNEL_WIN32, "Unable to obtain standard output handle.");
+        R_ERROR(R_CHANNEL_WIN32, "Unable to obtain standard output handle.");
 
         return;
     }
@@ -99,7 +99,7 @@ void enableOSColorInput()
 
     if (!GetConsoleMode(stdOutHandle, &dwMode)) 
     {
-        R_ERR(R_CHANNEL_WIN32, "Unable to get output handle mode!");
+        R_ERROR(R_CHANNEL_WIN32, "Unable to get output handle mode!");
 
         return;
     }
@@ -108,7 +108,7 @@ void enableOSColorInput()
     
     if (!SetConsoleMode(stdOutHandle, dwMode)) 
     {
-        R_ERR(R_CHANNEL_WIN32, "Unable to set the output handle mode for virtual terminal processing!");
+        R_ERROR(R_CHANNEL_WIN32, "Unable to set the output handle mode for virtual terminal processing!");
     }
 }
 
@@ -147,7 +147,7 @@ void RealtimeTick::updateWatch(U64 id, U32 watchType)
 
     if (gWin32Runtime.watchId[watchType] == 0)
     {
-        R_ERR
+        R_ERROR
             (
                 "RealtimeTick", 
                 "This watch=%d is not initialized! Can not update!", 
@@ -158,7 +158,7 @@ void RealtimeTick::updateWatch(U64 id, U32 watchType)
 
     if (gWin32Runtime.watchId[watchType] != id)
     {
-        R_ERR
+        R_ERROR
             (
                 "RealtimeTick", 
                 "Can not update watch=%d. Id=%llu does not own it!", 
@@ -218,7 +218,7 @@ void RealtimeTick::initializeWatch(U64 id, U32 watchType)
             gWin32Runtime.watchId[watchType] != id
         )
     {
-        R_ERR("RealtimeTick", "Watch type is already initialized! Ignoring...");
+        R_ERROR("RealtimeTick", "Watch type is already initialized! Ignoring...");
         return;
     }
    

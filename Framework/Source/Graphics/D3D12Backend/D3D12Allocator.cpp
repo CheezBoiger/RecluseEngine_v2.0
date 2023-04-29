@@ -17,7 +17,7 @@ D3D12ResourcePagedAllocator::D3D12ResourcePagedAllocator()
 }
 
 
-ErrType D3D12ResourcePagedAllocator::initialize(ID3D12Device* pDevice, Allocator* pAllocator, U64 totalSizeBytes, ResourceMemoryUsage usage)
+ResultCode D3D12ResourcePagedAllocator::initialize(ID3D12Device* pDevice, Allocator* pAllocator, U64 totalSizeBytes, ResourceMemoryUsage usage)
 {  
     R_ASSERT(pAllocator         != NULL);
     R_ASSERT(totalSizeBytes     != 0u);
@@ -59,7 +59,7 @@ ErrType D3D12ResourcePagedAllocator::initialize(ID3D12Device* pDevice, Allocator
 
     if (FAILED(result))
     {
-        R_ERR(R_CHANNEL_D3D12, "Failed to create Direct3D 12 heap! ErrCode=%d", result);
+        R_ERROR(R_CHANNEL_D3D12, "Failed to create Direct3D 12 heap! ErrCode=%d", result);
         return RecluseResult_Failed;
     }
 
@@ -70,13 +70,13 @@ ErrType D3D12ResourcePagedAllocator::initialize(ID3D12Device* pDevice, Allocator
 }
 
 
-ErrType D3D12ResourcePagedAllocator::release()
+ResultCode D3D12ResourcePagedAllocator::release()
 {
     return RecluseResult_NoImpl;
 }
 
 
-ErrType D3D12ResourcePagedAllocator::allocate
+ResultCode D3D12ResourcePagedAllocator::allocate
                             (
                                 ID3D12Device* pDevice, 
                                 D3D12MemoryObject* pOut, 
@@ -85,7 +85,7 @@ ErrType D3D12ResourcePagedAllocator::allocate
                             ) 
 {
     U64 sizeInBytesRequired = 0ull;
-    ErrType result          = RecluseResult_Ok;
+    ResultCode result          = RecluseResult_Ok;
     SIZE_T formatSizeBytes  = Dxgi::getNativeFormatSize(desc.Format);
     U64 alignment           = desc.Alignment;
     U32 width               = desc.Width;
@@ -104,7 +104,7 @@ ErrType D3D12ResourcePagedAllocator::allocate
 
     if (result != RecluseResult_Ok) 
     {
-        R_ERR("D3D12Allocator", "Failed to allocate d3d12 resource!");
+        R_ERROR("D3D12Allocator", "Failed to allocate d3d12 resource!");
     } 
     else 
     {
@@ -116,7 +116,7 @@ ErrType D3D12ResourcePagedAllocator::allocate
         
         if (FAILED(hresult)) 
         {
-            R_ERR("D3D12Allocator", "Failed to call CreatePlacedResource() on code=(%d)", hresult);
+            R_ERROR("D3D12Allocator", "Failed to call CreatePlacedResource() on code=(%d)", hresult);
         } 
         else 
         {
@@ -129,14 +129,14 @@ ErrType D3D12ResourcePagedAllocator::allocate
 }
 
 
-ErrType D3D12ResourcePagedAllocator::free(D3D12MemoryObject* pObject)
+ResultCode D3D12ResourcePagedAllocator::free(D3D12MemoryObject* pObject)
 {
     R_ASSERT(pObject != NULL);
 
     Allocation allocation   = { };
     allocation.baseAddress  = pObject->basePtr;
     allocation.sizeBytes    = pObject->sizeInBytes;
-    ErrType err = m_pAllocator->free(&allocation);
+    ResultCode err = m_pAllocator->free(&allocation);
     
     if (err != RecluseResult_Ok)
     {
@@ -158,40 +158,40 @@ void D3D12ResourcePagedAllocator::clear()
     m_pAllocator->reset();
 }
 
-ErrType D3D12ResourceAllocationManager::initialize(ID3D12Device* pDevice)
+ResultCode D3D12ResourceAllocationManager::initialize(ID3D12Device* pDevice)
 {
     m_pDevice = pDevice;
     return RecluseResult_Ok;
 }
 
 
-ErrType D3D12ResourceAllocationManager::allocate(D3D12MemoryObject* pOut, const D3D12_RESOURCE_DESC& desc, D3D12_RESOURCE_STATES initialState)
+ResultCode D3D12ResourceAllocationManager::allocate(D3D12MemoryObject* pOut, const D3D12_RESOURCE_DESC& desc, D3D12_RESOURCE_STATES initialState)
 {
 
     return RecluseResult_NoImpl;
 }
 
 
-ErrType D3D12ResourceAllocationManager::free(D3D12MemoryObject* pObject)
+ResultCode D3D12ResourceAllocationManager::free(D3D12MemoryObject* pObject)
 {
     return RecluseResult_NoImpl;
 }
 
 
-ErrType D3D12ResourceAllocationManager::update()
+ResultCode D3D12ResourceAllocationManager::update()
 {
     cleanGarbage(m_garbageIndex);
     return RecluseResult_Ok;
 }
 
 
-ErrType D3D12ResourceAllocationManager::cleanGarbage(U32 index)
+ResultCode D3D12ResourceAllocationManager::cleanGarbage(U32 index)
 {
     return RecluseResult_NoImpl;
 }
 
 
-ErrType D3D12ResourceAllocationManager::reserveMemory(const MemoryReserveDescription& description)
+ResultCode D3D12ResourceAllocationManager::reserveMemory(const MemoryReserveDescription& description)
 {
     m_description = description;
     return RecluseResult_Ok;
