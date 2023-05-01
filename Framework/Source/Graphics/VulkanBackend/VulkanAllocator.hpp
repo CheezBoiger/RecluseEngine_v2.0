@@ -4,6 +4,7 @@
 #include "VulkanCommons.hpp"
 #include "Recluse/Memory/Allocator.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
+#include "Recluse/Threading/Threading.hpp"
 #include "Recluse/Types.hpp"
 
 #include <vector>
@@ -162,13 +163,13 @@ public:
     {
     }
 
-    ResultCode                 initialize(VulkanDevice* pDevice);
+    ResultCode              initialize(VulkanDevice* pDevice);
     void                    clear();
-    ResultCode                 release();
+    ResultCode              release();
 
-    ResultCode                 allocateBuffer(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements);
-    ResultCode                 allocateImage(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements, VkImageTiling tiling);
-    ResultCode                 free(VulkanMemory* pOut, Bool immediate = false);
+    ResultCode              allocateBuffer(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements);
+    ResultCode              allocateImage(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements, VkImageTiling tiling);
+    ResultCode              free(VulkanMemory* pOut, Bool immediate = false);
 
     void                    update(const UpdateConfig& config);
     void                    setTotalMemory(const MemoryReserveDescription& desc) { }
@@ -182,7 +183,7 @@ private:
     VulkanPagedAllocator*   getAllocator(ResourceMemoryUsage usage, MemoryTypeIndex memoryTypeIndex, VkDeviceSize sizeBytes, VkDeviceSize alignment);
     // Allocate a page of memory if required.
     VulkanPagedAllocator*   allocateMemoryPage(MemoryTypeIndex memoryTypeIndex, ResourceMemoryUsage usage);
-    ResultCode                 allocate(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements, VkImageTiling tiling = VK_IMAGE_TILING_LINEAR);
+    ResultCode              allocate(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements, VkImageTiling tiling = VK_IMAGE_TILING_LINEAR);
 
     std::map<MemoryTypeIndex, std::vector<SmartPtr<VulkanPagedAllocator>>>      m_resourceAllocators;
     std::map<MemoryTypeIndex, U64>                                              m_pagedMemoryTotalSizeBytes;
@@ -191,7 +192,8 @@ private:
     std::vector<std::vector<VulkanMemory>>                                      m_frameGarbage;
     VulkanDevice*                                                               m_pDevice;
     U64                                                                         m_totalAllocationSizeBytes;
-    MemoryReserveDescription                                                           m_maxDedicatedMemoryDesc;
+    MemoryReserveDescription                                                    m_maxDedicatedMemoryDesc;
     VkDeviceSize                                                                m_bufferImageGranularityBytes;
+    CriticalSection                                                             m_allocationCs;
 };
 } // Recluse

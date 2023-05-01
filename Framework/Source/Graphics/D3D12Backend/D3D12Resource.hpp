@@ -46,6 +46,9 @@ public:
     // Obtain struct that is used to make the actual transition on the GPU.
     D3D12_RESOURCE_BARRIER  transition(ResourceState newState);
 
+    // Get the resource virtual address if it was created on GPU memory.
+    D3D12_GPU_VIRTUAL_ADDRESS getVirtualAddress() const { return (m_memObj.usage == ResourceMemoryUsage_GpuOnly) ? m_memObj.pResource->GetGPUVirtualAddress() : 0ULL; }
+
 private:
     Bool                    isSupportedTransitionState(ResourceState state);
 

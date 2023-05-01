@@ -141,6 +141,8 @@ ResultCode VulkanAllocationManager::release()
             allocator->release(device);
     }
 
+    m_allocationCs.release();
+
     return RecluseResult_Ok;
 }
 
@@ -245,6 +247,7 @@ ResultCode VulkanAllocationManager::initialize(VulkanDevice* device)
     m_pDevice = device;
     VkPhysicalDeviceProperties properties = m_pDevice->getAdapter()->getProperties();
     m_bufferImageGranularityBytes = properties.limits.bufferImageGranularity;
+    m_allocationCs.initialize();
     return RecluseResult_Ok;
 }
 
@@ -285,8 +288,11 @@ ResultCode VulkanAllocationManager::allocate(VulkanMemory* pOut, ResourceMemoryU
 {
     VulkanAdapter* pAdapter                 = m_pDevice->getAdapter();
     MemoryTypeIndex memoryTypeIndex         = pAdapter->findMemoryType(requirements.memoryTypeBits, usage);
+
+    ScopedCriticalSection cs(m_allocationCs);
+
     VulkanPagedAllocator* pagedAllocator    = getAllocator(usage, memoryTypeIndex, requirements.size, requirements.alignment);
-    ResultCode result                          = RecluseResult_Ok;
+    ResultCode result                       = RecluseResult_Ok;
 
     if (!pagedAllocator)
     {

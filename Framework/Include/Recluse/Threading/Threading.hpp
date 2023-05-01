@@ -131,10 +131,10 @@ public:
         : m_section(nullptr)
     { }
     ~CriticalSection()
-    { if (m_section) free(); m_section = nullptr; }
+    { if (m_section) release(); m_section = nullptr; }
 
     ResultCode initialize();
-    ResultCode free();
+    ResultCode release();
 
     R_OS_CALL ResultCode enter();
 

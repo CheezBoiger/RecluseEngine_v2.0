@@ -217,7 +217,7 @@ ResultCode CriticalSection::initialize()
 }
 
 
-ResultCode CriticalSection::free()
+ResultCode CriticalSection::release()
 {
     R_ASSERT(m_section != NULL);
     DeleteCriticalSection((LPCRITICAL_SECTION)m_section);

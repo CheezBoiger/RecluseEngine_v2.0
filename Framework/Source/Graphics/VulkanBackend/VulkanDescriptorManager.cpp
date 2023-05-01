@@ -59,7 +59,7 @@ void DescriptorAllocatorInstance::release(VulkanDevice* pDevice)
     m_descriptorSetAllocator.release();
     m_descriptorSetLayoutAllocator.release();
 
-    m_allocatorCs.free();
+    m_allocatorCs.release();
 }
 
 

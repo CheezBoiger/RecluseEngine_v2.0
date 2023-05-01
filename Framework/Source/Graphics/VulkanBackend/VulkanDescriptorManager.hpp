@@ -205,20 +205,20 @@ private:
 class DescriptorAllocator
 {
 public:
-    const static U32 kMaxReservedBufferInstances;
+    const static U32                            kMaxReservedBufferInstances;
     // Initialize the descriptor allocator with the number of available buffers.
-    void                            initialize(VulkanDevice* pDevice, U32 bufferCount, VkDescriptorPoolCreateFlags flags = 0);
+    void                                        initialize(VulkanDevice* pDevice, U32 bufferCount, VkDescriptorPoolCreateFlags flags = 0);
     // Release all descriptor allocator instances.
-    void                            release(VulkanDevice* pDevice);
+    void                                        release(VulkanDevice* pDevice);
     // Resize our buffered instances. Only if we need to resize instance, instead of releasing everything and reinitialize.
-    void                            resize(VulkanDevice* pDevice, U32 newBufferCount);
+    void                                        resize(VulkanDevice* pDevice, U32 newBufferCount);
     
     // Get an allocator instance. Use the buffer index to find the right instance.
-    DescriptorAllocatorInstance*    getInstance(U32 bufferIndex) { return &m_bufferedInstances[bufferIndex]; }
-    U32                             getBufferCount() const { return m_bufferedInstances.size(); }  
+    DescriptorAllocatorInstance*                getInstance(U32 bufferIndex) { return &m_bufferedInstances[bufferIndex]; }
+    U32                                         getBufferCount() const { return m_bufferedInstances.size(); }  
 
 private:
-    ResultCode                         checkAndManageInstances(VulkanDevice* pDevice, U32 newbufferCount, VkDescriptorPoolCreateFlags flags);
+    ResultCode                                  checkAndManageInstances(VulkanDevice* pDevice, U32 newbufferCount, VkDescriptorPoolCreateFlags flags);
 
     std::vector<DescriptorAllocatorInstance>    m_bufferedInstances;
     VkDescriptorPoolCreateFlags                 m_flags;

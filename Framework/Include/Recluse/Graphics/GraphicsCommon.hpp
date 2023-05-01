@@ -115,16 +115,23 @@ enum ResourceState
     ResourceState_ShaderResource,
     // Copy Destination state.
     ResourceState_CopyDestination,
-    
+    // Copy Source state.
     ResourceState_CopySource,
+    // Vertex buffer state.
     ResourceState_VertexBuffer,
+    // Constant buffer state.
     ResourceState_ConstantBuffer,
+    // Index buffer state.
     ResourceState_IndexBuffer,
     // Unordered Access View State.
     ResourceState_UnorderedAccess,
+    // Depth-stencil readonly state.
     ResourceState_DepthStencilReadOnly,
+    // Depth-stencil write state.
     ResourceState_DepthStencilWrite,
+    // Presentation state, used mainly for presenting resources to the display engine.
     ResourceState_Present,
+    // Indirect argument buffer state.
     ResourceState_IndirectArgs
 };
 

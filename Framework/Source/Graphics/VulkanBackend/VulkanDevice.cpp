@@ -108,6 +108,7 @@ void VulkanContext::endRenderPass(VkCommandBuffer buffer)
 void VulkanContext::end()
 {
     endRenderPass(m_primaryCommandList.get());
+    flushBarrierTransitions(m_primaryCommandList.get());
     m_primaryCommandList.end();
     // This performance our submittal.
     VulkanDevice* pDevice       = getNativeDevice();

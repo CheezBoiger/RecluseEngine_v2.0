@@ -248,6 +248,7 @@ int main(int c, char* argv[])
     F32 index = 200;
     F32 counterFps = 0.f;
     F32 desiredFps = 1.f / 256.f;
+
     while (!pWindow->shouldClose()) 
     {
         RealtimeTick::updateWatch(1ull, 0);
@@ -271,6 +272,7 @@ int main(int c, char* argv[])
             context->clearRenderTarget(0, color, rect);
             context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
             context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
+            context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_Present);
         context->end();
         R_FATAL_ERROR("TEST", "%f Fps", 1.0f / ms);
         pSwapchain->present();

@@ -389,6 +389,14 @@ ResultCode VulkanSwapchain::submitFinalCommandBuffer(VkCommandBuffer commandBuff
 
         return RecluseResult_Ok;
     }
+
+    R_WARN
+        (
+            R_CHANNEL_VULKAN, 
+            "Submitting command buffer %#010llx without transitioning back swapchain buffer to PRESENT!"
+            " Will require an additional command buffer to transition it.",
+            reinterpret_cast<UPtr>(commandBuffer)
+        );
     
     range.aspectMask        = VK_IMAGE_ASPECT_COLOR_BIT;
     range.baseArrayLayer    = 0;
