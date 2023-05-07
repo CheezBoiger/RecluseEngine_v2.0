@@ -41,11 +41,18 @@ ResultCode D3D12Resource::initialize
     d3d12desc.Height            = desc.height;
     d3d12desc.MipLevels         = desc.mipLevels;
     d3d12desc.Format            = Dxgi::getNativeFormat(desc.format);
+    d3d12desc.Alignment         = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
 
     if (makeCommitted == true) 
     {
         D3D12_HEAP_PROPERTIES heapProps = { };
         D3D12_HEAP_FLAGS flags          = D3D12_HEAP_FLAG_NONE;
+
+        heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
+        heapProps.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+        heapProps.CreationNodeMask = 0;
+        heapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+        heapProps.VisibleNodeMask = 0;
 
         sResult = device->CreateCommittedResource(&heapProps, flags, &d3d12desc, state, 
             &optimizedClearValue, __uuidof(ID3D12Resource), (void**)&m_memObj.pResource);
@@ -54,7 +61,7 @@ ResultCode D3D12Resource::initialize
     {   
         R_ASSERT_FORMAT(pAllocator, "No allocator exists for the given dimension! Is the resource unknown?");
 
-        ResultCode result  = pAllocator->allocate(&m_memObj, d3d12desc, state);
+        ResultCode result  = pAllocator->allocate(&m_memObj, d3d12desc, desc.memoryUsage, state);
 
         if (result != RecluseResult_Ok)    
         {
@@ -65,6 +72,12 @@ ResultCode D3D12Resource::initialize
             makeCommitted = true;
             D3D12_HEAP_PROPERTIES heapProps = { };
             D3D12_HEAP_FLAGS flags          = D3D12_HEAP_FLAG_NONE;
+
+            heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
+            heapProps.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+            heapProps.CreationNodeMask = 0;
+            heapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+            heapProps.VisibleNodeMask = 0;
 
             sResult = device->CreateCommittedResource(&heapProps, flags, &d3d12desc, state, 
                 &optimizedClearValue, __uuidof(ID3D12Resource), (void**)&m_memObj.pResource);

@@ -5,8 +5,9 @@
 #include "Recluse/Memory/Allocator.hpp"
 
 #include "Recluse/Graphics/GraphicsCommon.hpp"
-
+#include "Recluse/Threading/Threading.hpp"
 #include <vector>
+#include <map>
 
 namespace Recluse {
 
@@ -35,8 +36,11 @@ public:
     void    clear();
     
 private:
+    
     D3D12MemoryPool                 m_pool;
     SmartPtr<Allocator>             m_pAllocator;
+    CriticalSection                 m_allocateCs;
+    std::vector<D3D12MemoryObject*> m_garbageResources;
 };
 
 
@@ -51,7 +55,7 @@ public:
 
     ResultCode initialize(ID3D12Device* pDevice);
     
-    ResultCode allocate(D3D12MemoryObject* pOut, const D3D12_RESOURCE_DESC& desc, D3D12_RESOURCE_STATES initialState);
+    ResultCode allocate(D3D12MemoryObject* pOut, const D3D12_RESOURCE_DESC& desc, ResourceMemoryUsage usage, D3D12_RESOURCE_STATES initialState);
     ResultCode free(D3D12MemoryObject* pObject);
     ResultCode update();
     ResultCode reserveMemory(const MemoryReserveDescription& description);
@@ -59,12 +63,9 @@ public:
 private:
     ResultCode cleanGarbage(U32 index);
 
-    ID3D12Device* m_pDevice;
-    std::vector<D3D12ResourcePagedAllocator*>    m_pagedAllocators;
-    // garbage resources to clean up after use.
-    std::vector<ID3D12Resource*>            m_garbageToClean;
-    U32                                     m_garbageIndex;
-
-    MemoryReserveDescription                       m_description;
+    ID3D12Device*                                                               m_pDevice;
+    std::map<ResourceMemoryUsage, std::vector<D3D12ResourcePagedAllocator*>>    m_pagedAllocators;
+    U32                                                                         m_garbageIndex;
+    MemoryReserveDescription                                                    m_description;
 };
 } // Recluse

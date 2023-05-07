@@ -146,6 +146,7 @@ public:
 
     // The actual descriptor atom size provided by the device context (usually from the driver itself.)
     U32                         getDescriptorSize() const { return m_descIncSz; }
+    D3D12_DESCRIPTOR_HEAP_TYPE  getDescriptorType() const { return m_pDescriptorHeap->getDesc().Type; }
 
 private:
     // The descriptor heap.

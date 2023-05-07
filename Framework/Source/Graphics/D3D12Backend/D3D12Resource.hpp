@@ -49,6 +49,9 @@ public:
     // Get the resource virtual address if it was created on GPU memory.
     D3D12_GPU_VIRTUAL_ADDRESS getVirtualAddress() const { return (m_memObj.usage == ResourceMemoryUsage_GpuOnly) ? m_memObj.pResource->GetGPUVirtualAddress() : 0ULL; }
 
+    ResultCode map(void** pMappedMemory, MapRange* pReadRange) override;
+    ResultCode unmap(MapRange* pWriteRange) override;
+
 private:
     Bool                    isSupportedTransitionState(ResourceState state);
 

@@ -66,12 +66,14 @@ ResultCode D3D12ResourcePagedAllocator::initialize(ID3D12Device* pDevice, Alloca
     m_pool.sizeInBytes = totalSizeBytes;
     m_pAllocator = makeSmartPtr(pAllocator);
     m_pAllocator->initialize(0ull, totalSizeBytes);
+    m_allocateCs.initialize();
     return RecluseResult_Ok;
 }
 
 
 ResultCode D3D12ResourcePagedAllocator::release()
 {
+    m_allocateCs.release();
     return RecluseResult_NoImpl;
 }
 
@@ -84,23 +86,15 @@ ResultCode D3D12ResourcePagedAllocator::allocate
                                 D3D12_RESOURCE_STATES initialState
                             ) 
 {
-    U64 sizeInBytesRequired = 0ull;
-    ResultCode result          = RecluseResult_Ok;
-    SIZE_T formatSizeBytes  = Dxgi::getNativeFormatSize(desc.Format);
-    U64 alignment           = desc.Alignment;
-    U32 width               = desc.Width;
-    U32 height              = desc.Height;
-    U32 depthOrArray        = desc.DepthOrArraySize;
-    U32 samples             = desc.SampleDesc.Count;
-    U32 mips                = desc.MipLevels;
+    ResultCode result                                       = RecluseResult_Ok;
+    D3D12_RESOURCE_ALLOCATION_INFO resourceAllocationInfo   = pDevice->GetResourceAllocationInfo(0, 1, &desc);
+    const D3D12_RESOURCE_STATES initState                   = initialState;
+    D3D12_CLEAR_VALUE optimizedClearValue                   = { };
 
-    const D3D12_RESOURCE_STATES initState   = initialState;
-    D3D12_CLEAR_VALUE optimizedClearValue   = { };
-
-    R_ASSERT(sizeInBytesRequired != 0ull);
+    ScopedCriticalSection _(m_allocateCs);
 
     Allocation allocOut     = { };
-    result = m_pAllocator->allocate(&allocOut, sizeInBytesRequired, alignment);
+    result = m_pAllocator->allocate(&allocOut, resourceAllocationInfo.SizeInBytes, resourceAllocationInfo.Alignment);
 
     if (result != RecluseResult_Ok) 
     {
@@ -165,7 +159,7 @@ ResultCode D3D12ResourceAllocationManager::initialize(ID3D12Device* pDevice)
 }
 
 
-ResultCode D3D12ResourceAllocationManager::allocate(D3D12MemoryObject* pOut, const D3D12_RESOURCE_DESC& desc, D3D12_RESOURCE_STATES initialState)
+ResultCode D3D12ResourceAllocationManager::allocate(D3D12MemoryObject* pOut, const D3D12_RESOURCE_DESC& desc, ResourceMemoryUsage usage, D3D12_RESOURCE_STATES initialState)
 {
 
     return RecluseResult_NoImpl;

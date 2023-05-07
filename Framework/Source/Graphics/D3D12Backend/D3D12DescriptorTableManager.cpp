@@ -10,7 +10,7 @@ namespace Recluse {
 const D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHeap::invalidGpuAddress = { 0 };
 const D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeap::invalidCpuAddress = { 0 };
 const F32 DescriptorHeapAllocationManager::kNumDescriptorsPageSize              = 1024.0f;
-const F32 DescriptorHeapAllocationManager::kNumSamplerDescriptorsPageSize       = 128.f;
+const F32 DescriptorHeapAllocationManager::kNumSamplerDescriptorsPageSize       = 256.f;
 
 
 DescriptorHeapAllocation::DescriptorHeapAllocation
@@ -126,13 +126,18 @@ DescriptorHeapAllocation CpuDescriptorHeap::allocate(U32 numberDescriptors)
 {
     DescriptorHeapAllocation allocation;
 
-    R_ASSERT((m_currentTotalEntries + numberDescriptors) < m_heapDesc.NumDescriptors);
+    R_ASSERT_FORMAT
+        (
+            (m_currentTotalEntries + numberDescriptors) < m_heapDesc.NumDescriptors,
+            "Descriptor allocation request spills over maximum descriptors in current frame. Request=%d, Max=%d",
+            numberDescriptors, m_heapDesc.NumDescriptors
+        );
 
     Allocation alloc    = { };
     ResultCode err         = RecluseResult_Ok;
 
     err = m_allocator->allocate(&alloc, numberDescriptors * m_descriptorSize, m_descriptorSize);
-
+    
     if (err == RecluseResult_Ok)
     {
         allocation = DescriptorHeapAllocation
@@ -153,7 +158,12 @@ DescriptorHeapAllocation GpuDescriptorHeap::allocate(U32 numberDescriptors)
 {
     DescriptorHeapAllocation allocation;
 
-    R_ASSERT((m_currentTotalEntries + numberDescriptors) < m_heapDesc.NumDescriptors);
+    R_ASSERT_FORMAT
+        (
+            (m_currentTotalEntries + numberDescriptors) < m_heapDesc.NumDescriptors, 
+            "Descriptor allocation request spills over maximum descriptors in current frame. Request=%d, Max=%d", 
+            numberDescriptors, m_heapDesc.NumDescriptors
+        );
 
     Allocation alloc    = { };
     ResultCode err         = RecluseResult_Ok;
