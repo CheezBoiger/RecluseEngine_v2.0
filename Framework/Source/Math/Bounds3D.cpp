@@ -101,5 +101,16 @@ Bool intersects(const BoundsSphere& sp0, const BoundsSphere& sp1)
     const F32 distance  = length(offset);
     return (distance < (sp0.radius + sp1.radius));
 }
+
+
+Bool contains(const Bounds3d& container, const Bounds3d& bounds)
+{
+    return (container.mmin.x <= bounds.mmin.x) && (bounds.mmin.x < container.mmax.x)
+        && (container.mmin.y <= bounds.mmin.y) && (bounds.mmin.y < container.mmax.y)
+        && (container.mmin.z <= bounds.mmin.z) && (bounds.mmin.z < container.mmax.z)
+        && (container.mmin.x <= bounds.mmax.x) && (bounds.mmax.x < container.mmax.x)
+        && (container.mmin.y <= bounds.mmax.y) && (bounds.mmax.y < container.mmax.y)
+        && (container.mmin.z <= bounds.mmax.z) && (bounds.mmax.z < container.mmax.z);
+}
 } // Math
 } // Recluse

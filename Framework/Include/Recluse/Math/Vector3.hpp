@@ -145,14 +145,17 @@ struct R_PUBLIC_API UShort3
     };
 };
 
-R_PUBLIC_API Float3  cross(const Float3& lh, const Float3& rh);
-R_PUBLIC_API F32     dot(const Float3& lh, const Float3& rh);
-R_PUBLIC_API F32     length(const Float3& v);
-R_PUBLIC_API F32     length2(const Float3& v);
-R_PUBLIC_API Float3  normalize(const Float3& v);
+R_PUBLIC_API Float3     cross(const Float3& lh, const Float3& rh);
+R_PUBLIC_API F32        dot(const Float3& lh, const Float3& rh);
+R_PUBLIC_API F32        length(const Float3& v);
+R_PUBLIC_API F32        length2(const Float3& v);
+R_PUBLIC_API Float3     normalize(const Float3& v);
+R_PUBLIC_API Float3     reflect(const Float3& incidence, const Float3& normal);
 
 // check if any component in the vector is nonzero.
 R_PUBLIC_API Bool   any(const Float3& a);
+// check if all components in the vector are nonzero.
+R_PUBLIC_API Bool   all(const Float3& a);
 
 
 typedef Float3  FVector3;

@@ -54,6 +54,11 @@ public:
         m_currentBufferIndex = (m_currentBufferIndex + 1) % m_bufferCount; 
     }
 
+    U32                                 currentBufferIndex() const 
+    { 
+        return m_currentBufferIndex; 
+    }
+
     // Not recommended, but submits a copy to this queue, and waits until the command has 
     // completed.
     void                                copyResource(GraphicsResource* dst, GraphicsResource* src) override;

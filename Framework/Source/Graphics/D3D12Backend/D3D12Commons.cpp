@@ -135,6 +135,31 @@ D3D12_SRV_DIMENSION getSrvDimension(Recluse::ResourceViewDimension dimension)
             return D3D12_SRV_DIMENSION_UNKNOWN;
     }
 }
+
+
+D3D12_COMPARISON_FUNC getNativeComparisonFunction(Recluse::CompareOp compareOp)
+{
+    switch (compareOp)
+    {
+        case CompareOp_Always:
+            return D3D12_COMPARISON_FUNC_ALWAYS;
+        case CompareOp_Equal:
+            return D3D12_COMPARISON_FUNC_EQUAL;
+        case CompareOp_Greater:
+            return D3D12_COMPARISON_FUNC_GREATER;
+        case CompareOp_GreaterOrEqual:
+            return D3D12_COMPARISON_FUNC_GREATER_EQUAL;
+        case CompareOp_Less:
+            return D3D12_COMPARISON_FUNC_LESS;
+        case CompareOp_LessOrEqual:
+            return D3D12_COMPARISON_FUNC_LESS_EQUAL;
+        case CompareOp_NotEqual:
+            return D3D12_COMPARISON_FUNC_NOT_EQUAL;
+        case CompareOp_Never:
+        default:
+            return D3D12_COMPARISON_FUNC_NEVER;
+    }
+}
 } // Recluse
 
 

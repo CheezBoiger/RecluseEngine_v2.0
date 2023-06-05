@@ -17,6 +17,8 @@
 #include "Recluse/System/Input.hpp"
 #include "Recluse/System/Limiter.hpp"
 #include "Recluse/Math/MathCommons.hpp"
+#include "Recluse/Math/Vector2.hpp"
+#include "Recluse/Math/Bounds2D.hpp"
 
 using namespace Recluse;
 
@@ -247,7 +249,13 @@ int main(int c, char* argv[])
     context->setBuffers(3);
     F32 index = 200;
     F32 counterFps = 0.f;
-    F32 desiredFps = 1.f / 256.f;
+    F32 desiredFps = 1.f / 60.f;
+    Math::Float2 direction{ 1.f, 1.f };
+    Math::Float2 boxSize = Math::Float2(200.0f, 200.0f);
+    Math::Bounds2d bounds = { Math::Float2(0.f, 0.f), Math::Float2(1024.f, 1024.0f) };
+    Math::Bounds2d box = { Math::Float2(400.f, 200.f), Math::Float2(0, 0) };
+    box.mmax = boxSize + box.mmin;
+    F32 speed = 400.f;
 
     while (!pWindow->shouldClose()) 
     {
@@ -257,9 +265,22 @@ int main(int c, char* argv[])
         //R_TRACE("TEST", "FPS: %f", 1.0f / tick.getDeltaTimeS());
         F32 color[]         = { 0.0f, 1.0f, 0.0f, 1.0f };
         F32 color2[]        = { 0.0f, 0.0f, 1.0f, 1.0f };
-        index               = Math::clamp(index - 100.f * ms, 0.f, 200.0f);
-        Rect rect           = { (F32)index, 200.f, 1024.f/2.f, 1024.f/2.f };
-        Rect rect2          = { 0.f, 0.f, 1024.f, 1024.f };
+        box.mmin            = box.mmin + direction * speed * ms;
+        box.mmax            = box.mmax + direction * speed * ms;
+        
+        if (!Math::contains(bounds, box))
+        {
+            Math::Float2 collisionN = { (box.mmin.x <= bounds.mmin.x) ? 1.f : (box.mmax.x > bounds.mmax.x ? -1.f : 0.f),
+                                        (box.mmin.y <= bounds.mmin.y) ? 1.f : (box.mmax.y > bounds.mmax.y ? -1.f : 0.f) };
+            
+            collisionN = Math::normalize(collisionN);
+            direction = Math::reflect(direction, collisionN);
+            box.mmin = box.mmin + direction * speed * ms;
+            box.mmax = box.mmax + direction * speed * ms;
+        }
+
+        Rect rect           = { box.mmin.x, box.mmin.y, boxSize.x, boxSize.y };
+        Rect rect2          = { bounds.mmin.x, bounds.mmin.y, bounds.mmax.x, bounds.mmax.y };
 
         context->begin();
             GraphicsResourceView* pView = pSwapchain->getFrameView(pSwapchain->getCurrentFrameIndex());

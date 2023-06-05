@@ -59,8 +59,9 @@ struct Structure
 
 struct PipelineState
 {
+    U32                 lastUsed;
     VkPipelineBindPoint bindPoint;
-    VkPipeline pipeline;
+    VkPipeline          pipeline;   
 };
 
 PipelineId          makePipelineId(const Structure& pipelineStructure);

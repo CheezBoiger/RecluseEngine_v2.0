@@ -11,16 +11,16 @@ class Octree
 {
 public:
 
-    void insert(const Float3& point);
-    void remove(const Float3& point);
+    void insert(const Math::Float3& point);
+    void remove(const Math::Float3& point);
 
-    Bool find(const Float3& point);
+    Bool find(const Math::Float3& point);
 
 private:
     struct OctreeNode
     {
         struct OctreeNode*  nodes[8];
-        Bounds3d            region;
+        Math::Bounds3d      region;
     };
 };
 } // Recluse

@@ -34,6 +34,7 @@ R_PUBLIC_API Bool    intersects(const Bounds3d& a, const BoundsSphere& sp);
 R_PUBLIC_API Bool    intersects(const BoundsSphere& sp, const Bounds3d& b);
 R_PUBLIC_API Bool    intersects(const BoundsSphere& sp0, const BoundsSphere& sp1);
 R_PUBLIC_API Bool    intersects(const Plane& plane, const Bounds3d& bounds);
+R_PUBLIC_API Bool    contains(const Bounds3d& container, const Bounds3d& bounds);
 R_PUBLIC_API F32     surfaceArea(const Bounds3d& a);
 R_PUBLIC_API Float3  center(const Bounds3d& a);
 R_PUBLIC_API Float3  extent(const Bounds3d& a);

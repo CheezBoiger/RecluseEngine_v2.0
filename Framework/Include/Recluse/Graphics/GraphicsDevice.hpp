@@ -210,62 +210,62 @@ public:
     virtual ~GraphicsDevice() { }
 
     // Reserve memory to be used for graphics resources.
-    virtual ResultCode             reserveMemory(const MemoryReserveDescription& desc) { return RecluseResult_NoImpl; }
+    virtual ResultCode              reserveMemory(const MemoryReserveDescription& desc) { return RecluseResult_NoImpl; }
 
     //< Create graphics resource.
     //<
-    virtual ResultCode             createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc, ResourceState initState) 
+    virtual ResultCode              createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc, ResourceState initState) 
         { return RecluseResult_NoImpl; }
 
-    virtual ResultCode             createResourceView(GraphicsResourceView** ppView, const ResourceViewDescription& desc) 
+    virtual ResultCode              createResourceView(GraphicsResourceView** ppView, const ResourceViewDescription& desc) 
         { return RecluseResult_NoImpl; }
 
-    virtual ResultCode             createSampler(GraphicsSampler** ppSampler, const SamplerDescription& desc) 
+    virtual ResultCode              createSampler(GraphicsSampler** ppSampler, const SamplerDescription& desc) 
         { return RecluseResult_NoImpl; }
 
-    virtual ResultCode             destroySampler(GraphicsSampler* pSampler) { return RecluseResult_NoImpl; }
-    virtual ResultCode             destroyResource(GraphicsResource* pResource) { return RecluseResult_NoImpl; }
-    virtual ResultCode             destroyResourceView(GraphicsResourceView* pResourceView) { return RecluseResult_NoImpl; }
+    virtual ResultCode              destroySampler(GraphicsSampler* pSampler) { return RecluseResult_NoImpl; }
+    virtual ResultCode              destroyResource(GraphicsResource* pResource) { return RecluseResult_NoImpl; }
+    virtual ResultCode              destroyResourceView(GraphicsResourceView* pResourceView) { return RecluseResult_NoImpl; }
 
     // Makes a vertex layout, will return a layout id if one already exists.
-    virtual Bool                makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout) { return false; }
-    virtual Bool                destroyVertexLayout(VertexInputLayoutId id) { return false; }
+    virtual Bool                    makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout) { return false; }
+    virtual Bool                    destroyVertexLayout(VertexInputLayoutId id) { return false; }
 
-    virtual GraphicsContext*    createContext() { return nullptr; }
-    virtual ResultCode             releaseContext(GraphicsContext* pContext) { return RecluseResult_NoImpl; }
+    virtual GraphicsContext*        createContext() { return nullptr; }
+    virtual ResultCode              releaseContext(GraphicsContext* pContext) { return RecluseResult_NoImpl; }
     
-    virtual GraphicsSwapchain*  getSwapchain() { return nullptr; }
+    virtual GraphicsSwapchain*      getSwapchain() { return nullptr; }
 
     // Load up shader programs to be created on the native api.
-    virtual ResultCode             loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition) { return RecluseResult_NoImpl; }
+    virtual ResultCode              loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition) { return RecluseResult_NoImpl; }
     
     // Unload a shader program, as well as it's permutations, created by this device.
-    virtual ResultCode             unloadShaderProgram(ShaderProgramId program) { return RecluseResult_NoImpl; }
+    virtual ResultCode              unloadShaderProgram(ShaderProgramId program) { return RecluseResult_NoImpl; }
     // Unload all shader programs, as well as their permutations.
-    virtual void                unloadAllShaderPrograms() { return; }
+    virtual void                    unloadAllShaderPrograms() { return; }
 
-    Bool                        hasFeaturesSupport(LayerFeatureFlags features) { return (m_supportedFeatures & features); }
+    Bool                            hasFeaturesSupport(LayerFeatureFlags features) { return (m_supportedFeatures & features); }
 
     // Not recommended, but submits a copy to this queue.
-    virtual void copyResource(GraphicsResource* dst, GraphicsResource* src) 
+    virtual void                    copyResource(GraphicsResource* dst, GraphicsResource* src) 
         { }
 
     // Submits copy of regions from src resource to dst resource.
-    virtual void  copyBufferRegions
-                        (
-                            GraphicsResource* dst, 
-                            GraphicsResource* src, 
-                            const CopyBufferRegion* pRegions, 
-                            U32 numRegions
-                        )
+    virtual void                    copyBufferRegions
+                                        (
+                                            GraphicsResource* dst, 
+                                            GraphicsResource* src, 
+                                            const CopyBufferRegion* pRegions, 
+                                            U32 numRegions
+                                        )
         { }
 
 protected:
     // Implementation should set this flag in order to be queried by users. This checks if the device is capable of 
     // supporting features requested.
-    void                        setSupportedFeatures(LayerFeatureFlags flags) { m_supportedFeatures = flags; }
+    void                            setSupportedFeatures(LayerFeatureFlags flags) { m_supportedFeatures = flags; }
 private:
-    LayerFeatureFlags           m_supportedFeatures;
+    LayerFeatureFlags               m_supportedFeatures;
 };
 
 
@@ -291,26 +291,26 @@ public:
 
     // Rebuild the swapchain if need be. Pass in NULL to rebuild the swapchain as is.
     // Be sure to update any new frame info and handles that are managed by the front engine!
-    R_PUBLIC_API ResultCode                rebuild(const SwapchainCreateDescription& desc) 
+    R_PUBLIC_API ResultCode                 rebuild(const SwapchainCreateDescription& desc) 
     { 
         m_desc = desc;
         return onRebuild(); 
     }
 
     // Present the current image.
-    R_PUBLIC_API virtual ResultCode        present(PresentConfig config = PresentConfig_Present) { return RecluseResult_NoImpl; }
+    R_PUBLIC_API virtual ResultCode         present(PresentConfig config = PresentConfig_Present) { return RecluseResult_NoImpl; }
 
     // Get the current frame index, updates after every present call.
-    R_PUBLIC_API virtual U32            getCurrentFrameIndex() { return RecluseResult_NoImpl; }
+    R_PUBLIC_API virtual U32                getCurrentFrameIndex() { return RecluseResult_NoImpl; }
 
-    virtual GraphicsResource*           getFrame(U32 idx) = 0;
-    virtual GraphicsResourceView*       getFrameView(U32 idx) = 0;
+    virtual GraphicsResource*               getFrame(U32 idx) = 0;
+    virtual GraphicsResourceView*           getFrameView(U32 idx) = 0;
 
-    const SwapchainCreateDescription&   getDesc() const { return m_desc; }
+    const SwapchainCreateDescription&       getDesc() const { return m_desc; }
 
 private:
-    virtual ResultCode                     onRebuild() { return RecluseResult_NoImpl; }
+    virtual ResultCode                      onRebuild() { return RecluseResult_NoImpl; }
 
-    SwapchainCreateDescription          m_desc;
+    SwapchainCreateDescription              m_desc;
 };
 } // Recluse

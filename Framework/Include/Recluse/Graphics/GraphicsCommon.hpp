@@ -267,19 +267,28 @@ enum CompareOp
 };
 
 
+enum BorderColor
+{
+    BorderColor_TransparentBlack,
+    BorderColor_OpaqueBlack,
+    BorderColor_OpaqueWhite
+};
+
+
 struct SamplerDescription 
 {
-    SamplerAddressMode  addrModeU;
-    SamplerAddressMode  addrModeV;
-    SamplerAddressMode  addrModeW;
+    SamplerAddressMode  addressModeU;
+    SamplerAddressMode  addressModeV;
+    SamplerAddressMode  addressModeW;
     F32                 minLod;
     F32                 maxLod;
     Filter              magFilter;
     Filter              minFilter;
     CompareOp           compareOp;
     SamplerMipMapMode   mipMapMode;
-    Bool                anisotropyEnable;
-    Bool                compareEnable;
+    F32                 maxAnisotropy;
+    F32                 mipLodBias;
+    BorderColor         borderColor;
 };
 
 

@@ -303,12 +303,12 @@ public:
 };
 
 
-R_FORCE_INLINE U64 makeBitset64(U64 offset, U64 size, U64 value)
+constexpr R_FORCE_INLINE U64 makeBitset64(U64 offset, U64 size, U64 value)
 {
     return ((value & ~(0xFFFFFFFFFFFFFFFF << size)) << offset);
 }
 
-R_FORCE_INLINE U32 makeBitset32(U32 offset, U32 size, U32 value)
+constexpr R_FORCE_INLINE U32 makeBitset32(U32 offset, U32 size, U32 value)
 {
     return ((value & ~(0xFFFFFFFF << size)) << offset);
 }

@@ -14,7 +14,7 @@ template
     <
         typename T, 
         typename Compare = GenericCompare<T>,
-        typename AllocatorType = DefaultAllocator,
+        typename AllocatorType = MallocAllocator,
         class MemPool = MemoryPool
     >
 class LinkedList 

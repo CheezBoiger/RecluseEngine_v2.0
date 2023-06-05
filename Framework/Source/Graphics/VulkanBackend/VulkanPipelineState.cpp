@@ -603,8 +603,9 @@ static VkPipeline createRayTracingPipeline()
 
 PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure, PipelineId id)
 {
-    PipelineState pipeline = { };
-    auto iter = g_pipelineMap.find(id);
+    PipelineState pipeline  = { };
+    pipeline.lastUsed       = 0;
+    auto iter               = g_pipelineMap.find(id);
     if (iter == g_pipelineMap.end())
     {
         ShaderPrograms::VulkanShaderProgram* program = ShaderPrograms::obtainShaderProgram(structure.state.shaderProgramId, structure.state.shaderPermutation);

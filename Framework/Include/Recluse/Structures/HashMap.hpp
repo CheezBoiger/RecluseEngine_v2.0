@@ -42,7 +42,7 @@ private:
 
 // Map container is a helper class to the std unordered map.
 // This serves an ADT for easier access.
-template<class K, class V>
+template<class K, class V, class MapType = std::unordered_map<K, V>>
 class MapContainer
 {
     typedef V*              Iterator;
@@ -50,19 +50,19 @@ class MapContainer
     typedef V&              Reference;
     typedef const V&        ConstReference;
 public:
-    MapContainer(std::unordered_map<K, V>* keys = nullptr)
+    MapContainer(MapType* keys = nullptr)
         : pMap(keys)
     {
     }
 
     Bool                        isValid() const { return pMap ? true : false; }
 
-    std::unordered_map<K, V>&   get() { return (*pMap); }
+    MapType&   get() { return (*pMap); }
    
     Reference                   operator[](K i) { return (*pMap)[i]; }
     ConstReference              operator[](K i) const { return (*pMap)[i]; }
         
 private:
-    std::unordered_map<K, V>* pMap;
+    MapType* pMap;
 };
 } // Recluse 

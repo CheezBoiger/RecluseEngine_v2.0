@@ -250,5 +250,11 @@ Bool any(const Float4& a)
 {
     return (a[0] != 0.f) || (a[1] != 0.f) || (a[2] != 0.f) || (a[3] != 0.f);
 }
+
+
+Bool all(const Float4& a)
+{
+    return (a[0] != 0.f) && (a[1] != 0.f) && (a[2] != 0.f) && (a[3] != 0.f);
+}
 } // Math
 } // Recluse

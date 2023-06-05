@@ -78,6 +78,14 @@ void D3D12PrimaryCommandList::end()
 }
 
 
+void D3D12PrimaryCommandList::use(U32 bufferIdx)
+{
+    R_ASSERT_FORMAT(bufferIdx < m_graphicsCommandLists.size(), "Commandlist use() requested idx=%d, but max is %d!", bufferIdx, static_cast<U32>(m_graphicsCommandLists.size()));
+    m_currentCmdList = m_graphicsCommandLists[bufferIdx];
+    m_currentAllocator = m_allocators[bufferIdx];
+}
+
+
 void D3D12PrimaryCommandList::bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* offsets)
 {
 }

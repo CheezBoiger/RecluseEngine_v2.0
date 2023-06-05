@@ -27,6 +27,7 @@ enum CameraPostProcessFlagBits
     CameraPostProcessFlag_EnableVignette                = (1 << 7),
     CameraPostProcessFlag_EnableChromaticAbberration    = (1 << 8),
     CameraPostProcessFlag_EnableLensWarping             = (1 << 9),
+    CameraPostProcessFlag_EnableTonemap                 = (1 << 10),
 
     CameraPostProcessFlag_All = 0xffffffff
 };

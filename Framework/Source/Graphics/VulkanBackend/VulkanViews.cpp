@@ -220,6 +220,21 @@ static VkSamplerMipmapMode getMipMapMode(SamplerMipMapMode mode)
 }
 
 
+R_INTERNAL VkBorderColor getNativeBorderColor(BorderColor borderColor)
+{
+    switch (borderColor)
+    {
+        case BorderColor_OpaqueBlack:
+            return VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
+        case BorderColor_OpaqueWhite:
+            return VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+        case BorderColor_TransparentBlack:
+        default:
+            return VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+    }
+}
+
+
 ResultCode VulkanSampler::initialize(VulkanDevice* pDevice, const SamplerDescription& desc)
 {
     R_ASSERT(pDevice != NULL);
@@ -229,17 +244,20 @@ ResultCode VulkanSampler::initialize(VulkanDevice* pDevice, const SamplerDescrip
     VkResult result             = VK_SUCCESS;
 
     cInfo.sType             = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    cInfo.addressModeU      = getAddressMode(desc.addrModeU);
-    cInfo.addressModeV      = getAddressMode(desc.addrModeV);    
-    cInfo.addressModeW      = getAddressMode(desc.addrModeW);
-    cInfo.anisotropyEnable  = desc.anisotropyEnable;
-    cInfo.compareEnable     = desc.compareEnable;
+    cInfo.addressModeU      = getAddressMode(desc.addressModeU);
+    cInfo.addressModeV      = getAddressMode(desc.addressModeV);    
+    cInfo.addressModeW      = getAddressMode(desc.addressModeW);
+    cInfo.anisotropyEnable  = (desc.maxAnisotropy > 0.f) ? true : false;
+    cInfo.maxAnisotropy     = desc.maxAnisotropy;
+    cInfo.compareEnable     = (desc.compareOp != CompareOp_Never) ? true : false;
     cInfo.compareOp         = Vulkan::getNativeCompareOp(desc.compareOp);
     cInfo.magFilter         = getFilter(desc.magFilter);
     cInfo.minFilter         = getFilter(desc.minFilter);
     cInfo.minLod            = desc.minLod;
     cInfo.maxLod            = desc.maxLod;
+    cInfo.mipLodBias        = desc.mipLodBias;
     cInfo.mipmapMode        = getMipMapMode(desc.mipMapMode);
+    cInfo.borderColor       = getNativeBorderColor(desc.borderColor);
     cInfo.flags             = 0;
 
     result = vkCreateSampler(device, &cInfo, nullptr, &m_sampler);

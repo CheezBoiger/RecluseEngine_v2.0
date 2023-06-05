@@ -198,6 +198,12 @@ Bool any(const Float3& a)
 }
 
 
+Bool all(const Float3& a)
+{
+    return (a[0] != 0.f) && (a[1] != 0.f) && (a[2] != 0.f);
+}
+
+
 Float3 cross(const Float3& lh, const Float3& rh)
 {
     return {
@@ -205,6 +211,12 @@ Float3 cross(const Float3& lh, const Float3& rh)
             lh.z * rh.x - lh.x * rh.z,
             lh.x * rh.y - lh.y * rh.x
     };
+}
+
+
+Float3 reflect(const Float3& incidence, const Float3& normal)
+{
+    return  incidence - 2.0 * dot(normal, incidence) * normal;
 }
 } // Math
 } // Recluse

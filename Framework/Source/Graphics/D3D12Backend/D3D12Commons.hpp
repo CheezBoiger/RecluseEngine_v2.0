@@ -51,6 +51,7 @@ extern D3D12_RTV_DIMENSION getRtvDimension(Recluse::ResourceViewDimension dimens
 extern D3D12_DSV_DIMENSION getDsvDimension(Recluse::ResourceViewDimension dimension);
 extern D3D12_UAV_DIMENSION getUavDimension(Recluse::ResourceViewDimension dimension);
 extern D3D12_SRV_DIMENSION getSrvDimension(Recluse::ResourceViewDimension dimension);
+extern D3D12_COMPARISON_FUNC getNativeComparisonFunction(Recluse::CompareOp compareOp);
 
 } // Recluse
 

@@ -48,13 +48,16 @@ void D3D12Context::begin()
     }
 
     resetCurrentResources();
-
+    m_pPrimaryCommandList->use(currentBufferIndex());
     m_pPrimaryCommandList->reset();
 }
 
 
 void D3D12Context::end()
 {
+    DescriptorHeapInstance* instance = m_pDevice->getDescriptorHeapManager()->getInstance(currentBufferIndex());
+    instance->upload(m_pDevice->get());
+
     m_pPrimaryCommandList->end();
 }
 
@@ -236,8 +239,10 @@ void D3D12Context::resetCurrentResources()
     if (FAILED(result)) 
     {
         R_ERROR(R_CHANNEL_WIN32, "Failed to properly reset allocators.");
-    }
+    }    
 
+    DescriptorHeapInstance* instance = m_pDevice->getDescriptorHeapManager()->getInstance(currentBufferIndex());
+    instance->update(DescriptorHeapUpdateFlag_Reset);
 }
 
 
