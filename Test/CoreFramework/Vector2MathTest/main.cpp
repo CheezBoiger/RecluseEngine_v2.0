@@ -38,7 +38,7 @@ int main(int c, char* argv[])
     MemoryArena arena(R_MB(2));
     LinearAllocator alloc;
     alloc.initialize(arena.getBaseAddress(), arena.getTotalSizeBytes());
-    RBTree<I32, CompareLess<I32>, LinearAllocator> tree(alloc);
+    RBTree<I32, CompareLess<I32>, CompareEqual<I32>, LinearAllocator> tree(alloc);
     tree.insert(4);
     tree.insert(1);
     tree.insert(5);

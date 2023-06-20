@@ -52,4 +52,12 @@ class CompareGreaterEqual : public GenericCompare<T>
 public:
     Bool operator() (const T& lh, const T& rh) const override { return lh >= rh; }
 };
+
+
+template<typename T>
+class CompareEqual : public GenericCompare<T>
+{
+public:
+    Bool operator() (const T& lh, const T& rh) const override { return lh == rh; }
+};
 } // Recluse

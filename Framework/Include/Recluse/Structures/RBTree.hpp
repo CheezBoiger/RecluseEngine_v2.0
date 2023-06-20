@@ -44,7 +44,7 @@ enum RBColor
 //
 // Keep in mind that this Red-Black tree implementation relies on tail recursion to maintain in-place performance.
 // 
-template<typename Type, typename Comparer = CompareLess<Type>, typename _Allocator = MallocAllocator>
+template<typename Type, typename Comparer = CompareLess<Type>, typename TypeEqual = CompareEqual<Type>, typename _Allocator = MallocAllocator>
 class RBTree
 {
 private:
@@ -74,6 +74,7 @@ public:
         : m_root(nullptr)
         , m_numNodes(0)
         , m_compare(Comparer())
+        , m_equal(TypeEqual())
         , m_alloc(alloc) { } 
 
     // Insert data to the tree.
@@ -138,13 +139,21 @@ private:
     MemoryArena             m_arena;
     
     Comparer                m_compare;
+    TypeEqual               m_equal;
     RBNodePointer           m_root;
     U32                     m_numNodes;
 };
 
 
-template<typename Type, typename Comparer, typename _Allocator>
-Internal::RBDirection RBTree<Type, Comparer, _Allocator>::childDirection(RBNodePointer node) const
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+Bool RBTree<Type, Comparer, TypeEqual, _Allocator>::find(ConstantTypeReference data)
+{
+    return false;
+}
+
+
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+Internal::RBDirection RBTree<Type, Comparer, TypeEqual, _Allocator>::childDirection(RBNodePointer node) const
 {
     if (node->parent->children[Internal::RBDirection_Left] == node)
         return Internal::RBDirection_Left;
@@ -153,8 +162,8 @@ Internal::RBDirection RBTree<Type, Comparer, _Allocator>::childDirection(RBNodeP
 }
 
 
-template<typename Type, typename Comparer, typename _Allocator>
-typename RBTree<Type, Comparer, _Allocator>::RBNode* RBTree<Type, Comparer, _Allocator>::makeNode(ConstantTypeReference data)
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+typename RBTree<Type, Comparer, typename TypeEqual, _Allocator>::RBNode* RBTree<Type, Comparer, TypeEqual, _Allocator>::makeNode(ConstantTypeReference data)
 {
     RBNodePointer newNode = (RBNodePointer)m_alloc.allocate(sizeof(struct RBNode), pointerSizeBytes());
     newNode->color                                  = Internal::RBColor_Red;
@@ -166,14 +175,14 @@ typename RBTree<Type, Comparer, _Allocator>::RBNode* RBTree<Type, Comparer, _All
 }
 
 
-template<typename Type, typename Comparer, typename _Allocator>
-void RBTree<Type, Comparer, _Allocator>::freeNode(RBNodePointer remNode)
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+void RBTree<Type, Comparer, TypeEqual, _Allocator>::freeNode(RBNodePointer remNode)
 {
     m_alloc.free((UPtr)remNode);
 }
 
-template<typename Type, typename Comparer, typename _Allocator>
-void RBTree<Type, Comparer, _Allocator>::insertFixup3(RBNodePointer node)
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+void RBTree<Type, Comparer, TypeEqual, _Allocator>::insertFixup3(RBNodePointer node)
 {
     RBNodePointer gp = grandparent(node);
     node->parent->color = Internal::RBColor_Black;  
@@ -184,8 +193,8 @@ void RBTree<Type, Comparer, _Allocator>::insertFixup3(RBNodePointer node)
         rotateLeft(gp);
 }
 
-template<typename Type, typename Comparer, typename _Allocator>
-void RBTree<Type, Comparer, _Allocator>::insertFixup2(RBNodePointer node)
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+void RBTree<Type, Comparer, TypeEqual, _Allocator>::insertFixup2(RBNodePointer node)
 {
     RBNodePointer gp = grandparent(node);
     if ((node == node->parent->right()) && 
@@ -203,8 +212,8 @@ void RBTree<Type, Comparer, _Allocator>::insertFixup2(RBNodePointer node)
     insertFixup3(node);
 }
 
-template<typename Type, typename Comparer, typename _Allocator>
-void RBTree<Type, Comparer, _Allocator>::insertFixup1(RBNodePointer node)
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+void RBTree<Type, Comparer, TypeEqual, _Allocator>::insertFixup1(RBNodePointer node)
 {
     RBNodePointer u = uncle(node);
     RBNodePointer gp = nullptr;
@@ -221,16 +230,16 @@ void RBTree<Type, Comparer, _Allocator>::insertFixup1(RBNodePointer node)
 }
 
 
-template<typename Type, typename Comparer, typename _Allocator>
-void RBTree<Type, Comparer, _Allocator>::insertFixup0(RBNodePointer node)
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+void RBTree<Type, Comparer, TypeEqual, _Allocator>::insertFixup0(RBNodePointer node)
 {
     if (node->parent->color != Internal::RBColor_Black)
         insertFixup1(node);
 }
 
 
-template<typename Type, typename Comparer, typename _Allocator>
-void RBTree<Type, Comparer, _Allocator>::insertFixup(RBNodePointer node)
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+void RBTree<Type, Comparer, TypeEqual, _Allocator>::insertFixup(RBNodePointer node)
 {
     if (!node->parent)
         node->color = Internal::RBColor_Black;
@@ -239,9 +248,9 @@ void RBTree<Type, Comparer, _Allocator>::insertFixup(RBNodePointer node)
 }
 
 
-template<typename Type, typename Comparer, typename _Allocator>
-typename RBTree<Type, Comparer, _Allocator>::RBNode* 
-RBTree<Type, Comparer, _Allocator>::findInsertionNode(RBNodePointer initNode, ConstantTypeReference data, Internal::RBDirection& childDirection)
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+typename RBTree<Type, Comparer, TypeEqual, _Allocator>::RBNode* 
+RBTree<Type, Comparer, TypeEqual, _Allocator>::findInsertionNode(RBNodePointer initNode, ConstantTypeReference data, Internal::RBDirection& childDirection)
 {
     RBNodePointer prev = nullptr;
     while ( initNode )
@@ -256,8 +265,8 @@ RBTree<Type, Comparer, _Allocator>::findInsertionNode(RBNodePointer initNode, Co
     return prev;
 }
 
-template<typename Type, typename Comparer, typename _Allocator>
-void RBTree<Type, Comparer, _Allocator>::insert(ConstantTypeReference data)
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+void RBTree<Type, Comparer, TypeEqual, _Allocator>::insert(ConstantTypeReference data)
 {
     RBNodePointer newNode   = makeNode(data);
 
@@ -278,8 +287,8 @@ void RBTree<Type, Comparer, _Allocator>::insert(ConstantTypeReference data)
 }
 
 
-template<typename Type, typename Comparer, typename _Allocator>
-void RBTree<Type, Comparer, _Allocator>::removeFixup5(RBNodePointer node)
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+void RBTree<Type, Comparer, TypeEqual, _Allocator>::removeFixup5(RBNodePointer node)
 {
     RBNodePointer sib = sibling(node);
     
@@ -305,8 +314,8 @@ void RBTree<Type, Comparer, _Allocator>::removeFixup5(RBNodePointer node)
 }
 
 
-template<typename Type, typename Comparer, typename _Allocator>
-void RBTree<Type, Comparer, _Allocator>::removeFixup4(RBNodePointer node)
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+void RBTree<Type, Comparer, TypeEqual, _Allocator>::removeFixup4(RBNodePointer node)
 {
     RBNodePointer sib = sibling(node);
     if ((node == node->parent->left()) &&
@@ -331,8 +340,8 @@ void RBTree<Type, Comparer, _Allocator>::removeFixup4(RBNodePointer node)
 }
 
 
-template<typename Type, typename Comparer, typename _Allocator>
-void RBTree<Type, Comparer, _Allocator>::removeFixup3(RBNodePointer node)
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+void RBTree<Type, Comparer, TypeEqual, _Allocator>::removeFixup3(RBNodePointer node)
 {
     RBNodePointer sib = sibling(node);
     if (nodeColor(node->parent) == Internal::RBColor_Red &&
@@ -348,8 +357,8 @@ void RBTree<Type, Comparer, _Allocator>::removeFixup3(RBNodePointer node)
 }
 
 
-template<typename Type, typename Comparer, typename _Allocator>
-void RBTree<Type, Comparer, _Allocator>::removeFixup2(RBNodePointer node)
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+void RBTree<Type, Comparer, TypeEqual, _Allocator>::removeFixup2(RBNodePointer node)
 {
     RBNodePointer sib = sibling(node);
     if (nodeColor(node->parent) == Internal::RBColor_Black &&
@@ -365,8 +374,8 @@ void RBTree<Type, Comparer, _Allocator>::removeFixup2(RBNodePointer node)
 }
 
 
-template<typename Type, typename Comparer, typename _Allocator>
-void RBTree<Type, Comparer, _Allocator>::removeFixup1(RBNodePointer n)
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+void RBTree<Type, Comparer, TypeEqual, _Allocator>::removeFixup1(RBNodePointer n)
 {
     if (n->parent)
     {
@@ -385,8 +394,8 @@ void RBTree<Type, Comparer, _Allocator>::removeFixup1(RBNodePointer n)
 }
 
 
-template<typename Type, typename Comparer, typename _Allocator>
-void RBTree<Type, Comparer, _Allocator>::remove(ConstantTypeReference data)
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+void RBTree<Type, Comparer, TypeEqual, _Allocator>::remove(ConstantTypeReference data)
 {
     RBNodePointer temp = nodeLookUp(data);
 
@@ -416,8 +425,8 @@ void RBTree<Type, Comparer, _Allocator>::remove(ConstantTypeReference data)
 }
 
 
-template<typename Type, typename Comparer, typename _Allocator>
-void RBTree<Type, Comparer, _Allocator>::replaceNode(RBNodePointer oldNode, RBNodePointer newNode)
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+void RBTree<Type, Comparer, TypeEqual, _Allocator>::replaceNode(RBNodePointer oldNode, RBNodePointer newNode)
 {
     if (!oldNode->parent)
         m_root = newNode;
@@ -429,8 +438,8 @@ void RBTree<Type, Comparer, _Allocator>::replaceNode(RBNodePointer oldNode, RBNo
 }
 
 
-template<typename Type, typename Comparer, typename _Allocator>
-void RBTree<Type, Comparer, _Allocator>::rotate(RBNodePointer node, Internal::RBDirection direction)
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+void RBTree<Type, Comparer, TypeEqual, _Allocator>::rotate(RBNodePointer node, Internal::RBDirection direction)
 {
     RBNodePointer gp    = node->parent;
     RBNodePointer s     = node->children[1 - direction];
@@ -453,8 +462,8 @@ void RBTree<Type, Comparer, _Allocator>::rotate(RBNodePointer node, Internal::RB
 }
 
 
-template<typename Type, typename Comparer, typename _Allocator>
-typename RBTree<Type, Comparer, _Allocator>::RBNode* RBTree<Type, Comparer, _Allocator>::grandparent(RBNodePointer node)
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+typename RBTree<Type, Comparer, TypeEqual, _Allocator>::RBNode* RBTree<Type, Comparer, TypeEqual, _Allocator>::grandparent(RBNodePointer node)
 {
     if (node && node->parent)
         return node->parent->parent;
@@ -462,8 +471,8 @@ typename RBTree<Type, Comparer, _Allocator>::RBNode* RBTree<Type, Comparer, _All
 }
 
 
-template<typename Type, typename Comparer, typename _Allocator>
-typename RBTree<Type, Comparer, _Allocator>::RBNode* RBTree<Type, Comparer, _Allocator>::uncle(RBNodePointer node)
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+typename RBTree<Type, Comparer, TypeEqual, _Allocator>::RBNode* RBTree<Type, Comparer, TypeEqual, _Allocator>::uncle(RBNodePointer node)
 {
     RBNodePointer gp = grandparent(node);
     if (!gp)
@@ -472,15 +481,15 @@ typename RBTree<Type, Comparer, _Allocator>::RBNode* RBTree<Type, Comparer, _All
 }
 
 
-template<typename Type, typename Comparer, typename _Allocator>
-typename RBTree<Type, Comparer, _Allocator>::RBNode* RBTree<Type, Comparer, _Allocator>::sibling(RBNodePointer node)
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+typename RBTree<Type, Comparer, TypeEqual, _Allocator>::RBNode* RBTree<Type, Comparer, TypeEqual, _Allocator>::sibling(RBNodePointer node)
 {
     return node->parent->children[(node == node->parent->children[Internal::RBDirection_Left]) ? Internal::RBDirection_Right : Internal::RBDirection_Left];
 }
 
 
-template<typename Type, typename Comparer, typename _Allocator>
-typename RBTree<Type, Comparer, _Allocator>::RBNode* RBTree<Type, Comparer, _Allocator>::findInOrderSuccessor(RBNodePointer node)
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+typename RBTree<Type, Comparer, TypeEqual, _Allocator>::RBNode* RBTree<Type, Comparer, TypeEqual, _Allocator>::findInOrderSuccessor(RBNodePointer node)
 {
     RBNodePointer currNode = node->children[Internal::RBDirection_Right];
     while (currNode->children[Internal::RBDirection_Left])
@@ -489,13 +498,13 @@ typename RBTree<Type, Comparer, _Allocator>::RBNode* RBTree<Type, Comparer, _All
 }
 
 
-template<typename Type, typename Comparer, typename _Allocator>
-typename RBTree<Type, Comparer, _Allocator>::RBNode* RBTree<Type, Comparer, _Allocator>::nodeLookUp(ConstantTypeReference data)
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+typename RBTree<Type, Comparer, TypeEqual, _Allocator>::RBNode* RBTree<Type, Comparer, TypeEqual, _Allocator>::nodeLookUp(ConstantTypeReference data)
 {
     RBNodePointer currNode = m_root;
     while (currNode)
     {
-        if (currNode->data == data)
+        if (m_equal(currNode->data, data))
             return currNode;
         
         if (m_compare(data, currNode->data))
@@ -507,8 +516,8 @@ typename RBTree<Type, Comparer, _Allocator>::RBNode* RBTree<Type, Comparer, _All
 }
 
 
-template<typename Type, typename Comparer, typename _Allocator>
-std::string RBTree<Type, Comparer, _Allocator>::stringify() const
+template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
+std::string RBTree<Type, Comparer, TypeEqual, _Allocator>::stringify() const
 {
     std::string text;
     I32 items = 0;
