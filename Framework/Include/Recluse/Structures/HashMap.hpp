@@ -3,40 +3,64 @@
 
 #include "Recluse/Types.hpp"
 #include "Recluse/Arch.hpp"
+#include "Recluse/Algorithms/Common.hpp"
+#include "Recluse/Memory/Allocator.hpp"
+#include "Recluse/Structures/RBTree.hpp"
 
 #include <unordered_map>
 
 namespace Recluse {
 
 
-template
-    <
-        typename Key, 
-        typename Value, 
-        typename Comparator, 
-        typename Allocator,
-        typename PairStruct
-    >
-class HashTable
+template<typename Key, typename Value, typename Comparator = CompareLess<Key>, typename _Allocator = MallocAllocator>
+class HashMap
 {
+private:
+    struct Pair
+    {
+        Key     key;
+        Value   value;
+    };
+
+    struct PairCompare
+    {
+        Bool operator() (const Pair& lh, const Pair& rh) const 
+        {
+            return lh.key <= rh.key;
+        }
+    };
+
+
+    struct PairEqual
+    {
+        Bool operator() (const Pair& lh, const Pair& rh) const
+        {
+            return (lh.key == rh.key) && (lh.value == rh.value);
+        }
+    };
 public:
 
     typedef Key&                    KeyReference;
-    typedef const Key&              ConstKeyReference;
+    typedef const Key&              ConstantKeyReference;
     typedef Value&                  ValueReference;
-    typedef const Value&            ConstValueReference;
-    
+    typedef const Value&            ConstantValueReference;
 
+    HashTable();
+
+    void        insert(ConstantKeyReference key, ConstantValueReference value);
+    void        remove(ConstantKeyReference key, ConstantValueReference value);
+
+    void        lookup(ConstantKeyReference key);
 private:
 
     SizeT       m_totalSize;
     SizeT       m_numObjects;
 
-    Allocator   m_allocator;
+    _Allocator  m_allocator;
     Comparator  m_compare;
 
     // Table with pairs.
-    PairStruct* m_table;
+    RBTree<Pair, PairCompare, PairEqual>* m_table;
 };
 
 

@@ -10,31 +10,27 @@
 namespace Recluse {
 
 
-template
-    <
-        typename T, 
-        typename Compare = GenericCompare<T>,
-        typename AllocatorType = MallocAllocator,
-        class MemPool = MemoryPool
-    >
+template<typename T, typename Compare = CompareLess<T>, typename TypeEqual = CompareEqual<T>, typename AllocatorType = MallocAllocator>
 class LinkedList 
 {
 
-    typedef T   LinkedListT;
-    typedef T*  LinkedListTPtr;
-    typedef T&  LinkedListTRef;
-    typedef Compare LinkedListCompare;
+    typedef T           Type;
+    typedef T*          TypePointer;
+    typedef T&          TypeReference;
+    typedef const T&    ConstantTypeReference;
+    typedef const T*    ConstantTypePointer;
+    typedef Compare     LinkedListCompare;
 
-    typedef struct LinkedNode 
+    typedef struct Node 
     {
-        const LinkedListT   data;
-        struct LinkedNode*  pNext;
-    } *PLinkedNode;
+        struct Node*  next;
+        Type          data;
+    } *PNode;
 
 
     struct Iterator 
     {
-        LinkedNode* pNext;
+        Node* pNext;
 
         void iterate()
         { 
@@ -45,45 +41,39 @@ class LinkedList
         }
     };
 
+    typedef Iterator*       IteratorPointer;
+    typedef Iterator&       IteratorRefrerence;
+    typedef const Iterator* ConstantIteratorPointer;
+    typedef const Iterator& ConstantIteratorReference;
+
 
 public:
+    LinkedList()
+        : m_root(nullptr)
+        , m_tail(nullptr)
+        , m_cmp(Compare())
+        , m_equal(TypeEqual())
+        , m_totalNodes(0)
+    { }
 
-    void pushBack(const LinkedListTRef& lh) 
-    {
-        if (!m_pRoot) 
-        {
-            m_pRoot = 
-        }
-    }
-
-    void get() 
-    { 
-        
-    }
-
-    U64 find(const T& obj) 
-    {
-        
-    }
+    void            pushBack(ConstantTypeReference data);
+    Type            pop();
+    void            get(SizeT idx = 0);
+    Iterator*       find(ConstantTypeReference data);
 
 
-    Iterator* begin() 
-    {
-        
-    }
+    Iterator*       begin();
 
-    Iterator* end()
-    {
-        return;
-    }
+    Iterator*       end();
 
-    Bool isEmpty() const { return m_totalNodes == 0; }
-    SizeT getTotalNodes() const { return m_totalNodes; }
+    SizeT           size() const { return m_totalNodes; }
+    Bool            empty() const { return (size() == 0); }
 
 private:
     LinkedListCompare   m_cmp;
+    TypeEqual           m_equal;
     SizeT               m_totalNodes;
-    PLinkedNode         m_pRoot;
-    PLinkedNode         m_pTail;
+    PNode               m_root;
+    PNode               m_tail;
 };
 } // Recluse

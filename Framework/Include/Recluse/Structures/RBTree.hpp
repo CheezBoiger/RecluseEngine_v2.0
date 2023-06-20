@@ -148,7 +148,8 @@ private:
 template<typename Type, typename Comparer, typename TypeEqual, typename _Allocator>
 Bool RBTree<Type, Comparer, TypeEqual, _Allocator>::find(ConstantTypeReference data)
 {
-    return false;
+    RBNodePointer node = nodeLookUp(data);
+    return !!(node);
 }
 
 
