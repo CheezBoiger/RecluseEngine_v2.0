@@ -25,24 +25,24 @@ int main()
     R_DEBUG("Core", "Initialize buddy memory allocator.");
     BuddyAllocator* pAllocator = new BuddyAllocator();
     pAllocator->initialize(0, align(R_1MB, 4));
-    Allocation alloc    = { };
-    Allocation alloc2   = { };
 
     R_DEBUG("Core", "Allocating buddy block.");
 
-    pAllocator->allocate(&alloc, 150, 4);
+    UPtr alloc = pAllocator->allocate(257, 4);
     logTick();
-    pAllocator->allocate(&alloc2, 512, 4);
-    logTick();
-
-    R_TRACE("Core", "Allocation: \t\t%llu bytes\n\t\toffset:\t\t%llu", alloc.sizeBytes, alloc.baseAddress);
-    R_TRACE("Core", "Allocation2: \t%llu bytes\n\t\toffset:\t\t%llu", alloc2.sizeBytes, alloc2.baseAddress);
-
-    pAllocator->free(&alloc);
+    UPtr alloc2 = pAllocator->allocate(512, 4);
     logTick();
 
-    pAllocator->free(&alloc2);
+    R_TRACE("Core", "Allocation: \t\t%llu bytes\n\t\toffset:\t\t%llu", 257, alloc);
+    R_TRACE("Core", "Allocation2: \t%llu bytes\n\t\toffset:\t\t%llu", 512, alloc2);
+    R_TRACE("Core", "Allocator: allocations: %d, allocated mem: %d bytes", pAllocator->getTotalAllocations(), pAllocator->getUsedSizeBytes());
+
+    pAllocator->free(alloc);
     logTick();
+
+    pAllocator->free(alloc2);
+    logTick();
+    R_TRACE("Core", "Allocator: allocations: %d, allocated mem: %d bytes", pAllocator->getTotalAllocations(), pAllocator->getUsedSizeBytes());
 
     pAllocator->cleanUp();
     delete pAllocator;

@@ -6,6 +6,10 @@
 
 #include "Recluse/Math/Vector2.hpp"
 #include "Recluse/Math/Matrix22.hpp"
+
+#include "Recluse/Structures/RBTree.hpp"
+#include "Recluse/Memory/LinearAllocator.hpp"
+#include "Recluse/Memory/MemoryPool.hpp"
 #include <vector>
 
 using namespace Recluse;
@@ -31,6 +35,45 @@ int main(int c, char* argv[])
 
     Log(LogError, "Test") << m;
 
+    MemoryArena arena(R_MB(2));
+    LinearAllocator alloc;
+    alloc.initialize(arena.getBaseAddress(), arena.getTotalSizeBytes());
+    RBTree<I32, CompareLess<I32>, LinearAllocator> tree(alloc);
+    tree.insert(4);
+    tree.insert(1);
+    tree.insert(5);
+    tree.insert(12);
+    tree.insert(60);
+    tree.insert(-1);
+    tree.insert(45);
+    tree.insert(20);
+    tree.insert(10);
+    tree.insert(2);
+    tree.insert(70);
+    tree.insert(100);
+    tree.insert(500);
+    tree.insert(200);
+    tree.insert(450);
+    std::string text = tree.stringify();
+    R_TRACE("Red-Black Tree", "\n%s", text.c_str());
+
+    tree.remove(60);
+    //tree.remove(4);
+    tree.remove(12);
+    tree.remove(2);
+    tree.remove(70);
+    tree.remove(-1);
+    //tree.remove(45);
+    tree.remove(20);
+    tree.remove(10);
+    tree.remove(100);
+    tree.remove(500);
+    tree.remove(200);
+    tree.remove(450);
+    tree.remove(1);
+    tree.remove(5);
+    text = tree.stringify();
+    R_TRACE("Red-Black Tree", "\n%s", text.c_str());
     Log::destroyLoggingSystem();
 
     return 0;

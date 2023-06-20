@@ -216,7 +216,22 @@ Float3 cross(const Float3& lh, const Float3& rh)
 
 Float3 reflect(const Float3& incidence, const Float3& normal)
 {
-    return  incidence - 2.0 * dot(normal, incidence) * normal;
+    return  incidence - 2.0f * dot(normal, incidence) * normal;
+}
+
+
+Float3 refract(const Float3& incidence, const Float3& normal, F32 eta)
+{
+    F32 NoI = dot(normal, incidence);
+    F32 NoI2 = NoI * NoI;
+    F32 eta2 = eta * eta;
+    F32 k = 1.0f - eta2 * (1.0f - NoI2);
+    Float3 R{0.f, 0.f, 0.f};
+    if (k >= 0.f)
+    {
+        R = eta * incidence - (eta * NoI + sqrtf(k)) * normal;
+    }
+    return R;
 }
 } // Math
 } // Recluse

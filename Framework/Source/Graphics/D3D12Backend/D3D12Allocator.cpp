@@ -93,9 +93,8 @@ ResultCode D3D12ResourcePagedAllocator::allocate
 
     ScopedCriticalSection _(m_allocateCs);
 
-    Allocation allocOut     = { };
-    result = m_pAllocator->allocate(&allocOut, resourceAllocationInfo.SizeInBytes, resourceAllocationInfo.Alignment);
-
+    UPtr address = m_pAllocator->allocate(resourceAllocationInfo.SizeInBytes, resourceAllocationInfo.Alignment);
+    result = m_pAllocator->getLastError();
     if (result != RecluseResult_Ok) 
     {
         R_ERROR("D3D12Allocator", "Failed to allocate d3d12 resource!");
@@ -103,7 +102,7 @@ ResultCode D3D12ResourcePagedAllocator::allocate
     else 
     {
         HRESULT hresult     = S_OK;
-        U64 addressOffset   = allocOut.baseAddress;
+        U64 addressOffset   = address;
 
         hresult = pDevice->CreatePlacedResource(m_pool.pHeap, addressOffset, &desc, 
             initState, &optimizedClearValue, __uuidof(ID3D12Resource), (void**)&pOut->pResource);
@@ -114,8 +113,8 @@ ResultCode D3D12ResourcePagedAllocator::allocate
         } 
         else 
         {
-            pOut->basePtr       = allocOut.baseAddress;
-            pOut->sizeInBytes   = allocOut.sizeBytes;
+            pOut->basePtr       = address;
+            pOut->sizeInBytes   = resourceAllocationInfo.SizeInBytes;
         }
     }
 
@@ -127,10 +126,9 @@ ResultCode D3D12ResourcePagedAllocator::free(D3D12MemoryObject* pObject)
 {
     R_ASSERT(pObject != NULL);
 
-    Allocation allocation   = { };
-    allocation.baseAddress  = pObject->basePtr;
-    allocation.sizeBytes    = pObject->sizeInBytes;
-    ResultCode err = m_pAllocator->free(&allocation);
+    ResultCode err = RecluseResult_Ok;
+    
+    m_pAllocator->free(pObject->basePtr);
     
     if (err != RecluseResult_Ok)
     {

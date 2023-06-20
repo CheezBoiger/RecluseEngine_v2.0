@@ -99,5 +99,26 @@ static Class lerp(const Class& a, const Class& b, Type t)
 {
 	return R_LERP(a, b, t);
 }
+
+
+template<typename Class>
+static Class ceil(Class v)
+{
+	return (Class)::ceil((F64)v);
+}
+
+
+template<typename Class>
+static Class floor(Class v)
+{
+	return (Class)::floor((F64)v);
+}
+
+
+template<typename Class>
+static Class divUp(Class a, Class b)
+{
+	return (a + (b - static_cast<Class>(1))) / b;
+}
 } // Math
 } // Recluse

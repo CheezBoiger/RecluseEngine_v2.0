@@ -8,9 +8,10 @@ namespace Recluse {
 
 enum ScreenMode 
 {
-    SCREEN_MODE_WINDOWED,
-    SCREEN_MODE_FULLSCREEN,
-    SCREEN_MODE_WINDOW_BORDERLESS
+    ScreenMode_Windowed,
+    ScreenMode_Fullscreen,
+    ScreenMode_WindowBorderless,
+    ScreenMode_FullscreenBorderless
 };
 
 class Mouse;
@@ -57,6 +58,7 @@ public:
         , m_xPos(0)
         , m_yPos(0)
         , m_isMinimized(false)
+        , m_monitorIndex(0)
         , m_isShowing(false)
         , m_pMouseHandle(nullptr)
         , m_keyCallback(nullptr)
@@ -75,15 +77,15 @@ public:
     // obtain the native window handle.
     void*                       getNativeHandle() { return m_handle; }
     // Set the screen mode.
-    void                        setScreenMode(ScreenMode mode);
+    R_OS_CALL R_PUBLIC_API void setScreenMode(ScreenMode mode);
     // Set the title of the window.
     void                        setTitle(const std::string& title);
     // Programmatically resize the window.
     void                        setScreenSize(U32 width, U32 height);
     // Set the window to the center of your screen.
-    void                        setToCenter();
+    R_OS_CALL R_PUBLIC_API void setToCenter();
     // Set the window to a location on your screen.
-    void                        setToPosition(U32 x, U32 y);
+    R_OS_CALL R_PUBLIC_API void setToPosition(U32 x, U32 y);
     void                        restore();
     void                        minimize();
     void                        maximize();
@@ -94,12 +96,19 @@ public:
     U32                         getPosY() const { return m_yPos; }
     const std::string&          getTitle() const { return m_title; }
     ScreenMode                  getScreenMode() const { return m_screenMode; }
+
+    // Check if we should close the window.
     B32                         shouldClose() const { return m_shouldClose; }
+
+    // set a mouse handle for this window. Only one mouse can be set per window.
     void                        setMouseHandle(Mouse* pMouse) { m_pMouseHandle = pMouse; }
     Mouse*                      getMouseHandle() { return m_pMouseHandle; }
 
     // Calls on window resize function. Should probbaly not be called outside of the Engine module.
     void                        onWindowResize(U32 x, U32 y, U32 width, U32 height) const { if (m_onWindowResizeCallback) m_onWindowResizeCallback(x, y, width, height); }
+
+    // Get the monitor index that this window is focused on.
+    U32                         getMonitorIndex() const { return m_monitorIndex; }
 
     // Grabs the display monitor that has the most area of intesection with the window.
     R_PUBLIC_API MonitorDesc getCurrentActiveMonitor();
@@ -123,7 +132,8 @@ private:
     B32 m_isShowing   : 1;
     // Title of the window.
     std::string m_title;
-    void* m_handle;
+    void*       m_handle;
+    U32         m_monitorIndex;
 
     WindowKeyFunction           m_keyCallback;
     WindowMouseFunction         m_mouseCallback;

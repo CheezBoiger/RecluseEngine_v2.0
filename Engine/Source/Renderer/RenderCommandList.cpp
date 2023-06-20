@@ -72,14 +72,15 @@ void RenderCommandList::destroy()
 
 ResultCode RenderCommandList::push(const RenderCommand& renderCommand)
 {
-    Allocation allocation = { };
+    UPtr allocation = kNullPtr;
 
     switch (renderCommand.op) 
     {
         case CommandOp_DrawableInstanced:
         {
             //COPY_COMMAND_TO_POOL(DrawRenderCommand, renderCommand);
-            DrawRenderCommand* pCommand = new (m_pAllocator, &allocation) DrawRenderCommand();
+            DrawRenderCommand* pCommand = new (m_pAllocator) DrawRenderCommand();
+            allocation = (UPtr)pCommand;
             *pCommand = static_cast<const DrawRenderCommand&>(renderCommand);
             break;     
         }
@@ -87,18 +88,18 @@ ResultCode RenderCommandList::push(const RenderCommand& renderCommand)
         case CommandOp_DrawableIndexedInstanced:
         {
             //COPY_COMMAND_TO_POOL(DrawIndexedRenderCommand, renderCommand); 
-            DrawIndexedRenderCommand* pCommand = new (m_pAllocator, &allocation) DrawIndexedRenderCommand();
+            DrawIndexedRenderCommand* pCommand = new (m_pAllocator) DrawIndexedRenderCommand();
+            allocation = (UPtr)pCommand;
             *pCommand = static_cast<const DrawIndexedRenderCommand&>(renderCommand);
             break;
         }
     }
 
-    UPtr p = allocation.baseAddress;
-    ResultCode result = m_pointerAllocator->allocate(&allocation, pointerSizeBytes(), pointerSizeBytes());
-
+    UPtr ptrAlloc = m_pointerAllocator->allocate(pointerSizeBytes(), pointerSizeBytes());
+    ResultCode result = m_pointerAllocator->getLastError();
     if (result == RecluseResult_Ok) 
     {
-        *(RenderCommand**)allocation.baseAddress = (RenderCommand*)p;
+        *(RenderCommand**)ptrAlloc = (RenderCommand*)allocation;
     }
     
     return RecluseResult_Ok;

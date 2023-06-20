@@ -146,7 +146,11 @@ R_PUBLIC_API Float2     normalize(const Float2& a);
 R_PUBLIC_API Int2       normalize(const Int2& a);
 R_PUBLIC_API UInt2      normalize(const UInt2& a);
 
+// Obtain the reflection vector from the incidence, which is governed by the facing normal.
 R_PUBLIC_API Float2     reflect(const Float2& incidence, const Float2& normal);
+
+// Obtain the refraction vector, which is governed by the facing normal, and the ratio of indices of refraction.
+R_PUBLIC_API Float2     refract(const Float2& incidence, const Float2& normal, F32 eta);
 
 // Check if any component of the vector is nonzero.
 R_PUBLIC_API Bool       any(const Float2& a);

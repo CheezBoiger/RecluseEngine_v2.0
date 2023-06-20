@@ -25,6 +25,9 @@
 
 namespace Recluse {
 
+
+static const UPtr kNullPtr = 0;
+
 template<class T, class S>
 T* rDynamicCast(S* obj)
 {

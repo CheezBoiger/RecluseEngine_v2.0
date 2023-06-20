@@ -14,14 +14,14 @@ Float3 extent(const Bounds3d& a)
 
 Float3 center(const Bounds3d& a)
 {
-    Float3 e = (a.mmax + a.mmin) * 0.5f;
+    const Float3 e = (a.mmax + a.mmin) * 0.5f;
     return e;
 }
 
 
 F32 surfaceArea(const Bounds3d& a)
 {
-    Float3 ext  = extent(a);
+    const Float3 ext  = extent(a);
     F32 dx      = ext.x;
     F32 dy      = ext.y;
     F32 dz      = ext.z;
@@ -41,7 +41,7 @@ Bool intersects(const Bounds3d& a, const Bounds3d& b)
 
 Bool intersects(const Ray& ray, const Bounds3d& bounds, F32& t)
 {
-	Float3 dirInv   = 1.0f / ray.dir;
+	const Float3 dirInv   = 1.0f / ray.dir;
 
 	F32 t1          = (bounds.mmin.x - ray.o.x) * dirInv.x;
 	F32 t2          = (bounds.mmax.x - ray.o.x) * dirInv.x;

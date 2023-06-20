@@ -88,6 +88,7 @@ void D3D12PrimaryCommandList::use(U32 bufferIdx)
 
 void D3D12PrimaryCommandList::bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* offsets)
 {
+    
 }
 
 

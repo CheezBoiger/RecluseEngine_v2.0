@@ -15,7 +15,10 @@ static Thread                   displayThread;
 static volatile B32             isLogging           = true;
 static volatile LogTypeFlags    logTypeFlags        = LogTypeFlags(0xFFFFFFFF);
 
-static std::unordered_set<std::string> g_disabledChannels;
+static std::unordered_set<std::string> g_disabledChannels = 
+{
+    "MemoryPool" 
+};
 
 // TODO: Check if these colors work for most windows machines.
 // TODO: Maybe a binary semaphore would be better, to order the display process?

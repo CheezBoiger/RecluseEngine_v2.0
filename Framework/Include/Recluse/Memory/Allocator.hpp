@@ -19,7 +19,6 @@ typedef struct Allocation
     U64     sizeBytes;          //< The size of the allocated memory that represents this object.
 } *PAllocation, &RAllocation;
 
-
 //! Recluse Allocator class. This is the abstract class that is used for defining multiple allocation
 //! data structures.
 class R_PUBLIC_API Allocator 
@@ -39,28 +38,31 @@ public:
     }
 
     //! Allocation requirements.
-    ResultCode allocate(Allocation* pOutput, U64 requestSz, U16 alignment) 
+    UPtr allocate(U64 requestSz, U16 alignment) 
     {
-        ResultCode err = onAllocate(pOutput, requestSz, alignment);
+        Allocation allocation = { };
+        ResultCode err = onAllocate(&allocation, requestSz, alignment);
         if (err == RecluseResult_Ok) 
         {
             m_totalAllocations  += 1;
-            m_usedSizeBytes     += pOutput->sizeBytes;
+            m_usedSizeBytes     += allocation.sizeBytes;
         }
-
-        return err;
+        m_lastError = err;
+        return allocation.baseAddress;
     }
 
-    ResultCode free(Allocation* pOutput) 
+    void free(UPtr ptr) 
     {
-        ResultCode err = onFree(pOutput);
+        Allocation alloc = { };
+        alloc.baseAddress = ptr;
+        alloc.sizeBytes = ~0;
+        ResultCode err = onFree(&alloc);
         if (err == RecluseResult_Ok) 
         {
-            m_usedSizeBytes     -= pOutput->sizeBytes;
+            m_usedSizeBytes     -= alloc.sizeBytes;
             m_totalAllocations  -= 1;
         }
-    
-        return err;
+        m_lastError = err;
     }
 
 
@@ -70,6 +72,7 @@ public:
         onReset();
         m_usedSizeBytes     = 0;
         m_totalAllocations  = 0;
+        m_lastError = RecluseResult_Ok;
     }
 
     void cleanUp() 
@@ -79,6 +82,7 @@ public:
         m_totalSizeBytes    = 0;
         m_usedSizeBytes     = 0;
         m_pMemoryBaseAddr   = 0ull;
+        m_lastError = RecluseResult_Ok;
     }
 
     inline U64 getTotalSizeBytes() const 
@@ -101,6 +105,8 @@ public:
         return m_pMemoryBaseAddr; 
     }
 
+    ResultCode getLastError() const { return m_lastError; }
+
 protected:
 
     virtual ResultCode onInitialize() = 0;
@@ -111,15 +117,18 @@ protected:
 
 private:
     U64     m_totalSizeBytes;
-    UPtr m_pMemoryBaseAddr;
+    UPtr    m_pMemoryBaseAddr;
     U64     m_usedSizeBytes;
     U64     m_totalAllocations;
+    ResultCode m_lastError = RecluseResult_Ok;
 };
 
 
 class MallocAllocator : public Allocator 
 {
 public:
+    MallocAllocator() { }
+    virtual ~MallocAllocator() { }
 
     virtual ResultCode onInitialize() override 
     { 
@@ -142,7 +151,11 @@ public:
     {
         void** ptrr = (void**)pOutput->baseAddress;
         ::free(ptrr[-1]);
+        return RecluseResult_Ok;
     }
+
+    virtual ResultCode onReset() override { return RecluseResult_Ok; }
+    virtual ResultCode onCleanUp() override { return RecluseResult_Ok; }
 };
 } // Recluse
 
@@ -152,7 +165,6 @@ public:
 // ex. 
 //          Object* pObj = new (allocator) Object();
 //
-R_PUBLIC_API void*   operator new (size_t sizeBytes, Recluse::Allocator* alloc, Recluse::Allocation* pOutput);
 R_PUBLIC_API void*   operator new (size_t sizeBytes, Recluse::Allocator* alloc);
 
 // Operator overload for deleting allocated pointers.

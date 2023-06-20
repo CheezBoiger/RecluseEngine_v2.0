@@ -263,5 +263,20 @@ Bool all(const Float2& a)
 {
     return (a[0] != 0.f) && (a[1] != 0.f);
 }
+
+
+Float2 refract(const Float2& incidence, const Float2& normal, F32 eta)
+{
+    F32 NoI = dot(normal, incidence);
+    F32 NoI2 = NoI * NoI;
+    F32 eta2 = eta * eta;
+    F32 k = 1.0f - eta2 * (1.0f - NoI2);
+    Float2 R{0.f, 0.f};
+    if (k >= 0.f)
+    {
+        R = eta * incidence - (eta * NoI + sqrtf(k)) * normal;
+    }
+    return R;
+}
 } // Math
 } // Recluse

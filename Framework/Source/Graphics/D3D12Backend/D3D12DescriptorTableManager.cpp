@@ -216,14 +216,13 @@ DescriptorTable CpuDescriptorHeap::allocate(U32 numberDescriptors)
             numberDescriptors, m_heapDesc.NumDescriptors
         );
 
-    Allocation alloc    = { };
     ResultCode err         = RecluseResult_Ok;
 
-    err = m_allocator->allocate(&alloc, numberDescriptors * m_descriptorSize, m_descriptorSize);
-    
+    UPtr allocatedAddress = m_allocator->allocate(numberDescriptors * m_descriptorSize, m_descriptorSize);
+    err = m_allocator->getLastError();
     if (err == RecluseResult_Ok)
     {
-        allocation.baseCpuDescriptorHandle  = { alloc.baseAddress };
+        allocation.baseCpuDescriptorHandle  = { allocatedAddress };
         allocation.numberDescriptors        = numberDescriptors;
         m_currentTotalEntries += numberDescriptors;
     }
@@ -241,17 +240,16 @@ DescriptorTable ShaderVisibleDescriptorHeap::allocate(U32 numberDescriptors)
             numberDescriptors, m_heapDesc.NumDescriptors
         );
 
-    Allocation alloc    = { };
     ResultCode err         = RecluseResult_Ok;
 
-    err = m_allocator->allocate(&alloc, numberDescriptors * m_descriptorSize, m_descriptorSize);
-    
+    UPtr address = m_allocator->allocate(numberDescriptors * m_descriptorSize, m_descriptorSize);
+    err = m_allocator->getLastError();    
     if (err == RecluseResult_Ok)
     {
         // Obtain the offset, to be used to map to the base gpu handle.
-        UPtr offset                                 = (alloc.baseAddress - m_baseCpuHandle.ptr) / m_descriptorSize;
+        UPtr offset                                 = (address - m_baseCpuHandle.ptr) / m_descriptorSize;
         D3D12_GPU_VIRTUAL_ADDRESS gpuVirtualAddress = (m_baseGpuHandle.ptr + offset * m_descriptorSize); 
-        allocation.baseCpuDescriptorHandle          = { alloc.baseAddress };
+        allocation.baseCpuDescriptorHandle          = { address };
         allocation.baseGpuDescriptorHandle          = { gpuVirtualAddress };
         allocation.numberDescriptors                = numberDescriptors;
         m_currentTotalEntries += numberDescriptors;

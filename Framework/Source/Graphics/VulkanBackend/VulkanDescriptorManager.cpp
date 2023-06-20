@@ -114,12 +114,8 @@ VulkanDescriptorAllocation DescriptorAllocatorInstance::allocate(U32 numberSetsT
     {
         ScopedCriticalSection sc(m_allocatorCs);
 
-        Allocation alloc = { };
-        m_descriptorSetAllocator->allocate(&alloc, sizeof(VkDescriptorSet) * numberSetsToAlloc, 0);
-        pAllocatedSets = (VkDescriptorSet*)alloc.baseAddress;
-
-        m_descriptorSetLayoutAllocator->allocate(&alloc, sizeof(VkDescriptorSetLayout) * numberSetsToAlloc, 0);
-        pAllocatedLayouts = (VkDescriptorSetLayout*)alloc.baseAddress;
+        pAllocatedSets = (VkDescriptorSet*)m_descriptorSetAllocator->allocate(sizeof(VkDescriptorSet) * numberSetsToAlloc, 0);
+        pAllocatedLayouts = (VkDescriptorSetLayout*)m_descriptorSetLayoutAllocator->allocate(sizeof(VkDescriptorSetLayout) * numberSetsToAlloc, 0);;
     }
 
     const SizeT descriptorSetLayoutBytes = sizeof(VkDescriptorSetLayout) * numberSetsToAlloc;

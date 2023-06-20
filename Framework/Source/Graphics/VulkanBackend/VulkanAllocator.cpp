@@ -37,10 +37,9 @@ static B32 areMemoryResourcesOnSeparatePages
 ResultCode VulkanPagedAllocator::allocate(VulkanMemory* pOut, const VkMemoryRequirements& requirements, VkDeviceSize granularityBytes, VkImageTiling tiling)
 {
      R_ASSERT(m_allocator != NULL);
-    
-    Allocation allocation   = { };
+
     ResultCode result          = RecluseResult_Ok;
-    UPtr baseAddr        = m_allocator->getBaseAddr();
+    UPtr baseAddr               = m_allocator->getBaseAddr();
 
     // Obtain the max alignment between granularity and memory requirement.
     // If the previous block contains a non-linear resource while the current one is linear or vice versa 
@@ -50,8 +49,9 @@ ResultCode VulkanPagedAllocator::allocate(VulkanMemory* pOut, const VkMemoryRequ
     U16 alignment = static_cast<U16>(Math::maximum(requirements.alignment, granularityBytes));
     // Align the block size of the requested memory with the needed requirements.
     // From there, allocate the aligned requested size, with the bufferImage granularity, so as to ensure we align with this.
-    result = m_allocator->allocate(&allocation, (U64)requirements.size, alignment);
-    
+    UPtr allocatedAddress   = m_allocator->allocate((U64)requirements.size, alignment);
+    result                  = m_allocator->getLastError();
+
     if (result == RecluseResult_OutOfMemory)
     {
         return result;
@@ -65,8 +65,8 @@ ResultCode VulkanPagedAllocator::allocate(VulkanMemory* pOut, const VkMemoryRequ
     }
 
     // The last alignment will be done with granularity.
-    pOut->sizeBytes         = allocation.sizeBytes;
-    pOut->offsetBytes       = allocation.baseAddress;
+    pOut->sizeBytes         = (U64)requirements.size;
+    pOut->offsetBytes       = allocatedAddress;
     pOut->deviceMemory      = m_pool.memory;
     pOut->baseAddr          = m_pool.basePtr;
     return result;
@@ -77,23 +77,13 @@ ResultCode VulkanPagedAllocator::free(VulkanMemory* pOut)
 {
     R_ASSERT(m_allocator != NULL);
     
-    ResultCode result = RecluseResult_Ok;    
-
     if (!pOut) 
     {
         return RecluseResult_NullPtrExcept;
     }
 
-    Allocation allocation   = { };
-    allocation.baseAddress  = pOut->offsetBytes;
-    allocation.sizeBytes    = pOut->sizeBytes;
-    //{
-    //    // Push back a copy.
-    //    std::vector<VulkanMemory>& garbageChute = m_frameGarbage[m_garbageIndex];
-    //    garbageChute.push_back(*pOut);
-    //}
-
-    return m_allocator->free(&allocation);
+    m_allocator->free(pOut->offsetBytes);
+    return m_allocator->getLastError();    
 }
 
 

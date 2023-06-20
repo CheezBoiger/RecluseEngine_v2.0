@@ -836,16 +836,17 @@ void VulkanDevice::invalidateAllMappedRanges()
 
 void VulkanDevice::pushFlushMemoryRange(const VkMappedMemoryRange& mappedRange)
 {
-    Allocation allocation   = { };
     VkDeviceSize atomSz     = getNonCoherentSize();
     // Alignment of 0 since we want to pack these ranges together. We hope that 
     // the api struct itself will be aligned properly.
-    ResultCode result          = m_memCache.flush.allocator->allocate
-                                (
-                                    &allocation, 
+    ResultCode result          = RecluseResult_Ok;
+
+    UPtr address = m_memCache.flush.allocator->allocate
+                                ( 
                                     sizeof(VkMappedMemoryRange), 
                                     0
                                 );
+    result = m_memCache.flush.allocator->getLastError();
  
     if (result != RecluseResult_Ok) 
     {
@@ -862,7 +863,7 @@ void VulkanDevice::pushFlushMemoryRange(const VkMappedMemoryRange& mappedRange)
         return;
     }
 
-    VkMappedMemoryRange* pRange = (VkMappedMemoryRange*)allocation.baseAddress;
+    VkMappedMemoryRange* pRange = (VkMappedMemoryRange*)address;
     *pRange                     = mappedRange;
 
     // We need to align on nonCoherentAtomSize, as spec states it must be a multiple of this.
@@ -872,15 +873,16 @@ void VulkanDevice::pushFlushMemoryRange(const VkMappedMemoryRange& mappedRange)
 
 void VulkanDevice::pushInvalidateMemoryRange(const VkMappedMemoryRange& mappedRange)
 {
-    Allocation allocation   = { };
     VkDeviceSize atomSz     = getNonCoherentSize();
     // Alignement of 0 since we want to pack these ranges together. We hope that the api struct itself will be aligned properly.
-    ResultCode result          = m_memCache.invalid.allocator->allocate
-                                (
-                                    &allocation, 
+    ResultCode result          = RecluseResult_Ok;
+
+    UPtr address = m_memCache.invalid.allocator->allocate
+                                ( 
                                     sizeof(VkMappedMemoryRange), 
                                     0
                                 );
+    result = m_memCache.invalid.allocator->getLastError();
  
     if (result != RecluseResult_Ok) 
     {
@@ -899,7 +901,7 @@ void VulkanDevice::pushInvalidateMemoryRange(const VkMappedMemoryRange& mappedRa
     
     }
 
-    VkMappedMemoryRange* pRange = (VkMappedMemoryRange*)allocation.baseAddress;
+    VkMappedMemoryRange* pRange = (VkMappedMemoryRange*)address;
     *pRange                     = mappedRange;
 
     pRange->size                = align(mappedRange.size, atomSz);

@@ -19,6 +19,9 @@
 #include "Recluse/Math/MathCommons.hpp"
 #include "Recluse/Math/Vector2.hpp"
 #include "Recluse/Math/Bounds2D.hpp"
+#include "Recluse/Math/Matrix44.hpp"
+#include "Recluse/Math/Matrix43.hpp"
+#include <random>
 
 using namespace Recluse;
 
@@ -250,12 +253,14 @@ int main(int c, char* argv[])
     F32 index = 200;
     F32 counterFps = 0.f;
     F32 desiredFps = 1.f / 60.f;
-    Math::Float2 direction{ 1.f, 1.f };
+    Math::Float2 direction{ 1.f, -1.f };
     Math::Float2 boxSize = Math::Float2(200.0f, 200.0f);
     Math::Bounds2d bounds = { Math::Float2(0.f, 0.f), Math::Float2(1024.f, 1024.0f) };
-    Math::Bounds2d box = { Math::Float2(400.f, 200.f), Math::Float2(0, 0) };
+    Math::Bounds2d box = { Math::Float2(412.f, 512.f), Math::Float2(0, 0) };
     box.mmax = boxSize + box.mmin;
-    F32 speed = 400.f;
+    F32 speed = 200.f;
+    F32 color[]         = { 0.0f, 1.0f, 0.0f, 1.0f };
+    F32 color2[]        = { 0.0f, 0.0f, 0.2f, 1.0f };
 
     while (!pWindow->shouldClose()) 
     {
@@ -263,18 +268,28 @@ int main(int c, char* argv[])
         RealtimeTick tick   = RealtimeTick::getTick(0);
         F32 ms              = Limiter::limit(desiredFps, 1ull, 0);
         //R_TRACE("TEST", "FPS: %f", 1.0f / tick.getDeltaTimeS());
-        F32 color[]         = { 0.0f, 1.0f, 0.0f, 1.0f };
-        F32 color2[]        = { 0.0f, 0.0f, 1.0f, 1.0f };
         box.mmin            = box.mmin + direction * speed * ms;
         box.mmax            = box.mmax + direction * speed * ms;
         
-        if (!Math::contains(bounds, box))
+        while (!Math::contains(bounds, box))
         {
             Math::Float2 collisionN = { (box.mmin.x <= bounds.mmin.x) ? 1.f : (box.mmax.x > bounds.mmax.x ? -1.f : 0.f),
                                         (box.mmin.y <= bounds.mmin.y) ? 1.f : (box.mmax.y > bounds.mmax.y ? -1.f : 0.f) };
             
-            collisionN = Math::normalize(collisionN);
-            direction = Math::reflect(direction, collisionN);
+            collisionN  = Math::normalize(collisionN);
+            direction   = Math::reflect(direction, collisionN);
+
+            std::random_device rd;
+            std::mt19937 twist(rd());
+            std::uniform_real_distribution<F32> dist(-0.1f, 0.1f);
+            std::uniform_real_distribution<F32> rgb(0.1f, 1.0f);
+
+            direction = Math::normalize(direction + Math::Float2{ dist(twist), dist(twist) });
+
+            color[0] = rgb(twist);
+            color[1] = rgb(twist);
+            color[2] = rgb(twist);
+
             box.mmin = box.mmin + direction * speed * ms;
             box.mmax = box.mmax + direction * speed * ms;
         }
@@ -295,7 +310,7 @@ int main(int c, char* argv[])
             context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
             context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_Present);
         context->end();
-        R_FATAL_ERROR("TEST", "%f Fps", 1.0f / ms);
+        //R_FATAL_ERROR("TEST", "%f Fps", 1.0f / ms);
         pSwapchain->present();
         pollEvents();
     }

@@ -49,7 +49,7 @@ ResultCode BuddyAllocator::onAllocate(Allocation* pOutput, U64 requestSz, U16 al
         m_freeList[nthBit].erase(m_freeList[nthBit].begin());
         U64 blockAddress                        = baseAddr + block.offsetBytes;
         pOutput->baseAddress                    = align(baseAddr + block.offsetBytes, alignment);
-        pOutput->sizeBytes                      = neededSzBytes;
+        pOutput->sizeBytes                      = block.memSzBytes;
         m_allocatedBlocks[pOutput->baseAddress] = makeBlockAllocation(blockAddress, block.memSzBytes);
     } 
     else 
@@ -99,7 +99,7 @@ ResultCode BuddyAllocator::onAllocate(Allocation* pOutput, U64 requestSz, U16 al
             // Allocate the buddy block. Use the aligned address as the key to the mapped buddy block.
             U64 blockAddress                        = baseAddr + block.offsetBytes;
             pOutput->baseAddress                    = align(blockAddress, alignment);
-            pOutput->sizeBytes                      = neededSzBytes;
+            pOutput->sizeBytes                      = block.memSzBytes;
             m_allocatedBlocks[pOutput->baseAddress] = makeBlockAllocation(blockAddress, block.memSzBytes);
         }
     }
@@ -120,8 +120,8 @@ ResultCode BuddyAllocator::onFree(Allocation* pOutput)
     const BlockAllocation& blockAllocation = m_allocatedBlocks[pOutput->baseAddress];    
 
     UPtr baseAddr    = getBaseAddr();
-    U64 szBytes         = pOutput->sizeBytes;
-    U32 nthBit          = (U32)ceil(log2(szBytes));
+    //U64 szBytes         = pOutput->sizeBytes;
+    U32 nthBit          = (U32)ceil(log2(blockAllocation.sizeBytes));
     U32 buddyNumber     = (U32)(blockAllocation.baseAddress / blockAllocation.sizeBytes);
     SizeT buddyAddr     = 0;
     U64 allocOffset     = blockAllocation.baseAddress - baseAddr;
@@ -169,8 +169,8 @@ ResultCode BuddyAllocator::onFree(Allocation* pOutput)
     }
 
     // Erase the block after, using the aligned address.
+    pOutput->sizeBytes = blockAllocation.sizeBytes;
     m_allocatedBlocks.erase(pOutput->baseAddress);
-
     return RecluseResult_Ok;
 }
 

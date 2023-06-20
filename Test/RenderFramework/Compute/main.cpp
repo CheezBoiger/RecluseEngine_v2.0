@@ -19,6 +19,7 @@
 #include "Recluse/Time.hpp"
 #include "Recluse/Filesystem/Filesystem.hpp"
 #include "Recluse/Messaging.hpp"
+#include "Recluse/Math/MathCommons.hpp"
 
 #include "Recluse/System/Limiter.hpp"
 
@@ -33,12 +34,18 @@ struct ConstData {
     float iter[2];
 };
 
-void updateConstData(GraphicsResource* pData, RealtimeTick& tick)
+
+enum ProgramId
+{
+    ProgramId_Mandelbrot
+};
+
+void updateConstData(GraphicsResource* pData, F32 deltaSeconds, F32 currTimeSeconds)
 {
     static float iter = 0.005f;
-    iter += 0.001f * tick.delta();
+    iter += deltaSeconds;
     ConstData dat = { };
-    dat.color[0] = abs(sinf(tick.getCurrentTimeS() * 0.0000001f));
+    dat.color[0] = abs(sinf(iter));
     dat.color[1] = 0.0f;
     dat.color[2] = 1.0f;
     dat.color[3] = 0.0f;
@@ -99,7 +106,7 @@ int main(int c, char* argv[])
         info.swapchainDescription.desiredFrames = 3;
         info.swapchainDescription.renderWidth = pWindow->getWidth();
         info.swapchainDescription.renderHeight = pWindow->getHeight();
-        info.swapchainDescription.format = ResourceFormat_R8G8B8A8_Unorm;
+        info.swapchainDescription.format = ResourceFormat_B8G8R8A8_Unorm;
 
         result = pAdapter->createDevice(info, &pDevice);
     }
@@ -192,13 +199,13 @@ int main(int c, char* argv[])
         description.compute.cs = shaderPath.c_str();
         description.compute.csName = "main";
         Builder::buildShaderProgramDefinitions(description, 0, ShaderIntermediateCode_Spirv);
-        Builder::Runtime::buildShaderProgram(pDevice, 0);
+        Builder::Runtime::buildShaderProgram(pDevice, ProgramId_Mandelbrot);
         Builder::clearShaderProgramDefinitions();
     }
 
     pWindow->open();
 
-    const F32 desiredFps = 60.0f;
+    const F32 desiredFps = 144.0f;
     F32 desiredMs = 1.f / desiredFps;
     pContext = pDevice->createContext();
     pContext->setBuffers(3);
@@ -207,19 +214,18 @@ int main(int c, char* argv[])
     {
         RealtimeTick::updateWatch(1ull, 0);
         RealtimeTick tick = RealtimeTick::getTick(0);
-        updateConstData(pData, tick);
+        F32 frameMs = Limiter::limit(desiredMs, 1ull, 0);
+        updateConstData(pData, frameMs, tick.getCurrentTimeS());
         GraphicsContext* context = pContext;
         context->begin();
             GraphicsResource* pResource = views[pSwapchain->getCurrentFrameIndex()]->getResource();
             context->transition(pResource, ResourceState_UnorderedAccess);
             context->bindConstantBuffers(ShaderType_Compute, 0, 1, &pData);
             context->bindUnorderedAccessViews(ShaderType_Compute, 0, 1, &views[pSwapchain->getCurrentFrameIndex()]);
-            context->setShaderProgram(0);
-            context->dispatch(pWindow->getWidth() / 8 + 1, pWindow->getHeight() / 8 + 1, 1);
+            context->setShaderProgram(ProgramId_Mandelbrot);
+            context->dispatch(Math::divUp(pWindow->getWidth(), 8u), Math::divUp(pWindow->getHeight(), 8u), 1);
+            context->transition(pResource, ResourceState_Present);
         context->end();
-
-        
-        F32 frameMs = Limiter::limit(desiredMs, 1ull, 0);
         R_VERBOSE("Test", "Frame: %f fps", 1.0f / frameMs);
         pSwapchain->present();
 
