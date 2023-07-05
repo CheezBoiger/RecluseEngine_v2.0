@@ -84,7 +84,8 @@ int main(int c, char* argv[])
     std::vector<RenderPass*> renderPasses;
     ResultCode result                  = RecluseResult_Ok;
 
-    pWindow = Window::create(u8"DescriptorSetInitialization", 0, 0, 1024, 1024);
+    pWindow = Window::create(u8"DescriptorSetInitialization", 0, 0, 1024, 1024, ScreenMode_WindowBorderless);
+    pWindow->setToCenter();
 
     pInstance = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
 

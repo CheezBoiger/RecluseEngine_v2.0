@@ -31,8 +31,10 @@ enum RBColor
 //
 // Ideally Red-Black trees offer optimal, and performant, storage and retrieval of ordered information, along with a 
 // guarantee that operations will complete within a known time (yes, that is verbatum to the wiki article... but it's true...)
-// In order to achieve expectant performance, and to maintain the balancing nature of these data structures, Red-Black trees must 
-// adhere to 5 requirements, such that these properties can benefit.
+// Its balancing is not perfect, but it does ensure that insertion/search/deletion operations are always efficient.
+// 
+// In order to achieve expectant performance, and to maintain the self-balancing nature of these data structures, Red-Black trees must 
+// adhere to 5 requirements, such that these properties can benefit from log(n) complexities.
 // 
 // The rules are as such:
 //  1. Every node is either Red or Black.
@@ -444,18 +446,13 @@ void RBTree<Type, Comparer, TypeEqual, _Allocator>::rotate(RBNodePointer node, I
 {
     RBNodePointer gp    = node->parent;
     RBNodePointer s     = node->children[1 - direction];
-    RBNodePointer c     = nullptr;
-
-    c                               = s->children[direction];
-    node->children[1 - direction]   = c;
-
+    RBNodePointer c     = s->children[direction];
+    node->children[1 - direction] = c;
     if (c)
         c->parent = node;
-
     s->children[direction]  = node;
     node->parent            = s;
     s->parent               = gp;
-
     if (gp)
         gp->children[node == gp->children[Internal::RBDirection_Right] ? Internal::RBDirection_Right : Internal::RBDirection_Left] = s;
     else

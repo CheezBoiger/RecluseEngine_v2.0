@@ -58,8 +58,9 @@ public:
     Camera*                                     getCamera(U32 index) { return m_cameras[index]; }
 
     template<typename Sys>
-    void                                        addSystemFor()
+    void                                        addSystemFor(U32 priority = 0u)
     {
+        Sys::getSystem()->setPriority(priority);
         registerSystem(Sys::getSystem());
     }
 

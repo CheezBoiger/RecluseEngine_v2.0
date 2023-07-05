@@ -14,7 +14,7 @@ namespace Recluse {
 struct BuddyBlock 
 {
     U64     memSzBytes;     // Likely sizes of 64 KB
-    U64     offsetBytes;    // Offset of the buddy block in virtual memory.
+    U64     addressBytes;    // Offset of the buddy block in virtual memory.
     U64     blockId;        // block id.
 };
 

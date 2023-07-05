@@ -231,7 +231,7 @@ class DescriptorHeapInstance
 {
 public:
     // Allocate a table of descriptors. Uses device only if we run out of descriptor space... This shouldn't usually happen unless
-    // we are overflowing with so many descriptors.
+    // we are overflowing with so many descriptors per frame.
     DescriptorHeapAllocation        allocate(ID3D12Device* pDevice, U32 numberDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
 
     // Free an allocation.

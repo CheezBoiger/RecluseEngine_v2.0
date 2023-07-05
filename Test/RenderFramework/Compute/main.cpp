@@ -170,7 +170,6 @@ int main(int c, char* argv[])
     } 
 
     {
-        
         ConstData dat = { };
         dat.color[0] = 1.0f;
         dat.color[1] = 0.0f;
@@ -230,7 +229,6 @@ int main(int c, char* argv[])
         pSwapchain->present();
 
         pollEvents();
-    
     }
     
     pContext->wait();

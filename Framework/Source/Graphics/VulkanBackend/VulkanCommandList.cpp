@@ -267,12 +267,15 @@ void VulkanContext::bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVerte
 
 void VulkanContext::drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstVertex, U32 firstInstance)
 {
-    const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure);
-    
-    bindPipelineState(set);
-    bindDescriptorSet(set);
     flushBarrierTransitions(m_primaryCommandList.get());
     
+    if (currentState().areResourcesDirty() || currentState().isPipelineDirty())
+    {
+        const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure);
+    
+        bindPipelineState(set);
+        bindDescriptorSet(set);
+    }
     vkCmdDraw(m_primaryCommandList.get(), vertexCount, instanceCount, firstVertex, firstInstance);
 }
 
@@ -354,7 +357,7 @@ void VulkanContext::setScissors(U32 numScissors, Rect* pRects)
 void VulkanContext::dispatch(U32 x, U32 y, U32 z)
 {
     endRenderPass(m_primaryCommandList.get());
-    if (currentState().areResourcesDirty())
+    if (currentState().areResourcesDirty() || currentState().isPipelineDirty())
     {
         const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure);
         bindPipelineState(set);
@@ -433,7 +436,7 @@ void VulkanContext::bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBy
 void VulkanContext::drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 firstIndex, U32 vertexOffset, U32 firstInstance)
 {
     flushBarrierTransitions(m_primaryCommandList.get());
-    if (currentState().areResourcesDirty())
+    if (currentState().areResourcesDirty() || currentState().isPipelineDirty())
     {
         const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure);
         bindPipelineState(set);
@@ -475,7 +478,7 @@ void VulkanContext::drawIndexedInstancedIndirect(GraphicsResource* pParams, U32 
     R_ASSERT(pParams->getApi() == GraphicsApi_Vulkan);
 
     flushBarrierTransitions(m_primaryCommandList.get());
-    if (currentState().areResourcesDirty())
+    if (currentState().areResourcesDirty() || currentState().isPipelineDirty())
     {
         const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure);
         bindPipelineState(set);
@@ -502,9 +505,11 @@ void VulkanContext::drawInstancedIndirect(GraphicsResource* pParams, U32 offset,
     R_ASSERT(pParams->getApi() == GraphicsApi_Vulkan);
 
     flushBarrierTransitions(m_primaryCommandList.get());
-    if (currentState().areResourcesDirty())
+    if (currentState().areResourcesDirty() || currentState().isPipelineDirty())
     {
-        bindDescriptorSet(DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure));
+        const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure); 
+        bindPipelineState(set);
+        bindDescriptorSet(set);
     }
     VulkanResource* pResource = static_cast<VulkanResource*>(pParams);
     currentState().proposeClean();
@@ -527,9 +532,11 @@ void VulkanContext::dispatchIndirect(GraphicsResource* pParams, U64 offset)
     R_ASSERT(pParams->getApi() == GraphicsApi_Vulkan);
 
     flushBarrierTransitions(m_primaryCommandList.get());
-    if (currentState().areResourcesDirty())
+    if (currentState().areResourcesDirty() || currentState().isPipelineDirty())
     {
-        bindDescriptorSet(DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure));
+        const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure);
+        bindPipelineState(set); 
+        bindDescriptorSet(set);
     }
     VulkanResource* pResource = pParams->castTo<VulkanResource>();
     

@@ -25,8 +25,8 @@ public:
     ResultCode onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment) override 
     {
         R_ASSERT(Math::isPowerOf2(alignment));
-        UPtr neededSzBytes   = requestSz + alignment;
-        U64 totalSzBytes        = getTotalSizeBytes();
+        UPtr neededSzBytes   = requestSz + alignOffset(m_top, alignment);
+        U64 totalSzBytes     = getTotalSizeBytes();
         UPtr szAddr          = getBaseAddr() + totalSzBytes;
         UPtr endAddr         = m_top + neededSzBytes;
     

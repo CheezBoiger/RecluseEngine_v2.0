@@ -106,7 +106,7 @@ private:
 
 public:
 
-    ShaderIntermediateCode getIntermediateCodeType() const { return m_intermediateCode; }
+    ShaderIntermediateCode  getIntermediateCodeType() const { return m_intermediateCode; }
 
     // Load the bytecode data to the shader. This requires that the data be in bytecode, not source!
     R_PUBLIC_API ResultCode load(const char* entryPoint, const char* byteCode, U64 szBytes, ShaderIntermediateCode imm, ShaderType shaderType);
@@ -114,36 +114,32 @@ public:
     // Save the compilation to a file.
     R_PUBLIC_API ResultCode saveToFile(const char* filePath);
 
-    R_PUBLIC_API Shader* convertTo(ShaderIntermediateCode intermediateCode);
-
-    const char* getEntryPointName() const { return m_entryPoint; }
-
-    ShaderType getType() const { return m_shaderType; }
-
-    const char* getByteCode() const { return m_byteCode.data(); }
-    
-    U64 getSzBytes() const { return m_byteCode.size(); }
+    R_PUBLIC_API Shader*    convertTo(ShaderIntermediateCode intermediateCode);
+    const char*             getEntryPointName() const { return m_entryPoint; }
+    ShaderType              getType() const { return m_shaderType; }
+    const char*             getByteCode() const { return m_byteCode.data(); }
+    U64                     getSzBytes() const { return m_byteCode.size(); }
 
     // Obtain the shader hash id, this is usually equal across the same shader with different permutations.
     // PermutationId defines the unique id between similar shaders, in order to distinguish from other combinations.
-    ShaderId getHashId() const { return m_shaderNameHash; }
+    ShaderId                getHashId() const { return m_shaderNameHash; }
     
-    void setName(const char* name) 
+    void                    setName(const char* name) 
     {
         m_shaderName = name;
         m_shaderNameHash = recluseHashFast(m_shaderName.data(), m_shaderName.size());
     }
 
-    const char* getName() const { return m_shaderName.c_str(); }
-    U64 getNameSize() const { return static_cast<U64>(m_shaderName.size()); }
+    const char*             getName() const { return m_shaderName.c_str(); }
+    U64                     getNameSize() const { return static_cast<U64>(m_shaderName.size()); }
 
-    void setPermutationId(ShaderPermutationId permutation) { m_permutation = permutation; }
-    ShaderPermutationId getPermutationId() const { return m_permutation; }
+    void                    setPermutationId(ShaderPermutationId permutation) { m_permutation = permutation; }
+    ShaderPermutationId     getPermutationId() const { return m_permutation; }
 
 private:
 
     // Generate id from bytecode value.
-    void genHashId();
+    void                    genHashId();
 
     ShaderIntermediateCode  m_intermediateCode;
     ShaderType              m_shaderType;

@@ -26,6 +26,18 @@ class GameEntity;
     virtual const char* getClassName() const override { return className(); }
 
 
+// Required declare for the game system to be used. 
+// Use the constructor you feel is important.
+// A Default destructor is required in order to do final cleanups at the end of an application's life.
+#define R_DECLARE_GAME_SYSTEM(_system, _component) \
+    public: \
+    static ECS::System<_component>* create() { \
+        return new _system(); \
+    } \
+    static const char* systemName() { return #_system; } \
+    virtual const char* getName() const override { return systemName(); }
+
+
 //! AbstractSystem is the high level provision that oversees all
 //! game components to their respect.
 //! Systems are what hold the game logic in the world scene.
@@ -59,37 +71,31 @@ public:
     }
 
     // Serialize the system and its components.
-    virtual ResultCode     serialize(Archive* archive) override { return RecluseResult_NoImpl; }
+    virtual ResultCode      serialize(Archive* archive) override { return RecluseResult_NoImpl; }
 
     // Deserialize the system and its components.
-    virtual ResultCode     deserialize(Archive* archive) override { return RecluseResult_NoImpl; }
+    virtual ResultCode      deserialize(Archive* archive) override { return RecluseResult_NoImpl; }
+
+    virtual const char*     getName() const { return "AbstractSystem"; }
 
 private:
     // Allows initializing the system before on intialize().
-    virtual ResultCode     onInitialize()                  { return RecluseResult_NoImpl; }
+    virtual ResultCode      onInitialize()                  { return RecluseResult_NoImpl; }
 
     // Allows cleaning up the system before releasing.
-    virtual ResultCode     onCleanUp()                     { return RecluseResult_NoImpl; }
+    virtual ResultCode      onCleanUp()                     { return RecluseResult_NoImpl; }
 
     // Intended to clear all components from the game world.
-    virtual void        onClearAll()                       { }
+    virtual void            onClearAll()                       { }
 
     // To update all components in the world.
-    virtual void        onUpdateComponents(const RealtimeTick& tick)  { }
+    virtual void            onUpdateComponents(const RealtimeTick& tick)  { }
 
     // Priority value of this abstract system. This will be used to determine the 
     // order of which this system will operate.
     U32                 m_priority;
 };
 
-// Required declare for the game system to be used. 
-// Use the constructor you feel is important.
-// A Default destructor is required in order to do final cleanups at the end of an application's life.
-#define R_DECLARE_GAME_SYSTEM(_constructor, _component) \
-    public: \
-    static ECS::System<_component>* create() { \
-        return new _constructor; \
-    }
 
 //! System is the required definition of the given system, which is to 
 //! define how to allocate, free, and update all components the application interacts 

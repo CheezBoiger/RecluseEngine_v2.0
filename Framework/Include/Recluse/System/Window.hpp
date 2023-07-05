@@ -60,24 +60,27 @@ public:
         , m_isMinimized(false)
         , m_monitorIndex(0)
         , m_isShowing(false)
+        , m_isFullscreen(false)
+        , m_isBorderless(false)
         , m_pMouseHandle(nullptr)
         , m_keyCallback(nullptr)
-        , m_onWindowResizeCallback(nullptr) { }
+        , m_onWindowResizeCallback(nullptr) 
+    { 
+        m_status.mustChangeScreen = false; 
+    }
 
     // Create the window.
-    static R_OS_CALL R_PUBLIC_API Window* create(const std::string& title, U32 x, U32 y, U32 width, U32 height);
+    static R_OS_CALL R_PUBLIC_API Window*       create(const std::string& title, U32 x, U32 y, U32 width, U32 height, ScreenMode screenMode = ScreenMode_Windowed);
     // Destroy the window.
-    static R_OS_CALL R_PUBLIC_API ResultCode destroy(Window* pWindow);
-    static R_OS_CALL R_PUBLIC_API Window* getActiveFocusedWindow();
+    static R_OS_CALL R_PUBLIC_API ResultCode    destroy(Window* pWindow);
+    static R_OS_CALL R_PUBLIC_API Window*       getActiveFocusedWindow();
 
     // close the window.
-    R_OS_CALL R_PUBLIC_API void           close();
+    R_OS_CALL R_PUBLIC_API void close();
     // Open the window,
-    R_OS_CALL R_PUBLIC_API void           open();
+    R_OS_CALL R_PUBLIC_API void open();
     // obtain the native window handle.
     void*                       getNativeHandle() { return m_handle; }
-    // Set the screen mode.
-    R_OS_CALL R_PUBLIC_API void setScreenMode(ScreenMode mode);
     // Set the title of the window.
     void                        setTitle(const std::string& title);
     // Programmatically resize the window.
@@ -90,12 +93,17 @@ public:
     void                        minimize();
     void                        maximize();
     B32                         isMinimized() const { return m_isMinimized; }
+    B32                         isFullscreen() const { return m_isFullscreen; }
+    B32                         isBorderless() const { return m_isBorderless; }
     U32                         getWidth() const { return m_width; }
     U32                         getHeight() const { return m_height; }
     U32                         getPosX() const { return m_xPos; }
     U32                         getPosY() const { return m_yPos; }
     const std::string&          getTitle() const { return m_title; }
     ScreenMode                  getScreenMode() const { return m_screenMode; }
+
+    // Request a resize of this window.
+    void                        requestResize(U32 newWidth, U32 newHeight);
 
     // Check if we should close the window.
     B32                         shouldClose() const { return m_shouldClose; }
@@ -111,29 +119,54 @@ public:
     U32                         getMonitorIndex() const { return m_monitorIndex; }
 
     // Grabs the display monitor that has the most area of intesection with the window.
-    R_PUBLIC_API MonitorDesc getCurrentActiveMonitor();
+    R_PUBLIC_API MonitorDesc    getCurrentActiveMonitor();
+
+    // Set the screen mode.
+    R_PUBLIC_API void setScreenMode(ScreenMode mode)
+    {
+        if (m_screenMode != mode)
+        {
+            m_screenMode = mode;
+            m_status.mustChangeScreen = true;
+        }
+    }
 
 private:
+
+    B32 mustChangeScreen() const { return m_status.mustChangeScreen; }
+    void screenChanged() { m_status.mustChangeScreen = false; }
+    void update();
+
     // The window width
-    U32 m_width;
+    U32                         m_width;
     // The window height.
-    U32 m_height;
+    U32                         m_height;
     // The window x position (top-left corner.)
-    U32 m_xPos;
+    U32                         m_xPos;
     // The window y position (top-left corner.)
-    U32 m_yPos;
+    U32                         m_yPos;
     // Current screen mode.
-    ScreenMode m_screenMode;
+    ScreenMode                  m_screenMode;
     // If the window is minimized.
-    B32 m_isMinimized : 1;
+    B32                         m_isMinimized : 1;
     // Should the window close.
-    B32 m_shouldClose : 1;
+    B32                         m_shouldClose : 1;
     // Is the window showing.
-    B32 m_isShowing   : 1;
+    B32                         m_isShowing   : 1;
+    // Is the window in fullscreen?
+    B32                         m_isFullscreen : 1;
+    // Is the window borderless?
+    B32                         m_isBorderless : 1;
+
+    struct 
+    {
+        B32     mustChangeScreen;
+    } m_status;
+
     // Title of the window.
-    std::string m_title;
-    void*       m_handle;
-    U32         m_monitorIndex;
+    std::string                 m_title;
+    void*                       m_handle;
+    U32                         m_monitorIndex;
 
     WindowKeyFunction           m_keyCallback;
     WindowMouseFunction         m_mouseCallback;

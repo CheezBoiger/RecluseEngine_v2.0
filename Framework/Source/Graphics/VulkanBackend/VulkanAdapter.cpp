@@ -32,7 +32,7 @@ std::vector<VulkanAdapter> VulkanAdapter::getAvailablePhysicalDevices(VulkanInst
         vkEnumeratePhysicalDevices(ctx->get(), &count, devices.data());
 
         R_DEBUG(R_CHANNEL_VULKAN, 
-            ((count > 1) ? "There are %d vulkan devices." : "There is %d vulkan device."), count);        
+            ((count != 1) ? "There are %d vulkan devices." : "There is %d vulkan device."), count);        
 
         for (U32 i = 0; i < count; ++i) 
         {

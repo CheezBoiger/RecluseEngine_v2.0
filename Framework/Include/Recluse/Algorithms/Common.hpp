@@ -7,7 +7,7 @@ namespace Recluse {
 
 
 template <typename T>
-static void swap(T& lh, T& rh) 
+static void recluseSwap(T& lh, T& rh) 
 {
     T temp = lh;
     lh = rh;

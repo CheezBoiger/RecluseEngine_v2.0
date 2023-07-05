@@ -45,7 +45,7 @@ public:
     typedef Value&                  ValueReference;
     typedef const Value&            ConstantValueReference;
 
-    HashTable();
+    HashMap() {}
 
     void        insert(ConstantKeyReference key, ConstantValueReference value);
     void        remove(ConstantKeyReference key, ConstantValueReference value);

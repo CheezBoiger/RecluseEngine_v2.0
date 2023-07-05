@@ -138,6 +138,8 @@ D3D12_RESOURCE_BARRIER D3D12Resource::transition(ResourceState newState)
     barrier.Transition.StateAfter   = getNativeResourceState(newState);
     barrier.Transition.Subresource  = 0u;
 
+    setCurrentResourceState(newState);
+
     return barrier;
 }
 

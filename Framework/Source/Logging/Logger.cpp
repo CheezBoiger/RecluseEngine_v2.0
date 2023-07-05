@@ -6,7 +6,7 @@
 
 #include "Recluse/Filesystem/Archive.hpp"
 
-#include <unordered_set>
+#include <set>
 
 namespace Recluse {
 
@@ -15,7 +15,7 @@ static Thread                   displayThread;
 static volatile B32             isLogging           = true;
 static volatile LogTypeFlags    logTypeFlags        = LogTypeFlags(0xFFFFFFFF);
 
-static std::unordered_set<std::string> g_disabledChannels = 
+static std::set<std::string> g_disabledChannels = 
 {
     "MemoryPool" 
 };

@@ -9,6 +9,20 @@
 namespace Recluse {
 
 
+
+void MemoryPool::copy(MemoryPool* dst, U64 dstOffset, MemoryPool* src, U64 srcOffset, U64 sizeBytes)
+{
+    R_ASSERT_FORMAT(dst && src, "Either src or dst memory pools are nullptr!");
+    R_ASSERT_FORMAT(sizeBytes > 0, "%s requested 0 bytes to copy!");
+
+    UPtr dstMemoryBase      = dst->getBaseAddress();
+    UPtr srcMemoryBase      = src->getBaseAddress();
+    UPtr dstMemoryOffset    = dstMemoryBase + dstOffset;
+    UPtr srcMemoryOffset    = srcMemoryBase + srcOffset;
+    memcpy((void*)dstMemoryOffset, (void*)srcMemoryOffset, sizeBytes);
+}
+
+
 MemoryPool::MemoryPool(U64 szBytes, U64 pageSz)
     : m_baseAddr(0ull)
     , m_pageSzBytes(pageSz)

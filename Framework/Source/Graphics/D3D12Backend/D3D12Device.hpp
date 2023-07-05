@@ -20,6 +20,7 @@ class D3D12ResourceAllocationManager;
 class D3D12Swapchain;
 class D3D12Queue;
 class D3D12PrimaryCommandList;
+class D3D12RenderPass;
 class D3D12Resource;
 class D3D12Device;
 
@@ -78,10 +79,18 @@ public:
 
     const std::vector<BufferResources>& getBufferResources() const { return m_bufferResources; }
     void                                resetCurrentResources();
+   
+    void                                bindRenderTargets(U32 count, GraphicsResourceView** ppResources, GraphicsResourceView* pDepthStencil = nullptr) override;
+    void                                clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) override;
+    void                                clearDepthStencil(F32 clearDepth, U8 clearStencil, const Rect& rect) override;
+    void                                setScissors(U32 numScissors, Rect* pRects) override;
+    void                                setViewports(U32 numViewports, Viewport* pViewports) override;
 
     ID3D12GraphicsCommandList*          currentGraphicsCommandList() { return m_pPrimaryCommandList->get(); }
     void                                pushState(ContextFlags flags = ContextFlag_None) override;
     void                                popState() override;
+
+    void                                transition(GraphicsResource* pResource, ResourceState newState) override;
     
 
 private:
@@ -90,19 +99,22 @@ private:
         Pipelines::PipelineStateObject  m_pipelineStateObject;
     };
 
+    void                                flushBarrierTransitions();
     void                                initializeBufferResources(U32 buffering);
     void                                destroyBufferResources();
     ContextState&                       currentState() { return *m_contextStates.end(); }
 
-    ResultCode                             createCommandList(D3D12PrimaryCommandList** ppList, GraphicsQueueTypeFlags flags);
-    ResultCode                             destroyCommandList(D3D12PrimaryCommandList* pList);
+    ResultCode                          createCommandList(D3D12PrimaryCommandList** ppList, GraphicsQueueTypeFlags flags);
+    ResultCode                          destroyCommandList(D3D12PrimaryCommandList* pList);
 
     D3D12Device*                        m_pDevice;
     std::vector<BufferResources>        m_bufferResources;
     U32                                 m_currentBufferIndex;
     U32                                 m_bufferCount;
+    D3D12RenderPass*                    m_pRenderPass;
     D3D12PrimaryCommandList*            m_pPrimaryCommandList;
     std::vector<ContextState>           m_contextStates;
+    std::vector<D3D12_RESOURCE_BARRIER> m_barrierTransitions;
 };
 
 class D3D12Device : public GraphicsDevice 
@@ -115,22 +127,22 @@ public:
         , m_graphicsQueue(nullptr)
         , m_swapchain(nullptr) { }
 
-    ResultCode                             initialize(D3D12Adapter* adapter, const DeviceCreateInfo& info);
+    ResultCode                          initialize(D3D12Adapter* adapter, const DeviceCreateInfo& info);
     void                                destroy();
 
     ID3D12Device*                       get() const { return m_device; }
     D3D12Adapter*                       getAdapter() const { return m_pAdapter; }
 
-    ResultCode                             createSwapchain(D3D12Swapchain** ppSwapchain, const SwapchainCreateDescription& desc);
-    ResultCode                             destroySwapchain(D3D12Swapchain* pSwapchain);
+    ResultCode                          createSwapchain(D3D12Swapchain** ppSwapchain, const SwapchainCreateDescription& desc);
+    ResultCode                          destroySwapchain(D3D12Swapchain* pSwapchain);
 
-    ResultCode                             createCommandQueue(D3D12Queue** ppQueue, GraphicsQueueTypeFlags type);
-    ResultCode                             destroyCommandQueue(D3D12Queue* pQueue);
+    ResultCode                          createCommandQueue(D3D12Queue** ppQueue, GraphicsQueueTypeFlags type);
+    ResultCode                          destroyCommandQueue(D3D12Queue* pQueue);
 
     GraphicsContext*                    createContext() override { return m_context; }
     HWND                                getWindowHandle() const { return m_windowHandle; }
 
-    ResultCode                             reserveMemory(const MemoryReserveDescription& desc) override;
+    ResultCode                          reserveMemory(const MemoryReserveDescription& desc) override;
     D3D12Queue*                         getBackbufferQueue() const { return m_graphicsQueue; }
     GraphicsSwapchain*                  getSwapchain() override;
 
@@ -144,14 +156,14 @@ public:
     D3D12_FEATURE_DATA_FORMAT_SUPPORT   checkFormatSupport(ResourceFormat format);
     DescriptorHeapAllocationManager*    getDescriptorHeapManager() { return &m_descHeapManager; }
 
-    ResultCode                             loadShaderProgram
+    ResultCode                          loadShaderProgram
                                             (
                                                 ShaderProgramId program, 
                                                 ShaderProgramPermutation permutation, 
                                                 const Builder::ShaderProgramDefinition& definition
                                             ) override;
 
-    ResultCode                             unloadShaderProgram(ShaderProgramId program) override;
+    ResultCode                          unloadShaderProgram(ShaderProgramId program) override;
     void                                unloadAllShaderPrograms() override;
 
     Bool                                makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout) override;

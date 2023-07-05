@@ -88,7 +88,7 @@ enum UpdaterEvent : U64
 class SimpleUpdaterSystem : public ECS::System<MoverComponent>
 {
 public:
-    R_DECLARE_GAME_SYSTEM(SimpleUpdaterSystem(), MoverComponent);
+    R_DECLARE_GAME_SYSTEM(SimpleUpdaterSystem, MoverComponent);
 
     virtual ResultCode onInitialize() override
     {
@@ -139,6 +139,15 @@ public:
     virtual ResultCode onAllocateComponents(MoverComponent*** pOuts, U32 count) override { return RecluseResult_NoImpl; }
     virtual ResultCode onFreeComponent(MoverComponent** pIn) override { if (*pIn) delete *pIn; return RecluseResult_Ok; }
     virtual ResultCode onFreeComponents(MoverComponent*** pIns, U32 count) override { return RecluseResult_NoImpl; }
+
+    virtual ResultCode onCleanUp() override 
+    {
+        for (auto it = m_movers.begin(); it != m_movers.end(); ++it)
+            delete (*it);
+        m_movers.clear();
+        return RecluseResult_Ok; 
+    }
+
 private:
     std::vector<MoverComponent*> m_movers;
     Bool m_shouldUpdate = true;

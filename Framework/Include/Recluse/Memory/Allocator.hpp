@@ -24,9 +24,17 @@ typedef struct Allocation
 class R_PUBLIC_API Allocator 
 {
 public:
-    virtual ~Allocator() { }
+    virtual ~Allocator() 
+    {
+         
+    }
 
-    Allocator() : m_totalAllocations(0), m_totalSizeBytes(0), m_usedSizeBytes(0), m_pMemoryBaseAddr(0ull) { }
+    Allocator(UPtr basePtr = 0ull, U64 sizeBytes = 0ull) 
+        : m_totalAllocations(0)
+        , m_totalSizeBytes(sizeBytes)
+        , m_usedSizeBytes(0)
+        , m_pMemoryBaseAddr(basePtr)
+        , m_initialized(false) { }
 
     //! Allocator mem size and page size (usually 4kb). 
     void initialize(UPtr pBasePtr, U64 sizeBytes) 
@@ -34,7 +42,9 @@ public:
         m_totalSizeBytes    = sizeBytes;
         m_pMemoryBaseAddr   = pBasePtr;
         m_usedSizeBytes     = 0;
-        onInitialize();
+        ResultCode result = onInitialize();
+        if (result == RecluseResult_Ok)
+            m_initialized = true;
     }
 
     //! Allocation requirements.
@@ -77,12 +87,15 @@ public:
 
     void cleanUp() 
     {
-        onCleanUp();
+        ResultCode result = onCleanUp();
         m_totalAllocations  = 0;
         m_totalSizeBytes    = 0;
         m_usedSizeBytes     = 0;
         m_pMemoryBaseAddr   = 0ull;
-        m_lastError = RecluseResult_Ok;
+        
+        m_lastError = result;
+        if (result == RecluseResult_Ok)
+            m_initialized = false;
     }
 
     inline U64 getTotalSizeBytes() const 
@@ -121,6 +134,7 @@ private:
     U64     m_usedSizeBytes;
     U64     m_totalAllocations;
     ResultCode m_lastError = RecluseResult_Ok;
+    Bool    m_initialized;
 };
 
 

@@ -85,8 +85,11 @@ public:
     // in order to avoid the cpu from waiting to record and utilize resources when ready. We can essentially
     // have the cpu working on buffers that are ready to be used, while buffers that are pending are being used
     // and displayed by the gpu. 
-    // Note: You can not have less buffers than there are frames! Doing so will cause undefinted behavior, and potential
-    //       overwrite of existing buffers inflight.
+    // Note: If there are less buffers then there are frames, you might incur a gpu stall on the cpu side, which might 
+    //       not be as prevalent on lower-end hardware than higher-end. This is because the cpu side will be busy working on 
+    //       resources, while the gpu is waiting for the next batch. More buffers require more memory, but will lower the possibility of 
+    //       gpu stalls due to cpu usage, but too many buffers may potentially lead to stall as well! You need a sweet spot, which is usually
+    //       around 2-3 buffers. 
     virtual ResultCode setBuffers(U32 newBufferCount) { return RecluseResult_NoImpl; }
 
     // Not recommended, but submits a copy to this queue.
@@ -116,6 +119,10 @@ public:
                         ) 
         { }
 
+    // Requests a host-side wait on the device. This is useful if there is mutual exclusivity of resources that the device is 
+    // in the middle of using. For instance, trying to clean up resources at the end of an application, would require waiting until
+    // the device has finished its current use of the resources, before performing any clean up.
+    // Other instances can include minimizing the window, or when the window is out of focus...
     virtual ResultCode wait() { return RecluseResult_NoImpl; }
 
     virtual void bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* pOffsets) { }
@@ -142,6 +149,7 @@ public:
     // which is handled by managed drivers for older APIs, yet we reinforce this for older 
     // API anyways, in order to ensure newer APIs will still conform!
     virtual void transition(GraphicsResource* pResource, ResourceState) { }
+    virtual void transitionResources(GraphicsResource** resources, ResourceState* states, U32 resourceCount) { }
 
     virtual Bool supportsAsyncCompute() { return false; }
 
@@ -157,7 +165,7 @@ public:
     virtual void bindShaderResources(ShaderType type, U32 offset, U32 count, GraphicsResourceView** ppResources) { }
     virtual void bindUnorderedAccessViews(ShaderType type, U32 offset, U32 count, GraphicsResourceView** ppResources) { }
     virtual void bindConstantBuffers(ShaderType type, U32 offset, U32 count, GraphicsResource** ppResources) { }
-    virtual void bindRenderTargets(U32 count, GraphicsResourceView** ppResources, GraphicsResourceView* pDepthStencil) { }
+    virtual void bindRenderTargets(U32 count, GraphicsResourceView** ppResources, GraphicsResourceView* pDepthStencil = nullptr) { }
     virtual void bindSamplers(ShaderType type, U32 count, GraphicsSampler** ppSampler) { }
     virtual void bindRasterizerState(const RasterState& state) { }
     virtual void bindBlendState(const BlendState& state) { }

@@ -48,6 +48,14 @@ static R_FORCE_INLINE UPtr align(UPtr baseAddress, U64 alignment)
     return (alignment == 0) ? baseAddress : R_ALLOC_MASK(baseAddress, alignment);
 }
 
+
+// Obtain the alignment offset from the ptr address, should the ptr be unaligned.
+// if alignment is 0, then offset is 0.
+static R_FORCE_INLINE UPtr alignOffset(UPtr ptr, U64 alignment)
+{
+    return (alignment == 0) ? 0 : (UPtr)((U64)ptr & (alignment - 1));
+}
+
 template<typename Type>
 static constexpr R_FORCE_INLINE Type rightShift(Type value, Type bits)
 {

@@ -14,7 +14,7 @@ namespace Recluse {
 namespace Pipelines {
 
 std::unordered_map<PipelineId, PipelineState> g_pipelineMap;
-std::unordered_map<VkDescriptorSetLayout, VkPipelineLayout> g_pipelineLayoutMap;
+std::unordered_map<VkDescriptorSetLayout, ReferenceObject<VkPipelineLayout>> g_pipelineLayoutMap;
 
 static VkPrimitiveTopology getNativeTopology(PrimitiveTopology topology)
 {
@@ -391,6 +391,7 @@ const VulkanVertexLayout* obtain(VertexInputLayoutId inputLayoutId)
     auto iter = g_vertexLayoutMap.find(inputLayoutId);
     if (iter != g_vertexLayoutMap.end())
         return &iter->second;
+    R_ASSERT_FORMAT(false, "No Vertex Input found for the LayoutId(%d)", inputLayoutId);
     return nullptr;
 }
 
@@ -415,7 +416,7 @@ VkPipelineLayout makeLayout(VulkanDevice* pDevice, VkDescriptorSetLayout descrip
     }
     else
     {
-        layout = iter->second;
+        layout = *iter->second;
     }
     return layout;
 }
@@ -609,6 +610,14 @@ PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure, Pi
     if (iter == g_pipelineMap.end())
     {
         ShaderPrograms::VulkanShaderProgram* program = ShaderPrograms::obtainShaderProgram(structure.state.shaderProgramId, structure.state.shaderPermutation);
+
+        R_ASSERT_FORMAT
+            (
+                program, 
+                "No shader program (id=%d) with the following permutation (id=%d) exists! This will cause a crash!", 
+                structure.state.shaderProgramId, structure.state.shaderPermutation
+            );
+
         pipeline.bindPoint = program->bindPoint;
         switch (program->bindPoint)
         {
@@ -631,6 +640,8 @@ PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure, Pi
     }
     else
     {
+        // Increment the count every time we use this pipeline.
+        iter->second.lastUsed += 1;
         pipeline = iter->second;
     }
     return pipeline;
@@ -641,7 +652,9 @@ ResultCode clearPipelineCache(VulkanDevice* pDevice)
 {
     for (auto pipelineLayoutIt : g_pipelineLayoutMap)
     {
-        destroyPipelineLayout(pDevice, pipelineLayoutIt.second);
+        destroyPipelineLayout(pDevice, *pipelineLayoutIt.second);
+        // Clean out the reference counter.
+        while (pipelineLayoutIt.second.release());
     }
 
     for (auto pipelineIt : g_pipelineMap)
@@ -652,6 +665,13 @@ ResultCode clearPipelineCache(VulkanDevice* pDevice)
     g_pipelineLayoutMap.clear();
     g_pipelineMap.clear();
 
+    return RecluseResult_Ok;
+}
+
+
+ResultCode releasePipeline(VulkanDevice* pDevice, PipelineId pipelineId)
+{
+    
     return RecluseResult_Ok;
 }
 } // Pipelines

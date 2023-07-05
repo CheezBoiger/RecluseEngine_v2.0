@@ -64,17 +64,17 @@ struct PipelineState
     VkPipeline          pipeline;   
 };
 
-PipelineId          makePipelineId(const Structure& pipelineStructure);
+PipelineId              makePipelineId(const Structure& pipelineStructure);
 
 // Creates a pipeline if one does not exist. Otherwise, returns an existing pipeline.
-PipelineState       makePipeline(VulkanDevice* pDevice, const Structure& structure);
-PipelineState       makePipeline(VulkanDevice* pDevice, const Structure& structure, PipelineId pipelineId);
+PipelineState           makePipeline(VulkanDevice* pDevice, const Structure& structure);
+PipelineState           makePipeline(VulkanDevice* pDevice, const Structure& structure, PipelineId pipelineId);
 
 // Clears the whole pipeline cache.
-ResultCode             clearPipelineCache(VulkanDevice* pDevice);
-ResultCode             releasePipeline(VulkanDevice* pDevice, PipelineId pipelineId);
+ResultCode              clearPipelineCache(VulkanDevice* pDevice);
+ResultCode              releasePipeline(VulkanDevice* pDevice, PipelineId pipelineId);
 
 // Creates a pipeline layout if one does not exist. Otherwise, returns an existing pipeline layout.
-VkPipelineLayout    makeLayout(VulkanDevice* pDevice, VkDescriptorSetLayout layout);
+VkPipelineLayout        makeLayout(VulkanDevice* pDevice, VkDescriptorSetLayout layout);
 } // PipelineManager
 } // Recluse

@@ -28,12 +28,18 @@ U32 D3D12RenderPass::getNumRenderTargets() const
 }
 
 
-ResultCode D3D12RenderPass::initialize(D3D12Device* pDevice, U32 numRtvDescriptors, const D3D12GraphicsResourceView** rtvDescriptors, const D3D12GraphicsResourceView* dsvDescriptor)
+ResultCode D3D12RenderPass::update(D3D12Device* pDevice, U32 bufferIdx, U32 numRtvDescriptors, const D3D12GraphicsResourceView** rtvDescriptors, const D3D12GraphicsResourceView* dsvDescriptor)
 {
     R_ASSERT(pDevice != NULL);
     R_ASSERT(numRtvDescriptors <= 8);
+
+    if (!shouldUpdate(bufferIdx))
+    {
+        return RecluseResult_Ok;
+    }
+
     auto* pDescriptorManager = pDevice->getDescriptorHeapManager();
-    DescriptorHeapInstance* descriptorHeap = pDescriptorManager->getInstance(0);
+    DescriptorHeapInstance* descriptorHeap = pDescriptorManager->getInstance(bufferIdx);
 
     R_ASSERT(pDescriptorManager != NULL);
 
@@ -49,7 +55,7 @@ ResultCode D3D12RenderPass::initialize(D3D12Device* pDevice, U32 numRtvDescripto
         {
             const D3D12GraphicsResourceView* pResourceView = rtvDescriptors[i];
             const D3D12_RENDER_TARGET_VIEW_DESC& rtvDescription = pResourceView->asRtv();
-            ID3D12Resource* pResource = const_cast<ID3D12Resource*>(pResourceView->getResource()->castTo<D3D12Resource>()->get());
+            ID3D12Resource* pResource = pResourceView->getResource()->castTo<D3D12Resource>()->get();
             device->CreateRenderTargetView(pResource, &rtvDescription, dhAllocation.getCpuDescriptor(i));
         }
         m_rtvDhAllocation = dhAllocation;
@@ -59,10 +65,14 @@ ResultCode D3D12RenderPass::initialize(D3D12Device* pDevice, U32 numRtvDescripto
     {
         DescriptorHeapAllocation dsvAllocation = descriptorHeap->allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
         const D3D12_DEPTH_STENCIL_VIEW_DESC& dsvDescription = dsvDescriptor->asDsv();
-        ID3D12Resource* pResource = const_cast<ID3D12Resource*>(dsvDescriptor->getResource()->castTo<D3D12Resource>()->get());
+        ID3D12Resource* pResource = dsvDescriptor->getResource()->castTo<D3D12Resource>()->get();
         device->CreateDepthStencilView(pResource, &dsvDescription, dsvAllocation.getCpuDescriptor());
         m_dsvDhAllocation = dsvAllocation;
     }
+
+    // Assign the updated buffer idx to let us know that we have updated this render pass.
+    m_updateBufferIdx = bufferIdx;
+
     return RecluseResult_Ok;
 }
 
@@ -88,4 +98,12 @@ ResultCode D3D12RenderPass::release(D3D12Device* pDevice)
 
     return RecluseResult_NoImpl;
 }
+
+
+namespace RenderPasses {
+D3D12RenderPass* makeRenderPass(U32 numRtvs, const GraphicsResourceView** rtvs, const GraphicsResourceView* dsv)
+{
+    return nullptr;
+}
+} // RenderPasses
 } // Recluse

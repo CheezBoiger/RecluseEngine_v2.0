@@ -247,140 +247,142 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
     // Reinterpret hwnd to window pointer.
     Window* pWindow = reinterpret_cast<Window*>(GetPropW(hwnd, R_WIN32_PROP_NAME));
 
-    switch (uMsg) 
+    if (pWindow)
     {
-        case WM_CLOSE:
-        case WM_QUIT:
+        switch (uMsg) 
         {
-            pWindow->close();
-            break;
-        }
-        case WM_INPUT:
-        {
-            IInputFeedback feedback = { };
-            Mouse* pMouse           = pWindow->getMouseHandle();
-            RAWINPUT* raw           = &gWin32Runtime.lpb;
-
-            I32 dx = 0, dy = 0;
-            UINT dwSize;
-
-            if (!pMouse) 
+            case WM_CLOSE:
+            case WM_QUIT:
             {
-                // Break early as there is no mouse attached to this 
-                // window.
+                pWindow->close();
                 break;
             }
+            case WM_INPUT:
+            {
+                IInputFeedback feedback = { };
+                Mouse* pMouse           = pWindow->getMouseHandle();
+                RAWINPUT* raw           = &gWin32Runtime.lpb;
+
+                I32 dx = 0, dy = 0;
+                UINT dwSize;
+
+                if (!pMouse) 
+                {
+                    // Break early as there is no mouse attached to this 
+                    // window.
+                    break;
+                }
         
-            if 
-                (
-                    GetRawInputData
-                        (
-                            (HRAWINPUT)lParam, 
-                            RID_INPUT, 
-                            raw, 
-                            &dwSize, 
-                            sizeof(RAWINPUTHEADER)
-                        ) == -1u
-                ) 
-            {
-
-                R_WARN(R_CHANNEL_WIN32, "Raw input not returning correct size.");
-                break;
-
-            }
-
-            if (raw->header.dwType == RIM_TYPEMOUSE) 
-            {
-                if (raw->data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE) 
+                if 
+                    (
+                        GetRawInputData
+                            (
+                                (HRAWINPUT)lParam, 
+                                RID_INPUT, 
+                                raw, 
+                                &dwSize, 
+                                sizeof(RAWINPUTHEADER)
+                            ) == -1u
+                    ) 
                 {
-                    I32 prevX = pMouse->getLastXPos();
-                    I32 prevY = pMouse->getLastYPos();
 
-                    dx = (raw->data.mouse.lLastX / 65535.0f) * pWindow->getWidth()  - prevX; // get the delta from last mouse pos.
-                    dy = (raw->data.mouse.lLastY / 65535.0f) * pWindow->getHeight() - prevY; // get the delta from last mouse pos.
-                } 
-                else 
-                {
-                    dx = raw->data.mouse.lLastX;
-                    dy = raw->data.mouse.lLastY;
+                    R_WARN(R_CHANNEL_WIN32, "Raw input not returning correct size.");
+                    break;
+
                 }
 
-                if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_1_DOWN)
-                    feedback.buttonStateFlags &= InputState_Down << 0;
-                if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_2_DOWN)
-                    feedback.buttonStateFlags &= InputState_Down << 1;
-                if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_3_DOWN)
-                    feedback.buttonStateFlags &= InputState_Down << 2;
-                if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_4_DOWN)
-                    feedback.buttonStateFlags &= InputState_Down << 3;
-                if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_5_DOWN)
-                    feedback.buttonStateFlags &= InputState_Down << 4;
-            } 
+                if (raw->header.dwType == RIM_TYPEMOUSE) 
+                {
+                    if (raw->data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE) 
+                    {
+                        I32 prevX = pMouse->getLastXPos();
+                        I32 prevY = pMouse->getLastYPos();
 
-            feedback.xRate = dx;
-            feedback.yRate = dy;
+                        dx = (raw->data.mouse.lLastX / 65535.0f) * pWindow->getWidth()  - prevX; // get the delta from last mouse pos.
+                        dy = (raw->data.mouse.lLastY / 65535.0f) * pWindow->getHeight() - prevY; // get the delta from last mouse pos.
+                    } 
+                    else 
+                    {
+                        dx = raw->data.mouse.lLastX;
+                        dy = raw->data.mouse.lLastY;
+                    }
 
-            // TODO: Set the mouse position.
-            pMouse->integrateInput(feedback);
+                    if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_1_DOWN)
+                        feedback.buttonStateFlags &= InputState_Down << 0;
+                    if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_2_DOWN)
+                        feedback.buttonStateFlags &= InputState_Down << 1;
+                    if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_3_DOWN)
+                        feedback.buttonStateFlags &= InputState_Down << 2;
+                    if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_4_DOWN)
+                        feedback.buttonStateFlags &= InputState_Down << 3;
+                    if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_5_DOWN)
+                        feedback.buttonStateFlags &= InputState_Down << 4;
+                } 
 
-            break;
-        }
-        case WM_SYSKEYDOWN:
-        case WM_KEYDOWN:
-        {
-            Win32::registerKeyCall(I32(wParam), WM_KEYDOWN);
-            // Shift/ctrl key is registered, but we also need to check which shift/ctrl key (left, right)
-            // was also pressed. We check both. 
-            if (wParam == VK_SHIFT)
-            {
-                CHECK_KEY_STATE_DOWN(VK_LSHIFT, Win32::registerKeyCall);
-                CHECK_KEY_STATE_DOWN(VK_RSHIFT, Win32::registerKeyCall);
-            }
-            else if (wParam == VK_CONTROL)
-            {
-                CHECK_KEY_STATE_DOWN(VK_LCONTROL, Win32::registerKeyCall);
-                CHECK_KEY_STATE_DOWN(VK_RCONTROL, Win32::registerKeyCall);
-            }
-            break;
-        }
-        case WM_SYSKEYUP:
-        case WM_KEYUP:
-        {
-            Win32::registerKeyCall(I32(wParam), WM_KEYUP);
-            // The same applies as above key_down call.
-            if (wParam == VK_SHIFT)
-            {
-                CHECK_KEY_STATE_UP(VK_LSHIFT, Win32::registerKeyCall);
-                CHECK_KEY_STATE_UP(VK_RSHIFT, Win32::registerKeyCall);
-            }
-            else if (wParam == VK_CONTROL)
-            {
-                CHECK_KEY_STATE_UP(VK_LCONTROL, Win32::registerKeyCall);
-                CHECK_KEY_STATE_UP(VK_RCONTROL, Win32::registerKeyCall);
-            }
-            break;
-        }
-        case WM_MOVE:
-        case WM_SIZE:
-        {
-            // As a window is resized, we rely this back to the handler.
-            // Keep in mind that this needs to be rely'ed back to the renderer. 
-            // Which shouldn't be problematic. We can signal this inside our onWindowResize callback.
-            UINT width  = LOWORD(lParam);
-            UINT height = HIWORD(lParam);
-            pWindow->onWindowResize(pWindow->getPosX(), pWindow->getPosY(), width, height);
-            break;
-        }
-        case WM_MOUSEMOVE:
-        case WM_SYSCOMMAND:
-        case WM_LBUTTONDOWN:
-        case WM_RBUTTONDOWN:
-        case WM_LBUTTONUP:
-        case WM_RBUTTONUP:
-        case WM_PAINT:
-        default: break;
-    }    
+                feedback.xRate = dx;
+                feedback.yRate = dy;
 
+                // TODO: Set the mouse position.
+                pMouse->integrateInput(feedback);
+
+                break;
+            }
+            case WM_SYSKEYDOWN:
+            case WM_KEYDOWN:
+            {
+                Win32::registerKeyCall(I32(wParam), WM_KEYDOWN);
+                // Shift/ctrl key is registered, but we also need to check which shift/ctrl key (left, right)
+                // was also pressed. We check both. 
+                if (wParam == VK_SHIFT)
+                {
+                    CHECK_KEY_STATE_DOWN(VK_LSHIFT, Win32::registerKeyCall);
+                    CHECK_KEY_STATE_DOWN(VK_RSHIFT, Win32::registerKeyCall);
+                }
+                else if (wParam == VK_CONTROL)
+                {
+                    CHECK_KEY_STATE_DOWN(VK_LCONTROL, Win32::registerKeyCall);
+                    CHECK_KEY_STATE_DOWN(VK_RCONTROL, Win32::registerKeyCall);
+                }
+                break;
+            }
+            case WM_SYSKEYUP:
+            case WM_KEYUP:
+            {
+                Win32::registerKeyCall(I32(wParam), WM_KEYUP);
+                // The same applies as above key_down call.
+                if (wParam == VK_SHIFT)
+                {
+                    CHECK_KEY_STATE_UP(VK_LSHIFT, Win32::registerKeyCall);
+                    CHECK_KEY_STATE_UP(VK_RSHIFT, Win32::registerKeyCall);
+                }
+                else if (wParam == VK_CONTROL)
+                {
+                    CHECK_KEY_STATE_UP(VK_LCONTROL, Win32::registerKeyCall);
+                    CHECK_KEY_STATE_UP(VK_RCONTROL, Win32::registerKeyCall);
+                }
+                break;
+            }
+            case WM_MOVE:
+            case WM_SIZE:
+            {
+                // As a window is resized, we rely this back to the handler.
+                // Keep in mind that this needs to be rely'ed back to the renderer. 
+                // Which shouldn't be problematic. We can signal this inside our onWindowResize callback.
+                UINT width  = LOWORD(lParam);
+                UINT height = HIWORD(lParam);
+                pWindow->onWindowResize(pWindow->getPosX(), pWindow->getPosY(), width, height);
+                break;
+            }
+            case WM_MOUSEMOVE:
+            case WM_SYSCOMMAND:
+            case WM_LBUTTONDOWN:
+            case WM_RBUTTONDOWN:
+            case WM_LBUTTONUP:
+            case WM_RBUTTONUP:
+            case WM_PAINT:
+            default: break;
+        }    
+    }
     return DefWindowProcW(hwnd, uMsg, wParam, lParam);
 }
 

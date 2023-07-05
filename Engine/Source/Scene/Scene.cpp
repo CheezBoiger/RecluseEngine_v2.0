@@ -169,7 +169,7 @@ void Scene::unregisterSystems()
     for (auto& system : m_systems)
     {
         system->clearAll();
-        R_ASSERT_FORMAT(system->cleanUp() == RecluseResult_Ok, "cleanUp() failed for system.");
+        R_ASSERT_FORMAT(system->cleanUp() == RecluseResult_Ok, "cleanUp() failed for system %s", system->getName());
     }
 
     m_systems.clear();

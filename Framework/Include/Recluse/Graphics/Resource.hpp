@@ -24,26 +24,26 @@ public:
     GraphicsResource(const GraphicsResourceDescription& desc)
         : m_desc(desc) { }
 
-    virtual ~GraphicsResource() { }
+    virtual                             ~GraphicsResource() { }
 
     const GraphicsResourceDescription& getDesc() const { return m_desc; }
 
     // Map the resource based on range. If NULL range, maps the entire resource.
-    virtual ResultCode map(void** pMappedMemory, MapRange* pReadRange) { return RecluseResult_NoImpl; }
+    virtual ResultCode                  map(void** pMappedMemory, MapRange* pReadRange) { return RecluseResult_NoImpl; }
 
     // Unmap and invalidate the resource cache, which will flush if needed.
-    virtual ResultCode unmap(MapRange* pWriteRange) { return RecluseResult_NoImpl; }
+    virtual ResultCode                  unmap(MapRange* pWriteRange) { return RecluseResult_NoImpl; }
 
-    ResourceState getCurrentResourceState() const { return m_currentState; }
+    ResourceState                       getCurrentResourceState() const { return m_currentState; }
 
-    Bool isInResourceState(ResourceState desiredState) const { return (m_currentState == desiredState); }
+    Bool                                isInResourceState(ResourceState desiredState) const { return (m_currentState == desiredState); }
 
 protected:
-    void setCurrentResourceState(ResourceState state) { m_currentState = state; }
+    void                                setCurrentResourceState(ResourceState state) { m_currentState = state; }
 
 private:
-    GraphicsResourceDescription m_desc;
-    ResourceState m_currentState;
-    ResourceId m_id;
+    GraphicsResourceDescription         m_desc;
+    ResourceState                       m_currentState;
+    ResourceId                          m_id;
 };
 } // Recluse

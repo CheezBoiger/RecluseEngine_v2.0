@@ -16,6 +16,8 @@ static struct
     B32 initialized;
 } win32WindowFunctionality = { false };
 
+CriticalSection windowCs = { };
+
 
 static void setRawInputDevices(HWND hwnd)
 {
@@ -54,13 +56,29 @@ static B32 checkWindowRegistered()
         }
     
         win32WindowFunctionality.initialized = true;
+        windowCs.initialize();
     }
 
     return win32WindowFunctionality.initialized;
 }
 
 
-Window* Window::create(const std::string& title, U32 x, U32 y, U32 width, U32 height)
+R_INTERNAL
+DWORD getWindowStyle(ScreenMode screenMode)
+{
+    switch (screenMode)
+    {
+        case ScreenMode_WindowBorderless:
+        case ScreenMode_FullscreenBorderless:
+            return (WS_POPUP);
+        case ScreenMode_Windowed:
+        default:
+            return (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_BORDER | WS_SIZEBOX);
+    }
+}
+
+
+Window* Window::create(const std::string& title, U32 x, U32 y, U32 width, U32 height, ScreenMode screenMode)
 {
     R_DEBUG
         (
@@ -81,7 +99,7 @@ Window* Window::create(const std::string& title, U32 x, U32 y, U32 width, U32 he
         return nullptr;
     }
 
-    {    
+    {   
         wchar_t* ltitle = nullptr;
         int size        = 0;
 
@@ -97,7 +115,7 @@ Window* Window::create(const std::string& title, U32 x, U32 y, U32 width, U32 he
                         NULL, 
                         R_WIN32_WINDOW_NAME,
                         ltitle, 
-                        (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX), 
+                        (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_BORDER | WS_SIZEBOX), 
                         x, y, 
                         width, height, 
                         NULL, 
@@ -110,34 +128,26 @@ Window* Window::create(const std::string& title, U32 x, U32 y, U32 width, U32 he
 
     if (!hwnd) 
     {
-        R_ERROR(R_CHANNEL_WIN32, "Failed to creat window handle!");
+        R_ERROR(R_CHANNEL_WIN32, "Failed to create window handle!");
         
         return nullptr;
     }
 
-    pWindow             = new Window();
-    pWindow->m_xPos     = x;
-    pWindow->m_yPos     = y;
-    pWindow->m_width    = width;
-    pWindow->m_height   = height;
-    pWindow->m_title    = title;
-    pWindow->m_handle   = hwnd;
+    pWindow                 = new Window();
+    pWindow->m_xPos         = x;
+    pWindow->m_yPos         = y;
+    pWindow->m_width        = width;
+    pWindow->m_height       = height;
+    pWindow->m_title        = title;
+    pWindow->m_handle       = hwnd;
+    pWindow->m_isBorderless = (screenMode == ScreenMode_FullscreenBorderless || screenMode == ScreenMode_WindowBorderless);
+    pWindow->m_isFullscreen = (screenMode == ScreenMode_Fullscreen || screenMode == ScreenMode_FullscreenBorderless);
+    pWindow->m_isShowing    = false;
 
     SetPropW(hwnd, R_WIN32_PROP_NAME, pWindow);
 
-    // Adjust window size due to possible menu.
-    RECT windowRect = { (LONG)x, (LONG)y, (LONG)width, (LONG)height };
-
-    AdjustWindowRect(&windowRect, WS_CAPTION, GetMenu(hwnd) != NULL);
-
-    MoveWindow
-        (
-            hwnd, 
-            0, 0,
-            windowRect.right - windowRect.left, 
-            windowRect.bottom - windowRect.top, 
-            FALSE
-        );
+    pWindow->setScreenMode(screenMode);
+    pWindow->update();
 
     setRawInputDevices(hwnd);
 
@@ -203,10 +213,66 @@ ResultCode Window::destroy(Window* pWindow)
 }
 
 
+void Window::setToCenter()
+{
+    HMONITOR monitor = MonitorFromWindow((HWND)m_handle, MONITOR_DEFAULTTOPRIMARY);
+    MONITORINFO monitorInfo;
+    monitorInfo.cbSize = sizeof(MONITORINFO);
+
+    GetMonitorInfo(monitor, &monitorInfo);
+    RECT windowSize;
+    GetWindowRect((HWND)m_handle, &windowSize);
+
+    LONG monitorX = monitorInfo.rcMonitor.right;
+    LONG monitorY = monitorInfo.rcMonitor.bottom;
+
+    LONG centerX = (monitorX - windowSize.right) / 2;
+    LONG centerY = (monitorY - windowSize.bottom) / 2;
+
+    SetWindowPos((HWND)m_handle, 0, static_cast<int>(centerX), static_cast<int>(centerY), 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+    m_xPos = static_cast<int>(centerX);
+    m_yPos = static_cast<int>(centerY);
+    UpdateWindow((HWND)m_handle);
+}
+
+
 void Window::open()
 {
     HWND hwnd = (HWND)getNativeHandle();
     ShowWindow(hwnd, SW_SHOW);
+    UpdateWindow(hwnd);
     m_isShowing = true;
+}
+
+
+void Window::update()
+{
+    if (mustChangeScreen())
+    {
+        HWND hwnd = (HWND)m_handle;
+        if (isBorderless())
+        {
+            SetWindowLongW(hwnd, GWL_EXSTYLE, 0);
+            SetWindowLongW(hwnd, GWL_STYLE, (WS_POPUP));
+            SetWindowPos(hwnd, HWND_NOTOPMOST, m_xPos, m_yPos, m_width, m_height, (SWP_FRAMECHANGED));
+        }
+        else
+        {
+            // Adjust window size due to possible menu.
+            RECT windowRect = { (LONG)m_xPos, (LONG)m_yPos, (LONG)m_width, (LONG)m_height };
+
+            AdjustWindowRect(&windowRect, WS_CAPTION, GetMenu(hwnd) != NULL);
+
+            MoveWindow
+                (
+                    hwnd, 
+                    0, 0,
+                    windowRect.right - windowRect.left, 
+                    windowRect.bottom - windowRect.top, 
+                    FALSE
+                );
+        }
+        screenChanged();
+    }
 }
 } // Recluse

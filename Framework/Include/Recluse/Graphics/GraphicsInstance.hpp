@@ -36,12 +36,17 @@ public:
     GraphicsInstance(GraphicsAPI api)
         : m_api(api) { }
 
-    virtual ~GraphicsInstance() { }
+    virtual                                     ~GraphicsInstance() { }
     
-    static R_PUBLIC_API GraphicsInstance* createInstance(enum GraphicsAPI api = GraphicsApi_Vulkan);
-    static R_PUBLIC_API ResultCode destroyInstance(GraphicsInstance* pInstance);
+    // Create the graphics instance. This should be the starting point for your graphics rendering 
+    // devices.
+    static R_PUBLIC_API GraphicsInstance*       createInstance(enum GraphicsAPI api = GraphicsApi_Vulkan);
 
-    R_PUBLIC_API ResultCode initialize(const ApplicationInfo& appInfo, LayerFeatureFlags flags) 
+    // Destroy the graphics instance. Be sure to clean up any memory or objects that were allocated by 
+    // adapters.
+    static R_PUBLIC_API ResultCode              destroyInstance(GraphicsInstance* pInstance);
+
+    R_PUBLIC_API ResultCode                     initialize(const ApplicationInfo& appInfo, LayerFeatureFlags flags) 
     { 
         ResultCode err = onInitialize(appInfo, flags);
         queryGraphicsAdapters();
@@ -52,33 +57,33 @@ public:
     R_PUBLIC_API std::vector<GraphicsAdapter*>& getGraphicsAdapters() { return m_graphicsAdapters; }
 
     // Get the runtime graphics api.
-    GraphicsAPI getApi() const { return m_api; }
+    GraphicsAPI                                 getApi() const { return m_api; }
 
 protected:
     // Called in initialize.
-    virtual void queryGraphicsAdapters() = 0;
+    virtual void                                queryGraphicsAdapters() = 0;
 
     // Called in destroy.
-    virtual void freeGraphicsAdapters() = 0;
+    virtual void                                freeGraphicsAdapters() = 0;
 
     // Called in initialize.
-    virtual ResultCode onInitialize(const ApplicationInfo& appInfo, LayerFeatureFlags flags) = 0;
+    virtual ResultCode                          onInitialize(const ApplicationInfo& appInfo, LayerFeatureFlags flags) = 0;
     
     // Called in destroy.
-    virtual void onDestroy() = 0;
+    virtual void                                onDestroy() = 0;
 
     // Available adapters.
-    std::vector<GraphicsAdapter*> m_graphicsAdapters;
+    std::vector<GraphicsAdapter*>               m_graphicsAdapters;
 
 private:
     // Destroys the context, should be called by the destroyContext() function.
-    void destroy() 
+    void                                        destroy() 
     { 
         freeGraphicsAdapters();
         onDestroy();
     }
 
     // Graphics api used.
-    GraphicsAPI m_api;
+    GraphicsAPI                                 m_api;
 };
 } // Recluse

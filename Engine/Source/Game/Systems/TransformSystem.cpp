@@ -20,7 +20,7 @@ ResultCode TransformSystem::onFreeComponent(Transform** pIn)
         if ((*pIn)->getOwner() == (*it)->getOwner())
         {
             m_transforms.erase(it);
-            delete* pIn;
+            delete *pIn;
             *pIn = nullptr;
             return RecluseResult_Ok;
         }
@@ -47,5 +47,17 @@ Transform* TransformSystem::getComponent(const RGUID& entityKey)
 Transform** TransformSystem::getAllComponents(U64& pOut)
 {
     return m_transforms.data();
+}
+
+
+ResultCode TransformSystem::onCleanUp()
+{
+    for (auto it = m_transforms.begin(); it != m_transforms.end(); ++it)
+    {
+        (*it)->cleanUp();
+        delete *it;
+    }
+    m_transforms.clear();
+    return RecluseResult_Ok;
 }
 } // Recluse

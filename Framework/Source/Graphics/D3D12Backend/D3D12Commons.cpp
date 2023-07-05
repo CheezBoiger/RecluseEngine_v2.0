@@ -31,6 +31,8 @@ D3D12_RESOURCE_STATES getNativeResourceState(Recluse::ResourceState state)
         case Recluse::ResourceState_VertexBuffer:
         case Recluse::ResourceState_ConstantBuffer:
             return D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+        case Recluse::ResourceState_IndirectArgs:
+            return D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT;
     }
 
     return D3D12_RESOURCE_STATE_COMMON;

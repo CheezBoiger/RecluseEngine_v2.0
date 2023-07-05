@@ -54,36 +54,39 @@ public:
     ~MemoryPool();
         
     // Get the starting address of the memory pool.
-    UPtr     getBaseAddress() const { return m_baseAddr; }
+    UPtr                getBaseAddress() const { return m_baseAddr; }
 
     // Get the total size of the pool, in bytes.
-    U64         getTotalSizeBytes() const { return m_totalSzBytes; }
+    U64                 getTotalSizeBytes() const { return m_totalSzBytes; }
 
     // Get the page size used for the pool, in bytes.
-    U64         getPageSzBytes() const { return m_pageSzBytes; }
+    U64                 getPageSzBytes() const { return m_pageSzBytes; }
 
-    inline void*       getRawAddressAt(U64 sizeBytes) { return reinterpret_cast<void*>(m_baseAddr + sizeBytes); }
-    inline UPtr     getPtrAddressAt(U64 sizeBytes) { return (m_baseAddr + sizeBytes); }
+    inline void*        getRawAddressAt(U64 sizeBytes) { return reinterpret_cast<void*>(m_baseAddr + sizeBytes); }
+    inline UPtr         getPtrAddressAt(U64 sizeBytes) { return (m_baseAddr + sizeBytes); }
 
     // Add a memory leak scanner to the pool, to ensure there are no memory leaks.
-    void        addScanner(MemoryScanner* scanner);
+    void                addScanner(MemoryScanner* scanner);
 
     // Pre allocates the memory pool.
-    void        preAllocate(U64 szBytes, U64 pageSize = 4096ull);
+    void                preAllocate(U64 szBytes, U64 pageSize = 4096ull);
 
     // Clear the pool, wipe out the state and set to default value.
     // This does not free the pool memory!
-    void        clear(U32 defaultValue = 0);
+    void                clear(U32 defaultValue = 0);
 
     // Free the pool memory! This will delete the memory!
-    void        release();
+    void                release();
 
     // Check if the memory pool is allocated, otherwise return false if pool is not.
-    Bool        isAllocated() { return !!m_totalSzBytes; }
+    Bool                isAllocated() { return !!m_totalSzBytes; }
+
+    // Copy contents from source memory pool, to destination memory pool.
+    static void         copy(MemoryPool* dst, U64 dstOffset, MemoryPool* src, U64 srcOffset, U64 sizeBytes);
 
 private:
 
-    UPtr m_baseAddr;
+    UPtr    m_baseAddr;
     U64     m_totalSzBytes;
     U64     m_pageSzBytes;
     B32     m_isMalloc;

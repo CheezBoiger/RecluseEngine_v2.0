@@ -5,7 +5,9 @@
 #include "D3D12Swapchain.hpp"
 #include "D3D12CommandList.hpp"
 #include "D3D12Resource.hpp"
+#include "D3D12ResourceView.hpp"
 #include "D3D12Allocator.hpp"
+#include "D3D12RenderPass.hpp"
 #include "Recluse/Types.hpp"
 #include "Recluse/Messaging.hpp"
 
@@ -83,6 +85,69 @@ void D3D12Context::popState()
 }
 
 
+void D3D12Context::transition(GraphicsResource* pResource, ResourceState newState)
+{
+    if (!pResource->isInResourceState(newState))
+    {
+        D3D12Resource* d3d12Resource = pResource->castTo<D3D12Resource>();
+        D3D12_RESOURCE_BARRIER barrier = d3d12Resource->transition(newState);
+        m_barrierTransitions.push_back(barrier);
+    }
+}
+
+
+void D3D12Context::flushBarrierTransitions()
+{
+    if (!m_barrierTransitions.empty())
+    {
+        ID3D12GraphicsCommandList* pList = m_pPrimaryCommandList->get();
+        pList->ResourceBarrier(static_cast<UINT>(m_barrierTransitions.size()), m_barrierTransitions.data());
+        m_barrierTransitions.clear();
+    }
+}
+
+
+void D3D12Context::bindRenderTargets(U32 count, GraphicsResourceView** ppResources, GraphicsResourceView* pDepthStencil)
+{
+    ID3D12GraphicsCommandList* pList = m_pPrimaryCommandList->get();
+    D3D12RenderPass* pRenderPass = RenderPasses::makeRenderPass
+                                            (
+                                                count, 
+                                                const_cast<const GraphicsResourceView**>(ppResources), 
+                                                const_cast<const GraphicsResourceView*>(pDepthStencil)
+                                            );
+    R_ASSERT_FORMAT(pRenderPass, "D3D12RenderPass was passed nullptr!");
+    pRenderPass->update(m_pDevice, currentBufferIndex(), count, nullptr, nullptr);
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = pRenderPass->getRtvDescriptor();
+    D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = pRenderPass->getDsvDescriptor();
+    pList->OMSetRenderTargets(count, &rtvHandle, true, &dsvHandle);
+    
+    m_pRenderPass = pRenderPass;
+}
+
+
+void D3D12Context::clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect)
+{
+    ID3D12GraphicsCommandList* pList = m_pPrimaryCommandList->get();
+    R_ASSERT_FORMAT(m_pRenderPass, "No render pass was set for clear! Be sure to call bindRenderTargets() to set up a render pass!");
+    
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pRenderPass->getRtvDescriptor(idx);
+    FLOAT clearValue[4];
+    D3D12_RECT d3d12Rect = { };
+
+    d3d12Rect.left      = rect.x;
+    d3d12Rect.right     = rect.width;
+    d3d12Rect.top       = rect.y;
+    d3d12Rect.bottom    = rect.height;
+
+    clearValue[0] = clearColor[0];
+    clearValue[1] = clearColor[1];
+    clearValue[2] = clearColor[2];
+    clearValue[3] = clearColor[3];
+    pList->ClearRenderTargetView(rtvHandle, clearValue, 1, &d3d12Rect);
+}
+
+
 ResultCode D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo& info)
 {
     R_DEBUG(R_CHANNEL_D3D12, "Creating D3D12 device...");
@@ -91,7 +156,6 @@ ResultCode D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo
     HRESULT result          = S_OK;
 
     result = D3D12CreateDevice(pAdapter, D3D_FEATURE_LEVEL_11_1, __uuidof(ID3D12Device), (void**)&m_device);
-
 
     if (result != S_OK) 
     {

@@ -25,7 +25,7 @@ ResultCode BuddyAllocator::onInitialize()
 
     BuddyBlock block    = { };
     block.blockId       = nthBit;
-    block.offsetBytes   = baseAddr;
+    block.addressBytes   = baseAddr;
     block.memSzBytes    = totalSzBytes;
 
     // Store big block as initialized to the whole memory region.
@@ -38,7 +38,6 @@ ResultCode BuddyAllocator::onInitialize()
 ResultCode BuddyAllocator::onAllocate(Allocation* pOutput, U64 requestSz, U16 alignment)
 {
     R_ASSERT(Math::isPowerOf2(alignment));
-    UPtr baseAddr    = getBaseAddr();
     U64 neededSzBytes   = requestSz + (alignment - 1);
     
     U32 nthBit          = (U32)ceil(log2(neededSzBytes));
@@ -47,8 +46,8 @@ ResultCode BuddyAllocator::onAllocate(Allocation* pOutput, U64 requestSz, U16 al
     {
         BuddyBlock block = m_freeList[nthBit][0];
         m_freeList[nthBit].erase(m_freeList[nthBit].begin());
-        U64 blockAddress                        = baseAddr + block.offsetBytes;
-        pOutput->baseAddress                    = align(baseAddr + block.offsetBytes, alignment);
+        U64 blockAddress                        = block.addressBytes;
+        pOutput->baseAddress                    = align(block.addressBytes, alignment);
         pOutput->sizeBytes                      = block.memSzBytes;
         m_allocatedBlocks[pOutput->baseAddress] = makeBlockAllocation(blockAddress, block.memSzBytes);
     } 
@@ -83,10 +82,10 @@ ResultCode BuddyAllocator::onAllocate(Allocation* pOutput, U64 requestSz, U16 al
                 BuddyBlock blockLeft;
                 BuddyBlock blockRight;
                 
-                blockLeft.offsetBytes   = block.offsetBytes;
+                blockLeft.addressBytes   = block.addressBytes;
                 blockLeft.memSzBytes    = (block.memSzBytes >> 1ull);
                 
-                blockRight.offsetBytes  = blockLeft.offsetBytes + blockLeft.memSzBytes;
+                blockRight.addressBytes  = blockLeft.addressBytes + blockLeft.memSzBytes;
                 blockRight.memSzBytes   = (block.memSzBytes >> 1ull);
 
                 m_freeList[i].push_back(blockLeft);
@@ -97,7 +96,7 @@ ResultCode BuddyAllocator::onAllocate(Allocation* pOutput, U64 requestSz, U16 al
             }
         
             // Allocate the buddy block. Use the aligned address as the key to the mapped buddy block.
-            U64 blockAddress                        = baseAddr + block.offsetBytes;
+            U64 blockAddress                        = block.addressBytes;
             pOutput->baseAddress                    = align(blockAddress, alignment);
             pOutput->sizeBytes                      = block.memSzBytes;
             m_allocatedBlocks[pOutput->baseAddress] = makeBlockAllocation(blockAddress, block.memSzBytes);
@@ -128,7 +127,7 @@ ResultCode BuddyAllocator::onFree(Allocation* pOutput)
 
     // memSzBytes is always the power of our N-th value.
     BuddyBlock block    = { };
-    block.offsetBytes   = allocOffset;
+    block.addressBytes   = allocOffset;
     block.memSzBytes    = (1ull << nthBit);
 
     m_freeList[nthBit].push_back(block);
@@ -141,13 +140,13 @@ ResultCode BuddyAllocator::onFree(Allocation* pOutput)
     for (U32 i = 0; i < m_freeList[nthBit].size(); ++i) 
     {
         // Merge blocks together, if applicable.
-        if (m_freeList[nthBit][i].offsetBytes == buddyAddr) 
+        if (m_freeList[nthBit][i].addressBytes == buddyAddr) 
         {
             // Check if even, merge with alloc offset. Otherwise, use buddyaddr
             if (Math::isEven(buddyNumber)) 
             {
                 BuddyBlock newBlock     = { };
-                newBlock.offsetBytes    = allocOffset;
+                newBlock.addressBytes    = allocOffset;
                 newBlock.memSzBytes     = 2ull * (1ull << nthBit);
                 m_freeList[nthBit + 1].push_back(newBlock);
              
@@ -155,7 +154,7 @@ ResultCode BuddyAllocator::onFree(Allocation* pOutput)
             else 
             {
                 BuddyBlock newBlock     = { };
-                newBlock.offsetBytes    = buddyAddr;
+                newBlock.addressBytes    = buddyAddr;
                 newBlock.memSzBytes     = 2ull * (1ull << nthBit);
                 m_freeList[nthBit + 1].push_back(newBlock);
             
