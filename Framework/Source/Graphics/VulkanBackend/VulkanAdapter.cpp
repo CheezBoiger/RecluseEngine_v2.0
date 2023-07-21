@@ -48,19 +48,38 @@ std::vector<VulkanAdapter> VulkanAdapter::getAvailablePhysicalDevices(VulkanInst
 }
 
 
-VkPhysicalDeviceProperties VulkanAdapter::getProperties() const
+VkDeviceSize VulkanAdapter::obtainMinUniformBufferOffsetAlignment(VulkanDevice* pDevice)
+{
+    R_ASSERT(pDevice != NULL);
+    const VkPhysicalDeviceProperties& properties = pDevice->getAdapter()->getProperties();
+    return properties.limits.minUniformBufferOffsetAlignment;
+}
+
+
+VkPhysicalDeviceProperties VulkanAdapter::internalGetPhysicalProperties()
 {
     VkPhysicalDeviceProperties props = { };
     vkGetPhysicalDeviceProperties(m_phyDevice, &props);
     return props;
 }
 
+const VkPhysicalDeviceProperties& VulkanAdapter::getProperties() const
+{
+    return m_properties;
+}
 
-VkPhysicalDeviceMemoryProperties VulkanAdapter::getMemoryProperties() const
+
+VkPhysicalDeviceMemoryProperties VulkanAdapter::internalGetPhysicalMemoryProperties()
 {
     VkPhysicalDeviceMemoryProperties props = { };
     vkGetPhysicalDeviceMemoryProperties(m_phyDevice, &props);
     return props;
+}
+
+
+const VkPhysicalDeviceMemoryProperties& VulkanAdapter::getMemoryProperties() const
+{
+    return m_memoryProperties;
 }
 
 
@@ -209,11 +228,10 @@ B32 VulkanAdapter::checkSurfaceSupport(U32 queueIndex, VkSurfaceKHR surface) con
 }
 
 
-U32 VulkanAdapter::findMemoryType(U32 filter, ResourceMemoryUsage usage) const
+U32 VulkanAdapter::findMemoryType(U32 memoryTypeBitsRequirement, ResourceMemoryUsage usage) const
 { 
     VkMemoryPropertyFlags required = 0;
     VkMemoryPropertyFlags preferred = 0;
-    U32 index = 0xffffffff;
 
     switch (usage) 
     {
@@ -246,26 +264,22 @@ U32 VulkanAdapter::findMemoryType(U32 filter, ResourceMemoryUsage usage) const
 
     VkPhysicalDeviceMemoryProperties memoryProperties = getMemoryProperties();
 
-    for (U32 i = 0; i < memoryProperties.memoryTypeCount; ++i) 
+    for (U32 memoryIndex = 0; memoryIndex < memoryProperties.memoryTypeCount; ++memoryIndex) 
     {
-        const VkMemoryPropertyFlags propFlags = memoryProperties.memoryTypes[i].propertyFlags;
+        const U32 memoryTypeBits = (1 << memoryIndex);
+        const VkMemoryPropertyFlags properties = memoryProperties.memoryTypes[memoryIndex].propertyFlags;
+        const Bool isRequiredMemoryType = memoryTypeBitsRequirement & memoryTypeBits;
+        const Bool hasRequiredProperties = ((properties & required) == required);
+        const Bool hasPreferredProperties = ((properties & preferred) == preferred) && hasRequiredProperties;
 
-        if ((filter & (1 << i))) 
+        if (isRequiredMemoryType && (hasPreferredProperties || hasRequiredProperties))
         {
-            if ((propFlags & required) == required && ((propFlags & preferred) == preferred)) 
-            {
-                index = i;
-                break;
-            } 
-            else if ((propFlags & required) == required) 
-            {
-                index = i;
-                break;
-            }
+            return memoryIndex;
         }
     }
 
-    return index;
+    // Couldn't find the requirements we were looking for.
+    return 0xffffffff;
 }
 
 

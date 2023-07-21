@@ -64,6 +64,7 @@ const char* getResourceFormatString(ResourceFormat format)
         FORMAT_STRING(ResourceFormat_R16_Uint);
         FORMAT_STRING(ResourceFormat_R16_Float);
         FORMAT_STRING(ResourceFormat_B8G8R8A8_Unorm);
+        FORMAT_STRING(ResourceFormat_R32G32B32_Float);
     }
 }
 } // Recluse

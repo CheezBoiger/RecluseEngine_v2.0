@@ -27,8 +27,8 @@ public:
             D3D12Device* pDevice,
             U32 bufferIdx,
             U32 numRtvDescriptors, 
-            const D3D12GraphicsResourceView** rtvDescriptors, 
-            const D3D12GraphicsResourceView* dsvDescriptor = nullptr
+            GraphicsResourceView* const* rtvDescriptors, 
+            const GraphicsResourceView* dsvDescriptor = nullptr
         );
 
     ResultCode                      release(D3D12Device* pDevice);
@@ -51,6 +51,6 @@ private:
 namespace RenderPasses {
 
 
-D3D12RenderPass* makeRenderPass(U32 numRtvs, const GraphicsResourceView** rtvs, const GraphicsResourceView* dsv = nullptr);
+D3D12RenderPass* makeRenderPass(U32 numRtvs, GraphicsResourceView* const* rtvs, const GraphicsResourceView* dsv = nullptr);
 } // Renderpasses
 } // Recluse

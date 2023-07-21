@@ -76,13 +76,15 @@ public:
 
     BufferResources*                    getCurrentBufferResource() { return &m_bufferResources[m_currentBufferIndex]; }
     U32                                 getCurrentBufferIndex() const { return m_currentBufferIndex; }
+    U32                                 obtainCurrentBufferIndex() const { return getCurrentBufferIndex(); }
+    U32                                 obtainBufferCount() const { return m_bufferCount; }
 
     const std::vector<BufferResources>& getBufferResources() const { return m_bufferResources; }
     void                                resetCurrentResources();
    
     void                                bindRenderTargets(U32 count, GraphicsResourceView** ppResources, GraphicsResourceView* pDepthStencil = nullptr) override;
     void                                clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) override;
-    void                                clearDepthStencil(F32 clearDepth, U8 clearStencil, const Rect& rect) override;
+    void                                clearDepthStencil(ClearFlags clearFlags, F32 clearDepth, U8 clearStencil, const Rect& rect) override;
     void                                setScissors(U32 numScissors, Rect* pRects) override;
     void                                setViewports(U32 numViewports, Viewport* pViewports) override;
 

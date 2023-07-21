@@ -28,7 +28,7 @@ U32 D3D12RenderPass::getNumRenderTargets() const
 }
 
 
-ResultCode D3D12RenderPass::update(D3D12Device* pDevice, U32 bufferIdx, U32 numRtvDescriptors, const D3D12GraphicsResourceView** rtvDescriptors, const D3D12GraphicsResourceView* dsvDescriptor)
+ResultCode D3D12RenderPass::update(D3D12Device* pDevice, U32 bufferIdx, U32 numRtvDescriptors, GraphicsResourceView* const* rtvDescriptors, const GraphicsResourceView* dsvDescriptor)
 {
     R_ASSERT(pDevice != NULL);
     R_ASSERT(numRtvDescriptors <= 8);
@@ -53,7 +53,7 @@ ResultCode D3D12RenderPass::update(D3D12Device* pDevice, U32 bufferIdx, U32 numR
         DescriptorHeapAllocation dhAllocation = descriptorHeap->allocate(device, numRtvDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
         for (U32 i = 0; i < numRtvDescriptors; ++i)
         {
-            const D3D12GraphicsResourceView* pResourceView = rtvDescriptors[i];
+            const D3D12GraphicsResourceView* pResourceView = rtvDescriptors[i]->castTo<D3D12GraphicsResourceView>();
             const D3D12_RENDER_TARGET_VIEW_DESC& rtvDescription = pResourceView->asRtv();
             ID3D12Resource* pResource = pResourceView->getResource()->castTo<D3D12Resource>()->get();
             device->CreateRenderTargetView(pResource, &rtvDescription, dhAllocation.getCpuDescriptor(i));
@@ -64,7 +64,7 @@ ResultCode D3D12RenderPass::update(D3D12Device* pDevice, U32 bufferIdx, U32 numR
     if (dsvDescriptor)
     {
         DescriptorHeapAllocation dsvAllocation = descriptorHeap->allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-        const D3D12_DEPTH_STENCIL_VIEW_DESC& dsvDescription = dsvDescriptor->asDsv();
+        const D3D12_DEPTH_STENCIL_VIEW_DESC& dsvDescription = dsvDescriptor->castTo<D3D12GraphicsResourceView>()->asDsv();
         ID3D12Resource* pResource = dsvDescriptor->getResource()->castTo<D3D12Resource>()->get();
         device->CreateDepthStencilView(pResource, &dsvDescription, dsvAllocation.getCpuDescriptor());
         m_dsvDhAllocation = dsvAllocation;
@@ -101,7 +101,7 @@ ResultCode D3D12RenderPass::release(D3D12Device* pDevice)
 
 
 namespace RenderPasses {
-D3D12RenderPass* makeRenderPass(U32 numRtvs, const GraphicsResourceView** rtvs, const GraphicsResourceView* dsv)
+D3D12RenderPass* makeRenderPass(U32 numRtvs, GraphicsResourceView* const* rtvs, const GraphicsResourceView* dsv)
 {
     return nullptr;
 }

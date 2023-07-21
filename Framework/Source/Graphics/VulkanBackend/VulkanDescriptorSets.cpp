@@ -4,6 +4,7 @@
 #include "VulkanCommons.hpp"
 #include "VulkanResource.hpp"
 #include "VulkanDescriptorManager.hpp"
+#include "VulkanAdapter.hpp"
 #include "VulkanViews.hpp"
 
 #include "Recluse/Messaging.hpp"
@@ -84,7 +85,11 @@ VkDescriptorSetLayout createDescriptorSetLayout(VulkanContext* pContext, const D
 
     for (U32 i = 0; i < structure.key.value.constantBuffers; ++i)
     {
-        VulkanBuffer* pBuffer = structure.ppConstantBuffers[i];
+        VulkanBuffer* pBuffer = structure.ppConstantBuffers[i].buffer;
+        
+        // No pBuffer means no slot occupied.
+        if (!pBuffer)
+            continue;
 
         bindings[binding].binding               = binding;
         bindings[binding].descriptorCount       = 1;
@@ -101,10 +106,12 @@ VkDescriptorSetLayout createDescriptorSetLayout(VulkanContext* pContext, const D
         bindings[binding].descriptorCount   = 1;
         bindings[binding].descriptorType    = VK_DESCRIPTOR_TYPE_SAMPLER;
         bindings[binding].stageFlags        = Vulkan::getShaderStages(pContext->obtainSamplerShaderFlags(pSampler->getId()));
+        binding++;
     }
 
+    R_ASSERT(binding < bindings.size());
     ci.sType            = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    ci.bindingCount     = bindings.size();
+    ci.bindingCount     = binding;
     ci.pBindings        = bindings.data();
 
     result = vkCreateDescriptorSetLayout(device, &ci, nullptr, &layout);
@@ -153,18 +160,14 @@ static ResultCode freeDescriptorSet(VulkanContext* pContext, const VulkanDescrip
 }
 
 
-static VkDescriptorBufferInfo makeDescriptorBufferInfo(VulkanResource* pResource)
+static VkDescriptorBufferInfo makeDescriptorBufferInfo(VulkanBuffer* pBuffer, VkDeviceSize offsetBytes, VkDeviceSize sizeBytes)
 {
     VkDescriptorBufferInfo info = { };
-    R_ASSERT(pResource->isBuffer());
-    VulkanBuffer* pBuffer       = pResource->castTo<VulkanBuffer>();
     // The actual size of the requested buffer needs to be used, not the actual allocation size, which is usually a 
     // sized aligned to gpu alignment size.
-    const GraphicsResourceDescription& desc = pBuffer->getDesc();
-    const VulkanMemory& memory  = pBuffer->getMemory();
     info.buffer                 = pBuffer->get();
-    info.offset                 = memory.offsetBytes;
-    info.range                  = desc.width;
+    info.offset                 = offsetBytes;
+    info.range                  = sizeBytes;
     return info;
 }
 
@@ -215,7 +218,8 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
 
         if (description.dimension == ResourceDimension_Buffer)
         {
-            VkDescriptorBufferInfo info = makeDescriptorBufferInfo(pResource);
+            VulkanBuffer* buffer = pResource->castTo<VulkanBuffer>();
+            VkDescriptorBufferInfo info = makeDescriptorBufferInfo(buffer, 0, buffer->getDesc().width);
             bufferInfo.push_back(info);
             write.pBufferInfo = &bufferInfo.back();
         }
@@ -244,7 +248,8 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
 
         if (description.dimension == ResourceDimension_Buffer)
         { 
-            VkDescriptorBufferInfo info = makeDescriptorBufferInfo(pResource);
+            VulkanBuffer* buffer = pResource->castTo<VulkanBuffer>();
+            VkDescriptorBufferInfo info = makeDescriptorBufferInfo(buffer, 0, buffer->getDesc().width);
             bufferInfo.push_back(info);
             write.pBufferInfo = &bufferInfo.back();
         }
@@ -261,8 +266,15 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
     for (U32 i = 0; i < structure.key.value.constantBuffers; ++i)
     {
         VkWriteDescriptorSet write      = { };
-        VulkanBuffer* pBuffer           = structure.ppConstantBuffers[i];
-        VkDescriptorBufferInfo info     = makeDescriptorBufferInfo(pBuffer);
+        VulkanBuffer* pBuffer           = structure.ppConstantBuffers[i].buffer;
+
+        // No constant buffer means the slot is unoccupied.
+        if (!pBuffer) 
+            continue;
+
+        VkDeviceSize minUBOAlignOffsetBytes = VulkanAdapter::obtainMinUniformBufferOffsetAlignment(pContext->getDevice()->castTo<VulkanDevice>());
+        VkDeviceSize alignedMemoryOffset = align(structure.ppConstantBuffers[i].offset, minUBOAlignOffsetBytes);
+        VkDescriptorBufferInfo info     = makeDescriptorBufferInfo(pBuffer, alignedMemoryOffset, structure.ppConstantBuffers[i].sizeBytes);
 
         bufferInfo.push_back(info);
 

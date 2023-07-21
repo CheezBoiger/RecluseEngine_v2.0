@@ -110,19 +110,37 @@ void D3D12Context::flushBarrierTransitions()
 void D3D12Context::bindRenderTargets(U32 count, GraphicsResourceView** ppResources, GraphicsResourceView* pDepthStencil)
 {
     ID3D12GraphicsCommandList* pList = m_pPrimaryCommandList->get();
-    D3D12RenderPass* pRenderPass = RenderPasses::makeRenderPass
-                                            (
-                                                count, 
-                                                const_cast<const GraphicsResourceView**>(ppResources), 
-                                                const_cast<const GraphicsResourceView*>(pDepthStencil)
-                                            );
+    D3D12RenderPass* pRenderPass = RenderPasses::makeRenderPass(count, ppResources, pDepthStencil);
     R_ASSERT_FORMAT(pRenderPass, "D3D12RenderPass was passed nullptr!");
-    pRenderPass->update(m_pDevice, currentBufferIndex(), count, nullptr, nullptr);
+    pRenderPass->update(m_pDevice, currentBufferIndex(), count, ppResources, pDepthStencil);
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = pRenderPass->getRtvDescriptor();
     D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = pRenderPass->getDsvDescriptor();
     pList->OMSetRenderTargets(count, &rtvHandle, true, &dsvHandle);
     
     m_pRenderPass = pRenderPass;
+}
+
+
+void D3D12Context::clearDepthStencil(ClearFlags clearFlags, F32 clearDepth, U8 clearStencil, const Rect& rect)
+{
+    ID3D12GraphicsCommandList* pList = m_pPrimaryCommandList->get();
+    R_ASSERT_FORMAT(m_pRenderPass, "No render pass was set for clear! Be sure to call bindRenderTargets() to set up a render pass!");
+    D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_pRenderPass->getDsvDescriptor();
+    R_ASSERT_FORMAT(dsvHandle.ptr != 0, "Null depth descriptor handle passed to clearDepthStencil()!");
+
+    D3D12_CLEAR_FLAGS flags = (D3D12_CLEAR_FLAGS)0;
+    if (clearFlags & ClearFlag_Depth)
+        flags |= D3D12_CLEAR_FLAG_DEPTH;
+    if (clearFlags & ClearFlag_Stencil)
+        flags |= D3D12_CLEAR_FLAG_STENCIL;
+
+    D3D12_RECT nativeRect   = { };
+    nativeRect.left         = rect.x;
+    nativeRect.right        = rect.width;
+    nativeRect.top          = rect.y;
+    nativeRect.bottom       = rect.height;
+    
+    pList->ClearDepthStencilView(dsvHandle, flags, clearDepth, clearStencil, 1, &nativeRect);
 }
 
 

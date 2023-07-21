@@ -77,7 +77,7 @@
 #else
     #define R_ASSERT_LOG()
     #define R_ASSERT(expression)
-    #define R_ASSERT_FORMAT(expression, msg)
+    #define R_ASSERT_FORMAT(expression, msg, ...)
     #define R_DEBUG(chan, str, ...)
     #define R_DEBUG_WRAP(cond)
 #endif

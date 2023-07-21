@@ -44,8 +44,15 @@ void VulkanContext::initialize(U32 bufferCount)
     createCommandPools(bufferCount);
     createPrimaryCommandList(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_TRANSFER_BIT | VK_QUEUE_COMPUTE_BIT);
     DescriptorAllocator* descriptorAllocator = pDevice->getDescriptorAllocator();
+    VulkanAllocationManager* allocManager = pDevice->getAllocationManager();
     // We are essentially reserving descriptor allocator instances.
     descriptorAllocator->initialize(pDevice, bufferCount);
+
+    VulkanAllocationManager::UpdateConfig config = { };
+    config.flags = VulkanAllocationManager::Flag_GarbageResize | VulkanAllocationManager::Flag_SetFrameIndex;
+    config.garbageBufferCount = bufferCount;
+    config.frameIndex = m_currentBufferIndex;
+    allocManager->update(config);
 }
 
 
@@ -64,6 +71,7 @@ void VulkanContext::release()
     destroyFences();
     // Ensure we no longer have any buffers.
     m_bufferCount = 0;
+    m_currentBufferIndex = 0;
 }
 
 
@@ -256,14 +264,6 @@ ResultCode VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& in
     if (err != RecluseResult_Ok)
     {
         R_ERROR(R_CHANNEL_VULKAN, "Failed to initialize the allocation manager!");
-    }
-    
-    {
-        VulkanAllocationManager::UpdateConfig config;
-        config.flags = VulkanAllocationManager::Flag_GarbageResize;
-        config.garbageBufferCount = info.swapchainDescription.desiredFrames;
-        config.frameIndex = 0; 
-        m_allocationManager->update(config);
     }
 
     // Create a swapchain if we have our info.

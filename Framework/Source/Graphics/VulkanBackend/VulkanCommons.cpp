@@ -81,6 +81,8 @@ VkFormat getVulkanFormat(Recluse::ResourceFormat format)
           return VK_FORMAT_R8_UINT;
         case Recluse::ResourceFormat_B8G8R8A8_Unorm:
           return VK_FORMAT_B8G8R8A8_UNORM;
+        case Recluse::ResourceFormat_R32G32B32_Float:
+          return VK_FORMAT_R32G32B32_SFLOAT;
         default:
             return VK_FORMAT_UNDEFINED;
     }
@@ -125,6 +127,8 @@ Recluse::ResourceFormat getResourceFormat(VkFormat format)
         return Recluse::ResourceFormat_R16_Uint;
     case VK_FORMAT_B8G8R8A8_UNORM:
         return Recluse::ResourceFormat_B8G8R8A8_Unorm;
+    case VK_FORMAT_R32G32B32_SFLOAT:
+        return Recluse::ResourceFormat_R32G32B32_Float;
     default:
         return Recluse::ResourceFormat_Unknown;
     }

@@ -13,6 +13,7 @@
 #include "VulkanCommandList.hpp"
 #include <vector>
 #include <list>
+#include <array>
 
 namespace Recluse {
 
@@ -61,6 +62,8 @@ public:
     ResultCode             createPrimaryCommandList(VkQueueFlags flags);
     ResultCode             destroyPrimaryCommandList();
     ResultCode             setBuffers(U32 newBufferCount);
+    U32                     obtainCurrentBufferIndex() const { return getCurrentBufferIndex(); }
+    U32                     obtainBufferCount() const { return getBufferCount(); }
     DescriptorAllocatorInstance* currentDescriptorAllocator();
 
     // Not recommended, but submits a copy to this queue, and waits until the command has 
@@ -81,7 +84,7 @@ public:
     VkRenderPass        getRenderPass();
 
     void clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) override;
-    void clearDepthStencil(F32 clearDepth, U8 clearStencil, const Rect& rect) override;
+    void clearDepthStencil(ClearFlags flags, F32 clearDepth, U8 clearStencil, const Rect& rect) override;
 
     void drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstVertex, U32 firstInstance) override;
     void bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* pOffsets) override;
@@ -100,7 +103,7 @@ public:
 
     void bindShaderResources(ShaderType type, U32 offset, U32 count, GraphicsResourceView** ppResources) override;
     void bindUnorderedAccessViews(ShaderType type, U32 offset, U32 count, GraphicsResourceView** ppResources) override;
-    void bindConstantBuffers(ShaderType type, U32 offset, U32 count, GraphicsResource** ppResources) override;
+    void bindConstantBuffer(ShaderType type, U32 slot, GraphicsResource* pResource, U64 offsetBytes, U64 sizeBytes) override;
     void bindRenderTargets(U32 count, GraphicsResourceView** ppResources, GraphicsResourceView* pDepthStencil) override;
     void bindSamplers(ShaderType type, U32 count, GraphicsSampler** ppSampler) override;
     void bindRasterizerState(const RasterState& state) override { }
@@ -206,7 +209,7 @@ private:
         DescriptorSets::Structure                                       m_boundDescriptorSetStructure;
         std::vector<VulkanResourceView*>                                m_srvs;
         std::vector<VulkanResourceView*>                                m_uavs;
-        std::vector<VulkanBuffer*>                                      m_cbvs;
+        std::array<DescriptorSets::ConstantBuffer, 16>                  m_cbvs;
         std::vector<VulkanSampler*>                                     m_samplers;
         ContextDirtyFlags                                               m_dirtyFlags;
 

@@ -43,6 +43,31 @@ enum ShaderProgram
     ShaderProgram_Box = 12354343
 };
 
+
+void buildVertexLayouts(GraphicsDevice* pDevice)
+{
+    VertexAttribute attribs[2];
+    attribs[0].format = ResourceFormat_R32G32B32_Float;
+    attribs[0].location = 0;
+    attribs[0].offsetBytes = 0;
+    attribs[0].semantic = Semantic_Position;
+    attribs[0].semanticIndex = 0;
+    attribs[0].slot = 0;
+
+    attribs[1].format = ResourceFormat_R32G32B32_Float;
+    attribs[1].location = 1;
+    attribs[1].offsetBytes = sizeof(Math::Float4);
+    
+
+    VertexInputLayout layout = { };
+    layout.numVertexBindings = 2;
+    layout.vertexBindings[0].binding = 0;
+    layout.vertexBindings[0].inputRate = InputRate_PerVertex;
+    layout.vertexBindings[0].numVertexAttributes = 2;
+    layout.vertexBindings[0].pVertexAttributes = attribs;
+    R_ASSERT(pDevice->makeVertexLayout(VertexLayout_PositionNormal, layout));
+}
+
 int main(char* argv[], int c)
 {
     Log::initializeLoggingSystem();

@@ -219,7 +219,7 @@ int main(int c, char* argv[])
         context->begin();
             GraphicsResource* pResource = views[pSwapchain->getCurrentFrameIndex()]->getResource();
             context->transition(pResource, ResourceState_UnorderedAccess);
-            context->bindConstantBuffers(ShaderType_Compute, 0, 1, &pData);
+            context->bindConstantBuffer(ShaderType_Compute, 0, pData, 0, sizeof(ConstData));
             context->bindUnorderedAccessViews(ShaderType_Compute, 0, 1, &views[pSwapchain->getCurrentFrameIndex()]);
             context->setShaderProgram(ProgramId_Mandelbrot);
             context->dispatch(Math::divUp(pWindow->getWidth(), 8u), Math::divUp(pWindow->getHeight(), 8u), 1);

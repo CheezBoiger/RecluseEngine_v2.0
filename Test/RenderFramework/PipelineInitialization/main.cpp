@@ -58,7 +58,7 @@ enum ShaderKey
     ShaderKey_SimpleColor
 };
 
-void updateConstData(GraphicsResource* pData, RealtimeTick& tick)
+void updateConstData(GraphicsResource* pData, RealtimeTick& tick, U64 offsetBytes)
 {
     ConstData dat = { };
     dat.color[0] = abs(sinf(tick.getCurrentTimeS() * 0.0000001f));
@@ -69,9 +69,12 @@ void updateConstData(GraphicsResource* pData, RealtimeTick& tick)
     dat.offset[0] = 0.0f;
     dat.offset[1] = 0.0f;
     void* ptr = nullptr;
-    pData->map(&ptr, nullptr);
+    MapRange range = { };
+    range.offsetBytes = offsetBytes;
+    range.sizeBytes = sizeof(ConstData);
+    pData->map(&ptr, &range);
     memcpy(ptr, &dat, sizeof(ConstData));
-    pData->unmap(nullptr);
+    pData->unmap(&range);
 }
 
 int main(int c, char* argv[])
@@ -79,17 +82,17 @@ int main(int c, char* argv[])
     Log::initializeLoggingSystem();
     RealtimeTick::initializeWatch(1ull, 0);
 
-    GraphicsInstance* pInstance       = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
-    GraphicsAdapter* pAdapter       = nullptr;
-    GraphicsDevice* pDevice         = nullptr;
-    GraphicsResource* pData         = nullptr;
-    GraphicsContext* pContext       = nullptr;
-    GraphicsResource* pVertexBuffer = nullptr;
-    PipelineState* pPipeline        = nullptr;
-    GraphicsSwapchain* pSwapchain   = nullptr;
-    Window* pWindow                 = Window::create("PipelineInitialization", 0, 0, 512, 512);
-    Mouse* pMouse                   = new Mouse();
-    ResultCode result                  = RecluseResult_Ok;
+    GraphicsInstance* pInstance             = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
+    GraphicsAdapter* pAdapter               = nullptr;
+    GraphicsDevice* pDevice                 = nullptr;
+    GraphicsResource* pData                 = nullptr;
+    GraphicsContext* pContext               = nullptr;
+    GraphicsResource* pVertexBuffer         = nullptr;
+    PipelineState* pPipeline                = nullptr;
+    GraphicsSwapchain* pSwapchain           = nullptr;
+    Window* pWindow                         = Window::create("PipelineInitialization", 0, 0, 512, 512);
+    Mouse* pMouse                           = new Mouse();
+    ResultCode result                       = RecluseResult_Ok;
 
     pMouse->initialize("Mouse1");
     pWindow->setMouseHandle(pMouse);
@@ -137,7 +140,7 @@ int main(int c, char* argv[])
     }
 
     pContext = pDevice->createContext();
-    pContext->setBuffers(2);
+    pContext->setBuffers(3);
 
     {
         MemoryReserveDescription desc = { };
@@ -170,10 +173,9 @@ int main(int c, char* argv[])
     {
         GraphicsResourceDescription desc = { };
         desc.dimension = ResourceDimension_Buffer;
-        desc.width = sizeof(ConstData);
+        desc.width = sizeof(ConstData) * pContext->obtainBufferCount();
         desc.memoryUsage = ResourceMemoryUsage_CpuToGpu;
         desc.usage = ResourceUsage_ConstantBuffer;
-        
         result = pDevice->createResource(&pData, desc, ResourceState_ConstantBuffer);
     }
 
@@ -295,8 +297,9 @@ int main(int c, char* argv[])
         F32 ms = Limiter::limit(1.0f / 160.0f, 1ull, 0);
         RealtimeTick::updateWatch(1ull, 0);
         RealtimeTick tick = RealtimeTick::getTick(0);
-        updateConstData(pData, tick);
         context->begin();
+            updateConstData(pData, tick, sizeof(ConstData) * pContext->obtainCurrentBufferIndex());
+            
             context->pushState();
             context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
             context->setCullMode(CullMode_None);
@@ -310,9 +313,10 @@ int main(int c, char* argv[])
             GraphicsResourceView* pView = pSwapchain->getFrameView(pSwapchain->getCurrentFrameIndex());
             context->setColorWriteMask(0, Color_Rgba);
             context->bindRenderTargets(1, &pView, nullptr);
-            context->bindConstantBuffers(ShaderType_Vertex, 0, 1, &pData);
+            context->bindConstantBuffer(ShaderType_Vertex, 0, pData, sizeof(ConstData) * pContext->obtainCurrentBufferIndex(), sizeof(ConstData));
             context->bindVertexBuffers(1, &pVertexBuffer, &offset);
             context->drawInstanced(3, 1, 0, 0);
+            context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_Present);
             context->popState();
         context->end();
         R_VERBOSE("Game", "%f fps", 1.0f / ms);

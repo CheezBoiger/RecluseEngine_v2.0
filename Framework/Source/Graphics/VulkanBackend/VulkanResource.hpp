@@ -41,6 +41,9 @@ public:
     ResultCode          map(void** ptr, MapRange* pReadRange) override;
     ResultCode          unmap(MapRange* pWrittenRange) override;
 
+    // Required alignment needed for writing onto this resource.
+    VkDeviceSize        getAlignmentRequirement() const { m_alignmentRequirement; }
+
     // Get the vulkan device that was used to allocate this resource.
     //
     VulkanDevice*       getDevice() const { return m_pDevice; }
@@ -81,6 +84,7 @@ private:
     VulkanDevice* m_pDevice;
 
     VkAccessFlags       m_currentAccessMask;
+    VkDeviceSize        m_alignmentRequirement;
     Bool m_isBuffer;
     ResourceId m_id;
 };

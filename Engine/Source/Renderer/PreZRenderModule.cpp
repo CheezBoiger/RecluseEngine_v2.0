@@ -62,7 +62,7 @@ void generate(GraphicsContext* context, Engine::RenderCommandList* pMeshCommandL
     // Set the PreZ pass.
     context->pushState();
     context->setShaderProgram(ShaderProgram_PreZDepth);
-    context->clearDepthStencil(1.0f, 0, depthRect);
+    context->clearDepthStencil(ClearFlag_Depth, 1.0f, 0, depthRect);
     context->setCullMode(CullMode_Back);
     context->setFrontFace(FrontFace_Clockwise);
     context->setPolygonMode(PolygonMode_Fill);

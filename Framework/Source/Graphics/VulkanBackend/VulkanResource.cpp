@@ -106,6 +106,8 @@ ResultCode VulkanResource::initialize(VulkanDevice* pDevice, const GraphicsResou
         return result;
     }
 
+    m_alignmentRequirement = memoryRequirements.alignment;
+
     result = onBind(pDevice);
 
     return result;
@@ -403,7 +405,7 @@ ResultCode VulkanResource::map(void** ptr, MapRange* pReadRange)
     
     if (pReadRange) 
     {
-        offsetBytes += pReadRange->offsetBytes;
+        offsetBytes += align(pReadRange->offsetBytes, m_alignmentRequirement);
         sizeBytes    = pReadRange->sizeBytes;
     } 
 
@@ -431,7 +433,7 @@ ResultCode VulkanResource::unmap(MapRange* pWriteRange)
 
     if (pWriteRange) 
     {
-        offsetBytes += pWriteRange->offsetBytes;
+        offsetBytes += align(pWriteRange->offsetBytes, m_alignmentRequirement);
         sizeBytes    = pWriteRange->sizeBytes;
     }
 

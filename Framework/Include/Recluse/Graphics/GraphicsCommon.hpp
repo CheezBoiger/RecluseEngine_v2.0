@@ -9,6 +9,8 @@
 namespace Recluse {
 
 class GraphicsResource;
+typedef Hash64 ResourceId;
+typedef Hash64 ResourceViewId;
 
 enum BindType 
 {
@@ -209,6 +211,18 @@ struct Rect
         width, 
         height;
 };
+
+
+enum ClearFlag
+{
+    ClearFlag_None = 0,
+    ClearFlag_Color = 0x001,
+    ClearFlag_Depth = 0x002,
+    ClearFlag_Stencil = 0x004
+};
+
+
+typedef U32 ClearFlags;
 
 
 struct CopyBufferRegion 

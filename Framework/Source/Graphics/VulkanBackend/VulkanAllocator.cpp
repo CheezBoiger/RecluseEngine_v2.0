@@ -2,6 +2,7 @@
 #include "VulkanAdapter.hpp"
 #include "VulkanAllocator.hpp"
 #include "VulkanDevice.hpp"
+#include "VulkanQueue.hpp"
 #include "Recluse/Memory/MemoryCommon.hpp"
 #include "Recluse/Memory/LinearAllocator.hpp"
 
@@ -49,7 +50,8 @@ ResultCode VulkanPagedAllocator::allocate(VulkanMemory* pOut, const VkMemoryRequ
     U16 alignment = static_cast<U16>(Math::maximum(requirements.alignment, granularityBytes));
     // Align the block size of the requested memory with the needed requirements.
     // From there, allocate the aligned requested size, with the bufferImage granularity, so as to ensure we align with this.
-    UPtr allocatedAddress   = m_allocator->allocate((U64)requirements.size, alignment);
+    VkDeviceSize neededSizeBytes = requirements.size + requirements.alignment;
+    UPtr allocatedAddress   = m_allocator->allocate((U64)neededSizeBytes, alignment);
     result                  = m_allocator->getLastError();
 
     if (result == RecluseResult_OutOfMemory)
@@ -65,7 +67,7 @@ ResultCode VulkanPagedAllocator::allocate(VulkanMemory* pOut, const VkMemoryRequ
     }
 
     // The last alignment will be done with granularity.
-    pOut->sizeBytes         = (U64)requirements.size;
+    pOut->sizeBytes         = (U64)neededSizeBytes;
     pOut->offsetBytes       = allocatedAddress;
     pOut->deviceMemory      = m_pool.memory;
     pOut->baseAddr          = m_pool.basePtr;
@@ -183,6 +185,7 @@ void VulkanAllocationManager::update(const UpdateConfig& config)
         const U32 newGarbageCount = config.garbageBufferCount;
         // Clean up all garbage before doing this...
         R_DEBUG("VulkanAllocator", "Updating garbage buffers...");
+
         for (U32 i = 0; i < (U32)m_frameGarbage.size(); ++i) 
         {
             emptyGarbage(i);
@@ -219,6 +222,7 @@ void VulkanAllocationManager::update(const UpdateConfig& config)
 
     if (config.flags & Flag_Update)
     {
+        // We clean up the resources that we know should already be done for this buffer index.
         emptyGarbage(m_garbageIndex);
     }
 }
@@ -238,6 +242,8 @@ ResultCode VulkanAllocationManager::initialize(VulkanDevice* device)
     VkPhysicalDeviceProperties properties = m_pDevice->getAdapter()->getProperties();
     m_bufferImageGranularityBytes = properties.limits.bufferImageGranularity;
     m_allocationCs.initialize();
+    // One frame index.
+    m_frameGarbage.resize(1);
     return RecluseResult_Ok;
 }
 

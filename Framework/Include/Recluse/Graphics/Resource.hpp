@@ -14,8 +14,6 @@ struct MapRange
     U64 sizeBytes;
 };
 
-typedef Hash64 ResourceId;
-
 // Graphics Resource description.
 //
 class R_PUBLIC_API GraphicsResource : public virtual IGraphicsObject, public ICastableObject

@@ -71,7 +71,7 @@ void updateResource(GraphicsResource* pResource)
 
 int main(int c, char* argv[])
 {
-    Log::initializeLoggingSystem();
+    Log::initializeLoggingSystem();     
     RealtimeTick::initializeWatch(1ull, 0);
     GraphicsInstance* pInstance     = nullptr;
     GraphicsAdapter* pAdapter       = nullptr;

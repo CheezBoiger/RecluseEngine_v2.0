@@ -132,6 +132,7 @@ VkCommandBuffer VulkanPrimaryCommandList::get() const
 void VulkanContext::setRenderPass(VulkanRenderPass* pPass)
 {
     R_ASSERT_FORMAT(pPass != NULL, "Null renderpass was set prior to render pass binding call!");
+    R_ASSERT_FORMAT(pPass->getNumRenderTargets() <= 8, "Render Pass contains more than %d rtvs! This is more than hardware specs.", 8);
 
     flushBarrierTransitions(m_primaryCommandList.get());
 
@@ -161,8 +162,10 @@ void VulkanContext::resetBinds()
     m_contextStates.push_back({ });
     currentState().m_srvs.clear();
     currentState().m_uavs.clear();
-    currentState().m_cbvs.clear();
     currentState().m_samplers.clear();
+
+    memset(currentState().m_cbvs.data(), 0, currentState().m_cbvs.size() * sizeof(DescriptorSets::ConstantBuffer));
+
     m_resourceViewShaderAccessMap.clear();
     m_constantBufferShaderAccessMap.clear();
     m_samplerShaderAccessMap.clear();
@@ -447,7 +450,7 @@ void VulkanContext::drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 
 }
 
 
-void VulkanContext::clearDepthStencil(F32 clearDepth, U8 clearStencil, const Rect& rect)
+void VulkanContext::clearDepthStencil(ClearFlags clearFlags, F32 clearDepth, U8 clearStencil, const Rect& rect)
 {
     R_ASSERT(m_boundRenderPass != NULL);
     
@@ -455,8 +458,14 @@ void VulkanContext::clearDepthStencil(F32 clearDepth, U8 clearStencil, const Rec
 
     VkClearRect clearRect                       = { };
     VkClearAttachment attachment                = { };
+
+    VkImageAspectFlags flags = VK_IMAGE_ASPECT_NONE;
+    if (clearFlags & ClearFlag_Depth)
+        flags |= VK_IMAGE_ASPECT_DEPTH_BIT;
+    if (clearFlags & ClearFlag_Stencil)
+        flags |= VK_IMAGE_ASPECT_STENCIL_BIT;
     
-    attachment.aspectMask                       = VK_IMAGE_ASPECT_DEPTH_BIT;
+    attachment.aspectMask                       = flags;
     attachment.clearValue.depthStencil.depth    = clearDepth;
     attachment.clearValue.depthStencil.stencil  = clearStencil;
     attachment.colorAttachment                  = m_newRenderPass->getNumRenderTargets(); // usually the last one.
@@ -611,19 +620,17 @@ void VulkanContext::copyBufferRegions
 }
 
 
-void VulkanContext::bindConstantBuffers(ShaderType type, U32 offset, U32 count, GraphicsResource** ppResources)
+void VulkanContext::bindConstantBuffer(ShaderType type, U32 slot, GraphicsResource* pResource, U64 offsetBytes, U64 sizeBytes)
 {
-    currentState().m_cbvs.reserve(count);
+    R_ASSERT_FORMAT(currentState().m_cbvs.size() > slot, "Maximum of %d constant buffers may be bound simultaneously. Request slot %d is not allowed.", currentState().m_cbvs.size(), slot);
+    R_ASSERT(pResource->getApi() == GraphicsApi_Vulkan);
     ShaderStageFlags shaderFlags = shaderTypeToShaderStageFlags(type);
-    for (U32 i = 0; i < count; ++i)
-    {
-        R_ASSERT(ppResources[i]->getApi() == GraphicsApi_Vulkan);
-        VulkanResource* pVulkanResource = ppResources[i]->castTo<VulkanResource>();
-        R_ASSERT(pVulkanResource->isBuffer());
-        VulkanBuffer* pBuffer           = pVulkanResource->castTo<VulkanBuffer>();
-        m_constantBufferShaderAccessMap[pBuffer->getId()] |= shaderFlags;
-        currentState().m_cbvs.push_back(pBuffer);
-    }
+    VulkanResource* pVulkanResource = pResource->castTo<VulkanResource>();
+    R_ASSERT(pVulkanResource->isBuffer());
+    VulkanBuffer* pBuffer           = pVulkanResource->castTo<VulkanBuffer>();
+    m_constantBufferShaderAccessMap[pBuffer->getId()] |= shaderFlags;
+    currentState().m_cbvs[slot] = { pBuffer, static_cast<VkDeviceSize>(offsetBytes), static_cast<VkDeviceSize>(sizeBytes) };
+
     currentState().m_boundDescriptorSetStructure.key.value.shaderTypeFlags |= shaderFlags;
     currentState().m_boundDescriptorSetStructure.ppConstantBuffers         = currentState().m_cbvs.data();
     currentState().m_boundDescriptorSetStructure.key.value.constantBuffers = currentState().m_cbvs.size();

@@ -1,6 +1,8 @@
 //
 #include "D3D12Commons.hpp"
 
+#include "Recluse/Messaging.hpp"
+
 namespace Recluse {
 
 D3D12_RESOURCE_STATES getNativeResourceState(Recluse::ResourceState state)
@@ -178,6 +180,8 @@ DXGI_FORMAT getNativeFormat(Recluse::ResourceFormat format)
             return DXGI_FORMAT_B8G8R8A8_UNORM;
         case Recluse::ResourceFormat_B8G8R8A8_Srgb:
             return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+        case Recluse::ResourceFormat_R32G32B32_Float:
+            return DXGI_FORMAT_R32G32B32_FLOAT;
         default:
             break;
     }
@@ -190,11 +194,70 @@ SIZE_T getNativeFormatSize(DXGI_FORMAT format)
 {
     switch (format) 
     {
+        case DXGI_FORMAT_R8_SINT:
+        case DXGI_FORMAT_R8_SNORM:
+        case DXGI_FORMAT_R8_UNORM:
+        case DXGI_FORMAT_R8_TYPELESS:
+            
+            return 1ull;
+
+        case DXGI_FORMAT_R16_UINT:
+        case DXGI_FORMAT_R16_FLOAT:
+        case DXGI_FORMAT_R16_SINT:
+        case DXGI_FORMAT_R16_SNORM:
+        case DXGI_FORMAT_R16_TYPELESS:
+        case DXGI_FORMAT_R16_UNORM:
+        case DXGI_FORMAT_R8G8_SINT:
+        case DXGI_FORMAT_R8G8_SNORM:
+        case DXGI_FORMAT_R8G8_TYPELESS:
+        case DXGI_FORMAT_R8G8_UINT:
+
+            return 2ull;
+
         case DXGI_FORMAT_R16G16_FLOAT:
         case DXGI_FORMAT_R8G8B8A8_UNORM:
+        case DXGI_FORMAT_R32_FLOAT:
+        case DXGI_FORMAT_R32_UINT:
+        case DXGI_FORMAT_R32_TYPELESS:
+        case DXGI_FORMAT_R32_SINT:
+        case DXGI_FORMAT_R8G8B8A8_SINT:
+        case DXGI_FORMAT_R8G8B8A8_SNORM:
+        case DXGI_FORMAT_R8G8B8A8_TYPELESS:
+        case DXGI_FORMAT_R8G8B8A8_UINT:
+        case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+
             return 4ull;
+
         case DXGI_FORMAT_R16G16B16A16_FLOAT:
+        case DXGI_FORMAT_R16G16B16A16_SINT:
+        case DXGI_FORMAT_R16G16B16A16_SNORM:
+        case DXGI_FORMAT_R16G16B16A16_TYPELESS:
+        case DXGI_FORMAT_R16G16B16A16_UINT:
+        case DXGI_FORMAT_R16G16B16A16_UNORM:
+        case DXGI_FORMAT_R32G32_FLOAT:
+        case DXGI_FORMAT_R32G32_SINT:
+        case DXGI_FORMAT_R32G32_UINT:
+        case DXGI_FORMAT_R32G32_TYPELESS:
+        case DXGI_FORMAT_R32G8X24_TYPELESS:
+
             return 8ull;
+
+        case DXGI_FORMAT_R32G32B32_FLOAT:
+        case DXGI_FORMAT_R32G32B32_SINT:
+        case DXGI_FORMAT_R32G32B32_TYPELESS:
+        case DXGI_FORMAT_R32G32B32_UINT:
+
+            return 12ull;
+
+        case DXGI_FORMAT_R32G32B32A32_FLOAT:
+        case DXGI_FORMAT_R32G32B32A32_SINT:
+        case DXGI_FORMAT_R32G32B32A32_TYPELESS:
+        case DXGI_FORMAT_R32G32B32A32_UINT:
+
+            return 16ull;
+
+        default:
+            R_ASSERT_FORMAT(false, "D3D12: Can not find byte size format for DXGI format %d", format);
     }
 
     // Return no bytes for unknown formats.

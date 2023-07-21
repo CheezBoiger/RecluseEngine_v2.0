@@ -91,6 +91,10 @@ public:
     //       gpu stalls due to cpu usage, but too many buffers may potentially lead to stall as well! You need a sweet spot, which is usually
     //       around 2-3 buffers. 
     virtual ResultCode setBuffers(U32 newBufferCount) { return RecluseResult_NoImpl; }
+    virtual U32 obtainBufferCount() const { return 0; }
+
+    // Obtain the current buffer index from this context.
+    virtual U32 obtainCurrentBufferIndex() const { return 0; }
 
     // Not recommended, but submits a copy to this queue.
     virtual void copyResource(GraphicsResource* dst, GraphicsResource* src) 
@@ -141,7 +145,7 @@ public:
     virtual void dispatchRays(U32 x, U32 y, U32 z) { }
 
     virtual void clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) { }
-    virtual void clearDepthStencil(F32 clearDepth, U8 clearStencil, const Rect& rect) { }
+    virtual void clearDepthStencil(ClearFlags clearFlags, F32 clearDepth, U8 clearStencil, const Rect& rect) { }
 
     virtual void copyBufferRegions(CopyBufferRegion* pRegions, U32 numRegions) { }
 
@@ -164,7 +168,7 @@ public:
     virtual void setPolygonMode(PolygonMode polygonMode) { }
     virtual void bindShaderResources(ShaderType type, U32 offset, U32 count, GraphicsResourceView** ppResources) { }
     virtual void bindUnorderedAccessViews(ShaderType type, U32 offset, U32 count, GraphicsResourceView** ppResources) { }
-    virtual void bindConstantBuffers(ShaderType type, U32 offset, U32 count, GraphicsResource** ppResources) { }
+    virtual void bindConstantBuffer(ShaderType type, U32 slot, GraphicsResource* pResource, U64 offsetBytes, U64 sizeBytes) { }
     virtual void bindRenderTargets(U32 count, GraphicsResourceView** ppResources, GraphicsResourceView* pDepthStencil = nullptr) { }
     virtual void bindSamplers(ShaderType type, U32 count, GraphicsSampler** ppSampler) { }
     virtual void bindRasterizerState(const RasterState& state) { }

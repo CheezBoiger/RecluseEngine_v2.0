@@ -25,6 +25,8 @@ public:
         m_phyDevice = a.m_phyDevice; 
         m_instance = a.m_instance;
         m_id = a.m_id;
+        m_memoryProperties = internalGetPhysicalMemoryProperties();
+        m_properties = internalGetPhysicalProperties();
     }
 
     VulkanAdapter& operator=(VulkanAdapter&& a) noexcept
@@ -35,6 +37,8 @@ public:
         m_phyDevice = a.m_phyDevice;
         m_instance = a.m_instance;
         m_id = a.m_id;
+        m_memoryProperties = internalGetPhysicalMemoryProperties();
+        m_properties = internalGetPhysicalProperties();
         return (*this);
     }
 
@@ -46,10 +50,12 @@ public:
     { }
 
     static std::vector<VulkanAdapter> getAvailablePhysicalDevices(VulkanInstance* ctx);
+    static VkDeviceSize obtainMinUniformBufferOffsetAlignment(VulkanDevice* pDevice);
+    static VkDeviceSize obtainMinStorageBufferOffsetAlignment(VulkanDevice* pDevice);
 
-    ResultCode                                 getAdapterInfo(AdapterInfo* out) const override;
-    ResultCode                                 createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice) override;
-    ResultCode                                 destroyDevice(GraphicsDevice* pDevice) override;
+    ResultCode                              getAdapterInfo(AdapterInfo* out) const override;
+    ResultCode                              createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice) override;
+    ResultCode                              destroyDevice(GraphicsDevice* pDevice) override;
 
     U32                                     findMemoryType(U32 filter, ResourceMemoryUsage usage) const;
 
@@ -57,8 +63,8 @@ public:
 
     VkPhysicalDevice                        get() const { return m_phyDevice; }
 
-    VkPhysicalDeviceProperties              getProperties() const;
-    VkPhysicalDeviceMemoryProperties        getMemoryProperties() const;
+    const VkPhysicalDeviceProperties&       getProperties() const;
+    const VkPhysicalDeviceMemoryProperties& getMemoryProperties() const;
     VkPhysicalDeviceMemoryProperties2       getMemoryProperties2() const;
     VkPhysicalDeviceFeatures                getFeatures() const;
     VkPhysicalDeviceFeatures2               getFeatures2() const;
@@ -82,22 +88,26 @@ private:
     VulkanAdapter(const VulkanAdapter&) = delete;
     VulkanAdapter& operator=(const VulkanAdapter& a) = delete;
 
-    void checkAvailableDeviceExtensions();
+    void                                    checkAvailableDeviceExtensions();
+    VkPhysicalDeviceMemoryProperties        internalGetPhysicalMemoryProperties();
+    VkPhysicalDeviceProperties              internalGetPhysicalProperties();
 
     // Native adapter device.
-    VkPhysicalDevice m_phyDevice;
+    VkPhysicalDevice                        m_phyDevice;
 
     // Context handle.
-    VulkanInstance* m_instance;
+    VulkanInstance*                         m_instance;
+    VkPhysicalDeviceMemoryProperties        m_memoryProperties;
+    VkPhysicalDeviceProperties              m_properties;
 
     // All logical devices that were created by this adapter.
-    std::list<VulkanDevice*> m_devices;
+    std::list<VulkanDevice*>                m_devices;
 
     // Supported device extension flags, to be used by request of creation of logical devices from this physical device adapter.
-    LayerFeatureFlags   m_supportedDeviceExtensionFlags;
+    LayerFeatureFlags                       m_supportedDeviceExtensionFlags;
 
     // This adapter id.
-    U32                 m_id;
+    U32                                     m_id;
 
     std::vector<std::tuple<LayerFeatureFlag, std::vector<const char*>>> m_supportedDeviceExtensions;
 };

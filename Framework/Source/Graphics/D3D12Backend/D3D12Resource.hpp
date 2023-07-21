@@ -52,6 +52,8 @@ public:
     ResultCode map(void** pMappedMemory, MapRange* pReadRange) override;
     ResultCode unmap(MapRange* pWriteRange) override;
 
+    
+
 private:
     Bool                    isSupportedTransitionState(ResourceState state);
 
