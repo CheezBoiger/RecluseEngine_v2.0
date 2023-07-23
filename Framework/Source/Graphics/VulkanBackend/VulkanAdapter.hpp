@@ -27,6 +27,7 @@ public:
         m_id = a.m_id;
         m_memoryProperties = internalGetPhysicalMemoryProperties();
         m_properties = internalGetPhysicalProperties();
+        m_features = internalGetPhysicalFeatures();
     }
 
     VulkanAdapter& operator=(VulkanAdapter&& a) noexcept
@@ -39,6 +40,7 @@ public:
         m_id = a.m_id;
         m_memoryProperties = internalGetPhysicalMemoryProperties();
         m_properties = internalGetPhysicalProperties();
+        m_features = internalGetPhysicalFeatures();
         return (*this);
     }
 
@@ -66,7 +68,7 @@ public:
     const VkPhysicalDeviceProperties&       getProperties() const;
     const VkPhysicalDeviceMemoryProperties& getMemoryProperties() const;
     VkPhysicalDeviceMemoryProperties2       getMemoryProperties2() const;
-    VkPhysicalDeviceFeatures                getFeatures() const;
+    const VkPhysicalDeviceFeatures&         getFeatures() const;
     VkPhysicalDeviceFeatures2               getFeatures2() const;
     VkFormatProperties                      getFormatProperties(VkFormat format) const;
     std::vector<VkQueueFamilyProperties>    getQueueFamilyProperties() const;
@@ -91,6 +93,7 @@ private:
     void                                    checkAvailableDeviceExtensions();
     VkPhysicalDeviceMemoryProperties        internalGetPhysicalMemoryProperties();
     VkPhysicalDeviceProperties              internalGetPhysicalProperties();
+    VkPhysicalDeviceFeatures                internalGetPhysicalFeatures();
 
     // Native adapter device.
     VkPhysicalDevice                        m_phyDevice;
@@ -99,6 +102,7 @@ private:
     VulkanInstance*                         m_instance;
     VkPhysicalDeviceMemoryProperties        m_memoryProperties;
     VkPhysicalDeviceProperties              m_properties;
+    VkPhysicalDeviceFeatures                m_features;
 
     // All logical devices that were created by this adapter.
     std::list<VulkanDevice*>                m_devices;

@@ -171,9 +171,10 @@ static VkColorComponentFlags getColorComponents(ColorComponentMaskFlags flags)
 }
 
 
-static VkPipelineRasterizationStateCreateInfo getRasterInfo(const RasterState& rs)
+static VkPipelineRasterizationStateCreateInfo getRasterInfo(VulkanDevice* device, const RasterState& rs)
 {
-    VkPipelineRasterizationStateCreateInfo info = { };
+    const VkPhysicalDeviceFeatures& enabledFeatures = device->getEnabledFeatures();
+    VkPipelineRasterizationStateCreateInfo info     = { };
     info.sType                      = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     info.cullMode                   = getNativeCullMode(rs.cullMode);
     info.depthBiasClamp             = rs.depthBiasClamp;
@@ -182,7 +183,7 @@ static VkPipelineRasterizationStateCreateInfo getRasterInfo(const RasterState& r
     info.depthBiasSlopeFactor       = rs.depthBiasSlopFactor;
     info.depthClampEnable           = rs.depthClampEnable;
     info.frontFace                  = getNativeFrontFace(rs.frontFace);
-    info.lineWidth                  = 1.0f;//rs.lineWidth;
+    info.lineWidth                  = enabledFeatures.wideLines ? rs.lineWidth : 1.0f;
     info.polygonMode                = getNativePolygonMode(rs.polygonMode);
     info.rasterizerDiscardEnable    = VK_FALSE;
     return info;
@@ -440,7 +441,7 @@ VkPipeline createGraphicsPipeline(VulkanDevice* pDevice, const Structure& struct
     std::vector<VkVertexInputBindingDescription> bindings;
     std::vector<VkPipelineColorBlendAttachmentState> blendAttachments;
 
-    VkPipelineRasterizationStateCreateInfo rasterState          = getRasterInfo(structure.state.graphics.raster);
+    VkPipelineRasterizationStateCreateInfo rasterState          = getRasterInfo(pDevice, structure.state.graphics.raster);
     VkPipelineDepthStencilStateCreateInfo depthStencilState     = getDepthStencilInfo(structure.state.graphics.depthStencil);
     VkPipelineViewportStateCreateInfo viewportState             = getViewportInfo();
     VkPipelineColorBlendStateCreateInfo blendState              = getBlendInfo(structure.state.graphics.blendState, blendAttachments, structure.state.graphics.numRenderTargets);

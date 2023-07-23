@@ -77,17 +77,23 @@ VkPhysicalDeviceMemoryProperties VulkanAdapter::internalGetPhysicalMemoryPropert
 }
 
 
+VkPhysicalDeviceFeatures VulkanAdapter::internalGetPhysicalFeatures()
+{
+    VkPhysicalDeviceFeatures features = { };
+    vkGetPhysicalDeviceFeatures(m_phyDevice, &features);
+    return features;    
+}
+
+
 const VkPhysicalDeviceMemoryProperties& VulkanAdapter::getMemoryProperties() const
 {
     return m_memoryProperties;
 }
 
 
-VkPhysicalDeviceFeatures VulkanAdapter::getFeatures() const
+const VkPhysicalDeviceFeatures& VulkanAdapter::getFeatures() const
 {
-    VkPhysicalDeviceFeatures features = { };
-    vkGetPhysicalDeviceFeatures(m_phyDevice, &features);
-    return features;
+    return m_features;
 }
 
 

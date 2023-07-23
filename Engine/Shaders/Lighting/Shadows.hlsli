@@ -12,11 +12,11 @@ void CalculateBlendAmountForMap
 		out float BlendBetweenCascadesAmount
 	)
 {
-	float2 distanceToOne 					= float2(1 - ShadowMapTextureCoord.x, 1 - ShadowMapTextureCoord.y);
-	CurrentPixelsBlendBandLocation 			= min(ShadowMapTextureCoord.x, ShadowMapTextureCoord.y);
-	float currentPixelsBlendBandLocation2 	= min(distanceToOne.x, distanceToOne.y);
-	CurrentPixelsBlendBandLocation 			= min(CurrentPixelsBlendBandLocation, currentPixelsBlendBandLocation2);
-	BlendBetweenCascadesAmount 				= CurrentPixelsBlendBandLocation / CascadeBlendArea;
+	float2 distanceToOne = float2(1 - ShadowMapTextureCoord.x, 1 - ShadowMapTextureCoord.y);
+	CurrentPixelsBlendBandLocation = min(ShadowMapTextureCoord.x, ShadowMapTextureCoord.y);
+	float currentPixelsBlendBandLocation2 = min(distanceToOne.x, distanceToOne.y);
+	CurrentPixelsBlendBandLocation = min(CurrentPixelsBlendBandLocation, currentPixelsBlendBandLocation2);
+	BlendBetweenCascadesAmount = CurrentPixelsBlendBandLocation / CascadeBlendArea;
 }
 
 #endif // SHADOWS_HLSLI

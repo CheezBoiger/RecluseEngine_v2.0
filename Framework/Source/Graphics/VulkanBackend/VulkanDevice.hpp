@@ -273,7 +273,7 @@ public:
         , m_windowHandle(nullptr)
         , m_adapter(nullptr)
         , m_pGraphicsQueue(nullptr)
-        , m_properties({ })
+        , m_enabledFeatures({ })
         , m_memCache({ })
         , m_swapchain(nullptr)
     { 
@@ -344,11 +344,13 @@ public:
     void flushAllMappedRanges();
     void invalidateAllMappedRanges();
 
-    VkDeviceSize getNonCoherentSize() const { return m_properties.limits.nonCoherentAtomSize; }
+    VkDeviceSize getNonCoherentSize() const;
 
     GraphicsSwapchain* getSwapchain() override;
 
     Bool hasSurface() const { return m_surface != VK_NULL_HANDLE; }
+
+    const VkPhysicalDeviceFeatures& getEnabledFeatures() const { return m_enabledFeatures; }
 
 private:
 
@@ -388,8 +390,8 @@ private:
     DescriptorAllocator                 m_descriptorAllocator;
     
     void*                               m_windowHandle;
-    
-    // Adapter properties.
-    VkPhysicalDeviceProperties m_properties;
+
+    // Cache the enabled features that are available for this device.
+    VkPhysicalDeviceFeatures            m_enabledFeatures;
 };
 } // Recluse

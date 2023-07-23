@@ -203,7 +203,7 @@ struct RasterState
     CullMode    cullMode;
     FrontFace   frontFace;
     PolygonMode polygonMode;
-    F32         lineWidth;
+    F32         lineWidth = 1.0f;
     F32         depthBiasClamp;
     F32         depthBiasConstantFactor;
     F32         depthBiasSlopFactor;

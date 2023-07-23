@@ -321,7 +321,7 @@ int main(int c, char* argv[])
             context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
             context->setCullMode(CullMode_None);
             context->setFrontFace(FrontFace_CounterClockwise);
-            context->setPolygonMode(PolygonMode_Fill);
+            context->setPolygonMode(PolygonMode_Line);
             context->setTopology(PrimitiveTopology_TriangleList);
             context->setViewports(1, &viewport);
             context->setScissors(1, &scissor);

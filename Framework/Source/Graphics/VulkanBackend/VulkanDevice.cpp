@@ -134,13 +134,48 @@ void VulkanContext::end()
 }
 
 
+#define CHECK_AND_ENABLE_FEATURE_IF_AVAILABLE(enabled, available, feature) \
+    if (available.feature) \
+    { \
+        enabled.feature = true; \
+    } \
+    else \
+    { \
+        R_WARN(R_CHANNEL_VULKAN, "Feature %s can not be enabled for device creation! Not supported on this physical device!", #feature); \
+    } 
+
+
+R_INTERNAL
+VkPhysicalDeviceFeatures checkEnableFeatures(VulkanAdapter* adapter)
+{
+    VkPhysicalDeviceFeatures enabledFeatures    = { };
+    VkPhysicalDeviceFeatures availableFeatures  = adapter->getFeatures();
+
+    CHECK_AND_ENABLE_FEATURE_IF_AVAILABLE(enabledFeatures, availableFeatures, geometryShader);
+    CHECK_AND_ENABLE_FEATURE_IF_AVAILABLE(enabledFeatures, availableFeatures, fillModeNonSolid);
+    CHECK_AND_ENABLE_FEATURE_IF_AVAILABLE(enabledFeatures, availableFeatures, imageCubeArray);
+    CHECK_AND_ENABLE_FEATURE_IF_AVAILABLE(enabledFeatures, availableFeatures, tessellationShader);
+    CHECK_AND_ENABLE_FEATURE_IF_AVAILABLE(enabledFeatures, availableFeatures, depthClamp);
+    CHECK_AND_ENABLE_FEATURE_IF_AVAILABLE(enabledFeatures, availableFeatures, depthBiasClamp);
+    CHECK_AND_ENABLE_FEATURE_IF_AVAILABLE(enabledFeatures, availableFeatures, depthBounds);
+    CHECK_AND_ENABLE_FEATURE_IF_AVAILABLE(enabledFeatures, availableFeatures, logicOp);
+    CHECK_AND_ENABLE_FEATURE_IF_AVAILABLE(enabledFeatures, availableFeatures, alphaToOne);
+    CHECK_AND_ENABLE_FEATURE_IF_AVAILABLE(enabledFeatures, availableFeatures, samplerAnisotropy);
+    CHECK_AND_ENABLE_FEATURE_IF_AVAILABLE(enabledFeatures, availableFeatures, wideLines);
+
+    return enabledFeatures;
+}
+
+
 ResultCode VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
 {
+    R_ASSERT_FORMAT(adapter != NULL, "Adapter must not be NULL! Device creation will fail!");
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos; 
 
     VkDeviceCreateInfo createInfo                       = { };
 
-    VulkanInstance* pVc                                  = adapter->getInstance();
+    VkPhysicalDeviceFeatures features                   = checkEnableFeatures(adapter);
+    VulkanInstance* pVc                                 = adapter->getInstance();
     std::vector<VkQueueFamilyProperties> queueFamilies  = adapter->getQueueFamilyProperties();
     std::vector<const char*> deviceExtensions           = adapter->queryAvailableDeviceExtensions(pVc->getRequestedDeviceFeatures());
 
@@ -243,6 +278,7 @@ ResultCode VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& in
     createInfo.queueCreateInfoCount     = (U32)queueCreateInfos.size();
     createInfo.enabledExtensionCount    = (U32)deviceExtensions.size();
     createInfo.ppEnabledExtensionNames  = deviceExtensions.data();
+    createInfo.pEnabledFeatures         = &features;
 
     VkResult result = vkCreateDevice(adapter->get(), &createInfo, nullptr, &m_device);
 
@@ -272,7 +308,7 @@ ResultCode VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& in
         createSwapchain(&m_swapchain, info.swapchainDescription, getBackbufferQueue());
     }
 
-    m_properties = adapter->getProperties();
+    m_enabledFeatures = features;
 
     return 0;
 }
@@ -313,6 +349,12 @@ void VulkanDevice::release(VkInstance instance)
 
         R_DEBUG(R_CHANNEL_VULKAN, "Device Destroyed.");
     }
+}
+
+
+VkDeviceSize VulkanDevice::getNonCoherentSize() const
+{
+    return m_adapter->getProperties().limits.nonCoherentAtomSize;
 }
 
 
