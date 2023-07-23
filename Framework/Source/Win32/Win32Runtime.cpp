@@ -363,6 +363,11 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
                 break;
             }
             case WM_MOVE:
+            {
+                UINT x = LOWORD(lParam);
+                UINT y = HIWORD(lParam);
+                break;
+            }
             case WM_SIZE:
             {
                 // As a window is resized, we rely this back to the handler.
@@ -370,7 +375,7 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
                 // Which shouldn't be problematic. We can signal this inside our onWindowResize callback.
                 UINT width  = LOWORD(lParam);
                 UINT height = HIWORD(lParam);
-                pWindow->onWindowResize(pWindow->getPosX(), pWindow->getPosY(), width, height);
+                pWindow->setScreenSize(width, height);
                 break;
             }
             case WM_MOUSEMOVE:

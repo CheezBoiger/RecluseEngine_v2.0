@@ -145,8 +145,12 @@ ResultCode VulkanSwapchain::onRebuild()
     // Destroy and rebuild the swapchain.
     destroy();
     build(m_pDevice);
-
-    return RecluseResult_NoImpl;
+    // TODO(Garcia): Application frame index has to match with native API image index
+    //                  This might need to be reinvestigated, as I feel either we need to remove one of these,
+    //                  or syncronize them both.
+    m_currentFrameIndex = 0;
+    m_currentImageIndex = 0;
+    return RecluseResult_Ok;
 }
 
 

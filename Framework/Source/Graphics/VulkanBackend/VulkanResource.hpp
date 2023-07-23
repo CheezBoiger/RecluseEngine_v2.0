@@ -42,7 +42,7 @@ public:
     ResultCode          unmap(MapRange* pWrittenRange) override;
 
     // Required alignment needed for writing onto this resource.
-    VkDeviceSize        getAlignmentRequirement() const { m_alignmentRequirement; }
+    VkDeviceSize        getAlignmentRequirement() const { return m_alignmentRequirement; }
 
     // Get the vulkan device that was used to allocate this resource.
     //
@@ -69,24 +69,21 @@ public:
     }
 
 private:
-    virtual ResultCode onCreate(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState)
+    virtual ResultCode  onCreate(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState)
         { return RecluseResult_NoImpl; }
 
-    virtual ResultCode onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryRequirements& memRequirements) 
+    virtual ResultCode  onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryRequirements& memRequirements) 
         { return RecluseResult_NoImpl; }
     
-    virtual ResultCode onBind(VulkanDevice* pDevice) { return RecluseResult_NoImpl; }
+    virtual ResultCode  onBind(VulkanDevice* pDevice) { return RecluseResult_NoImpl; }
+    virtual ResultCode  onRelease(VulkanDevice* pDevice) { return RecluseResult_NoImpl; }
 
-    virtual ResultCode onRelease(VulkanDevice* pDevice) { return RecluseResult_NoImpl; }
-
-    VulkanMemory m_memory;
-
-    VulkanDevice* m_pDevice;
-
+    VulkanMemory        m_memory;
+    VulkanDevice*       m_pDevice;
     VkAccessFlags       m_currentAccessMask;
     VkDeviceSize        m_alignmentRequirement;
-    Bool m_isBuffer;
-    ResourceId m_id;
+    Bool                m_isBuffer;
+    ResourceId          m_id;
 };
 
 
@@ -98,19 +95,14 @@ public:
         : VulkanResource(desc, true)
         , m_buffer(VK_NULL_HANDLE) { }
 
-    VkBuffer get() const { return m_buffer; }
-
-    VkBufferMemoryBarrier transition(ResourceState dstState);
+    VkBuffer                get() const { return m_buffer; }
+    VkBufferMemoryBarrier   transition(ResourceState dstState);
 
 private:
-    ResultCode onCreate(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState) override; 
-
-    ResultCode onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryRequirements& memRequirements) override;
-
-    ResultCode onBind(VulkanDevice* pDevice) override;
-    
-    ResultCode onRelease(VulkanDevice* pDevice) override;    
-
+    ResultCode      onCreate(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState) override; 
+    ResultCode      onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryRequirements& memRequirements) override;
+    ResultCode      onBind(VulkanDevice* pDevice) override;
+    ResultCode      onRelease(VulkanDevice* pDevice) override;    
     VkBuffer        m_buffer;
 };
 
@@ -139,18 +131,14 @@ public:
     // Create memory barrier object to transition the layout of this image to the 
     // specified destination layout.
     // 
-    VkImageMemoryBarrier transition(ResourceState dstState, VkImageSubresourceRange& range);
+    VkImageMemoryBarrier    transition(ResourceState dstState, VkImageSubresourceRange& range);
 
 private:
-    ResultCode             onCreate(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState) override; 
-
-    ResultCode             onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryRequirements& memRequirements) override;
-
-    ResultCode             onBind(VulkanDevice* pDevice) override;
-    
-    ResultCode             onRelease(VulkanDevice* pDevice) override;   
-
-    VkFormatFeatureFlags loadFormatFeatures(VkImageCreateInfo& info, ResourceUsageFlags usage) const;
+    ResultCode              onCreate(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState) override; 
+    ResultCode              onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryRequirements& memRequirements) override;
+    ResultCode              onBind(VulkanDevice* pDevice) override;
+    ResultCode              onRelease(VulkanDevice* pDevice) override;   
+    VkFormatFeatureFlags    loadFormatFeatures(VkImageCreateInfo& info, ResourceUsageFlags usage) const;
 
     VkImage             m_image;
     VkImageLayout       m_currentLayout;
@@ -159,8 +147,8 @@ private:
 
 namespace Resources {
 
-VulkanResource* makeResource(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState);
-ResultCode         releaseResource(VulkanDevice* pDevice, ResourceId id);
-VulkanResource* obtainResource(ResourceId id);
+VulkanResource*     makeResource(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState);
+ResultCode          releaseResource(VulkanDevice* pDevice, ResourceId id);
+VulkanResource*     obtainResource(ResourceId id);
 } // Resources
 } // Recluse

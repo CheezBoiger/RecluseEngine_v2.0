@@ -750,8 +750,8 @@ void VulkanDevice::allocateMemCache()
     m_memCache.invalid.pool         = new MemoryPool(cacheSizeBytes);
     m_memCache.flush.allocator      = new LinearAllocator();
     m_memCache.invalid.allocator    = new LinearAllocator();
-    UPtr alignedFlushAddress     = align(m_memCache.flush.pool->getBaseAddress(), pointerSizeBytes());
-    UPtr alignedInvalidAddress   = align(m_memCache.invalid.pool->getBaseAddress(), pointerSizeBytes());
+    UPtr alignedFlushAddress        = align(m_memCache.flush.pool->getBaseAddress(), pointerSizeBytes());
+    UPtr alignedInvalidAddress      = align(m_memCache.invalid.pool->getBaseAddress(), pointerSizeBytes());
 
     m_memCache.flush.allocator->initialize(alignedFlushAddress, cacheSizeBytes);
     m_memCache.invalid.allocator->initialize(alignedInvalidAddress, cacheSizeBytes);

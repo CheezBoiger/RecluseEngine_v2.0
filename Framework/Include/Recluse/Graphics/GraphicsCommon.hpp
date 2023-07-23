@@ -325,6 +325,13 @@ enum GraphicsQueueType
 
 typedef U32 GraphicsQueueTypeFlags;
 
+
+struct GraphicsResourceDebug
+{
+    U64 maxMemoryGpuSizeBytes;
+    U64 usedMemoryGpuSizeBytes;
+};
+
 // Common Graphics Object manager.
 class IGraphicsObject
 {

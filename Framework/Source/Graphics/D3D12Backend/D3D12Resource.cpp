@@ -28,20 +28,20 @@ ResultCode D3D12Resource::initialize
                                 Bool makeCommitted
                             )
 {
-    ID3D12Device* device                    = pDevice->get();
-    D3D12_RESOURCE_DESC d3d12desc           = { };
-    D3D12_RESOURCE_STATES state             = getNativeResourceState(initialState);
-    D3D12_CLEAR_VALUE optimizedClearValue   = { };
-    D3D12ResourceAllocationManager* pAllocator = pDevice->resourceAllocationManager();
-    HRESULT sResult                         = S_OK;
+    ID3D12Device* device                        = pDevice->get();
+    D3D12_RESOURCE_DESC d3d12desc               = { };
+    D3D12_RESOURCE_STATES state                 = getNativeResourceState(initialState);
+    D3D12_CLEAR_VALUE optimizedClearValue       = { };
+    D3D12ResourceAllocationManager* pAllocator  = pDevice->resourceAllocationManager();
+    HRESULT sResult                             = S_OK;
 
-    d3d12desc.Dimension         = getDimension(desc.dimension);
-    d3d12desc.DepthOrArraySize  = desc.depthOrArraySize;
-    d3d12desc.Width             = desc.width;
-    d3d12desc.Height            = desc.height;
-    d3d12desc.MipLevels         = desc.mipLevels;
-    d3d12desc.Format            = Dxgi::getNativeFormat(desc.format);
-    d3d12desc.Alignment         = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+    d3d12desc.Dimension                         = getDimension(desc.dimension);
+    d3d12desc.DepthOrArraySize                  = desc.depthOrArraySize;
+    d3d12desc.Width                             = desc.width;
+    d3d12desc.Height                            = desc.height;
+    d3d12desc.MipLevels                         = desc.mipLevels;
+    d3d12desc.Format                            = Dxgi::getNativeFormat(desc.format);
+    d3d12desc.Alignment                         = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
 
     if (makeCommitted == true) 
     {

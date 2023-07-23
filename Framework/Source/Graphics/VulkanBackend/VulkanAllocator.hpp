@@ -75,7 +75,8 @@ public:
         }
 
         // Since we only need to work with offsets relative to the address,
-        // We don't need the real address.
+        // We don't need to allocate based on the real address. The offset makes it easier to determine how far 
+        // from the base address that our allocated object resides in, without needing to do extra calculations.
         m_allocator->initialize(0ull, m_pool.sizeBytes);
         return RecluseResult_Ok; 
     }
@@ -91,7 +92,7 @@ public:
     // 
     // @return ErrType The result of the allocation, whether successful or not. If successful, returns pOut with filled data about the allocation. A failure
     //                 will give out the reason for the failure, along with no data fill in pOut.
-    ResultCode     allocate
+    ResultCode   allocate
                     (
                         VulkanMemory* pOut, 
                         const VkMemoryRequirements& requirements, 
@@ -101,7 +102,7 @@ public:
 
     // Free up memory, handles throwing memory into the garbage.
     // Immediate free can be done if we know we are in the same frame index.
-    ResultCode     free(VulkanMemory* pOut);
+    ResultCode   free(VulkanMemory* pOut);
 
     // Destroy this allocation manager from the inside!
     void        release(VkDevice device);

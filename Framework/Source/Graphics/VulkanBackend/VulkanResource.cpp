@@ -405,7 +405,7 @@ ResultCode VulkanResource::map(void** ptr, MapRange* pReadRange)
     
     if (pReadRange) 
     {
-        offsetBytes += align(pReadRange->offsetBytes, m_alignmentRequirement);
+        offsetBytes += align(pReadRange->offsetBytes, getAlignmentRequirement());
         sizeBytes    = pReadRange->sizeBytes;
     } 
 
@@ -433,7 +433,7 @@ ResultCode VulkanResource::unmap(MapRange* pWriteRange)
 
     if (pWriteRange) 
     {
-        offsetBytes += align(pWriteRange->offsetBytes, m_alignmentRequirement);
+        offsetBytes += align(pWriteRange->offsetBytes, getAlignmentRequirement());
         sizeBytes    = pWriteRange->sizeBytes;
     }
 

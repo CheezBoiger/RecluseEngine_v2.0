@@ -274,5 +274,20 @@ void Window::update()
         }
         screenChanged();
     }
+
+    if (mustResize())
+    {
+        onWindowResize(m_xPos, m_yPos, m_width, m_height);
+        resized();
+    }
+}
+
+
+void Window::setScreenSize(U32 width, U32 height)
+{
+    m_width = width;
+    m_height = height;
+    m_status.mustResize = true;
+    update();
 }
 } // Recluse

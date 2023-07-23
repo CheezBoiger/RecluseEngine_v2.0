@@ -388,6 +388,44 @@ void D3D12Context::destroyBufferResources()
 }
 
 
+void D3D12Context::setScissors(U32 numScissors, Rect* pRects)
+{
+    R_ASSERT(numScissors < D3D12_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE);
+    ID3D12GraphicsCommandList* pList = m_pPrimaryCommandList->get();
+    D3D12_RECT rects[D3D12_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE];
+    
+    for (U32 i = 0; i < numScissors; ++i)
+    {
+        rects[i].left   = pRects[i].x;
+        rects[i].top    = pRects[i].y;
+        rects[i].right  = pRects[i].width;
+        rects[i].bottom = pRects[i].height;
+    }
+
+    pList->RSSetScissorRects(numScissors, rects);
+}
+
+
+void D3D12Context::setViewports(U32 numViewports, Viewport* pViewports)
+{
+    R_ASSERT(numViewports < D3D12_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE);
+    ID3D12GraphicsCommandList* pList = m_pPrimaryCommandList->get();
+    D3D12_VIEWPORT viewports[D3D12_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE];
+
+    for (U32 i = 0; i < numViewports; ++i)
+    {
+        viewports[i].TopLeftX   = pViewports[i].x;
+        viewports[i].TopLeftY   = pViewports[i].y;
+        viewports[i].Width      = pViewports[i].width;
+        viewports[i].Height     = pViewports[i].height;
+        viewports[i].MaxDepth   = pViewports[i].maxDepth;
+        viewports[i].MinDepth   = pViewports[i].minDepth;
+    }
+    
+    pList->RSSetViewports(numViewports, viewports);
+}
+
+
 ResultCode D3D12Context::createCommandList(D3D12PrimaryCommandList** ppList, GraphicsQueueTypeFlags flags)
 {
     D3D12PrimaryCommandList* pList = new D3D12PrimaryCommandList();

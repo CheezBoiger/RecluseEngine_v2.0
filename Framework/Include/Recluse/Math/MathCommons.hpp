@@ -59,6 +59,7 @@ static Bool isPowerOf2(T d)
 }
 
 
+// Get the minimum of the two values.
 template<typename T>
 static T minimum(T a, T b)
 {
@@ -66,6 +67,7 @@ static T minimum(T a, T b)
 }
 
 
+// Get the maximum of the two values.
 template<typename T>
 static T maximum(T a, T b)
 {
@@ -73,15 +75,17 @@ static T maximum(T a, T b)
 }
 
 
+// Degrees to radians.
 template<typename T>
-static T toRadians(T deg)
+static T deg2Rad(T deg)
 {
 	return R_RADIANS(deg);
 }
 
 
+// Radians to degrees.
 template<typename T>
-static T toDegrees(T rads)
+static T rad2Deg(T rads)
 {
 	return R_DEGREES(rads);
 }

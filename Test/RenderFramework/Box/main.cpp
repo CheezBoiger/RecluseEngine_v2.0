@@ -12,6 +12,9 @@
 
 using namespace Recluse;
 
+GraphicsDevice* device = nullptr;
+GraphicsContext* context = nullptr;
+
 
 struct Vertex
 {
@@ -44,6 +47,20 @@ enum ShaderProgram
 };
 
 
+void ResizeFunction(U32 x, U32 y, U32 width, U32 height)
+{
+    GraphicsSwapchain* swapchain = device->getSwapchain();
+    SwapchainCreateDescription desc = swapchain->getDesc();
+    if (desc.renderHeight != height || desc.renderWidth != width)
+    {
+        context->wait();
+        desc.renderWidth = width;
+        desc.renderHeight = height;
+        swapchain->rebuild(desc);
+    }
+}
+
+
 void buildVertexLayouts(GraphicsDevice* pDevice)
 {
     VertexAttribute attribs[2];
@@ -73,12 +90,11 @@ int main(char* argv[], int c)
     Log::initializeLoggingSystem();
     GraphicsInstance* instance  = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
     GraphicsAdapter* adapter    = nullptr;
-    GraphicsDevice* device      = nullptr;
-    GraphicsContext* context    = nullptr;
 
-    Window* window = Window::create("Box", 0, 0, 1024, 1024, ScreenMode_WindowBorderless);
+    Window* window = Window::create("Box", 0, 0, 1024, 1024, ScreenMode_Windowed);
     window->open();
     window->setToCenter();
+    window->setOnWindowResize(ResizeFunction);
 
     {
         ApplicationInfo appInfo = { };
@@ -112,13 +128,13 @@ int main(char* argv[], int c)
     while (!window->shouldClose())
     {
         context->begin();
-            context->transition(device->getSwapchain()->getFrame(device->getSwapchain()->getCurrentFrameIndex()), ResourceState_RenderTarget);
-            context->setShaderProgram(ShaderProgram_Box);
-            context->setInputVertexLayout(VertexLayout_PositionNormal);
-            context->enableDepth(true);
-            context->setDepthCompareOp(CompareOp_GreaterOrEqual);
-            context->bindIndexBuffer(nullptr, 0, IndexType_Unsigned16);
-            context->drawIndexedInstanced(0, 0, 0, 0, 0);
+            //context->transition(device->getSwapchain()->getFrame(device->getSwapchain()->getCurrentFrameIndex()), ResourceState_RenderTarget);
+            //context->setShaderProgram(ShaderProgram_Box);
+            //context->setInputVertexLayout(VertexLayout_PositionNormal);
+            //context->enableDepth(true);
+            //context->setDepthCompareOp(CompareOp_GreaterOrEqual);
+            //context->bindIndexBuffer(nullptr, 0, IndexType_Unsigned16);
+            //context->drawIndexedInstanced(0, 0, 0, 0, 0);
             context->transition(device->getSwapchain()->getFrame(device->getSwapchain()->getCurrentFrameIndex()), ResourceState_Present);
         context->end();
         device->getSwapchain()->present();

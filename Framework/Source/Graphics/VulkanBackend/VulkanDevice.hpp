@@ -52,36 +52,33 @@ public:
 
     ~VulkanContext();
     
-    void                release();
-    void                begin() override;
-    void                end() override;
+    void                            release();
+    void                            begin() override;
+    void                            end() override;
 
-    inline U32          getBufferCount() const { return m_bufferCount; }
-    inline U32          getCurrentBufferIndex() const { return m_currentBufferIndex; }
-    inline VkFence      getCurrentFence() const { return m_fences[m_currentBufferIndex]; }
-    ResultCode             createPrimaryCommandList(VkQueueFlags flags);
-    ResultCode             destroyPrimaryCommandList();
-    ResultCode             setBuffers(U32 newBufferCount);
-    U32                     obtainCurrentBufferIndex() const { return getCurrentBufferIndex(); }
-    U32                     obtainBufferCount() const { return getBufferCount(); }
-    DescriptorAllocatorInstance* currentDescriptorAllocator();
+    inline U32                      getBufferCount() const { return m_bufferCount; }
+    inline U32                      getCurrentBufferIndex() const { return m_currentBufferIndex; }
+    inline VkFence                  getCurrentFence() const { return m_fences[m_currentBufferIndex]; }
+    ResultCode                      createPrimaryCommandList(VkQueueFlags flags);
+    ResultCode                      destroyPrimaryCommandList();
+    ResultCode                      setBuffers(U32 newBufferCount);
+    U32                             obtainCurrentBufferIndex() const { return getCurrentBufferIndex(); }
+    U32                             obtainBufferCount() const { return getBufferCount(); }
+    DescriptorAllocatorInstance*    currentDescriptorAllocator();
 
     // Not recommended, but submits a copy to this queue, and waits until the command has 
     // completed.
-    void                copyResource(GraphicsResource* dst, GraphicsResource* src) override;
+    void                            copyResource(GraphicsResource* dst, GraphicsResource* src) override;
 
     // Submits copy of regions from src resource to dst resource. Generally the caller thread will
     // be blocked until this function returns, so be sure to use when needed.
-    void                copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, 
-                            const CopyBufferRegion* pRegions, U32 numRegions) override;
+    void                            copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, 
+                                        const CopyBufferRegion* pRegions, U32 numRegions) override;
 
-    GraphicsDevice*     getDevice() override;
-
-    VulkanPrimaryCommandList* getPrimaryCommandList() { return &m_primaryCommandList; }
-
-    ResultCode             wait() override;
-
-    VkRenderPass        getRenderPass();
+    GraphicsDevice*                 getDevice() override;
+    VulkanPrimaryCommandList*       getPrimaryCommandList() { return &m_primaryCommandList; }
+    ResultCode                      wait() override;
+    VkRenderPass                    getRenderPass();
 
     void clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) override;
     void clearDepthStencil(ClearFlags flags, F32 clearDepth, U8 clearStencil, const Rect& rect) override;
@@ -282,35 +279,35 @@ public:
     { 
     }
 
-    ResultCode initialize(VulkanAdapter* iadapter, DeviceCreateInfo& info);
-    VulkanQueue* getBackbufferQueue() { return m_pGraphicsQueue; }
-    ResultCode createQueues();
+    ResultCode          initialize(VulkanAdapter* iadapter, DeviceCreateInfo& info);
+    VulkanQueue*        getBackbufferQueue() { return m_pGraphicsQueue; }
+    ResultCode          createQueues();
     const std::vector<QueueFamily>& getQueueFamilies() const { return m_queueFamilies; }    
 
 
-    ResultCode createQueue(VulkanQueue** ppQueue, VkQueueFlags flags, B32 isPresentable);
-    ResultCode destroyQueues();
+    ResultCode          createQueue(VulkanQueue** ppQueue, VkQueueFlags flags, B32 isPresentable);
+    ResultCode          destroyQueues();
 
-    ResultCode createSwapchain(VulkanSwapchain** ppSwapchain, 
-        const SwapchainCreateDescription& pDesc, VulkanQueue* pPresentationQueue);
+    ResultCode          createSwapchain(VulkanSwapchain** ppSwapchain, 
+                            const SwapchainCreateDescription& pDesc, VulkanQueue* pPresentationQueue);
 
-    GraphicsContext* createContext() override;
-    ResultCode releaseContext(GraphicsContext* pContext) override;
+    GraphicsContext*    createContext() override;
+    ResultCode          releaseContext(GraphicsContext* pContext) override;
 
-    ResultCode     destroySwapchain(VulkanSwapchain* pSwapchain);
-    ResultCode     createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc, ResourceState initState) override;
-    ResultCode     createSampler(GraphicsSampler** ppSampler, const SamplerDescription& desc) override;
-    ResultCode     destroySampler(GraphicsSampler* pSampler) override;
-    ResultCode     destroyResource(GraphicsResource* pResource) override;
-    ResultCode     createResourceView(GraphicsResourceView** ppView, const ResourceViewDescription& desc) override;
-    ResultCode     loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition) override;
-    ResultCode     unloadShaderProgram(ShaderProgramId program) override;
-    void        unloadAllShaderPrograms() override;
-    Bool        makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout) override;
-    Bool        destroyVertexLayout(VertexInputLayoutId id) override;
-    void        release(VkInstance instance);
-    ResultCode     destroyResourceView(GraphicsResourceView* pResourceView) override;
-    void        copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, const CopyBufferRegion* regions, U32 numRegions) override;
+    ResultCode          destroySwapchain(VulkanSwapchain* pSwapchain);
+    ResultCode          createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc, ResourceState initState) override;
+    ResultCode          createSampler(GraphicsSampler** ppSampler, const SamplerDescription& desc) override;
+    ResultCode          destroySampler(GraphicsSampler* pSampler) override;
+    ResultCode          destroyResource(GraphicsResource* pResource) override;
+    ResultCode          createResourceView(GraphicsResourceView** ppView, const ResourceViewDescription& desc) override;
+    ResultCode          loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition) override;
+    ResultCode          unloadShaderProgram(ShaderProgramId program) override;
+    void                unloadAllShaderPrograms() override;
+    Bool                makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout) override;
+    Bool                destroyVertexLayout(VertexInputLayoutId id) override;
+    void                release(VkInstance instance);
+    ResultCode          destroyResourceView(GraphicsResourceView* pResourceView) override;
+    void                copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, const CopyBufferRegion* regions, U32 numRegions) override;
 
     DescriptorAllocatorInstance* getDescriptorAllocatorInstance(U32 bufferIndex)
     {

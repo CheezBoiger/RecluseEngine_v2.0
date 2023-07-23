@@ -1,4 +1,4 @@
-#include "Recluse/Graphics/GraphicsCommon.hpp"
+﻿#include "Recluse/Graphics/GraphicsCommon.hpp"
 #include "Recluse/Graphics/CommandList.hpp"
 #include "Recluse/Graphics/DescriptorSet.hpp"
 #include "Recluse/Graphics/GraphicsAdapter.hpp"
@@ -58,6 +58,22 @@ enum ShaderKey
     ShaderKey_SimpleColor
 };
 
+GraphicsContext* pContext               = nullptr;
+GraphicsDevice* pDevice                 = nullptr;
+
+void ResizeFunction(U32 x, U32 y, U32 width, U32 height)
+{
+    GraphicsSwapchain* swapchain = pDevice->getSwapchain();
+    SwapchainCreateDescription desc = swapchain->getDesc();
+    if (desc.renderWidth != width || desc.renderHeight != height)
+    {
+        desc.renderWidth = width;   
+        desc.renderHeight = height;
+        pContext->wait();
+        swapchain->rebuild(desc);
+    }
+}
+
 void updateConstData(GraphicsResource* pData, RealtimeTick& tick, U64 offsetBytes)
 {
     ConstData dat = { };
@@ -84,18 +100,18 @@ int main(int c, char* argv[])
 
     GraphicsInstance* pInstance             = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
     GraphicsAdapter* pAdapter               = nullptr;
-    GraphicsDevice* pDevice                 = nullptr;
     GraphicsResource* pData                 = nullptr;
-    GraphicsContext* pContext               = nullptr;
+
     GraphicsResource* pVertexBuffer         = nullptr;
     PipelineState* pPipeline                = nullptr;
     GraphicsSwapchain* pSwapchain           = nullptr;
-    Window* pWindow                         = Window::create("PipelineInitialization", 0, 0, 512, 512);
+    Window* pWindow                         = Window::create(u8"猫はいいですPipelineInitialization", 0, 0, 512, 512);
     Mouse* pMouse                           = new Mouse();
     ResultCode result                       = RecluseResult_Ok;
 
     pMouse->initialize("Mouse1");
     pWindow->setMouseHandle(pMouse);
+    pWindow->setOnWindowResize(ResizeFunction);
 
     std::vector<RenderPass*> passes;
 
@@ -128,6 +144,7 @@ int main(int c, char* argv[])
         info.swapchainDescription = { };
         info.swapchainDescription.buffering = FrameBuffering_Single;
         info.swapchainDescription.desiredFrames = 3;
+        info.swapchainDescription.format = ResourceFormat_B8G8R8A8_Unorm;
         info.swapchainDescription.renderWidth = pWindow->getWidth();
         info.swapchainDescription.renderHeight = pWindow->getHeight();
 
@@ -280,15 +297,6 @@ int main(int c, char* argv[])
     
     pWindow->open();
 
-    Viewport viewport = { };
-    viewport.x = 0; viewport.y = 0;
-    viewport.width = 512, viewport.height = 512;
-    viewport.minDepth = 0.0f; viewport.maxDepth = 1.0f;
-
-    Rect scissor = { };
-    scissor.x = 0; scissor.y = 0;
-    scissor.width = 512; scissor.height = 512;
-
     U64 offset = 0;
 
     GraphicsContext* context = pContext;
@@ -297,6 +305,15 @@ int main(int c, char* argv[])
         F32 ms = Limiter::limit(1.0f / 160.0f, 1ull, 0);
         RealtimeTick::updateWatch(1ull, 0);
         RealtimeTick tick = RealtimeTick::getTick(0);
+        Viewport viewport = { };
+        viewport.x = 0; viewport.y = 0;
+        viewport.width = pWindow->getWidth(), viewport.height = pWindow->getHeight();
+        viewport.minDepth = 0.0f; viewport.maxDepth = 1.0f;
+
+        Rect scissor = { };
+        scissor.x = 0; scissor.y = 0;
+        scissor.width = pWindow->getWidth(); scissor.height = pWindow->getHeight();
+
         context->begin();
             updateConstData(pData, tick, sizeof(ConstData) * pContext->obtainCurrentBufferIndex());
             

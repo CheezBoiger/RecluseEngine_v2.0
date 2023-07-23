@@ -65,8 +65,8 @@ int main(int c, char* argv[])
     memReserves.bufferPools[ResourceMemoryUsage_CpuToGpu] = 32ull * R_1KB;
     memReserves.bufferPools[ResourceMemoryUsage_GpuToCpu] = 32ull * R_1KB;
     memReserves.bufferPools[ResourceMemoryUsage_CpuOnly] = 256 * R_1MB;
-    memReserves.texturePoolGPUOnly = 512 * R_1MB; // half a GB.
-    memReserves.bufferPools[ResourceMemoryUsage_GpuOnly] = 512 * R_1MB; // half a GB.
+    memReserves.texturePoolGPUOnly = R_MB(512); // half a GB.
+    memReserves.bufferPools[ResourceMemoryUsage_GpuOnly] = R_MB(512); // half a GB.
     
     pDevice->reserveMemory(memReserves);
 

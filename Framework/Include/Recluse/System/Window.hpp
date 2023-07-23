@@ -121,6 +121,8 @@ public:
     // Grabs the display monitor that has the most area of intesection with the window.
     R_PUBLIC_API MonitorDesc    getCurrentActiveMonitor();
 
+    void                        setOnWindowResize(OnWindowResizeFunction func) { m_onWindowResizeCallback = func; }
+
     // Set the screen mode.
     R_PUBLIC_API void setScreenMode(ScreenMode mode)
     {
@@ -131,10 +133,13 @@ public:
         }
     }
 
+
 private:
 
     B32 mustChangeScreen() const { return m_status.mustChangeScreen; }
+    B32 mustResize() const { return m_status.mustResize; }
     void screenChanged() { m_status.mustChangeScreen = false; }
+    void resized() { m_status.mustResize = false; }
     void update();
 
     // The window width
@@ -160,7 +165,8 @@ private:
 
     struct 
     {
-        B32     mustChangeScreen;
+        B32     mustChangeScreen : 1;
+        B32     mustResize : 1;
     } m_status;
 
     // Title of the window.
