@@ -4,6 +4,7 @@
 #include "VulkanDevice.hpp"
 #include "VulkanObjects.hpp"
 #include "VulkanCommons.hpp"
+#include "VulkanAdapter.hpp"
 
 #include "Recluse/Types.hpp"
 #include "Recluse/Messaging.hpp"
@@ -15,6 +16,7 @@ namespace Pipelines {
 
 std::unordered_map<PipelineId, PipelineState> g_pipelineMap;
 std::unordered_map<VkDescriptorSetLayout, ReferenceObject<VkPipelineLayout>> g_pipelineLayoutMap;
+R_INTERNAL Bool g_allowPipelineCaching = false;
 
 static VkPrimitiveTopology getNativeTopology(PrimitiveTopology topology)
 {
@@ -168,6 +170,112 @@ static VkColorComponentFlags getColorComponents(ColorComponentMaskFlags flags)
     if (flags & Color_B) components |= VK_COLOR_COMPONENT_B_BIT;
     if (flags & Color_A) components |= VK_COLOR_COMPONENT_A_BIT;
     return components;
+}
+
+
+struct PipelineCacheHeader
+{
+    // Device id.
+    U32 deviceId;
+    // Vendor Id.
+    U32 vendorId;
+    // Header Length in bytes.
+    U32 headerLength;
+    // Header version.
+    U32 headerVersion;
+    U8  pipelineCacheUUID[VK_UUID_SIZE];
+};
+
+
+R_INTERNAL
+VkPipelineCache createEmptyCache(VkDevice device)
+{
+        VkResult result = VK_SUCCESS;
+        VkPipelineCache pipelineCache = VK_NULL_HANDLE;
+ 
+        if (g_allowPipelineCaching)
+        {
+            VkPipelineCacheCreateInfo pipelineCacheCreate = { };
+            pipelineCacheCreate.flags = 0;
+            pipelineCacheCreate.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+            pipelineCacheCreate.initialDataSize = 0;
+            pipelineCacheCreate.pInitialData = nullptr;
+            result = vkCreatePipelineCache(device, &pipelineCacheCreate, nullptr, &pipelineCache);
+
+            if (result != VK_SUCCESS)
+            {
+                return VK_NULL_HANDLE;
+            }
+        }
+        return pipelineCache;
+}
+
+
+R_INTERNAL
+VkPipelineCache findPipelineCache(VulkanDevice* pDevice, PipelineId pipelineId)
+{
+    VkPipelineCache pipelineCache   = VK_NULL_HANDLE;
+    size_t sizeBytes                = 0;
+    Bool found                      = false;
+    VkDevice device                 = pDevice->get();
+
+    // TODO: We need to find our file and query for the binary information.
+    
+    if (found)
+    {
+        VkResult result = VK_SUCCESS;
+        VkPipelineCacheCreateInfo info = { };
+        info.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+        info.flags = 0;
+        info.initialDataSize = 0;
+        info.pInitialData = nullptr;
+        result = vkCreatePipelineCache(device, &info, nullptr, &pipelineCache);
+
+        if (result != VK_SUCCESS)
+        {
+            R_WARN(R_CHANNEL_VULKAN, "Failed to create found pipeline cache!!");
+            pipelineCache = VK_NULL_HANDLE;
+        }
+    }
+    else
+    {
+        pipelineCache = createEmptyCache(device);
+    }
+    return pipelineCache;
+}
+
+
+R_INTERNAL
+void cachePipeline(VulkanDevice* pDevice, PipelineId pipelineId, VkPipelineCache pipelineCache)
+{
+    if (g_allowPipelineCaching)
+    {
+        VkDevice device = pDevice->get();
+        if (pipelineCache)
+        {
+            VkResult result = VK_SUCCESS;
+            size_t sizeBytes = 0;
+            void* buffer = nullptr;
+            const VkPhysicalDeviceProperties& properties = pDevice->getAdapter()->getProperties();
+ 
+            R_VERBOSE(R_CHANNEL_VULKAN, "Caching pipeline");
+        
+            result = vkGetPipelineCacheData(device, pipelineCache, &sizeBytes, buffer); 
+            buffer = malloc(sizeBytes);
+            result = vkGetPipelineCacheData(device, pipelineCache, &sizeBytes, buffer);
+
+            // TODO: We need to be able to store this binary information on disk.
+            PipelineCacheHeader header = { };
+            header.headerLength = sizeof(PipelineCacheHeader);
+            header.deviceId = properties.deviceID;
+            header.vendorId = properties.vendorID;
+
+            for (U32 i = 0; i < VK_UUID_SIZE; ++i)
+                header.pipelineCacheUUID[i] = properties.pipelineCacheUUID[i];
+        
+            free(buffer);
+        }
+    }
 }
 
 
@@ -422,7 +530,7 @@ VkPipelineLayout makeLayout(VulkanDevice* pDevice, VkDescriptorSetLayout descrip
     return layout;
 }
 
-VkPipeline createGraphicsPipeline(VulkanDevice* pDevice, const Structure& structure, const ShaderPrograms::VulkanShaderProgram* program)
+VkPipeline createGraphicsPipeline(VulkanDevice* pDevice, VkPipelineCache pipelineCache, const Structure& structure, const ShaderPrograms::VulkanShaderProgram* program)
 {
     VkPipeline pipeline                             = VK_NULL_HANDLE;
     VkDevice device                                 = pDevice->get();
@@ -528,7 +636,7 @@ VkPipeline createGraphicsPipeline(VulkanDevice* pDevice, const Structure& struct
     ci.layout               = pipelineLayout;
     ci.pStages              = shaderStages;
 
-    result = vkCreateGraphicsPipelines(device, nullptr, 1, &ci, nullptr, &pipeline);
+    result = vkCreateGraphicsPipelines(device, pipelineCache, 1, &ci, nullptr, &pipeline);
    
     if (result != VK_SUCCESS) 
     {
@@ -543,7 +651,7 @@ VkPipeline createGraphicsPipeline(VulkanDevice* pDevice, const Structure& struct
 }
 
 
-VkPipeline createComputePipeline(VulkanDevice* pDevice, const Structure& structure, const ShaderPrograms::VulkanShaderProgram* program)
+VkPipeline createComputePipeline(VulkanDevice* pDevice, VkPipelineCache pipelineCache, const Structure& structure, const ShaderPrograms::VulkanShaderProgram* program)
 {
     VkComputePipelineCreateInfo createInfo  = { };
     VkDevice device                         = pDevice->get();
@@ -568,7 +676,7 @@ VkPipeline createComputePipeline(VulkanDevice* pDevice, const Structure& structu
     createInfo.stage.pName  = program->compute.csEntry;
     createInfo.stage.stage  = VK_SHADER_STAGE_COMPUTE_BIT;
 
-    result = vkCreateComputePipelines(device, nullptr, 1, &createInfo, nullptr, &pipeline);
+    result = vkCreateComputePipelines(device, pipelineCache, 1, &createInfo, nullptr, &pipeline);
 
     if (result != VK_SUCCESS) 
     {
@@ -605,12 +713,13 @@ static VkPipeline createRayTracingPipeline()
 
 PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure, PipelineId id)
 {
-    PipelineState pipeline  = { };
-    pipeline.lastUsed       = 0;
-    auto iter               = g_pipelineMap.find(id);
+    PipelineState pipeline          = { };
+    pipeline.lastUsed               = 0;
+    auto iter                       = g_pipelineMap.find(id);
     if (iter == g_pipelineMap.end())
     {
         ShaderPrograms::VulkanShaderProgram* program = ShaderPrograms::obtainShaderProgram(structure.state.shaderProgramId, structure.state.shaderPermutation);
+        pipeline.pipelineCache = findPipelineCache(pDevice, id);
 
         R_ASSERT_FORMAT
             (
@@ -623,10 +732,10 @@ PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure, Pi
         switch (program->bindPoint)
         {
         case VK_PIPELINE_BIND_POINT_GRAPHICS:
-            pipeline.pipeline = createGraphicsPipeline(pDevice, structure, program);
+            pipeline.pipeline = createGraphicsPipeline(pDevice, pipeline.pipelineCache, structure, program);
             break;
         case VK_PIPELINE_BIND_POINT_COMPUTE:
-            pipeline.pipeline = createComputePipeline(pDevice, structure, program);
+            pipeline.pipeline = createComputePipeline(pDevice, pipeline.pipelineCache, structure, program);
             break;
         case VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR:
             R_ERROR(R_CHANNEL_VULKAN, "Ray tracing pipelines are not supported currently!");
@@ -636,6 +745,7 @@ PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure, Pi
 
         if (pipeline.pipeline)
         {
+            cachePipeline(pDevice, id, pipeline.pipelineCache);
             g_pipelineMap.insert(std::make_pair(id, pipeline));
         }
     }
@@ -646,6 +756,17 @@ PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure, Pi
         pipeline = iter->second;
     }
     return pipeline;
+}
+
+
+R_INTERNAL
+void destroyPipelineCache(VulkanDevice* pDevice, VkPipelineCache pipelineCache)
+{
+    VkDevice device = pDevice->get();
+    if (pipelineCache)
+    {
+        vkDestroyPipelineCache(device, pipelineCache, nullptr);
+    }
 }
 
 
@@ -661,6 +782,7 @@ ResultCode clearPipelineCache(VulkanDevice* pDevice)
     for (auto pipelineIt : g_pipelineMap)
     {
         destroyPipeline(pDevice, pipelineIt.second.pipeline);
+        destroyPipelineCache(pDevice, pipelineIt.second.pipelineCache);
     }
 
     g_pipelineLayoutMap.clear();

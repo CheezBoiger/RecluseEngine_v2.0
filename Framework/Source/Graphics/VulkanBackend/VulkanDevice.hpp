@@ -309,12 +309,12 @@ public:
     ResultCode          destroyResourceView(GraphicsResourceView* pResourceView) override;
     void                copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, const CopyBufferRegion* regions, U32 numRegions) override;
 
-    DescriptorAllocatorInstance* getDescriptorAllocatorInstance(U32 bufferIndex)
+    DescriptorAllocatorInstance*    getDescriptorAllocatorInstance(U32 bufferIndex)
     {
         return m_descriptorAllocator.getInstance(bufferIndex);
     }
 
-    DescriptorAllocator* getDescriptorAllocator() { return &m_descriptorAllocator; }
+    DescriptorAllocator*            getDescriptorAllocator() { return &m_descriptorAllocator; }
 
     VkDevice operator()() 
     {
@@ -326,46 +326,38 @@ public:
         return m_device;
     }
 
-    VkSurfaceKHR getSurface() const { return m_surface; }
+    VkSurfaceKHR                    getSurface() const { return m_surface; }
+    ResultCode                      reserveMemory(const MemoryReserveDescription& desc) override;
+    VulkanAdapter*                  getAdapter() const { return m_adapter; }
 
-    ResultCode reserveMemory(const MemoryReserveDescription& desc) override;
-
-    VulkanAdapter* getAdapter() const { return m_adapter; }
-
-    VulkanAllocationManager* getAllocationManager()
+    VulkanAllocationManager*        getAllocationManager()
         { return m_allocationManager.raw(); }
 
     // Invalidate resources when reading back from GPU.
-    void pushInvalidateMemoryRange(const VkMappedMemoryRange& mappedRange);
+    void                            pushInvalidateMemoryRange(const VkMappedMemoryRange& mappedRange);
 
     // Flush the resource memory range when writing from CPU to GPU.
-    void pushFlushMemoryRange(const VkMappedMemoryRange& mappedRange);
+    void                            pushFlushMemoryRange(const VkMappedMemoryRange& mappedRange);
 
-    void flushAllMappedRanges();
-    void invalidateAllMappedRanges();
-
-    VkDeviceSize getNonCoherentSize() const;
-
-    GraphicsSwapchain* getSwapchain() override;
-
-    Bool hasSurface() const { return m_surface != VK_NULL_HANDLE; }
+    void                            flushAllMappedRanges();
+    void                            invalidateAllMappedRanges();
+    VkDeviceSize                    getNonCoherentSize() const;
+    GraphicsSwapchain*              getSwapchain() override;
+    Bool                            hasSurface() const { return m_surface != VK_NULL_HANDLE; }
 
     const VkPhysicalDeviceFeatures& getEnabledFeatures() const { return m_enabledFeatures; }
 
 private:
 
-    ResultCode createSurface(VkInstance instance, void* handle);
-    void allocateMemCache();
-    void createDescriptorHeap();
+    ResultCode                      createSurface(VkInstance instance, void* handle);
+    void                            allocateMemCache();
+    void                            createDescriptorHeap();
+    void                            destroyDescriptorHeap();
+    void                            freeMemCache();
 
-
-    void destroyDescriptorHeap();
-    void freeMemCache();
-
-    VulkanAdapter* m_adapter;
-
-    VkDevice m_device;
-    VkSurfaceKHR m_surface;
+    VulkanAdapter*                  m_adapter;
+    VkDevice                        m_device;
+    VkSurfaceKHR                    m_surface;
     struct 
     {
         struct 

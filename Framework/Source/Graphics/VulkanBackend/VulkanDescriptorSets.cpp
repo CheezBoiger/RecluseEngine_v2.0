@@ -10,6 +10,11 @@
 #include "Recluse/Messaging.hpp"
 
 #include <unordered_map>
+#include <array>
+
+#define R_MAX_WRITE_BUFFER_INFO_COUNT 64
+#define R_MAX_WRITE_IMAGE_INFO_COUNT 64
+#define R_MAX_WRITE_INFO_COUNT (R_MAX_WRITE_BUFFER_INFO_COUNT + R_MAX_WRITE_IMAGE_INFO_COUNT)
 
 namespace Recluse {
 namespace DescriptorSets {
@@ -195,9 +200,9 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
     std::vector<VkDescriptorBufferInfo> bufferInfo;
     std::vector<VkDescriptorImageInfo> imageInfo;
 
-    bufferInfo.reserve(32);
-    imageInfo.reserve(64);
-    writeSet.reserve(96);
+    bufferInfo.reserve(R_MAX_WRITE_BUFFER_INFO_COUNT);
+    imageInfo.reserve(R_MAX_WRITE_IMAGE_INFO_COUNT);
+    writeSet.reserve(R_MAX_WRITE_INFO_COUNT);
 
     // NOTE(): This algorithm needs to be aligned with the makeDescriptorSetLayout function!
     //         Since most descriptor sets will likely need to be created with the same format.
@@ -235,29 +240,29 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
 
     for (U32 i = 0; i < structure.key.value.uavs; ++i)
     {
-        VkWriteDescriptorSet write = { };
-        VulkanResourceView* pView = structure.ppUnorderedAccesses[i];
-        const ResourceViewDescription& description = pView->getDesc();
-        VulkanResource* pResource = pView->getResource()->castTo<VulkanResource>();
+        VkWriteDescriptorSet write                  = { };
+        VulkanResourceView* pView                   = structure.ppUnorderedAccesses[i];
+        const ResourceViewDescription& description  = pView->getDesc();
+        VulkanResource* pResource                   = pView->getResource()->castTo<VulkanResource>();
 
-        write.sType             = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write.descriptorCount   = 1;
-        write.dstSet            = set;
-        write.descriptorType    = getDescriptorType(description.dimension, DescriptorBindType_UnorderedAccess);
-        write.dstBinding        = binding++;
+        write.sType                                 = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.descriptorCount                       = 1;
+        write.dstSet                                = set;
+        write.descriptorType                        = getDescriptorType(description.dimension, DescriptorBindType_UnorderedAccess);
+        write.dstBinding                            = binding++;
 
         if (description.dimension == ResourceDimension_Buffer)
         { 
-            VulkanBuffer* buffer = pResource->castTo<VulkanBuffer>();
-            VkDescriptorBufferInfo info = makeDescriptorBufferInfo(buffer, 0, buffer->getDesc().width);
+            VulkanBuffer* buffer            = pResource->castTo<VulkanBuffer>();
+            VkDescriptorBufferInfo info     = makeDescriptorBufferInfo(buffer, 0, buffer->getDesc().width);
             bufferInfo.push_back(info);
-            write.pBufferInfo = &bufferInfo.back();
+            write.pBufferInfo               = &bufferInfo.back();
         }
         else
         {
-            VkDescriptorImageInfo info = makeDescriptorImageInfo(pView);
+            VkDescriptorImageInfo info      = makeDescriptorImageInfo(pView);
             imageInfo.push_back(info);
-            write.pImageInfo = &imageInfo.back();
+            write.pImageInfo                = &imageInfo.back();
         }
 
         writeSet.push_back(write);
@@ -273,8 +278,8 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
             continue;
 
         VkDeviceSize minUBOAlignOffsetBytes = VulkanAdapter::obtainMinUniformBufferOffsetAlignment(pContext->getDevice()->castTo<VulkanDevice>());
-        VkDeviceSize alignedMemoryOffset = align(structure.ppConstantBuffers[i].offset, minUBOAlignOffsetBytes);
-        VkDescriptorBufferInfo info     = makeDescriptorBufferInfo(pBuffer, alignedMemoryOffset, structure.ppConstantBuffers[i].sizeBytes);
+        VkDeviceSize alignedMemoryOffset    = align(structure.ppConstantBuffers[i].offset, minUBOAlignOffsetBytes);
+        VkDescriptorBufferInfo info         = makeDescriptorBufferInfo(pBuffer, alignedMemoryOffset, structure.ppConstantBuffers[i].sizeBytes);
 
         bufferInfo.push_back(info);
 

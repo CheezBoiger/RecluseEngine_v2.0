@@ -144,6 +144,8 @@ public:
 
     R_OS_CALL ResultCode leave();
 
+    Bool isInitialized() const { return !!m_section; }
+
 private:
     void* m_section;
 };
@@ -165,5 +167,13 @@ public:
     }
 private:
     CriticalSection& m_cs;
+};
+
+
+class R_PUBLIC_API CriticalSectionGuard : public CriticalSection
+{
+public:
+    CriticalSectionGuard() { initialize(); }
+    ~CriticalSectionGuard() { release(); }
 };
 } // Recluse

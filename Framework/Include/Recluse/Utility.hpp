@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Recluse/Types.hpp"
+#include <map>
 
 namespace Recluse {
 
@@ -312,5 +313,45 @@ constexpr R_FORCE_INLINE U32 makeBitset32(U32 offset, U32 size, U32 value)
 {
     return ((value & ~(0xFFFFFFFF << size)) << offset);
 }
+
+
+namespace GlobalCommands {
+namespace Internal {
+    struct DataListener;
+    struct DataListener
+    {
+        void* value;
+
+        R_PUBLIC_API DataListener(const std::string& command, void* globalVariable);
+    private:
+        void storeData(const std::string& command, DataListener* data);
+    };
+    R_PUBLIC_API DataListener* obtainData(const std::string& command);
+    R_PUBLIC_API Bool setData(const std::string& command, const void* value, size_t sizeBytesToWrite);
+} // Internal
+
+
+// Obtain the value of the global command.
+template<typename Class>
+Class obtainValue(const std::string& command)
+{
+    Internal::DataListener* pData = Internal::obtainData(command);
+    return *reinterpret_cast<Class*>(pData->value);
+}
+
+// Set the value of the global command.
+template<typename Class>
+Bool setValue(const std::string& command, Class value)
+{
+    return Internal::setData(command, &value, sizeof(Class));
+}
+
+#define R_DECLARE_GLOBAL_VARIABLE(varName, defaultValue, commandName, dataType) \
+    dataType varName = defaultValue; \
+    Recluse::GlobalCommands::Internal::DataListener listener_ ## varName = Recluse::GlobalCommands::Internal::DataListener(commandName, &varName);
+
+#define R_DECLARE_GLOBAL_BOOLEAN(varName, defaultValue, commandName) R_DECLARE_GLOBAL_VARIABLE(varName, defaultValue, commandName, Recluse::Bool)
+#define R_DECLARE_GLOBAL_F32(varName, defaultValue, commandName) R_DECLARE_GLOBAL_VARIABLE(varName, defaultValue, commandName, Recluse::F32)
+} // GlobalCommands
 } // Recluse
 #endif // RECLUSE_UTILITY_HPP

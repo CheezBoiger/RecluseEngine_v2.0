@@ -107,6 +107,15 @@ void D3D12Swapchain::destroy()
 }
 
 
+ResultCode D3D12Swapchain::onRebuild()
+{
+    // Destroy the current swapchain and recreate it with the new descriptions.
+    m_currentFrameIndex = 0;
+    destroy();
+    return initialize(m_pDevice);
+}
+
+
 GraphicsResource* D3D12Swapchain::getFrame(U32 idx)
 {
     return nullptr;

@@ -29,6 +29,7 @@ public:
 
     // Present to our window display.
     ResultCode present(PresentConfig config = PresentConfig_Present) override;
+    ResultCode onRebuild() override;
 
     GraphicsResource*       getFrame(U32 idx) override;
     GraphicsResourceView*   getFrameView(U32 idx) override;

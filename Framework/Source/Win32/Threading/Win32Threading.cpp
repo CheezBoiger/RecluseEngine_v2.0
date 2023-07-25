@@ -210,7 +210,7 @@ Bool testAndSet(U32* ptr, U32 offset)
 
 ResultCode CriticalSection::initialize()
 {
-    R_ASSERT_FORMAT(m_section == NULL, "Critical Section is not null prior to initialization! section=%d", m_section);
+    R_ASSERT_FORMAT(m_section == NULL, "Critical Section is not null prior to initialization! Could indicate was already created? section=%d", m_section);
     m_section = malloc(sizeof(CRITICAL_SECTION));
     InitializeCriticalSection((LPCRITICAL_SECTION)m_section);
     return RecluseResult_Ok;

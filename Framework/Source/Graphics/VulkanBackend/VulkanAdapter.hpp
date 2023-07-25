@@ -51,9 +51,9 @@ public:
         , m_id(id) 
     { }
 
-    static std::vector<VulkanAdapter> getAvailablePhysicalDevices(VulkanInstance* ctx);
-    static VkDeviceSize obtainMinUniformBufferOffsetAlignment(VulkanDevice* pDevice);
-    static VkDeviceSize obtainMinStorageBufferOffsetAlignment(VulkanDevice* pDevice);
+    static std::vector<VulkanAdapter>       getAvailablePhysicalDevices(VulkanInstance* ctx);
+    static VkDeviceSize                     obtainMinUniformBufferOffsetAlignment(VulkanDevice* pDevice);
+    static VkDeviceSize                     obtainMinStorageBufferOffsetAlignment(VulkanDevice* pDevice);
 
     ResultCode                              getAdapterInfo(AdapterInfo* out) const override;
     ResultCode                              createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice) override;

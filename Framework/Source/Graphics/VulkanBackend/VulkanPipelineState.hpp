@@ -61,7 +61,8 @@ struct PipelineState
 {
     U32                 lastUsed;
     VkPipelineBindPoint bindPoint;
-    VkPipeline          pipeline;   
+    VkPipeline          pipeline      = VK_NULL_HANDLE;
+    VkPipelineCache     pipelineCache = VK_NULL_HANDLE;
 };
 
 PipelineId              makePipelineId(const Structure& pipelineStructure);

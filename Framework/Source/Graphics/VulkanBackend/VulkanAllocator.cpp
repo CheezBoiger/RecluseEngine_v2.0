@@ -148,12 +148,12 @@ void VulkanAllocationManager::emptyGarbage(U32 index)
     {
         result = RecluseResult_Ok;
         
-        VulkanMemory& mrange        = garbage[i];
-        Allocation alloc            = { };
-        VulkanPagedAllocator* allocator  = m_resourceAllocators[mrange.memoryTypeIndex][mrange.allocatorIndex];
+        VulkanMemory& mrange                = garbage[i];
+        Allocation alloc                    = { };
+        VulkanPagedAllocator* allocator     = m_resourceAllocators[mrange.memoryTypeIndex][mrange.allocatorIndex];
 
-        alloc.baseAddress       = mrange.offsetBytes;
-        alloc.sizeBytes         = mrange.sizeBytes;
+        alloc.baseAddress                   = mrange.offsetBytes;
+        alloc.sizeBytes                     = mrange.sizeBytes;
 
         result = allocator->free(&mrange);
 

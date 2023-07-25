@@ -22,6 +22,9 @@
 namespace Recluse {
 
 
+R_DECLARE_GLOBAL_BOOLEAN(g_justLog, false, "Vulkan.Test");
+
+
 void checkAvailableDeviceExtensions(const VulkanAdapter* adapter, std::vector<const char*>& extensions)
 {
 }
@@ -100,6 +103,11 @@ void VulkanContext::begin()
     m_primaryCommandList.use(getCurrentBufferIndex());
     m_primaryCommandList.reset();
     m_primaryCommandList.begin();
+
+    if (g_justLog)
+    {
+        R_VERBOSE(R_CHANNEL_VULKAN, "We are Logging!!!");
+    }
 }
 
 

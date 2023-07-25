@@ -26,6 +26,9 @@
 
 using namespace Recluse;
 
+R_DECLARE_GLOBAL_BOOLEAN(g_globalVar, false, "Global.Var");
+R_DECLARE_GLOBAL_F32(g_value, 1.0f, "Global.Floatie");
+
 struct Vertex 
 {
     F32 position[2];
@@ -122,13 +125,11 @@ int main(int c, char* argv[])
     }
 
     {
-        ApplicationInfo app = { };
-        app.engineName = "Cat";
-        app.appName = "PipelineInitialization";
-
+        ApplicationInfo app     = { };
+        app.engineName          = "Cat";
+        app.appName             = "PipelineInitialization";
         LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation;
-
-        result = pInstance->initialize(app, flags);
+        result                  = pInstance->initialize(app, flags);
     }
     
     if (result != RecluseResult_Ok) 
@@ -139,16 +140,15 @@ int main(int c, char* argv[])
     pAdapter = pInstance->getGraphicsAdapters()[0];
 
     {
-        DeviceCreateInfo info = { };
-        info.winHandle = pWindow->getNativeHandle();
-        info.swapchainDescription = { };
-        info.swapchainDescription.buffering = FrameBuffering_Single;
-        info.swapchainDescription.desiredFrames = 3;
-        info.swapchainDescription.format = ResourceFormat_B8G8R8A8_Unorm;
-        info.swapchainDescription.renderWidth = pWindow->getWidth();
-        info.swapchainDescription.renderHeight = pWindow->getHeight();
-
-        result = pAdapter->createDevice(info, &pDevice);
+        DeviceCreateInfo info                       = { };
+        info.winHandle                              = pWindow->getNativeHandle();
+        info.swapchainDescription                   = { };
+        info.swapchainDescription.buffering         = FrameBuffering_Single;
+        info.swapchainDescription.desiredFrames     = 3;
+        info.swapchainDescription.format            = ResourceFormat_B8G8R8A8_Unorm;
+        info.swapchainDescription.renderWidth       = pWindow->getWidth();
+        info.swapchainDescription.renderHeight      = pWindow->getHeight();
+        result                                      = pAdapter->createDevice(info, &pDevice);
     }
 
     if (result != RecluseResult_Ok) 
@@ -313,10 +313,8 @@ int main(int c, char* argv[])
         Rect scissor = { };
         scissor.x = 0; scissor.y = 0;
         scissor.width = pWindow->getWidth(); scissor.height = pWindow->getHeight();
-
         context->begin();
             updateConstData(pData, tick, sizeof(ConstData) * pContext->obtainCurrentBufferIndex());
-            
             context->pushState();
             context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
             context->setCullMode(CullMode_None);
@@ -337,6 +335,7 @@ int main(int c, char* argv[])
             context->popState();
         context->end();
         R_VERBOSE("Game", "%f fps", 1.0f / ms);
+        R_VERBOSE("Game", "g_globalVar=%d", g_globalVar);
         pSwapchain->present();
 
         pollEvents();
