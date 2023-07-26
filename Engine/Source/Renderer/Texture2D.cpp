@@ -108,10 +108,6 @@ ResultCode TextureView::initialize(Renderer* pRenderer, Texture2D* pTexture, Res
     GraphicsDevice* pDevice = pRenderer->getDevice();
     ResultCode result = RecluseResult_Ok;
 
-    desc.pResource = pTexture->getResource();
-
-    result = pDevice->createResourceView(&m_view, desc);
-
     m_texture = pTexture;
 
     genCrC((void*)m_view, sizeof(TextureView));
@@ -122,11 +118,6 @@ ResultCode TextureView::initialize(Renderer* pRenderer, Texture2D* pTexture, Res
 
 ResultCode TextureView::destroy(Renderer* pRenderer)
 {
-    if (m_view) 
-    {
-        pRenderer->getDevice()->destroyResourceView(m_view);
-        m_view = nullptr;
-    }
 
     return RecluseResult_Ok;
 }

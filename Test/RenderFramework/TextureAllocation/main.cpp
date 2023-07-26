@@ -102,10 +102,9 @@ int main(int c, char* argv[])
         viewDesc.format             = ResourceFormat_R8G8B8A8_Unorm;
         viewDesc.layerCount         = 1;
         viewDesc.mipLevelCount      = 1;
-        viewDesc.pResource          = pTexture;
         viewDesc.type               = ResourceViewType_RenderTarget;
        
-        result = pDevice->createResourceView(&pView, viewDesc);
+        pTexture->asView(viewDesc);
         
         if (result != RecluseResult_Ok) {
         
@@ -113,8 +112,7 @@ int main(int c, char* argv[])
         
         } else {
         
-            R_TRACE("Graphics", "Successfully created view...");    
-            pDevice->destroyResourceView(pView);
+            R_TRACE("Graphics", "Successfully created view...");
 
         }
 

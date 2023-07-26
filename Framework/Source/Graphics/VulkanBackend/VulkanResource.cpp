@@ -122,6 +122,8 @@ void VulkanResource::release()
 
     onRelease(m_pDevice);
 
+    releaseViews();
+
     if (m_memory.deviceMemory) 
     {
         result = allocator->free(&m_memory);
@@ -131,6 +133,19 @@ void VulkanResource::release()
         }
 
     }
+}
+
+
+void VulkanResource::releaseViews()
+{
+    // Clear all remaining resource views associated.
+    for (auto iter : m_resourceIds)
+    {
+        ResourceViewId id = iter.second;
+        ResourceViews::releaseResourceView(m_pDevice, id);
+    }
+
+    m_resourceIds.clear();
 }
 
 
@@ -501,5 +516,24 @@ VkBufferMemoryBarrier VulkanBuffer::transition(ResourceState dstState)
     setCurrentAccessMask(barrier.dstAccessMask);
 
     return barrier;
+}
+
+
+ResourceViewId VulkanResource::asView(const ResourceViewDescription& description)
+{
+    Hash64 hash = recluseHashFast(&description, sizeof(ResourceViewDescription));
+    ResourceViewId viewId = 0;
+    auto iter = m_resourceIds.find(hash);
+    if (iter == m_resourceIds.end())
+    {
+        viewId = ResourceViews::makeResourceView(m_pDevice, this, description);
+        m_resourceIds.insert(std::make_pair(hash, viewId));
+    }
+    else
+    {
+        viewId = iter->second;
+    }
+
+    return viewId;
 }
 } // Recluse

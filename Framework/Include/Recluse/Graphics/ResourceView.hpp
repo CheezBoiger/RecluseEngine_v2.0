@@ -21,8 +21,6 @@ public:
     { }
 
     const ResourceViewDescription&    getDesc() const { return m_desc; }
-    GraphicsResource*   getResource() const { return m_desc.pResource; }
-    Bool                hasResource() const { return m_desc.pResource != nullptr; }
 
 private:
     ResourceViewDescription m_desc;

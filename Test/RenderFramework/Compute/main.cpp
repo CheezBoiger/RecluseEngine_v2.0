@@ -151,25 +151,6 @@ int main(int c, char* argv[])
     pSwapchain = pDevice->getSwapchain();
 
     {
-        ResourceViewDescription desc   = { };
-        desc.type               = ResourceViewType_UnorderedAccess;
-        desc.dimension          = ResourceViewDimension_2d;
-        desc.format             = ResourceFormat_B8G8R8A8_Unorm;
-        desc.layerCount         = 1;
-        desc.mipLevelCount      = 1;
-        desc.baseArrayLayer     = 0;
-        desc.baseMipLevel       = 0;
-        desc.name               = "ResultMandelbrot";
-
-        views.resize(pSwapchain->getDesc().desiredFrames);
-        for (U32 i = 0; i < pSwapchain->getDesc().desiredFrames; ++i) 
-        {
-            desc.pResource = pSwapchain->getFrame(i);
-            pDevice->createResourceView(&views[i], desc);
-        }
-    } 
-
-    {
         ConstData dat = { };
         dat.color[0] = 1.0f;
         dat.color[1] = 0.0f;
@@ -217,13 +198,23 @@ int main(int c, char* argv[])
         updateConstData(pData, frameMs, tick.getCurrentTimeS());
         GraphicsContext* context = pContext;
         context->begin();
-            GraphicsResource* pResource = views[pSwapchain->getCurrentFrameIndex()]->getResource();
-            context->transition(pResource, ResourceState_UnorderedAccess);
+            ResourceViewDescription desc   = { };
+            desc.type               = ResourceViewType_UnorderedAccess;
+            desc.dimension          = ResourceViewDimension_2d;
+            desc.format             = ResourceFormat_B8G8R8A8_Unorm;
+            desc.layerCount         = 1;
+            desc.mipLevelCount      = 1;
+            desc.baseArrayLayer     = 0;
+            desc.baseMipLevel       = 0;
+
+            GraphicsResource* frame = pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex());
+            ResourceViewId uavView = frame->asView(desc);
+            context->transition(frame, ResourceState_UnorderedAccess);
             context->bindConstantBuffer(ShaderType_Compute, 0, pData, 0, sizeof(ConstData));
-            context->bindUnorderedAccessViews(ShaderType_Compute, 0, 1, &views[pSwapchain->getCurrentFrameIndex()]);
+            context->bindUnorderedAccessViews(ShaderType_Compute, 0, 1, &uavView);
             context->setShaderProgram(ProgramId_Mandelbrot);
             context->dispatch(Math::divUp(pWindow->getWidth(), 8u), Math::divUp(pWindow->getHeight(), 8u), 1);
-            context->transition(pResource, ResourceState_Present);
+            context->transition(frame, ResourceState_Present);
         context->end();
         R_VERBOSE("Test", "Frame: %f fps", 1.0f / frameMs);
         pSwapchain->present();
@@ -233,10 +224,6 @@ int main(int c, char* argv[])
     
     pContext->wait();
     pDevice->destroyResource(pData);
-
-    for (U32 i = 0; i < views.size(); ++i)
-        pDevice->destroyResourceView(views[i]);
-
     pDevice->releaseContext(pContext);
     pAdapter->destroyDevice(pDevice);
     GraphicsInstance::destroyInstance(pInstance);

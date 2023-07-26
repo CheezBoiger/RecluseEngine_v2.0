@@ -44,7 +44,6 @@ public:
     U32                     getFrameCount() const { return m_frameResources.getNumMaxFrames(); }
 
     GraphicsResource*       getFrame(U32 idx) override;
-    GraphicsResourceView*   getFrameView(U32 idx) override;
 
     // Call this function before the start of a primary command buffer record!
     // Prepares the frame for the next image to draw onto.
@@ -93,7 +92,6 @@ private:
     U32                                 m_currentImageIndex;
     VulkanFrameResources                m_frameResources;
     std::vector<VulkanImage*>           m_frameImages;
-    std::vector<VulkanResourceView*>    m_frameViews;
     std::vector<VkCommandBuffer>        m_commandbuffers;
     VkCommandPool                       m_commandPool;
     const QueueFamily*                  m_queueFamily;

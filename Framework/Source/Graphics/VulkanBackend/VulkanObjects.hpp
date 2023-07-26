@@ -20,12 +20,12 @@ class VulkanContext;
 
 struct VulkanRenderPassDesc
 {
-    GraphicsResourceView**  ppRenderTargetViews;
-    U32                     numRenderTargets;
-    U32                     width;
-    U32                     height;
-    U32                     layers;
-    GraphicsResourceView*   pDepthStencil;
+    ResourceViewId*  ppRenderTargetViews;
+    U32              numRenderTargets;
+    U32              width;
+    U32              height;
+    U32              layers;
+    ResourceViewId   pDepthStencil;
 };
 
 class VulkanRenderPass
@@ -61,7 +61,7 @@ namespace RenderPasses {
 typedef Hash64 RenderPassId;
 typedef Hash64 FrameBufferId;
 
-VulkanRenderPass*       makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, GraphicsResourceView** ppRenderTargetViews, GraphicsResourceView* pDepthStencil);
+VulkanRenderPass*       makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, ResourceViewId* ppRenderTargetViews, ResourceViewId pDepthStencil);
 void                    clearCache(VulkanDevice* pDevice);
 } // RenderPassManager
 
@@ -120,12 +120,12 @@ enum ClearCacheFlag
 typedef Hash64 DescriptorSetLayoutId;
 typedef Hash64 DescriptorSetId;
 
-VkDescriptorSetLayout       makeLayout(VulkanContext* pContext, const Structure& structure);
-const VulkanDescriptorAllocation& makeDescriptorSet(VulkanContext* pContext, const Structure& structure);
-ResultCode                     releaseLayout(VulkanContext* pContext, const Structure& structure);
-ResultCode                     releaseDescriptorSet(VulkanContext* pContext, const Structure& structure);
-DescriptorSetLayoutId       obtainDescriptorLayoutKey(const Structure& structure);
-void                        clearDescriptorSetCache(VulkanContext* pContext, ClearCacheFlag flag = ClearCacheFlag_DescriptorPoolFastClear);
-void                        clearDescriptorLayoutCache(VulkanDevice* pContext);
+VkDescriptorSetLayout               makeLayout(VulkanContext* pContext, const Structure& structure);
+const VulkanDescriptorAllocation&   makeDescriptorSet(VulkanContext* pContext, const Structure& structure);
+ResultCode                          releaseLayout(VulkanContext* pContext, const Structure& structure);
+ResultCode                          releaseDescriptorSet(VulkanContext* pContext, const Structure& structure);
+DescriptorSetLayoutId               obtainDescriptorLayoutKey(const Structure& structure);
+void                                clearDescriptorSetCache(VulkanContext* pContext, ClearCacheFlag flag = ClearCacheFlag_DescriptorPoolFastClear);
+void                                clearDescriptorLayoutCache(VulkanDevice* pContext);
 } // DescriptorSet
 } // Recluse

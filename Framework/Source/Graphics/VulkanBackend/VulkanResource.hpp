@@ -34,6 +34,9 @@ public:
     //
     void                release();
 
+    // Simply releases views associated with this resource.
+    void                releaseViews();
+
     // Vulkan memory handle, normally assigned by the Vulkan Allocator.
     //
     const VulkanMemory& getMemory() const { return m_memory; }
@@ -51,6 +54,9 @@ public:
     // Check if the vulkan resource is a buffer. Otherwise, will be an image.
     inline Bool         isBuffer() const { return m_isBuffer; }
     ResourceId          getId() const override { return m_id; }
+
+    ResourceViewId      asView(const ResourceViewDescription& description) override;
+    void                setDevice(VulkanDevice* pDevice) { m_pDevice = pDevice; }
 
     //GraphicsAPI getApi() const override { return VulkanGraphicsObject::getApi(); }
 protected:
@@ -84,6 +90,8 @@ private:
     VkDeviceSize        m_alignmentRequirement;
     Bool                m_isBuffer;
     ResourceId          m_id;
+
+    std::map<Hash64, ResourceViewId> m_resourceIds; 
 };
 
 

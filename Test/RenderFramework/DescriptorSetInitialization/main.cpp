@@ -299,12 +299,20 @@ int main(int c, char* argv[])
         Rect rect2          = { bounds.mmin.x, bounds.mmin.y, bounds.mmax.x, bounds.mmax.y };
 
         context->begin();
-            GraphicsResourceView* pView = pSwapchain->getFrameView(pSwapchain->getCurrentFrameIndex());
+            ResourceViewDescription rtvDesc = { };
+            rtvDesc.type = ResourceViewType_RenderTarget;
+            rtvDesc.baseArrayLayer = 0;
+            rtvDesc.baseMipLevel = 0;
+            rtvDesc.layerCount = 1;
+            rtvDesc.mipLevelCount = 1;
+            rtvDesc.dimension = ResourceViewDimension_2d;
+            rtvDesc.format = ResourceFormat_B8G8R8A8_Unorm;
+            ResourceViewId view = pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex())->asView(rtvDesc);
             context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
-            context->bindRenderTargets(1, &pView, nullptr);
+            context->bindRenderTargets(1, &view);
             context->clearRenderTarget(0, color2, rect2);
             context->clearRenderTarget(0, color, rect);
-            context->bindRenderTargets(1, &pView, nullptr);
+            context->bindRenderTargets(1, &view);
             context->clearRenderTarget(0, color2, rect2);
             context->clearRenderTarget(0, color, rect);
             context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);

@@ -93,6 +93,7 @@ ResultCode D3D12Resource::initialize
 
     m_isCommitted               = makeCommitted;
     m_allowedTransitionStates   = desc.usage;
+    m_pDevice                   = pDevice;
 
     setCurrentResourceState(initialState);
 
@@ -102,11 +103,12 @@ ResultCode D3D12Resource::initialize
 
 ResultCode D3D12Resource::destroy()
 {
+    R_ASSERT(m_pDevice != nullptr);
     if (m_memObj.pResource) 
     {
         if (!m_isCommitted) 
         {
-            D3D12ResourcePagedAllocator* pAllocator = nullptr;
+            D3D12ResourceAllocationManager* pAllocator = m_pDevice->resourceAllocationManager();
             // Get the allocator from the device maybe?
             R_ASSERT(pAllocator != NULL);
             

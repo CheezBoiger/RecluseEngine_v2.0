@@ -100,8 +100,8 @@ ResultCode VulkanRenderPass::initialize(VulkanDevice* pDevice, const VulkanRende
 
     auto storeColorDescription = [&] (U32 i) -> void 
     {
-        VulkanResourceView* pView   = desc.ppRenderTargetViews[i]->castTo<VulkanResourceView>();
-        ResourceViewDescription viewDesc   = pView->getDesc();
+        VulkanResourceView* pView           = ResourceViews::obtainResourceView(desc.ppRenderTargetViews[i]);
+        ResourceViewDescription viewDesc    = pView->getDesc();
 
         descriptions[i].samples         = VK_SAMPLE_COUNT_1_BIT;
         descriptions[i].format          = Vulkan::getVulkanFormat(viewDesc.format);
@@ -121,7 +121,7 @@ ResultCode VulkanRenderPass::initialize(VulkanDevice* pDevice, const VulkanRende
 
     auto storeDepthStencilDescription = [&] (U32 i) -> void 
     {
-        VulkanResourceView* pView   = desc.pDepthStencil->castTo<VulkanResourceView>();
+        VulkanResourceView* pView   = ResourceViews::obtainResourceView(desc.pDepthStencil);
         ResourceViewDescription viewDesc   = pView->getDesc();
 
         descriptions[i].samples         = VK_SAMPLE_COUNT_1_BIT;
@@ -267,7 +267,7 @@ ResultCode VulkanRenderPass::release(VulkanDevice* pDevice)
 
 namespace RenderPasses {
 
-VulkanRenderPass* makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, GraphicsResourceView** ppRenderTargetViews, GraphicsResourceView* pDepthStencil)
+VulkanRenderPass* makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, ResourceViewId* ppRenderTargetViews, ResourceViewId pDepthStencil)
 {
     // We never really have a max of 8 render targets in current hardware.
     R_ASSERT(numRenderTargets <= 8);
@@ -282,18 +282,20 @@ VulkanRenderPass* makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, Gr
     
     for (U32 i = 0; i < numRenderTargets; ++i)
     {
-        ids[count++]    = ppRenderTargetViews[i]->getId();
-        targetWidth     = Math::maximum(targetWidth, ppRenderTargetViews[i]->getDesc().pResource->getDesc().width);
-        targetHeight    = Math::maximum(targetHeight, ppRenderTargetViews[i]->getDesc().pResource->getDesc().height);
-        targetLayers    = Math::maximum(targetLayers, ppRenderTargetViews[i]->getDesc().pResource->getDesc().depthOrArraySize);
+        VulkanResourceView* pView = ResourceViews::obtainResourceView(ppRenderTargetViews[i]);
+        ids[count++]    = pView->getId();
+        targetWidth     = Math::maximum(targetWidth, pView->getResource()->getDesc().width);
+        targetHeight    = Math::maximum(targetHeight, pView->getResource()->getDesc().height);
+        targetLayers    = Math::maximum(targetLayers, pView->getResource()->getDesc().depthOrArraySize);
     }
 
     if (pDepthStencil)
     {
-        ids[count++]    = pDepthStencil->getId();
-        targetWidth     = Math::maximum(targetWidth, pDepthStencil->getDesc().pResource->getDesc().width);
-        targetHeight    = Math::maximum(targetHeight, pDepthStencil->getDesc().pResource->getDesc().height);
-        targetLayers    = Math::maximum(targetLayers, pDepthStencil->getDesc().pResource->getDesc().depthOrArraySize);
+        VulkanResourceView* pView = ResourceViews::obtainResourceView(pDepthStencil);
+        ids[count++]    = pView->getId();
+        targetWidth     = Math::maximum(targetWidth, pView->getResource()->getDesc().width);
+        targetHeight    = Math::maximum(targetHeight, pView->getResource()->getDesc().height);
+        targetLayers    = Math::maximum(targetLayers, pView->getResource()->getDesc().depthOrArraySize);
     }
 
     const U64 resourceViewBytes = sizeof(ResourceViewId) * (U64)count;

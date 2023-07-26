@@ -98,10 +98,10 @@ public:
 
     void transition(GraphicsResource* pResource, ResourceState dstState) override;
 
-    void bindShaderResources(ShaderType type, U32 offset, U32 count, GraphicsResourceView** ppResources) override;
-    void bindUnorderedAccessViews(ShaderType type, U32 offset, U32 count, GraphicsResourceView** ppResources) override;
+    void bindShaderResources(ShaderType type, U32 offset, U32 count, ResourceViewId* ppResources) override;
+    void bindUnorderedAccessViews(ShaderType type, U32 offset, U32 count, ResourceViewId* ppResources) override;
     void bindConstantBuffer(ShaderType type, U32 slot, GraphicsResource* pResource, U64 offsetBytes, U64 sizeBytes) override;
-    void bindRenderTargets(U32 count, GraphicsResourceView** ppResources, GraphicsResourceView* pDepthStencil) override;
+    void bindRenderTargets(U32 count, ResourceViewId* ppResources, ResourceViewId pDepthStencil) override;
     void bindSamplers(ShaderType type, U32 count, GraphicsSampler** ppSampler) override;
     void bindRasterizerState(const RasterState& state) override { }
     void bindBlendState(const BlendState& state) override { currentState().m_pipelineStructure.state.graphics.blendState = state; currentState().markPipelineDirty(); }
@@ -299,14 +299,12 @@ public:
     ResultCode          createSampler(GraphicsSampler** ppSampler, const SamplerDescription& desc) override;
     ResultCode          destroySampler(GraphicsSampler* pSampler) override;
     ResultCode          destroyResource(GraphicsResource* pResource) override;
-    ResultCode          createResourceView(GraphicsResourceView** ppView, const ResourceViewDescription& desc) override;
     ResultCode          loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition) override;
     ResultCode          unloadShaderProgram(ShaderProgramId program) override;
     void                unloadAllShaderPrograms() override;
     Bool                makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout) override;
     Bool                destroyVertexLayout(VertexInputLayoutId id) override;
     void                release(VkInstance instance);
-    ResultCode          destroyResourceView(GraphicsResourceView* pResourceView) override;
     void                copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, const CopyBufferRegion* regions, U32 numRegions) override;
 
     DescriptorAllocatorInstance*    getDescriptorAllocatorInstance(U32 bufferIndex)

@@ -3,7 +3,8 @@
 
 #include "D3D12Commons.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
-
+#include "D3D12Resource.hpp"
+#include "D3D12ResourceView.hpp"
 
 namespace Recluse {
 
@@ -11,6 +12,8 @@ class D3D12Device;
 class D3D12Queue;
 
 struct FrameResource {
+    D3D12Resource* frameResource;
+    D3D12GraphicsResourceView* pView;
 };
 
 class D3D12Swapchain : public GraphicsSwapchain 
@@ -28,18 +31,17 @@ public:
     void destroy();
 
     // Present to our window display.
-    ResultCode present(PresentConfig config = PresentConfig_Present) override;
-    ResultCode onRebuild() override;
+    ResultCode              present(PresentConfig config = PresentConfig_Present) override;
+    ResultCode              onRebuild() override;
 
     GraphicsResource*       getFrame(U32 idx) override;
-    GraphicsResourceView*   getFrameView(U32 idx) override;
 
 private:
 
-    ResultCode initializeFrameResources();
-    ResultCode destroyFrameResources();
+    ResultCode              initializeFrameResources();
+    ResultCode              destroyFrameResources();
     
-    ResultCode flushFinishedCommandLists();
+    ResultCode              flushFinishedCommandLists();
     
     IDXGISwapChain3*            m_pSwapchain;
     D3D12Device*                m_pDevice;

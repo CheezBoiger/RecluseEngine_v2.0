@@ -17,7 +17,7 @@
 namespace Recluse {
 namespace PreZ {
 
-GraphicsResourceView* pSceneDepthView = nullptr;
+GraphicsResource* pSceneDepth = nullptr;
 
 std::unordered_map<Engine::VertexAttribFlags, PipelineState*> pipelines;
 RenderPass* pPreZPass = nullptr;
@@ -52,7 +52,7 @@ void destroy(GraphicsDevice* pDevice)
 void generate(GraphicsContext* context, Engine::RenderCommandList* pMeshCommandList, U64* keys, U64 sz)
 {
     Engine::RenderCommand** pRenderCommands     = pMeshCommandList->getRenderCommands();
-    const GraphicsResourceDescription& depth    = pSceneDepthView->getResource()->getDesc();
+    const GraphicsResourceDescription& depth    = pSceneDepth->getDesc();
     Rect depthRect                              = { };
     depthRect.x         = depthRect.y           = 0.f;
 

@@ -82,7 +82,7 @@ public:
     const std::vector<BufferResources>& getBufferResources() const { return m_bufferResources; }
     void                                resetCurrentResources();
    
-    void                                bindRenderTargets(U32 count, GraphicsResourceView** ppResources, GraphicsResourceView* pDepthStencil = nullptr) override;
+    void                                bindRenderTargets(U32 count, ResourceViewId* ppResources, ResourceViewId pDepthStencil = 0) override;
     void                                clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) override;
     void                                clearDepthStencil(ClearFlags clearFlags, F32 clearDepth, U8 clearStencil, const Rect& rect) override;
     void                                setScissors(U32 numScissors, Rect* pRects) override;

@@ -60,5 +60,6 @@ private:
     D3D12MemoryObject       m_memObj;
     Bool                    m_isCommitted;
     ResourceTransitionFlags m_allowedTransitionStates;
+    D3D12Device*            m_pDevice;
 };
 } // Recluse

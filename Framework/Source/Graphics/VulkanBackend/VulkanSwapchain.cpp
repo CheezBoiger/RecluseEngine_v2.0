@@ -20,12 +20,6 @@ GraphicsResource* VulkanSwapchain::getFrame(U32 idx)
 }
 
 
-GraphicsResourceView* VulkanSwapchain::getFrameView(U32 idx)
-{
-    return m_frameViews[idx];
-}
-
-
 ResultCode VulkanSwapchain::build(VulkanDevice* pDevice)
 {
     VkSwapchainCreateInfoKHR createInfo         = { };
@@ -165,10 +159,9 @@ ResultCode VulkanSwapchain::destroy()
 
         for (U32 i = 0; i < m_frameImages.size(); ++i) 
         {   
-            m_frameViews[i]->release(m_pDevice);
             // Do not call m_frameResources[i]->destroy(), images are originally handled
             // by the swapchain.
-            delete m_frameViews[i];
+            m_frameImages[i]->releaseViews();
             delete m_frameImages[i];
         }
 
@@ -278,7 +271,6 @@ void VulkanSwapchain::buildFrameResources(ResourceFormat resourceFormat)
     const SwapchainCreateDescription& swapchainDesc = getDesc();
 
     m_frameImages.resize(numMaxFrames);
-    m_frameViews.resize(numMaxFrames);
 
     // For swapchain resources, we don't necessarily need to allocate or create the native handles
     // for our images, we just need to pass them over to the object wrapper. This will then be 
@@ -302,20 +294,7 @@ void VulkanSwapchain::buildFrameResources(ResourceFormat resourceFormat)
 
         m_frameImages[i] = new VulkanImage(desc, frame, VK_IMAGE_LAYOUT_UNDEFINED);
         m_frameImages[i]->generateId();
-
-        ResourceViewDescription viewDesc = { };
-        viewDesc.format         = resourceFormat;
-        viewDesc.pResource      = m_frameImages[i];
-        viewDesc.mipLevelCount  = 1;
-        viewDesc.layerCount     = 1;
-        viewDesc.baseArrayLayer = 0;
-        viewDesc.baseMipLevel   = 0;
-        viewDesc.dimension      = ResourceViewDimension_2d;
-        viewDesc.type           = ResourceViewType_RenderTarget;
-        
-        m_frameViews[i] = new VulkanResourceView(viewDesc);
-        m_frameViews[i]->initialize(m_pDevice);
-        m_frameViews[i]->generateId();
+        m_frameImages[i]->setDevice(m_pDevice);
     }
 }
 

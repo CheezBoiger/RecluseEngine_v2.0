@@ -8,6 +8,7 @@
 namespace Recluse {
 
 class VulkanDevice;
+class VulkanResource;
 
 class VulkanResourceView : public GraphicsResourceView 
 {
@@ -21,7 +22,7 @@ public:
         , m_subresourceRange({ })
         , m_id(~0) { }
 
-    ResultCode initialize(VulkanDevice* pDevice);
+    ResultCode initialize(VulkanDevice* pDevice, VulkanResource* pResource);
 
     ResultCode release(VulkanDevice* pDevice);
 
@@ -31,6 +32,7 @@ public:
 
     VkImageSubresourceRange getSubresourceRange() const { return m_subresourceRange; }
     ResourceViewId getId() const override { return m_id; }
+    VulkanResource* getResource() const { return m_resource; }
 private:
     static ResourceViewId kResourceViewCreationCounter;
     static MutexGuard kResourceViewCreationMutex;
@@ -39,11 +41,12 @@ public:
     void generateId() override 
     {
         ScopedLock _(kResourceViewCreationMutex);
-        m_id = kResourceViewCreationCounter++;
+        m_id = ++kResourceViewCreationCounter;
     }
 
 private:
 
+    VulkanResource*         m_resource;
     VkImageView             m_view;
     VkImageLayout           m_expectedLayout;
     VkImageSubresourceRange m_subresourceRange;
@@ -94,10 +97,10 @@ private:
 };
 
 namespace ResourceViews {
-VulkanResourceView* makeResourceView(VulkanDevice* pDevice, const ResourceViewDescription& desc);
+ResourceViewId      makeResourceView(VulkanDevice* pDevice, VulkanResource* pResource, const ResourceViewDescription& desc);
 VulkanSampler*      makeSampler(VulkanDevice* pDevice, const SamplerDescription& desc);
-ResultCode             releaseResourceView(VulkanDevice* pDevice, ResourceViewId id);
-ResultCode             releaseSampler(VulkanDevice* pDevice, SamplerId id);
+ResultCode          releaseResourceView(VulkanDevice* pDevice, ResourceViewId id);
+ResultCode          releaseSampler(VulkanDevice* pDevice, SamplerId id);
 VulkanResourceView* obtainResourceView(ResourceViewId id);
 VulkanSampler*      obtainSampler(SamplerId);
 } // ResourceViews

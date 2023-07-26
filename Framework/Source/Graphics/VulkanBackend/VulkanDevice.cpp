@@ -760,23 +760,6 @@ void VulkanContext::destroyFences()
 }
 
 
-ResultCode VulkanDevice::createResourceView(GraphicsResourceView** ppView, const ResourceViewDescription& desc)
-{
-    VulkanResourceView* pView = ResourceViews::makeResourceView(this, desc);
-    if (!pView)
-       return RecluseResult_Failed;
-    *ppView = pView;
-    return RecluseResult_Ok;
-}
-
-
-ResultCode VulkanDevice::destroyResourceView(GraphicsResourceView* pView)
-{
-    if (!pView) return RecluseResult_NullPtrExcept;
-    return ResourceViews::releaseResourceView(this, pView->getId());
-}
-
-
 void VulkanDevice::createDescriptorHeap()
 {
     // TODO: Need to do a resize of this, and probably not rely on context so much on obtaining the buffer count.

@@ -26,9 +26,6 @@
 
 using namespace Recluse;
 
-R_DECLARE_GLOBAL_BOOLEAN(g_globalVar, false, "Global.Var");
-R_DECLARE_GLOBAL_F32(g_value, 1.0f, "Global.Floatie");
-
 struct Vertex 
 {
     F32 position[2];
@@ -300,6 +297,7 @@ int main(int c, char* argv[])
     U64 offset = 0;
 
     GraphicsContext* context = pContext;
+    GlobalCommands::setValue("Vulkan.EnablePipelineCache", true);
     while (!pWindow->shouldClose()) 
     {
         F32 ms = Limiter::limit(1.0f / 160.0f, 1ull, 0);
@@ -325,9 +323,18 @@ int main(int c, char* argv[])
             context->setScissors(1, &scissor);
             context->setInputVertexLayout(VertexLayoutKey_PositionOnly);
             context->setShaderProgram(ShaderKey_SimpleColor);
-            GraphicsResourceView* pView = pSwapchain->getFrameView(pSwapchain->getCurrentFrameIndex());
+            
+            ResourceViewDescription rtvDesc = { };
+            rtvDesc.type = ResourceViewType_RenderTarget;
+            rtvDesc.format = ResourceFormat_B8G8R8A8_Unorm;
+            rtvDesc.dimension = ResourceViewDimension_2d;
+            rtvDesc.baseArrayLayer = 0;
+            rtvDesc.baseMipLevel = 0;
+            rtvDesc.layerCount = 1;
+            rtvDesc.mipLevelCount = 1;
+            ResourceViewId frameRtv = pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex())->asView(rtvDesc);
             context->setColorWriteMask(0, Color_Rgba);
-            context->bindRenderTargets(1, &pView, nullptr);
+            context->bindRenderTargets(1, &frameRtv);
             context->bindConstantBuffer(ShaderType_Vertex, 0, pData, sizeof(ConstData) * pContext->obtainCurrentBufferIndex(), sizeof(ConstData));
             context->bindVertexBuffers(1, &pVertexBuffer, &offset);
             context->drawInstanced(3, 1, 0, 0);
@@ -335,7 +342,6 @@ int main(int c, char* argv[])
             context->popState();
         context->end();
         R_VERBOSE("Game", "%f fps", 1.0f / ms);
-        R_VERBOSE("Game", "g_globalVar=%d", g_globalVar);
         pSwapchain->present();
 
         pollEvents();

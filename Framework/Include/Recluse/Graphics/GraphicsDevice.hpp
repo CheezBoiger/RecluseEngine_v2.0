@@ -48,8 +48,6 @@ struct ResourceViewDescription
     U32                     mipLevelCount;
     U32                     baseArrayLayer;
     U32                     layerCount;
-    GraphicsResource*       pResource;
-    const char*             name;
 };
 
 
@@ -166,10 +164,10 @@ public:
     virtual void setLineWidth(F32 width) { }
     virtual void setDepthCompareOp(CompareOp compareOp) { }
     virtual void setPolygonMode(PolygonMode polygonMode) { }
-    virtual void bindShaderResources(ShaderType type, U32 offset, U32 count, GraphicsResourceView** ppResources) { }
-    virtual void bindUnorderedAccessViews(ShaderType type, U32 offset, U32 count, GraphicsResourceView** ppResources) { }
+    virtual void bindShaderResources(ShaderType type, U32 offset, U32 count, ResourceViewId* ppResources) { }
+    virtual void bindUnorderedAccessViews(ShaderType type, U32 offset, U32 count, ResourceViewId* ppResources) { }
     virtual void bindConstantBuffer(ShaderType type, U32 slot, GraphicsResource* pResource, U64 offsetBytes, U64 sizeBytes) { }
-    virtual void bindRenderTargets(U32 count, GraphicsResourceView** ppResources, GraphicsResourceView* pDepthStencil = nullptr) { }
+    virtual void bindRenderTargets(U32 count, ResourceViewId* ppResources, ResourceViewId pDepthStencil = 0) { }
     virtual void bindSamplers(ShaderType type, U32 count, GraphicsSampler** ppSampler) { }
     virtual void bindRasterizerState(const RasterState& state) { }
     virtual void bindBlendState(const BlendState& state) { }
@@ -229,15 +227,11 @@ public:
     virtual ResultCode              createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc, ResourceState initState) 
         { return RecluseResult_NoImpl; }
 
-    virtual ResultCode              createResourceView(GraphicsResourceView** ppView, const ResourceViewDescription& desc) 
-        { return RecluseResult_NoImpl; }
-
     virtual ResultCode              createSampler(GraphicsSampler** ppSampler, const SamplerDescription& desc) 
         { return RecluseResult_NoImpl; }
 
     virtual ResultCode              destroySampler(GraphicsSampler* pSampler) { return RecluseResult_NoImpl; }
     virtual ResultCode              destroyResource(GraphicsResource* pResource) { return RecluseResult_NoImpl; }
-    virtual ResultCode              destroyResourceView(GraphicsResourceView* pResourceView) { return RecluseResult_NoImpl; }
 
     // Makes a vertex layout, will return a layout id if one already exists.
     virtual Bool                    makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout) { return false; }
@@ -316,7 +310,6 @@ public:
     R_PUBLIC_API virtual U32                getCurrentFrameIndex() { return RecluseResult_NoImpl; }
 
     virtual GraphicsResource*               getFrame(U32 idx) = 0;
-    virtual GraphicsResourceView*           getFrameView(U32 idx) = 0;
 
     const SwapchainCreateDescription&       getDesc() const { return m_desc; }
 

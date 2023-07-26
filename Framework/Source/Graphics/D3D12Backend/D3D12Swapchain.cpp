@@ -122,12 +122,6 @@ GraphicsResource* D3D12Swapchain::getFrame(U32 idx)
 }
 
 
-GraphicsResourceView* D3D12Swapchain::getFrameView(U32 idx)
-{
-    return nullptr;
-}
-
-
 ResultCode D3D12Swapchain::present(PresentConfig config)
 {
     //D3D12Context* pContext      = staticCast<D3D12Context*>(m_pDevice->getContext());
@@ -171,6 +165,9 @@ ResultCode D3D12Swapchain::initializeFrameResources()
     {
         FrameResource& frameRes = m_frameResources[i];
         // TODO: No current frame resource handles.
+        ID3D12Resource* pFrameResource = nullptr;
+        R_ASSERT(SUCCEEDED(m_pSwapchain->GetBuffer(i, __uuidof(ID3D12Resource*), (void**)&pFrameResource)));
+        
     }
 
     m_currentFrameIndex = m_pSwapchain->GetCurrentBackBufferIndex();

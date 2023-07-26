@@ -107,7 +107,7 @@ void D3D12Context::flushBarrierTransitions()
 }
 
 
-void D3D12Context::bindRenderTargets(U32 count, GraphicsResourceView** ppResources, GraphicsResourceView* pDepthStencil)
+void D3D12Context::bindRenderTargets(U32 count, ResourceViewId* ppResources, ResourceViewId pDepthStencil)
 {
     ID3D12GraphicsCommandList* pList = m_pPrimaryCommandList->get();
     D3D12RenderPass* pRenderPass = RenderPasses::makeRenderPass(count, ppResources, pDepthStencil);

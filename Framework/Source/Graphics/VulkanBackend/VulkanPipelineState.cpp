@@ -8,6 +8,7 @@
 
 #include "Recluse/Types.hpp"
 #include "Recluse/Messaging.hpp"
+#include "Recluse/Filesystem/Filesystem.hpp"
 
 #include "VulkanShaderCache.hpp"
 
@@ -16,7 +17,7 @@ namespace Pipelines {
 
 std::unordered_map<PipelineId, PipelineState> g_pipelineMap;
 std::unordered_map<VkDescriptorSetLayout, ReferenceObject<VkPipelineLayout>> g_pipelineLayoutMap;
-R_INTERNAL Bool g_allowPipelineCaching = false;
+R_DECLARE_GLOBAL_BOOLEAN(g_allowPipelineCaching, false, "Vulkan.EnablePipelineCache");
 
 static VkPrimitiveTopology getNativeTopology(PrimitiveTopology topology)
 {
@@ -186,7 +187,9 @@ struct PipelineCacheHeader
     U8  pipelineCacheUUID[VK_UUID_SIZE];
 };
 
-
+// TODO(Garcia): We might want to store all pipeline cache data into one file,
+//               and then read from there instead. Otherwise we are going to have a 
+//               crap ton of separate tiny files...
 R_INTERNAL
 VkPipelineCache createEmptyCache(VkDevice device)
 {
@@ -212,36 +215,48 @@ VkPipelineCache createEmptyCache(VkDevice device)
 
 
 R_INTERNAL
-VkPipelineCache findPipelineCache(VulkanDevice* pDevice, PipelineId pipelineId)
+Bool findPipelineCache(VulkanDevice* pDevice, PipelineId pipelineId, VkPipelineCache& pipelineCache)
 {
-    VkPipelineCache pipelineCache   = VK_NULL_HANDLE;
     size_t sizeBytes                = 0;
     Bool found                      = false;
     VkDevice device                 = pDevice->get();
 
-    // TODO: We need to find our file and query for the binary information.
-    
-    if (found)
+    if (g_allowPipelineCaching)
     {
-        VkResult result = VK_SUCCESS;
-        VkPipelineCacheCreateInfo info = { };
-        info.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
-        info.flags = 0;
-        info.initialDataSize = 0;
-        info.pInitialData = nullptr;
-        result = vkCreatePipelineCache(device, &info, nullptr, &pipelineCache);
-
-        if (result != VK_SUCCESS)
+        std::string filename            = "Pipeline-" + std::to_string(pipelineId) + ".txt";
+        // TODO: We need to find our file and query for the binary information.
+        FileBufferData fileData = { };
+        ResultCode r = File::readFrom(&fileData, filename);
+        found = (r == RecluseResult_Ok);
+    
+        if (found)
         {
-            R_WARN(R_CHANNEL_VULKAN, "Failed to create found pipeline cache!!");
-            pipelineCache = VK_NULL_HANDLE;
+            VkResult result = VK_SUCCESS;
+            PipelineCacheHeader header = { };
+            VkPipelineCacheCreateInfo info = { };
+            info.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+            info.flags = 0;
+
+            memcpy(&header, fileData.data(), sizeof(PipelineCacheHeader));
+            size_t binarySizeBytes = fileData.size() - sizeof(PipelineCacheHeader);
+            void* binaryBasePtr = fileData.data() + sizeof(PipelineCacheHeader);
+
+            info.initialDataSize = binarySizeBytes;
+            info.pInitialData = binaryBasePtr;
+            result = vkCreatePipelineCache(device, &info, nullptr, &pipelineCache);
+
+            if (result != VK_SUCCESS)
+            {
+                R_WARN(R_CHANNEL_VULKAN, "Failed to create found pipeline cache!!");
+                pipelineCache = VK_NULL_HANDLE;
+            }
+        }
+        else
+        {
+            pipelineCache = createEmptyCache(device);
         }
     }
-    else
-    {
-        pipelineCache = createEmptyCache(device);
-    }
-    return pipelineCache;
+    return found;
 }
 
 
@@ -272,6 +287,15 @@ void cachePipeline(VulkanDevice* pDevice, PipelineId pipelineId, VkPipelineCache
 
             for (U32 i = 0; i < VK_UUID_SIZE; ++i)
                 header.pipelineCacheUUID[i] = properties.pipelineCacheUUID[i];
+            std::string filename = "Pipeline-" + std::to_string(pipelineId) + ".txt";
+            File fileToDisk;
+            fileToDisk.open(filename, "w");
+            if (fileToDisk.isOpen())
+            {
+                fileToDisk.write(&header, sizeof(PipelineCacheHeader));
+                fileToDisk.write(buffer, sizeBytes);
+                fileToDisk.close();
+            }
         
             free(buffer);
         }
@@ -719,7 +743,7 @@ PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure, Pi
     if (iter == g_pipelineMap.end())
     {
         ShaderPrograms::VulkanShaderProgram* program = ShaderPrograms::obtainShaderProgram(structure.state.shaderProgramId, structure.state.shaderPermutation);
-        pipeline.pipelineCache = findPipelineCache(pDevice, id);
+        Bool pipelineCacheHit = findPipelineCache(pDevice, id, pipeline.pipelineCache);
 
         R_ASSERT_FORMAT
             (
@@ -745,7 +769,8 @@ PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure, Pi
 
         if (pipeline.pipeline)
         {
-            cachePipeline(pDevice, id, pipeline.pipelineCache);
+            if (!pipelineCacheHit)
+                cachePipeline(pDevice, id, pipeline.pipelineCache);
             g_pipelineMap.insert(std::make_pair(id, pipeline));
         }
     }

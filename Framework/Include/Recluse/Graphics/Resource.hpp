@@ -36,6 +36,9 @@ public:
 
     Bool                                isInResourceState(ResourceState desiredState) const { return (m_currentState == desiredState); }
 
+    // Get the resource as a specific view.
+    virtual ResourceViewId              asView(const ResourceViewDescription& description) { return 0; }
+
 protected:
     void                                setCurrentResourceState(ResourceState state) { m_currentState = state; }
 

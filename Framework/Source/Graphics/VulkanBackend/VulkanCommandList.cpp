@@ -586,7 +586,7 @@ void VulkanContext::flushBarrierTransitions(VkCommandBuffer cmdBuffer)
 }
 
 
-void VulkanContext::bindRenderTargets(U32 count, GraphicsResourceView** ppResourceViews, GraphicsResourceView* pDepthStencil)
+void VulkanContext::bindRenderTargets(U32 count, ResourceViewId* ppResourceViews, ResourceViewId pDepthStencil)
 {
     // Obtain the given render pass for the following resources. If one is already available, don't set it again!
     VulkanRenderPass* pPass = RenderPasses::makeRenderPass(m_pDevice, count, ppResourceViews, pDepthStencil);
@@ -638,13 +638,13 @@ void VulkanContext::bindConstantBuffer(ShaderType type, U32 slot, GraphicsResour
 }
 
 
-void VulkanContext::bindShaderResources(ShaderType type, U32 offset, U32 count, GraphicsResourceView** ppResourceViews)
+void VulkanContext::bindShaderResources(ShaderType type, U32 offset, U32 count, ResourceViewId* ppResourceViews)
 {
     currentState().m_srvs.reserve(count);
     ShaderStageFlags shaderFlags = shaderTypeToShaderStageFlags(type);
     for (U32 i = 0; i < count; ++i)
     {
-        VulkanResourceView* pVulkanResourceView = ppResourceViews[i]->castTo<VulkanResourceView>();
+        VulkanResourceView* pVulkanResourceView = ResourceViews::obtainResourceView(ppResourceViews[i]);
         m_resourceViewShaderAccessMap[pVulkanResourceView->getId()] |= shaderFlags;
         currentState().m_srvs.push_back(pVulkanResourceView);
     }
@@ -655,13 +655,13 @@ void VulkanContext::bindShaderResources(ShaderType type, U32 offset, U32 count, 
 }
 
 
-void VulkanContext::bindUnorderedAccessViews(ShaderType type, U32 offset, U32 count, GraphicsResourceView** ppResourceViews)
+void VulkanContext::bindUnorderedAccessViews(ShaderType type, U32 offset, U32 count, ResourceViewId* ppResourceViews)
 {
     currentState().m_uavs.reserve(count);
     ShaderStageFlags shaderFlags = shaderTypeToShaderStageFlags(type);
     for (U32 i = 0; i < count; ++i)
     {
-        VulkanResourceView* pVulkanResourceView = ppResourceViews[i]->castTo<VulkanResourceView>();
+        VulkanResourceView* pVulkanResourceView = ResourceViews::obtainResourceView(ppResourceViews[i]);
         m_resourceViewShaderAccessMap[pVulkanResourceView->getId()] |= shaderFlags;
         currentState().m_uavs.push_back(pVulkanResourceView);
     }

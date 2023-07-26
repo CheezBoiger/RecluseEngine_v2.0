@@ -13,13 +13,13 @@ std::unordered_map<ResourceViewId, VulkanResourceView*> g_resourceViewMap;
 std::unordered_map<SamplerId, VulkanSampler*> g_samplerMap;
 
 
-VulkanResourceView* makeResourceView(VulkanDevice* pDevice, const ResourceViewDescription& desc)
+ResourceViewId makeResourceView(VulkanDevice* pDevice, VulkanResource* pResource, const ResourceViewDescription& desc)
 {
     VulkanResourceView* pView = new VulkanResourceView(desc);
-    pView->initialize(pDevice);
+    pView->initialize(pDevice, pResource);
     pView->generateId();
     g_resourceViewMap[pView->getId()] = pView;
-    return pView;
+    return pView->getId();
 }
 
 
@@ -41,6 +41,7 @@ ResultCode releaseResourceView(VulkanDevice* pDevice, ResourceViewId id)
     if (iter == g_resourceViewMap.end())
         return RecluseResult_NotFound;
     iter->second->release(pDevice);
+    delete iter->second;
     g_resourceViewMap.erase(iter);
     return RecluseResult_Ok;
 }
@@ -52,6 +53,7 @@ ResultCode releaseSampler(VulkanDevice* pDevice, SamplerId id)
     if (iter == g_samplerMap.end())
         return RecluseResult_NotFound;
     iter->second->release(pDevice);
+    delete iter->second;
     g_samplerMap.erase(iter);
     return RecluseResult_Ok;
 }
@@ -81,7 +83,7 @@ SamplerId VulkanSampler::kSamplerCreationCounter                = 0;
 MutexGuard VulkanResourceView::kResourceViewCreationMutex    = MutexGuard("VulkanResourceViewCreationMutex");
 MutexGuard VulkanSampler::kSamplerCreationMutex              = MutexGuard("VulkanSamplerCreationMutex");
 
-ResultCode VulkanResourceView::initialize(VulkanDevice* pDevice)
+ResultCode VulkanResourceView::initialize(VulkanDevice* pDevice, VulkanResource* pResource)
 {
     ResultCode result          = RecluseResult_Ok;
     ResourceViewDescription desc   = getDesc();
@@ -89,7 +91,7 @@ ResultCode VulkanResourceView::initialize(VulkanDevice* pDevice)
     VkImageViewCreateInfo info = { };
     info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     info.format                                 = Vulkan::getVulkanFormat(desc.format);
-    info.image                                  = static_cast<VulkanImage*>(desc.pResource)->get();
+    info.image                                  = static_cast<VulkanImage*>(pResource)->get();
     info.viewType                               = VK_IMAGE_VIEW_TYPE_1D;
     info.subresourceRange.baseArrayLayer        = desc.baseArrayLayer;
     info.subresourceRange.baseMipLevel          = desc.baseMipLevel;
@@ -135,9 +137,10 @@ ResultCode VulkanResourceView::initialize(VulkanDevice* pDevice)
     }
 
     m_subresourceRange = info.subresourceRange;
+    m_resource = pResource;
 
     const Bool supportsDebugMarking = pDevice->getAdapter()->getInstance()->supportsDebugMarking();
-    const char* debugName           = desc.name;
+    const char* debugName           = pResource->getDesc().name;
     if (supportsDebugMarking && debugName)
     {
         VkDebugUtilsObjectNameInfoEXT nameInfo = { };
