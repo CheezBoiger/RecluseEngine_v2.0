@@ -16,6 +16,15 @@ class RenderPass;
 class PipelineState;
 
 
+enum CommandListStatus 
+{
+    CommandList_Closed,
+    CommandList_Reset,
+    CommandList_Recording,
+    CommandList_Ready
+};
+
+
 class R_PUBLIC_API GraphicsCommandList 
 {
 public:

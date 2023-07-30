@@ -79,6 +79,7 @@ public:
     VulkanPrimaryCommandList*       getPrimaryCommandList() { return &m_primaryCommandList; }
     ResultCode                      wait() override;
     VkRenderPass                    getRenderPass();
+    Bool                            supportsAsyncCompute() const;
 
     void clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) override;
     void clearDepthStencil(ClearFlags flags, F32 clearDepth, U8 clearStencil, const Rect& rect) override;
@@ -273,6 +274,7 @@ public:
         , m_windowHandle(nullptr)
         , m_adapter(nullptr)
         , m_pGraphicsQueue(nullptr)
+        , m_pAsyncComputeQueue(nullptr)
         , m_enabledFeatures({ })
         , m_memCache({ })
         , m_swapchain(nullptr)
@@ -281,6 +283,7 @@ public:
 
     ResultCode          initialize(VulkanAdapter* iadapter, DeviceCreateInfo& info);
     VulkanQueue*        getBackbufferQueue() { return m_pGraphicsQueue; }
+    VulkanQueue*        getAsyncQueue() { return m_pAsyncComputeQueue; }
     ResultCode          createQueues();
     const std::vector<QueueFamily>& getQueueFamilies() const { return m_queueFamilies; }    
 
@@ -377,6 +380,7 @@ private:
     std::vector<VulkanContext*>         m_allocatedContexts;
     std::vector<QueueFamily>            m_queueFamilies;
     VulkanQueue*                        m_pGraphicsQueue;
+    VulkanQueue*                        m_pAsyncComputeQueue;
     DescriptorAllocator                 m_descriptorAllocator;
     
     void*                               m_windowHandle;

@@ -18,17 +18,24 @@ namespace Pipelines {
 std::unordered_map<PipelineId, PipelineState> g_pipelineMap;
 std::unordered_map<VkDescriptorSetLayout, ReferenceObject<VkPipelineLayout>> g_pipelineLayoutMap;
 R_DECLARE_GLOBAL_BOOLEAN(g_allowPipelineCaching, false, "Vulkan.EnablePipelineCache");
+R_DECLARE_GLOBAL_STRING(g_pipelineCacheDir, "VulkanCache", "Vulkan.PipelineCacheDir");
+
+
+namespace PipelineCache {
+
+U32 pipelineCacheHeaderVersion = 0;
+} // PipelineCache
 
 static VkPrimitiveTopology getNativeTopology(PrimitiveTopology topology)
 {
     switch ( topology ) 
     {
-        case PrimitiveTopology_LineStrip: return VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
-        case PrimitiveTopology_LineList: return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-        case PrimitiveTopology_PointList: return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
-        case PrimitiveTopology_TriangleStrip: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
-        case PrimitiveTopology_TriangleList: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-        default: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        case PrimitiveTopology_LineStrip:       return VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+        case PrimitiveTopology_LineList:        return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+        case PrimitiveTopology_PointList:       return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+        case PrimitiveTopology_TriangleStrip:   return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+        case PrimitiveTopology_TriangleList:    return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        default:                                return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     }
 }
 
@@ -39,7 +46,7 @@ static VkVertexInputRate getNativeVertexInputRate(InputRate rate)
     {
         case InputRate_PerInstance: return VK_VERTEX_INPUT_RATE_INSTANCE;
         case InputRate_PerVertex: 
-        default: return VK_VERTEX_INPUT_RATE_VERTEX;
+        default:                    return VK_VERTEX_INPUT_RATE_VERTEX;
     }
 }
 
@@ -48,11 +55,11 @@ static VkCullModeFlags getNativeCullMode(CullMode mode)
 {
     switch (mode) 
     {
-        case CullMode_Back: return VK_CULL_MODE_BACK_BIT;
-        case CullMode_Front: return VK_CULL_MODE_FRONT_BIT;
+        case CullMode_Back:         return VK_CULL_MODE_BACK_BIT;
+        case CullMode_Front:        return VK_CULL_MODE_FRONT_BIT;
         case CullMode_FrontAndBack: return VK_CULL_MODE_FRONT_AND_BACK;
         case CullMode_None:
-        default: return VK_CULL_MODE_NONE;
+        default:                    return VK_CULL_MODE_NONE;
     }
 }
 
@@ -61,10 +68,10 @@ static VkPolygonMode getNativePolygonMode(PolygonMode polygonMode)
 {
     switch (polygonMode) 
     {
-        case PolygonMode_Line: return VK_POLYGON_MODE_LINE;
-        case PolygonMode_Point: return VK_POLYGON_MODE_POINT;
+        case PolygonMode_Line:      return VK_POLYGON_MODE_LINE;
+        case PolygonMode_Point:     return VK_POLYGON_MODE_POINT;
         case PolygonMode_Fill:
-        default: return VK_POLYGON_MODE_FILL;
+        default:                    return VK_POLYGON_MODE_FILL;
     }
 }
 
@@ -73,15 +80,15 @@ static VkStencilOp getNativeStencilOp(StencilOp op)
 {
     switch (op) 
     {
-        case StencilOp_DecrementAndClamp: return VK_STENCIL_OP_DECREMENT_AND_CLAMP;
-        case StencilOp_DecrementAndWrap: return VK_STENCIL_OP_DECREMENT_AND_WRAP;
-        case StencilOp_IncrementAndClamp: return VK_STENCIL_OP_INCREMENT_AND_CLAMP;
-        case StencilOp_IncrementAndWrap: return VK_STENCIL_OP_INCREMENT_AND_WRAP;
-        case StencilOp_Invert: return VK_STENCIL_OP_INVERT;
-        case StencilOp_Keep: return VK_STENCIL_OP_KEEP;
-        case StencilOp_Replace: return VK_STENCIL_OP_REPLACE;
+        case StencilOp_DecrementAndClamp:   return VK_STENCIL_OP_DECREMENT_AND_CLAMP;
+        case StencilOp_DecrementAndWrap:    return VK_STENCIL_OP_DECREMENT_AND_WRAP;
+        case StencilOp_IncrementAndClamp:   return VK_STENCIL_OP_INCREMENT_AND_CLAMP;
+        case StencilOp_IncrementAndWrap:    return VK_STENCIL_OP_INCREMENT_AND_WRAP;
+        case StencilOp_Invert:              return VK_STENCIL_OP_INVERT;
+        case StencilOp_Keep:                return VK_STENCIL_OP_KEEP;
+        case StencilOp_Replace:             return VK_STENCIL_OP_REPLACE;
         case StencilOp_Zero:
-        default: return VK_STENCIL_OP_ZERO;
+        default:                            return VK_STENCIL_OP_ZERO;
     }
 }
 
@@ -90,9 +97,9 @@ static VkFrontFace getNativeFrontFace(FrontFace face)
 {
     switch (face) 
     {
-        case FrontFace_Clockwise: return VK_FRONT_FACE_CLOCKWISE;
+        case FrontFace_Clockwise:           return VK_FRONT_FACE_CLOCKWISE;
         case FrontFace_CounterClockwise:
-        default: return VK_FRONT_FACE_COUNTER_CLOCKWISE;
+        default:                            return VK_FRONT_FACE_COUNTER_CLOCKWISE;
     }
 }
 
@@ -153,12 +160,12 @@ static VkBlendOp getBlendOp(BlendOp op)
 {
     switch (op) 
     {
-        case BlendOp_Add: return VK_BLEND_OP_ADD;
-        case BlendOp_Subtract: return VK_BLEND_OP_SUBTRACT;
-        case BlendOp_ReverseSubtract: return VK_BLEND_OP_REVERSE_SUBTRACT;
-        case BlendOp_Min: return VK_BLEND_OP_MIN;
-        case BlendOp_Max: return VK_BLEND_OP_MAX;
-        default: return VK_BLEND_OP_ADD;
+        case BlendOp_Add:               return VK_BLEND_OP_ADD;
+        case BlendOp_Subtract:          return VK_BLEND_OP_SUBTRACT;
+        case BlendOp_ReverseSubtract:   return VK_BLEND_OP_REVERSE_SUBTRACT;
+        case BlendOp_Min:               return VK_BLEND_OP_MIN;
+        case BlendOp_Max:               return VK_BLEND_OP_MAX;
+        default:                        return VK_BLEND_OP_ADD;
     }
 }
 
@@ -215,6 +222,38 @@ VkPipelineCache createEmptyCache(VkDevice device)
 
 
 R_INTERNAL
+std::string makeCacheDirectory(const std::string& filename)
+{
+    std::string dirPath = Filesystem::getCurrentDir() + "/" + g_pipelineCacheDir;
+    std::string filePath = dirPath + "/" + filename;
+    Filesystem::createDirectory(dirPath);
+    return filePath;
+}
+
+
+R_INTERNAL
+Bool verifyFileHeaderIntegrity(VulkanDevice* pDevice, const PipelineCacheHeader& header)
+{
+    const VkPhysicalDeviceProperties& properties = pDevice->getAdapter()->getProperties();
+    // Verify if the cache header version is the same.
+    if (header.headerVersion != PipelineCache::pipelineCacheHeaderVersion)
+        return false;
+    if (header.deviceId != properties.deviceID)
+        return false;
+    if (header.vendorId != properties.vendorID);
+        return false;
+
+    for (U32 i = 0; i < VK_UUID_SIZE; ++i)
+    {
+        if (header.pipelineCacheUUID[i] != properties.pipelineCacheUUID[i])
+            return false;
+    }    
+
+    return true;
+}
+
+
+R_INTERNAL
 Bool findPipelineCache(VulkanDevice* pDevice, PipelineId pipelineId, VkPipelineCache& pipelineCache)
 {
     size_t sizeBytes                = 0;
@@ -223,7 +262,7 @@ Bool findPipelineCache(VulkanDevice* pDevice, PipelineId pipelineId, VkPipelineC
 
     if (g_allowPipelineCaching)
     {
-        std::string filename            = "Pipeline-" + std::to_string(pipelineId) + ".txt";
+        std::string filename            = makeCacheDirectory("Pipeline-" + std::to_string(pipelineId) + ".txt");
         // TODO: We need to find our file and query for the binary information.
         FileBufferData fileData = { };
         ResultCode r = File::readFrom(&fileData, filename);
@@ -238,16 +277,24 @@ Bool findPipelineCache(VulkanDevice* pDevice, PipelineId pipelineId, VkPipelineC
             info.flags = 0;
 
             memcpy(&header, fileData.data(), sizeof(PipelineCacheHeader));
-            size_t binarySizeBytes = fileData.size() - sizeof(PipelineCacheHeader);
-            void* binaryBasePtr = fileData.data() + sizeof(PipelineCacheHeader);
 
-            info.initialDataSize = binarySizeBytes;
-            info.pInitialData = binaryBasePtr;
-            result = vkCreatePipelineCache(device, &info, nullptr, &pipelineCache);
-
-            if (result != VK_SUCCESS)
+            if (verifyFileHeaderIntegrity(pDevice, header))
             {
-                R_WARN(R_CHANNEL_VULKAN, "Failed to create found pipeline cache!!");
+                size_t binarySizeBytes = fileData.size() - sizeof(PipelineCacheHeader);
+                void* binaryBasePtr = fileData.data() + sizeof(PipelineCacheHeader);
+
+                info.initialDataSize = binarySizeBytes;
+                info.pInitialData = binaryBasePtr;
+                result = vkCreatePipelineCache(device, &info, nullptr, &pipelineCache);
+
+                if (result != VK_SUCCESS)
+                {
+                    R_WARN(R_CHANNEL_VULKAN, "Failed to create found pipeline cache!!");
+                    pipelineCache = VK_NULL_HANDLE;
+                }
+            }
+            else
+            {
                 pipelineCache = VK_NULL_HANDLE;
             }
         }
@@ -280,14 +327,16 @@ void cachePipeline(VulkanDevice* pDevice, PipelineId pipelineId, VkPipelineCache
             result = vkGetPipelineCacheData(device, pipelineCache, &sizeBytes, buffer);
 
             // TODO: We need to be able to store this binary information on disk.
-            PipelineCacheHeader header = { };
-            header.headerLength = sizeof(PipelineCacheHeader);
-            header.deviceId = properties.deviceID;
-            header.vendorId = properties.vendorID;
+            PipelineCacheHeader header  = { };
+            header.headerLength         = sizeof(PipelineCacheHeader);
+            header.deviceId             = properties.deviceID;
+            header.vendorId             = properties.vendorID;
+            header.headerVersion        = PipelineCache::pipelineCacheHeaderVersion;
 
             for (U32 i = 0; i < VK_UUID_SIZE; ++i)
                 header.pipelineCacheUUID[i] = properties.pipelineCacheUUID[i];
-            std::string filename = "Pipeline-" + std::to_string(pipelineId) + ".txt";
+
+            std::string filename = makeCacheDirectory("Pipeline-" + std::to_string(pipelineId) + ".txt");
             File fileToDisk;
             fileToDisk.open(filename, "w");
             if (fileToDisk.isOpen())

@@ -17,7 +17,7 @@ void D3D12Instance::queryGraphicsAdapters()
     { 
         R_DEBUG(R_CHANNEL_D3D12, "There are %llu D3D12 devices.", adapters.size());
     } 
-    else 
+    else if (adapters.size() == 1)
     {
         R_DEBUG(R_CHANNEL_D3D12, "There is 1 D3D12 device.");
     }

@@ -52,15 +52,22 @@ void D3D12Context::begin()
     resetCurrentResources();
     m_pPrimaryCommandList->use(currentBufferIndex());
     m_pPrimaryCommandList->reset();
+    m_pPrimaryCommandList->begin();
+    prepare();
 }
 
 
 void D3D12Context::end()
 {
-    DescriptorHeapInstance* instance = m_pDevice->getDescriptorHeapManager()->getInstance(currentBufferIndex());
-    instance->upload(m_pDevice->get());
+    DescriptorHeapInstance* instance    = m_pDevice->getDescriptorHeapManager()->getInstance(currentBufferIndex());
+    D3D12Swapchain* pSwapchain          = m_pDevice->getSwapchain()->castTo<D3D12Swapchain>();
 
     m_pPrimaryCommandList->end();
+
+    // Upload the current instance for this buffer, in order to properly set the bound gpu addresses.
+    instance->upload(m_pDevice->get());
+    // Fire off our command list!
+    pSwapchain->submitPrimaryCommandList(m_pPrimaryCommandList->get());
 }
 
 
@@ -163,6 +170,12 @@ void D3D12Context::clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect)
     clearValue[2] = clearColor[2];
     clearValue[3] = clearColor[3];
     pList->ClearRenderTargetView(rtvHandle, clearValue, 1, &d3d12Rect);
+}
+
+
+void D3D12Context::prepare()
+{
+    
 }
 
 

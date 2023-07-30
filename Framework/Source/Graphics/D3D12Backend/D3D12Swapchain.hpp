@@ -36,12 +36,12 @@ public:
 
     GraphicsResource*       getFrame(U32 idx) override;
 
+    ResultCode              submitPrimaryCommandList(ID3D12GraphicsCommandList* pCommandList);
+
 private:
 
     ResultCode              initializeFrameResources();
     ResultCode              destroyFrameResources();
-    
-    ResultCode              flushFinishedCommandLists();
     
     IDXGISwapChain3*            m_pSwapchain;
     D3D12Device*                m_pDevice;

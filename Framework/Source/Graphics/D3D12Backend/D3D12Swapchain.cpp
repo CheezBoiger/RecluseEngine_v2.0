@@ -131,8 +131,6 @@ ResultCode D3D12Swapchain::present(PresentConfig config)
     HANDLE pEvent               = nullptr;
     ID3D12Fence* pFence         = nullptr;
     U64 currentValue            = 0;
-    
-    flushFinishedCommandLists();
 
     result = m_pSwapchain->Present(0, 0);
     
@@ -192,18 +190,15 @@ ResultCode D3D12Swapchain::destroyFrameResources()
 }
 
 
-ResultCode D3D12Swapchain::flushFinishedCommandLists()
+ResultCode D3D12Swapchain::submitPrimaryCommandList(ID3D12GraphicsCommandList* pCommandList)
 {
-    //D3D12Context* pContext              = staticCast<D3D12Context*>(m_pDevice->getContext());
-    //ID3D12CommandQueue* pQueue          = m_pBackbufferQueue->get();
-    //ID3D12GraphicsCommandList* pCmdList = pContext->currentGraphicsCommandList();
+    ID3D12CommandQueue* pPresentationQueue = m_pBackbufferQueue->get();
+    ID3D12CommandList* pLists[] = { pCommandList };
 
-    //if (pCmdList) 
-    //{
-    //    ID3D12CommandList* pLists[] = { pCmdList };
-    //    pQueue->ExecuteCommandLists(1, pLists);
-    //}
+    R_ASSERT(pPresentationQueue != NULL);
+    R_ASSERT(pCommandList != NULL);
 
+    pPresentationQueue->ExecuteCommandLists(1, pLists);
     return RecluseResult_Ok;
 }
 } // Recluse

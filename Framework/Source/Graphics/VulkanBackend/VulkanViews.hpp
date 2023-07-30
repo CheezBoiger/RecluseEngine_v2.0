@@ -13,7 +13,7 @@ class VulkanResource;
 class VulkanResourceView : public GraphicsResourceView 
 {
 public:
-    GraphicsAPI getApi() const override { return GraphicsApi_Vulkan; }
+    GraphicsAPI                 getApi() const override { return GraphicsApi_Vulkan; }
 
     VulkanResourceView(const ResourceViewDescription& desc)
         : GraphicsResourceView(desc)
@@ -22,20 +22,18 @@ public:
         , m_subresourceRange({ })
         , m_id(~0) { }
 
-    ResultCode initialize(VulkanDevice* pDevice, VulkanResource* pResource);
+    ResultCode                  initialize(VulkanDevice* pDevice, VulkanResource* pResource);
+    ResultCode                  release(VulkanDevice* pDevice);
+    VkImageView                 get() const { return m_view; }
 
-    ResultCode release(VulkanDevice* pDevice);
+    VkImageLayout               getExpectedLayout() const { return m_expectedLayout; }
 
-    VkImageView get() const { return m_view; }
-
-    VkImageLayout getExpectedLayout() const { return m_expectedLayout; }
-
-    VkImageSubresourceRange getSubresourceRange() const { return m_subresourceRange; }
-    ResourceViewId getId() const override { return m_id; }
-    VulkanResource* getResource() const { return m_resource; }
+    VkImageSubresourceRange     getSubresourceRange() const { return m_subresourceRange; }
+    ResourceViewId              getId() const override { return m_id; }
+    VulkanResource*             getResource() const { return m_resource; }
 private:
-    static ResourceViewId kResourceViewCreationCounter;
-    static MutexGuard kResourceViewCreationMutex;
+    static ResourceViewId       kResourceViewCreationCounter;
+    static MutexGuard           kResourceViewCreationMutex;
 
 public:
     void generateId() override 

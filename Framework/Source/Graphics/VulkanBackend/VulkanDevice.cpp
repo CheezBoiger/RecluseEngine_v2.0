@@ -121,6 +121,13 @@ void VulkanContext::endRenderPass(VkCommandBuffer buffer)
 }
 
 
+Bool VulkanContext::supportsAsyncCompute() const
+{
+    R_ASSERT(m_pDevice != NULL);
+    return (m_pDevice->getAsyncQueue() != NULL);
+}
+
+
 void VulkanContext::end()
 {
     endRenderPass(m_primaryCommandList.get());
@@ -517,6 +524,14 @@ ResultCode VulkanDevice::createQueues()
         R_ERROR(R_CHANNEL_VULKAN, "Failed to create main RHI queue!");
     }
 
+    result = createQueue(&m_pAsyncComputeQueue, VK_QUEUE_COMPUTE_BIT, false);
+
+    if (result != RecluseResult_Ok)
+    {
+        R_DEBUG(R_CHANNEL_VULKAN, "Async Compute not supported. No queue was created for this...");
+        m_pAsyncComputeQueue = nullptr;
+    }
+
     return result;
 }
 
@@ -579,6 +594,12 @@ ResultCode VulkanDevice::destroyQueues()
     {
         delete m_pGraphicsQueue;
         m_pGraphicsQueue = nullptr;
+    }
+
+    if (m_pAsyncComputeQueue)
+    {
+        delete m_pAsyncComputeQueue;
+        m_pAsyncComputeQueue = nullptr;
     }
 
     return RecluseResult_Ok;

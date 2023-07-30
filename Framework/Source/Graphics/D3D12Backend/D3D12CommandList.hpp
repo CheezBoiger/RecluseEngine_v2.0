@@ -20,6 +20,7 @@ public:
     void use(U32 bufferIdx);
     void begin() override;
     void end() override;
+    void reset() override;
 
     void bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* offsets) override;
     void bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBytes, IndexType type) override;
@@ -36,6 +37,6 @@ private:
     std::vector<ID3D12CommandAllocator*>        m_allocators;
     ID3D12GraphicsCommandList4*                 m_currentCmdList;
     ID3D12CommandAllocator*                     m_currentAllocator;
-    D3D12Context*                               m_pDeviceContext;
+    CommandListStatus                           m_status;
 };
 } // Recluse

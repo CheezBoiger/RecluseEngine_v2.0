@@ -332,7 +332,17 @@ ResultCode VulkanAllocationManager::free(VulkanMemory* pOut, Bool immediate)
 VulkanPagedAllocator* VulkanAllocationManager::allocateMemoryPage(MemoryTypeIndex memoryTypeIndex, ResourceMemoryUsage usage)
 {
     VkDevice device                     = m_pDevice->get();
-    m_resourceAllocators[memoryTypeIndex].push_back(makeSmartPtr(new VulkanPagedAllocator()));
+    
+#if defined(RECLUSE_DEBUG)
+    {
+        const VkPhysicalDeviceProperties& properties = m_pDevice->getAdapter()->getProperties();
+        U32 numAllowedAllocations = static_cast<U32>(properties.limits.maxMemoryAllocationCount);
+        U32 numAllocations = static_cast<U32>(m_resourceAllocators.size());
+        R_ASSERT_FORMAT((numAllocations + 1) < numAllowedAllocations, "Vulkan device allows maximum %d allocations. We are going beyond that!", numAllowedAllocations);
+    }
+#endif
+
+   m_resourceAllocators[memoryTypeIndex].push_back(makeSmartPtr(new VulkanPagedAllocator()));
     VulkanPagedAllocator* pAllocator    = m_resourceAllocators[memoryTypeIndex].back();
     const U32 allocationId              = (m_resourceAllocators[memoryTypeIndex].size() - 1);
     pAllocator->initialize(device, new LinearAllocator(), memoryTypeIndex, kPerMemoryPageSizeBytes, usage, allocationId);

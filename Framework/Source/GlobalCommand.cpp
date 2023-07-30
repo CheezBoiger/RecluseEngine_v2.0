@@ -50,6 +50,20 @@ Bool setData(const std::string& command, const void* value, size_t sizeBytesToWr
     }
     return false;
 }
+
+
+Bool setDataAsString(const std::string& command, const char* value)
+{
+    ScopedCriticalSection _(g_commandCs);
+    auto iter = Internal::g_commandMap.find(command);
+    if (iter != Internal::g_commandMap.end())
+    {
+        std::string* pData = reinterpret_cast<std::string*>(iter->second->value);
+        *pData = value;
+        return true;
+    }
+    return false;
+}
 } // Internal
 } // GlobalCommands
 } // Recluse

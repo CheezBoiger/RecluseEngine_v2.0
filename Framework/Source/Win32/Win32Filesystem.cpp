@@ -10,6 +10,7 @@
 #include "Recluse/Memory/MemoryPool.hpp"
 
 #include <algorithm>
+#include <vector>
 
 namespace Recluse {
 
@@ -130,6 +131,13 @@ ResultCode File::writeToAsync(FileBufferDataAsync* pBuffer, const std::string& f
     ResultCode error = createThread(&thr, runFileAsyncTask);
 
     return RecluseResult_NoImpl;
+}
+
+
+std::vector<std::string> Filesystem::split(const std::string& filename)
+{
+    size_t f = filename.find_last_of("/\\");
+    return { filename.substr(0, f), filename.substr(f + 1) };
 }
 
 
@@ -276,5 +284,31 @@ std::string Filesystem::getDirectoryFromPath(const std::string& path)
     size_t pos = p.find_last_of('/');
     
     return p.substr(0, pos);
+}
+
+
+Bool directoryExists(const std::string& dirPath)
+{
+    DWORD dwAttributes = GetFileAttributes(dirPath.c_str());
+    return ((dwAttributes != INVALID_FILE_ATTRIBUTES) && (dwAttributes & FILE_ATTRIBUTE_DIRECTORY));
+}
+
+
+Bool Filesystem::createDirectory(const std::string& directoryPath)
+{
+    I32 pos = 0;
+    do
+    {
+        pos = directoryPath.find_first_of("\\/", pos + 1);
+        if (!CreateDirectory(directoryPath.substr(0, pos).c_str(), NULL))
+        {
+            DWORD err = GetLastError();
+            if (err != ERROR_ALREADY_EXISTS)
+            {
+                return false;
+            }
+        }
+    } while (pos != std::string::npos);
+    return true;
 }
 } // Recluse

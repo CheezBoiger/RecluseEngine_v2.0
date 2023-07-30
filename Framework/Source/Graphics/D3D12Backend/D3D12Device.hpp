@@ -104,6 +104,7 @@ private:
     void                                flushBarrierTransitions();
     void                                initializeBufferResources(U32 buffering);
     void                                destroyBufferResources();
+    void                                prepare();
     ContextState&                       currentState() { return *m_contextStates.end(); }
 
     ResultCode                          createCommandList(D3D12PrimaryCommandList** ppList, GraphicsQueueTypeFlags flags);

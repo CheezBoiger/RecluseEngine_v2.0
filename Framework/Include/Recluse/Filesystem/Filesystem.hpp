@@ -77,5 +77,12 @@ extern R_PUBLIC_API Bool isFile(const std::string& path);
 
 // Join to paths together.
 extern R_PUBLIC_API std::string join(const std::string& path0, const std::string& path1);
+
+
+extern R_PUBLIC_API Bool pathExists(const std::string& path);
+
+extern R_PUBLIC_API std::vector<std::string> split(const std::string& filename);
+
+extern R_PUBLIC_API Bool createDirectory(const std::string& directoryPath);
 } // Filesystem.
 } // Recluse 

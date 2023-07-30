@@ -15,13 +15,6 @@ class VulkanRenderPass;
 class VulkanPipelineState;
 class VulkanContext;
 
-enum CommandListStatus 
-{
-    CommandList_Closed,
-    CommandList_Reset,
-    CommandList_Recording,
-    CommandList_Ready
-};
 
 class VulkanPrimaryCommandList : public GraphicsCommandList 
 {

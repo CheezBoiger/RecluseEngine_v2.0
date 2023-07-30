@@ -46,8 +46,6 @@ ResultCode D3D12PrimaryCommandList::initialize(D3D12Context* pDeviceContext, Gra
 
     }
 
-    m_pDeviceContext = pDeviceContext;
-
     return RecluseResult_Ok;
 }
 
@@ -60,15 +58,16 @@ ResultCode D3D12PrimaryCommandList::destroy()
 
 void D3D12PrimaryCommandList::begin()
 {
-    R_ASSERT(m_pDeviceContext != NULL);
+    m_status = CommandList_Recording;
+}
+
+
+void D3D12PrimaryCommandList::reset()
+{
     R_ASSERT(!m_graphicsCommandLists.empty());
     R_ASSERT(!m_allocators.empty());
-
-    U32 currentBufferInd    = m_pDeviceContext->getCurrentBufferIndex();
-    m_currentCmdList        = m_graphicsCommandLists[currentBufferInd];
-    m_currentAllocator      = m_allocators[currentBufferInd];
-
     m_currentCmdList->Reset(m_currentAllocator, nullptr);
+    m_status = CommandList_Reset;
 }
 
 
@@ -88,7 +87,7 @@ void D3D12PrimaryCommandList::use(U32 bufferIdx)
 
 void D3D12PrimaryCommandList::bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* offsets)
 {
-    
+    ID3D12GraphicsCommandList* pList = get();
 }
 
 

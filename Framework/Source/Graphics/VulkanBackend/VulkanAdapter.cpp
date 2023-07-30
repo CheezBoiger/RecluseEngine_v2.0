@@ -51,8 +51,18 @@ std::vector<VulkanAdapter> VulkanAdapter::getAvailablePhysicalDevices(VulkanInst
 VkDeviceSize VulkanAdapter::obtainMinUniformBufferOffsetAlignment(VulkanDevice* pDevice)
 {
     R_ASSERT(pDevice != NULL);
+    R_ASSERT(pDevice->getAdapter() != NULL);
     const VkPhysicalDeviceProperties& properties = pDevice->getAdapter()->getProperties();
     return properties.limits.minUniformBufferOffsetAlignment;
+}
+
+
+VkDeviceSize VulkanAdapter::obtainMinStorageBufferOffsetAlignment(VulkanDevice* pDevice)
+{
+    R_ASSERT(pDevice != NULL);
+    R_ASSERT(pDevice->getAdapter() != NULL);
+    const VkPhysicalDeviceProperties& properties = pDevice->getAdapter()->getProperties();
+    return properties.limits.minStorageBufferOffsetAlignment;
 }
 
 

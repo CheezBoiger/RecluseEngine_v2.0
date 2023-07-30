@@ -328,6 +328,7 @@ namespace Internal {
     };
     R_PUBLIC_API DataListener* obtainData(const std::string& command);
     R_PUBLIC_API Bool setData(const std::string& command, const void* value, size_t sizeBytesToWrite);
+    R_PUBLIC_API Bool setDataAsString(const std::string& command, const char* value);
 } // Internal
 
 
@@ -339,6 +340,7 @@ Class obtainValue(const std::string& command)
     return *reinterpret_cast<Class*>(pData->value);
 }
 
+namespace {
 // Set the value of the global command.
 template<typename Class>
 Bool setValue(const std::string& command, Class value)
@@ -346,12 +348,28 @@ Bool setValue(const std::string& command, Class value)
     return Internal::setData(command, &value, sizeof(Class));
 }
 
+template<>
+Bool setValue(const std::string& command, std::string value)
+{
+    return Internal::setDataAsString(command, value.c_str());
+}
+
+template<>
+Bool setValue(const std::string& command, const char* value)
+{
+    return Internal::setDataAsString(command, value);
+}
+} // anonymous namespace
+
 #define R_DECLARE_GLOBAL_VARIABLE(varName, defaultValue, commandName, dataType) \
     dataType varName = defaultValue; \
-    Recluse::GlobalCommands::Internal::DataListener listener_ ## varName = Recluse::GlobalCommands::Internal::DataListener(commandName, &varName);
+    Recluse::GlobalCommands::Internal::DataListener _listener__ ## varName = Recluse::GlobalCommands::Internal::DataListener(commandName, &varName);
 
 #define R_DECLARE_GLOBAL_BOOLEAN(varName, defaultValue, commandName) R_DECLARE_GLOBAL_VARIABLE(varName, defaultValue, commandName, Recluse::Bool)
 #define R_DECLARE_GLOBAL_F32(varName, defaultValue, commandName) R_DECLARE_GLOBAL_VARIABLE(varName, defaultValue, commandName, Recluse::F32)
+#define R_DELCARE_GLOBAL_I32(varName, defaultValue, commandName) R_DECLARE_GLOBAL_VARIABLE(varName, defaultValue, commandName, Recluse::I32)
+#define R_DECLARE_GLOBAL_U32(varName, defaultValue, commandName) R_DECLARE_GLOBAL_VARIABLE(varName, defaultValue, commandName, Recluse::U32)
+#define R_DECLARE_GLOBAL_STRING(varName, defaultValue, commandName) R_DECLARE_GLOBAL_VARIABLE(varName, defaultValue, commandName, std::string)
 } // GlobalCommands
 } // Recluse
 #endif // RECLUSE_UTILITY_HPP
