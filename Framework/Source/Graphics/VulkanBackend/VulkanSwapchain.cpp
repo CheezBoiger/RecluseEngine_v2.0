@@ -29,6 +29,9 @@ ResultCode VulkanSwapchain::build(VulkanDevice* pDevice)
     VkFormat vkFormat                           = Vulkan::getVulkanFormat(pDesc.format);
     VkColorSpaceKHR colorSpace                  = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
 
+    m_pBackbufferQueue                          = pDevice->getBackbufferQueue();
+    m_pDevice                                   = pDevice;
+
     if (pDesc.renderWidth <= 0 || pDesc.renderHeight <= 0) 
     {
         R_ERROR(R_CHANNEL_VULKAN, "Can not define a RenderWidth or Height less than 1!");
@@ -93,6 +96,8 @@ ResultCode VulkanSwapchain::build(VulkanDevice* pDevice)
         case FrameBuffering_Double: createInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR; break;
         case FrameBuffering_Triple: createInfo.presentMode = VK_PRESENT_MODE_MAILBOX_KHR; break;
     }
+
+    createInfo.presentMode = checkAvailablePresentMode(surface, createInfo.presentMode);
     
     result = vkCreateSwapchainKHR(pDevice->get(), &createInfo, nullptr, &m_swapchain);
 
@@ -104,9 +109,6 @@ ResultCode VulkanSwapchain::build(VulkanDevice* pDevice)
     }    
 
     R_DEBUG(R_CHANNEL_VULKAN, "Successfully created vulkan swapchain!");
-    
-    m_pBackbufferQueue  = pDevice->getBackbufferQueue();
-    m_pDevice           = pDevice;
 
     buildFrameResources(Vulkan::getResourceFormat(vkFormat));
     queryCommandPools();
@@ -425,5 +427,32 @@ ResultCode VulkanSwapchain::submitFinalCommandBuffer(VkCommandBuffer commandBuff
 
     vkQueueSubmit(m_pBackbufferQueue->get(), 1, &submitInfo, fence);
     return RecluseResult_Ok;
+}
+
+
+VkPresentModeKHR VulkanSwapchain::checkAvailablePresentMode(VkSurfaceKHR surface, VkPresentModeKHR presentMode)
+{
+    Bool foundSupportedPresentMode                      = false;
+    VkPresentModeKHR supportedPresentMode               = presentMode;
+    std::vector<VkPresentModeKHR> supportedPresentModes = m_pDevice->getAdapter()->getSupportedPresentModes(surface);
+
+    R_ASSERT_FORMAT(!supportedPresentModes.empty(), "If trying to create a swapchain with a surface, there should at least be one supported present mode!");
+    
+    for (U32 i = 0; i < supportedPresentModes.size(); ++i)
+    {
+        if (supportedPresentMode == supportedPresentModes[i])
+        {
+            foundSupportedPresentMode = true;
+            break;
+        }
+    }
+
+    if (!foundSupportedPresentMode)
+    {
+        R_WARN(R_CHANNEL_VULKAN, "Could not find the requested supported present mode... resorting to default present mode...");
+        supportedPresentMode = supportedPresentModes[0];
+    }
+
+    return supportedPresentMode;
 }
 } // Recluse

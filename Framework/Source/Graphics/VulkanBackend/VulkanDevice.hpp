@@ -45,7 +45,6 @@ public:
         : m_bufferCount(0)
         , m_currentBufferIndex(0)
         , m_boundRenderPass(nullptr)
-        , m_newRenderPass(nullptr)
         , m_pDevice(pDevice) 
     { 
     }
@@ -227,7 +226,7 @@ private:
     // Flushes barrier transitions if we need to. This must be called on any resources that will be accessed by 
 // specific api calls that require the state of the resource to be the desired target at the time.
     void flushBarrierTransitions(VkCommandBuffer cmdBuffer);
-    void setRenderPass(VulkanRenderPass* pPass);
+    void setRenderPass(const VulkanRenderPass& pPass);
     void bindDescriptorSet(const VulkanDescriptorAllocation& set);
     
     inline void incrementBufferIndex() 
@@ -249,7 +248,7 @@ private:
     VulkanDevice*                                                       m_pDevice;
     ::std::vector<VkBufferMemoryBarrier>                                m_bufferMemoryBarriers;
     ::std::vector<VkImageMemoryBarrier>                                 m_imageMemoryBarriers;
-    VulkanRenderPass*                                                   m_newRenderPass;
+    VulkanRenderPass                                                    m_newRenderPass;
     VkRenderPass                                                        m_boundRenderPass;
     VulkanPrimaryCommandList                                            m_primaryCommandList;
     Pipelines::PipelineState                                            m_pipelineState;

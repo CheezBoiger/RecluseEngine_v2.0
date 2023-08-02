@@ -139,6 +139,8 @@ ResultCode VulkanResourceView::initialize(VulkanDevice* pDevice, VulkanResource*
     m_subresourceRange = info.subresourceRange;
     m_resource = pResource;
 
+    generateDescriptionId();
+
     const Bool supportsDebugMarking = pDevice->getAdapter()->getInstance()->supportsDebugMarking();
     const char* debugName           = pResource->getDesc().name;
     if (supportsDebugMarking && debugName)
@@ -174,6 +176,20 @@ ResultCode VulkanResourceView::release(VulkanDevice* pDevice)
     }
 
     return result;
+}
+
+
+void VulkanResourceView::generateDescriptionId()
+{
+    DescriptionPacked packed                    = { };
+    const ResourceViewDescription& description  = getDesc();
+    packed.baseLayer        = description.baseArrayLayer;
+    packed.baseMip          = description.baseMipLevel;
+    packed.dim              = description.dimension;
+    packed.layerCount       = description.layerCount;
+    packed.mipCount         = description.mipLevelCount;
+    packed.format           = description.format;
+    m_descId                = packed.hash0;
 }
 
 

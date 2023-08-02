@@ -34,16 +34,12 @@ public:
 
     // Build the vulkan swapchain. This will return the total number of frames that 
     // were created.
-    ResultCode                 build(VulkanDevice* pDevice);
-
-    ResultCode                 onRebuild() override;
-    
-    ResultCode                 present(PresentConfig config = PresentConfig_Present) override; 
-
-    U32                     getCurrentFrameIndex() override { return m_currentFrameIndex; }
-    U32                     getFrameCount() const { return m_frameResources.getNumMaxFrames(); }
-
-    GraphicsResource*       getFrame(U32 idx) override;
+    ResultCode                  build(VulkanDevice* pDevice);
+    ResultCode                  onRebuild() override;
+    ResultCode                  present(PresentConfig config = PresentConfig_Present) override; 
+    U32                         getCurrentFrameIndex() override { return m_currentFrameIndex; }
+    U32                         getFrameCount() const { return m_frameResources.getNumMaxFrames(); }
+    GraphicsResource*           getFrame(U32 idx) override;
 
     // Call this function before the start of a primary command buffer record!
     // Prepares the frame for the next image to draw onto.
@@ -56,30 +52,31 @@ public:
         return m_swapchain;
     }
 
-    VkSwapchainKHR  get() const { return m_swapchain; }
+    VkSwapchainKHR              get() const { return m_swapchain; }
 
     // Destroy the vulkan swapchain, including surface.
-    ResultCode         destroy();
+    ResultCode                  destroy();
 
-    VulkanDevice*   getDevice() const { return m_pDevice; }
+    VulkanDevice*               getDevice() const { return m_pDevice; }
 
-    VkFramebuffer   getFramebuffer(U32 idx) const { return m_frameResources.getFrameBuffer(idx); }
-    VkSemaphore     getWaitSemaphore(U32 idx) const { return m_frameResources.getWaitSemaphore(idx); }
-    VkSemaphore     getSignalSemaphore(U32 idx) const { return m_frameResources.getSignalSemaphore(idx); }
-    VkFence         getFence(U32 idx) const { return m_frameResources.getFence(idx); }
+    VkFramebuffer               getFramebuffer(U32 idx) const { return m_frameResources.getFrameBuffer(idx); }
+    VkSemaphore                 getWaitSemaphore(U32 idx) const { return m_frameResources.getWaitSemaphore(idx); }
+    VkSemaphore                 getSignalSemaphore(U32 idx) const { return m_frameResources.getSignalSemaphore(idx); }
+    VkFence                     getFence(U32 idx) const { return m_frameResources.getFence(idx); }
 
-    VulkanQueue*    getPresentationQueue() const { return m_pBackbufferQueue; }
+    VulkanQueue*                getPresentationQueue() const { return m_pBackbufferQueue; }
+    VkPresentModeKHR            checkAvailablePresentMode(VkSurfaceKHR surface, VkPresentModeKHR presentMode);
 
     // Submit the final command buffer, which will utilize the wait and signal semphores for the current frame.
     // Can optionally override the frame inflight fence with your own fence if needed. Keep in mind this can be 
     // dangerous!
-    ResultCode         submitFinalCommandBuffer(VkCommandBuffer commandBuffer, VkFence cpuFence = VK_NULL_HANDLE);
+    ResultCode                  submitFinalCommandBuffer(VkCommandBuffer commandBuffer, VkFence cpuFence = VK_NULL_HANDLE);
 
 private:
 
-    void        buildFrameResources(ResourceFormat resourceFormat);
-    void        queryCommandPools();
-    inline void incrementFrameIndex() 
+    void                        buildFrameResources(ResourceFormat resourceFormat);
+    void                        queryCommandPools();
+    inline void                 incrementFrameIndex() 
         { m_currentFrameIndex = (m_currentFrameIndex + 1) % m_frameResources.getNumMaxFrames(); }
 
     VkSwapchainKHR                      m_swapchain;

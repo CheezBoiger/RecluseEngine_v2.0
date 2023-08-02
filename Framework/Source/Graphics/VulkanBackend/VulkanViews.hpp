@@ -13,6 +13,27 @@ class VulkanResource;
 class VulkanResourceView : public GraphicsResourceView 
 {
 public:
+    typedef U64 DescriptionId;
+    struct DescriptionPacked
+    {
+        union
+        {
+            struct 
+            {
+                U32 dim         : 4,
+                    viewType    : 2,
+                    pad0        : 2,
+                    baseLayer   : 4,
+                    baseMip     : 4,
+                    layerCount  : 4,
+                    mipCount    : 4,
+                    pad1        : 8;
+                U32 format;
+            };
+            DescriptionId hash0;
+        };
+    };
+
     GraphicsAPI                 getApi() const override { return GraphicsApi_Vulkan; }
 
     VulkanResourceView(const ResourceViewDescription& desc)
@@ -20,6 +41,7 @@ public:
         , m_expectedLayout(VK_IMAGE_LAYOUT_UNDEFINED)
         , m_view(VK_NULL_HANDLE)
         , m_subresourceRange({ })
+        , m_descId(0)
         , m_id(~0) { }
 
     ResultCode                  initialize(VulkanDevice* pDevice, VulkanResource* pResource);
@@ -30,6 +52,7 @@ public:
 
     VkImageSubresourceRange     getSubresourceRange() const { return m_subresourceRange; }
     ResourceViewId              getId() const override { return m_id; }
+    DescriptionId               getDescriptionId() const { return m_descId; }
     VulkanResource*             getResource() const { return m_resource; }
 private:
     static ResourceViewId       kResourceViewCreationCounter;
@@ -43,12 +66,14 @@ public:
     }
 
 private:
+    void generateDescriptionId();
 
     VulkanResource*         m_resource;
     VkImageView             m_view;
     VkImageLayout           m_expectedLayout;
     VkImageSubresourceRange m_subresourceRange;
     ResourceViewId          m_id;
+    DescriptionId           m_descId;
 };
 
 

@@ -28,31 +28,29 @@ struct VulkanRenderPassDesc
     ResourceViewId   pDepthStencil;
 };
 
+struct FramebufferObject
+{
+    VkFramebuffer framebuffer;
+    VkRect2D      renderArea;
+};
+
 class VulkanRenderPass
 {
 public:
-    VulkanRenderPass()
-        : m_fbo(VK_NULL_HANDLE)
-        , m_renderPass(VK_NULL_HANDLE)
-        , m_renderArea({ })
-        , m_numRenderTargets(0)
-        , m_fboId(0ull) { }
-
-    ResultCode         initialize(VulkanDevice* pDevice, const VulkanRenderPassDesc& desc);
-    ResultCode         release(VulkanDevice* pDevice);
+    VulkanRenderPass(FramebufferObject* framebuffer = nullptr, VkRenderPass renderPass = VK_NULL_HANDLE)
+        : m_fbo(framebuffer)
+        , m_renderPass(renderPass) { }
 
     VkRenderPass    get() const { return m_renderPass; }
-    VkFramebuffer   getFbo() const { return m_fbo; }
+    VkFramebuffer   getFbo() const { return m_fbo->framebuffer; }
+    const VkRect2D& getRenderArea() const { return m_fbo->renderArea; }
+    Bool            isNull() const { return (!m_renderPass && !m_fbo); }
 
-    U32             getNumRenderTargets() const { return m_numRenderTargets; }
-    VkRect2D        getRenderArea() const { return m_renderArea; }
-
+    // Nullify the render pass, it's okay to do this since this is just a temporary container.
+    void            nullify() { m_fbo = nullptr; m_renderPass = VK_NULL_HANDLE; }
 private:
-    VkRenderPass    m_renderPass;
-    VkFramebuffer   m_fbo;
-    VkRect2D        m_renderArea;
-    Hash64          m_fboId;
-    U32             m_numRenderTargets;
+    VkRenderPass        m_renderPass;
+    FramebufferObject*  m_fbo;
 };
 
 
@@ -61,7 +59,7 @@ namespace RenderPasses {
 typedef Hash64 RenderPassId;
 typedef Hash64 FrameBufferId;
 
-VulkanRenderPass*       makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, ResourceViewId* ppRenderTargetViews, ResourceViewId pDepthStencil);
+VulkanRenderPass        makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, ResourceViewId* ppRenderTargetViews, ResourceViewId pDepthStencil);
 void                    clearCache(VulkanDevice* pDevice);
 } // RenderPassManager
 

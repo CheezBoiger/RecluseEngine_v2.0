@@ -73,6 +73,7 @@ public:
     VkFormatProperties                      getFormatProperties(VkFormat format) const;
     std::vector<VkQueueFamilyProperties>    getQueueFamilyProperties() const;
     std::vector<VkExtensionProperties>      getDeviceExtensionProperties() const;
+    std::vector<VkPresentModeKHR>           getSupportedPresentModes(VkSurfaceKHR surface) const;
 
     B32                                     checkSurfaceSupport(U32 queueIndex, VkSurfaceKHR surface) const;
     U32                                     getId() const { return m_id; }

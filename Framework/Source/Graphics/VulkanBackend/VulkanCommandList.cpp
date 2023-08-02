@@ -129,34 +129,31 @@ VkCommandBuffer VulkanPrimaryCommandList::get() const
 }
 
 
-void VulkanContext::setRenderPass(VulkanRenderPass* pPass)
+void VulkanContext::setRenderPass(const VulkanRenderPass& renderPass)
 {
-    R_ASSERT_FORMAT(pPass != NULL, "Null renderpass was set prior to render pass binding call!");
-    R_ASSERT_FORMAT(pPass->getNumRenderTargets() <= 8, "Render Pass contains more than %d rtvs! This is more than hardware specs.", 8);
-
+    R_ASSERT_FORMAT(!renderPass.isNull(), "Render pass must not be null!");
     flushBarrierTransitions(m_primaryCommandList.get());
 
     // End current render pass if it doesn't match this one. And begin the new pass.
-    if (m_boundRenderPass != pPass->get()) 
+    if (m_boundRenderPass != renderPass.get()) 
     {
         endRenderPass(m_primaryCommandList.get());   
         VkRenderPassBeginInfo beginInfo = { };
         beginInfo.sType                 = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        beginInfo.framebuffer           = pPass->getFbo();
-        beginInfo.renderPass            = pPass->get();
+        beginInfo.framebuffer           = renderPass.getFbo();
+        beginInfo.renderPass            = renderPass.get();
         beginInfo.clearValueCount       = 0;
         beginInfo.pClearValues          = nullptr;
-        beginInfo.renderArea            = pPass->getRenderArea();
+        beginInfo.renderArea            = renderPass.getRenderArea();
 
         vkCmdBeginRenderPass(m_primaryCommandList.get(), &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
-        m_boundRenderPass               = pPass->get();
+        m_boundRenderPass               = renderPass.get();
     }
 }
 
 
 void VulkanContext::resetBinds()
 {
-    m_boundRenderPass = VK_NULL_HANDLE;
     // Make sure we have at least one context state (this is our primary context state.)
     m_contextStates.clear();
     m_contextStates.push_back({ });
@@ -170,9 +167,9 @@ void VulkanContext::resetBinds()
     m_constantBufferShaderAccessMap.clear();
     m_samplerShaderAccessMap.clear();
     m_pipelineState.pipeline    = VK_NULL_HANDLE;
-    m_newRenderPass             = nullptr;
     m_boundRenderPass           = VK_NULL_HANDLE;
     m_boundDescriptorSet        = VK_NULL_HANDLE;
+    m_newRenderPass.nullify();
 }
 
 
@@ -220,10 +217,10 @@ void VulkanContext::bindPipelineState(const VulkanDescriptorAllocation& set)
         m_pipelineState = pipelineState;
     }
 
-    if (m_newRenderPass)
+    if (!m_newRenderPass.isNull())
     {
         setRenderPass(m_newRenderPass);
-        m_boundRenderPass = m_newRenderPass->get();
+        m_boundRenderPass = m_newRenderPass.get();
     }
 }
 
@@ -465,10 +462,11 @@ void VulkanContext::clearDepthStencil(ClearFlags clearFlags, F32 clearDepth, U8 
     if (clearFlags & ClearFlag_Stencil)
         flags |= VK_IMAGE_ASPECT_STENCIL_BIT;
     
+    const U32 numRenderTargets                  = currentState().m_pipelineStructure.state.graphics.numRenderTargets;
     attachment.aspectMask                       = flags;
     attachment.clearValue.depthStencil.depth    = clearDepth;
     attachment.clearValue.depthStencil.stencil  = clearStencil;
-    attachment.colorAttachment                  = m_newRenderPass->getNumRenderTargets(); // usually the last one.
+    attachment.colorAttachment                  = numRenderTargets ? (numRenderTargets - 1) : 0; // usually the last one.
 
     clearRect.baseArrayLayer    = 0;
     clearRect.layerCount        = 1;
@@ -589,10 +587,9 @@ void VulkanContext::flushBarrierTransitions(VkCommandBuffer cmdBuffer)
 void VulkanContext::bindRenderTargets(U32 count, ResourceViewId* ppResourceViews, ResourceViewId pDepthStencil)
 {
     // Obtain the given render pass for the following resources. If one is already available, don't set it again!
-    VulkanRenderPass* pPass = RenderPasses::makeRenderPass(m_pDevice, count, ppResourceViews, pDepthStencil);
+    m_newRenderPass = RenderPasses::makeRenderPass(m_pDevice, count, ppResourceViews, pDepthStencil);
     currentState().m_pipelineStructure.state.graphics.numRenderTargets = count;
-    currentState().m_pipelineStructure.state.graphics.renderPass = pPass->get();
-    m_newRenderPass = pPass;
+    currentState().m_pipelineStructure.state.graphics.renderPass = m_newRenderPass.get();
     currentState().markPipelineDirty();
 }
 

@@ -11,10 +11,11 @@
 
 namespace Recluse {
 
-std::unordered_map<Hash64, ReferenceObject<VkFramebuffer>> g_fboCache;
-std::unordered_map<Hash64, VulkanRenderPass> g_rpCache;
+std::unordered_map<Hash64, ReferenceObject<FramebufferObject>> g_fboCache;
+std::unordered_map<Hash64, ReferenceObject<VkRenderPass>> g_rpCache;
 
-static U64 serialize(const VkFramebufferCreateInfo& info)
+R_INTERNAL 
+U64 serialize(const VkFramebufferCreateInfo& info)
 {
     Hash64 uniqueId = 0ull;
 
@@ -24,7 +25,7 @@ static U64 serialize(const VkFramebufferCreateInfo& info)
     for (U32 i = 0; i < info.attachmentCount; ++i)
     {
         VkImageView ref = info.pAttachments[i];
-        uniqueId += reinterpret_cast<Hash64>(ref);
+        uniqueId ^= reinterpret_cast<Hash64>(ref);
     }
 
     uniqueId = recluseHashFast(&uniqueId, sizeof(Hash64));
@@ -32,13 +33,15 @@ static U64 serialize(const VkFramebufferCreateInfo& info)
 }
 
 
-static U64 serialize(const VkRenderPassCreateInfo& info)
+R_INTERNAL 
+U64 serialize(const VkRenderPassCreateInfo& info)
 {
     return 0ull;
 }
 
 
-static Bool inFboCache(Hash64 fboId)
+R_INTERNAL
+Bool inFboCache(Hash64 fboId)
 {
     auto it = g_fboCache.find(fboId);
     if (it == g_fboCache.end())
@@ -47,53 +50,123 @@ static Bool inFboCache(Hash64 fboId)
 }
 
 
-static Bool cacheFbo(Hash64 fboId, VkFramebuffer fbo)
+R_INTERNAL
+FramebufferObject* getCachedFbo(Hash64 fboId)
+{
+    return &g_fboCache[fboId]();
+}
+
+
+R_INTERNAL
+FramebufferObject* cacheFbo(Hash64 fboId, VkFramebuffer fbo, const VkRect2D& renderArea)
 {
     if (inFboCache(fboId))
     {
         R_VERBOSE(R_CHANNEL_VULKAN, "Fbo is already in cache! Can not cache unless deleting the existing one...");
-        return false;
+        return getCachedFbo(fboId);
     }
 
-    g_fboCache[fboId] = makeReference(fbo);
+    FramebufferObject data = { fbo, renderArea };
+    g_fboCache[fboId] = makeReference(data);
 
-    return true;
+    return &g_fboCache[fboId]();
 }
 
 
-static void addFboRef(Hash64 fboId)
+R_INTERNAL
+void addFboRef(Hash64 fboId)
 {
     g_fboCache[fboId].add();
 }
 
-static VkFramebuffer getCachedFbo(Hash64 fboId)
-{
-    return g_fboCache[fboId]();
-}
 
-
-static void destroyFbo(Hash64 fboId, VkDevice device)
+R_INTERNAL 
+void destroyFbo(Hash64 fboId, VkDevice device)
 {
     if (!g_fboCache[fboId].release())
     {
-        VkFramebuffer fbo = g_fboCache[fboId]();
+        VkFramebuffer fbo = g_fboCache[fboId]().framebuffer;
         vkDestroyFramebuffer(device, fbo, nullptr);
         g_fboCache.erase(fboId);
     }
 }
 
 
-ResultCode VulkanRenderPass::initialize(VulkanDevice* pDevice, const VulkanRenderPassDesc& desc)
+FramebufferObject* makeFrameBuffer(VulkanDevice* pDevice, VkRenderPass renderPass, const VulkanRenderPassDesc& desc)
+{
+    
+    FramebufferObject* framebuffer = nullptr;
+    VkFramebufferCreateInfo fboIf = { };
+    VkImageView viewAttachments[9];
+    Bool hasDepthStencil = false;
+    U32 totalAttachmentCount = 0;    
+    U32 i = 0;
+    for (i = 0; i < desc.numRenderTargets; ++i)
+    {
+        VulkanResourceView* pView = ResourceViews::obtainResourceView(desc.ppRenderTargetViews[i]);
+        viewAttachments[i] = pView->get();
+    }
+
+    if (desc.pDepthStencil)
+    {
+        VulkanResourceView* pView = ResourceViews::obtainResourceView(desc.ppRenderTargetViews[i]);
+        viewAttachments[i] = pView->get();
+        hasDepthStencil = true;
+    }
+
+    totalAttachmentCount = desc.numRenderTargets + hasDepthStencil;
+
+    fboIf.sType             = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    fboIf.renderPass        = renderPass;
+    fboIf.width             = desc.width;
+    fboIf.height            = desc.height;
+    fboIf.pAttachments      = viewAttachments;
+    fboIf.attachmentCount   = totalAttachmentCount;
+    fboIf.layers            = desc.layers;
+
+    // Find a proper framebuffer object in the cache, otherwise if miss, create a new fbo.
+    Hash64 fboId = serialize(fboIf);
+    if (inFboCache(fboId))
+    {
+        framebuffer = getCachedFbo(fboId);
+
+        addFboRef(fboId);
+    }
+    else
+    {
+        ResultCode result = RecluseResult_Ok;
+        R_VERBOSE(R_CHANNEL_VULKAN, "No cached fbo was hit, creating a new fbo...");
+        VkFramebuffer fbo = VK_NULL_HANDLE;
+        result = vkCreateFramebuffer(pDevice->get(), &fboIf, nullptr, &fbo);
+        
+        if (result != VK_SUCCESS) 
+        {
+            R_ERROR(R_CHANNEL_VULKAN, "Failed to create vulkan framebuffer object.!");
+            return VK_NULL_HANDLE;
+        }
+        else
+        {   
+            VkRect2D renderArea = { };
+            renderArea.extent = { desc.width, desc.height };
+            renderArea.offset = { 0, 0 };
+            framebuffer = cacheFbo(fboId, fbo, renderArea);
+        }
+    }
+
+    return framebuffer;
+}
+
+
+VkRenderPass createRenderPass(VulkanDevice* pDevice,  const VulkanRenderPassDesc& desc)
 {
     R_DEBUG(R_CHANNEL_VULKAN, "Creating vulkan render pass...");
+    VkRenderPass renderPass = VK_NULL_HANDLE;
 
     VkAttachmentDescription descriptions[9]; // including depthstencil, if possible.
     VkAttachmentReference   references[9];  // references for subpass.
-    VkImageView viewAttachments[9];
     VkSubpassDependency dependencies[2];    // dependecies between renderpasses.
     B32 depthStencilIncluded            = desc.pDepthStencil ? true : false;
     VkResult result                     = VK_SUCCESS;
-    VkFramebufferCreateInfo fboIf       = { };
     VkRenderPassCreateInfo  rpIf        = { };
     VkSubpassDescription subpass        = { };
     U32 totalNumAttachments             = 0;
@@ -115,8 +188,6 @@ ResultCode VulkanRenderPass::initialize(VulkanDevice* pDevice, const VulkanRende
         
         references[i].attachment        = i;
         references[i].layout            = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-        viewAttachments[i]              = pView->get();
     };
 
     auto storeDepthStencilDescription = [&] (U32 i) -> void 
@@ -136,8 +207,6 @@ ResultCode VulkanRenderPass::initialize(VulkanDevice* pDevice, const VulkanRende
     
         references[i].attachment        = i;
         references[i].layout            = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
-        
-        viewAttachments[i]              = pView->get();
     };
     
     U32 i = 0;
@@ -173,13 +242,12 @@ ResultCode VulkanRenderPass::initialize(VulkanDevice* pDevice, const VulkanRende
     dependencies[1].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     dependencies[1].dstAccessMask   = 0;
     dependencies[1].dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-
+    
     if (depthStencilIncluded) 
     {
         dependencies[0].dstAccessMask |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
         dependencies[1].srcAccessMask |= dependencies[1].dstAccessMask;
     }
-
 
     rpIf.sType                      = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     rpIf.attachmentCount            = totalNumAttachments;
@@ -189,90 +257,38 @@ ResultCode VulkanRenderPass::initialize(VulkanDevice* pDevice, const VulkanRende
     rpIf.dependencyCount            = 2;
     rpIf.pDependencies              = dependencies;
     
-    
-    result = vkCreateRenderPass(pDevice->get(), &rpIf, nullptr, &m_renderPass);
+    result = vkCreateRenderPass(pDevice->get(), &rpIf, nullptr, &renderPass);
 
-    if (result != VK_SUCCESS) 
-    {
-        R_ERROR(R_CHANNEL_VULKAN, "Failed to create vulkan render pass!");
-
-        release(pDevice);
-
-        return RecluseResult_Failed;
-    }
-
-    fboIf.sType             = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    fboIf.renderPass        = m_renderPass;
-    fboIf.width             = desc.width;
-    fboIf.height            = desc.height;
-    fboIf.pAttachments      = viewAttachments;
-    fboIf.attachmentCount   = totalNumAttachments;
-    fboIf.layers            = desc.layers;
-
-    // Find a proper framebuffer object in the cache, otherwise if miss, create a new fbo.
-    Hash64 fboId = serialize(fboIf);
-    if (inFboCache(fboId))
-    {
-        R_VERBOSE(R_CHANNEL_VULKAN, "Fbo Cache hit!");
-        m_fbo = getCachedFbo(fboId);
-
-        addFboRef(fboId);
-    }
-    else
-    {
-        R_VERBOSE(R_CHANNEL_VULKAN, "No cached fbo was hit, creating a new fbo...");
-        result = vkCreateFramebuffer(pDevice->get(), &fboIf, nullptr, &m_fbo);
-        
-        if (result != VK_SUCCESS) 
-        {
-            R_ERROR(R_CHANNEL_VULKAN, "Failed to create vulkan framebuffer object.!");
-
-            release(pDevice);
-
-            return RecluseResult_Failed;
-        }
-
-        cacheFbo(fboId, m_fbo);
-    }
-
-    m_renderArea        = { };
-    m_renderArea.extent = { desc.width, desc.height };
-    m_renderArea.offset = { 0, 0 };
-    m_fboId             = fboId;
-
-    return RecluseResult_Ok;
+    return renderPass;
 }
 
 
-ResultCode VulkanRenderPass::release(VulkanDevice* pDevice)
+VkRenderPass internalMakeRenderPass(VulkanDevice* pDevice,  const VulkanRenderPassDesc& desc, RenderPasses::RenderPassId renderPassId)
 {
-    R_DEBUG(R_CHANNEL_VULKAN, "Destroying render pass...");
-
-    if (m_renderPass) 
+    auto& iter = g_rpCache.find(renderPassId);
+    // Failed to find a suitable render pass, make a new one.
+    if (iter == g_rpCache.end())
     {
-        vkDestroyRenderPass(pDevice->get(), m_renderPass, nullptr);
-        m_renderPass = VK_NULL_HANDLE;    
-
+        VkRenderPass renderPass = createRenderPass(pDevice, desc);
+        g_rpCache.insert(std::make_pair(renderPassId, renderPass));
+        return renderPass;
     }
-
-    if (m_fbo) 
+    else
     {
-        destroyFbo(m_fboId, pDevice->get());
-        m_fbo = VK_NULL_HANDLE;
+        // We have one, let's return this one.
+        return *iter->second;
     }
-
-    return RecluseResult_Ok;
 }
 
 
 namespace RenderPasses {
 
-VulkanRenderPass* makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, ResourceViewId* ppRenderTargetViews, ResourceViewId pDepthStencil)
+VulkanRenderPass makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, ResourceViewId* ppRenderTargetViews, ResourceViewId pDepthStencil)
 {
     // We never really have a max of 8 render targets in current hardware.
     R_ASSERT(numRenderTargets <= 8);
     R_ASSERT(pDevice != NULL);
-    thread_local ResourceViewId ids[9];    
+    thread_local VulkanResourceView::DescriptionId ids[9];    
     VulkanRenderPass* pPass = nullptr;
     Hash64 accumulate       = 0;
     U32 count           = 0;
@@ -283,7 +299,7 @@ VulkanRenderPass* makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, Re
     for (U32 i = 0; i < numRenderTargets; ++i)
     {
         VulkanResourceView* pView = ResourceViews::obtainResourceView(ppRenderTargetViews[i]);
-        ids[count++]    = pView->getId();
+        ids[count++]    = pView->getDescriptionId();
         targetWidth     = Math::maximum(targetWidth, pView->getResource()->getDesc().width);
         targetHeight    = Math::maximum(targetHeight, pView->getResource()->getDesc().height);
         targetLayers    = Math::maximum(targetLayers, pView->getResource()->getDesc().depthOrArraySize);
@@ -292,38 +308,30 @@ VulkanRenderPass* makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, Re
     if (pDepthStencil)
     {
         VulkanResourceView* pView = ResourceViews::obtainResourceView(pDepthStencil);
-        ids[count++]    = pView->getId();
+        ids[count++]    = pView->getDescriptionId();
         targetWidth     = Math::maximum(targetWidth, pView->getResource()->getDesc().width);
         targetHeight    = Math::maximum(targetHeight, pView->getResource()->getDesc().height);
         targetLayers    = Math::maximum(targetLayers, pView->getResource()->getDesc().depthOrArraySize);
     }
 
-    const U64 resourceViewBytes = sizeof(ResourceViewId) * (U64)count;
+    // TODO(Garcia): We need to find a more general way to identify renderpasses,
+    //               because this is relying too much on VkImageView (which is only meant for FBOs.)
+    //               Due to this, we are creating too many pipeline caches for the same renderpass.
+
+    const U64 resourceViewBytes = sizeof(VulkanResourceView::DescriptionId) * (U64)count;
     RenderPassId id = recluseHashFast(ids, resourceViewBytes);
+    VulkanRenderPassDesc desc   = { };
+    desc.numRenderTargets       = numRenderTargets;
+    desc.pDepthStencil          = pDepthStencil;
+    desc.ppRenderTargetViews    = ppRenderTargetViews;
+    desc.width                  = targetWidth;
+    desc.height                 = targetHeight;
+    desc.layers                 = targetLayers;
 
-    auto& iter = g_rpCache.find(id);
-    // Failed to find a suitable render pass, make a new one.
-    if (iter == g_rpCache.end())
-    {
-        g_rpCache.insert(std::make_pair(id, VulkanRenderPass()));
-        VulkanRenderPass& pass      = g_rpCache[id];
-        VulkanRenderPassDesc desc   = { };
-        desc.numRenderTargets       = numRenderTargets;
-        desc.pDepthStencil          = pDepthStencil;
-        desc.ppRenderTargetViews    = ppRenderTargetViews;
-        desc.width                  = targetWidth;
-        desc.height                 = targetHeight;
-        desc.layers                 = targetLayers;
-        pass.initialize(pDevice, desc);
-        pPass = &pass;
-    }
-    else
-    {
-        // We have one, let's return this one.
-        return &iter->second;
-    }
+    VkRenderPass renderPass         = internalMakeRenderPass(pDevice, desc, id);
+    FramebufferObject* framebuffer  = makeFrameBuffer(pDevice, renderPass, desc);
 
-    return pPass;
+    return VulkanRenderPass(framebuffer, renderPass);
 }
 
 void clearCache(VulkanDevice* pDevice)
@@ -331,8 +339,12 @@ void clearCache(VulkanDevice* pDevice)
     R_ASSERT(pDevice != NULL);
     for (auto iter : g_rpCache)
     {
-        iter.second.release(pDevice);
+        while (iter.second.release());
+        
+        vkDestroyRenderPass(pDevice->get(), *iter.second, nullptr);
+        R_DEBUG(R_CHANNEL_VULKAN, "Destroying render pass...");
     }
+
     for (auto iter : g_fboCache)
     {
         // Release all fbo references.
@@ -340,7 +352,8 @@ void clearCache(VulkanDevice* pDevice)
         {
         }
         
-        vkDestroyFramebuffer(pDevice->get(), *iter.second, nullptr);
+        vkDestroyFramebuffer(pDevice->get(), iter.second().framebuffer, nullptr);
+        R_DEBUG(R_CHANNEL_VULKAN, "Destroying framebuffer");
     }
     g_rpCache.clear();
     g_fboCache.clear();

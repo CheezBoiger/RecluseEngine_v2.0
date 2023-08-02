@@ -427,4 +427,15 @@ std::vector<const char*> VulkanAdapter::queryAvailableDeviceExtensions(LayerFeat
 
     return extensions;
 }
+
+
+std::vector<VkPresentModeKHR> VulkanAdapter::getSupportedPresentModes(VkSurfaceKHR surface) const
+{
+    std::vector<VkPresentModeKHR> modes;
+    uint32_t numModes = 0;
+    vkGetPhysicalDeviceSurfacePresentModesKHR(m_phyDevice, surface, &numModes, nullptr);
+    modes.resize(numModes);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(m_phyDevice, surface, &numModes, modes.data());
+    return modes;
+}
 } // Recluse 
