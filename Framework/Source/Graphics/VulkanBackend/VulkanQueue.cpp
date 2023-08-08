@@ -6,6 +6,7 @@
 #include "VulkanCommandList.hpp"
 
 #include "Recluse/Messaging.hpp"
+#include "Recluse/Math/MathCommons.hpp"
 
 namespace Recluse {
 
@@ -123,9 +124,8 @@ void VulkanQueue::generateCopyResource(VkCommandBuffer cmdBuffer, GraphicsResour
         } 
         else 
         {
-            VulkanImage* srcImage      = static_cast<VulkanImage*>(src);
-            VkBufferImageCopy region    = { };
-            // TODO:
+            VulkanImage* srcImage                   = static_cast<VulkanImage*>(src);
+            VkBufferImageCopy region                = { };
             VkImageSubresourceRange sub             = srcImage->makeSubresourceRange(srcImage->getCurrentResourceState());
             region.imageSubresource.aspectMask      = sub.aspectMask;
             region.imageSubresource.baseArrayLayer  = sub.baseArrayLayer;
@@ -180,27 +180,29 @@ void VulkanQueue::generateCopyResource(VkCommandBuffer cmdBuffer, GraphicsResour
         }
         else
         {
+            // TODO(Garcia): we might want to expose offset and mip/layer offsetting 
+            //               regions per image copy.
             VulkanImage* srcImage = src->castTo<VulkanImage>();
             VkImageSubresourceRange srcRange = srcImage->makeSubresourceRange(srcImage->getCurrentResourceState());
             VkImageSubresourceRange dstRange = dstImage->makeSubresourceRange(dstImage->getCurrentResourceState());
             VkImageCopy region = { };
-            region.dstOffset.x = 0;
-            region.dstOffset.y = 0;
-            region.dstOffset.z = 0;
-            region.srcOffset.x = 0;
-            region.srcOffset.y = 0;
-            region.srcOffset.z = 0;
-            region.extent.depth = srcDesc.depthOrArraySize;
-            region.extent.width = srcDesc.width;
-            region.extent.height = srcDesc.height;
-            region.dstSubresource.aspectMask = dstRange.aspectMask;
-            region.dstSubresource.baseArrayLayer = dstRange.baseArrayLayer;
-            region.dstSubresource.layerCount = dstRange.layerCount;
-            region.dstSubresource.mipLevel = dstRange.baseMipLevel;
-            region.srcSubresource.aspectMask = srcRange.aspectMask;
-            region.srcSubresource.baseArrayLayer = srcRange.baseArrayLayer;
-            region.srcSubresource.layerCount = srcRange.layerCount;
-            region.srcSubresource.mipLevel = srcRange.baseMipLevel;
+            region.dstOffset.x                      = 0;
+            region.dstOffset.y                      = 0;
+            region.dstOffset.z                      = 0;
+            region.srcOffset.x                      = 0;
+            region.srcOffset.y                      = 0;
+            region.srcOffset.z                      = 0;
+            region.extent.depth                     = Math::minimum(srcDesc.depthOrArraySize, dstDesc.depthOrArraySize);
+            region.extent.width                     = Math::minimum(srcDesc.width, dstDesc.width);
+            region.extent.height                    = Math::minimum(srcDesc.height, dstDesc.height);
+            region.dstSubresource.aspectMask        = dstRange.aspectMask;
+            region.dstSubresource.baseArrayLayer    = dstRange.baseArrayLayer;
+            region.dstSubresource.layerCount        = dstRange.layerCount;
+            region.dstSubresource.mipLevel          = dstRange.baseMipLevel;
+            region.srcSubresource.aspectMask        = srcRange.aspectMask;
+            region.srcSubresource.baseArrayLayer    = srcRange.baseArrayLayer;
+            region.srcSubresource.layerCount        = srcRange.layerCount;
+            region.srcSubresource.mipLevel          = srcRange.baseMipLevel;
             vkCmdCopyImage
                 (
                     cmdBuffer, 
