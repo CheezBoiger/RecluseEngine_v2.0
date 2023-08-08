@@ -778,8 +778,10 @@ PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure)
 
 static VkPipeline createRayTracingPipeline()
 {
+#if (VK_HEADER_VERSION >= 236)
     VkRayTracingPipelineCreateInfoKHR rayTracingInfo = { };
     rayTracingInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR;
+#endif
     return nullptr;
 }
 

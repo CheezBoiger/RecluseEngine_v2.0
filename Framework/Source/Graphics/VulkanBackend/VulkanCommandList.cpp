@@ -410,7 +410,7 @@ void VulkanContext::clearDepthStencil(ClearFlags clearFlags, F32 clearDepth, U8 
     VkClearRect clearRect                       = { };
     VkClearAttachment attachment                = { };
 
-    VkImageAspectFlags flags = VK_IMAGE_ASPECT_NONE;
+    VkImageAspectFlags flags = 0;
     if (clearFlags & ClearFlag_Depth)
         flags |= VK_IMAGE_ASPECT_DEPTH_BIT;
     if (clearFlags & ClearFlag_Stencil)

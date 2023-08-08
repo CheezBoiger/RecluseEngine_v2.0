@@ -139,7 +139,7 @@ ShaderBuilder* createDxcShaderBuilder(ShaderIntermediateCode imm)
 #if defined RCL_DXC
     return new DXCShaderBuilder(imm);
 #else
-    R_ERR("DXC", "DXC was not enabled for compilation!");
+    R_ERROR("DXC", "DXC was not enabled for compilation!");
     return nullptr;
 #endif
 }

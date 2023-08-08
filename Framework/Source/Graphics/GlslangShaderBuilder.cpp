@@ -104,6 +104,7 @@ const TBuiltInResource DefaultTBuiltInResource = {
     /* .maxTaskWorkGroupSizeY_NV = */ 1,
     /* .maxTaskWorkGroupSizeZ_NV = */ 1,
     /* .maxMeshViewCountNV = */ 4,
+#if (VK_HEADER_VERSION >= 236)
     /* .maxMeshOutputVerticesEXT */ 256,
     /* .maxMeshOutputPrimitivesEXT */ 512,
     /* .maxMeshWorkGroupSizeX_EXT */ 32,
@@ -114,7 +115,7 @@ const TBuiltInResource DefaultTBuiltInResource = {
     /* .maxTaskWorkGroupSizeZ_EXT */ 1,
     /* .maxMeshViewCountEXT */  4,
     /* .maxDualSourceDrawBuffersEXT */ 1,
-
+#endif
     /* .limits = */ {
         /* .nonInductiveForLoops = */ 1,
         /* .whileLoops = */ 1,
