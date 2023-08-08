@@ -25,6 +25,8 @@ public:
 
     D3D12Instance* getInstance() const { return m_pInstance; }
 
+    U32 constantBufferOffsetAlignmentBytes() const;
+
     ResultCode createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice) override;
     ResultCode destroyDevice(GraphicsDevice* pDevice) override;
 

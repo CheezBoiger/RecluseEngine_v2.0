@@ -187,7 +187,7 @@ int main(int c, char* argv[])
     {
         GraphicsResourceDescription desc = { };
         desc.dimension = ResourceDimension_Buffer;
-        desc.width = sizeof(ConstData) * pContext->obtainBufferCount();
+        desc.width = pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainBufferCount();
         desc.memoryUsage = ResourceMemoryUsage_CpuToGpu;
         desc.usage = ResourceUsage_ConstantBuffer;
         result = pDevice->createResource(&pData, desc, ResourceState_ConstantBuffer);
@@ -312,7 +312,7 @@ int main(int c, char* argv[])
         scissor.x = 0; scissor.y = 0;
         scissor.width = pWindow->getWidth(); scissor.height = pWindow->getHeight();
         context->begin();
-            updateConstData(pData, tick, sizeof(ConstData) * pContext->obtainCurrentBufferIndex());
+            updateConstData(pData, tick, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex());
             context->pushState();
             context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
             context->setCullMode(CullMode_None);
@@ -335,7 +335,7 @@ int main(int c, char* argv[])
             ResourceViewId frameRtv = pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex())->asView(rtvDesc);
             context->setColorWriteMask(0, Color_Rgba);
             context->bindRenderTargets(1, &frameRtv);
-            context->bindConstantBuffer(ShaderType_Vertex, 0, pData, sizeof(ConstData) * pContext->obtainCurrentBufferIndex(), sizeof(ConstData));
+            context->bindConstantBuffer(ShaderType_Vertex, 0, pData, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), sizeof(ConstData));
             context->bindVertexBuffers(1, &pVertexBuffer, &offset);
             context->drawInstanced(3, 1, 0, 0);
             context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_Present);

@@ -104,7 +104,7 @@ const TBuiltInResource DefaultTBuiltInResource = {
     /* .maxTaskWorkGroupSizeY_NV = */ 1,
     /* .maxTaskWorkGroupSizeZ_NV = */ 1,
     /* .maxMeshViewCountNV = */ 4,
-#if (VK_HEADER_VERSION >= 236)
+#if (VK_HEADER_VERSION >= 236) || 1
     /* .maxMeshOutputVerticesEXT */ 256,
     /* .maxMeshOutputPrimitivesEXT */ 512,
     /* .maxMeshWorkGroupSizeX_EXT */ 32,

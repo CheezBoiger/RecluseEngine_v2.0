@@ -246,7 +246,7 @@ VkFormatFeatureFlags VulkanImage::loadFormatFeatures(VkImageCreateInfo& info, Re
 
 ResultCode VulkanImage::onCreate(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState)
 {
-    ResultCode result                      = RecluseResult_Ok;
+    ResultCode result                   = RecluseResult_Ok;
     ResourceUsageFlags usage            = desc.usage;
     VkResult vulkanResult               = VK_SUCCESS;
     VkFormat format                     = Vulkan::getVulkanFormat(desc.format);
@@ -423,7 +423,7 @@ ResultCode VulkanResource::map(void** ptr, MapRange* pReadRange)
     
     if (pReadRange) 
     {
-        offsetBytes += align(pReadRange->offsetBytes, getAlignmentRequirement());
+        offsetBytes += align(pReadRange->offsetBytes, VulkanAdapter::obtainMinMemoryMapAlignment(m_pDevice));
         sizeBytes    = pReadRange->sizeBytes;
     } 
 
@@ -451,7 +451,7 @@ ResultCode VulkanResource::unmap(MapRange* pWriteRange)
 
     if (pWriteRange) 
     {
-        offsetBytes += align(pWriteRange->offsetBytes, getAlignmentRequirement());
+        offsetBytes += align(pWriteRange->offsetBytes, VulkanAdapter::obtainMinMemoryMapAlignment(m_pDevice));
         sizeBytes    = pWriteRange->sizeBytes;
     }
 

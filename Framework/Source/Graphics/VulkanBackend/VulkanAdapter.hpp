@@ -54,12 +54,14 @@ public:
     static std::vector<VulkanAdapter>       getAvailablePhysicalDevices(VulkanInstance* ctx);
     static VkDeviceSize                     obtainMinUniformBufferOffsetAlignment(VulkanDevice* pDevice);
     static VkDeviceSize                     obtainMinStorageBufferOffsetAlignment(VulkanDevice* pDevice);
+    static VkDeviceSize                     obtainMinMemoryMapAlignment(VulkanDevice* pDevice);
 
     ResultCode                              getAdapterInfo(AdapterInfo* out) const override;
     ResultCode                              createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice) override;
     ResultCode                              destroyDevice(GraphicsDevice* pDevice) override;
 
     U32                                     findMemoryType(U32 filter, ResourceMemoryUsage usage) const;
+    U32                                     constantBufferOffsetAlignmentBytes() const;
 
     VkPhysicalDevice                        operator()() const { return m_phyDevice; }
 

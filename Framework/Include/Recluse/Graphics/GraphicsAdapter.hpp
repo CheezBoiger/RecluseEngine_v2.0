@@ -21,6 +21,7 @@ struct R_PUBLIC_API AdapterLimits
     U32     maxConstBufferBinds;
     U32     maxUavBinds;
     U32     maxSrvBinds;
+    U32     constantBufferOffsetAlignmentBytes;
 
     Bool    hasGeometryShaders;
     Bool    hasRaytracing;
@@ -43,6 +44,10 @@ public:
 
     virtual ResultCode getAdapterInfo(AdapterInfo* out) const { return RecluseResult_NoImpl; }
     virtual ResultCode getAdapterLimits() const { return RecluseResult_NoImpl; }
+
+    // Get the offset constant buffer offset alignment in bytes.
+    // This is needed if you plan on using one resource and offsetting from it!
+    virtual U32 constantBufferOffsetAlignmentBytes() const { return 0ull; }
 
     // Creates a device from this adapter.
     virtual ResultCode createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice) 

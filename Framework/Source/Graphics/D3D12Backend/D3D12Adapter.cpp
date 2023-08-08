@@ -72,6 +72,12 @@ ResultCode D3D12Adapter::getAdapterInfo(AdapterInfo* out) const
 }
 
 
+U32 D3D12Adapter::constantBufferOffsetAlignmentBytes() const
+{
+    return D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
+}
+
+
 ResultCode D3D12Adapter::createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice)
 {
     D3D12Device* pDevice    = new D3D12Device();

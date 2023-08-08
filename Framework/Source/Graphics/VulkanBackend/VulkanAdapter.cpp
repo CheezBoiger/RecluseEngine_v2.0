@@ -123,6 +123,18 @@ VkPhysicalDeviceFeatures2 VulkanAdapter::getFeatures2() const
 }
 
 
+U32 VulkanAdapter::constantBufferOffsetAlignmentBytes() const
+{
+    return static_cast<U32>(m_properties.limits.minUniformBufferOffsetAlignment);
+}
+
+
+VkDeviceSize VulkanAdapter::obtainMinMemoryMapAlignment(VulkanDevice* pdevice)
+{
+    return pdevice->getAdapter()->getProperties().limits.minMemoryMapAlignment;
+}
+
+
 ResultCode VulkanAdapter::getAdapterInfo(AdapterInfo* out) const
 {
     VkPhysicalDeviceProperties properties = getProperties();
