@@ -140,8 +140,10 @@ public:
     // specified destination layout.
     // 
     VkImageMemoryBarrier    transition(ResourceState dstState, VkImageSubresourceRange& range);
+    VkImageSubresourceRange makeSubresourceRange(ResourceState dstState);
 
 private:
+    void                    performInitialLayout(VulkanDevice* pDevice, ResourceState initState);
     ResultCode              onCreate(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState) override; 
     ResultCode              onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryRequirements& memRequirements) override;
     ResultCode              onBind(VulkanDevice* pDevice) override;

@@ -11,6 +11,8 @@
 #include "VulkanDescriptorManager.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 #include "VulkanCommandList.hpp"
+
+#include "Recluse/Threading/Threading.hpp"
 #include <vector>
 #include <list>
 #include <array>
@@ -98,9 +100,9 @@ public:
 
     void transition(GraphicsResource* pResource, ResourceState dstState) override;
 
-    void bindShaderResources(ShaderType type, U32 offset, U32 count, ResourceViewId* ppResources) override;
-    void bindUnorderedAccessViews(ShaderType type, U32 offset, U32 count, ResourceViewId* ppResources) override;
-    void bindConstantBuffer(ShaderType type, U32 slot, GraphicsResource* pResource, U64 offsetBytes, U64 sizeBytes) override;
+    void bindShaderResource(ShaderType type, U32 slot, ResourceViewId view) override;
+    void bindUnorderedAccessView(ShaderType type, U32 slot, ResourceViewId view) override;
+    void bindConstantBuffer(ShaderType type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes) override;
     void bindRenderTargets(U32 count, ResourceViewId* ppResources, ResourceViewId pDepthStencil) override;
     void bindSamplers(ShaderType type, U32 count, GraphicsSampler** ppSampler) override;
     void bindRasterizerState(const RasterState& state) override { }
@@ -204,9 +206,9 @@ private:
     {
         Pipelines::Structure                                            m_pipelineStructure;
         DescriptorSets::Structure                                       m_boundDescriptorSetStructure;
-        std::vector<VulkanResourceView*>                                m_srvs;
-        std::vector<VulkanResourceView*>                                m_uavs;
-        std::array<DescriptorSets::ConstantBuffer, 16>                  m_cbvs;
+        std::array<VulkanResourceView*, 128>                            m_srvs;
+        std::array<VulkanResourceView*, 32>                             m_uavs;
+        std::array<DescriptorSets::BufferView, 16>                      m_cbvs;
         std::vector<VulkanSampler*>                                     m_samplers;
         ContextDirtyFlags                                               m_dirtyFlags;
 
@@ -308,6 +310,7 @@ public:
     Bool                destroyVertexLayout(VertexInputLayoutId id) override;
     void                release(VkInstance instance);
     void                copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, const CopyBufferRegion* regions, U32 numRegions) override;
+    void                copyResource(GraphicsResource* dst, GraphicsResource* src) override;
 
     DescriptorAllocatorInstance*    getDescriptorAllocatorInstance(U32 bufferIndex)
     {
@@ -360,6 +363,8 @@ private:
     VkSurfaceKHR                    m_surface;
     struct 
     {
+        CriticalSection m_invalidCs;
+        CriticalSection m_flushCs;
         struct 
         {
             MemoryPool* pool;

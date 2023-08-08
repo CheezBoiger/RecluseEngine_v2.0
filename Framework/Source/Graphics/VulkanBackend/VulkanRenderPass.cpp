@@ -103,13 +103,13 @@ FramebufferObject* makeFrameBuffer(VulkanDevice* pDevice, VkRenderPass renderPas
     U32 i = 0;
     for (i = 0; i < desc.numRenderTargets; ++i)
     {
-        VulkanResourceView* pView = ResourceViews::obtainResourceView(desc.ppRenderTargetViews[i]);
+        VulkanImageView* pView = ResourceViews::obtainResourceView(desc.ppRenderTargetViews[i])->castTo<VulkanImageView>();
         viewAttachments[i] = pView->get();
     }
 
     if (desc.pDepthStencil)
     {
-        VulkanResourceView* pView = ResourceViews::obtainResourceView(desc.ppRenderTargetViews[i]);
+        VulkanImageView* pView = ResourceViews::obtainResourceView(desc.ppRenderTargetViews[i])->castTo<VulkanImageView>();
         viewAttachments[i] = pView->get();
         hasDepthStencil = true;
     }
@@ -173,7 +173,7 @@ VkRenderPass createRenderPass(VulkanDevice* pDevice,  const VulkanRenderPassDesc
 
     auto storeColorDescription = [&] (U32 i) -> void 
     {
-        VulkanResourceView* pView           = ResourceViews::obtainResourceView(desc.ppRenderTargetViews[i]);
+        VulkanImageView* pView           = ResourceViews::obtainResourceView(desc.ppRenderTargetViews[i])->castTo<VulkanImageView>();
         ResourceViewDescription viewDesc    = pView->getDesc();
 
         descriptions[i].samples         = VK_SAMPLE_COUNT_1_BIT;
@@ -192,7 +192,7 @@ VkRenderPass createRenderPass(VulkanDevice* pDevice,  const VulkanRenderPassDesc
 
     auto storeDepthStencilDescription = [&] (U32 i) -> void 
     {
-        VulkanResourceView* pView   = ResourceViews::obtainResourceView(desc.pDepthStencil);
+        VulkanImageView* pView   = ResourceViews::obtainResourceView(desc.pDepthStencil)->castTo<VulkanImageView>();
         ResourceViewDescription viewDesc   = pView->getDesc();
 
         descriptions[i].samples         = VK_SAMPLE_COUNT_1_BIT;

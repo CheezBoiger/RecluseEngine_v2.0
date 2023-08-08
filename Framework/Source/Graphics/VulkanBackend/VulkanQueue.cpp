@@ -27,6 +27,7 @@ ResultCode VulkanQueue::initialize(VulkanDevice* device, QueueFamily* pFamily, U
     info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         
     vkCreateFence(m_pDevice->get(), &info, nullptr, &m_fence);
+    vkCreateFence(m_pDevice->get(), &info, nullptr, &m_oneTimeOnlyFence);
     
     return RecluseResult_Ok;
 }
@@ -56,6 +57,13 @@ void VulkanQueue::destroy()
     
         vkDestroyFence(m_pDevice->get(), m_fence, nullptr);
         m_fence = VK_NULL_HANDLE;
+    
+    }
+
+    if (m_oneTimeOnlyFence) {
+    
+        vkDestroyFence(m_pDevice->get(), m_oneTimeOnlyFence, nullptr);
+        m_oneTimeOnlyFence = VK_NULL_HANDLE;
     
     }
 }
@@ -90,17 +98,14 @@ ErrType VulkanQueue::submit(const QueueSubmit* payload)
 }
 */
 
-ResultCode VulkanQueue::copyResource(GraphicsResource* dst, GraphicsResource* src)
+
+void VulkanQueue::generateCopyResource(VkCommandBuffer cmdBuffer, GraphicsResource* dst, GraphicsResource* src)
 {
     const GraphicsResourceDescription& dstDesc = dst->getDesc();
     const GraphicsResourceDescription& srcDesc = src->getDesc();
 
     ResourceDimension dstDim = dstDesc.dimension;
     ResourceDimension srcDim = srcDesc.dimension;
-
-    // Create a one time only command list.
-    VkDevice device             = m_pDevice->get();
-    VkCommandBuffer cmdBuffer   = beginOneTimeCommandBuffer();
 
     if (dstDim == ResourceDimension_Buffer) 
     { 
@@ -110,7 +115,7 @@ ResultCode VulkanQueue::copyResource(GraphicsResource* dst, GraphicsResource* sr
         {
             VulkanBuffer* srcBuffer = static_cast<VulkanBuffer*>(src);
             VkBufferCopy region     = { };
-            region.size             = dstDesc.width;
+            region.size             = srcDesc.width;
             region.dstOffset        = 0;
             region.srcOffset        = 0;
             vkCmdCopyBuffer(cmdBuffer, srcBuffer->get(), dstBuffer->get(), 1, &region);
@@ -118,32 +123,102 @@ ResultCode VulkanQueue::copyResource(GraphicsResource* dst, GraphicsResource* sr
         } 
         else 
         {
-            VulkanImage* pSrcImage      = static_cast<VulkanImage*>(src);
+            VulkanImage* srcImage      = static_cast<VulkanImage*>(src);
             VkBufferImageCopy region    = { };
             // TODO:
+            VkImageSubresourceRange sub             = srcImage->makeSubresourceRange(srcImage->getCurrentResourceState());
+            region.imageSubresource.aspectMask      = sub.aspectMask;
+            region.imageSubresource.baseArrayLayer  = sub.baseArrayLayer;
+            region.imageSubresource.layerCount      = sub.layerCount;
+            region.imageSubresource.mipLevel        = sub.baseMipLevel;
+            region.imageExtent.width                = dstDesc.width;
+            region.imageExtent.height               = dstDesc.height;
+            region.imageExtent.depth                = dstDesc.depthOrArraySize;
+            region.imageOffset.x                    = 0;
+            region.imageOffset.y                    = 0;
+            region.imageOffset.z                    = 0;
+
+            region.bufferOffset                     = 0;
+            region.bufferRowLength                  = 0;
+            region.bufferImageHeight                = 0;
             vkCmdCopyImageToBuffer
                 (
                     cmdBuffer, 
-                    pSrcImage->get(), 
-                    pSrcImage->getCurrentLayout(),
+                    srcImage->get(), 
+                    srcImage->getCurrentLayout(),
                     dstBuffer->get(), 
                     1, 
                     &region
                 );
         }
-    } 
+    }
+    else
+    {
+        // Destination is an image.
+        VulkanImage* dstImage = dst->castTo<VulkanImage>();
+        if (srcDim == ResourceDimension_Buffer)
+        {
+            VulkanBuffer* srcBuffer = src->castTo<VulkanBuffer>();
+            VkBufferImageCopy region = { };
+            // TODO:
+            VkImageSubresourceRange sub             = dstImage->makeSubresourceRange(dstImage->getCurrentResourceState());
+            region.imageSubresource.aspectMask      = sub.aspectMask;
+            region.imageSubresource.baseArrayLayer  = sub.baseArrayLayer;
+            region.imageSubresource.layerCount      = sub.layerCount;
+            region.imageSubresource.mipLevel        = sub.baseMipLevel;
+            region.imageExtent.width                = dstDesc.width;
+            region.imageExtent.height               = dstDesc.height;
+            region.imageExtent.depth                = dstDesc.depthOrArraySize;
+            region.imageOffset.x                    = 0;
+            region.imageOffset.y                    = 0;
+            region.imageOffset.z                    = 0;
 
-    vkEndCommandBuffer(cmdBuffer);
+            region.bufferOffset                     = 0;
+            region.bufferRowLength                  = 0;
+            region.bufferImageHeight                = 0;
+            vkCmdCopyBufferToImage(cmdBuffer, srcBuffer->get(), dstImage->get(), dstImage->getCurrentLayout(), 1, &region);
+        }
+        else
+        {
+            VulkanImage* srcImage = src->castTo<VulkanImage>();
+            VkImageSubresourceRange srcRange = srcImage->makeSubresourceRange(srcImage->getCurrentResourceState());
+            VkImageSubresourceRange dstRange = dstImage->makeSubresourceRange(dstImage->getCurrentResourceState());
+            VkImageCopy region = { };
+            region.dstOffset.x = 0;
+            region.dstOffset.y = 0;
+            region.dstOffset.z = 0;
+            region.srcOffset.x = 0;
+            region.srcOffset.y = 0;
+            region.srcOffset.z = 0;
+            region.extent.depth = srcDesc.depthOrArraySize;
+            region.extent.width = srcDesc.width;
+            region.extent.height = srcDesc.height;
+            region.dstSubresource.aspectMask = dstRange.aspectMask;
+            region.dstSubresource.baseArrayLayer = dstRange.baseArrayLayer;
+            region.dstSubresource.layerCount = dstRange.layerCount;
+            region.dstSubresource.mipLevel = dstRange.baseMipLevel;
+            region.srcSubresource.aspectMask = srcRange.aspectMask;
+            region.srcSubresource.baseArrayLayer = srcRange.baseArrayLayer;
+            region.srcSubresource.layerCount = srcRange.layerCount;
+            region.srcSubresource.mipLevel = srcRange.baseMipLevel;
+            vkCmdCopyImage
+                (
+                    cmdBuffer, 
+                    srcImage->get(), srcImage->getCurrentLayout(), 
+                    dstImage->get(), dstImage->getCurrentLayout(), 
+                    1, &region
+                );
+        }
+    }
+}
 
-    VkSubmitInfo submit = { };
-    submit.commandBufferCount = 1;
-    submit.pCommandBuffers = &cmdBuffer;
-    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-    vkQueueSubmit(m_queue, 1, &submit, m_fence);
-    
-    vkWaitForFences(device, 1, &m_fence, true, UINT64_MAX);
-    vkResetFences(device, 1, &m_fence);
+ResultCode VulkanQueue::copyResource(GraphicsResource* dst, GraphicsResource* src)
+{
+    // Create a one time only command list.
+    VkDevice device             = m_pDevice->get();
+    VkCommandBuffer cmdBuffer   = beginOneTimeCommandBuffer();
+    generateCopyResource(cmdBuffer, dst, src);
+    endAndSubmitOneTimeCommandBuffer(cmdBuffer);
     
     return RecluseResult_Ok;
 }
@@ -183,6 +258,28 @@ VkCommandBuffer VulkanQueue::beginOneTimeCommandBuffer()
 }
 
 
+ResultCode VulkanQueue::endAndSubmitOneTimeCommandBuffer(VkCommandBuffer commandBuffer)
+{
+    VkDevice device             = m_pDevice->get();
+    if (!commandBuffer)
+    {
+        return RecluseResult_InvalidArgs;
+    }
+    
+    vkEndCommandBuffer(commandBuffer);
+
+    VkSubmitInfo submit = { };
+    submit.commandBufferCount = 1;
+    submit.pCommandBuffers = &commandBuffer;
+    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+    vkQueueSubmit(m_queue, 1, &submit, m_oneTimeOnlyFence);
+    vkWaitForFences(device, 1, &m_oneTimeOnlyFence, true, UINT64_MAX);
+    vkResetFences(device, 1, &m_oneTimeOnlyFence);
+    freeOneTimeOnlyCommandBuffer(commandBuffer);
+}
+
+
 ResultCode VulkanQueue::copyBufferRegions
     (
         GraphicsResource* dst, 
@@ -207,18 +304,14 @@ ResultCode VulkanQueue::copyBufferRegions
 
     vkCmdCopyBuffer(cmdBuffer, srcBuf, dstBuf, numRegions, bufferCopies.data());
 
-    vkEndCommandBuffer(cmdBuffer);
-
-    VkSubmitInfo submit = { };
-    submit.commandBufferCount = 1;
-    submit.pCommandBuffers = &cmdBuffer;
-    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-    vkQueueSubmit(m_queue, 1, &submit, m_fence);
-    
-    vkWaitForFences(device, 1, &m_fence, true, UINT64_MAX);
-    vkResetFences(device, 1, &m_fence);
-    
+    endAndSubmitOneTimeCommandBuffer(cmdBuffer);
     return RecluseResult_Ok;
+}
+
+
+void VulkanQueue::freeOneTimeOnlyCommandBuffer(VkCommandBuffer commandBuffer)
+{
+    VkDevice device = m_pDevice->get();
+    vkFreeCommandBuffers(device, m_tempCommandPool, 1, &commandBuffer);
 }
 } // Recluse

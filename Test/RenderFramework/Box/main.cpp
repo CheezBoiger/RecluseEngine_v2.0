@@ -5,6 +5,7 @@
 #include "Recluse/Graphics/GraphicsInstance.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 #include "Recluse/Graphics/GraphicsAdapter.hpp"
+#include "Recluse/Graphics/Resource.hpp"
 #include "Recluse/Messaging.hpp"
 
 #include "Recluse/Math/Vector3.hpp"
@@ -14,6 +15,8 @@ using namespace Recluse;
 
 GraphicsDevice* device = nullptr;
 GraphicsContext* context = nullptr;
+static const U32 g_textureWidth = 64;
+static const U32 g_textureHeight = 64;
 
 
 struct Vertex
@@ -58,6 +61,65 @@ void ResizeFunction(U32 x, U32 y, U32 width, U32 height)
         desc.renderHeight = height;
         swapchain->rebuild(desc);
     }
+}
+
+
+void createTextureResource(GraphicsResource** textureResource)
+{
+    ResultCode result = RecluseResult_Ok;
+    GraphicsResourceDescription textureDesc = { };
+    textureDesc.dimension = ResourceDimension_2d;
+    textureDesc.format = ResourceFormat_R8G8B8A8_Unorm;
+    textureDesc.width = g_textureWidth;
+    textureDesc.height = g_textureHeight;
+    textureDesc.depthOrArraySize = 1;
+    textureDesc.memoryUsage = ResourceMemoryUsage_GpuOnly;
+    textureDesc.mipLevels = 1;
+    textureDesc.miscFlags = 0;
+    textureDesc.samples = 1;
+    textureDesc.usage = ResourceUsage_ShaderResource | ResourceUsage_CopyDestination | ResourceUsage_CopySource;
+    result = device->createResource(textureResource, textureDesc, ResourceState_CopyDestination);
+
+    R_ASSERT(result == RecluseResult_Ok);
+
+    Math::UByte4 texture[g_textureWidth][g_textureHeight];
+    U64 textureTotalSizeBytes = sizeof(Math::UByte4) * g_textureWidth * g_textureHeight;
+
+    for ( int i = 0; i < g_textureHeight; i++ ) 
+    {
+        for ( int j = 0; j < g_textureWidth; j++ ) 
+        {
+            U8 c = (((i & 0x8) == 0) ^ ((j & 0x8)  == 0)) * 255;
+            texture[i][j][0]  = c;
+            texture[i][j][1]  = c;
+            texture[i][j][2]  = c;
+            texture[i][j][3]  = 255;
+        }
+    }
+    
+    GraphicsResourceDescription staging = { };
+    staging.dimension = ResourceDimension_Buffer;
+    staging.format = ResourceFormat_Unknown;
+    staging.width = g_textureWidth * g_textureHeight * sizeof(Math::UByte4);
+    staging.height = 1;
+    staging.depthOrArraySize = 1;
+    staging.memoryUsage = ResourceMemoryUsage_CpuOnly;
+    staging.mipLevels = 1;
+    staging.miscFlags = 0;
+    staging.samples = 1;
+    staging.usage = ResourceUsage_CopySource;
+
+    GraphicsResource* stagingBuffer = nullptr;
+    device->createResource(&stagingBuffer, staging, ResourceState_CopySource);
+    R_ASSERT(result == RecluseResult_Ok);
+
+    void* stagingMem = nullptr;
+    stagingBuffer->map(&stagingMem, nullptr);
+    memcpy(stagingMem, texture, textureTotalSizeBytes);
+    stagingBuffer->unmap(nullptr);
+    
+    device->copyResource(*textureResource, stagingBuffer);
+    device->destroyResource(stagingBuffer);
 }
 
 
@@ -124,6 +186,9 @@ int main(char* argv[], int c)
     context = device->createContext();
     R_ASSERT(context);
     context->setBuffers(2);
+
+    GraphicsResource* textureResource = nullptr;
+    createTextureResource(&textureResource);
     
     while (!window->shouldClose())
     {
@@ -135,6 +200,11 @@ int main(char* argv[], int c)
             //context->setDepthCompareOp(CompareOp_GreaterOrEqual);
             //context->bindIndexBuffer(nullptr, 0, IndexType_Unsigned16);
             //context->drawIndexedInstanced(0, 0, 0, 0, 0);
+            GraphicsResource* swapchainImage = device->getSwapchain()->getFrame(device->getSwapchain()->getCurrentFrameIndex());
+            context->transition(textureResource, ResourceState_CopySource);
+            context->transition(swapchainImage, ResourceState_CopyDestination);
+            context->copyResource(swapchainImage, textureResource);
+            
             context->transition(device->getSwapchain()->getFrame(device->getSwapchain()->getCurrentFrameIndex()), ResourceState_Present);
         context->end();
         device->getSwapchain()->present();
@@ -143,6 +213,7 @@ int main(char* argv[], int c)
         
     context->wait();
 
+    device->destroyResource(textureResource);
     device->releaseContext(context);
     adapter->destroyDevice(device);
     GraphicsInstance::destroyInstance(instance);

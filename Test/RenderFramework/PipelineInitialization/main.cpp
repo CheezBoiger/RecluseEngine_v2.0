@@ -325,13 +325,13 @@ int main(int c, char* argv[])
             context->setShaderProgram(ShaderKey_SimpleColor);
             
             ResourceViewDescription rtvDesc = { };
-            rtvDesc.type = ResourceViewType_RenderTarget;
-            rtvDesc.format = ResourceFormat_B8G8R8A8_Unorm;
-            rtvDesc.dimension = ResourceViewDimension_2d;
-            rtvDesc.baseArrayLayer = 0;
-            rtvDesc.baseMipLevel = 0;
-            rtvDesc.layerCount = 1;
-            rtvDesc.mipLevelCount = 1;
+            rtvDesc.type                    = ResourceViewType_RenderTarget;
+            rtvDesc.format                  = ResourceFormat_B8G8R8A8_Unorm;
+            rtvDesc.dimension               = ResourceViewDimension_2d;
+            rtvDesc.baseArrayLayer          = 0;
+            rtvDesc.baseMipLevel            = 0;
+            rtvDesc.layerCount              = 1;
+            rtvDesc.mipLevelCount           = 1;
             ResourceViewId frameRtv = pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex())->asView(rtvDesc);
             context->setColorWriteMask(0, Color_Rgba);
             context->bindRenderTargets(1, &frameRtv);

@@ -489,7 +489,7 @@ void D3D12Context::copyBufferRegions
         const CopyBufferRegion* pRegions, 
         U32 numRegions
     )
-{
+{  
     R_NO_IMPL();
 }
 

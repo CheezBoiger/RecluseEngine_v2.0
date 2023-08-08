@@ -36,24 +36,35 @@ public:
 
     GraphicsAPI                 getApi() const override { return GraphicsApi_Vulkan; }
 
-    VulkanResourceView(const ResourceViewDescription& desc)
+    VulkanResourceView(const ResourceViewDescription& desc, Bool isBufferView)
         : GraphicsResourceView(desc)
-        , m_expectedLayout(VK_IMAGE_LAYOUT_UNDEFINED)
-        , m_view(VK_NULL_HANDLE)
-        , m_subresourceRange({ })
         , m_descId(0)
-        , m_id(~0) { }
+        , m_id(~0)
+        , m_isBufferView(isBufferView) { }
 
-    ResultCode                  initialize(VulkanDevice* pDevice, VulkanResource* pResource);
-    ResultCode                  release(VulkanDevice* pDevice);
-    VkImageView                 get() const { return m_view; }
+    virtual ~VulkanResourceView() { }
 
-    VkImageLayout               getExpectedLayout() const { return m_expectedLayout; }
+    ResultCode          initialize(VulkanDevice* pDevice, VulkanResource* pResource) 
+    {
+        generateDescriptionId();
+        m_resource = pResource;
+        return onInitialize(pDevice, pResource); 
+    }
 
-    VkImageSubresourceRange     getSubresourceRange() const { return m_subresourceRange; }
+    ResultCode          release(VulkanDevice* pDevice) 
+    { 
+        return onRelease(pDevice); 
+    }
+
     ResourceViewId              getId() const override { return m_id; }
     DescriptionId               getDescriptionId() const { return m_descId; }
     VulkanResource*             getResource() const { return m_resource; }
+    Bool                        isBufferView() const { return m_isBufferView; }
+
+protected:
+    virtual ResultCode          onInitialize(VulkanDevice* pDevice, VulkanResource* pResource) { return RecluseResult_Ok; }
+    virtual ResultCode          onRelease(VulkanDevice* pDevice) { return RecluseResult_Ok; }
+
 private:
     static ResourceViewId       kResourceViewCreationCounter;
     static MutexGuard           kResourceViewCreationMutex;
@@ -69,11 +80,32 @@ private:
     void generateDescriptionId();
 
     VulkanResource*         m_resource;
-    VkImageView             m_view;
-    VkImageLayout           m_expectedLayout;
-    VkImageSubresourceRange m_subresourceRange;
     ResourceViewId          m_id;
     DescriptionId           m_descId;
+    Bool                    m_isBufferView;
+};
+
+
+class VulkanImageView : public VulkanResourceView
+{
+public:
+    VulkanImageView(const ResourceViewDescription& desc)
+        : VulkanResourceView(desc, false)
+        , m_expectedLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+        , m_view(VK_NULL_HANDLE)
+        , m_subresourceRange({ }) { }
+
+    ResultCode onInitialize(VulkanDevice* pDevice, VulkanResource* pResource) override;
+    ResultCode onRelease(VulkanDevice* pDevice) override;
+
+    VkImageView                 get() const { return m_view; }
+    VkImageLayout               getExpectedLayout() const { return m_expectedLayout; }
+    VkImageSubresourceRange     getSubresourceRange() const { return m_subresourceRange; }
+
+private:
+    VkImageView                 m_view;
+    VkImageLayout               m_expectedLayout;
+    VkImageSubresourceRange     m_subresourceRange;
 };
 
 
@@ -125,6 +157,7 @@ VulkanSampler*      makeSampler(VulkanDevice* pDevice, const SamplerDescription&
 ResultCode          releaseResourceView(VulkanDevice* pDevice, ResourceViewId id);
 ResultCode          releaseSampler(VulkanDevice* pDevice, SamplerId id);
 VulkanResourceView* obtainResourceView(ResourceViewId id);
-VulkanSampler*      obtainSampler(SamplerId);
+VulkanSampler*      obtainSampler(SamplerId sampler);
+void                clearCache(VulkanDevice* pDevice);
 } // ResourceViews
 } // Recluse

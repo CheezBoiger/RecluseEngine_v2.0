@@ -124,6 +124,20 @@ struct R_PUBLIC_API UInt4
     inline UInt4 operator<(const UInt4& rh) const;
 };
 
+
+struct R_PUBLIC_API UByte4
+{
+    union
+    {
+        struct { U8 x, y, z, w; };
+        struct { U8 s, t, r, q; };
+        struct { U8 r, g, b, a; };
+    };
+
+    inline U8& operator[](U32 idx) { return (&x)[idx]; }
+    inline U8 operator[](U32 idx) const { return (&x)[idx]; }
+};
+
 R_PUBLIC_API F32 dot(const Float4& a, const Float4& b);
 R_PUBLIC_API F32 length(const Float4& a);
 R_PUBLIC_API F32 length2(const Float4& a);

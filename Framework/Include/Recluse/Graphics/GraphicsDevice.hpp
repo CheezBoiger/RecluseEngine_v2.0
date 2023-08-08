@@ -46,8 +46,19 @@ struct ResourceViewDescription
     ResourceViewDimension   dimension;
     U32                     baseMipLevel;
     U32                     mipLevelCount;
-    U32                     baseArrayLayer;
-    U32                     layerCount;
+    union
+    {
+        struct 
+        {
+            U32             baseArrayLayer;
+            U32             layerCount;
+        };
+        struct
+        {
+            U32             offsetBytes;
+            U32             sizeBytes;  
+        };
+    };
 };
 
 
@@ -164,9 +175,9 @@ public:
     virtual void setLineWidth(F32 width) { }
     virtual void setDepthCompareOp(CompareOp compareOp) { }
     virtual void setPolygonMode(PolygonMode polygonMode) { }
-    virtual void bindShaderResources(ShaderType type, U32 offset, U32 count, ResourceViewId* ppResources) { }
-    virtual void bindUnorderedAccessViews(ShaderType type, U32 offset, U32 count, ResourceViewId* ppResources) { }
-    virtual void bindConstantBuffer(ShaderType type, U32 slot, GraphicsResource* pResource, U64 offsetBytes, U64 sizeBytes) { }
+    virtual void bindShaderResource(ShaderType type, U32 slot, ResourceViewId view) { }
+    virtual void bindUnorderedAccessView(ShaderType type, U32 slot, ResourceViewId view) { }
+    virtual void bindConstantBuffer(ShaderType type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes) { }
     virtual void bindRenderTargets(U32 count, ResourceViewId* ppResources, ResourceViewId pDepthStencil = 0) { }
     virtual void bindSamplers(ShaderType type, U32 count, GraphicsSampler** ppSampler) { }
     virtual void bindRasterizerState(const RasterState& state) { }

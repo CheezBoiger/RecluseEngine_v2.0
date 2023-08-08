@@ -9,13 +9,19 @@
 namespace Recluse {
 namespace ResourceViews {
 
-std::unordered_map<ResourceViewId, VulkanResourceView*> g_resourceViewMap;
-std::unordered_map<SamplerId, VulkanSampler*> g_samplerMap;
+std::unordered_map<ResourceViewId, VulkanResourceView*>     g_resourceViewMap;
+std::unordered_map<SamplerId, VulkanSampler*>               g_samplerMap;
 
 
 ResourceViewId makeResourceView(VulkanDevice* pDevice, VulkanResource* pResource, const ResourceViewDescription& desc)
 {
-    VulkanResourceView* pView = new VulkanResourceView(desc);
+    
+    VulkanResourceView* pView = nullptr;
+     
+    if (desc.dimension != ResourceViewDimension_Buffer)
+        pView = new VulkanImageView(desc);
+    else
+        pView = new VulkanResourceView(desc, true);
     pView->initialize(pDevice, pResource);
     pView->generateId();
     g_resourceViewMap[pView->getId()] = pView;
@@ -75,6 +81,30 @@ VulkanSampler* obtainSampler(SamplerId id)
         return nullptr;
     return iter->second;
 }
+
+
+void clearCache(VulkanDevice* pDevice)
+{
+    for (auto iter : g_resourceViewMap)
+    {
+        if (iter.second)
+        {
+            iter.second->release(pDevice);
+            delete iter.second;
+        }
+    }
+
+    for (auto iter : g_samplerMap)
+    {
+        if (iter.second)
+        {
+            iter.second->release(pDevice);
+            delete iter.second;
+        }
+    }
+
+    g_resourceViewMap.clear();
+}
 } // ResourceViews
 
 ResourceViewId VulkanResourceView::kResourceViewCreationCounter = 0;
@@ -83,8 +113,11 @@ SamplerId VulkanSampler::kSamplerCreationCounter                = 0;
 MutexGuard VulkanResourceView::kResourceViewCreationMutex    = MutexGuard("VulkanResourceViewCreationMutex");
 MutexGuard VulkanSampler::kSamplerCreationMutex              = MutexGuard("VulkanSamplerCreationMutex");
 
-ResultCode VulkanResourceView::initialize(VulkanDevice* pDevice, VulkanResource* pResource)
+ResultCode VulkanImageView::onInitialize(VulkanDevice* pDevice, VulkanResource* pResource)
 {
+    R_ASSERT(pResource != NULL);
+    R_ASSERT_FORMAT(!pResource->isBuffer(), "Image resources can not be used as buffer views!");
+
     ResultCode result          = RecluseResult_Ok;
     ResourceViewDescription desc   = getDesc();
 
@@ -137,9 +170,6 @@ ResultCode VulkanResourceView::initialize(VulkanDevice* pDevice, VulkanResource*
     }
 
     m_subresourceRange = info.subresourceRange;
-    m_resource = pResource;
-
-    generateDescriptionId();
 
     const Bool supportsDebugMarking = pDevice->getAdapter()->getInstance()->supportsDebugMarking();
     const char* debugName           = pResource->getDesc().name;
@@ -162,7 +192,7 @@ ResultCode VulkanResourceView::initialize(VulkanDevice* pDevice, VulkanResource*
 }
 
 
-ResultCode VulkanResourceView::release(VulkanDevice* pDevice)
+ResultCode VulkanImageView::onRelease(VulkanDevice* pDevice)
 {
     ResultCode result = RecluseResult_Ok;
 

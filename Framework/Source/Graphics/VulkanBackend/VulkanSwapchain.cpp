@@ -80,7 +80,7 @@ ResultCode VulkanSwapchain::build(VulkanDevice* pDevice)
     createInfo.imageExtent      = { pDesc.renderWidth, pDesc.renderHeight };
     createInfo.oldSwapchain     = (m_swapchain) ? m_swapchain : VK_NULL_HANDLE;
     createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    createInfo.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
+    createInfo.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
     createInfo.compositeAlpha   = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     createInfo.presentMode      = VK_PRESENT_MODE_FIFO_KHR;
     createInfo.minImageCount    = pDesc.desiredFrames;

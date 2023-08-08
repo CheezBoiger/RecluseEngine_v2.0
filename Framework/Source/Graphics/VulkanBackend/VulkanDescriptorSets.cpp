@@ -65,6 +65,10 @@ VkDescriptorSetLayout createDescriptorSetLayout(VulkanContext* pContext, const D
     for (U32 i = 0; i < structure.key.value.srvs; ++i) 
     {
         VulkanResourceView* pView                   = structure.ppShaderResources[i];
+
+        if (!pView)
+            continue;
+
         const ResourceViewDescription& description  = pView->getDesc();
 
         bindings[binding].binding             = binding;
@@ -78,6 +82,10 @@ VkDescriptorSetLayout createDescriptorSetLayout(VulkanContext* pContext, const D
     for (U32 i = 0; i < structure.key.value.uavs; ++i)
     {
         VulkanResourceView* pView = structure.ppUnorderedAccesses[i];
+
+        if (!pView)
+            continue;
+
         const ResourceViewDescription& description = pView->getDesc();
 
         bindings[binding].binding             = binding;
@@ -114,7 +122,7 @@ VkDescriptorSetLayout createDescriptorSetLayout(VulkanContext* pContext, const D
         binding++;
     }
 
-    R_ASSERT(binding < bindings.size());
+    R_ASSERT(binding <= bindings.size());
     ci.sType            = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     ci.bindingCount     = binding;
     ci.pBindings        = bindings.data();
@@ -177,7 +185,7 @@ static VkDescriptorBufferInfo makeDescriptorBufferInfo(VulkanBuffer* pBuffer, Vk
 }
 
 
-static VkDescriptorImageInfo makeDescriptorImageInfo(VulkanResourceView* pView)
+static VkDescriptorImageInfo makeDescriptorImageInfo(VulkanImageView* pView)
 {
     VkDescriptorImageInfo info = {};
     info.imageLayout = pView->getExpectedLayout();
@@ -212,8 +220,12 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
     {
         VkWriteDescriptorSet write = { };
         VulkanResourceView* pView = structure.ppShaderResources[i];
+
+        // null view means not occupied!
+        if (!pView)
+            continue;
+
         const ResourceViewDescription& description  = pView->getDesc();
-        VulkanResource* pResource                   = pView->getResource()->castTo<VulkanResource>();
         
         write.sType             = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         write.descriptorCount   = 1;
@@ -221,17 +233,18 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
         write.descriptorType    = getDescriptorType(description.dimension, DescriptorBindType_ShaderResource);
         write.dstBinding        = binding++;
 
-        if (description.dimension == ResourceDimension_Buffer)
+        if (pView->isBufferView())
         {
-            VulkanBuffer* buffer = pResource->castTo<VulkanBuffer>();
+            VulkanResource* pResource   = pView->getResource()->castTo<VulkanResource>();
+            VulkanBuffer* buffer        = pResource->castTo<VulkanBuffer>();
             VkDescriptorBufferInfo info = makeDescriptorBufferInfo(buffer, 0, buffer->getDesc().width);
             bufferInfo.push_back(info);
             write.pBufferInfo = &bufferInfo.back();
         }
         else
         {
-
-            VkDescriptorImageInfo info = makeDescriptorImageInfo(pView);
+            VulkanImageView* pImageView = pView->castTo<VulkanImageView>();
+            VkDescriptorImageInfo info = makeDescriptorImageInfo(pImageView);
             imageInfo.push_back(info);
         }
 
@@ -242,8 +255,11 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
     {
         VkWriteDescriptorSet write                  = { };
         VulkanResourceView* pView                   = structure.ppUnorderedAccesses[i];
+
+        if (!pView)
+            continue;
+
         const ResourceViewDescription& description  = pView->getDesc();
-        VulkanResource* pResource                   = pView->getResource()->castTo<VulkanResource>();
 
         write.sType                                 = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         write.descriptorCount                       = 1;
@@ -251,8 +267,9 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
         write.descriptorType                        = getDescriptorType(description.dimension, DescriptorBindType_UnorderedAccess);
         write.dstBinding                            = binding++;
 
-        if (description.dimension == ResourceDimension_Buffer)
+        if (pView->isBufferView())
         { 
+            VulkanResource* pResource       = pView->getResource()->castTo<VulkanResource>();
             VulkanBuffer* buffer            = pResource->castTo<VulkanBuffer>();
             VkDescriptorBufferInfo info     = makeDescriptorBufferInfo(buffer, 0, buffer->getDesc().width);
             bufferInfo.push_back(info);
@@ -260,7 +277,8 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
         }
         else
         {
-            VkDescriptorImageInfo info      = makeDescriptorImageInfo(pView);
+            VulkanImageView* pImageView     = pView->castTo<VulkanImageView>();
+            VkDescriptorImageInfo info      = makeDescriptorImageInfo(pImageView);
             imageInfo.push_back(info);
             write.pImageInfo                = &imageInfo.back();
         }
@@ -274,7 +292,7 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
         VulkanBuffer* pBuffer           = structure.ppConstantBuffers[i].buffer;
 
         // No constant buffer means the slot is unoccupied.
-        if (!pBuffer) 
+        if (!pBuffer)
             continue;
 
         VkDeviceSize minUBOAlignOffsetBytes = VulkanAdapter::obtainMinUniformBufferOffsetAlignment(pContext->getDevice()->castTo<VulkanDevice>());

@@ -67,18 +67,19 @@ void                    clearCache(VulkanDevice* pDevice);
 namespace DescriptorSets {
 
 
-struct ConstantBuffer
+struct BufferView
 {
     VulkanBuffer* buffer;
-    VkDeviceSize offset;
-    VkDeviceSize sizeBytes;
+    U32 offset;
+    U32 sizeBytes;
 };
+
 
 struct Structure
 {
     VulkanResourceView**    ppShaderResources;
     VulkanResourceView**    ppUnorderedAccesses;
-    ConstantBuffer*         ppConstantBuffers;
+    BufferView*             ppConstantBuffers;
     VulkanSampler**         ppSamplers;
     union
     {

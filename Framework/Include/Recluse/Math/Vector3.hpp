@@ -145,6 +145,20 @@ struct R_PUBLIC_API UShort3
     };
 };
 
+
+struct R_PUBLIC_API UByte3
+{
+    union
+    {
+        struct { U8 x, y, z; };
+        struct { U8 r, g, b; };
+        struct { U8 u, v, w; };
+    };
+
+    inline U8& operator[](U32 idx) { return (&x)[idx]; }
+    inline U8 operator[](U32 idx) const { return (&x)[idx]; }
+};
+
 R_PUBLIC_API Float3     cross(const Float3& lh, const Float3& rh);
 R_PUBLIC_API F32        dot(const Float3& lh, const Float3& rh);
 R_PUBLIC_API F32        length(const Float3& v);

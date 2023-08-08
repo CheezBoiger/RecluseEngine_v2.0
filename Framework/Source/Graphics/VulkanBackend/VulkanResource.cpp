@@ -5,7 +5,7 @@
 #include "VulkanDevice.hpp"
 #include "VulkanAdapter.hpp"
 #include "VulkanCommons.hpp"
-
+#include "VulkanQueue.hpp"
 #include "Recluse/Messaging.hpp"
 
 
@@ -260,7 +260,7 @@ ResultCode VulkanImage::onCreate(VulkanDevice* pDevice, const GraphicsResourceDe
     info.extent.width       = desc.width;   
     info.extent.height      = desc.height;
     info.extent.depth       = (info.imageType == ResourceDimension_3d) ? desc.depthOrArraySize : 1;
-    info.initialLayout      = Vulkan::getVulkanImageLayout(initState);
+    info.initialLayout      = VK_IMAGE_LAYOUT_UNDEFINED; // this is a must, since the vulkan spec states it needs to be either UNDEFINED, or PREINITIALIZED.
     info.mipLevels          = desc.mipLevels;
     info.imageType          = VK_IMAGE_TYPE_2D;         
     info.tiling             = tiling;
@@ -305,7 +305,7 @@ ResultCode VulkanImage::onCreate(VulkanDevice* pDevice, const GraphicsResourceDe
         result = RecluseResult_Failed;
     }
     
-    m_currentLayout = info.initialLayout;
+    m_currentLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
     return result;
 }
@@ -406,6 +406,9 @@ ResultCode VulkanImage::onBind(VulkanDevice* pDevice)
         }
     }
 
+    // Here after we bind memory, we must transition to initial state.
+    performInitialLayout(pDevice, getCurrentResourceState());
+
     return RecluseResult_Ok;
 }
 
@@ -498,6 +501,28 @@ VkImageMemoryBarrier VulkanImage::transition(ResourceState dstState, VkImageSubr
 }
 
 
+VkImageSubresourceRange VulkanImage::makeSubresourceRange(ResourceState dstState)
+{
+        const GraphicsResourceDescription& description  = getDesc();
+        VkImageSubresourceRange range       = { };
+        range.baseArrayLayer                = 0;
+        range.baseMipLevel                  = 0;
+        range.layerCount                    = description.depthOrArraySize;
+        range.levelCount                    = description.mipLevels;
+        range.aspectMask                    = VK_IMAGE_ASPECT_COLOR_BIT;
+        
+        if 
+            (
+                dstState == ResourceState_DepthStencilReadOnly || 
+                dstState == ResourceState_DepthStencilWrite
+            )
+        {
+            range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+        }
+    return range;
+}
+
+
 VkBufferMemoryBarrier VulkanBuffer::transition(ResourceState dstState)
 {
     const VulkanMemory& allocation                  = getMemory();
@@ -536,4 +561,29 @@ ResourceViewId VulkanResource::asView(const ResourceViewDescription& description
 
     return viewId;
 }
+
+
+void VulkanImage::performInitialLayout(VulkanDevice* pDevice, ResourceState initialState)
+{
+    VkImageLayout layout = Vulkan::getVulkanImageLayout(initialState);
+    VulkanQueue* pQueue = pDevice->getBackbufferQueue();
+
+    if (layout == VK_IMAGE_LAYOUT_UNDEFINED)
+    {
+        return;
+    }
+
+    VkCommandBuffer transitionCmd = pQueue->beginOneTimeCommandBuffer();
+    VkImageSubresourceRange range = makeSubresourceRange(initialState);
+    VkImageMemoryBarrier barrier = transition(initialState, range);
+    vkCmdPipelineBarrier
+        (
+            transitionCmd, 
+            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_DEPENDENCY_BY_REGION_BIT, 
+            0, nullptr, 0, nullptr, 
+            1, &barrier
+        );
+    pQueue->endAndSubmitOneTimeCommandBuffer(transitionCmd);
+}
+
 } // Recluse

@@ -16,10 +16,14 @@ struct QueueFamily;
 class VulkanQueue 
 {
 public:
+
+    static void generateCopyResource(VkCommandBuffer commandBuffer, GraphicsResource* dst, GraphicsResource* src);
+
     VulkanQueue(VkQueueFlags type, B32 isPresentSupported = false) 
         : m_queue(nullptr)
         , m_pDevice(nullptr)
         , m_fence(VK_NULL_HANDLE)
+        , m_oneTimeOnlyFence(VK_NULL_HANDLE)
         , m_pFamilyRef(nullptr)
         , m_isPresentSupported(isPresentSupported)
         , m_tempCommandPool(VK_NULL_HANDLE)
@@ -50,15 +54,21 @@ public:
     
     VkQueueFlags getQueueFlags() const { return m_queueFlags; }
 
-private:
     // Generate an internal one-time only command buffer for copy operations.
     // Mainly a quick way to copy buffers and textures.
     VkCommandBuffer beginOneTimeCommandBuffer();
+
+    ResultCode endAndSubmitOneTimeCommandBuffer(VkCommandBuffer commandBuffer);
+
+private:
+
+    void            freeOneTimeOnlyCommandBuffer(VkCommandBuffer commandBuffer);
 
     VkQueue         m_queue;
     VulkanDevice*   m_pDevice;
     QueueFamily*    m_pFamilyRef;
     VkFence         m_fence;
+    VkFence         m_oneTimeOnlyFence;
     B32             m_isPresentSupported;
     VkQueueFlags    m_queueFlags;
     VkCommandPool   m_tempCommandPool;

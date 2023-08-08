@@ -345,6 +345,7 @@ void VulkanDevice::release(VkInstance instance)
     destroyQueues();
     destroyDescriptorHeap();
     freeMemCache();
+    ResourceViews::clearCache(this);
     RenderPasses::clearCache(this);
     ShaderPrograms::unloadAll(this);
     Pipelines::VertexLayout::unloadAll();
@@ -809,6 +810,8 @@ void VulkanDevice::allocateMemCache()
 
     m_memCache.flush.allocator->initialize(alignedFlushAddress, cacheSizeBytes);
     m_memCache.invalid.allocator->initialize(alignedInvalidAddress, cacheSizeBytes);
+    m_memCache.m_flushCs.initialize();
+    m_memCache.m_invalidCs.initialize();
 }
 
 
@@ -839,6 +842,9 @@ void VulkanDevice::freeMemCache()
         delete m_memCache.invalid.pool;
         m_memCache.invalid.pool = nullptr;
     }
+
+    m_memCache.m_flushCs.release();
+    m_memCache.m_invalidCs.release();
 }
 
 
@@ -894,14 +900,14 @@ void VulkanDevice::pushFlushMemoryRange(const VkMappedMemoryRange& mappedRange)
     // Alignment of 0 since we want to pack these ranges together. We hope that 
     // the api struct itself will be aligned properly.
     ResultCode result          = RecluseResult_Ok;
+    UPtr address = 0ull;
 
-    UPtr address = m_memCache.flush.allocator->allocate
-                                ( 
-                                    sizeof(VkMappedMemoryRange), 
-                                    0
-                                );
-    result = m_memCache.flush.allocator->getLastError();
- 
+    {
+        ScopedCriticalSection _(m_memCache.m_flushCs);
+        address = m_memCache.flush.allocator->allocate(sizeof(VkMappedMemoryRange), 0);
+        result = m_memCache.flush.allocator->getLastError();
+    } 
+
     if (result != RecluseResult_Ok) 
     {
         if (result == RecluseResult_OutOfMemory) 
@@ -930,14 +936,14 @@ void VulkanDevice::pushInvalidateMemoryRange(const VkMappedMemoryRange& mappedRa
     VkDeviceSize atomSz     = getNonCoherentSize();
     // Alignement of 0 since we want to pack these ranges together. We hope that the api struct itself will be aligned properly.
     ResultCode result          = RecluseResult_Ok;
+    UPtr address = 0ull;
 
-    UPtr address = m_memCache.invalid.allocator->allocate
-                                ( 
-                                    sizeof(VkMappedMemoryRange), 
-                                    0
-                                );
-    result = m_memCache.invalid.allocator->getLastError();
- 
+    {
+        ScopedCriticalSection _(m_memCache.m_invalidCs);
+        address = m_memCache.invalid.allocator->allocate(sizeof(VkMappedMemoryRange), 0);
+        result = m_memCache.invalid.allocator->getLastError();
+    }
+
     if (result != RecluseResult_Ok) 
     {
         if (result == RecluseResult_OutOfMemory) 
@@ -1057,5 +1063,11 @@ ResultCode VulkanDevice::releaseContext(GraphicsContext* pContext)
 void VulkanDevice::copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, const CopyBufferRegion* regions, U32 numRegions)
 {
     m_swapchain->getPresentationQueue()->copyBufferRegions(dst, src, regions, numRegions);
+}
+
+
+void VulkanDevice::copyResource(GraphicsResource* dst, GraphicsResource* src)
+{
+    m_swapchain->getPresentationQueue()->copyResource(dst, src);
 }
 } // Recluse
