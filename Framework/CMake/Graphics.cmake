@@ -85,7 +85,6 @@ if ( RCL_VULKAN )
 				add_definitions( -DR_GLSLANG_LEGACY_API=0 )
 			endif()
 			set ( VULKAN_GLSLANG_LIBRARY_RELEASE optimized $ENV{VULKAN_SDK}/Lib/glslang.lib 
-									 optimized $ENV{VULKAN_SDK}/Lib/MachineIndependent.lib
 									 optimized $ENV{VULKAN_SDK}/Lib/shaderc.lib
 									 optimized $ENV{VULKAN_SDK}/Lib/shaderc_util.lib
 									 optimized $ENV{VULKAN_SDK}/Lib/GenericCodeGen.lib
@@ -98,7 +97,6 @@ if ( RCL_VULKAN )
                                      optimized $ENV{VULKAN_SDK}/Lib/SPIRV-Tools-opt.lib)
 			message ( WARNING "Windows: you will need to also Download Vulkan SDK DebugShaderLibs in order to use glslang debug libs")
 			set ( VULKAN_GLSLANG_LIBRARY_DEBUG debug $ENV{VULKAN_SDK}/Lib/glslangd.lib 
-									 debug $ENV{VULKAN_SDK}/Lib/MachineIndependentd.lib
                                      debug $ENV{VULKAN_SDK}/Lib/shadercd.lib
 									 debug $ENV{VULKAN_SDK}/Lib/shaderc_utild.lib
 									 debug $ENV{VULKAN_SDK}/Lib/GenericCodeGend.lib
@@ -109,6 +107,10 @@ if ( RCL_VULKAN )
                                      debug $ENV{VULKAN_SDK}/Lib/SPIRV-Toolsd.lib
                                      debug $ENV{VULKAN_SDK}/Lib/SPIRV-Tools-linkd.lib
                                      debug $ENV{VULKAN_SDK}/Lib/SPIRV-Tools-optd.lib)
+			if ( NOT R_GLSLANG_LEGACY_API )
+				set ( VULKAN_GLSLANG_LIBRARY_DEBUG ${VULKAN_GLSLANG_LIBRARY_DEBUG} debug $ENV{VULKAN_SDK}/Lib/MachineIndependentd.lib)
+				set ( VULKAN_GLSLANG_LIBRARY_RELEASE ${VULKAN_GLSLANG_LIBRARY_RELEASE} optimized $ENV{VULKAN_SDK}/Lib/MachineIndependent.lib)
+			endif()
 			set ( VULKAN_GLSLANG_LIBRARIES ${VULKAN_GLSLANG_LIBRARY_RELEASE} ${VULKAN_GLSLANG_LIBRARY_DEBUG} )
 			set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} ${VULKAN_GLSLANG_LIBRARIES} )
 		endif()
