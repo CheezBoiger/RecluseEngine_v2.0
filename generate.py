@@ -21,6 +21,7 @@ def parse_arguments():
     parser.add_argument("-vulkan", dest="vulkan", action="store_true", help="Enable vulkan", default=False)
     parser.add_argument("-dx12", dest="dx12", action="store_true", help="Enable DX12", default=False)
     parser.add_argument("-glsl", dest="glsl", action="store_true", help="Enable GLSlang compiler use.", default=False)
+    parser.add_argument("-glsl.older", dest="glsl_older", action="store_true", help="Fallback to an older version of GLSlang compiler api.", default=False)
     parser.add_argument("-dxc", dest="dxc", action="store_true", help="Enable DXC compiler use.", default=False)
     parser.add_argument("-test", dest="test", action="store_true", help="Enable tests.", default=False)
     parser.add_argument("-developer", dest="developer", action="store_true", help="Enable Developer mode for the engine.", default=False)
@@ -58,11 +59,16 @@ def add_additional_cmake_commands():
     else:
         cmds.append("-DRCL_DXC=False")
         
+    if parsed_commands.glsl_older == True:
+        cmds.append("-DR_GLSLANG_LEGACY_API=True")
+    else:
+        cmds.append("-DR_GLSLANG_LEGACY_API=False")
+        
     if parsed_commands.developer == True:
         cmds.append("-DR_DEVELOPER=True")
     else:
         cmds.append("-DR_DEVELOPER=False")
-
+        
     return cmds
 
 def check_install_package(package):
