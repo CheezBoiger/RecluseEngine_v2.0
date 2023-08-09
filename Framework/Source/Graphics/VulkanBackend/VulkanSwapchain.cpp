@@ -26,7 +26,7 @@ ResultCode VulkanSwapchain::build(VulkanDevice* pDevice)
     const SwapchainCreateDescription& pDesc     = getDesc();
     VkSurfaceKHR surface                        = pDevice->getSurface();
     VkResult result                             = VK_SUCCESS;
-    VkFormat vkFormat                           = Vulkan::getVulkanFormat(pDesc.format);
+    VkFormat surfaceFormat                      = VK_FORMAT_UNDEFINED;
     VkColorSpaceKHR colorSpace                  = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
 
     m_pBackbufferQueue                          = pDevice->getBackbufferQueue();
@@ -40,22 +40,20 @@ ResultCode VulkanSwapchain::build(VulkanDevice* pDevice)
     }
 
     {
-        VulkanAdapter* pAdapter = pDevice->getAdapter();
-        std::vector<VkSurfaceFormatKHR> supportedFormats = pAdapter->getSurfaceFormats(surface);
+        VulkanAdapter* pAdapter                             = pDevice->getAdapter();
+        std::vector<VkSurfaceFormatKHR> supportedFormats    = pAdapter->getSurfaceFormats(surface);
+        VkFormat wantedSurfaceFormat                        = Vulkan::getVulkanFormat(pDesc.format);
         for (VkSurfaceFormatKHR& sF : supportedFormats) 
         {
-            if (sF.format == vkFormat) 
+            if (sF.format == wantedSurfaceFormat) 
             {
                 colorSpace = sF.colorSpace;
+                surfaceFormat = sF.format;
                 break;
-            } 
-            else 
-            {
-                vkFormat = VK_FORMAT_UNDEFINED;
             }
         }
 
-        if (vkFormat == VK_FORMAT_UNDEFINED) 
+        if (surfaceFormat == VK_FORMAT_UNDEFINED) 
         {
             // Use the default first.
             R_WARN
@@ -66,8 +64,8 @@ ResultCode VulkanSwapchain::build(VulkanDevice* pDevice)
                     getResourceFormatString(Vulkan::getResourceFormat(supportedFormats[0].format))
                 );
             R_ASSERT_FORMAT(!supportedFormats.empty(), "No supported formats were found for this physical device!");
-            vkFormat    = supportedFormats[0].format;
-            colorSpace  = supportedFormats[0].colorSpace;
+            surfaceFormat    = supportedFormats[0].format;
+            colorSpace       = supportedFormats[0].colorSpace;
         }
     }
     
@@ -75,7 +73,7 @@ ResultCode VulkanSwapchain::build(VulkanDevice* pDevice)
     createInfo.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     createInfo.clipped          = VK_TRUE;
     createInfo.imageColorSpace  = colorSpace;
-    createInfo.imageFormat      = vkFormat;
+    createInfo.imageFormat      = surfaceFormat;
     createInfo.surface          = surface;
     createInfo.imageExtent      = { pDesc.renderWidth, pDesc.renderHeight };
     createInfo.oldSwapchain     = (m_swapchain) ? m_swapchain : VK_NULL_HANDLE;
@@ -110,7 +108,8 @@ ResultCode VulkanSwapchain::build(VulkanDevice* pDevice)
 
     R_DEBUG(R_CHANNEL_VULKAN, "Successfully created vulkan swapchain!");
 
-    buildFrameResources(Vulkan::getResourceFormat(vkFormat));
+    requestOverrideResourceFormat(Vulkan::getResourceFormat(surfaceFormat));
+    buildFrameResources(Vulkan::getResourceFormat(surfaceFormat));
     queryCommandPools();
 
     //VkSemaphore imageAvailableSema = getWaitSemaphore(m_currentFrameIndex);

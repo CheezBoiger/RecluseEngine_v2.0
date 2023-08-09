@@ -142,7 +142,7 @@ int main(int c, char* argv[])
         info.swapchainDescription                   = { };
         info.swapchainDescription.buffering         = FrameBuffering_Single;
         info.swapchainDescription.desiredFrames     = 3;
-        info.swapchainDescription.format            = ResourceFormat_B8G8R8A8_Unorm;
+        info.swapchainDescription.format            = ResourceFormat_R8G8B8A8_Unorm;
         info.swapchainDescription.renderWidth       = pWindow->getWidth();
         info.swapchainDescription.renderHeight      = pWindow->getHeight();
         result                                      = pAdapter->createDevice(info, &pDevice);
@@ -326,7 +326,7 @@ int main(int c, char* argv[])
             
             ResourceViewDescription rtvDesc = { };
             rtvDesc.type                    = ResourceViewType_RenderTarget;
-            rtvDesc.format                  = ResourceFormat_B8G8R8A8_Unorm;
+            rtvDesc.format                  = pSwapchain->getDesc().format;
             rtvDesc.dimension               = ResourceViewDimension_2d;
             rtvDesc.baseArrayLayer          = 0;
             rtvDesc.baseMipLevel            = 0;

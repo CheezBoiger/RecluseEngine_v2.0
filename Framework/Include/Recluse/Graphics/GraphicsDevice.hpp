@@ -323,6 +323,11 @@ public:
     virtual GraphicsResource*               getFrame(U32 idx) = 0;
 
     const SwapchainCreateDescription&       getDesc() const { return m_desc; }
+protected:
+    void requestOverrideResourceFormat(ResourceFormat overridedFormat)
+    {
+        m_desc.format = overridedFormat;
+    }
 
 private:
     virtual ResultCode                      onRebuild() { return RecluseResult_NoImpl; }
