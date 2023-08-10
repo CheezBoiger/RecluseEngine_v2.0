@@ -315,6 +315,8 @@ ResultCode VulkanSampler::initialize(VulkanDevice* pDevice, const SamplerDescrip
     {
         return RecluseResult_Failed;
     }
+
+    generateDescriptionId(desc);
     
     return RecluseResult_Ok;
 }
@@ -333,5 +335,24 @@ ResultCode VulkanSampler::release(VulkanDevice* pDevice)
     }
 
     return RecluseResult_Ok;
+}
+
+
+void VulkanSampler::generateDescriptionId(const SamplerDescription& description)
+{
+    SamplerDescriptionUnion obj = { };
+    obj.addrU = description.addressModeU;
+    obj.addrV = description.addressModeV;
+    obj.addrW = description.addressModeW;
+    obj.borderColor = description.borderColor;
+    obj.compareOp = description.compareOp;
+    obj.maxFilter = description.magFilter;
+    obj.minFilter = description.minFilter;
+    obj.mipMapMode = description.mipMapMode;
+    obj.maxAnisotropy = description.maxAnisotropy;
+    obj.minLod = description.minLod;
+    obj.maxLod = description.maxLod;
+    obj.mipLodBias = description.mipLodBias;
+    m_descId = recluseHashFast(&obj, sizeof(SamplerDescriptionUnion));
 }
 } // Recluse

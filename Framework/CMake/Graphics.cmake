@@ -87,7 +87,6 @@ if ( RCL_VULKAN )
 			set ( VULKAN_GLSLANG_LIBRARY_RELEASE optimized $ENV{VULKAN_SDK}/Lib/glslang.lib 
 									 optimized $ENV{VULKAN_SDK}/Lib/shaderc.lib
 									 optimized $ENV{VULKAN_SDK}/Lib/shaderc_util.lib
-									 optimized $ENV{VULKAN_SDK}/Lib/GenericCodeGen.lib
                                      optimized $ENV{VULKAN_SDK}/Lib/SPIRV.lib
                                      optimized $ENV{VULKAN_SDK}/Lib/HLSL.lib
                                      optimized $ENV{VULKAN_SDK}/Lib/OGLCompiler.lib
@@ -109,7 +108,9 @@ if ( RCL_VULKAN )
                                      debug $ENV{VULKAN_SDK}/Lib/SPIRV-Tools-optd.lib)
 			if ( NOT R_GLSLANG_LEGACY_API )
 				set ( VULKAN_GLSLANG_LIBRARY_DEBUG ${VULKAN_GLSLANG_LIBRARY_DEBUG} debug $ENV{VULKAN_SDK}/Lib/MachineIndependentd.lib)
-				set ( VULKAN_GLSLANG_LIBRARY_RELEASE ${VULKAN_GLSLANG_LIBRARY_RELEASE} optimized $ENV{VULKAN_SDK}/Lib/MachineIndependent.lib)
+				set ( VULKAN_GLSLANG_LIBRARY_RELEASE ${VULKAN_GLSLANG_LIBRARY_RELEASE} 
+						optimized $ENV{VULKAN_SDK}/Lib/MachineIndependent.lib 
+						optimized $ENV{VULKAN_SDK}/Lib/GenericCodeGen.lib)
 			endif()
 			set ( VULKAN_GLSLANG_LIBRARIES ${VULKAN_GLSLANG_LIBRARY_RELEASE} ${VULKAN_GLSLANG_LIBRARY_DEBUG} )
 			set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} ${VULKAN_GLSLANG_LIBRARIES} )

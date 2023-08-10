@@ -335,6 +335,7 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
 }
 
 typedef Hash64 DescriptorSetId;
+typedef Hash64 DescriptorLayoutId;
 
 class DescriptorSetKeyHasher
 {
@@ -343,7 +344,7 @@ public:
     {
         Hash64 hh   = recluseHashFast(&key.key.hash, sizeof(U64) * 2u);
         hh          ^= recluseHashFast(key.ppShaderResources, sizeof(VulkanResourceView*) * key.key.value.srvs);
-        hh          ^= recluseHashFast(key.ppConstantBuffers, sizeof(VulkanBuffer*) * key.key.value.constantBuffers);
+        hh          ^= recluseHashFast(key.ppConstantBuffers, sizeof(BufferView*) * key.key.value.constantBuffers);
         hh          ^= recluseHashFast(key.ppUnorderedAccesses, sizeof(VulkanResourceView*) * key.key.value.uavs);
         hh          ^= recluseHashFast(key.ppSamplers, sizeof(VulkanSampler*) * key.key.value.samplers);
         return staticCast<size_t>(hh);
@@ -354,36 +355,24 @@ public:
 class DescriptorSetLayoutKeyHasher
 {
 public:
-    size_t operator()(const Structure& key) const
+    Hash64 operator()(const Structure& key) const
     {
-        Hash64 hh = recluseHashFast(&key.key.hash, sizeof(U64) * 2u);
-        // TODO: This hasher needs to be quick. So we need to ensure we don't have too many loops here.
-
-        return staticCast<size_t>(hh);
+        return recluseHashFast(&key.key.hash, sizeof(key.key));
     }
 };
 
-class DescriptorSetLayoutKeyComparer
-{
-public:
-    bool operator()(const Structure& lh, const Structure& rh) const
-    {
-        return (lh.key.hash.l0 == rh.key.hash.l0) && (lh.key.hash.l1 == rh.key.hash.l1);
-    }
-};
-
-std::unordered_map<Structure, VkDescriptorSetLayout, DescriptorSetLayoutKeyHasher, DescriptorSetLayoutKeyComparer> g_layoutMap;
+std::unordered_map<DescriptorLayoutId, VkDescriptorSetLayout> g_layoutMap;
 std::unordered_map<DescriptorSetId, VulkanDescriptorAllocation> g_descriptorSetMap;
-
 
 VkDescriptorSetLayout makeLayout(VulkanContext* pContext, const Structure& structure)
 {
     VkDescriptorSetLayout layout = VK_NULL_HANDLE;
-    auto& iter = g_layoutMap.find(structure);
+    DescriptorLayoutId id = DescriptorSetLayoutKeyHasher()(structure);
+    auto& iter = g_layoutMap.find(id);
     if (iter == g_layoutMap.end())
     {
         layout = createDescriptorSetLayout(pContext, structure);
-        g_layoutMap.insert(std::make_pair(structure, layout));
+        g_layoutMap.insert(std::make_pair(id, layout));
     }
     else
     {
@@ -444,7 +433,8 @@ ResultCode releaseDescriptorSet(VulkanContext* pContext, const Structure& struct
 
 ResultCode releaseLayout(VulkanContext* pContext, const Structure& structure)
 {
-    auto& iter = g_layoutMap.find(structure);
+    DescriptorLayoutId layoutId = DescriptorSetLayoutKeyHasher()(structure);
+    auto& iter = g_layoutMap.find(layoutId);
     if (iter != g_layoutMap.end())
     {
         VkDevice device = pContext->getDevice()->castTo<VulkanDevice>()->get();

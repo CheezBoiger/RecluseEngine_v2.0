@@ -11,6 +11,7 @@
 #include "Recluse/Graphics/ShaderBuilder.hpp"
 #include "Recluse/Graphics/ShaderProgramBuilder.hpp"
 
+#include "Recluse/Math/Vector2.hpp"
 #include "Recluse/Memory/MemoryCommon.hpp"
 #include "Recluse/System/Window.hpp"
 #include "Recluse/System/Input.hpp"
@@ -74,7 +75,7 @@ void ResizeFunction(U32 x, U32 y, U32 width, U32 height)
     }
 }
 
-void updateConstData(GraphicsResource* pData, RealtimeTick& tick, U64 offsetBytes)
+void updateConstData(GraphicsResource* pData, RealtimeTick& tick, U64 offsetBytes, const Math::Float2& posOffset)
 {
     ConstData dat = { };
     dat.color[0] = abs(sinf(tick.getCurrentTimeS() * 0.0000001f));
@@ -82,8 +83,8 @@ void updateConstData(GraphicsResource* pData, RealtimeTick& tick, U64 offsetByte
     dat.color[2] = 1.0f;
     dat.color[3] = 0.0f;
     
-    dat.offset[0] = 0.0f;
-    dat.offset[1] = 0.0f;
+    dat.offset[0] = posOffset.x;
+    dat.offset[1] = posOffset.y;
     void* ptr = nullptr;
     MapRange range = { };
     range.offsetBytes = offsetBytes;
@@ -97,10 +98,10 @@ int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
     RealtimeTick::initializeWatch(1ull, 0);
-
     GraphicsInstance* pInstance             = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
     GraphicsAdapter* pAdapter               = nullptr;
     GraphicsResource* pData                 = nullptr;
+    GraphicsResource* pData2                = nullptr;
 
     GraphicsResource* pVertexBuffer         = nullptr;
     PipelineState* pPipeline                = nullptr;
@@ -191,6 +192,7 @@ int main(int c, char* argv[])
         desc.memoryUsage = ResourceMemoryUsage_CpuToGpu;
         desc.usage = ResourceUsage_ConstantBuffer;
         result = pDevice->createResource(&pData, desc, ResourceState_ConstantBuffer);
+        result = pDevice->createResource(&pData2, desc, ResourceState_ConstantBuffer);
     }
 
     if (result != RecluseResult_Ok) 
@@ -312,7 +314,8 @@ int main(int c, char* argv[])
         scissor.x = 0; scissor.y = 0;
         scissor.width = pWindow->getWidth(); scissor.height = pWindow->getHeight();
         context->begin();
-            updateConstData(pData, tick, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex());
+            updateConstData(pData, tick, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), Math::Float2(0, 0));
+            updateConstData(pData2, tick, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), Math::Float2(0, 1));
             context->pushState();
             context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
             context->setCullMode(CullMode_None);
@@ -338,6 +341,8 @@ int main(int c, char* argv[])
             context->bindConstantBuffer(ShaderType_Vertex, 0, pData, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), sizeof(ConstData));
             context->bindVertexBuffers(1, &pVertexBuffer, &offset);
             context->drawInstanced(3, 1, 0, 0);
+            context->bindConstantBuffer(ShaderType_Vertex, 0, pData2, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), sizeof(ConstData));
+            context->drawInstanced(3, 1, 0, 0);
             context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_Present);
             context->popState();
         context->end();
@@ -352,6 +357,7 @@ int main(int c, char* argv[])
 
     pDevice->destroyResource(pVertexBuffer);
     pDevice->destroyResource(pData);
+    pDevice->destroyResource(pData2);
     pDevice->releaseContext(pContext);
     pAdapter->destroyDevice(pDevice);
     GraphicsInstance::destroyInstance(pInstance);

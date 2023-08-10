@@ -112,7 +112,31 @@ private:
 class VulkanSampler : public GraphicsSampler 
 {
 public:
+    typedef Hash64 SamplerDescriptionId;
 
+    struct SamplerDescriptionUnion
+    {
+        union
+        {
+            struct
+            {
+                U32 addrU       : 3,
+                    addrV       : 3,
+                    addrW       : 3,
+                    borderColor : 2,
+                    mipMapMode  : 1,
+                    minFilter   : 2,
+                    maxFilter   : 2,
+                    compareOp   : 3,
+                    pad0        : 13;
+            };
+            U32 hash0;
+        };
+        F32 minLod;
+        F32 maxLod;
+        F32 maxAnisotropy;
+        F32 mipLodBias;
+    };
     GraphicsAPI getApi() const override { return GraphicsApi_Vulkan; }
 
     VulkanSampler()
@@ -134,6 +158,7 @@ public:
 
     VkSamplerCreateInfo getCopyInfo() const { return m_info; }
     SamplerId getId() const override { return m_id; }
+    SamplerDescriptionId getDescriptionId() const { return m_descId; }
 private:
     static SamplerId kSamplerCreationCounter;
     static MutexGuard kSamplerCreationMutex;
@@ -145,10 +170,13 @@ public:
         m_id = kSamplerCreationCounter++;
     }
 
+    void generateDescriptionId(const SamplerDescription& desc);
+
 private:
-    VkSampler           m_sampler;
-    VkSamplerCreateInfo m_info;
-    SamplerId           m_id;
+    VkSampler               m_sampler;
+    VkSamplerCreateInfo     m_info;
+    SamplerId               m_id;
+    Hash64                  m_descId;
 };
 
 namespace ResourceViews {

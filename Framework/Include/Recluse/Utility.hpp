@@ -47,7 +47,8 @@ public:
     {
         if (hasNoReferences())
         {
-            delete m_count;
+            if (m_count)
+                delete m_count;
             m_count = nullptr;
         }
     }

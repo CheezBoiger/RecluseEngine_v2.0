@@ -12,7 +12,7 @@
 namespace Recluse {
 
 std::unordered_map<Hash64, ReferenceObject<FramebufferObject>> g_fboCache;
-std::unordered_map<Hash64, ReferenceObject<VkRenderPass>> g_rpCache;
+std::unordered_map<Hash64, VkRenderPass> g_rpCache;
 
 R_INTERNAL 
 U64 serialize(const VkFramebufferCreateInfo& info)
@@ -276,7 +276,7 @@ VkRenderPass internalMakeRenderPass(VulkanDevice* pDevice,  const VulkanRenderPa
     else
     {
         // We have one, let's return this one.
-        return *iter->second;
+        return iter->second;
     }
 }
 
@@ -339,9 +339,9 @@ void clearCache(VulkanDevice* pDevice)
     R_ASSERT(pDevice != NULL);
     for (auto iter : g_rpCache)
     {
-        while (iter.second.release());
+        //while (iter.second.release());
         
-        vkDestroyRenderPass(pDevice->get(), *iter.second, nullptr);
+        vkDestroyRenderPass(pDevice->get(), iter.second, nullptr);
         R_DEBUG(R_CHANNEL_VULKAN, "Destroying render pass...");
     }
 
