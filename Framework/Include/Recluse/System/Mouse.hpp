@@ -40,11 +40,13 @@ public:
 
     Bool                            getIsEnabled() const { return m_isEnabled; }
 
-    void                            setButtonState(U32 buttonIx, InputState state) override { m_buttonStates[buttonIx] = state; }
-    InputState                      getButtonState(U32 buttonIx) override { return m_buttonStates[buttonIx]; }
+    void                            setButtonState(U32 buttonIx, InputState state) override { if (state == InputState_Down) m_buttonStates |= (1 << buttonIx); else m_buttonStates &= ~(1 << buttonIx); }
+    InputState                      getButtonState(U32 buttonIx) override { return (InputState)((m_buttonStates & (1 << buttonIx)) >> buttonIx); }
 
     void                            setEnable(Bool enable) { m_isEnabled = enable; }
     void                            setShowing(Bool show) { m_isShowing = show; }
+
+    U32                             allButtonFlags() const { return m_buttonStates; }
 
     // Set the mouse to clamp to window.
     void                            setClamped(Bool clamped) { m_isClamped = clamped; }
@@ -64,7 +66,7 @@ private:
     I32         m_yPosition;
     I32         m_xLastPosition;
     I32         m_yLastPosition;
-    InputState  m_buttonStates[R_MAX_MOUSE_BUTTONS];
+    U32         m_buttonStates;
     Bool        m_isShowing;
     Bool        m_isEnabled;
     Bool        m_isClamped;

@@ -22,7 +22,8 @@ LogTypeFlags(0xFFFFFFFF & (~LogDebug));
 
 static std::set<std::string> g_disabledChannels = 
 {
-    "MemoryPool" 
+    "MemoryPool",
+    "Raw Input"
 };
 
 // TODO: Check if these colors work for most windows machines.

@@ -338,15 +338,26 @@ int main(int c, char* argv[])
             ResourceViewId frameRtv = pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex())->asView(rtvDesc);
             context->setColorWriteMask(0, Color_Rgba);
             context->bindRenderTargets(1, &frameRtv);
-            context->bindConstantBuffer(ShaderType_Vertex, 0, pData, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), sizeof(ConstData));
+            F32 clear[4] = { 0, 0, 0, 1 };
+            Rect rect; rect.x = 0; rect.y = 0; rect.width = pSwapchain->getDesc().renderWidth; rect.height = pSwapchain->getDesc().renderHeight;
+            context->clearRenderTarget(0, clear, rect);
             context->bindVertexBuffers(1, &pVertexBuffer, &offset);
-            context->drawInstanced(3, 1, 0, 0);
-            context->bindConstantBuffer(ShaderType_Vertex, 0, pData2, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), sizeof(ConstData));
-            context->drawInstanced(3, 1, 0, 0);
+
+            if (pMouse->getButtonState(1) == InputState_Down)
+            {
+                context->bindConstantBuffer(ShaderType_Vertex, 0, pData, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), sizeof(ConstData));
+                context->drawInstanced(3, 1, 0, 0);
+            }
+            if (pMouse->getButtonState(0) == InputState_Down)
+            {
+                context->bindConstantBuffer(ShaderType_Vertex, 0, pData2, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), sizeof(ConstData));
+                context->drawInstanced(3, 1, 0, 0);
+            }
+
             context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_Present);
             context->popState();
         context->end();
-        R_VERBOSE("Game", "%f fps", 1.0f / ms);
+        //R_VERBOSE("Game", "%f fps", 1.0f / ms);
         pSwapchain->present();
 
         pollEvents();

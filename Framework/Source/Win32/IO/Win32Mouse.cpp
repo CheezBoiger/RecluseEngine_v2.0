@@ -13,11 +13,13 @@ ResultCode Mouse::integrateInput(const IInputFeedback& feedback)
     // We need to ensure that the number of buttons is less than the number of supported button flags.
     R_ASSERT(R_MAX_MOUSE_BUTTONS < 32);
 
-    for (U32 i = 1, index = 0; index < R_MAX_MOUSE_BUTTONS; i <<= 1, ++index)
-    {
-        InputState requestedState   = (InputState)(feedback.buttonStateFlags & i);
-        setButtonState(index, requestedState);
-    }
+    //for (U32 i = 1, index = 0; index < R_MAX_MOUSE_BUTTONS; i <<= 1, ++index)
+    //{
+    //    InputState requestedState   = (InputState)(feedback.buttonStateFlags & i);
+    //    setButtonState(index, requestedState);
+    //}
+
+    m_buttonStates = feedback.buttonStateFlags;
 
     updatePosition(xPosition, yPosition);
 

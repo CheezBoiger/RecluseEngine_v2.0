@@ -35,7 +35,7 @@ static struct
     U64                 watchId[MAX_WATCH_TYPE_INDICES] = { };
 
     U64                 gTicksPerSecond = initializeTicksPerSecond();   //< ticks in seconds.
-    RAWINPUT            lpb;                                            //< raw input.
+    RAWINPUT            lpb[4];                                            //< raw input.
     const DWORD         mainThreadId    = GetCurrentThreadId();         //< this is the main thread id!
     Bool                isInitialized   = false;
 } gWin32Runtime;
@@ -259,72 +259,51 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
             }
             case WM_INPUT:
             {
-                IInputFeedback feedback = { };
                 Mouse* pMouse           = pWindow->getMouseHandle();
-                RAWINPUT* raw           = &gWin32Runtime.lpb;
-
-                I32 dx = 0, dy = 0;
-                UINT dwSize;
-
-                if (!pMouse) 
+                if (pMouse) 
                 {
-                    // Break early as there is no mouse attached to this 
-                    // window.
-                    break;
-                }
-        
-                if 
-                    (
-                        GetRawInputData
-                            (
-                                (HRAWINPUT)lParam, 
-                                RID_INPUT, 
-                                raw, 
-                                &dwSize, 
-                                sizeof(RAWINPUTHEADER)
-                            ) == -1u
-                    ) 
-                {
-
-                    R_WARN(R_CHANNEL_WIN32, "Raw input not returning correct size.");
-                    break;
-
-                }
-
-                if (raw->header.dwType == RIM_TYPEMOUSE) 
-                {
-                    if (raw->data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE) 
+                    RAWINPUT* raw           = gWin32Runtime.lpb;
+                    UINT dwSize;
+                    UINT result = GetRawInputData((HRAWINPUT)lParam, RID_INPUT, raw, &dwSize, sizeof(RAWINPUTHEADER)); 
+                    if (result != (UINT)-1) 
                     {
-                        I32 prevX = pMouse->getLastXPos();
-                        I32 prevY = pMouse->getLastYPos();
+                        IInputFeedback feedback = { };
+                        I32 dx = 0, dy = 0;
+                        if (raw->header.dwType == RIM_TYPEMOUSE) 
+                        {
+                            if (raw->data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE) 
+                            {
+                                I32 prevX = pMouse->getLastXPos();
+                                I32 prevY = pMouse->getLastYPos();
 
-                        dx = (raw->data.mouse.lLastX / 65535.0f) * pWindow->getWidth()  - prevX; // get the delta from last mouse pos.
-                        dy = (raw->data.mouse.lLastY / 65535.0f) * pWindow->getHeight() - prevY; // get the delta from last mouse pos.
-                    } 
-                    else 
-                    {
-                        dx = raw->data.mouse.lLastX;
-                        dy = raw->data.mouse.lLastY;
+                                dx = raw->data.mouse.lLastX  - prevX; // get the delta from last mouse pos.
+                                dy = raw->data.mouse.lLastY  - prevY; // get the delta from last mouse pos.
+                            } 
+                            else 
+                            {
+                                dx = raw->data.mouse.lLastX;
+                                dy = raw->data.mouse.lLastY;
+                            }
+
+                            feedback.buttonStateFlags = pMouse->allButtonFlags();
+                            for (U32 i = 1, index = 0; index < 5; i <<= 2, ++index)
+                            {
+                                if (raw->data.mouse.ulButtons & i)
+                                    feedback.buttonStateFlags |= (1 << index);
+                                else if (raw->data.mouse.ulButtons & (i << 1))
+                                    feedback.buttonStateFlags &= ~(1 << index);
+                            }
+                        } 
+
+                        feedback.xRate = dx;
+                        feedback.yRate = dy;
+
+                        // TODO: Set the mouse position.
+                        pMouse->integrateInput(feedback);
                     }
-
-                    if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_1_DOWN)
-                        feedback.buttonStateFlags &= InputState_Down << 0;
-                    if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_2_DOWN)
-                        feedback.buttonStateFlags &= InputState_Down << 1;
-                    if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_3_DOWN)
-                        feedback.buttonStateFlags &= InputState_Down << 2;
-                    if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_4_DOWN)
-                        feedback.buttonStateFlags &= InputState_Down << 3;
-                    if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_5_DOWN)
-                        feedback.buttonStateFlags &= InputState_Down << 4;
-                } 
-
-                feedback.xRate = dx;
-                feedback.yRate = dy;
-
-                // TODO: Set the mouse position.
-                pMouse->integrateInput(feedback);
-
+                    else // I am not sure why we need this, but the compiler keeps optimizing the code above out, without it.
+                        R_WARN("Raw Input", "Raw Input returned incorrect results");
+                }
                 break;
             }
             case WM_SYSKEYDOWN:
