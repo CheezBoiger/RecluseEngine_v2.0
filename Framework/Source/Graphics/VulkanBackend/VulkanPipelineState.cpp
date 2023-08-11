@@ -851,8 +851,6 @@ ResultCode clearPipelineCache(VulkanDevice* pDevice)
     for (auto pipelineLayoutIt : g_pipelineLayoutMap)
     {
         destroyPipelineLayout(pDevice, *pipelineLayoutIt.second);
-        // Clean out the reference counter.
-        while (pipelineLayoutIt.second.release());
     }
 
     for (auto pipelineIt : g_pipelineMap)

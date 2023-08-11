@@ -22,6 +22,7 @@
 #define R_VERBOSE(chan, format, ...)    do { R_LOG(chan, Recluse::LogVerbose, format, __VA_ARGS__); } while (false)
 #define R_TRACE(chan, format, ...)      do { R_LOG(chan, Recluse::LogTrace, format, __VA_ARGS__);   } while (false)
 #define R_NOTIFY(chan, format, ...)     do { R_LOG(chan, Recluse::LogNotify, format, __VA_ARGS__);  } while (false)
+#define R_DEBUG(chan, str, ...)         do { R_LOG(chan, Recluse::LogDebug, str, __VA_ARGS__); } while (false)
  
 #if defined(RECLUSE_DEBUG) || defined(RECLUSE_DEVELOPER)
     namespace Recluse {
@@ -72,13 +73,11 @@
         #define R_ASSERT(expression)
         #define R_ASSERT_FORMAT(expression, msg, ...)
     #endif // !defined(R_IGNORE_ASSERT)
-    #define R_DEBUG(chan, str, ...) R_LOG(chan, Recluse::LogDebug, str, __VA_ARGS__)
     #define R_DEBUG_WRAP(cond) cond
 #else
     #define R_ASSERT_LOG()
     #define R_ASSERT(expression)
     #define R_ASSERT_FORMAT(expression, msg, ...)
-    #define R_DEBUG(chan, str, ...)
     #define R_DEBUG_WRAP(cond)
 #endif
 

@@ -166,7 +166,7 @@ int main(char* argv[], int c)
         appInfo.appMajor = 0;
         appInfo.appPatch = 0;
         LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation;
-        R_ASSERT(instance->initialize(appInfo, flags) == RecluseResult_Ok);
+        instance->initialize(appInfo, flags);
     }
     
     adapter = instance->getGraphicsAdapters()[0];
@@ -180,7 +180,7 @@ int main(char* argv[], int c)
         devInfo.swapchainDescription.format         = ResourceFormat_B8G8R8A8_Unorm;
         devInfo.swapchainDescription.renderWidth    = window->getWidth();
         devInfo.swapchainDescription.renderHeight   = window->getHeight();
-        R_ASSERT(adapter->createDevice(devInfo, &device) == RecluseResult_Ok);
+        adapter->createDevice(devInfo, &device);
     }
 
     context = device->createContext();

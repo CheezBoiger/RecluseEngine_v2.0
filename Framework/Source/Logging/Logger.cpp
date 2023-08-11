@@ -13,7 +13,12 @@ namespace Recluse {
 static LoggingQueue*            loggingQueue        = nullptr;
 static Thread                   displayThread;
 static volatile B32             isLogging           = true;
-static volatile LogTypeFlags    logTypeFlags        = LogTypeFlags(0xFFFFFFFF);
+static volatile LogTypeFlags    logTypeFlags        = 
+#if defined(RECLUSE_DEBUG)
+LogTypeFlags(0xFFFFFFFF);
+#else
+LogTypeFlags(0xFFFFFFFF & (~LogDebug));
+#endif
 
 static std::set<std::string> g_disabledChannels = 
 {

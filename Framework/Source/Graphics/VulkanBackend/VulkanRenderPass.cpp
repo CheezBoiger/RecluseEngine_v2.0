@@ -73,13 +73,6 @@ FramebufferObject* cacheFbo(Hash64 fboId, VkFramebuffer fbo, const VkRect2D& ren
 }
 
 
-R_INTERNAL
-void addFboRef(Hash64 fboId)
-{
-    g_fboCache[fboId].add();
-}
-
-
 R_INTERNAL 
 void destroyFbo(Hash64 fboId, VkDevice device)
 {
@@ -129,8 +122,6 @@ FramebufferObject* makeFrameBuffer(VulkanDevice* pDevice, VkRenderPass renderPas
     if (inFboCache(fboId))
     {
         framebuffer = getCachedFbo(fboId);
-
-        addFboRef(fboId);
     }
     else
     {
@@ -346,12 +337,7 @@ void clearCache(VulkanDevice* pDevice)
     }
 
     for (auto iter : g_fboCache)
-    {
-        // Release all fbo references.
-        while (iter.second.release())
-        {
-        }
-        
+    {   
         vkDestroyFramebuffer(pDevice->get(), iter.second().framebuffer, nullptr);
         R_DEBUG(R_CHANNEL_VULKAN, "Destroying framebuffer");
     }

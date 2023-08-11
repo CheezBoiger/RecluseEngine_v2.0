@@ -66,6 +66,7 @@ public:
 
     // Release by decrementing the reference counter on this object. Returns the 
     // result of the decrement. Returns 0 if this reference counter has no more reference, or was already released.
+    // Try not to call this manually if there are more than one reference counters referencing the same object!
     U32  release() 
     { 
         if (!m_count) return 0;
@@ -242,6 +243,7 @@ public:
 
     ~ReferenceObject()
     {
+        release();
     }
 
     ReferenceObject(const ReferenceObject& obj)

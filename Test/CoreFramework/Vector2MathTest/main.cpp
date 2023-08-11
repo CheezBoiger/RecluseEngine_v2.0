@@ -10,6 +10,7 @@
 #include "Recluse/Structures/RBTree.hpp"
 #include "Recluse/Memory/BuddyAllocator.hpp"
 #include "Recluse/Memory/MemoryPool.hpp"
+#include "Recluse/Utility.hpp"
 #include <vector>
 
 using namespace Recluse;
