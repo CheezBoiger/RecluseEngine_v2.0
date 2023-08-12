@@ -41,7 +41,7 @@ std::vector<I16> boxIndicies =
 
 enum VertexLayout
 {
-    VertexLayout_PositionNormal
+    VertexLayout_PositionNormalTexCoordColor
 };
 
 enum ShaderProgram
@@ -125,26 +125,40 @@ void createTextureResource(GraphicsResource** textureResource)
 
 void buildVertexLayouts(GraphicsDevice* pDevice)
 {
-    VertexAttribute attribs[2];
+    VertexAttribute attribs[4];
     attribs[0].format = ResourceFormat_R32G32B32_Float;
     attribs[0].location = 0;
     attribs[0].offsetBytes = 0;
     attribs[0].semantic = Semantic_Position;
     attribs[0].semanticIndex = 0;
-    attribs[0].slot = 0;
 
     attribs[1].format = ResourceFormat_R32G32B32_Float;
     attribs[1].location = 1;
-    attribs[1].offsetBytes = sizeof(Math::Float4);
+    attribs[1].offsetBytes = VertexAttribute::OffsetAppend;
+    attribs[1].semantic = Semantic_Texcoord;
+    attribs[1].semanticIndex = 0;
+
+    attribs[2].format = ResourceFormat_R32G32_Float;
+    attribs[2].location = 2;
+    attribs[2].offsetBytes = VertexAttribute::OffsetAppend;
+    attribs[2].semantic = Semantic_Texcoord;
+    attribs[2].semanticIndex = 1;
+
+    attribs[3].format = ResourceFormat_R32G32B32A32_Float;
+    attribs[3].location = 3;
+    attribs[3].offsetBytes = VertexAttribute::OffsetAppend;
+    attribs[3].semantic = Semantic_Texcoord;
+    attribs[3].semanticIndex = 2;
     
 
     VertexInputLayout layout = { };
     layout.numVertexBindings = 2;
     layout.vertexBindings[0].binding = 0;
     layout.vertexBindings[0].inputRate = InputRate_PerVertex;
-    layout.vertexBindings[0].numVertexAttributes = 2;
+    layout.vertexBindings[0].numVertexAttributes = 4;
     layout.vertexBindings[0].pVertexAttributes = attribs;
-    R_ASSERT(pDevice->makeVertexLayout(VertexLayout_PositionNormal, layout));
+    ResultCode result = pDevice->makeVertexLayout(VertexLayout_PositionNormalTexCoordColor, layout);
+    R_ASSERT(result == RecluseResult_Ok);
 }
 
 int main(char* argv[], int c)
@@ -195,7 +209,7 @@ int main(char* argv[], int c)
         context->begin();
             //context->transition(device->getSwapchain()->getFrame(device->getSwapchain()->getCurrentFrameIndex()), ResourceState_RenderTarget);
             //context->setShaderProgram(ShaderProgram_Box);
-            //context->setInputVertexLayout(VertexLayout_PositionNormal);
+            //context->setInputVertexLayout(VertexLayout_PositionNormalTexCoordColor);
             //context->enableDepth(true);
             //context->setDepthCompareOp(CompareOp_GreaterOrEqual);
             //context->bindIndexBuffer(nullptr, 0, IndexType_Unsigned16);

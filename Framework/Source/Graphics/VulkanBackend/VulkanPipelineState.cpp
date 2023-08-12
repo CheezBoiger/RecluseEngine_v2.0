@@ -381,6 +381,20 @@ static VkPipelineInputAssemblyStateCreateInfo getAssemblyInfo(PrimitiveTopology 
 }
 
 
+static VkStencilOpState fillStencilStateOp(const StencilOpState& opState)
+{
+    VkStencilOpState state = { };
+    state.compareOp     = Vulkan::getNativeCompareOp(opState.compareOp);
+    state.depthFailOp   = Vulkan::getNativeStencilOp(opState.depthFailOp);
+    state.failOp        = Vulkan::getNativeStencilOp(opState.failOp);
+    state.passOp        = Vulkan::getNativeStencilOp(opState.passOp);
+    state.compareMask   = opState.readMask;
+    state.reference     = opState.reference;
+    state.writeMask     = opState.writeMask;
+    return state;
+} 
+
+
 static VkPipelineDepthStencilStateCreateInfo getDepthStencilInfo(const DepthStencil& ds)
 {
     VkPipelineDepthStencilStateCreateInfo info  = { };
@@ -389,11 +403,11 @@ static VkPipelineDepthStencilStateCreateInfo getDepthStencilInfo(const DepthSten
     info.depthCompareOp                         = Vulkan::getNativeCompareOp(ds.depthCompareOp);
     info.depthTestEnable                        = (VkBool32)ds.depthTestEnable;
     info.depthWriteEnable                       = (VkBool32)ds.depthWriteEnable;
-    info.front;
     info.maxDepthBounds                         = ds.maxDepthBounds;
     info.minDepthBounds                         = ds.minDepthBounds;
     info.stencilTestEnable                      = (VkBool32)ds.stencilTestEnable;
-    info.back;
+    info.back                                   = fillStencilStateOp(ds.back);
+    info.front                                  = fillStencilStateOp(ds.front);
     return info;
 }
 
@@ -531,6 +545,7 @@ static VulkanVertexLayout createVertexInput(const VertexInputLayout& vi)
     
     for (U32 i = 0; i < vi.numVertexBindings; ++i) 
     {
+        U32 offsetBytes                     = 0;
         const VertexBinding& vertexBind     = vi.vertexBindings[i];
         U32 binding                         = vertexBind.binding;
         {
@@ -549,8 +564,21 @@ static VulkanVertexLayout createVertexInput(const VertexInputLayout& vi)
             attribute.binding                           = binding;
             attribute.format                            = Vulkan::getVulkanFormat(attrib.format);
             attribute.location                          = attrib.location;
-            attribute.offset                            = attrib.offsetBytes;
+
+            U32 formatSizeBytes                         = Vulkan::getFormatSizeBytes(attribute.format);
+
+            if (attrib.offsetBytes != VertexAttribute::OffsetAppend)
+            {
+                offsetBytes         = attrib.offsetBytes + formatSizeBytes;
+                attribute.offset    = attrib.offsetBytes;
+            }
+            else
+            {
+                attribute.offset = offsetBytes;
+                offsetBytes += formatSizeBytes;
+            }
             layout.descriptions.push_back(attribute);   
+
         }
     }
 
@@ -870,6 +898,12 @@ ResultCode releasePipeline(VulkanDevice* pDevice, PipelineId pipelineId)
 {
     
     return RecluseResult_Ok;
+}
+
+
+void Structure::nullify()
+{
+    memset(&state, 0, sizeof(state));
 }
 } // Pipelines
 } // Recluse

@@ -168,6 +168,7 @@ void VulkanContext::resetBinds()
     currentState().m_boundDescriptorSetStructure.key.value.constantBuffers  = 0;
     currentState().m_boundDescriptorSetStructure.key.value.srvs             = 0;
     currentState().m_boundDescriptorSetStructure.key.value.uavs             = 0;
+    currentState().m_pipelineStructure.nullify();
 
     m_resourceViewShaderAccessMap.clear();
     m_constantBufferShaderAccessMap.clear();

@@ -113,6 +113,7 @@ int main(int c, char* argv[])
     pMouse->initialize("Mouse1");
     pWindow->setMouseHandle(pMouse);
     pWindow->setOnWindowResize(ResizeFunction);
+    pWindow->setToCenter();
 
     std::vector<RenderPass*> passes;
 

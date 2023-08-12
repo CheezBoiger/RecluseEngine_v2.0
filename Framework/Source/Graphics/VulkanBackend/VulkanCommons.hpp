@@ -6,6 +6,7 @@
 #include "Recluse/Graphics/Shader.hpp"
 #include "Recluse/Graphics/Format.hpp"
 #include "Recluse/Graphics/GraphicsCommon.hpp"
+#include "Recluse/Graphics/PipelineState.hpp"
 
 #if defined (RECLUSE_WINDOWS)
 #define VK_USE_PLATFORM_WIN32_KHR 1
@@ -41,8 +42,10 @@ public:
 
 namespace Vulkan {
 
-extern VkFormat getVulkanFormat(Recluse::ResourceFormat format);
-extern Recluse::ResourceFormat getResourceFormat(VkFormat format);
+extern VkFormat                 getVulkanFormat(Recluse::ResourceFormat format);
+extern Recluse::ResourceFormat  getResourceFormat(VkFormat format);
+extern VkStencilOp              getNativeStencilOp(Recluse::StencilOp op);
+extern uint32_t                 getFormatSizeBytes(VkFormat format);
 
 static VkSampleCountFlagBits getSamples(Recluse::U32 count)
 {

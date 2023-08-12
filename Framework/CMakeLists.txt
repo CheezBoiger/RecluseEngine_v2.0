@@ -26,7 +26,6 @@ include ( CMake/Math.cmake )
 add_library (               ${RECLUSE_FRAMEWORK_NAME} SHARED    ${RECLUSE_FRAMEWORK_COMPILE_FILES} ) 
 target_include_directories( ${RECLUSE_FRAMEWORK_NAME} PUBLIC    ${RECLUSE_FRAMEWORK_INCLUDE_FILES} ${RECLUSE_FRAMEWORK_SOURCE} ${RECLUSE_FRAMEWORK_THIRD_PARTY})
 target_link_libraries (     ${RECLUSE_FRAMEWORK_NAME}           ${RECLUSE_FRAMEWORK_LINK_BINARIES} )
-
 # Doing some stuff for organization.
 if (MSVC)
   foreach(source IN LISTS RECLUSE_FRAMEWORK_COMPILE_FILES)
@@ -38,9 +37,10 @@ endif()
 
 # Visual Studio organization. For Good purposes.
 if (WIN32)
-  set_property(TARGET ${RECLUSE_FRAMEWORK_NAME} 
-    PROPERTY 
-    FOLDER ${RECLUSE_FRAMEWORK_NAME})
+	target_sources(${RECLUSE_FRAMEWORK_NAME} PRIVATE Resource.rc resource.h)
+	set_property(TARGET ${RECLUSE_FRAMEWORK_NAME} 
+		PROPERTY 
+		FOLDER ${RECLUSE_FRAMEWORK_NAME})
 endif()
 
 install(TARGETS ${RECLUSE_FRAMEWORK_NAME}

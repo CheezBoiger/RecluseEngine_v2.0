@@ -36,7 +36,7 @@ D3D12_RESOURCE_STATES getNativeResourceState(Recluse::ResourceState state)
         case Recluse::ResourceState_IndirectArgs:
             return D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT;
     }
-
+    
     return D3D12_RESOURCE_STATE_COMMON;
 }
 

@@ -345,12 +345,13 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
             {
                 UINT x = LOWORD(lParam);
                 UINT y = HIWORD(lParam);
+                pWindow->overridePosition(x, y);
                 break;
             }
             case WM_SIZE:
             {
-                // As a window is resized, we rely this back to the handler.
-                // Keep in mind that this needs to be rely'ed back to the renderer. 
+                // As a window is resized, we relay this back to the handler.
+                // Keep in mind that this needs to be relay'ed back to the renderer. 
                 // Which shouldn't be problematic. We can signal this inside our onWindowResize callback.
                 UINT width  = LOWORD(lParam);
                 UINT height = HIWORD(lParam);

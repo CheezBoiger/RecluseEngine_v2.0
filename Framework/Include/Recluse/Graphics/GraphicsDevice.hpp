@@ -191,6 +191,8 @@ public:
     virtual void setDepthClampEnable(Bool enable) { }
     virtual void setDepthBiasEnable(Bool enable) { }
     virtual void setDepthBiasClamp(F32 value) { }
+    virtual void setFrontStencilState(const StencilOpState& state) { }
+    virtual void setBackStencilState(const StencilOpState& state) { }
 
     // Blend operations to be done on a rendertarget. Index matches the rendertarget index, and must be
     // less than the max rendertargets bindable.

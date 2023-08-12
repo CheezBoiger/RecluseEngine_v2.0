@@ -54,6 +54,8 @@ struct Structure
         ShaderProgramPermutation    shaderPermutation;
         ShaderProgramId             shaderProgramId;
     } state;
+
+    void nullify();
 };
 
 

@@ -34,7 +34,7 @@ ResultCode VulkanSwapchain::build(VulkanDevice* pDevice)
 
     if (pDesc.renderWidth <= 0 || pDesc.renderHeight <= 0) 
     {
-        R_ERROR(R_CHANNEL_VULKAN, "Can not define a RenderWidth or Height less than 1!");
+        R_ERROR(R_CHANNEL_VULKAN, "Can not define a RenderWidth or Height less than 1! Width=%d, Height=%d", pDesc.renderWidth, pDesc.renderHeight);
 
         return RecluseResult_InvalidArgs;    
     }

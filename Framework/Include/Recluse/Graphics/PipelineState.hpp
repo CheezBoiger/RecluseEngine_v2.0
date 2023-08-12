@@ -18,6 +18,18 @@ struct ShaderModule
 };
 
 
+struct StencilOpState
+{
+    StencilOp   failOp;
+    StencilOp   passOp;
+    StencilOp   depthFailOp;
+    CompareOp   compareOp;
+    U32         readMask;
+    U32         writeMask;
+    U32         reference;
+};
+
+
 enum InputRate 
 {
     InputRate_PerVertex,
@@ -41,20 +53,6 @@ enum FrontFace
     FrontFace_Clockwise
 };
 
-
-enum StencilOp 
-{
-    StencilOp_Keep,
-    StencilOp_Zero,
-    StencilOp_Replace,
-    StencilOp_IncrementAndClamp,
-    StencilOp_DecrementAndClamp,
-    StencilOp_Invert,
-    StencilOp_IncrementAndWrap,
-    StencilOp_DecrementAndWrap
-};
-
-
 enum PolygonMode 
 {
     PolygonMode_Fill,
@@ -74,6 +72,11 @@ enum CullMode
 
 struct VertexAttribute 
 {
+    enum 
+    { 
+        // Append the offset for the given attibute based on the previous attribute.
+        OffsetAppend = 0xffffffff 
+    };
     // Location/input slot that defines the vertex attribute in the vertex shader.
     union {
         U32             location;
@@ -196,6 +199,8 @@ struct DepthStencil
     F32 minDepthBounds;
     F32 maxDepthBounds;
     CompareOp depthCompareOp;
+    StencilOpState  front;
+    StencilOpState  back;
 };
 
 struct RasterState 

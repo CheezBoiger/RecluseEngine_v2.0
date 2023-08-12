@@ -82,6 +82,8 @@ public:
     virtual void setTopology(PrimitiveTopology topology) { }
     virtual void setShader(ShaderStage type, Hash64 shader, U32 permutation) { }
     virtual void setPipelineType(BindType type) { }
+    virtual void setFrontStencilState(const StencilOpState& state) { }
+    virtual void setBackStencilState(const StencilOpState& state) { }
 private:
     
 };

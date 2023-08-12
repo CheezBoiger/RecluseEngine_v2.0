@@ -132,7 +132,8 @@ public:
             m_status.mustChangeScreen = true;
         }
     }
-
+    
+    void                        overridePosition(U32 x, U32 y) { m_xPos = x; m_yPos = y; }
 
 private:
 

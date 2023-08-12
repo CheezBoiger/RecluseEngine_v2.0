@@ -20,6 +20,20 @@ enum BindType
 };
 
 
+enum StencilOp 
+{
+    StencilOp_Keep,
+    StencilOp_Zero,
+    StencilOp_Replace,
+    StencilOp_IncrementAndClamp,
+    StencilOp_DecrementAndClamp,
+    StencilOp_Invert,
+    StencilOp_IncrementAndWrap,
+    StencilOp_DecrementAndWrap
+};
+
+
+
 enum ResourceDimension 
 {
     ResourceDimension_Buffer,
