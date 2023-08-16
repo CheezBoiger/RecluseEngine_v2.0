@@ -17,9 +17,10 @@ static volatile LogTypeFlags    logTypeFlags        =
 #if defined(RECLUSE_DEBUG)
 LogTypeFlags(0xFFFFFFFF);
 #else
-LogTypeFlags(0xFFFFFFFF & (~LogDebug));
+LogTypeFlags(0xFFFFFFFF & ~(LogDebug | LogVerbose | LogTrace | LogInfo));
 #endif
 
+// TODO: Might look into disabling all channels, and instead enable them manually if needed.
 static std::set<std::string> g_disabledChannels = 
 {
     "MemoryPool",
@@ -47,15 +48,15 @@ static void printLog(const LogMessage* log)
 
     switch (log->type) 
     {
-        case LogWarn:       color = R_COLOR_YELLOW;     logStr = "Warn"; break;
-        case LogDebug:      color = R_COLOR_MAGENTA;    logStr = "Debug"; break;
-        case LogVerbose:    color = R_COLOR_CYAN;       logStr = "Verbose"; break;
-        case LogError:      color = R_COLOR_RED;        logStr = "Error"; break;        
-        case LogTrace:      color = R_COLOR_GREEN;      logStr = "Trace"; break;
-        case LogInfo:       /* Use default color */     logStr = "Info"; break;
-        case LogFatal:      color = R_COLOR_RED;        logStr = "FATAL"; break;
-        case LogNotify:     color = R_COLOR_BABY_BLUE;       logStr = "Notify"; break;
-        case LogMsg:
+        case LogType_Warn:       color = R_COLOR_YELLOW;     logStr = "Warn"; break;
+        case LogType_Debug:      color = R_COLOR_MAGENTA;    logStr = "Debug"; break;
+        case LogType_Verbose:    color = R_COLOR_CYAN;       logStr = "Verbose"; break;
+        case LogType_Error:      color = R_COLOR_RED;        logStr = "Error"; break;        
+        case LogType_Trace:      color = R_COLOR_GREEN;      logStr = "Trace"; break;
+        case LogType_Info:       /* Use default color */     logStr = "Info"; break;
+        case LogType_Fatal:      color = R_COLOR_RED;        logStr = "FATAL"; break;
+        case LogType_Notify:     color = R_COLOR_BABY_BLUE;       logStr = "Notify"; break;
+        case LogType_Msg:
         default: break;
     }
 
@@ -204,7 +205,7 @@ void LoggingQueue::dequeue()
 
     if (m_tail != m_head) 
     {
-        m_head->logMessage.type = LogDontStore;
+        m_head->logMessage.type = LogType_DontStore;
         LogNode* node           = m_head;
         m_head                  = m_head->pNext;
         node->~LogNode();

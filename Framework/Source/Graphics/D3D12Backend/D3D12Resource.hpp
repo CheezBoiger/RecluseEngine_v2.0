@@ -13,11 +13,16 @@ typedef U32 ResourceTransitionFlags;
 class D3D12Resource : public GraphicsResource 
 {
 public:
+
+    GraphicsAPI getApi() const { return GraphicsApi_Direct3D12; }
     
-    D3D12Resource(GraphicsResourceDescription& desc)
+    D3D12Resource(GraphicsResourceDescription& desc, ID3D12Resource* pResource = nullptr)
         : GraphicsResource(desc)
         , m_memObj({})
-        , m_isCommitted(false) { }
+        , m_isCommitted(false) 
+    {
+        m_memObj.pResource = pResource; 
+    }
 
     // Initialize the resource.
     ResultCode                 initialize
@@ -49,10 +54,10 @@ public:
     // Get the resource virtual address if it was created on GPU memory.
     D3D12_GPU_VIRTUAL_ADDRESS getVirtualAddress() const { return (m_memObj.usage == ResourceMemoryUsage_GpuOnly) ? m_memObj.pResource->GetGPUVirtualAddress() : 0ULL; }
 
-    ResultCode map(void** pMappedMemory, MapRange* pReadRange) override;
-    ResultCode unmap(MapRange* pWriteRange) override;
+    ResultCode map(void** pMappedMemory, MapRange* pReadRange) override { return RecluseResult_NoImpl; }
+    ResultCode unmap(MapRange* pWriteRange) override { return RecluseResult_NoImpl; }
 
-    
+    ResourceId getId() const { return m_id; }
 
 private:
     Bool                    isSupportedTransitionState(ResourceState state);
@@ -61,5 +66,6 @@ private:
     Bool                    m_isCommitted;
     ResourceTransitionFlags m_allowedTransitionStates;
     D3D12Device*            m_pDevice;
+    ResourceId              m_id;
 };
 } // Recluse

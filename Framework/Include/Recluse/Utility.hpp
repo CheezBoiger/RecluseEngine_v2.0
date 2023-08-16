@@ -26,7 +26,7 @@ public:
     {
     }
 
-    ReferenceCounter(const ReferenceCounter& ref) { m_count = ref.m_count; increment(); }
+    ReferenceCounter(const ReferenceCounter& ref) { m_count = ref.m_count; if (m_count) increment(); }
     ReferenceCounter(ReferenceCounter&& ref) noexcept { m_count = ref.m_count; ref.m_count = nullptr; }
 
     ReferenceCounter& operator=(const ReferenceCounter& ref)

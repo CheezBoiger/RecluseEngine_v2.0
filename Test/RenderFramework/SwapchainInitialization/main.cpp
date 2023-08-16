@@ -14,12 +14,11 @@ int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
     RealtimeTick::initializeWatch(1ull, 0);
-
     GraphicsSwapchain* pSwapchain   = nullptr;
     GraphicsDevice* pDevice         = nullptr;
     GraphicsInstance* pInstance       = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
 
-    Window* pWindow = Window::create(u8"SwapchainInitialization", 0, 0, 128, 128);
+    Window* pWindow = Window::create(u8"SwapchainInitialization", 0, 0, 1280, 720);
 
     if (!pInstance || !pWindow) {
         goto Exit;
@@ -60,8 +59,8 @@ int main(int c, char* argv[])
     deviceCreate.winHandle = pWindow->getNativeHandle();
     deviceCreate.swapchainDescription.buffering                    = FrameBuffering_Triple;
     deviceCreate.swapchainDescription.desiredFrames                = 3;
-    deviceCreate.swapchainDescription.renderHeight                 = 128;
-    deviceCreate.swapchainDescription.renderWidth                  = 128;
+    deviceCreate.swapchainDescription.renderHeight                 = 720;
+    deviceCreate.swapchainDescription.renderWidth                  = 1280;
     deviceCreate.swapchainDescription.format                       = ResourceFormat_B8G8R8A8_Unorm;
 
     result = adapters[0]->createDevice(deviceCreate, &pDevice);
@@ -71,6 +70,9 @@ int main(int c, char* argv[])
         R_ERROR("Graphics", "Failed to create device!");
 
     }
+    GraphicsContext* pContext = pDevice->createContext();
+    pContext->setBuffers(3);
+    pWindow->setToCenter();
 
     pSwapchain = pDevice->getSwapchain();
     
@@ -87,13 +89,16 @@ int main(int c, char* argv[])
             RealtimeTick::updateWatch(1ull, 0);
             RealtimeTick tick = RealtimeTick::getTick(0);
             R_TRACE("Graphics", "FPS: %f", 1.f / tick.delta());
+            pContext->begin();
+            pContext->end();
             pSwapchain->present();
 
             pollEvents();
                     
         }
     }
-
+    pContext->wait();
+    pDevice->releaseContext(pContext);
     adapters[0]->destroyDevice(pDevice);
 
    GraphicsInstance::destroyInstance(pInstance);

@@ -9,6 +9,7 @@
 #include "VulkanViews.hpp"
 #include "VulkanCommandList.hpp"
 #include "Recluse/Messaging.hpp"
+#include "Recluse/Math/MathCommons.hpp"
 
 
 namespace Recluse {
@@ -28,7 +29,10 @@ ResultCode VulkanSwapchain::build(VulkanDevice* pDevice)
     VkResult result                             = VK_SUCCESS;
     VkFormat surfaceFormat                      = VK_FORMAT_UNDEFINED;
     VkColorSpaceKHR colorSpace                  = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-
+    U32 frameCount                              = pDesc.desiredFrames;
+    U32 renderWidth                             = pDesc.renderWidth;
+    U32 renderHeight                            = pDesc.renderHeight;
+    VkImageUsageFlags imageUsageBits            = 0;
     m_pBackbufferQueue                          = pDevice->getBackbufferQueue();
     m_pDevice                                   = pDevice;
 
@@ -43,6 +47,10 @@ ResultCode VulkanSwapchain::build(VulkanDevice* pDevice)
         VulkanAdapter* pAdapter                             = pDevice->getAdapter();
         std::vector<VkSurfaceFormatKHR> supportedFormats    = pAdapter->getSurfaceFormats(surface);
         VkFormat wantedSurfaceFormat                        = Vulkan::getVulkanFormat(pDesc.format);
+        VkSurfaceCapabilitiesKHR capabilities               = pAdapter->getSurfaceCapabilities(surface);
+        frameCount                                          = Math::clamp(frameCount, capabilities.minImageCount, capabilities.maxImageCount);
+        renderWidth                                         = Math::clamp(renderWidth, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
+        renderHeight                                        = Math::clamp(renderHeight, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
         for (VkSurfaceFormatKHR& sF : supportedFormats) 
         {
             if (sF.format == wantedSurfaceFormat) 
@@ -67,6 +75,11 @@ ResultCode VulkanSwapchain::build(VulkanDevice* pDevice)
             surfaceFormat    = supportedFormats[0].format;
             colorSpace       = supportedFormats[0].colorSpace;
         }
+
+        if (capabilities.supportedUsageFlags & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) imageUsageBits |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        if (capabilities.supportedUsageFlags & VK_IMAGE_USAGE_STORAGE_BIT)          imageUsageBits |= VK_IMAGE_USAGE_STORAGE_BIT;
+        if (capabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_DST_BIT)     imageUsageBits |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+        if (capabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_SRC_BIT)     imageUsageBits |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
     }
     
     // TODO: We need to pass a struct input for desired configurations.
@@ -75,13 +88,13 @@ ResultCode VulkanSwapchain::build(VulkanDevice* pDevice)
     createInfo.imageColorSpace  = colorSpace;
     createInfo.imageFormat      = surfaceFormat;
     createInfo.surface          = surface;
-    createInfo.imageExtent      = { pDesc.renderWidth, pDesc.renderHeight };
+    createInfo.imageExtent      = { renderWidth, renderHeight };
     createInfo.oldSwapchain     = (m_swapchain) ? m_swapchain : VK_NULL_HANDLE;
     createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    createInfo.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    createInfo.imageUsage       = imageUsageBits;
     createInfo.compositeAlpha   = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     createInfo.presentMode      = VK_PRESENT_MODE_FIFO_KHR;
-    createInfo.minImageCount    = pDesc.desiredFrames;
+    createInfo.minImageCount    = frameCount;
     createInfo.imageArrayLayers = 1;
     createInfo.preTransform     = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR; 
     createInfo.pQueueFamilyIndices = nullptr;
@@ -109,6 +122,8 @@ ResultCode VulkanSwapchain::build(VulkanDevice* pDevice)
     R_DEBUG(R_CHANNEL_VULKAN, "Successfully created vulkan swapchain!");
 
     requestOverrideResourceFormat(Vulkan::getResourceFormat(surfaceFormat));
+    requestOverrideFrameCount(frameCount);
+    requestOverrideRenderResolution(renderWidth, renderHeight);
     buildFrameResources(Vulkan::getResourceFormat(surfaceFormat));
     queryCommandPools();
 
@@ -196,7 +211,6 @@ ResultCode VulkanSwapchain::present(PresentConfig config)
     ResultCode err                     = RecluseResult_Ok;
 
     const U32 currentFrameIndex     = getCurrentFrameIndex();
-    VkFence frameFence              = m_frameResources.getFence(currentFrameIndex);
 
     if (config & PresentConfig_DelayPresent)
     {

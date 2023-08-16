@@ -129,13 +129,17 @@ enum KeyCode
 	KeyCode_MaxBufferCount
 };
 
-// Check if the key is up and idle.
-R_PUBLIC_API Bool		isKeyUp(KeyCode code);
 
-// Check if the key is pressed down.
-R_PUBLIC_API Bool		isKeyDown(KeyCode code);
+class R_PUBLIC_API KeyboardListener
+{
+public:
+	KeyboardListener() { }
 
-// Get the key status.
-R_PUBLIC_API KeyStatus	getKeyStatus(KeyCode code);
-
+	// Check if the key is up and idle.
+	Bool		isKeyUp(KeyCode code);
+	// Check if the key is pressed down.
+	Bool		isKeyDown(KeyCode code);
+	// Get the key status.
+	KeyStatus	getKeyStatus(KeyCode code);
+};
 } // Recluse

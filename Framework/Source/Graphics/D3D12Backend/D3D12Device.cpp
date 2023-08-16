@@ -33,21 +33,38 @@ void D3D12Context::release()
 }
 
 
+GraphicsDevice* D3D12Context::getDevice()
+{
+    return m_pDevice;
+}
+
+
+ResultCode D3D12Context::setBuffers(U32 bufferCount)
+{
+    release();
+    m_bufferCount = bufferCount;
+    initialize();
+    m_pDevice->getDescriptorHeapManager()->resizeShaderVisibleHeapInstances(m_bufferCount);
+    return RecluseResult_Ok;
+}
+
+
+ResultCode D3D12Context::wait()
+{
+    D3D12Queue* pqueue = m_pDevice->getBackbufferQueue();
+    D3D12Swapchain* swapchain = m_pDevice->getSwapchain()->castTo<D3D12Swapchain>();
+    pqueue->waitForGpu(swapchain->getCurrentFenceValue());
+    return RecluseResult_Ok;
+}
+
+
 void D3D12Context::begin()
 {
-
+    
     incrementBufferIndex();
 
-    BufferResources* pBufferResources   = getCurrentBufferResource();
-    ID3D12Fence* pFence                 = pBufferResources->pFence;
-    HANDLE eventHandle                  = pBufferResources->pEvent;
-    U64 currentValue                    = pBufferResources->fenceValue;
-
-    if (pFence->GetCompletedValue() < currentValue)
-    {
-        pFence->SetEventOnCompletion(currentValue, eventHandle);
-        WaitForSingleObjectEx(eventHandle, INFINITE, false);
-    }
+    D3D12Swapchain* swapchain               = m_pDevice->getSwapchain()->castTo<D3D12Swapchain>();
+    swapchain->prepareNextFrame();
 
     resetCurrentResources();
     m_pPrimaryCommandList->use(currentBufferIndex());
@@ -59,13 +76,13 @@ void D3D12Context::begin()
 
 void D3D12Context::end()
 {
-    DescriptorHeapInstance* instance    = m_pDevice->getDescriptorHeapManager()->getInstance(currentBufferIndex());
+    //DescriptorHeapInstance* instance    = m_pDevice->getDescriptorHeapManager()->getInstance(currentBufferIndex());
     D3D12Swapchain* pSwapchain          = m_pDevice->getSwapchain()->castTo<D3D12Swapchain>();
 
     m_pPrimaryCommandList->end();
 
     // Upload the current instance for this buffer, in order to properly set the bound gpu addresses.
-    instance->upload(m_pDevice->get());
+    //instance->upload(m_pDevice->get());
     // Fire off our command list!
     pSwapchain->submitPrimaryCommandList(m_pPrimaryCommandList->get());
 }
@@ -208,16 +225,16 @@ ResultCode D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo
         createSwapchain(&m_swapchain, info.swapchainDescription);
     }
 
+    DescriptorHeapAllocationManager::DescriptorCoreSize descriptorSizes = { };
+    m_descHeapManager.initialize(m_device, descriptorSizes, 0);
+
     return RecluseResult_Ok;
 }
 
 
 void D3D12Device::destroy()
 {
-    m_context->release();
-    delete m_context;
-    m_context = nullptr;
-
+    m_descHeapManager.release();
     if (m_swapchain) 
     {
         destroySwapchain(m_swapchain);
@@ -336,13 +353,14 @@ void D3D12Context::resetCurrentResources()
         R_ERROR(R_CHANNEL_WIN32, "Failed to properly reset allocators.");
     }    
 
-    DescriptorHeapInstance* instance = m_pDevice->getDescriptorHeapManager()->getInstance(currentBufferIndex());
-    instance->update(DescriptorHeapUpdateFlag_Reset);
+    //DescriptorHeapInstance* instance = m_pDevice->getDescriptorHeapManager()->getInstance(currentBufferIndex());
+    //instance->update(DescriptorHeapUpdateFlag_Reset);
 }
 
 
 void D3D12Context::initializeBufferResources(U32 buffering)
 {
+    if (buffering == 0) return;
     HRESULT result      = S_OK;
     m_bufferResources.resize(buffering);
 
@@ -358,22 +376,7 @@ void D3D12Context::initializeBufferResources(U32 buffering)
                                 );
 
         R_ASSERT(result == S_OK);
-
         m_bufferResources[i].fenceValue = 0;
-        m_bufferResources[i].pEvent     = CreateEvent(NULL, FALSE, FALSE, NULL);
-
-        result = m_pDevice->get()->CreateFence
-                                (
-                                    0, 
-                                    D3D12_FENCE_FLAG_NONE, 
-                                    __uuidof(ID3D12Fence), 
-                                    (void**)&m_bufferResources[i].pFence
-                                );
-
-        if (FAILED(result)) 
-        {
-            R_ERROR(R_CHANNEL_D3D12, "Failed to initialize a fence for frame resource: %d", i);
-        }
     }
 }
 
@@ -386,14 +389,9 @@ void D3D12Context::destroyBufferResources()
     {
         if (m_bufferResources[i].pAllocator) 
         {
+            m_bufferResources[i].pAllocator->Reset();
             m_bufferResources[i].pAllocator->Release();
             m_bufferResources[i].pAllocator = nullptr;
-
-            CloseHandle(m_bufferResources[i].pEvent);
-            m_bufferResources[i].pEvent = NULL;
-
-            m_bufferResources[i].pFence->Release();
-            m_bufferResources[i].pFence = nullptr;
         }
     }
 
@@ -585,5 +583,22 @@ Bool D3D12Device::destroyVertexLayout(VertexInputLayoutId id)
 {
     R_NO_IMPL();
     return false;
+}
+
+
+GraphicsContext* D3D12Device::createContext()
+{
+    D3D12Context* pContext = new D3D12Context(this, 0);
+    return pContext;
+}
+
+
+ResultCode D3D12Device::releaseContext(GraphicsContext* pContext)
+{
+    R_ASSERT(pContext);
+    D3D12Context* d3d12Context = pContext->castTo<D3D12Context>();
+    d3d12Context->release();
+    delete d3d12Context;
+    return RecluseResult_Ok;
 }
 } // Recluse

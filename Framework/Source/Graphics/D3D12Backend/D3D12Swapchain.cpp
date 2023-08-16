@@ -36,7 +36,7 @@ ResultCode D3D12Swapchain::initialize(D3D12Device* pDevice)
         D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport = pDevice->checkFormatSupport(desc.format);
         if (!(formatSupport.Support1 & D3D12_FORMAT_SUPPORT1_DISPLAY)) 
         {
-            R_WARN(R_CHANNEL_D3D12, "Swapchain format not supported for display, using default...");
+            R_WARN(R_CHANNEL_D3D12, "Swapchain format not supported for display, trying default...");
             format = DXGI_FORMAT_R8G8B8A8_UNORM;
         }
     }
@@ -89,6 +89,11 @@ ResultCode D3D12Swapchain::initialize(D3D12Device* pDevice)
     // Initialize our frame resources, make sure to assign device and other values before calling this.
     initializeFrameResources();
 
+    m_currentFrameIndex = m_pSwapchain->GetCurrentBackBufferIndex();
+
+    BufferResources& bufResource = m_frameResources[m_currentFrameIndex].bufferResources;
+    bufResource.fenceValue = m_pBackbufferQueue->waitForGpu(bufResource.fenceValue);
+    
     return RecluseResult_Ok;
 }
 
@@ -104,6 +109,8 @@ void D3D12Swapchain::destroy()
         m_pSwapchain->Release();
         m_pSwapchain = nullptr;
     }
+
+
 }
 
 
@@ -118,35 +125,26 @@ ResultCode D3D12Swapchain::onRebuild()
 
 GraphicsResource* D3D12Swapchain::getFrame(U32 idx)
 {
-    return nullptr;
+    R_ASSERT(idx < m_frameResources.size());
+    return m_frameResources[idx].frameResource;
 }
 
 
 ResultCode D3D12Swapchain::present(PresentConfig config)
 {
-    //D3D12Context* pContext      = staticCast<D3D12Context*>(m_pDevice->getContext());
-    ID3D12CommandQueue* pQueue  = m_pBackbufferQueue->get();
+    const SwapchainCreateDescription& desc = getDesc();
+    UINT syncInterval           = 0;
     HRESULT result              = S_OK;
-    BufferResources* pBR        = nullptr;//pContext->getCurrentBufferResource();
-    HANDLE pEvent               = nullptr;
-    ID3D12Fence* pFence         = nullptr;
-    U64 currentValue            = 0;
 
-    result = m_pSwapchain->Present(0, 0);
+    if (desc.buffering == FrameBuffering_Double)
+        syncInterval = 1;
+
+    result = m_pSwapchain->Present(syncInterval, 0);
     
     if (FAILED(result)) 
     {
         R_ERROR(R_CHANNEL_D3D12, "Failed to present current frame: %d", getCurrentFrameIndex());        
     }
-
-    pBR->fenceValue     = pBR->fenceValue + 1;
-    pFence              = pBR->pFence;
-    currentValue        = pBR->fenceValue;
-
-    // Set the value for the fence on GPU side, letting us know when our commands have finished.
-    pQueue->Signal(pFence, currentValue);
-
-    m_currentFrameIndex = m_pSwapchain->GetCurrentBackBufferIndex();
 
     return RecluseResult_Ok;
 }
@@ -156,16 +154,29 @@ ResultCode D3D12Swapchain::initializeFrameResources()
 {
     HRESULT result          = S_OK;
     ID3D12Device* pDevice   = m_pDevice->get();
+    const SwapchainCreateDescription& swapchainDesc = getDesc();
 
     m_frameResources.resize(m_maxFrames);
     
     for (U32 i = 0; i < m_frameResources.size(); ++i) 
     {
         FrameResource& frameRes = m_frameResources[i];
-        // TODO: No current frame resource handles.
-        ID3D12Resource* pFrameResource = nullptr;
-        R_ASSERT(SUCCEEDED(m_pSwapchain->GetBuffer(i, __uuidof(ID3D12Resource*), (void**)&pFrameResource)));
-        
+        // We don't need to initialize frame resources, they are already 
+        // handled by the swapchain. We just wrap them!
+        ID3D12Resource* pFrameResource      = nullptr;
+        GraphicsResourceDescription desc    = { };
+        desc.dimension                      = ResourceDimension_2d;
+        desc.depthOrArraySize               = 1;
+        desc.height                         = swapchainDesc.renderHeight;
+        desc.width                          = swapchainDesc.renderWidth;
+        desc.mipLevels                      = 1;
+        desc.name                           = "Swapchain Frame Resource";
+        desc.samples                        = 1;
+        desc.format                         = swapchainDesc.format;
+        Bool result = SUCCEEDED(m_pSwapchain->GetBuffer(i, __uuidof(ID3D12Resource*), (void**)&pFrameResource));
+        R_ASSERT(result);
+        m_frameResources[i].frameResource = new D3D12Resource(desc, pFrameResource);
+        m_frameResources[i].bufferResources.fenceValue = 0;
     }
 
     m_currentFrameIndex = m_pSwapchain->GetCurrentBackBufferIndex();
@@ -180,13 +191,16 @@ ResultCode D3D12Swapchain::destroyFrameResources()
     {
         for (U32 i = 0; i < m_frameResources.size(); ++i) 
         {
-            // TODO(): Wut do we do here?
+            // We just delete the resource, it just wraps the swapchain frame.
+            // We call the native destroy() function, as the swapchain owns it.
+            m_frameResources[i].frameResource->get()->Release();
+            delete m_frameResources[i].frameResource;
         }
     
         m_frameResources.clear();
     }
 
-    return RecluseResult_NoImpl;
+    return RecluseResult_Ok;
 }
 
 
@@ -199,6 +213,28 @@ ResultCode D3D12Swapchain::submitPrimaryCommandList(ID3D12GraphicsCommandList* p
     R_ASSERT(pCommandList != NULL);
 
     pPresentationQueue->ExecuteCommandLists(1, pLists);
+    return RecluseResult_Ok;
+}
+
+
+ResultCode D3D12Swapchain::prepareNextFrame()
+{
+    ID3D12Fence* fence = m_pBackbufferQueue->getFence();
+    HANDLE e = m_pBackbufferQueue->getEvent();
+    // Set the value for the fence on GPU side, letting us know when our commands have finished.
+    const U64 currentFenceValue = m_frameResources[m_currentFrameIndex].bufferResources.fenceValue;
+    m_pBackbufferQueue->get()->Signal(fence, currentFenceValue);
+
+    m_currentFrameIndex = m_pSwapchain->GetCurrentBackBufferIndex();
+
+    BufferResources* newResources = &m_frameResources[m_currentFrameIndex].bufferResources; 
+    const U64 completedValue = fence->GetCompletedValue();
+    if (completedValue < newResources->fenceValue)
+    {
+        fence->SetEventOnCompletion(newResources->fenceValue, e);
+        WaitForSingleObject(e, INFINITE);
+    }
+    newResources->fenceValue = currentFenceValue + 1;
     return RecluseResult_Ok;
 }
 } // Recluse

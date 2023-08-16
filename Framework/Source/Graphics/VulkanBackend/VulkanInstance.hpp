@@ -21,7 +21,7 @@ public:
 
     virtual ~VulkanInstance() { }
     // Initialize the vulkan context.
-    ResultCode             onInitialize(const ApplicationInfo& appInfo, LayerFeatureFlags layerFlags) override;
+    ResultCode          onInitialize(const ApplicationInfo& appInfo, LayerFeatureFlags layerFlags) override;
 
     // Destroy the vulkan context. Be sure to clean up all resources and device, before
     // destroying vulkan context.

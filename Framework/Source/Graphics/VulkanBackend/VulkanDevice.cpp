@@ -156,7 +156,7 @@ void VulkanContext::end()
     } \
     else \
     { \
-        R_WARN(R_CHANNEL_VULKAN, "Feature %s can not be enabled for device creation! Not supported on this physical device!", #feature); \
+        R_VERBOSE(R_CHANNEL_VULKAN, "Feature %s can not be enabled for device creation! Not supported on this physical device!", #feature); \
     } 
 
 
@@ -571,8 +571,7 @@ ResultCode VulkanDevice::createQueue(VulkanQueue** ppQueue, VkQueueFlags flags, 
 
     if (queueFamilyIndex == 0xFFFFFFFF || queueIndex == 0xFFFFFFFF) 
     {
-        R_ERROR(R_CHANNEL_VULKAN, "Could not find proper queue family! Can not create queue.");
-
+        // Can not find proper queue family, fails to create a queue!
         return RecluseResult_Failed;
     }
 
@@ -1026,13 +1025,15 @@ void VulkanDevice::unloadAllShaderPrograms()
 
 Bool VulkanDevice::makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout)
 {
-    return Pipelines::VertexLayout::make(id, layout);
+    ResultCode result = Pipelines::VertexLayout::make(id, layout);
+    return (result == RecluseResult_Ok || result == RecluseResult_AlreadyExists);
 }
 
 
 Bool VulkanDevice::destroyVertexLayout(VertexInputLayoutId id)
 {
-    return false;
+    ResultCode result = Pipelines::VertexLayout::unloadLayout(id);
+    return (result == RecluseResult_Ok || result == RecluseResult_NotFound);
 }
 
 

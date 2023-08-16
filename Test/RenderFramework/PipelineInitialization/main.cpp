@@ -20,6 +20,7 @@
 #include "Recluse/Filesystem/Filesystem.hpp"
 #include "Recluse/Messaging.hpp"
 #include "Recluse/System/Mouse.hpp"
+#include "Recluse/System/KeyboardInput.hpp"
 
 #include "Recluse/System/Limiter.hpp"
 
@@ -343,6 +344,8 @@ int main(int c, char* argv[])
             Rect rect; rect.x = 0; rect.y = 0; rect.width = pSwapchain->getDesc().renderWidth; rect.height = pSwapchain->getDesc().renderHeight;
             context->clearRenderTarget(0, clear, rect);
             context->bindVertexBuffers(1, &pVertexBuffer, &offset);
+
+            KeyboardListener listener = { };
 
             if (pMouse->getButtonState(1) == InputState_Down)
             {

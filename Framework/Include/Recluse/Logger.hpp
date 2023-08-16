@@ -23,16 +23,16 @@ struct Float4;
 
 enum LogType 
 {
-    LogMsg          = 0,
-    LogError        = (1 << 0),
-    LogDebug        = (1 << 1),
-    LogWarn         = (1 << 2),
-    LogVerbose      = (1 << 3),
-    LogInfo         = (1 << 4),
-    LogDontStore    = (1 << 5),
-    LogTrace        = (1 << 6),
-    LogFatal        = (1 << 7),
-    LogNotify       = (1 << 8)
+    LogType_Msg          = 0,
+    LogType_Error        = (1 << 0),
+    LogType_Debug        = (1 << 1),
+    LogType_Warn         = (1 << 2),
+    LogType_Verbose      = (1 << 3),
+    LogType_Info         = (1 << 4),
+    LogType_DontStore    = (1 << 5),
+    LogType_Trace        = (1 << 6),
+    LogType_Fatal        = (1 << 7),
+    LogType_Notify       = (1 << 8)
 };
 
 typedef U32 LogTypeFlags;
@@ -75,7 +75,7 @@ public:
     // Final call once the process is completely finished. 
     static R_PUBLIC_API void destroyLoggingSystem();
 
-    Log(LogType type = LogMsg, const std::string& chan = u8"") 
+    Log(LogType type = LogType_Msg, const std::string& chan = u8"") 
     {
         this->data.type = type;
         data.channel = chan;

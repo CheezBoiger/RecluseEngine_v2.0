@@ -34,7 +34,7 @@ int main(int c, char* argv[])
 
     Matrix22 m = { 1, 0, 0, 1 };
 
-    Log(LogError, "Test") << m;
+    Log(LogType_Error, "Test") << m;
 
     MemoryArena arena(R_MB(2));
     BuddyAllocator alloc;

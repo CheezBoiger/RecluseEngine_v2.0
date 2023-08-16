@@ -50,6 +50,32 @@ std::unordered_map<DWORD, KeyCode> kWin32KeyMap =
     R_WIN_KEY(0x11, KeyCode_Control),
     R_WIN_KEY(0xA2, KeyCode_L_Control),
     R_WIN_KEY(0xA3, KeyCode_R_Control),
+    R_WIN_KEY(0x14, KeyCode_Capslock),
+    R_WIN_KEY(0x12, KeyCode_Alt),
+    R_WIN_KEY(0xA4, KeyCode_L_Alt),
+    R_WIN_KEY(0xA5, KeyCode_R_Alt),
+    R_WIN_KEY(0x30, KeyCode_0),
+    R_WIN_KEY(0x31, KeyCode_1),
+    R_WIN_KEY(0x32, KeyCode_2),
+    R_WIN_KEY(0x33, KeyCode_3),
+    R_WIN_KEY(0x34, KeyCode_4),
+    R_WIN_KEY(0x35, KeyCode_5),
+    R_WIN_KEY(0x36, KeyCode_6),
+    R_WIN_KEY(0x37, KeyCode_7),
+    R_WIN_KEY(0x38, KeyCode_8),
+    R_WIN_KEY(0x39, KeyCode_9),
+    R_WIN_KEY(0x70, KeyCode_F1),
+    R_WIN_KEY(0x71, KeyCode_F2),
+    R_WIN_KEY(0x72, KeyCode_F3),
+    R_WIN_KEY(0x73, KeyCode_F4),
+    R_WIN_KEY(0x74, KeyCode_F5),
+    R_WIN_KEY(0x75, KeyCode_F6),
+    R_WIN_KEY(0x76, KeyCode_F7),
+    R_WIN_KEY(0x77, KeyCode_F8),
+    R_WIN_KEY(0x78, KeyCode_F9),
+    R_WIN_KEY(0x79, KeyCode_F10),
+    R_WIN_KEY(0x7A, KeyCode_F11),
+    R_WIN_KEY(0x7B, KeyCode_F12),
 };
 
 
@@ -80,19 +106,19 @@ void registerKeyCall(DWORD keyCode, DWORD status)
 } // Win32
 
 
-Bool isKeyUp(KeyCode code)
+Bool KeyboardListener::isKeyUp(KeyCode code)
 {
     return kWin32InputKeyCodes[code] == KeyStatus_Up;
 }
 
 
-Bool isKeyDown(KeyCode code)
+Bool KeyboardListener::isKeyDown(KeyCode code)
 {
     return kWin32InputKeyCodes[code] == KeyStatus_Down || kWin32InputKeyCodes[code] == KeyStatus_StillDown;
 }
 
 
-KeyStatus getKeyStatus(KeyCode code)
+KeyStatus KeyboardListener::getKeyStatus(KeyCode code)
 {
     return kWin32InputKeyCodes[code];
 }

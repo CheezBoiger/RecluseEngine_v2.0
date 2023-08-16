@@ -152,13 +152,13 @@ void buildVertexLayouts(GraphicsDevice* pDevice)
     
 
     VertexInputLayout layout = { };
-    layout.numVertexBindings = 2;
+    layout.numVertexBindings = 1;
     layout.vertexBindings[0].binding = 0;
     layout.vertexBindings[0].inputRate = InputRate_PerVertex;
     layout.vertexBindings[0].numVertexAttributes = 4;
     layout.vertexBindings[0].pVertexAttributes = attribs;
-    ResultCode result = pDevice->makeVertexLayout(VertexLayout_PositionNormalTexCoordColor, layout);
-    R_ASSERT(result == RecluseResult_Ok);
+    Bool result = pDevice->makeVertexLayout(VertexLayout_PositionNormalTexCoordColor, layout);
+    R_ASSERT(result);
 }
 
 int main(char* argv[], int c)
@@ -203,6 +203,8 @@ int main(char* argv[], int c)
 
     GraphicsResource* textureResource = nullptr;
     createTextureResource(&textureResource);
+
+    buildVertexLayouts(device);
     
     while (!window->shouldClose())
     {

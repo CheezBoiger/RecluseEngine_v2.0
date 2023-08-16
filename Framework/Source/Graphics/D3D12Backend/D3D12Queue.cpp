@@ -36,6 +36,9 @@ ResultCode D3D12Queue::initialize(D3D12Device* pDevice)
         return RecluseResult_Failed;        
     }    
 
+    pDevice->get()->CreateFence(0, D3D12_FENCE_FLAG_NONE, __uuidof(ID3D12Fence), (void**)&pFence);
+    pEvent = CreateEvent(nullptr, false, false, nullptr);
+
     return RecluseResult_Ok;
 }
 
@@ -49,6 +52,28 @@ void D3D12Queue::destroy()
         m_queue->Release();
         m_queue = nullptr;    
     }
+
+    if (pFence)
+    {
+        pFence->Release();
+        pFence = nullptr;
+    }
+
+    if (pEvent)
+    {
+        CloseHandle(pEvent);
+        pEvent = nullptr;
+    }
+}
+
+
+U64 D3D12Queue::waitForGpu(U64 currentFenceValue)
+{ 
+    const U64 newFenceValue = currentFenceValue;
+    m_queue->Signal(pFence, newFenceValue);
+    pFence->SetEventOnCompletion(newFenceValue, pEvent);
+    WaitForSingleObject(pEvent, INFINITE);
+    return newFenceValue + 1;
 }
 
 /*

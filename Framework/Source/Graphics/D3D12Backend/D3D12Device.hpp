@@ -27,8 +27,6 @@ class D3D12Device;
 struct BufferResources 
 {
     ID3D12CommandAllocator* pAllocator;
-    ID3D12Fence*            pFence;
-    HANDLE                  pEvent;
     U64                     fenceValue;
 };
 
@@ -49,6 +47,8 @@ public:
     void                                release();
     virtual void                        begin() override;
     virtual void                        end() override;
+    ResultCode                          setBuffers(U32 bufferCount) override;
+    ResultCode                          wait() override;
 
     inline void                         incrementBufferIndex() 
     { 
@@ -93,6 +93,7 @@ public:
     void                                popState() override;
 
     void                                transition(GraphicsResource* pResource, ResourceState newState) override;
+    GraphicsDevice*                     getDevice() override;
     
 
 private:
@@ -142,7 +143,8 @@ public:
     ResultCode                          createCommandQueue(D3D12Queue** ppQueue, GraphicsQueueTypeFlags type);
     ResultCode                          destroyCommandQueue(D3D12Queue* pQueue);
 
-    GraphicsContext*                    createContext() override { return m_context; }
+    GraphicsContext*                    createContext() override;
+    ResultCode                          releaseContext(GraphicsContext* pContext) override;
     HWND                                getWindowHandle() const { return m_windowHandle; }
 
     ResultCode                          reserveMemory(const MemoryReserveDescription& desc) override;
@@ -188,7 +190,6 @@ private:
     D3D12Swapchain*                     m_swapchain;
 
     DescriptorHeapAllocationManager     m_descHeapManager;
-    D3D12Context*                       m_context;
 
     HWND m_windowHandle;
 };

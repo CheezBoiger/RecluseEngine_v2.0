@@ -36,15 +36,15 @@ public:
     GraphicsResourceView*           getRenderTarget(U32 idx);
     GraphicsResourceView*           getDepthStencil();
 
-    D3D12_CPU_DESCRIPTOR_HANDLE     getRtvDescriptor(U32 idx = 0u) const { return m_rtvDhAllocation.getCpuDescriptor(idx); }
-    D3D12_CPU_DESCRIPTOR_HANDLE     getDsvDescriptor() const { return m_dsvDhAllocation.getCpuDescriptor(); }
+    D3D12_CPU_DESCRIPTOR_HANDLE     getRtvDescriptor(U32 idx = 0u) const { return m_rtvDhAllocation.getAddress(idx); }
+    D3D12_CPU_DESCRIPTOR_HANDLE     getDsvDescriptor() const { return m_dsvDhAllocation.baseCpuDescriptorHandle; }
 
     // 
     B32                             shouldUpdate(U32 bufferIdx) const { return (bufferIdx != m_updateBufferIdx); }
 
 private:
-    DescriptorHeapAllocation    m_rtvDhAllocation;
-    DescriptorHeapAllocation    m_dsvDhAllocation;
+    CpuDescriptorTable          m_rtvDhAllocation;
+    CpuDescriptorTable          m_dsvDhAllocation;
     U32                         m_updateBufferIdx;
 };
 

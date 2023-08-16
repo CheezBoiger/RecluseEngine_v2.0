@@ -52,6 +52,10 @@ ResultCode D3D12PrimaryCommandList::initialize(D3D12Context* pDeviceContext, Gra
 
 ResultCode D3D12PrimaryCommandList::destroy()
 {
+    for (U32 i = 0; i < m_graphicsCommandLists.size(); ++i)
+    {
+        m_graphicsCommandLists[i]->Release();
+    }
     return RecluseResult_Ok;
 }
 

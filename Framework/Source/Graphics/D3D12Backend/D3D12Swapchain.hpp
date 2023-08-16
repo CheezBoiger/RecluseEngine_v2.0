@@ -12,8 +12,8 @@ class D3D12Device;
 class D3D12Queue;
 
 struct FrameResource {
-    D3D12Resource* frameResource;
-    D3D12GraphicsResourceView* pView;
+    D3D12Resource*              frameResource;
+    BufferResources             bufferResources;
 };
 
 class D3D12Swapchain : public GraphicsSwapchain 
@@ -37,6 +37,9 @@ public:
     GraphicsResource*       getFrame(U32 idx) override;
 
     ResultCode              submitPrimaryCommandList(ID3D12GraphicsCommandList* pCommandList);
+    ResultCode              prepareNextFrame();
+
+    U64                     getCurrentFenceValue() { return m_frameResources[m_currentFrameIndex].bufferResources.fenceValue; }
 
 private:
 

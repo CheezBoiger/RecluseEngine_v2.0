@@ -450,4 +450,11 @@ std::vector<VkPresentModeKHR> VulkanAdapter::getSupportedPresentModes(VkSurfaceK
     vkGetPhysicalDeviceSurfacePresentModesKHR(m_phyDevice, surface, &numModes, modes.data());
     return modes;
 }
+
+VkSurfaceCapabilitiesKHR VulkanAdapter::getSurfaceCapabilities(VkSurfaceKHR surface) const
+{
+    VkSurfaceCapabilitiesKHR capabilities;
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_phyDevice, surface, &capabilities);
+    return capabilities;
+}
 } // Recluse 

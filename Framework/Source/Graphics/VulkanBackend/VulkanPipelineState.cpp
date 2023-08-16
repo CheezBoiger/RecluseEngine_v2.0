@@ -585,14 +585,27 @@ static VulkanVertexLayout createVertexInput(const VertexInputLayout& vi)
     return layout;
 }
 
-Bool make(VertexInputLayoutId id, const VertexInputLayout& vl)
+ResultCode make(VertexInputLayoutId id, const VertexInputLayout& vl)
 {
     auto iter = g_vertexLayoutMap.find(id);
     if (iter != g_vertexLayoutMap.end())
-        return true;
+        return RecluseResult_AlreadyExists;
     VulkanVertexLayout layout = createVertexInput(vl);
     g_vertexLayoutMap[id] = layout;
-    return true;
+    return RecluseResult_Ok;
+}
+
+
+ResultCode unloadLayout(VertexInputLayoutId id)
+{
+    auto iter = g_vertexLayoutMap.find(id);
+    if (iter != g_vertexLayoutMap.end())
+    {
+        g_vertexLayoutMap.erase(iter);
+        return RecluseResult_Ok;
+    }
+
+    return RecluseResult_NotFound;
 }
 
 

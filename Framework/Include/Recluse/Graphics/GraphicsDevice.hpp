@@ -331,6 +331,17 @@ protected:
         m_desc.format = overridedFormat;
     }
 
+    void requestOverrideFrameCount(U32 newFrameCount)
+    {
+        m_desc.desiredFrames = newFrameCount;
+    }
+
+    void requestOverrideRenderResolution(U32 width, U32 height)
+    {
+        m_desc.renderWidth = width;
+        m_desc.renderHeight = height;
+    }
+
 private:
     virtual ResultCode                      onRebuild() { return RecluseResult_NoImpl; }
 

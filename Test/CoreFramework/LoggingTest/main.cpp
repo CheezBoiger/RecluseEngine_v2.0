@@ -16,7 +16,7 @@ ResultCode printHello(void* data)
 {
     I32 uid = *(I32*)data;
 
-    Log log(LogDebug);
+    Log log(LogType_Debug);
     
     log << DateFormatter("%Y-%M-%D %h:%m:%s") << "Testing insta-Logging..." << rFLUSH;
 

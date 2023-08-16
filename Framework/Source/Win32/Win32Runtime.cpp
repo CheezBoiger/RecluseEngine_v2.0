@@ -322,6 +322,11 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
                     CHECK_KEY_STATE_DOWN(VK_LCONTROL, Win32::registerKeyCall);
                     CHECK_KEY_STATE_DOWN(VK_RCONTROL, Win32::registerKeyCall);
                 }
+                else if (wParam == VK_MENU)
+                {
+                    CHECK_KEY_STATE_DOWN(VK_LMENU, Win32::registerKeyCall);
+                    CHECK_KEY_STATE_DOWN(VK_RMENU, Win32::registerKeyCall);
+                }
                 break;
             }
             case WM_SYSKEYUP:
@@ -338,6 +343,11 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
                 {
                     CHECK_KEY_STATE_UP(VK_LCONTROL, Win32::registerKeyCall);
                     CHECK_KEY_STATE_UP(VK_RCONTROL, Win32::registerKeyCall);
+                }
+                else if (wParam == VK_MENU)
+                {
+                    CHECK_KEY_STATE_UP(VK_LMENU, Win32::registerKeyCall);
+                    CHECK_KEY_STATE_UP(VK_RMENU, Win32::registerKeyCall);
                 }
                 break;
             }

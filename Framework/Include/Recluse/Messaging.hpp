@@ -17,12 +17,12 @@
     }
 
 // Helper macros for logging messages.
-#define R_INFO(chan, format, ...)       do { R_LOG(chan, Recluse::LogInfo, format, __VA_ARGS__);    } while (false)
-#define R_WARN(chan, format, ...)       do { R_LOG(chan, Recluse::LogWarn, format, __VA_ARGS__);    } while (false)
-#define R_VERBOSE(chan, format, ...)    do { R_LOG(chan, Recluse::LogVerbose, format, __VA_ARGS__); } while (false)
-#define R_TRACE(chan, format, ...)      do { R_LOG(chan, Recluse::LogTrace, format, __VA_ARGS__);   } while (false)
-#define R_NOTIFY(chan, format, ...)     do { R_LOG(chan, Recluse::LogNotify, format, __VA_ARGS__);  } while (false)
-#define R_DEBUG(chan, str, ...)         do { R_LOG(chan, Recluse::LogDebug, str, __VA_ARGS__); } while (false)
+#define R_INFO(chan, format, ...)       do { R_LOG(chan, Recluse::LogType_Info, format, __VA_ARGS__);    } while (false)
+#define R_WARN(chan, format, ...)       do { R_LOG(chan, Recluse::LogType_Warn, format, __VA_ARGS__);    } while (false)
+#define R_VERBOSE(chan, format, ...)    do { R_LOG(chan, Recluse::LogType_Verbose, format, __VA_ARGS__); } while (false)
+#define R_TRACE(chan, format, ...)      do { R_LOG(chan, Recluse::LogType_Trace, format, __VA_ARGS__);   } while (false)
+#define R_NOTIFY(chan, format, ...)     do { R_LOG(chan, Recluse::LogType_Notify, format, __VA_ARGS__);  } while (false)
+#define R_DEBUG(chan, str, ...)         do { R_LOG(chan, Recluse::LogType_Debug, str, __VA_ARGS__); } while (false)
  
 #if defined(RECLUSE_DEBUG) || defined(RECLUSE_DEVELOPER)
     namespace Recluse {
@@ -105,7 +105,7 @@
     // the user, this is entirely ignored.
     #define R_NO_IMPL() R_ASSERT_FORMAT(false, "No implementation for %s", __FUNCTION__)
 #else
-    #define R_ERROR(chan, format, ...) do { R_LOG(chan, Recluse::LogError, format, __VA_ARGS__); } while (false)
-    #define R_FATAL_ERROR(chan, format, ...) do { R_LOG(chan, Recluse::LogFatal, format, __VA_ARGS__); } while (false)
+    #define R_ERROR(chan, format, ...) do { R_LOG(chan, Recluse::LogType_Error, format, __VA_ARGS__); } while (false)
+    #define R_FATAL_ERROR(chan, format, ...) do { R_LOG(chan, Recluse::LogType_Fatal, format, __VA_ARGS__); } while (false)
     #define R_NO_IMPL()
 #endif
