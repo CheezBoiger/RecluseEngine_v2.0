@@ -137,13 +137,15 @@ R_INTERNAL const char* getGpuHeapTypeName(GpuHeapType type)
 DescriptorHeap::DescriptorHeap()
     : m_pHeap(nullptr)
     , m_allocator(nullptr)
+    , m_baseCpuHandle(DescriptorTable::invalidCpuAddress)
+    , m_baseGpuHandle(DescriptorTable::invalidGpuAddress)
 {
 }
 
 
 SmartPtr<Allocator> DescriptorHeap::makeAllocator(ID3D12DescriptorHeap* pHeap, U64 numDescriptors, U64 descriptorSizeBytes)
 {
-    SmartPtr<Allocator> allocator = makeSmartPtr(new LinearAllocator());
+    SmartPtr<Allocator> allocator = new LinearAllocator();
     D3D12_CPU_DESCRIPTOR_HANDLE descriptor = pHeap->GetCPUDescriptorHandleForHeapStart();
     allocator->initialize(descriptor.ptr, numDescriptors * descriptorSizeBytes);
     return allocator;
@@ -156,6 +158,15 @@ void DescriptorHeap::reset()
     m_allocator->reset();
     m_currentTotalEntries = 0;
     m_freeAllocations.clear();
+}
+
+
+Bool DescriptorHeap::contains(D3D12_CPU_DESCRIPTOR_HANDLE handle)
+{
+    UINT64 beginAddress = m_baseCpuHandle.ptr;
+    UINT64 endAddress = m_baseCpuHandle.ptr + m_heapDesc.NumDescriptors * m_descriptorSize;
+    UINT64 address = handle.ptr;
+    return ((address >= beginAddress) && (address <= endAddress));
 }
 
 
@@ -173,7 +184,8 @@ ResultCode DescriptorHeap::initialize(ID3D12Device* pDevice, U32 nodeMask, U32 n
     m_heapDesc = desc;
     m_descriptorSize = pDevice->GetDescriptorHandleIncrementSize(type);
     m_baseCpuHandle = m_pHeap->GetCPUDescriptorHandleForHeapStart();
-    m_baseGpuHandle = m_pHeap->GetGPUDescriptorHandleForHeapStart();
+    if (desc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
+        m_baseGpuHandle = m_pHeap->GetGPUDescriptorHandleForHeapStart();
 
     m_allocator = makeAllocator(m_pHeap, numDescriptors, m_descriptorSize);
 
@@ -187,13 +199,12 @@ ResultCode DescriptorHeap::release()
     {
         m_allocator->cleanUp();
     }
-
     if (m_pHeap)
     {
         m_pHeap->Release();
         m_pHeap = nullptr;
     }
-
+    m_freeAllocations.clear();
     return RecluseResult_Ok;
 }
 
@@ -211,7 +222,7 @@ CpuDescriptorTable CpuDescriptorHeap::allocate(U32 numberDescriptors)
 
     ResultCode err         = RecluseResult_Ok;
 
-    UPtr allocatedAddress = m_allocator->allocate(numberDescriptors * m_descriptorSize, m_descriptorSize);
+    UPtr allocatedAddress = m_allocator->allocate(numberDescriptors * m_descriptorSize, 0);
     err = m_allocator->getLastError();
     if (err == RecluseResult_Ok)
     {
@@ -255,6 +266,16 @@ ResultCode DescriptorHeapAllocationManager::initialize(ID3D12Device* pDevice, co
     m_pDevice = pDevice;
     m_shaderVisibleDescriptorHeapInstances.reserve(kMaxedReservedShaderVisibleInstances);
     resizeShaderVisibleHeapInstances(bufferCount);
+
+    // initialize a null descriptor for each cpu heap type.
+    {
+        D3D12_RENDER_TARGET_VIEW_DESC desc  = { };
+        desc.ViewDimension                  = D3D12_RTV_DIMENSION_BUFFER;
+        desc.Buffer.FirstElement            = 0;
+        desc.Buffer.NumElements             = 0;
+        desc.Format                         = DXGI_FORMAT_R32_FLOAT;
+        m_nullRtvDescriptor = allocateRenderTargetView(nullptr, desc);
+    }
     return RecluseResult_Ok;
 }
 
@@ -429,18 +450,120 @@ CpuDescriptorHeap* DescriptorHeapAllocationManager::createNewCpuDescriptorHeap(C
 }
 
 
+CpuDescriptorTable DescriptorHeapAllocationManager::internalAllocate(CpuHeapType heapType, U32 numDescriptors)
+{
+    CpuDescriptorHeap* heap = getCurrentHeap(heapType, numDescriptors);
+    CpuDescriptorTable handle = heap->allocate(numDescriptors);
+    return handle;   
+}
+
+
 D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapAllocationManager::allocateRenderTargetView(ID3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC& desc)
 {
-    CpuDescriptorHeap* heap = getCurrentHeap(CpuHeapType_Rtv, 1);
-    CpuDescriptorTable handle = heap->allocate(1);
+    CpuDescriptorTable handle = internalAllocate(CpuHeapType_Rtv, 1);
     m_pDevice->CreateRenderTargetView(pResource, &desc, handle.baseCpuDescriptorHandle);
     return handle.baseCpuDescriptorHandle;
 }
 
 
-ResultCode DescriptorHeapAllocationManager::freeRenderTarget(D3D12_CPU_DESCRIPTOR_HANDLE handle)
+D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapAllocationManager::allocateShaderResourceView(ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& desc)
 {
-    
+    CpuDescriptorTable handle = internalAllocate(CpuHeapType_CbvSrvUav, 1);
+    m_pDevice->CreateShaderResourceView(pResource, &desc, handle.baseCpuDescriptorHandle);
+    return handle.baseCpuDescriptorHandle;
+}
+
+
+D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapAllocationManager::allocateUnorderedAccessView(ID3D12Resource* pResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc)
+{
+    CpuDescriptorTable handle = internalAllocate(CpuHeapType_CbvSrvUav, 1);
+    m_pDevice->CreateUnorderedAccessView(pResource, nullptr, &desc, handle.baseCpuDescriptorHandle);
+    return handle.baseCpuDescriptorHandle;
+}
+
+
+D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapAllocationManager::allocateDepthStencilView(ID3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& desc)
+{
+    CpuDescriptorTable handle = internalAllocate(CpuHeapType_Dsv, 1);
+    m_pDevice->CreateDepthStencilView(pResource, &desc, handle.baseCpuDescriptorHandle);
+    return handle.baseCpuDescriptorHandle;
+}
+
+
+D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapAllocationManager::allocateConstantBufferView(const D3D12_CONSTANT_BUFFER_VIEW_DESC& desc)
+{
+    CpuDescriptorTable handle = internalAllocate(CpuHeapType_CbvSrvUav, 1);
+    m_pDevice->CreateConstantBufferView(&desc, handle.baseCpuDescriptorHandle);
+    return handle.baseCpuDescriptorHandle;
+}
+
+
+ResultCode DescriptorHeapAllocationManager::freeRenderTargetView(D3D12_CPU_DESCRIPTOR_HANDLE handle)
+{
+    return internalFree(handle, CpuHeapType_Rtv);
+}
+
+
+ResultCode DescriptorHeapAllocationManager::freeShaderResourceView(D3D12_CPU_DESCRIPTOR_HANDLE handle)
+{
+    return internalFree(handle, CpuHeapType_CbvSrvUav);
+}
+
+
+ResultCode DescriptorHeapAllocationManager::freeConstantBufferView(D3D12_CPU_DESCRIPTOR_HANDLE handle)
+{
+    return internalFree(handle, CpuHeapType_CbvSrvUav);
+}
+
+
+ResultCode DescriptorHeapAllocationManager::freeUnorderedAccessView(D3D12_CPU_DESCRIPTOR_HANDLE handle)
+{
+    return internalFree(handle, CpuHeapType_CbvSrvUav);
+}
+
+
+ResultCode DescriptorHeapAllocationManager::freeDepthStencilView(D3D12_CPU_DESCRIPTOR_HANDLE handle)
+{
+    return internalFree(handle, CpuHeapType_Dsv);
+}
+
+
+ResultCode DescriptorHeapAllocationManager::freeDescriptorTable(CpuHeapType heapType, const CpuDescriptorTable& table)
+{
+    if (table.baseCpuDescriptorHandle.ptr == DescriptorTable::invalidCpuAddress.ptr)
+    {
+        return RecluseResult_InvalidArgs;
+    }
+    for (U32 i = 0; i < m_cpuDescriptorTableHeaps[heapType].size(); ++i)
+    {
+        CpuDescriptorHeap& heap = m_cpuDescriptorTableHeaps[heapType][i];
+        if (heap.contains(table.baseCpuDescriptorHandle))
+        {
+            heap.free(table);
+            break;
+        }
+    }
+    return RecluseResult_Ok;
+}
+
+
+ResultCode DescriptorHeapAllocationManager::internalFree(D3D12_CPU_DESCRIPTOR_HANDLE descriptor, CpuHeapType heapType)
+{
+    if (descriptor.ptr == DescriptorTable::invalidCpuAddress.ptr)
+        return RecluseResult_InvalidArgs;
+    for (U32 i = 0; i < m_cpuDescriptorHeaps[heapType].size(); ++i)
+    {
+        CpuDescriptorHeap& heap = m_cpuDescriptorHeaps[heapType][i];
+        if (heap.contains(descriptor))
+        {
+            CpuDescriptorTable makeShiftTable       = { };
+            makeShiftTable.descriptorAtomSize       = heap.getDescriptorSize();
+            makeShiftTable.baseCpuDescriptorHandle  = descriptor;
+            makeShiftTable.numberDescriptors        = 1;
+            heap.free(makeShiftTable);
+            break;
+        }
+    }
     return RecluseResult_Ok;
 }
 

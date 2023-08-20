@@ -45,6 +45,7 @@ ResultCode D3D12Context::setBuffers(U32 bufferCount)
     m_bufferCount = bufferCount;
     initialize();
     m_pDevice->getDescriptorHeapManager()->resizeShaderVisibleHeapInstances(m_bufferCount);
+    m_currentBufferIndex = 0;
     return RecluseResult_Ok;
 }
 
@@ -76,13 +77,11 @@ void D3D12Context::begin()
 
 void D3D12Context::end()
 {
-    //DescriptorHeapInstance* instance    = m_pDevice->getDescriptorHeapManager()->getInstance(currentBufferIndex());
+    // We should always flush any remaining barrier transitions, especially if they involve transiting our back buffer back to present state.
+    flushBarrierTransitions();
     D3D12Swapchain* pSwapchain          = m_pDevice->getSwapchain()->castTo<D3D12Swapchain>();
 
     m_pPrimaryCommandList->end();
-
-    // Upload the current instance for this buffer, in order to properly set the bound gpu addresses.
-    //instance->upload(m_pDevice->get());
     // Fire off our command list!
     pSwapchain->submitPrimaryCommandList(m_pPrimaryCommandList->get());
 }
@@ -134,12 +133,11 @@ void D3D12Context::flushBarrierTransitions()
 void D3D12Context::bindRenderTargets(U32 count, ResourceViewId* ppResources, ResourceViewId pDepthStencil)
 {
     ID3D12GraphicsCommandList* pList = m_pPrimaryCommandList->get();
-    D3D12RenderPass* pRenderPass = RenderPasses::makeRenderPass(count, ppResources, pDepthStencil);
+    D3D12RenderPass* pRenderPass = RenderPasses::makeRenderPass(m_pDevice, count, ppResources, pDepthStencil);
     R_ASSERT_FORMAT(pRenderPass, "D3D12RenderPass was passed nullptr!");
-    pRenderPass->update(m_pDevice, currentBufferIndex(), count, ppResources, pDepthStencil);
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = pRenderPass->getRtvDescriptor();
     D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = pRenderPass->getDsvDescriptor();
-    pList->OMSetRenderTargets(count, &rtvHandle, true, &dsvHandle);
+    pList->OMSetRenderTargets(count, &rtvHandle, true, dsvHandle.ptr == DescriptorTable::invalidCpuAddress.ptr ? nullptr : &dsvHandle);
     
     m_pRenderPass = pRenderPass;
 }
@@ -172,7 +170,8 @@ void D3D12Context::clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect)
 {
     ID3D12GraphicsCommandList* pList = m_pPrimaryCommandList->get();
     R_ASSERT_FORMAT(m_pRenderPass, "No render pass was set for clear! Be sure to call bindRenderTargets() to set up a render pass!");
-    
+    flushBarrierTransitions();
+   
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pRenderPass->getRtvDescriptor(idx);
     FLOAT clearValue[4];
     D3D12_RECT d3d12Rect = { };
@@ -192,7 +191,14 @@ void D3D12Context::clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect)
 
 void D3D12Context::prepare()
 {
-    
+    ShaderVisibleDescriptorHeapInstance* shaderVisibleHeap = m_pDevice->getDescriptorHeapManager()->getShaderVisibleInstance(getCurrentBufferIndex());
+    shaderVisibleHeap->update(DescriptorHeapUpdateFlag_Reset);
+
+    // We should bind the descriptor heaps at the start of the commandlist.
+    ID3D12DescriptorHeap* pHeaps[2] = { nullptr, nullptr };
+    pHeaps[0] = shaderVisibleHeap->get(GpuHeapType_CbvSrvUav).getNative();
+    pHeaps[1] = shaderVisibleHeap->get(GpuHeapType_Sampler).getNative();
+    m_pPrimaryCommandList->bindDescriptorHeaps(pHeaps, 2);
 }
 
 
@@ -234,6 +240,8 @@ ResultCode D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo
 
 void D3D12Device::destroy()
 {
+    RenderPasses::clearAll(this);
+    DescriptorViews::clearAll(this);
     m_descHeapManager.release();
     if (m_swapchain) 
     {
@@ -353,8 +361,8 @@ void D3D12Context::resetCurrentResources()
         R_ERROR(R_CHANNEL_WIN32, "Failed to properly reset allocators.");
     }    
 
-    //DescriptorHeapInstance* instance = m_pDevice->getDescriptorHeapManager()->getInstance(currentBufferIndex());
-    //instance->update(DescriptorHeapUpdateFlag_Reset);
+    ShaderVisibleDescriptorHeapInstance* instance = m_pDevice->getDescriptorHeapManager()->getShaderVisibleInstance(getCurrentBufferIndex());
+    instance->update(DescriptorHeapUpdateFlag_Reset);
 }
 
 

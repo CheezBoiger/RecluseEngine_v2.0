@@ -50,7 +50,11 @@ struct ResourceViewDescription
     {
         struct 
         {
+            // Base array layer. If the view type is Cube or Cube Array, then this 
+            // value must be a multiple of 6.
             U32             baseArrayLayer;
+            // Layer count. If the view type is Cube, then this MUST be 6. If the view type is Cube Array, then this MUST be a 
+            // multiple of 6.
             U32             layerCount;
         };
         struct

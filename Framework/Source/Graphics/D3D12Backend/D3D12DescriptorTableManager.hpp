@@ -69,6 +69,7 @@ struct CpuDescriptorTable : public DescriptorTable
         : baseCpuDescriptorHandle(cpuHandle)
         , DescriptorTable(numberDescriptors) { }
     D3D12_CPU_DESCRIPTOR_HANDLE getAddress(U32 idx) const { return { baseCpuDescriptorHandle.ptr + idx * descriptorAtomSize }; }
+    void invalidate() { baseCpuDescriptorHandle = DescriptorTable::invalidCpuAddress; }
 };
 
 
@@ -94,42 +95,43 @@ public:
     DescriptorHeap();
     virtual ~DescriptorHeap() { }
 
-    ResultCode                          initialize(ID3D12Device* pDevice, U32 nodeMask, U32 numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
-    ResultCode                          release();
+    ResultCode                              initialize(ID3D12Device* pDevice, U32 nodeMask, U32 numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
+    ResultCode                              release();
 
-    virtual CpuDescriptorTable          allocate(U32 numDescriptors) { return CpuDescriptorTable(); }
-    virtual void                        free(const CpuDescriptorTable& descriptorTable) { }
-    virtual void                        reset();
+    virtual CpuDescriptorTable              allocate(U32 numDescriptors) { return CpuDescriptorTable(); }
+    virtual void                            free(const CpuDescriptorTable& descriptorTable) { }
+    virtual void                            reset();
 
     // Resize the descriptor heap instance, to support more or less descriptors at a time.
-    void                                resize(U32 descriptorCount);
+    void                                    resize(U32 descriptorCount);
+
+    // Check if the heap contains this descriptor handle.
+    Bool                                    contains(D3D12_CPU_DESCRIPTOR_HANDLE handle);
 
     // Get the descriptor heap description.
-    D3D12_DESCRIPTOR_HEAP_DESC          getDesc() const { return m_pHeap->GetDesc(); }
+    D3D12_DESCRIPTOR_HEAP_DESC              getDesc() const { return m_pHeap->GetDesc(); }
     // Get the native descriptor heap handle.
-    ID3D12DescriptorHeap*               getNative() { return m_pHeap; }
+    ID3D12DescriptorHeap*                   getNative() { return m_pHeap; }
 
     // Check if the descriptor heap is valid.
-    Bool                                isValid() const { return (m_pHeap != nullptr); }
+    Bool                                    isValid() const { return (m_pHeap != nullptr); }
 
     // Is there space in this descriptor heap?
-    Bool                                hasAvailableSpace() const { return (m_currentTotalEntries < m_heapDesc.NumDescriptors); }
-    Bool                                hasAvailableSpaceForRequest(U32 requestedDescriptors) const { return ((m_currentTotalEntries + requestedDescriptors) < m_heapDesc.NumDescriptors); }
+    Bool                                    hasAvailableSpace() const { return (m_currentTotalEntries < m_heapDesc.NumDescriptors); }
+    Bool                                    hasAvailableSpaceForRequest(U32 requestedDescriptors) const { return ((m_currentTotalEntries + requestedDescriptors) < m_heapDesc.NumDescriptors); }
+    Bool                                    isShaderVisible() const { return (m_heapDesc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE); }
 
-    Bool                                isShaderVisible() const { return (m_heapDesc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE); }
+    D3D12_CPU_DESCRIPTOR_HANDLE             getBaseCpuHandle() const { return m_baseCpuHandle; }
+    D3D12_GPU_DESCRIPTOR_HANDLE             getBaseGpuHandle() const { return m_baseGpuHandle; }
 
-    D3D12_CPU_DESCRIPTOR_HANDLE         getBaseCpuHandle() const { return m_baseCpuHandle; }
-
-    D3D12_GPU_DESCRIPTOR_HANDLE         getBaseGpuHandle() const { return m_baseGpuHandle; }
-
-    U32                                 getTotalDescriptorCount() { return m_heapDesc.NumDescriptors; }
-    U32                                 getHeapId() const { return m_heapId; }
-    U32                                 getAllocatedEntries() const { return m_currentTotalEntries; }
-    U32                                 getDescriptorSize() const { return m_descriptorSize; }
+    U32                                     getTotalDescriptorCount() { return m_heapDesc.NumDescriptors; }
+    U32                                     getHeapId() const { return m_heapId; }
+    U32                                     getAllocatedEntries() const { return m_currentTotalEntries; }
+    U32                                     getDescriptorSize() const { return m_descriptorSize; }
 
 protected:
 
-    virtual D3D12_DESCRIPTOR_HEAP_DESC makeDescriptorHeapDescription(U32 nodeMask, U32 numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type)
+    virtual D3D12_DESCRIPTOR_HEAP_DESC      makeDescriptorHeapDescription(U32 nodeMask, U32 numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type)
     {
         D3D12_DESCRIPTOR_HEAP_DESC desc = { };
         desc.NumDescriptors = numDescriptors;
@@ -139,7 +141,7 @@ protected:
         return desc;
     }
 
-    virtual SmartPtr<Allocator> makeAllocator(ID3D12DescriptorHeap* pHeap, U64 numDescriptors, U64 descriptorSizeBytes);
+    virtual SmartPtr<Allocator>             makeAllocator(ID3D12DescriptorHeap* pHeap, U64 numDescriptors, U64 descriptorSizeBytes);
 
     ID3D12DescriptorHeap*                   m_pHeap;
     std::vector<CpuDescriptorTable>         m_freeAllocations;
@@ -156,8 +158,8 @@ protected:
 class CpuDescriptorHeap : public DescriptorHeap
 {
 public:
-    virtual CpuDescriptorTable  allocate(U32 numDescriptors) override;
-    virtual void                free(const CpuDescriptorTable& descriptorTable) override;
+    virtual CpuDescriptorTable              allocate(U32 numDescriptors) override;
+    virtual void                            free(const CpuDescriptorTable& descriptorTable) override;
 };
 
 
@@ -166,10 +168,10 @@ public:
 class ShaderVisibleDescriptorHeap : public DescriptorHeap
 {
 public:
-    virtual SmartPtr<Allocator>         makeAllocator(ID3D12DescriptorHeap* pHeap, U64 numDescriptors, U64 descriptorSizeBytes) override;
+    virtual SmartPtr<Allocator>             makeAllocator(ID3D12DescriptorHeap* pHeap, U64 numDescriptors, U64 descriptorSizeBytes) override;
 
 protected:
-    D3D12_DESCRIPTOR_HEAP_DESC          makeDescriptorHeapDescription(U32 nodeMask, U32 numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type) override
+    D3D12_DESCRIPTOR_HEAP_DESC              makeDescriptorHeapDescription(U32 nodeMask, U32 numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type) override
     {
         D3D12_DESCRIPTOR_HEAP_DESC desc = DescriptorHeap::makeDescriptorHeapDescription(nodeMask, numDescriptors, type);
         desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
@@ -243,36 +245,45 @@ public:
         , m_pDevice(nullptr)
     { }
 
-    ResultCode                              initialize(ID3D12Device* pDevice, const DescriptorCoreSize& descriptorSizes, U32 bufferCount);
-    ResultCode                              release();
+    ResultCode                                              initialize(ID3D12Device* pDevice, const DescriptorCoreSize& descriptorSizes, U32 bufferCount);
+    ResultCode                                              release();
 
-    void                                    resizeShaderVisibleHeapInstances(U32 bufferIndex);
-    void                                    resetTableHeaps();
+    void                                                    resizeShaderVisibleHeapInstances(U32 bufferIndex);
+    void                                                    resetTableHeaps();
 
-    ShaderVisibleDescriptorHeapInstance*    getShaderVisibleInstance(U32 index)
+    ShaderVisibleDescriptorHeapInstance*                    getShaderVisibleInstance(U32 index)
     {
         return &m_shaderVisibleDescriptorHeapInstances[index];
     }
 
 
     // Table creation, to be used to bind resources in contiguous, or linear, memory.
-    CpuDescriptorTable              copyDescriptorsToTable(CpuHeapType heapType, D3D12_CPU_DESCRIPTOR_HANDLE* handles, U32 descriptorCount);
+    CpuDescriptorTable                                      copyDescriptorsToTable(CpuHeapType heapType, D3D12_CPU_DESCRIPTOR_HANDLE* handles, U32 descriptorCount);
+    ResultCode                                              freeDescriptorTable(CpuHeapType heapType, const CpuDescriptorTable& table);
 
     // Individual persistant descriptors creation.
-    D3D12_CPU_DESCRIPTOR_HANDLE     allocateShaderResourceView(ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& desc);
-    D3D12_CPU_DESCRIPTOR_HANDLE     allocateConstantBufferView(ID3D12Resource* pResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& desc);
-    D3D12_CPU_DESCRIPTOR_HANDLE     allocateUnorderedAccessView(ID3D12Resource* pResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc);
-    D3D12_CPU_DESCRIPTOR_HANDLE     allocateRenderTargetView(ID3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC& desc);
-    D3D12_CPU_DESCRIPTOR_HANDLE     allocateDepthStencilView(ID3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& desc);
+    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateShaderResourceView(ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& desc);
 
-    ResultCode                      freeRenderTarget(D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
+    // Constant buffer views just take the gpu address as the resource.
+    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateConstantBufferView(const D3D12_CONSTANT_BUFFER_VIEW_DESC& desc);
+    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateUnorderedAccessView(ID3D12Resource* pResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc);
+    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateRenderTargetView(ID3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC& desc);
+    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateDepthStencilView(ID3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& desc);
+    D3D12_CPU_DESCRIPTOR_HANDLE                             nullRtvDescriptor() const { return m_nullRtvDescriptor; }
+
+    ResultCode                                              freeRenderTargetView(D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
+    ResultCode                                              freeShaderResourceView(D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
+    ResultCode                                              freeConstantBufferView(D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
+    ResultCode                                              freeUnorderedAccessView(D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
+    ResultCode                                              freeDepthStencilView(D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
 
 private:
-
-    CpuDescriptorHeap*              createNewCpuDescriptorTableHeap(CpuHeapType type);
-    CpuDescriptorHeap*              getCurrentTableHeap(CpuHeapType type, U32 requestCount);
-    CpuDescriptorHeap*              getCurrentHeap(CpuHeapType type, U32 requestCount);
-    CpuDescriptorHeap*              createNewCpuDescriptorHeap(CpuHeapType type);
+    CpuDescriptorTable                                      internalAllocate(CpuHeapType heapType, U32 numDescriptors);
+    CpuDescriptorHeap*                                      createNewCpuDescriptorTableHeap(CpuHeapType type);
+    CpuDescriptorHeap*                                      getCurrentTableHeap(CpuHeapType type, U32 requestCount);
+    CpuDescriptorHeap*                                      getCurrentHeap(CpuHeapType type, U32 requestCount);
+    CpuDescriptorHeap*                                      createNewCpuDescriptorHeap(CpuHeapType type);
+    ResultCode                                              internalFree(D3D12_CPU_DESCRIPTOR_HANDLE descriptor, CpuHeapType heapType);
 
     std::vector<ShaderVisibleDescriptorHeapInstance>        m_shaderVisibleDescriptorHeapInstances;
 
@@ -280,6 +291,7 @@ private:
     std::map<CpuHeapType, std::vector<CpuDescriptorHeap>>   m_cpuDescriptorHeaps;
     // Temporary descriptor heaps in the form of tables.
     std::map<CpuHeapType, std::vector<CpuDescriptorHeap>>   m_cpuDescriptorTableHeaps;
+    D3D12_CPU_DESCRIPTOR_HANDLE                             m_nullRtvDescriptor;
     ID3D12Device*                                           m_pDevice;
     U32                                                     m_currentTableHeapIndex;
     U32                                                     m_currentHeapIndex;

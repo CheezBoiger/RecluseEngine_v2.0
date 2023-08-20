@@ -25,10 +25,7 @@ public:
     void bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* offsets) override;
     void bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBytes, IndexType type) override;
 
-    void bindDescriptorHeaps(ID3D12DescriptorHeap* const* pHeaps, U32 numHeaps)
-    {
-        get()->SetDescriptorHeaps(numHeaps, pHeaps);
-    }
+    void bindDescriptorHeaps(ID3D12DescriptorHeap* const* pHeaps, U32 numHeaps);
 
     ID3D12GraphicsCommandList* get() { return m_currentCmdList; }
 

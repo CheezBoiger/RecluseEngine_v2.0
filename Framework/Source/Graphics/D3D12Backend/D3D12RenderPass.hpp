@@ -17,18 +17,16 @@ class D3D12RenderPass
 {
 public:
     D3D12RenderPass()
+        : m_rtvDhAllocation(DescriptorTable::invalidCpuAddress)
+        , m_dsvDhAllocation(DescriptorTable::invalidCpuAddress)
     { }
 
-    // Update the render pass with latest descriptors for use. Be sure to call this every time we use the next buffer.
-    // This is required to prevent stale descriptors.
-    // This function will also check if it needs to update, should it have already been updated.
-    ResultCode                      update
+    ResultCode                      initialize
         (
             D3D12Device* pDevice,
-            U32 bufferIdx,
             U32 numRtvDescriptors, 
             ResourceViewId* rtvDescriptors, 
-            ResourceViewId dsvDescriptor = 0
+            ResourceViewId dsvDescriptor = -1
         );
 
     ResultCode                      release(D3D12Device* pDevice);
@@ -39,18 +37,14 @@ public:
     D3D12_CPU_DESCRIPTOR_HANDLE     getRtvDescriptor(U32 idx = 0u) const { return m_rtvDhAllocation.getAddress(idx); }
     D3D12_CPU_DESCRIPTOR_HANDLE     getDsvDescriptor() const { return m_dsvDhAllocation.baseCpuDescriptorHandle; }
 
-    // 
-    B32                             shouldUpdate(U32 bufferIdx) const { return (bufferIdx != m_updateBufferIdx); }
-
 private:
     CpuDescriptorTable          m_rtvDhAllocation;
     CpuDescriptorTable          m_dsvDhAllocation;
-    U32                         m_updateBufferIdx;
 };
 
 namespace RenderPasses {
 
-
-D3D12RenderPass* makeRenderPass(U32 numRtvs, ResourceViewId* rtvs, ResourceViewId dsv = 0);
+void                clearAll(D3D12Device* pDevice);
+D3D12RenderPass*    makeRenderPass(D3D12Device* pDevice, U32 numRtvs, ResourceViewId* rtvs, ResourceViewId dsv = 0);
 } // Renderpasses
 } // Recluse

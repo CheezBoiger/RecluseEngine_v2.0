@@ -2,9 +2,24 @@
 #include "D3D12Resource.hpp"
 #include "D3D12Device.hpp"
 #include "D3D12Allocator.hpp"
+#include "D3D12ResourceView.hpp"
 #include "Recluse/Messaging.hpp"
 
+#include "Recluse/Threading/Threading.hpp"
+
 namespace Recluse {
+
+
+MutexGuard              g_resourceMutex = { };
+ResourceId              g_resourceCounter = 0;
+
+
+R_INTERNAL
+ResourceId generateResourceId()
+{
+    ScopedLock _(g_resourceMutex);
+    return ++g_resourceCounter;
+}
 
 
 D3D12_RESOURCE_DIMENSION getDimension(ResourceDimension dim)
@@ -41,8 +56,7 @@ ResultCode D3D12Resource::initialize
     d3d12desc.Height                            = desc.height;
     d3d12desc.MipLevels                         = desc.mipLevels;
     d3d12desc.Format                            = Dxgi::getNativeFormat(desc.format);
-    d3d12desc.Alignment                         = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
-
+    d3d12desc.Alignment                         = 0;
     if (makeCommitted == true) 
     {
         D3D12_HEAP_PROPERTIES heapProps = { };
@@ -59,6 +73,8 @@ ResultCode D3D12Resource::initialize
     } 
     else 
     {   
+        // We require default placement alignment for our resource.
+        d3d12desc.Alignment                         = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
         R_ASSERT_FORMAT(pAllocator, "No allocator exists for the given dimension! Is the resource unknown?");
 
         ResultCode result  = pAllocator->allocate(&m_memObj, d3d12desc, desc.memoryUsage, state);
@@ -96,6 +112,7 @@ ResultCode D3D12Resource::initialize
     m_pDevice                   = pDevice;
 
     setCurrentResourceState(initialState);
+    m_id = generateResourceId();
 
     return RecluseResult_Ok;
 }
@@ -104,6 +121,12 @@ ResultCode D3D12Resource::initialize
 ResultCode D3D12Resource::destroy()
 {
     R_ASSERT(m_pDevice != nullptr);
+
+    for (auto view : m_viewMap)
+    {
+        DescriptorViews::destroyResourceView(m_pDevice, view.second);
+    }
+
     if (m_memObj.pResource) 
     {
         if (!m_isCommitted) 
@@ -121,6 +144,7 @@ ResultCode D3D12Resource::destroy()
             }
         }
 
+        m_viewMap.clear();
         m_memObj.pResource->Release();
         m_memObj.pResource = nullptr;
 
@@ -171,5 +195,30 @@ Bool D3D12Resource::isSupportedTransitionState(ResourceState state)
     }
 
     return 0;
+}
+
+
+ResourceViewId D3D12Resource::asView(const ResourceViewDescription& description)
+{
+    ResourceViewId view = 0;
+    Hash64 hash = recluseHashFast(&description, sizeof(ResourceViewDescription));
+    auto iter = m_viewMap.find(hash);
+    if (iter == m_viewMap.end())
+    {
+        view = DescriptorViews::makeResourceView(m_pDevice, m_memObj.pResource, description);
+        m_viewMap.insert(std::make_pair(hash, view));
+    }
+    else
+    {
+        view = iter->second;
+    }
+
+    return view;
+}
+
+
+void D3D12Resource::generateId()
+{
+    m_id = generateResourceId();
 }
 } // Recluse

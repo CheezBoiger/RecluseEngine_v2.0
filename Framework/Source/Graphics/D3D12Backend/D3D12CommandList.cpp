@@ -99,4 +99,10 @@ void D3D12PrimaryCommandList::bindIndexBuffer(GraphicsResource* pIndexBuffer, U6
 {
 
 }
+
+
+void D3D12PrimaryCommandList::bindDescriptorHeaps(ID3D12DescriptorHeap* const* pHeaps, U32 numHeaps)
+{
+    get()->SetDescriptorHeaps(numHeaps, pHeaps);
+}
 } // Recluse

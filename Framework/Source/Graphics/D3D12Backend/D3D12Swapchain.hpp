@@ -40,6 +40,7 @@ public:
     ResultCode              prepareNextFrame();
 
     U64                     getCurrentFenceValue() { return m_frameResources[m_currentFrameIndex].bufferResources.fenceValue; }
+    U32                     getCurrentFrameIndex() override { return m_currentFrameIndex; }
 
 private:
 

@@ -85,11 +85,33 @@ int main(int c, char* argv[])
         R_TRACE("Graphics", "Succeeded swapchain creation!");
 
         pWindow->open();
-        while (!pWindow->shouldClose()) {
+        while (!pWindow->shouldClose()) 
+        {
             RealtimeTick::updateWatch(1ull, 0);
             RealtimeTick tick = RealtimeTick::getTick(0);
             R_TRACE("Graphics", "FPS: %f", 1.f / tick.delta());
             pContext->begin();
+                
+                ResourceViewDescription rtvDescription = { };
+                rtvDescription.type = ResourceViewType_RenderTarget;
+                rtvDescription.baseArrayLayer = 0;
+                rtvDescription.baseMipLevel = 0;
+                rtvDescription.dimension = ResourceViewDimension_2d;
+                rtvDescription.layerCount  = 1;
+                rtvDescription.mipLevelCount = 1;
+                rtvDescription.format = pSwapchain->getDesc().format;
+                GraphicsResource* swapchainResource = pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex());
+                pContext->transition(swapchainResource, ResourceState_RenderTarget);
+                ResourceViewId rtv = swapchainResource->asView(rtvDescription);
+                pContext->bindRenderTargets(1, &rtv);
+                Rect rect = { };
+                rect.x = 0;
+                rect.y = 0;
+                rect.width = pSwapchain->getDesc().renderWidth;
+                rect.height = pSwapchain->getDesc().renderHeight;
+                F32 color[4] = { 1.0f, 0.5f, 0.0f, 0 };
+                pContext->clearRenderTarget(0, color, rect);
+                pContext->transition(swapchainResource, ResourceState_Present);
             pContext->end();
             pSwapchain->present();
 

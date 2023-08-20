@@ -16,12 +16,14 @@ public:
 
     GraphicsAPI getApi() const { return GraphicsApi_Direct3D12; }
     
-    D3D12Resource(GraphicsResourceDescription& desc, ID3D12Resource* pResource = nullptr)
+    D3D12Resource(GraphicsResourceDescription& desc, D3D12Device* pDevice = nullptr, ID3D12Resource* pResource = nullptr, ResourceState initState = ResourceState_Common)
         : GraphicsResource(desc)
         , m_memObj({})
-        , m_isCommitted(false) 
+        , m_isCommitted(false)
+        , m_pDevice(pDevice)
     {
         m_memObj.pResource = pResource; 
+        setCurrentResourceState(initState);
     }
 
     // Initialize the resource.
@@ -39,33 +41,38 @@ public:
                                 );
 
     // Destroy the resource.
-    ResultCode                 destroy();
+    ResultCode                  destroy();
 
     // Get the memory object.
-    ID3D12Resource*         get() {         return m_memObj.pResource; }
-    const ID3D12Resource*   get() const {   return m_memObj.pResource; }
+    ID3D12Resource*             get() {         return m_memObj.pResource; }
+    const ID3D12Resource*       get() const {   return m_memObj.pResource; }
 
     // Is the resource committed.
-    Bool                    isCommitted() const { return m_isCommitted; }
+    Bool                        isCommitted() const { return m_isCommitted; }
 
     // Obtain struct that is used to make the actual transition on the GPU.
-    D3D12_RESOURCE_BARRIER  transition(ResourceState newState);
+    D3D12_RESOURCE_BARRIER      transition(ResourceState newState);
 
     // Get the resource virtual address if it was created on GPU memory.
-    D3D12_GPU_VIRTUAL_ADDRESS getVirtualAddress() const { return (m_memObj.usage == ResourceMemoryUsage_GpuOnly) ? m_memObj.pResource->GetGPUVirtualAddress() : 0ULL; }
+    D3D12_GPU_VIRTUAL_ADDRESS   getVirtualAddress() const { return (m_memObj.usage == ResourceMemoryUsage_GpuOnly) ? m_memObj.pResource->GetGPUVirtualAddress() : 0ULL; }
 
-    ResultCode map(void** pMappedMemory, MapRange* pReadRange) override { return RecluseResult_NoImpl; }
-    ResultCode unmap(MapRange* pWriteRange) override { return RecluseResult_NoImpl; }
+    ResultCode                  map(void** pMappedMemory, MapRange* pReadRange) override { return RecluseResult_NoImpl; }
+    ResultCode                  unmap(MapRange* pWriteRange) override { return RecluseResult_NoImpl; }
 
-    ResourceId getId() const { return m_id; }
+    ResourceId                  getId() const { return m_id; }
+
+    ResourceViewId              asView(const ResourceViewDescription& description) override;
+
+    void                        generateId() override;
 
 private:
-    Bool                    isSupportedTransitionState(ResourceState state);
+    Bool                        isSupportedTransitionState(ResourceState state);
 
-    D3D12MemoryObject       m_memObj;
-    Bool                    m_isCommitted;
-    ResourceTransitionFlags m_allowedTransitionStates;
-    D3D12Device*            m_pDevice;
-    ResourceId              m_id;
+    D3D12MemoryObject           m_memObj;
+    Bool                        m_isCommitted;
+    ResourceTransitionFlags     m_allowedTransitionStates;
+    D3D12Device*                m_pDevice;
+    ResourceId                  m_id;
+    std::map<Hash64, ResourceViewId> m_viewMap;
 };
 } // Recluse

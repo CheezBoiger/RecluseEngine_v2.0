@@ -159,7 +159,7 @@ ResultCode D3D12ResourceAllocationManager::initialize(ID3D12Device* pDevice)
 
 ResultCode D3D12ResourceAllocationManager::allocate(D3D12MemoryObject* pOut, const D3D12_RESOURCE_DESC& desc, ResourceMemoryUsage usage, D3D12_RESOURCE_STATES initialState)
 {
-
+    
     return RecluseResult_NoImpl;
 }
 
