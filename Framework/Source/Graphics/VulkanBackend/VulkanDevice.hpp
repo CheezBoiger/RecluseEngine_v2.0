@@ -166,6 +166,8 @@ public:
         currentState().markPipelineDirty(); 
     }
 
+    void internalBindVertexBuffersAndIndexBuffer();
+
     void endRenderPass(VkCommandBuffer buffer);
     void resetBinds();
 
@@ -195,9 +197,11 @@ public:
 private:
     enum ContextDirtyFlag
     {
-        ContextDirtyFlag_Clean = (0),
-        ContextDirtyFlag_Resources = (1 << 0),
-        ContextDirtyFlag_Pipeline = (1 << 1)
+        ContextDirtyFlag_Clean          = (0),
+        ContextDirtyFlag_Resources      = (1 << 0),
+        ContextDirtyFlag_Pipeline       = (1 << 1),
+        ContextDirtyFlag_VertexBuffers  = (1 << 2),
+        ContextDirtyFlag_IndexBuffer    = (1 << 3)
     };
 
     typedef U32 ContextDirtyFlags;
@@ -209,14 +213,21 @@ private:
         std::array<VulkanResourceView*, 128>                            m_srvs;
         std::array<VulkanResourceView*, 32>                             m_uavs;
         std::array<DescriptorSets::BufferView, 16>                      m_cbvs;
+        std::array<VkBuffer, 8>                                         m_vertexBuffers;
+        std::array<U64, 8>                                              m_vbOffsets;
+        VkBuffer                                                        m_indexBuffer;
         std::vector<VulkanSampler*>                                     m_samplers;
         ContextDirtyFlags                                               m_dirtyFlags;
+        U8                                                              m_numBoundVBs;
+        VkIndexType                                                     m_ibType;
+        VkDeviceSize                                                    m_ibOffsetBytes;
 
-        void setDirty(ContextDirtyFlags flags) { m_dirtyFlags = flags; }
+        void setDirty(ContextDirtyFlags flags) { m_dirtyFlags |= flags; }
         void markPipelineDirty() { m_dirtyFlags |= ContextDirtyFlag_Pipeline; }
         void markResourcesDirty() { m_dirtyFlags |= ContextDirtyFlag_Resources; };
         Bool isPipelineDirty() const { return (m_dirtyFlags & ContextDirtyFlag_Pipeline); }
         Bool areResourcesDirty() const { return (m_dirtyFlags & ContextDirtyFlag_Resources); }
+        Bool areVertexBuffersOrIndexBuffersDirty() const { return m_dirtyFlags & (ContextDirtyFlag_IndexBuffer | ContextDirtyFlag_VertexBuffers); }
         void proposeClean() { m_dirtyFlags = ContextDirtyFlag_Clean; }
     };
 

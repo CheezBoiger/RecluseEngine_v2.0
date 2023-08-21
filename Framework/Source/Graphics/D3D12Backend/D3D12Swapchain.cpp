@@ -174,7 +174,7 @@ ResultCode D3D12Swapchain::initializeFrameResources()
         desc.format                         = swapchainDesc.format;
         Bool result = SUCCEEDED(m_pSwapchain->GetBuffer(i, __uuidof(ID3D12Resource*), (void**)&pFrameResource));
         R_ASSERT(result);
-        m_frameResources[i].frameResource = new D3D12Resource(desc, m_pDevice, pFrameResource, ResourceState_Present);
+        m_frameResources[i].frameResource = new D3D12Resource(m_pDevice, pFrameResource, ResourceState_Present);
         m_frameResources[i].frameResource->generateId();
         m_frameResources[i].fenceValue = 0;
     }

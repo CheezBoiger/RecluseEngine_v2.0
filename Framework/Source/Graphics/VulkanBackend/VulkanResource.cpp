@@ -27,7 +27,7 @@ VulkanResource* makeResource(VulkanDevice* pDevice, const GraphicsResourceDescri
     }
     else
     {
-        VulkanImage* pImage = new VulkanImage(desc);
+        VulkanImage* pImage = new VulkanImage();
         pImage->initialize(pDevice, desc, initState);
         pImage->generateId();
         ResourceId id       = pImage->getId();
@@ -71,7 +71,8 @@ ResultCode VulkanResource::initialize(VulkanDevice* pDevice, const GraphicsResou
     VulkanAllocationManager* allocator      = pDevice->getAllocationManager();
     ResultCode result                          = RecluseResult_Ok;
     m_pDevice                               = pDevice;
-  
+    m_memoryUsage                           = desc.memoryUsage;
+    m_dimension                             = desc.dimension;
     setCurrentResourceState(initState);
 
     result = onCreate(pDevice, desc, initState);
@@ -108,7 +109,7 @@ ResultCode VulkanResource::initialize(VulkanDevice* pDevice, const GraphicsResou
 
     m_alignmentRequirement = memoryRequirements.alignment;
 
-    result = onBind(pDevice);
+    result = onBind(pDevice, desc);
 
     return result;
 }
@@ -117,7 +118,6 @@ ResultCode VulkanResource::initialize(VulkanDevice* pDevice, const GraphicsResou
 void VulkanResource::release()
 {
     VulkanAllocationManager* allocator      = m_pDevice->getAllocationManager();
-    const GraphicsResourceDescription& desc = getDesc();
     ResultCode result                          = RecluseResult_Ok;
 
     onRelease(m_pDevice);
@@ -154,6 +154,8 @@ ResultCode VulkanBuffer::onCreate(VulkanDevice* pDevice, const GraphicsResourceD
     ResultCode result                  = RecluseResult_Ok;
     ResourceUsageFlags usageFlags   = desc.usage;
     VkResult vulkanResult           = VK_SUCCESS;
+    // Initial size in bytes, this is what the buffer itself would be seen with.
+    m_bufferSizeBytes               = desc.width;
 
     VkBufferCreateInfo info = { };
     info.sType          = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -305,7 +307,12 @@ ResultCode VulkanImage::onCreate(VulkanDevice* pDevice, const GraphicsResourceDe
         result = RecluseResult_Failed;
     }
     
-    m_currentLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    m_currentLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
+    m_depthOrArraySize  = static_cast<U16>(desc.depthOrArraySize);
+    m_mipLevels         = static_cast<U16>(desc.mipLevels);
+    m_width             = desc.width;
+    m_height            = desc.height;
+    m_depthOrArraySize  = desc.depthOrArraySize;   
 
     return result;
 }
@@ -346,7 +353,7 @@ ResultCode VulkanImage::onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryR
 }
 
 
-ResultCode VulkanBuffer::onBind(VulkanDevice* pDevice)
+ResultCode VulkanBuffer::onBind(VulkanDevice* pDevice, const GraphicsResourceDescription& description)
 {
     const VulkanMemory& memory = getMemory();
 
@@ -358,7 +365,7 @@ ResultCode VulkanBuffer::onBind(VulkanDevice* pDevice)
     }
 
     const Bool supportsDebugMarking = pDevice->getAdapter()->getInstance()->supportsDebugMarking();
-    const char* debugName           = getDesc().name;
+    const char* debugName           = description.name;
     if (supportsDebugMarking && debugName)
     {
         VkDebugUtilsObjectNameInfoEXT nameInfo  = { };
@@ -373,12 +380,12 @@ ResultCode VulkanBuffer::onBind(VulkanDevice* pDevice)
             R_WARN(R_CHANNEL_VULKAN, "Failed to create buffer debug name object.");
         }
     }    
-
+    performInitialLayout(getDevice(), getCurrentResourceState());
     return RecluseResult_Ok;
 }
 
 
-ResultCode VulkanImage::onBind(VulkanDevice* pDevice)
+ResultCode VulkanImage::onBind(VulkanDevice* pDevice, const GraphicsResourceDescription& description)
 {
     const VulkanMemory& memory = getMemory();
     
@@ -390,7 +397,7 @@ ResultCode VulkanImage::onBind(VulkanDevice* pDevice)
     }
 
     const Bool supportsDebugMarking = pDevice->getAdapter()->getInstance()->supportsDebugMarking();
-    const char* debugName           = getDesc().name;
+    const char* debugName           = description.name;
     if (supportsDebugMarking && debugName)
     {
         VkDebugUtilsObjectNameInfoEXT nameInfo  = { };
@@ -440,7 +447,6 @@ ResultCode VulkanResource::map(void** ptr, MapRange* pReadRange)
 
 ResultCode VulkanResource::unmap(MapRange* pWriteRange)
 {
-    const GraphicsResourceDescription& desc = getDesc();
     VkMappedMemoryRange mappedRange         = { };
     ResultCode result                          = RecluseResult_Ok;
     VkResult vr                             = VK_SUCCESS;
@@ -460,10 +466,11 @@ ResultCode VulkanResource::unmap(MapRange* pWriteRange)
     mappedRange.offset  = offsetBytes;
     mappedRange.size    = sizeBytes;
 
+    const ResourceMemoryUsage memUsage = getMemoryUsage();
     if 
         (
-            desc.memoryUsage == ResourceMemoryUsage_CpuOnly 
-            || desc.memoryUsage == ResourceMemoryUsage_CpuToGpu
+            memUsage == ResourceMemoryUsage_CpuOnly 
+            || memUsage == ResourceMemoryUsage_CpuToGpu
         ) 
     {
         m_pDevice->pushFlushMemoryRange(mappedRange);
@@ -479,7 +486,6 @@ ResultCode VulkanResource::unmap(MapRange* pWriteRange)
 
 VkImageMemoryBarrier VulkanImage::transition(ResourceState dstState, VkImageSubresourceRange& range)
 {
-    const GraphicsResourceDescription& description  = getDesc();
     VkImageMemoryBarrier barrier                    = { };
 
     VkImageLayout dstImageLayout            = Vulkan::getVulkanImageLayout(dstState);
@@ -488,7 +494,7 @@ VkImageMemoryBarrier VulkanImage::transition(ResourceState dstState, VkImageSubr
     barrier.newLayout                       = dstImageLayout;
     barrier.image                           = m_image;
     barrier.dstAccessMask                   = Vulkan::getDesiredResourceStateAccessMask(dstState) 
-                                            | Vulkan::getDesiredHostMemoryUsageAccess(description.memoryUsage);
+                                            | Vulkan::getDesiredHostMemoryUsageAccess(getMemoryUsage());
     barrier.srcAccessMask                   = getCurrentAccessMask();
     barrier.subresourceRange                = range;
 
@@ -503,12 +509,11 @@ VkImageMemoryBarrier VulkanImage::transition(ResourceState dstState, VkImageSubr
 
 VkImageSubresourceRange VulkanImage::makeSubresourceRange(ResourceState dstState)
 {
-        const GraphicsResourceDescription& description  = getDesc();
         VkImageSubresourceRange range       = { };
         range.baseArrayLayer                = 0;
         range.baseMipLevel                  = 0;
-        range.layerCount                    = description.depthOrArraySize;
-        range.levelCount                    = description.mipLevels;
+        range.layerCount                    = m_depthOrArraySize;
+        range.levelCount                    = m_mipLevels;
         range.aspectMask                    = VK_IMAGE_ASPECT_COLOR_BIT;
         
         if 
@@ -525,17 +530,15 @@ VkImageSubresourceRange VulkanImage::makeSubresourceRange(ResourceState dstState
 
 VkBufferMemoryBarrier VulkanBuffer::transition(ResourceState dstState)
 {
-    const VulkanMemory& allocation                  = getMemory();
-    const GraphicsResourceDescription& description  = getDesc();
     VkBufferMemoryBarrier barrier                   = { };
 
     barrier.sType           = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
     barrier.buffer          = m_buffer;
     barrier.offset          = 0; // This is relative to the base offset when called by bindBufferMemory, so we don't need to include another offset.
-    barrier.size            = allocation.sizeBytes;
+    barrier.size            = getBufferSizeBytes();
     barrier.srcAccessMask   = getCurrentAccessMask();
     barrier.dstAccessMask   = Vulkan::getDesiredResourceStateAccessMask(dstState) 
-                            | Vulkan::getDesiredHostMemoryUsageAccess(description.memoryUsage);
+                            | Vulkan::getDesiredHostMemoryUsageAccess(getMemoryUsage());
     
     setCurrentResourceState(dstState);
     setCurrentAccessMask(barrier.dstAccessMask);
@@ -586,4 +589,30 @@ void VulkanImage::performInitialLayout(VulkanDevice* pDevice, ResourceState init
     pQueue->endAndSubmitOneTimeCommandBuffer(transitionCmd);
 }
 
+
+void VulkanBuffer::performInitialLayout(VulkanDevice* pDevice, ResourceState initialState)
+{
+    VulkanQueue* pQueue = pDevice->getBackbufferQueue();
+
+    VkCommandBuffer transitionCmd = pQueue->beginOneTimeCommandBuffer();
+    VkBufferMemoryBarrier barrier = transition(initialState);
+    vkCmdPipelineBarrier
+        (
+            transitionCmd, 
+            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_DEPENDENCY_BY_REGION_BIT, 
+            0, nullptr, 
+            1, &barrier, 
+            0, nullptr
+        );
+    pQueue->endAndSubmitOneTimeCommandBuffer(transitionCmd);
+}
+
+
+void VulkanImage::initializeMetadata(const GraphicsResourceDescription& description)
+{
+    m_depthOrArraySize = description.depthOrArraySize;
+    m_width = description.width;
+    m_height = description.height;
+    m_mipLevels = description.mipLevels;
+}
 } // Recluse

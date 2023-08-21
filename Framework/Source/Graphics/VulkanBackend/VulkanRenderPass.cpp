@@ -290,19 +290,23 @@ VulkanRenderPass makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, Res
     for (U32 i = 0; i < numRenderTargets; ++i)
     {
         VulkanResourceView* pView = ResourceViews::obtainResourceView(ppRenderTargetViews[i]);
+        R_ASSERT(!pView->getResource()->isBuffer());
+        VulkanImage* pImage = pView->getResource()->castTo<VulkanImage>();
         ids[count++]    = pView->getDescriptionId();
-        targetWidth     = Math::maximum(targetWidth, pView->getResource()->getDesc().width);
-        targetHeight    = Math::maximum(targetHeight, pView->getResource()->getDesc().height);
-        targetLayers    = Math::maximum(targetLayers, pView->getResource()->getDesc().depthOrArraySize);
+        targetWidth     = Math::maximum(targetWidth, pImage->getWidth());
+        targetHeight    = Math::maximum(targetHeight, pImage->getHeight());
+        targetLayers    = Math::maximum(targetLayers, pImage->getDepthOrArraySize());
     }
 
     if (pDepthStencil)
     {
         VulkanResourceView* pView = ResourceViews::obtainResourceView(pDepthStencil);
+        R_ASSERT(!pView->getResource()->isBuffer());
+        VulkanImage* pImage = pView->getResource()->castTo<VulkanImage>();
         ids[count++]    = pView->getDescriptionId();
-        targetWidth     = Math::maximum(targetWidth, pView->getResource()->getDesc().width);
-        targetHeight    = Math::maximum(targetHeight, pView->getResource()->getDesc().height);
-        targetLayers    = Math::maximum(targetLayers, pView->getResource()->getDesc().depthOrArraySize);
+        targetWidth     = Math::maximum(targetWidth, pImage->getWidth());
+        targetHeight    = Math::maximum(targetHeight, pImage->getHeight());
+        targetLayers    = Math::maximum(targetLayers, pImage->getDepthOrArraySize());
     }
 
     // TODO(Garcia): We need to find a more general way to identify renderpasses,

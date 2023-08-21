@@ -307,7 +307,8 @@ void VulkanSwapchain::buildFrameResources(ResourceFormat resourceFormat)
         desc.samples        = 1;
         desc.depthOrArraySize    = 1;
 
-        m_frameImages[i] = new VulkanImage(desc, frame, VK_IMAGE_LAYOUT_UNDEFINED);
+        m_frameImages[i] = new VulkanImage(frame, VK_IMAGE_LAYOUT_UNDEFINED);
+        m_frameImages[i]->initializeMetadata(desc);
         m_frameImages[i]->generateId();
         m_frameImages[i]->setDevice(m_pDevice);
     }

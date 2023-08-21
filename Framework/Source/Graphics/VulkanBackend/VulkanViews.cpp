@@ -172,7 +172,7 @@ ResultCode VulkanImageView::onInitialize(VulkanDevice* pDevice, VulkanResource* 
     m_subresourceRange = info.subresourceRange;
 
     const Bool supportsDebugMarking = pDevice->getAdapter()->getInstance()->supportsDebugMarking();
-    const char* debugName           = pResource->getDesc().name;
+    const char* debugName           = "VulkanView";
     if (supportsDebugMarking && debugName)
     {
         VkDebugUtilsObjectNameInfoEXT nameInfo = { };

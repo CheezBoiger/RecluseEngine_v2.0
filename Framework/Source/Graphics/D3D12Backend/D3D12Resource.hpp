@@ -16,8 +16,8 @@ public:
 
     GraphicsAPI getApi() const { return GraphicsApi_Direct3D12; }
     
-    D3D12Resource(GraphicsResourceDescription& desc, D3D12Device* pDevice = nullptr, ID3D12Resource* pResource = nullptr, ResourceState initState = ResourceState_Common)
-        : GraphicsResource(desc)
+    D3D12Resource(D3D12Device* pDevice = nullptr, ID3D12Resource* pResource = nullptr, ResourceState initState = ResourceState_Common)
+        : GraphicsResource()
         , m_memObj({})
         , m_isCommitted(false)
         , m_pDevice(pDevice)

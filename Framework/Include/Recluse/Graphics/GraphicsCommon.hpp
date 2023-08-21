@@ -61,9 +61,13 @@ enum ResourceViewDimension
 
 enum ResourceMemoryUsage 
 {
+    // Cpu/host usage mainly. Host write access is fastest, but device read access will be slower. Best for write-once on cpu, read-once on gpu.
     ResourceMemoryUsage_CpuOnly,
+    // Gpu/Device only memory usage. Gpu read/writes are fastest, but cpu does not have read/write access. Best if resources are not needing to be updated by host.
     ResourceMemoryUsage_GpuOnly,
+    // Cpu to Gpu memory usage. Optimized for dynamic writes into buffers and textures from cpu to gpu.
     ResourceMemoryUsage_CpuToGpu,
+    // Gpu to Cpu memory usage. Optimized for writing Gpu data back to allow cpu read access. Is usually done in a smaller region of memory, so don't rely much!
     ResourceMemoryUsage_GpuToCpu,
     ResourceMemoryUsage_Count = (ResourceMemoryUsage_GpuToCpu + 1)
 };

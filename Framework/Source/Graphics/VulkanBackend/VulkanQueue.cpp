@@ -102,11 +102,12 @@ ErrType VulkanQueue::submit(const QueueSubmit* payload)
 
 void VulkanQueue::generateCopyResource(VkCommandBuffer cmdBuffer, GraphicsResource* dst, GraphicsResource* src)
 {
-    const GraphicsResourceDescription& dstDesc = dst->getDesc();
-    const GraphicsResourceDescription& srcDesc = src->getDesc();
 
-    ResourceDimension dstDim = dstDesc.dimension;
-    ResourceDimension srcDim = srcDesc.dimension;
+    ResourceDimension dstDim = dst->castTo<VulkanResource>()->getDimension();
+    ResourceDimension srcDim = src->castTo<VulkanResource>()->getDimension();
+    
+    R_ASSERT_FORMAT(dst->isInResourceState(ResourceState_CopyDestination), "Destination resource not in Copy Destination state!");
+    R_ASSERT_FORMAT(src->isInResourceState(ResourceState_CopySource), "Source resource not in Copy Source State!");
 
     if (dstDim == ResourceDimension_Buffer) 
     { 
@@ -116,7 +117,7 @@ void VulkanQueue::generateCopyResource(VkCommandBuffer cmdBuffer, GraphicsResour
         {
             VulkanBuffer* srcBuffer = static_cast<VulkanBuffer*>(src);
             VkBufferCopy region     = { };
-            region.size             = srcDesc.width;
+            region.size             = srcBuffer->getBufferSizeBytes();
             region.dstOffset        = 0;
             region.srcOffset        = 0;
             vkCmdCopyBuffer(cmdBuffer, srcBuffer->get(), dstBuffer->get(), 1, &region);
@@ -131,9 +132,9 @@ void VulkanQueue::generateCopyResource(VkCommandBuffer cmdBuffer, GraphicsResour
             region.imageSubresource.baseArrayLayer  = sub.baseArrayLayer;
             region.imageSubresource.layerCount      = sub.layerCount;
             region.imageSubresource.mipLevel        = sub.baseMipLevel;
-            region.imageExtent.width                = dstDesc.width;
-            region.imageExtent.height               = dstDesc.height;
-            region.imageExtent.depth                = dstDesc.depthOrArraySize;
+            region.imageExtent.width                = srcImage->getWidth();
+            region.imageExtent.height               = srcImage->getHeight();
+            region.imageExtent.depth                = srcImage->getDepthOrArraySize();
             region.imageOffset.x                    = 0;
             region.imageOffset.y                    = 0;
             region.imageOffset.z                    = 0;
@@ -166,9 +167,9 @@ void VulkanQueue::generateCopyResource(VkCommandBuffer cmdBuffer, GraphicsResour
             region.imageSubresource.baseArrayLayer  = sub.baseArrayLayer;
             region.imageSubresource.layerCount      = sub.layerCount;
             region.imageSubresource.mipLevel        = sub.baseMipLevel;
-            region.imageExtent.width                = dstDesc.width;
-            region.imageExtent.height               = dstDesc.height;
-            region.imageExtent.depth                = dstDesc.depthOrArraySize;
+            region.imageExtent.width                = dstImage->getWidth();
+            region.imageExtent.height               = dstImage->getHeight();
+            region.imageExtent.depth                = dstImage->getDepthOrArraySize();
             region.imageOffset.x                    = 0;
             region.imageOffset.y                    = 0;
             region.imageOffset.z                    = 0;
@@ -192,9 +193,9 @@ void VulkanQueue::generateCopyResource(VkCommandBuffer cmdBuffer, GraphicsResour
             region.srcOffset.x                      = 0;
             region.srcOffset.y                      = 0;
             region.srcOffset.z                      = 0;
-            region.extent.depth                     = Math::minimum(srcDesc.depthOrArraySize, dstDesc.depthOrArraySize);
-            region.extent.width                     = Math::minimum(srcDesc.width, dstDesc.width);
-            region.extent.height                    = Math::minimum(srcDesc.height, dstDesc.height);
+            region.extent.depth                     = Math::minimum(srcImage->getDepthOrArraySize(), dstImage->getDepthOrArraySize());
+            region.extent.width                     = Math::minimum(srcImage->getWidth(), dstImage->getWidth());
+            region.extent.height                    = Math::minimum(srcImage->getHeight(), dstImage->getHeight());
             region.dstSubresource.aspectMask        = dstRange.aspectMask;
             region.dstSubresource.baseArrayLayer    = dstRange.baseArrayLayer;
             region.dstSubresource.layerCount        = dstRange.layerCount;
@@ -292,6 +293,8 @@ ResultCode VulkanQueue::copyBufferRegions
 {
     VkBuffer dstBuf             = static_cast<VulkanBuffer*>(dst)->get();
     VkBuffer srcBuf             = static_cast<VulkanBuffer*>(src)->get();
+    R_ASSERT_FORMAT(dst->isInResourceState(ResourceState_CopyDestination), "Resource is not in Copy Destination state prior to a copy!");
+    R_ASSERT_FORMAT(src->isInResourceState(ResourceState_CopySource), "Resource is not in a Copy Source state prior to a copy!");
     VkDevice device             = m_pDevice->get();
     VkCommandBuffer cmdBuffer   = beginOneTimeCommandBuffer();
 

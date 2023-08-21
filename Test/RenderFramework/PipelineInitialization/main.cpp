@@ -230,7 +230,7 @@ int main(int c, char* argv[])
         desc.dimension = ResourceDimension_Buffer;
         desc.memoryUsage = ResourceMemoryUsage_GpuOnly;
         desc.depthOrArraySize = 1;
-        pDevice->createResource(&pVertexBuffer, desc, ResourceState_VertexBuffer);
+        pDevice->createResource(&pVertexBuffer, desc, ResourceState_CopyDestination);
     
         desc.memoryUsage = ResourceMemoryUsage_CpuOnly;
         desc.usage = ResourceUsage_TransferSource;
@@ -343,6 +343,7 @@ int main(int c, char* argv[])
             F32 clear[4] = { 0, 0, 0, 1 };
             Rect rect; rect.x = 0; rect.y = 0; rect.width = pSwapchain->getDesc().renderWidth; rect.height = pSwapchain->getDesc().renderHeight;
             context->clearRenderTarget(0, clear, rect);
+            context->transition(pVertexBuffer, ResourceState_VertexBuffer);
             context->bindVertexBuffers(1, &pVertexBuffer, &offset);
 
             KeyboardListener listener = { };

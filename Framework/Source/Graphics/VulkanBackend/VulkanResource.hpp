@@ -17,8 +17,8 @@ class VulkanResource : public GraphicsResource, public VulkanGraphicsObject
 {
 public:
 
-    VulkanResource(const GraphicsResourceDescription& desc, Bool isBuffer, VkAccessFlags currentAccessMask = VK_ACCESS_MEMORY_READ_BIT)
-        : GraphicsResource(desc) 
+    VulkanResource(Bool isBuffer, VkAccessFlags currentAccessMask = VK_ACCESS_MEMORY_READ_BIT)
+        : GraphicsResource() 
         , m_memory({})
         , m_isBuffer(isBuffer)
         , m_currentAccessMask(currentAccessMask)
@@ -57,11 +57,14 @@ public:
 
     ResourceViewId      asView(const ResourceViewDescription& description) override;
     void                setDevice(VulkanDevice* pDevice) { m_pDevice = pDevice; }
+    ResourceMemoryUsage getMemoryUsage() const { return m_memoryUsage; }
+    ResourceDimension   getDimension() const { return m_dimension; }
 
     //GraphicsAPI getApi() const override { return VulkanGraphicsObject::getApi(); }
 protected:
     void                setCurrentAccessMask(VkAccessFlags flags) { m_currentAccessMask = flags; }
     VkAccessFlags       getCurrentAccessMask() const { return m_currentAccessMask; }
+    virtual void        performInitialLayout(VulkanDevice* pDevice, ResourceState initState) { }
 
 private:
     static ResourceId   kResourceCreationCounter;
@@ -81,7 +84,7 @@ private:
     virtual ResultCode  onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryRequirements& memRequirements) 
         { return RecluseResult_NoImpl; }
     
-    virtual ResultCode  onBind(VulkanDevice* pDevice) { return RecluseResult_NoImpl; }
+    virtual ResultCode  onBind(VulkanDevice* pDevice, const GraphicsResourceDescription& description) { return RecluseResult_NoImpl; }
     virtual ResultCode  onRelease(VulkanDevice* pDevice) { return RecluseResult_NoImpl; }
 
     VulkanMemory        m_memory;
@@ -90,6 +93,8 @@ private:
     VkDeviceSize        m_alignmentRequirement;
     Bool                m_isBuffer;
     ResourceId          m_id;
+    ResourceMemoryUsage m_memoryUsage;
+    ResourceDimension   m_dimension;
 
     std::map<Hash64, ResourceViewId> m_resourceIds; 
 };
@@ -100,18 +105,22 @@ class VulkanBuffer : public VulkanResource
 public:
 
     VulkanBuffer(const GraphicsResourceDescription& desc) 
-        : VulkanResource(desc, true)
-        , m_buffer(VK_NULL_HANDLE) { }
+        : VulkanResource(true)
+        , m_buffer(VK_NULL_HANDLE)
+        , m_bufferSizeBytes(0u) { }
 
     VkBuffer                get() const { return m_buffer; }
     VkBufferMemoryBarrier   transition(ResourceState dstState);
+    U32                     getBufferSizeBytes() const { return m_bufferSizeBytes; }
 
 private:
+    void            performInitialLayout(VulkanDevice* pDevice, ResourceState initState) override;
     ResultCode      onCreate(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState) override; 
     ResultCode      onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryRequirements& memRequirements) override;
-    ResultCode      onBind(VulkanDevice* pDevice) override;
+    ResultCode      onBind(VulkanDevice* pDevice, const GraphicsResourceDescription& description) override;
     ResultCode      onRelease(VulkanDevice* pDevice) override;    
     VkBuffer        m_buffer;
+    U32             m_bufferSizeBytes;
 };
 
 
@@ -119,10 +128,9 @@ class VulkanImage : public VulkanResource
 {
 public:
 
-    VulkanImage(const GraphicsResourceDescription& desc, 
-            VkImage image = VK_NULL_HANDLE, 
+    VulkanImage(VkImage image = VK_NULL_HANDLE, 
             VkImageLayout currentLayout = VK_IMAGE_LAYOUT_UNDEFINED)
-        : VulkanResource(desc, false)
+        : VulkanResource(false)
         , m_currentLayout(currentLayout)
         , m_image(image) { }
 
@@ -132,26 +140,35 @@ public:
 
     // Get the current layout of this image.
     //
-    VkImageLayout       getCurrentLayout() const { return m_currentLayout; }
+    VkImageLayout           getCurrentLayout() const { return m_currentLayout; }
 
-    void                overrideCurrentLayout(VkImageLayout layout) { m_currentLayout = layout; }
+    void                    overrideCurrentLayout(VkImageLayout layout) { m_currentLayout = layout; }
+    void                    initializeMetadata(const GraphicsResourceDescription& description);
 
     // Create memory barrier object to transition the layout of this image to the 
     // specified destination layout.
     // 
     VkImageMemoryBarrier    transition(ResourceState dstState, VkImageSubresourceRange& range);
     VkImageSubresourceRange makeSubresourceRange(ResourceState dstState);
+    U32                     getMipLevels() const { return m_mipLevels; }
+    U32                     getDepthOrArraySize() const { return m_depthOrArraySize; }
+    U32                     getWidth() const { return m_width; }
+    U32                     getHeight() const { return m_height; }
 
 private:
-    void                    performInitialLayout(VulkanDevice* pDevice, ResourceState initState);
+    void                    performInitialLayout(VulkanDevice* pDevice, ResourceState initState) override;
     ResultCode              onCreate(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState) override; 
     ResultCode              onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryRequirements& memRequirements) override;
-    ResultCode              onBind(VulkanDevice* pDevice) override;
+    ResultCode              onBind(VulkanDevice* pDevice, const GraphicsResourceDescription& description) override;
     ResultCode              onRelease(VulkanDevice* pDevice) override;   
     VkFormatFeatureFlags    loadFormatFeatures(VkImageCreateInfo& info, ResourceUsageFlags usage) const;
 
     VkImage             m_image;
     VkImageLayout       m_currentLayout;
+    U16                 m_depthOrArraySize;
+    U16                 m_mipLevels;
+    U32                 m_width;
+    U32                 m_height;
 };
 
 

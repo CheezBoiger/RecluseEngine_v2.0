@@ -224,6 +224,7 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
         // null view means not occupied!
         if (!pView)
             continue;
+        R_ASSERT_FORMAT(pView->getResource()->isInResourceState(ResourceState_ShaderResource), "Resource must be in shader resoure state!");
 
         const ResourceViewDescription& description  = pView->getDesc();
         
@@ -237,7 +238,7 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
         {
             VulkanResource* pResource   = pView->getResource()->castTo<VulkanResource>();
             VulkanBuffer* buffer        = pResource->castTo<VulkanBuffer>();
-            VkDescriptorBufferInfo info = makeDescriptorBufferInfo(buffer, 0, buffer->getDesc().width);
+            VkDescriptorBufferInfo info = makeDescriptorBufferInfo(buffer, 0, buffer->getBufferSizeBytes());
             bufferInfo.push_back(info);
             write.pBufferInfo = &bufferInfo.back();
         }
@@ -258,6 +259,7 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
 
         if (!pView)
             continue;
+        R_ASSERT_FORMAT(pView->getResource()->isInResourceState(ResourceState_UnorderedAccess), "Resource must be in unordered access state!");
 
         const ResourceViewDescription& description  = pView->getDesc();
 
@@ -271,7 +273,7 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
         { 
             VulkanResource* pResource       = pView->getResource()->castTo<VulkanResource>();
             VulkanBuffer* buffer            = pResource->castTo<VulkanBuffer>();
-            VkDescriptorBufferInfo info     = makeDescriptorBufferInfo(buffer, 0, buffer->getDesc().width);
+            VkDescriptorBufferInfo info     = makeDescriptorBufferInfo(buffer, 0, buffer->getBufferSizeBytes());
             bufferInfo.push_back(info);
             write.pBufferInfo               = &bufferInfo.back();
         }
@@ -294,6 +296,7 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
         // No constant buffer means the slot is unoccupied.
         if (!pBuffer)
             continue;
+        R_ASSERT_FORMAT(pBuffer->isInResourceState(ResourceState_ConstantBuffer), "Resource must be in constant buffer state!");
 
         VkDeviceSize minUBOAlignOffsetBytes = VulkanAdapter::obtainMinUniformBufferOffsetAlignment(pContext->getDevice()->castTo<VulkanDevice>());
         VkDeviceSize alignedMemoryOffset    = align(structure.ppConstantBuffers[i].offset, minUBOAlignOffsetBytes);

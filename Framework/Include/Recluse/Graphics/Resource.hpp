@@ -19,12 +19,10 @@ struct MapRange
 class R_PUBLIC_API GraphicsResource : public virtual IGraphicsObject, public ICastableObject
 {
 public:
-    GraphicsResource(const GraphicsResourceDescription& desc)
-        : m_desc(desc) { }
+    GraphicsResource()
+        { }
 
     virtual                             ~GraphicsResource() { }
-
-    const GraphicsResourceDescription& getDesc() const { return m_desc; }
 
     // Map the resource based on range. If NULL range, maps the entire resource.
     virtual ResultCode                  map(void** pMappedMemory, MapRange* pReadRange) { return RecluseResult_NoImpl; }
@@ -43,7 +41,6 @@ protected:
     void                                setCurrentResourceState(ResourceState state) { m_currentState = state; }
 
 private:
-    GraphicsResourceDescription         m_desc;
     ResourceState                       m_currentState;
     ResourceId                          m_id;
 };

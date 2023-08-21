@@ -52,12 +52,11 @@ void destroy(GraphicsDevice* pDevice)
 void generate(GraphicsContext* context, Engine::RenderCommandList* pMeshCommandList, U64* keys, U64 sz)
 {
     Engine::RenderCommand** pRenderCommands     = pMeshCommandList->getRenderCommands();
-    const GraphicsResourceDescription& depth    = pSceneDepth->getDesc();
     Rect depthRect                              = { };
     depthRect.x         = depthRect.y           = 0.f;
 
-    depthRect.width     = depth.width;
-    depthRect.height    = depth.height;
+    depthRect.width     = context->getDevice()->getSwapchain()->getDesc().renderWidth;
+    depthRect.height    = context->getDevice()->getSwapchain()->getDesc().renderHeight;
 
     // Set the PreZ pass.
     context->pushState();
