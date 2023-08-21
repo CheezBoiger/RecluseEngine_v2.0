@@ -5,6 +5,8 @@
 #include "Recluse/Memory/MemoryCommon.hpp"
 #include "Recluse/Math/MathCommons.hpp"
 
+#include "Recluse/Messaging.hpp"
+
 namespace Recluse {
 
 

@@ -20,7 +20,7 @@ class D3D12ResourcePagedAllocator
 public:
     D3D12ResourcePagedAllocator();
 
-    ResultCode initialize(ID3D12Device* pDevice, Allocator* pAllocator, U64 totalSizeBytes, ResourceMemoryUsage usage);
+    ResultCode initialize(ID3D12Device* pDevice, Allocator* pAllocator, U64 totalSizeBytes, ResourceMemoryUsage usage, U32 allocatorIndex);
     ResultCode release();
 
     ResultCode allocate
@@ -38,6 +38,7 @@ public:
 private:
     
     D3D12MemoryPool                 m_pool;
+    U32                             m_allocatorIndex;
     SmartPtr<Allocator>             m_pAllocator;
     CriticalSection                 m_allocateCs;
     std::vector<D3D12MemoryObject*> m_garbageResources;

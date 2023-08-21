@@ -13,7 +13,7 @@ class D3D12Queue;
 
 struct FrameResource {
     D3D12Resource*              frameResource;
-    BufferResources             bufferResources;
+    U64                         fenceValue;
 };
 
 class D3D12Swapchain : public GraphicsSwapchain 
@@ -37,10 +37,15 @@ public:
     GraphicsResource*       getFrame(U32 idx) override;
 
     ResultCode              submitPrimaryCommandList(ID3D12GraphicsCommandList* pCommandList);
+    // Run the basic frame sync.
     ResultCode              prepareNextFrame();
+    // Override the frame fence sync with your own buffer value sync. This could help against buffer resources 
+    // needing to be lower than the frame sync.
+    ResultCode              prepareNextFrameOverride(U64 currentBufferFenceValue, U64& nextBufferFenceValue);
 
-    U64                     getCurrentFenceValue() { return m_frameResources[m_currentFrameIndex].bufferResources.fenceValue; }
+    U64                     getCurrentFenceValue() { return m_frameResources[m_currentFrameIndex].fenceValue; }
     U32                     getCurrentFrameIndex() override { return m_currentFrameIndex; }
+    U64                     getCurrentCompletedValue();
 
 private:
 

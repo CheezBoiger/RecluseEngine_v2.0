@@ -177,11 +177,6 @@ public:
     D3D12ResourceAllocationManager*     resourceAllocationManager() { return &m_resourceAllocationManager; }
 
 private:
-
-    void                                initializeAllocators();
-    void                                destroyAllocators();
-    void                                allocateMemoryPool(D3D12MemoryPool* pPool, ResourceMemoryUsage memUsage);
-
     // Resource pools.
     D3D12ResourceAllocationManager      m_resourceAllocationManager;
     ID3D12Device*                       m_device;

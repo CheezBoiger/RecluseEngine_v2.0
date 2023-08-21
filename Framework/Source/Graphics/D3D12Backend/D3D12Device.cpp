@@ -8,6 +8,7 @@
 #include "D3D12ResourceView.hpp"
 #include "D3D12Allocator.hpp"
 #include "D3D12RenderPass.hpp"
+#include "D3D12Queue.hpp"
 #include "Recluse/Types.hpp"
 #include "Recluse/Messaging.hpp"
 
@@ -61,12 +62,23 @@ ResultCode D3D12Context::wait()
 
 void D3D12Context::begin()
 {
-    
-    incrementBufferIndex();
-
     D3D12Swapchain* swapchain               = m_pDevice->getSwapchain()->castTo<D3D12Swapchain>();
-    swapchain->prepareNextFrame();
 
+    // TODO: We will want to fix this garbage if statement. If the buffer count is less than the frame count, then
+    //       we need to rely on waiting for the buffer fencevalue to finish, instead of the frame fence (resources rely on buffer count.)
+    //       If the frame count is less than the buffer count, that is ok, we resort to using the frame fence values instead.
+    //       There has to be a cleaner solution, rather than simply using the if statement to determine which is the best strategy.
+    if (swapchain->getDesc().desiredFrames <= m_bufferCount)
+    {
+        swapchain->prepareNextFrame();    
+        incrementBufferIndex();
+    }
+    else
+    {
+        const U64 currentEventValue = m_bufferResources[getCurrentBufferIndex()].fenceValue;
+        incrementBufferIndex();
+        swapchain->prepareNextFrameOverride(currentEventValue, m_bufferResources[getCurrentBufferIndex()].fenceValue);
+    }
     resetCurrentResources();
     m_pPrimaryCommandList->use(currentBufferIndex());
     m_pPrimaryCommandList->reset();
@@ -337,12 +349,6 @@ ResultCode D3D12Device::destroyCommandQueue(D3D12Queue* pQueue)
 }
 
 
-void D3D12Device::allocateMemoryPool(D3D12MemoryPool* pPool, ResourceMemoryUsage memUsage)
-{
-
-}
-
-
 ResultCode D3D12Device::reserveMemory(const MemoryReserveDescription& desc)
 {
     return m_resourceAllocationManager.reserveMemory(desc);
@@ -373,7 +379,7 @@ void D3D12Context::initializeBufferResources(U32 buffering)
     m_bufferResources.resize(buffering);
 
     R_DEBUG(R_CHANNEL_D3D12, "Initializing buffer resources.");
-
+    D3D12Swapchain* swapchain = m_pDevice->getSwapchain()->castTo<D3D12Swapchain>();
     for (U32 i = 0; i < m_bufferResources.size(); ++i) 
     {    
         result = m_pDevice->get()->CreateCommandAllocator
@@ -384,8 +390,9 @@ void D3D12Context::initializeBufferResources(U32 buffering)
                                 );
 
         R_ASSERT(result == S_OK);
-        m_bufferResources[i].fenceValue = 0;
+        m_bufferResources[i].fenceValue = swapchain->getCurrentCompletedValue();
     }
+    m_bufferResources[m_currentBufferIndex].fenceValue = m_pDevice->getBackbufferQueue()->waitForGpu(m_bufferResources[m_currentBufferIndex].fenceValue);
 }
 
 

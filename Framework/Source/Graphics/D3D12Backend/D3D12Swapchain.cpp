@@ -91,8 +91,7 @@ ResultCode D3D12Swapchain::initialize(D3D12Device* pDevice)
 
     m_currentFrameIndex = m_pSwapchain->GetCurrentBackBufferIndex();
 
-    BufferResources& bufResource = m_frameResources[m_currentFrameIndex].bufferResources;
-    bufResource.fenceValue = m_pBackbufferQueue->waitForGpu(bufResource.fenceValue);
+    m_frameResources[m_currentFrameIndex].fenceValue = m_pBackbufferQueue->waitForGpu(m_frameResources[m_currentFrameIndex].fenceValue);
     
     return RecluseResult_Ok;
 }
@@ -177,7 +176,7 @@ ResultCode D3D12Swapchain::initializeFrameResources()
         R_ASSERT(result);
         m_frameResources[i].frameResource = new D3D12Resource(desc, m_pDevice, pFrameResource, ResourceState_Present);
         m_frameResources[i].frameResource->generateId();
-        m_frameResources[i].bufferResources.fenceValue = 0;
+        m_frameResources[i].fenceValue = 0;
     }
 
     m_currentFrameIndex = m_pSwapchain->GetCurrentBackBufferIndex();
@@ -223,19 +222,47 @@ ResultCode D3D12Swapchain::prepareNextFrame()
     ID3D12Fence* fence = m_pBackbufferQueue->getFence();
     HANDLE e = m_pBackbufferQueue->getEvent();
     // Set the value for the fence on GPU side, letting us know when our commands have finished.
-    const U64 currentFenceValue = m_frameResources[m_currentFrameIndex].bufferResources.fenceValue;
+    const U64 currentFenceValue = m_frameResources[m_currentFrameIndex].fenceValue;
     m_pBackbufferQueue->get()->Signal(fence, currentFenceValue);
 
     m_currentFrameIndex = m_pSwapchain->GetCurrentBackBufferIndex();
-
-    BufferResources* newResources = &m_frameResources[m_currentFrameIndex].bufferResources; 
+ 
+    U64& newFrameFenceValue = m_frameResources[m_currentFrameIndex].fenceValue;
     const U64 completedValue = fence->GetCompletedValue();
-    if (completedValue < newResources->fenceValue)
+    if (completedValue < newFrameFenceValue)
     {
-        fence->SetEventOnCompletion(newResources->fenceValue, e);
+        fence->SetEventOnCompletion(newFrameFenceValue, e);
         WaitForSingleObject(e, INFINITE);
     }
-    newResources->fenceValue = currentFenceValue + 1;
+    newFrameFenceValue = currentFenceValue + 1;
     return RecluseResult_Ok;
+}
+
+
+ResultCode D3D12Swapchain::prepareNextFrameOverride(U64 currentBufferFenceValue, U64& nextBufferFenceValue)
+{
+    ID3D12Fence* fence = m_pBackbufferQueue->getFence();
+    HANDLE e = m_pBackbufferQueue->getEvent();
+    const U64 currentFenceValue = currentBufferFenceValue;
+    m_pBackbufferQueue->get()->Signal(fence, currentFenceValue);
+
+    // We still need to query for our next frame, as it is essential, but overall we wait by buffer instead of frame index.
+    m_currentFrameIndex = m_pSwapchain->GetCurrentBackBufferIndex();
+ 
+    U64& newFrameFenceValue = nextBufferFenceValue;
+    const U64 completedValue = fence->GetCompletedValue();
+    if (completedValue < newFrameFenceValue)
+    {
+        fence->SetEventOnCompletion(newFrameFenceValue, e);
+        WaitForSingleObject(e, INFINITE);
+    }
+    newFrameFenceValue = currentFenceValue + 1;
+    return RecluseResult_Ok;
+}
+
+
+U64 D3D12Swapchain::getCurrentCompletedValue()
+{
+    return m_pBackbufferQueue->getFence()->GetCompletedValue(); 
 }
 } // Recluse

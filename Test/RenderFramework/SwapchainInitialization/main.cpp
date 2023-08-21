@@ -71,7 +71,7 @@ int main(int c, char* argv[])
 
     }
     GraphicsContext* pContext = pDevice->createContext();
-    pContext->setBuffers(3);
+    pContext->setBuffers(2);
     pWindow->setToCenter();
 
     pSwapchain = pDevice->getSwapchain();

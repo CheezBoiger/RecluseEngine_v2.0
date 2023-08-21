@@ -2,6 +2,7 @@
 #include "D3D12Allocator.hpp"
 #include "D3D12Commons.hpp"
 #include "Recluse/Memory/MemoryCommon.hpp"
+#include "Recluse/Memory/LinearAllocator.hpp"
 
 #include "Recluse/Messaging.hpp"
 
@@ -17,7 +18,7 @@ D3D12ResourcePagedAllocator::D3D12ResourcePagedAllocator()
 }
 
 
-ResultCode D3D12ResourcePagedAllocator::initialize(ID3D12Device* pDevice, Allocator* pAllocator, U64 totalSizeBytes, ResourceMemoryUsage usage)
+ResultCode D3D12ResourcePagedAllocator::initialize(ID3D12Device* pDevice, Allocator* pAllocator, U64 totalSizeBytes, ResourceMemoryUsage usage, U32 allocatorIndex)
 {  
     R_ASSERT(pAllocator         != NULL);
     R_ASSERT(totalSizeBytes     != 0u);
@@ -64,6 +65,7 @@ ResultCode D3D12ResourcePagedAllocator::initialize(ID3D12Device* pDevice, Alloca
     }
 
     m_pool.sizeInBytes = totalSizeBytes;
+    m_allocatorIndex = allocatorIndex;
     m_pAllocator = makeSmartPtr(pAllocator);
     m_pAllocator->initialize(0ull, totalSizeBytes);
     m_allocateCs.initialize();
@@ -113,8 +115,9 @@ ResultCode D3D12ResourcePagedAllocator::allocate
         } 
         else 
         {
-            pOut->basePtr       = address;
-            pOut->sizeInBytes   = resourceAllocationInfo.SizeInBytes;
+            pOut->basePtr           = address;
+            pOut->sizeInBytes       = resourceAllocationInfo.SizeInBytes;
+            pOut->allocatorIndex    = m_allocatorIndex;
         }
     }
 
@@ -159,14 +162,38 @@ ResultCode D3D12ResourceAllocationManager::initialize(ID3D12Device* pDevice)
 
 ResultCode D3D12ResourceAllocationManager::allocate(D3D12MemoryObject* pOut, const D3D12_RESOURCE_DESC& desc, ResourceMemoryUsage usage, D3D12_RESOURCE_STATES initialState)
 {
+    std::vector<D3D12ResourcePagedAllocator*>& pagedAllocators = m_pagedAllocators[usage];
+    if (pagedAllocators.empty())
+    {
+        pagedAllocators.push_back(new D3D12ResourcePagedAllocator());
+        pagedAllocators.back()->initialize(m_pDevice, new LinearAllocator(), kAllocationPageSizeBytes, usage, pagedAllocators.size() - 1u); 
+    }
     
-    return RecluseResult_NoImpl;
+    D3D12ResourcePagedAllocator* pagedAllocator = pagedAllocators.back();
+    ResultCode result = pagedAllocator->allocate(m_pDevice, pOut, desc, initialState);
+    if (result == RecluseResult_OutOfMemory)
+    {
+        pagedAllocators.push_back(new D3D12ResourcePagedAllocator());
+        pagedAllocators.back()->initialize(m_pDevice, new LinearAllocator(), kAllocationPageSizeBytes, usage, pagedAllocators.size() - 1u);
+        result = pagedAllocators.back()->allocate(m_pDevice, pOut, desc, initialState);
+    }
+    if (result != RecluseResult_Ok)
+    {
+        R_ERROR(R_CHANNEL_D3D12, "Failed to allocate!!");
+    }
+    return result;
 }
 
 
 ResultCode D3D12ResourceAllocationManager::free(D3D12MemoryObject* pObject)
 {
-    return RecluseResult_NoImpl;
+    if (!pObject)
+    {
+        return RecluseResult_NullPtrExcept;
+    }
+    std::vector<D3D12ResourcePagedAllocator*>& pagedAllocators = m_pagedAllocators[pObject->usage];
+    D3D12ResourcePagedAllocator* pagedAllocator = pagedAllocators[pObject->allocatorIndex];
+    return pagedAllocator->free(pObject);
 }
 
 
