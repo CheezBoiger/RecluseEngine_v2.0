@@ -221,7 +221,11 @@ struct Viewport
     F32 maxDepth;
 };
 
-
+// Rectangle structure.
+// x is the offset of the rectangle in x position
+// y is the offset of the rectangle in y position
+// width is the overall width extent of the rectangle.
+// height is the overall height extent of the rectangle.
 struct Rect 
 {
     F32 x, 

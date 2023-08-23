@@ -88,7 +88,7 @@ int main(int c, char* argv[])
     pWindow = Window::create(u8"DescriptorSetInitialization", 0, 0, 1024, 1024, ScreenMode_WindowBorderless);
     pWindow->setToCenter();
 
-    pInstance = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
+    pInstance = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
 
     if (!pInstance) {
 
@@ -165,7 +165,7 @@ int main(int c, char* argv[])
         desc.mipLevels = 1;
         desc.memoryUsage = ResourceMemoryUsage_CpuOnly;
         desc.samples = 1;
-        result = pDevice->createResource(&pData, desc, ResourceState_ConstantBuffer);
+        //result = pDevice->createResource(&pData, desc, ResourceState_ConstantBuffer);
     }
 
     if (result != RecluseResult_Ok) {
@@ -174,7 +174,7 @@ int main(int c, char* argv[])
     
     }
 
-    updateResource(pData);
+    //updateResource(pData);
 
     //{
     //    DescriptorBindDesc bindLayout = { };
@@ -336,7 +336,7 @@ int main(int c, char* argv[])
     R_TRACE("TEST", "Exited game loop...");
 
     pContext->wait();    
-    pDevice->destroyResource(pData); 
+    //pDevice->destroyResource(pData); 
     pDevice->releaseContext(context);
     pAdapter->destroyDevice(pDevice);
     Window::destroy(pWindow);

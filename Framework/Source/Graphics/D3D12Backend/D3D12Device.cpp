@@ -170,9 +170,9 @@ void D3D12Context::clearDepthStencil(ClearFlags clearFlags, F32 clearDepth, U8 c
 
     D3D12_RECT nativeRect   = { };
     nativeRect.left         = rect.x;
-    nativeRect.right        = rect.width;
+    nativeRect.right        = rect.x + rect.width;
     nativeRect.top          = rect.y;
-    nativeRect.bottom       = rect.height;
+    nativeRect.bottom       = rect.y + rect.height;
     
     pList->ClearDepthStencilView(dsvHandle, flags, clearDepth, clearStencil, 1, &nativeRect);
 }
@@ -189,9 +189,9 @@ void D3D12Context::clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect)
     D3D12_RECT d3d12Rect = { };
 
     d3d12Rect.left      = rect.x;
-    d3d12Rect.right     = rect.width;
+    d3d12Rect.right     = rect.x + rect.width;
     d3d12Rect.top       = rect.y;
-    d3d12Rect.bottom    = rect.height;
+    d3d12Rect.bottom    = rect.y + rect.height;
 
     clearValue[0] = clearColor[0];
     clearValue[1] = clearColor[1];
