@@ -74,10 +74,13 @@ int main(int c, char* argv[])
     GraphicsResource* pBuffer2 = nullptr;
     
     GraphicsResourceDescription bufferDesc = { };
-    bufferDesc.usage        = ResourceUsage_ConstantBuffer;
-    bufferDesc.dimension    = ResourceDimension_Buffer;
-    bufferDesc.memoryUsage  = ResourceMemoryUsage_GpuOnly;
-    bufferDesc.width        = R_1KB * 1024ull;
+    bufferDesc.usage            = ResourceUsage_ConstantBuffer;
+    bufferDesc.dimension        = ResourceDimension_Buffer;
+    bufferDesc.memoryUsage      = ResourceMemoryUsage_GpuOnly;
+    bufferDesc.width            = R_1KB * 1024ull;
+    bufferDesc.height           = 1;
+    bufferDesc.depthOrArraySize = 1;
+    bufferDesc.mipLevels        = 1;
 
     result = pDevice->createResource(&pBuffer, bufferDesc, ResourceState_ConstantBuffer);
 

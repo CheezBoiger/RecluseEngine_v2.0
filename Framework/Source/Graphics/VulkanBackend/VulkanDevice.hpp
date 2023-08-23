@@ -310,7 +310,7 @@ public:
     ResultCode          releaseContext(GraphicsContext* pContext) override;
 
     ResultCode          destroySwapchain(VulkanSwapchain* pSwapchain);
-    ResultCode          createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc, ResourceState initState) override;
+    ResultCode          createResource(GraphicsResource** ppResource, const GraphicsResourceDescription& pDesc, ResourceState initState) override;
     ResultCode          createSampler(GraphicsSampler** ppSampler, const SamplerDescription& desc) override;
     ResultCode          destroySampler(GraphicsSampler* pSampler) override;
     ResultCode          destroyResource(GraphicsResource* pResource) override;

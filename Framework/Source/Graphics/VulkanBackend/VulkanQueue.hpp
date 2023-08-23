@@ -35,8 +35,6 @@ public:
     void                    destroy();
 
     //ErrType submit(const QueueSubmit* payload);
-
-    void                    setTemporaryCommandPoolUse(VkCommandPool pool) { m_tempCommandPool = pool; }
     ResultCode              copyResource(GraphicsResource* dst, GraphicsResource* src);
     ResultCode              copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, 
                                 const CopyBufferRegion* pRegions, U32 numRegions);
@@ -51,6 +49,10 @@ public:
     // Mainly a quick way to copy buffers and textures.
     VkCommandBuffer         beginOneTimeCommandBuffer();
     ResultCode              endAndSubmitOneTimeCommandBuffer(VkCommandBuffer commandBuffer);
+
+    // Obtain the temporary command pool from this queue, any and all command buffers created by this pool, must be freed prior to 
+    // the release of this queue!
+    VkCommandPool           getTemporaryCommandPool() { return m_tempCommandPool; }
 
 private:
 

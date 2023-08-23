@@ -29,6 +29,13 @@ ResultCode VulkanQueue::initialize(VulkanDevice* device, QueueFamily* pFamily, U
         
     vkCreateFence(m_pDevice->get(), &info, nullptr, &m_fence);
     vkCreateFence(m_pDevice->get(), &info, nullptr, &m_oneTimeOnlyFence);
+
+    VkCommandPoolCreateInfo poolCreateInfo = { };
+    poolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    poolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    poolCreateInfo.queueFamilyIndex = queueFamilyIndex;
+
+    vkCreateCommandPool(device->get(), &poolCreateInfo, nullptr, &m_tempCommandPool);
     
     return RecluseResult_Ok;
 }
@@ -47,6 +54,11 @@ void VulkanQueue::wait()
 
 void VulkanQueue::destroy()
 {
+    if (m_tempCommandPool)
+    {
+        vkDestroyCommandPool(m_pDevice->get(), m_tempCommandPool, nullptr);
+        m_tempCommandPool = VK_NULL_HANDLE;
+    }
     if (m_queue) 
     {
         R_DEBUG(R_CHANNEL_VULKAN, "Destroying vulkan queue handle...");

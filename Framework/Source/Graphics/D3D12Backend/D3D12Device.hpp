@@ -97,9 +97,17 @@ public:
     
 
 private:
+    typedef U32 ContextDirtyFlags;
+    enum ContextDirty
+    {
+        ContextDirty_Clean      = 0,
+    };
+
     struct ContextState
     {
         Pipelines::PipelineStateObject  m_pipelineStateObject;
+        Pipelines::RootSigLayout        m_rootSigLayout;
+        
     };
 
     void                                flushBarrierTransitions();
@@ -116,6 +124,7 @@ private:
     U32                                 m_currentBufferIndex;
     U32                                 m_bufferCount;
     D3D12RenderPass*                    m_pRenderPass;
+    ContextDirtyFlags                   m_dirtyFlags;    
     D3D12PrimaryCommandList*            m_pPrimaryCommandList;
     std::vector<ContextState>           m_contextStates;
     std::vector<D3D12_RESOURCE_BARRIER> m_barrierTransitions;
@@ -153,10 +162,8 @@ public:
 
     // Helper descriptor creators for the device.
     void                                createSampler(const D3D12_SAMPLER_DESC& desc);
-    void                                createRenderTargetView(D3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC& desc, D3D12_CPU_DESCRIPTOR_HANDLE destDescriptorHandle);
-    void                                createDepthStencilView(D3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& desc, D3D12_CPU_DESCRIPTOR_HANDLE destDescriptorHandle);
-    void                                createShaderResourceView(const D3D12_SHADER_RESOURCE_VIEW_DESC& desc);
-    void                                createUnorderedAccessView(const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc);
+    ResultCode                          createResource(GraphicsResource** ppResource, const GraphicsResourceDescription& description, ResourceState initState) override;
+    ResultCode                          destroyResource(GraphicsResource* pResource) override;
 
     D3D12_FEATURE_DATA_FORMAT_SUPPORT   checkFormatSupport(ResourceFormat format);
     DescriptorHeapAllocationManager*    getDescriptorHeapManager() { return &m_descHeapManager; }

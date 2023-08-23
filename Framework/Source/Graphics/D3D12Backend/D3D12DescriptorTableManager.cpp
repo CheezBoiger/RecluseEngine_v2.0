@@ -590,18 +590,4 @@ ResultCode DescriptorHeapAllocationManager::release()
     m_currentHeapIndex = 0;
     return RecluseResult_Ok;
 }
-
-
-namespace Binder {
-
-
-ID3D12RootSignature* makeRootSignature()
-{
-    // D3D12SerializeRootSignature();
-    D3D12_ROOT_SIGNATURE_DESC desc = { };
-    ID3D12GraphicsCommandList* list;
-
-    return nullptr;
-}
-} // Binder
 } // Recluse

@@ -81,13 +81,12 @@ D3D12RenderPass* makeRenderPass(D3D12Device* pDevice, U32 numRtvs, ResourceViewI
     D3D12RenderPass* pass = nullptr;
     ResourceViewId targets[D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT + 1]; // For the dsv if we have one.
     
-    U32 i;
-    for (i = 0; i < numRtvs; ++i)
-        targets[i] = rtvs[i];
+    U32 numTargets = numRtvs;
+    memcpy(targets, rtvs, sizeof(ResourceViewId) * numRtvs);
     if (dsv != 0)
-        targets[i++] = dsv;
+        targets[numTargets++] = dsv;
 
-    Hash64 hash = recluseHashFast(targets, sizeof(ResourceViewId) * i);
+    Hash64 hash = recluseHashFast(targets, sizeof(ResourceViewId) * numTargets);
     auto iter = g_renderPassMap.find(hash);
     if (iter == g_renderPassMap.end())
     {

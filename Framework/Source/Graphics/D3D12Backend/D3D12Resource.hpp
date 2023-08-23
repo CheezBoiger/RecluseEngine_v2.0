@@ -75,4 +75,8 @@ private:
     ResourceId                  m_id;
     std::map<Hash64, ResourceViewId> m_viewMap;
 };
+
+
+D3D12Resource* makeResource(D3D12Device* pDevice, const GraphicsResourceDescription& description, ResourceState initialState);
+ResultCode     releaseResource(D3D12Resource* pResource);
 } // Recluse

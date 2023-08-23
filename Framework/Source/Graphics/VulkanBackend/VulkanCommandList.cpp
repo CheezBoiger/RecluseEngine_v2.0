@@ -157,16 +157,16 @@ void VulkanContext::internalBindVertexBuffersAndIndexBuffer()
     if (currentState().m_dirtyFlags & ContextDirtyFlag_VertexBuffers)
     {
         const uint32_t numVertexBuffers = currentState().m_numBoundVBs;
-        VkBuffer* buffers = currentState().m_vertexBuffers.data();
-        U64* offsets = currentState().m_vbOffsets.data();
+        VkBuffer* buffers               = currentState().m_vertexBuffers.data();
+        U64* offsets                    = currentState().m_vbOffsets.data();
         vkCmdBindVertexBuffers(m_primaryCommandList.get(), 0, numVertexBuffers, buffers, offsets);
     }
 
     if (currentState().m_dirtyFlags & ContextDirtyFlag_IndexBuffer)
     {
-        VkBuffer indexBuffer = currentState().m_indexBuffer;
-        VkDeviceSize offset = currentState().m_ibOffsetBytes;
-        VkIndexType indexType = currentState().m_ibType;
+        VkBuffer indexBuffer    = currentState().m_indexBuffer;
+        VkDeviceSize offset     = currentState().m_ibOffsetBytes;
+        VkIndexType indexType   = currentState().m_ibType;
         vkCmdBindIndexBuffer(m_primaryCommandList.get(), indexBuffer, offset, indexType);
     }
 }

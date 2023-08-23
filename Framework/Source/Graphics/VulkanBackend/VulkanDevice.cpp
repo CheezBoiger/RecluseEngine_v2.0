@@ -606,7 +606,7 @@ ResultCode VulkanDevice::destroyQueues()
 }
 
 
-ResultCode VulkanDevice::createResource(GraphicsResource** ppResource, GraphicsResourceDescription& desc, ResourceState initState)
+ResultCode VulkanDevice::createResource(GraphicsResource** ppResource, const GraphicsResourceDescription& desc, ResourceState initState)
 {
     VulkanResource* pResource = Resources::makeResource(this, desc, initState);
     *ppResource = pResource;

@@ -9,7 +9,7 @@
 namespace Recluse {
 
 class D3D12Context;
-
+class D3D12Device;
 
 extern const char* kHlslSemanticPosition;
 extern const char* kHlslSemanticNormal;
@@ -47,7 +47,28 @@ struct PipelineStateObject
     ID3D12RootSignature*            rootSignature; 
 };
 
-ID3D12PipelineState* makePipelineState(D3D12Context* pContext, const PipelineStateObject& pipelineState);
 
+struct ConstantBufferView
+{
+    D3D12_GPU_VIRTUAL_ADDRESS address;
+    U32                       offsetBytes;
+    U32                       sizeBytes;
+};
+
+struct RootSigLayout
+{
+    ConstantBufferView*     cbvs;
+    GraphicsResourceView**  srvs;
+    GraphicsResourceView**  uavs;
+    void**                  samplers;
+    U16                     cbvCount;
+    U16                     srvCount;
+    U16                     uavCount;
+    U16                     samplerCount;
+    ShaderStageFlags        shaderVisibility;
+};
+
+ID3D12PipelineState* makePipelineState(D3D12Context* pContext, const PipelineStateObject& pipelineState);
+ID3D12RootSignature* makeRootSignature(D3D12Device* pDevice, const RootSigLayout& layout);
 } // Pipelines
 } // Recluse

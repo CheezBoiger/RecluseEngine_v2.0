@@ -190,7 +190,10 @@ int main(int c, char* argv[])
     {
         GraphicsResourceDescription desc = { };
         desc.dimension = ResourceDimension_Buffer;
-        desc.width = pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainBufferCount();
+        desc.width              = pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainBufferCount();
+        desc.height             = 1;
+        desc.depthOrArraySize   = 1;
+        desc.mipLevels          = 1;
         desc.memoryUsage = ResourceMemoryUsage_CpuToGpu;
         desc.usage = ResourceUsage_ConstantBuffer;
         result = pDevice->createResource(&pData, desc, ResourceState_ConstantBuffer);
@@ -230,6 +233,8 @@ int main(int c, char* argv[])
         desc.dimension = ResourceDimension_Buffer;
         desc.memoryUsage = ResourceMemoryUsage_GpuOnly;
         desc.depthOrArraySize = 1;
+        desc.height = 1;
+        desc.mipLevels = 1;
         pDevice->createResource(&pVertexBuffer, desc, ResourceState_CopyDestination);
     
         desc.memoryUsage = ResourceMemoryUsage_CpuOnly;

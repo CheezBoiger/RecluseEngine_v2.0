@@ -30,20 +30,20 @@ ResultCode D3D12ResourcePagedAllocator::initialize(ID3D12Device* pDevice, Alloca
     {
     case ResourceMemoryUsage_CpuOnly:
         heapType        = D3D12_HEAP_TYPE_UPLOAD;
-        cpuPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_COMBINE;
+        cpuPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
         break;
     case ResourceMemoryUsage_CpuToGpu:
         heapType        = D3D12_HEAP_TYPE_UPLOAD;
-        cpuPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_BACK;
+        cpuPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
         break;
     case ResourceMemoryUsage_GpuToCpu:
         heapType        = D3D12_HEAP_TYPE_READBACK;
-        cpuPageProperty = D3D12_CPU_PAGE_PROPERTY_NOT_AVAILABLE;
+        cpuPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
         break;
     case ResourceMemoryUsage_GpuOnly:
     default:
         heapType        = D3D12_HEAP_TYPE_DEFAULT;
-        cpuPageProperty = D3D12_CPU_PAGE_PROPERTY_NOT_AVAILABLE;
+        cpuPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
         break;
     }
     
@@ -55,6 +55,7 @@ ResultCode D3D12ResourcePagedAllocator::initialize(ID3D12Device* pDevice, Alloca
     heapDesc.Properties.CPUPageProperty     = cpuPageProperty;
     heapDesc.Properties.CreationNodeMask    = 0;
     heapDesc.Properties.VisibleNodeMask     = 0;
+    heapDesc.Properties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 
     HRESULT result = pDevice->CreateHeap(&heapDesc, __uuidof(ID3D12Heap), (void**)&m_pool.pHeap);
 
@@ -68,14 +69,24 @@ ResultCode D3D12ResourcePagedAllocator::initialize(ID3D12Device* pDevice, Alloca
     m_allocatorIndex = allocatorIndex;
     m_pAllocator = makeSmartPtr(pAllocator);
     m_pAllocator->initialize(0ull, totalSizeBytes);
-    m_allocateCs.initialize();
     return RecluseResult_Ok;
 }
 
 
 ResultCode D3D12ResourcePagedAllocator::release()
 {
-    m_allocateCs.release();
+    if (m_pAllocator)
+    {
+        m_pAllocator->reset();
+        m_pAllocator->cleanUp();
+        m_pAllocator.release();
+    }
+    
+    if (m_pool.pHeap)
+    {
+        m_pool.pHeap->Release();
+        m_pool.pHeap = nullptr;
+    }
     return RecluseResult_NoImpl;
 }
 
@@ -85,15 +96,13 @@ ResultCode D3D12ResourcePagedAllocator::allocate
                                 ID3D12Device* pDevice, 
                                 D3D12MemoryObject* pOut, 
                                 const D3D12_RESOURCE_DESC& desc, 
+                                D3D12_CLEAR_VALUE* clearValue,
                                 D3D12_RESOURCE_STATES initialState
                             ) 
 {
     ResultCode result                                       = RecluseResult_Ok;
     D3D12_RESOURCE_ALLOCATION_INFO resourceAllocationInfo   = pDevice->GetResourceAllocationInfo(0, 1, &desc);
     const D3D12_RESOURCE_STATES initState                   = initialState;
-    D3D12_CLEAR_VALUE optimizedClearValue                   = { };
-
-    ScopedCriticalSection _(m_allocateCs);
 
     UPtr address = m_pAllocator->allocate(resourceAllocationInfo.SizeInBytes, resourceAllocationInfo.Alignment);
     result = m_pAllocator->getLastError();
@@ -107,7 +116,7 @@ ResultCode D3D12ResourcePagedAllocator::allocate
         U64 addressOffset   = address;
 
         hresult = pDevice->CreatePlacedResource(m_pool.pHeap, addressOffset, &desc, 
-            initState, &optimizedClearValue, __uuidof(ID3D12Resource), (void**)&pOut->pResource);
+            initState, clearValue, __uuidof(ID3D12Resource), (void**)&pOut->pResource);
         
         if (FAILED(hresult)) 
         {
@@ -140,7 +149,7 @@ ResultCode D3D12ResourcePagedAllocator::free(D3D12MemoryObject* pObject)
 
     pObject->pResource->Release();
 
-    return RecluseResult_NoImpl;
+    return err;
 }
 
 
@@ -156,13 +165,15 @@ void D3D12ResourcePagedAllocator::clear()
 ResultCode D3D12ResourceAllocationManager::initialize(ID3D12Device* pDevice)
 {
     m_pDevice = pDevice;
+    m_allocateCs.initialize();
     return RecluseResult_Ok;
 }
 
 
-ResultCode D3D12ResourceAllocationManager::allocate(D3D12MemoryObject* pOut, const D3D12_RESOURCE_DESC& desc, ResourceMemoryUsage usage, D3D12_RESOURCE_STATES initialState)
+ResultCode D3D12ResourceAllocationManager::allocate(D3D12MemoryObject* pOut, const D3D12_RESOURCE_DESC& desc, ResourceMemoryUsage usage, D3D12_CLEAR_VALUE* clearValue, D3D12_RESOURCE_STATES initialState)
 {
     std::vector<D3D12ResourcePagedAllocator*>& pagedAllocators = m_pagedAllocators[usage];
+    ScopedCriticalSection _(m_allocateCs);
     if (pagedAllocators.empty())
     {
         pagedAllocators.push_back(new D3D12ResourcePagedAllocator());
@@ -170,17 +181,19 @@ ResultCode D3D12ResourceAllocationManager::allocate(D3D12MemoryObject* pOut, con
     }
     
     D3D12ResourcePagedAllocator* pagedAllocator = pagedAllocators.back();
-    ResultCode result = pagedAllocator->allocate(m_pDevice, pOut, desc, initialState);
+    ResultCode result = pagedAllocator->allocate(m_pDevice, pOut, desc, clearValue, initialState);
     if (result == RecluseResult_OutOfMemory)
     {
         pagedAllocators.push_back(new D3D12ResourcePagedAllocator());
         pagedAllocators.back()->initialize(m_pDevice, new LinearAllocator(), kAllocationPageSizeBytes, usage, pagedAllocators.size() - 1u);
-        result = pagedAllocators.back()->allocate(m_pDevice, pOut, desc, initialState);
+        result = pagedAllocators.back()->allocate(m_pDevice, pOut, desc, clearValue, initialState);
     }
     if (result != RecluseResult_Ok)
     {
         R_ERROR(R_CHANNEL_D3D12, "Failed to allocate!!");
     }
+
+    pOut->usage = usage;
     return result;
 }
 
@@ -213,6 +226,21 @@ ResultCode D3D12ResourceAllocationManager::cleanGarbage(U32 index)
 ResultCode D3D12ResourceAllocationManager::reserveMemory(const MemoryReserveDescription& description)
 {
     m_description = description;
+    return RecluseResult_Ok;
+}
+
+
+ResultCode D3D12ResourceAllocationManager::release()
+{
+    m_allocateCs.release();
+    for (auto pagedAllocators : m_pagedAllocators)
+    {
+        for (auto heap : pagedAllocators.second)
+        {
+            heap->release();
+        }
+    }
+    m_pagedAllocators.clear();
     return RecluseResult_Ok;
 }
 } // Recluse

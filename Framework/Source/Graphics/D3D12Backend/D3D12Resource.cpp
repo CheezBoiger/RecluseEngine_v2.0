@@ -12,6 +12,7 @@ namespace Recluse {
 
 MutexGuard              g_resourceMutex = { };
 ResourceId              g_resourceCounter = 0;
+std::unordered_map<ResourceId, D3D12Resource*> m_resourceMap;
 
 
 R_INTERNAL
@@ -56,7 +57,32 @@ ResultCode D3D12Resource::initialize
     d3d12desc.Height                            = desc.height;
     d3d12desc.MipLevels                         = desc.mipLevels;
     d3d12desc.Format                            = Dxgi::getNativeFormat(desc.format);
+    d3d12desc.SampleDesc.Count                  = 1;
+    d3d12desc.SampleDesc.Quality                = 0;
     d3d12desc.Alignment                         = 0;
+    d3d12desc.Flags                             = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+
+    if (d3d12desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
+    {
+        d3d12desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    }
+    else
+    {
+        d3d12desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+    }
+
+    if (desc.usage & ResourceUsage_DepthStencil) d3d12desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+    if (desc.usage & ResourceUsage_RenderTarget) d3d12desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+    if (desc.usage & ResourceUsage_UnorderedAccess) d3d12desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+    if (desc.usage & ResourceUsage_ShaderResource) d3d12desc.Flags &= ~(D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE);
+
+    D3D12_CLEAR_VALUE* clearValue = d3d12desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER ? nullptr : &optimizedClearValue;
+
+    if (d3d12desc.Flags & (D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET))
+    {
+        clearValue = &optimizedClearValue;
+    }
+
     if (makeCommitted == true) 
     {
         D3D12_HEAP_PROPERTIES heapProps = { };
@@ -69,7 +95,7 @@ ResultCode D3D12Resource::initialize
         heapProps.VisibleNodeMask = 0;
 
         sResult = device->CreateCommittedResource(&heapProps, flags, &d3d12desc, state, 
-            &optimizedClearValue, __uuidof(ID3D12Resource), (void**)&m_memObj.pResource);
+            clearValue, __uuidof(ID3D12Resource), (void**)&m_memObj.pResource);
     } 
     else 
     {   
@@ -77,7 +103,7 @@ ResultCode D3D12Resource::initialize
         d3d12desc.Alignment                         = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
         R_ASSERT_FORMAT(pAllocator, "No allocator exists for the given dimension! Is the resource unknown?");
 
-        ResultCode result  = pAllocator->allocate(&m_memObj, d3d12desc, desc.memoryUsage, state);
+        ResultCode result  = pAllocator->allocate(&m_memObj, d3d12desc, desc.memoryUsage, nullptr, state);
 
         if (result != RecluseResult_Ok)    
         {
@@ -96,7 +122,7 @@ ResultCode D3D12Resource::initialize
             heapProps.VisibleNodeMask = 0;
 
             sResult = device->CreateCommittedResource(&heapProps, flags, &d3d12desc, state, 
-                &optimizedClearValue, __uuidof(ID3D12Resource), (void**)&m_memObj.pResource);
+                clearValue, __uuidof(ID3D12Resource), (void**)&m_memObj.pResource);
         }
     }
 
@@ -220,5 +246,44 @@ ResourceViewId D3D12Resource::asView(const ResourceViewDescription& description)
 void D3D12Resource::generateId()
 {
     m_id = generateResourceId();
+}
+
+
+D3D12Resource* makeResource(D3D12Device* pDevice, const GraphicsResourceDescription& description, ResourceState initialState)
+{
+    R_ASSERT_FORMAT(description.width > 0 && description.height > 0 && description.depthOrArraySize > 0 && description.mipLevels > 0, "Description width/height/arraySize/mipLevels should at least be 1 or greater!");
+    D3D12Resource* pResource = new D3D12Resource();
+    ResultCode result = pResource->initialize(pDevice, description, initialState);
+    if (result != RecluseResult_Ok)
+    {
+        delete pResource;
+        pResource = nullptr;
+    }
+    else
+    {
+        m_resourceMap[pResource->getId()] = pResource;
+    }
+    return pResource;
+}
+
+
+ResultCode releaseResource(D3D12Resource* pResource)
+{
+    if (!pResource)
+    {
+        return RecluseResult_NullPtrExcept;
+    }
+    auto iter = m_resourceMap.find(pResource->getId());
+    if (iter == m_resourceMap.end())
+    {
+        return RecluseResult_NotFound;
+    }
+    ResultCode result = pResource->destroy();
+    if (result == RecluseResult_Ok)
+    {
+        delete pResource;
+        m_resourceMap.erase(iter);
+    }
+    return RecluseResult_Ok;
 }
 } // Recluse

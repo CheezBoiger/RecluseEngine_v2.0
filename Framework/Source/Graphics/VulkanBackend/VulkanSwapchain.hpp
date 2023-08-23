@@ -90,7 +90,7 @@ private:
     VulkanFrameResources                m_frameResources;
     std::vector<VulkanImage*>           m_frameImages;
     std::vector<VkCommandBuffer>        m_commandbuffers;
-    VkCommandPool                       m_commandPool;
+    //VkCommandPool                     m_commandPool;
     const QueueFamily*                  m_queueFamily;
     
 };

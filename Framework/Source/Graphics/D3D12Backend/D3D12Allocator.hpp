@@ -28,6 +28,7 @@ public:
                     ID3D12Device* pDevice, 
                     D3D12MemoryObject* pOut, 
                     const D3D12_RESOURCE_DESC& desc, 
+                    D3D12_CLEAR_VALUE* clearValue,
                     D3D12_RESOURCE_STATES initialState
                 );
 
@@ -40,7 +41,6 @@ private:
     D3D12MemoryPool                 m_pool;
     U32                             m_allocatorIndex;
     SmartPtr<Allocator>             m_pAllocator;
-    CriticalSection                 m_allocateCs;
     std::vector<D3D12MemoryObject*> m_garbageResources;
 };
 
@@ -55,8 +55,9 @@ public:
     { }
 
     ResultCode initialize(ID3D12Device* pDevice);
+    ResultCode release();
     
-    ResultCode allocate(D3D12MemoryObject* pOut, const D3D12_RESOURCE_DESC& desc, ResourceMemoryUsage usage, D3D12_RESOURCE_STATES initialState);
+    ResultCode allocate(D3D12MemoryObject* pOut, const D3D12_RESOURCE_DESC& desc, ResourceMemoryUsage usage, D3D12_CLEAR_VALUE* clearValue, D3D12_RESOURCE_STATES initialState);
     ResultCode free(D3D12MemoryObject* pObject);
     ResultCode update();
     ResultCode reserveMemory(const MemoryReserveDescription& description);
@@ -68,5 +69,6 @@ private:
     std::map<ResourceMemoryUsage, std::vector<D3D12ResourcePagedAllocator*>>    m_pagedAllocators;
     U32                                                                         m_garbageIndex;
     MemoryReserveDescription                                                    m_description;
+    CriticalSection                                                             m_allocateCs;
 };
 } // Recluse

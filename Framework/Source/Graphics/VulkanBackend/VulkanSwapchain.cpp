@@ -187,18 +187,19 @@ ResultCode VulkanSwapchain::destroy()
         R_DEBUG(R_CHANNEL_VULKAN, "Destroyed swapchain.");
     }
 
+    VkCommandPool pool = m_pBackbufferQueue->getTemporaryCommandPool();
     for (U32 i = 0; i < m_commandbuffers.size(); ++i) 
     {
         vkFreeCommandBuffers
             (
                 device, 
-                m_commandPool,
+                pool,
                 1, 
                 &m_commandbuffers[i]
             );   
     }
 
-    vkDestroyCommandPool(device, m_commandPool, nullptr);
+    //vkDestroyCommandPool(device, m_commandPool, nullptr);
 
     return RecluseResult_Ok;
 }
@@ -317,42 +318,42 @@ void VulkanSwapchain::buildFrameResources(ResourceFormat resourceFormat)
 
 void VulkanSwapchain::queryCommandPools()
 {
-    const std::vector<QueueFamily>& queueFamilies = m_pDevice->getQueueFamilies();
+    //const std::vector<QueueFamily>& queueFamilies = m_pDevice->getQueueFamilies();
     VkDevice device = m_pDevice->get();
 
-    for (U32 i = 0; i < queueFamilies.size(); ++i) 
-    {
-        if (queueFamilies[i].flags & (VK_QUEUE_TRANSFER_BIT | VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT)) 
-        {
-            m_commandbuffers.resize(m_frameResources.getNumMaxFrames());
-            m_queueFamily = &queueFamilies[i];
+    //for (U32 i = 0; i < queueFamilies.size(); ++i) 
+    //{
+    //    if (queueFamilies[i].flags & (VK_QUEUE_TRANSFER_BIT | VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT)) 
+    //    {
 
-            {
-                VkCommandPoolCreateInfo poolCreateInfo = { };
-                poolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-                poolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-                poolCreateInfo.queueFamilyIndex = m_queueFamily->queueFamilyIndex;
+    //        m_queueFamily = &queueFamilies[i];
 
-                vkCreateCommandPool(device, &poolCreateInfo, nullptr, &m_commandPool);
-            }
+    //        {
+    //            VkCommandPoolCreateInfo poolCreateInfo = { };
+    //            poolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    //            poolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    //            poolCreateInfo.queueFamilyIndex = m_queueFamily->queueFamilyIndex;
 
-            for (U32 j = 0; j < m_commandbuffers.size(); ++j) 
-            {    
-                VkCommandBufferAllocateInfo allocIf = { };
-                allocIf.sType                       = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-                allocIf.commandBufferCount          = 1;
-                allocIf.level                       = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-                allocIf.commandPool                 = m_commandPool;
-                vkAllocateCommandBuffers(device, &allocIf, &m_commandbuffers[j]);
-            }
-
-            break;
-        }
-    }
+    //            vkCreateCommandPool(device, &poolCreateInfo, nullptr, &m_commandPool);
+    //        }
+    //        break;
+    //    }
+    //}
 
     // For the back buffer queue to be able to handle one time only command buffers, set it up from
     // the swapchain command pool.
-    m_pBackbufferQueue->setTemporaryCommandPoolUse(m_commandPool);
+    VkCommandPool pool = m_pBackbufferQueue->getTemporaryCommandPool();
+    m_commandbuffers.resize(m_frameResources.getNumMaxFrames());
+    for (U32 j = 0; j < m_commandbuffers.size(); ++j) 
+    {    
+        VkCommandBufferAllocateInfo allocIf = { };
+        allocIf.sType                       = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        allocIf.commandBufferCount          = 1;
+        allocIf.level                       = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        allocIf.commandPool                 = pool;
+        vkAllocateCommandBuffers(device, &allocIf, &m_commandbuffers[j]);
+    }
+    
 }
 
 

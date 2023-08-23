@@ -245,6 +245,7 @@ ResultCode D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo
 
     DescriptorHeapAllocationManager::DescriptorCoreSize descriptorSizes = { };
     m_descHeapManager.initialize(m_device, descriptorSizes, 0);
+    m_resourceAllocationManager.initialize(m_device);
 
     return RecluseResult_Ok;
 }
@@ -252,6 +253,7 @@ ResultCode D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo
 
 void D3D12Device::destroy()
 {
+    m_resourceAllocationManager.release();
     RenderPasses::clearAll(this);
     DescriptorViews::clearAll(this);
     m_descHeapManager.release();
@@ -519,30 +521,6 @@ void D3D12Device::createSampler(const D3D12_SAMPLER_DESC& desc)
 }
 
 
-void D3D12Device::createRenderTargetView(D3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC& desc, D3D12_CPU_DESCRIPTOR_HANDLE destDescriptor)
-{
-    m_device->CreateRenderTargetView(pResource->get(), &desc, destDescriptor);
-}
-
-
-void D3D12Device::createDepthStencilView(D3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& desc, D3D12_CPU_DESCRIPTOR_HANDLE destDescriptor)
-{
-    m_device->CreateDepthStencilView(pResource->get(), &desc, destDescriptor);
-}
-
-
-void D3D12Device::createShaderResourceView(const D3D12_SHADER_RESOURCE_VIEW_DESC& desc)
-{
-    R_NO_IMPL();
-}
-
-
-void D3D12Device::createUnorderedAccessView(const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc)
-{
-    R_NO_IMPL();
-}
-
-
 D3D12_FEATURE_DATA_FORMAT_SUPPORT D3D12Device::checkFormatSupport(ResourceFormat format)
 {
     D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport = { };
@@ -615,5 +593,25 @@ ResultCode D3D12Device::releaseContext(GraphicsContext* pContext)
     d3d12Context->release();
     delete d3d12Context;
     return RecluseResult_Ok;
+}
+
+
+ResultCode D3D12Device::createResource(GraphicsResource** ppResource, const GraphicsResourceDescription& description, ResourceState initState)
+{
+    D3D12Resource* pResource = makeResource(this, description, initState);
+    if (!pResource)
+    {
+        return RecluseResult_Failed;
+    }
+    *ppResource = pResource;
+    return RecluseResult_Ok;
+}
+
+
+ResultCode D3D12Device::destroyResource(GraphicsResource* pResource)
+{
+    R_ASSERT(pResource != NULL);
+    D3D12Resource* pD3D12Resource = pResource->castTo<D3D12Resource>();
+    return releaseResource(pD3D12Resource);
 }
 } // Recluse

@@ -263,4 +263,10 @@ SIZE_T getNativeFormatSize(DXGI_FORMAT format)
     // Return no bytes for unknown formats.
     return 0ull;
 }
+
+
+D3D12_SHADER_VISIBILITY getShaderVisibilityFlags(Recluse::ShaderStageFlags shaderStageFlags)
+{
+    return D3D12_SHADER_VISIBILITY_ALL;
+}
 } // Dxgi

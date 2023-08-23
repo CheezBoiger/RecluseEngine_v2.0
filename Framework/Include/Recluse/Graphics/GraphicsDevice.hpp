@@ -241,7 +241,7 @@ public:
 
     //< Create graphics resource.
     //<
-    virtual ResultCode              createResource(GraphicsResource** ppResource, GraphicsResourceDescription& pDesc, ResourceState initState) 
+    virtual ResultCode              createResource(GraphicsResource** ppResource, const GraphicsResourceDescription& pDesc, ResourceState initState) 
         { return RecluseResult_NoImpl; }
 
     virtual ResultCode              createSampler(GraphicsSampler** ppSampler, const SamplerDescription& desc) 

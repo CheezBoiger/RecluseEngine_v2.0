@@ -5,6 +5,7 @@
 
 #include "Recluse/Graphics/Format.hpp"
 #include "Recluse/Graphics/GraphicsCommon.hpp"
+#include "Recluse/Graphics/Shader.hpp"
 
 // D3D12 headers.
 #include <d3d12.h>
@@ -52,6 +53,7 @@ extern D3D12_DSV_DIMENSION getDsvDimension(Recluse::ResourceViewDimension dimens
 extern D3D12_UAV_DIMENSION getUavDimension(Recluse::ResourceViewDimension dimension);
 extern D3D12_SRV_DIMENSION getSrvDimension(Recluse::ResourceViewDimension dimension);
 extern D3D12_COMPARISON_FUNC getNativeComparisonFunction(Recluse::CompareOp compareOp);
+extern D3D12_SHADER_VISIBILITY getShaderVisibilityFlags(Recluse::ShaderStageFlags shaderStageFlags);
 
 } // Recluse
 

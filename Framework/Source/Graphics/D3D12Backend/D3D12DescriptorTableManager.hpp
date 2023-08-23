@@ -296,11 +296,4 @@ private:
     U32                                                     m_currentTableHeapIndex;
     U32                                                     m_currentHeapIndex;
 };
-
-
-namespace Binder {
-
-
-ID3D12RootSignature* makeRootSignature();
-} // Descriptors
 } // Recluse 

@@ -21,6 +21,7 @@
 #include "Recluse/Math/Bounds2D.hpp"
 #include "Recluse/Math/Matrix44.hpp"
 #include "Recluse/Math/Matrix43.hpp"
+#include "Recluse/System/KeyboardInput.hpp"
 #include <random>
 
 using namespace Recluse;
@@ -161,6 +162,7 @@ int main(int c, char* argv[])
         desc.width = sizeof(VertexData);
         desc.depthOrArraySize = 1;
         desc.height = 1;
+        desc.mipLevels = 1;
         desc.memoryUsage = ResourceMemoryUsage_CpuOnly;
         desc.samples = 1;
         result = pDevice->createResource(&pData, desc, ResourceState_ConstantBuffer);
@@ -321,6 +323,13 @@ int main(int c, char* argv[])
         context->end();
         //R_FATAL_ERROR("TEST", "%f Fps", 1.0f / ms);
         pSwapchain->present();
+
+        KeyboardListener listener;
+        if (listener.isKeyDown(KeyCode_Escape))
+        {
+            pWindow->close();
+        }
+        
         pollEvents();
     }
 

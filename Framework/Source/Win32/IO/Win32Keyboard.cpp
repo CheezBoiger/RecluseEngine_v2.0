@@ -76,6 +76,7 @@ std::unordered_map<DWORD, KeyCode> kWin32KeyMap =
     R_WIN_KEY(0x79, KeyCode_F10),
     R_WIN_KEY(0x7A, KeyCode_F11),
     R_WIN_KEY(0x7B, KeyCode_F12),
+    R_WIN_KEY(0x1B, KeyCode_Escape),
 };
 
 

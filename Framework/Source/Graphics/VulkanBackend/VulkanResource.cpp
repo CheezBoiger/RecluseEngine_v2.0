@@ -16,6 +16,7 @@ std::unordered_map<ResourceId, VulkanResource*> g_resourcesMap;
 
 VulkanResource* makeResource(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState)
 {
+    R_ASSERT_FORMAT(desc.width > 0 && desc.height > 0 && desc.depthOrArraySize > 0 && desc.mipLevels > 0, "Description width/height/arraySize/mipLevels should at least be 1 or greater!");
     if (desc.dimension == ResourceDimension_Buffer)
     {
         VulkanBuffer* pBuffer   = new VulkanBuffer(desc);
