@@ -114,7 +114,7 @@ ResultCode D3D12ResourcePagedAllocator::allocate
     {
         HRESULT hresult     = S_OK;
         U64 addressOffset   = address;
-
+    
         hresult = pDevice->CreatePlacedResource(m_pool.pHeap, addressOffset, &desc, 
             initState, clearValue, __uuidof(ID3D12Resource), (void**)&pOut->pResource);
         

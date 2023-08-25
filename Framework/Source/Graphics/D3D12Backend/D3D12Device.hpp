@@ -11,6 +11,7 @@
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 
 #include "D3D12PipelineState.hpp"
+#include <array>
 
 namespace Recluse {
 
@@ -88,11 +89,17 @@ public:
     void                                setScissors(U32 numScissors, Rect* pRects) override;
     void                                setViewports(U32 numViewports, Viewport* pViewports) override;
 
+    void                                bindShaderResource(ShaderType type, U32 slot, ResourceViewId view) override;
+    void                                bindUnorderedAccessView(ShaderType type, U32 slot, ResourceViewId view) override;
+    void                                bindConstantBuffer(ShaderType type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes) override;
+    void                                drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstVertex, U32 firstInstance) override;
+    void                                clearResourceBinds() override;
+
     ID3D12GraphicsCommandList*          currentGraphicsCommandList() { return m_pPrimaryCommandList->get(); }
     void                                pushState(ContextFlags flags = ContextFlag_None) override;
     void                                popState() override;
 
-    void                                transition(GraphicsResource* pResource, ResourceState newState) override;
+    void                                transition(GraphicsResource* pResource, ResourceState newState, U16 baseMip, U16 mipCount, U16 baseLayer, U16 layerCount) override;
     GraphicsDevice*                     getDevice() override;
     
 
@@ -101,23 +108,39 @@ private:
     enum ContextDirty
     {
         ContextDirty_Clean      = 0,
+        ContextDirty_Descriptors  = (1 << 0),
+        ContextDirty_SamplerDescriptors = (1 << 1),
+        ContextDirty_Pipeline = (1 << 2)
     };
 
     struct ContextState
     {
-        Pipelines::PipelineStateObject  m_pipelineStateObject;
-        Pipelines::RootSigLayout        m_rootSigLayout;
-        
+        Pipelines::PipelineStateObject                  m_pipelineStateObject;
+        Pipelines::RootSigLayout                        m_rootSigLayout;
+        Pipelines::RootSigResourceTable                 m_resourceTable;
+        std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 128>    m_srvs;
+        std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 8>      m_uavs;
+        std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 16>     m_cbvs;
+        std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 16>     m_samplers;
+        ID3D12RootSignature*                            m_currentRootSig;
+        ContextDirtyFlags                               m_dirtyFlags;
+        BindType                                        m_bindType;
+
+        void setDirty(ContextDirtyFlags flags) { m_dirtyFlags |= flags; }
+        void setClean() { m_dirtyFlags = ContextDirty_Clean; }
+        Bool isDirty(ContextDirtyFlags flagsToCheck) { return (m_dirtyFlags & flagsToCheck); }
     };
 
     void                                flushBarrierTransitions();
     void                                initializeBufferResources(U32 buffering);
     void                                destroyBufferResources();
     void                                prepare();
-    ContextState&                       currentState() { return *m_contextStates.end(); }
+    ContextState&                       currentState() { return m_contextStates.back(); }
 
     ResultCode                          createCommandList(D3D12PrimaryCommandList** ppList, GraphicsQueueTypeFlags flags);
     ResultCode                          destroyCommandList(D3D12PrimaryCommandList* pList);
+    ShaderVisibleDescriptorTable        uploadToShaderVisible(CpuDescriptorTable table, GpuHeapType shaderVisibleType);
+    void                                bindCurrentResources();
 
     D3D12Device*                        m_pDevice;
     std::vector<BufferResources>        m_bufferResources;
@@ -164,6 +187,8 @@ public:
     void                                createSampler(const D3D12_SAMPLER_DESC& desc);
     ResultCode                          createResource(GraphicsResource** ppResource, const GraphicsResourceDescription& description, ResourceState initState) override;
     ResultCode                          destroyResource(GraphicsResource* pResource) override;
+    void                                copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, const CopyBufferRegion* regions, U32 numRegions) override;
+    void                                copyResource(GraphicsResource* dst, GraphicsResource* src) override;
 
     D3D12_FEATURE_DATA_FORMAT_SUPPORT   checkFormatSupport(ResourceFormat format);
     DescriptorHeapAllocationManager*    getDescriptorHeapManager() { return &m_descHeapManager; }
@@ -193,6 +218,6 @@ private:
 
     DescriptorHeapAllocationManager     m_descHeapManager;
 
-    HWND m_windowHandle;
+    HWND                                m_windowHandle;
 };
 } // Recluse

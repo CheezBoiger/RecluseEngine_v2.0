@@ -177,18 +177,12 @@ void VulkanContext::resetBinds()
     // Make sure we have at least one context state (this is our primary context state.)
     m_contextStates.clear();
     m_contextStates.push_back({ });
-    currentState().m_samplers.clear();
 
-    memset(currentState().m_cbvs.data(), 0, currentState().m_cbvs.size() * sizeof(DescriptorSets::BufferView));
-    memset(currentState().m_srvs.data(), 0, currentState().m_srvs.size() * sizeof(VulkanResourceView*)); // This is ok, we are weak referencing.
-    memset(currentState().m_uavs.data(), 0, currentState().m_uavs.size() * sizeof(VulkanResourceView*)); // Same, just weak references.
+    clearResourceBinds();
 
     memset(currentState().m_vertexBuffers.data(), 0, currentState().m_vertexBuffers.size() * sizeof(VkBuffer));
     memset(currentState().m_vbOffsets.data(), 0, currentState().m_vbOffsets.size() * sizeof(U64));
 
-    currentState().m_boundDescriptorSetStructure.key.value.constantBuffers  = 0;
-    currentState().m_boundDescriptorSetStructure.key.value.srvs             = 0;
-    currentState().m_boundDescriptorSetStructure.key.value.uavs             = 0;
     currentState().m_indexBuffer                                            = nullptr;
     currentState().m_numBoundVBs                                            = 0;
     currentState().m_ibOffsetBytes                                          = 0;
@@ -384,7 +378,7 @@ void VulkanContext::dispatch(U32 x, U32 y, U32 z)
 }
 
 
-void VulkanContext::transition(GraphicsResource* pResource, ResourceState dstState)
+void VulkanContext::transition(GraphicsResource* pResource, ResourceState dstState, U16 baseMip, U16 mipCount, U16 baseLayer, U16 layerCount)
 {
     R_ASSERT(pResource != NULL);
 
@@ -405,7 +399,7 @@ void VulkanContext::transition(GraphicsResource* pResource, ResourceState dstSta
     else
     {
         VulkanImage* pVr                                = static_cast<VulkanImage*>(pVulkanResource);
-        VkImageSubresourceRange range                   = pVr->makeSubresourceRange(dstState);
+        VkImageSubresourceRange range                   = pVr->makeSubresourceRange(dstState, baseMip, mipCount, baseLayer, layerCount);
         VkImageMemoryBarrier barrier = pVr->transition(dstState, range);
         m_imageMemoryBarriers.push_back(barrier);
     }
@@ -672,20 +666,30 @@ void VulkanContext::bindUnorderedAccessView(ShaderType type, U32 slot, ResourceV
 }
 
 
-void VulkanContext::bindSamplers(ShaderType type, U32 count, GraphicsSampler** ppSamplers)
+void VulkanContext::bindSampler(ShaderType type, U32 slot, GraphicsSampler* ppSamplers)
 {
-    currentState().m_samplers.reserve(count);
     ShaderStageFlags shaderFlags = shaderTypeToShaderStageFlags(type);
-    for (U32 i = 0; i < count; ++i)
-    {
-        VulkanSampler* pVulkanSampler = ppSamplers[i]->castTo<VulkanSampler>();
-        m_samplerShaderAccessMap[pVulkanSampler->getId()] |= shaderFlags;
-        currentState().m_samplers.push_back(pVulkanSampler);
-    }
+    VulkanSampler* pVulkanSampler = ppSamplers->castTo<VulkanSampler>();
+    m_samplerShaderAccessMap[pVulkanSampler->getId()] |= shaderFlags;
+    currentState().m_samplers[slot] = pVulkanSampler;
     currentState().m_boundDescriptorSetStructure.key.value.shaderTypeFlags |= shaderFlags;
     currentState().m_boundDescriptorSetStructure.ppSamplers                = currentState().m_samplers.data();
-    currentState().m_boundDescriptorSetStructure.key.value.samplers        = currentState().m_samplers.size();
+    currentState().m_boundDescriptorSetStructure.key.value.samplers        = Math::maximum(currentState().m_boundDescriptorSetStructure.key.value.samplers, static_cast<U16>(slot+1));
     currentState().markResourcesDirty();
+}
+
+
+void VulkanContext::clearResourceBinds()
+{
+    memset(currentState().m_cbvs.data(), 0, currentState().m_cbvs.size() * sizeof(DescriptorSets::BufferView));
+    memset(currentState().m_srvs.data(), 0, currentState().m_srvs.size() * sizeof(VulkanResourceView*)); // This is ok, we are weak referencing.
+    memset(currentState().m_uavs.data(), 0, currentState().m_uavs.size() * sizeof(VulkanResourceView*)); // Same, just weak references.
+    memset(currentState().m_samplers.data(), 0, currentState().m_samplers.size() * sizeof(VulkanSampler*));
+
+    currentState().m_boundDescriptorSetStructure.key.value.constantBuffers  = 0;
+    currentState().m_boundDescriptorSetStructure.key.value.srvs             = 0;
+    currentState().m_boundDescriptorSetStructure.key.value.uavs             = 0;
+    currentState().m_boundDescriptorSetStructure.key.value.samplers         = 0;
 }
 
 

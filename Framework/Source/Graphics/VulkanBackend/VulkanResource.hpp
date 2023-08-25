@@ -149,7 +149,7 @@ public:
     // specified destination layout.
     // 
     VkImageMemoryBarrier    transition(ResourceState dstState, VkImageSubresourceRange& range);
-    VkImageSubresourceRange makeSubresourceRange(ResourceState dstState);
+    VkImageSubresourceRange makeSubresourceRange(ResourceState dstState, U16 baseMip = 0, U16 mipCount = 0, U16 baseLayer = 0, U16 layerCount = 0);
     U32                     getMipLevels() const { return m_mipLevels; }
     U32                     getDepthOrArraySize() const { return m_depthOrArraySize; }
     U32                     getWidth() const { return m_width; }

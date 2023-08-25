@@ -134,6 +134,7 @@ public:
     }
     
     void                        overridePosition(U32 x, U32 y) { m_xPos = x; m_yPos = y; }
+    void                        overrideMinimized(Bool isMinimized) { m_isMinimized = isMinimized; }
 
 private:
 

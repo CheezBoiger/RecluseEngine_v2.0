@@ -508,13 +508,28 @@ VkImageMemoryBarrier VulkanImage::transition(ResourceState dstState, VkImageSubr
 }
 
 
-VkImageSubresourceRange VulkanImage::makeSubresourceRange(ResourceState dstState)
+VkImageSubresourceRange VulkanImage::makeSubresourceRange(ResourceState dstState, U16 baseMip, U16 mipCount, U16 baseLayer, U16 layerCount)
 {
+        U32 baseArrayLayer                  = baseLayer;
+        U32 baseMipLevel                    = baseMip;
+        U32 arrayLayerCount                 = layerCount;
+        U32 mipLevelCount                   = mipCount;
+
+        if (layerCount == 0)
+        {
+            arrayLayerCount = m_depthOrArraySize - baseArrayLayer;
+        }
+
+        if (mipLevelCount == 0)
+        {
+            mipLevelCount = m_mipLevels - baseMipLevel;
+        }
+
         VkImageSubresourceRange range       = { };
-        range.baseArrayLayer                = 0;
-        range.baseMipLevel                  = 0;
-        range.layerCount                    = m_depthOrArraySize;
-        range.levelCount                    = m_mipLevels;
+        range.baseArrayLayer                = baseArrayLayer;
+        range.baseMipLevel                  = baseMipLevel;
+        range.layerCount                    = arrayLayerCount;
+        range.levelCount                    = mipLevelCount;
         range.aspectMask                    = VK_IMAGE_ASPECT_COLOR_BIT;
         
         if 

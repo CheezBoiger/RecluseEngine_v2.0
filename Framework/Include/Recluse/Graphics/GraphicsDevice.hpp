@@ -165,7 +165,8 @@ public:
     // Transitiion a resource to a given state. This is a modern API specific feature,
     // which is handled by managed drivers for older APIs, yet we reinforce this for older 
     // API anyways, in order to ensure newer APIs will still conform!
-    virtual void transition(GraphicsResource* pResource, ResourceState) { }
+    // If subresource == subresourceCount, then will transition all subresources of the resource.
+    virtual void transition(GraphicsResource* pResource, ResourceState newState, U16 baseMip = 0, U16 mipCount = 0, U16 baseLayer = 0, U16 layerCount = 0) { }
     virtual void transitionResources(GraphicsResource** resources, ResourceState* states, U32 resourceCount) { }
 
     virtual Bool supportsAsyncCompute() { return false; }
@@ -183,8 +184,7 @@ public:
     virtual void bindUnorderedAccessView(ShaderType type, U32 slot, ResourceViewId view) { }
     virtual void bindConstantBuffer(ShaderType type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes) { }
     virtual void bindRenderTargets(U32 count, ResourceViewId* ppResources, ResourceViewId pDepthStencil = 0) { }
-    virtual void bindSamplers(ShaderType type, U32 count, GraphicsSampler** ppSampler) { }
-    virtual void bindRasterizerState(const RasterState& state) { }
+    virtual void bindSampler(ShaderType type, U32 slot, GraphicsSampler* ppSampler) { }
     virtual void bindBlendState(const BlendState& state) { }
     virtual void releaseBindingResources() { }
     virtual void setTopology(PrimitiveTopology topology) { }
@@ -216,6 +216,9 @@ public:
     virtual void popState() { }
     // Push the current pipeline state. Allows inheriting from previous state.
     virtual void pushState(ContextFlags flags = ContextFlag_None) { }
+
+    // Clears all resource binds from the context. Useful to start with a clean slate for the binds.
+    virtual void clearResourceBinds() { }
 
     // Creates bundles to be used for multithreaded rendering. These will only inherit the current pipeline,
     // along with allow for binding resources and calling draw commands. In no way shall bundles be 

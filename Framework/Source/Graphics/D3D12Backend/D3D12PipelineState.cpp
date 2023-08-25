@@ -3,6 +3,7 @@
 #include "D3D12PipelineState.hpp"
 #include "Recluse/Serialization/Hasher.hpp"
 #include "Recluse/Messaging.hpp"
+#include "Recluse/Math/MathCommons.hpp"
 
 #include <unordered_map>
 #include <array>
@@ -13,6 +14,10 @@ const char* kHlslSemanticPosition   = "POSITION";
 const char* kHlslSemanticNormal     = "NORMAL";
 const char* kHlslSemanticTexcoord   = "TEXCOORD";
 const char* kHlslSemanticTangent    = "TANGENT";
+
+
+std::unordered_map<Hash64, CpuDescriptorTable> m_cachedCpuDescriptorTables;
+std::unordered_map<Hash64, CpuDescriptorTable> m_cachedSamplerTables;
 
 
 namespace Pipelines {
@@ -81,9 +86,9 @@ ID3D12RootSignature* internalCreateRootSignatureWithTable(ID3D12Device* pDevice,
     {
         D3D12_ROOT_SIGNATURE_DESC desc = { };
         // For CbvSrvUavs and Samplers.
-        D3D12_ROOT_PARAMETER tableParameters = { };
+        D3D12_ROOT_PARAMETER tableParameters[2] = { };
         std::array<D3D12_DESCRIPTOR_RANGE, 4> ranges = { };
-        
+        const Bool hasSamplers = (layout.samplerCount > 0);
         U32 rangeIdx = 0;
         U32 offsetInDescriptors = 0;
         if (layout.cbvCount > 0)
@@ -127,14 +132,22 @@ ID3D12RootSignature* internalCreateRootSignatureWithTable(ID3D12Device* pDevice,
             offsetInDescriptors += layout.samplerCount;
         }
 
-        tableParameters.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-        tableParameters.DescriptorTable.NumDescriptorRanges = rangeIdx;
-        tableParameters.DescriptorTable.pDescriptorRanges = ranges.data();
-        tableParameters.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+        tableParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        tableParameters[0].DescriptorTable.NumDescriptorRanges = rangeIdx;
+        tableParameters[0].DescriptorTable.pDescriptorRanges = ranges.data();
+        tableParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-        desc.NumParameters = 1;
+        if (hasSamplers)
+        {    
+            tableParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+            tableParameters[1].DescriptorTable.NumDescriptorRanges = 1;
+            tableParameters[1].DescriptorTable.pDescriptorRanges = &ranges[Math::clamp((U32)(rangeIdx - 1), (U32)0, (U32)ranges.size())];
+            tableParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+        }
+
+        desc.NumParameters = hasSamplers ? 2 : 1;
         desc.NumStaticSamplers = 0;
-        desc.pParameters = &tableParameters;
+        desc.pParameters = tableParameters;
         desc.pStaticSamplers = nullptr;
         desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE; // TODO: None for now, but we might want to try and optimize this?
 
@@ -143,7 +156,7 @@ ID3D12RootSignature* internalCreateRootSignatureWithTable(ID3D12Device* pDevice,
         HRESULT result = D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &pSignature, &pErrorBlob);
         if (SUCCEEDED(result))
         {
-            result = pDevice->CreateRootSignature(0, pSignature, pSignature->GetBufferSize(), __uuidof(ID3D12RootSignature), (void**)&pRootSig);
+            result = pDevice->CreateRootSignature(0, pSignature->GetBufferPointer(), pSignature->GetBufferSize(), __uuidof(ID3D12RootSignature), (void**)&pRootSig);
             if (FAILED(result))
             {
                 R_ERROR(R_CHANNEL_D3D12, "Failed to create RootSig! Error code: %x08", result);
@@ -197,6 +210,70 @@ ID3D12RootSignature* makeRootSignature(D3D12Device* pDevice, const RootSigLayout
         rootSignature = iter->second;
     }
     return rootSignature;
+}
+
+
+CpuDescriptorTable makeDescriptorSrvCbvUavTable(D3D12Device* pDevice, const RootSigLayout& layout, const RootSigResourceTable& resourceTable)
+{
+    DescriptorHeapAllocationManager* pManager = pDevice->getDescriptorHeapManager();
+    Hash64 hash = 0;
+    const U32 descriptorCount = layout.cbvCount + layout.srvCount + layout.uavCount;
+    std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> handles(descriptorCount);
+    U32 i = 0;
+    for (U32 j = 0; j < layout.cbvCount; ++j)
+    {
+        handles[i++] = resourceTable.cbvs[j];
+    }
+    for (U32 j = 0; j < layout.srvCount; ++j)
+    {
+        handles[i++] = resourceTable.srvs[j];
+    }
+    for (U32 j = 0; j < layout.uavCount; ++j)
+    {
+        handles[i++] = resourceTable.uavs[j];
+    }
+    hash = recluseHashFast(handles.data(), sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) * handles.size());
+    auto iter = m_cachedCpuDescriptorTables.find(hash);
+    if (iter == m_cachedCpuDescriptorTables.end())
+    {
+        CpuDescriptorTable table = pManager->copyDescriptorsToTable(CpuHeapType_CbvSrvUav, handles.data(), descriptorCount);
+        m_cachedCpuDescriptorTables.insert(std::make_pair(hash, table));
+        return table; 
+    }
+    else
+    {
+        return iter->second;
+    }
+}
+
+
+CpuDescriptorTable              makeDescriptorSamplertable(D3D12Device* pDevice, const RootSigLayout& layout, const RootSigResourceTable& resourceTable)
+{
+    DescriptorHeapAllocationManager* pManager = pDevice->getDescriptorHeapManager();
+    const U32 descriptorCount = layout.samplerCount;
+    Hash64 hash = recluseHashFast(resourceTable.samplers, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) * descriptorCount);
+    auto iter = m_cachedSamplerTables.find(hash);
+    if (iter == m_cachedSamplerTables.end())
+    {
+        CpuDescriptorTable table = pManager->copyDescriptorsToTable(CpuHeapType_CbvSrvUav, resourceTable.samplers, descriptorCount);
+        m_cachedSamplerTables.insert(std::make_pair(hash, table));
+        return table; 
+    }
+    else
+    {
+        return iter->second;
+    }
+}
+
+
+void cleanUpRootSigs()
+{
+    for (auto rootsig : m_rootSignatures)
+    {
+        rootsig.second->Release();
+    }
+
+    m_rootSignatures.clear();
 }
 } // Pipelines
 } // Recluse

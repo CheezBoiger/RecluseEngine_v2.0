@@ -366,6 +366,24 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
                 UINT width  = LOWORD(lParam);
                 UINT height = HIWORD(lParam);
                 pWindow->setScreenSize(width, height);
+                switch (wParam)
+                {
+                    case SIZE_MINIMIZED:
+                    {
+                        pWindow->overrideMinimized(true);
+                        break;
+                    }
+                    case SIZE_RESTORED:
+                    {
+                        pWindow->overrideMinimized(false);
+                        break;
+                    }
+                    case SIZE_MAXIMIZED:
+                    {
+                        pWindow->overrideMinimized(false);
+                        break;
+                    }
+                }
                 break;
             }
             case WM_MOUSEMOVE:
@@ -374,6 +392,10 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
             case WM_RBUTTONDOWN:
             case WM_LBUTTONUP:
             case WM_RBUTTONUP:
+            case WM_SHOWWINDOW:
+            {
+                break;
+            }
             case WM_PAINT:
             default: break;
         }    

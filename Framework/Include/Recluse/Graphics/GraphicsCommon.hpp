@@ -262,6 +262,8 @@ struct SwapchainCreateDescription
     U32             renderWidth;
     U32             renderHeight;
     ResourceFormat  format;
+    // Prefer using High-Dynamic Range when available.
+    Bool            preferHDR;
 };
 
 

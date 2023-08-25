@@ -142,6 +142,7 @@ Window* Window::create(const std::string& title, U32 x, U32 y, U32 width, U32 he
     pWindow->m_handle       = hwnd;
     pWindow->m_isBorderless = (screenMode == ScreenMode_FullscreenBorderless || screenMode == ScreenMode_WindowBorderless);
     pWindow->m_isFullscreen = (screenMode == ScreenMode_Fullscreen || screenMode == ScreenMode_FullscreenBorderless);
+    pWindow->m_isMinimized  = false;
     pWindow->m_isShowing    = false;
 
     SetPropW(hwnd, R_WIN32_PROP_NAME, pWindow);

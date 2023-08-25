@@ -19,6 +19,8 @@ void D3D12Context::initialize()
 {
     initializeBufferResources(m_bufferCount);
     createCommandList(&m_pPrimaryCommandList, QUEUE_TYPE_PRESENT | QUEUE_TYPE_GRAPHICS);
+    // Preallocate to 256 possible barriers in a sitting.
+    m_barrierTransitions.reserve(256);
 }
 
 
@@ -120,13 +122,36 @@ void D3D12Context::popState()
 }
 
 
-void D3D12Context::transition(GraphicsResource* pResource, ResourceState newState)
+void D3D12Context::transition(GraphicsResource* pResource, ResourceState newState, U16 baseMip, U16 mipCount, U16 baseLayer, U16 layerCount)
 {
     if (!pResource->isInResourceState(newState))
     {
         D3D12Resource* d3d12Resource = pResource->castTo<D3D12Resource>();
-        D3D12_RESOURCE_BARRIER barrier = d3d12Resource->transition(newState);
-        m_barrierTransitions.push_back(barrier);
+
+        if (mipCount == 0 && layerCount == 0)
+        {
+            D3D12_RESOURCE_BARRIER barrier = d3d12Resource->transition(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, newState);
+            m_barrierTransitions.push_back(barrier);
+        }
+        else
+        {
+            D3D12_RESOURCE_DESC resourceDesc = pResource->castTo<D3D12Resource>()->get()->GetDesc();
+            U32 mipLevels = resourceDesc.MipLevels;
+            U32 maxLayers = resourceDesc.DepthOrArraySize;
+            if (mipCount == 0) mipCount = mipLevels;
+            if (layerCount == 0) layerCount = maxLayers;
+
+            for (U32 mip = baseMip; mip < mipCount; ++mip)
+            {
+                for (U32 layer = baseLayer; layer < layerCount; ++layer)
+                {
+                    U32 subresource = mip + (layer * mipLevels) + (0 * mipLevels * maxLayers);
+                    D3D12_RESOURCE_BARRIER barrier = d3d12Resource->transition(subresource, newState);
+                    m_barrierTransitions.push_back(barrier);
+                }
+            }
+        }
+        d3d12Resource->finalizeTransition(newState);
     }
 }
 
@@ -146,12 +171,15 @@ void D3D12Context::bindRenderTargets(U32 count, ResourceViewId* ppResources, Res
 {
     ID3D12GraphicsCommandList* pList = m_pPrimaryCommandList->get();
     D3D12RenderPass* pRenderPass = RenderPasses::makeRenderPass(m_pDevice, count, ppResources, pDepthStencil);
-    R_ASSERT_FORMAT(pRenderPass, "D3D12RenderPass was passed nullptr!");
-    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = pRenderPass->getRtvDescriptor();
-    D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = pRenderPass->getDsvDescriptor();
-    pList->OMSetRenderTargets(count, &rtvHandle, true, dsvHandle.ptr == DescriptorTable::invalidCpuAddress.ptr ? nullptr : &dsvHandle);
+    if (pRenderPass != m_pRenderPass)
+    {
+        R_ASSERT_FORMAT(pRenderPass, "D3D12RenderPass was passed nullptr!");
+        D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = pRenderPass->getRtvDescriptor();
+        D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = pRenderPass->getDsvDescriptor();
+        pList->OMSetRenderTargets(count, &rtvHandle, true, dsvHandle.ptr == DescriptorTable::invalidCpuAddress.ptr ? nullptr : &dsvHandle);
     
-    m_pRenderPass = pRenderPass;
+        m_pRenderPass = pRenderPass;
+    }
 }
 
 
@@ -214,6 +242,14 @@ void D3D12Context::prepare()
 }
 
 
+ShaderVisibleDescriptorTable D3D12Context::uploadToShaderVisible(CpuDescriptorTable table, GpuHeapType shaderVisibleType)
+{
+    DescriptorHeapAllocationManager* manager        = m_pDevice->getDescriptorHeapManager();
+    ShaderVisibleDescriptorHeapInstance* instance   = manager->getShaderVisibleInstance(getCurrentBufferIndex());
+    return instance->upload(m_pDevice->get(), shaderVisibleType, table);
+}
+
+
 ResultCode D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo& info)
 {
     R_DEBUG(R_CHANNEL_D3D12, "Creating D3D12 device...");
@@ -255,6 +291,7 @@ void D3D12Device::destroy()
 {
     m_resourceAllocationManager.release();
     RenderPasses::clearAll(this);
+    Pipelines::cleanUpRootSigs();
     DescriptorViews::clearAll(this);
     m_descHeapManager.release();
     if (m_swapchain) 
@@ -367,7 +404,12 @@ void D3D12Context::resetCurrentResources()
     if (FAILED(result)) 
     {
         R_ERROR(R_CHANNEL_WIN32, "Failed to properly reset allocators.");
-    }    
+    }
+
+    // Must always start with one main context state.
+    m_contextStates.clear();
+    m_contextStates.push_back({ });
+    clearResourceBinds();
 
     ShaderVisibleDescriptorHeapInstance* instance = m_pDevice->getDescriptorHeapManager()->getShaderVisibleInstance(getCurrentBufferIndex());
     instance->update(DescriptorHeapUpdateFlag_Reset);
@@ -491,7 +533,8 @@ ResultCode D3D12Context::destroyCommandList(D3D12PrimaryCommandList* pList)
 
 void D3D12Context::copyResource(GraphicsResource* dst, GraphicsResource* src)
 {
-    R_NO_IMPL();
+    flushBarrierTransitions();
+    D3D12Queue::generateCopyResourceCommand(m_pPrimaryCommandList->get(), dst->castTo<D3D12Resource>(), src->castTo<D3D12Resource>()); 
 }
 
 
@@ -613,5 +656,16 @@ ResultCode D3D12Device::destroyResource(GraphicsResource* pResource)
     R_ASSERT(pResource != NULL);
     D3D12Resource* pD3D12Resource = pResource->castTo<D3D12Resource>();
     return releaseResource(pD3D12Resource);
+}
+
+
+void D3D12Device::copyResource(GraphicsResource* dst, GraphicsResource* src)
+{
+    m_graphicsQueue->copyResource(dst->castTo<D3D12Resource>(), src->castTo<D3D12Resource>());
+}
+
+
+void D3D12Device::copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, const CopyBufferRegion* regions, U32 numRegions)
+{
 }
 } // Recluse

@@ -98,14 +98,13 @@ public:
     void setScissors(U32 numScissors, Rect* pRects) override;
     void dispatch(U32 x, U32 y, U32 z) override;
 
-    void transition(GraphicsResource* pResource, ResourceState dstState) override;
+    void transition(GraphicsResource* pResource, ResourceState dstState, U16 baseMip, U16 mipCount, U16 baseLayer, U16 layerCount) override;
 
     void bindShaderResource(ShaderType type, U32 slot, ResourceViewId view) override;
     void bindUnorderedAccessView(ShaderType type, U32 slot, ResourceViewId view) override;
     void bindConstantBuffer(ShaderType type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes) override;
     void bindRenderTargets(U32 count, ResourceViewId* ppResources, ResourceViewId pDepthStencil) override;
-    void bindSamplers(ShaderType type, U32 count, GraphicsSampler** ppSampler) override;
-    void bindRasterizerState(const RasterState& state) override { }
+    void bindSampler(ShaderType type, U32 slot, GraphicsSampler* ppSampler) override;
     void bindBlendState(const BlendState& state) override { currentState().m_pipelineStructure.state.graphics.blendState = state; currentState().markPipelineDirty(); }
     void setTopology(PrimitiveTopology topology) override { currentState().m_pipelineStructure.state.graphics.primitiveTopology = topology; currentState().markPipelineDirty(); }
     void setPolygonMode(PolygonMode polygonMode) override { currentState().m_pipelineStructure.state.graphics.raster.polygonMode = polygonMode; currentState().markPipelineDirty(); }
@@ -118,6 +117,7 @@ public:
     void setBlendEnable(U32 rtIndex, Bool enable) override { currentState().m_pipelineStructure.state.graphics.blendState.attachments[rtIndex].blendEnable = enable; currentState().markPipelineDirty(); }
     void setBlendLogicOpEnable(Bool enable) override { currentState().m_pipelineStructure.state.graphics.blendState.logicOpEnable = enable; }
     void setBlendLogicOp(LogicOp logicOp) override { currentState().m_pipelineStructure.state.graphics.blendState.logicOp = logicOp; }
+    void clearResourceBinds() override;
     
     void setBlendConstants(F32 blendConstants[4]) override 
     { 
@@ -213,10 +213,10 @@ private:
         std::array<VulkanResourceView*, 128>                            m_srvs;
         std::array<VulkanResourceView*, 32>                             m_uavs;
         std::array<DescriptorSets::BufferView, 16>                      m_cbvs;
+        std::array<VulkanSampler*, 16>                                  m_samplers;
         std::array<VkBuffer, 8>                                         m_vertexBuffers;
         std::array<U64, 8>                                              m_vbOffsets;
         VkBuffer                                                        m_indexBuffer;
-        std::vector<VulkanSampler*>                                     m_samplers;
         ContextDirtyFlags                                               m_dirtyFlags;
         U8                                                              m_numBoundVBs;
         VkIndexType                                                     m_ibType;

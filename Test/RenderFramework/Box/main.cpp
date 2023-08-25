@@ -56,10 +56,13 @@ void ResizeFunction(U32 x, U32 y, U32 width, U32 height)
     SwapchainCreateDescription desc = swapchain->getDesc();
     if (desc.renderHeight != height || desc.renderWidth != width)
     {
-        context->wait();
-        desc.renderWidth = width;
-        desc.renderHeight = height;
-        swapchain->rebuild(desc);
+        if (width > 0 && height > 0)
+        {
+            context->wait();
+            desc.renderWidth = width;
+            desc.renderHeight = height;
+            swapchain->rebuild(desc);
+        }
     }
 }
 
@@ -164,7 +167,7 @@ void buildVertexLayouts(GraphicsDevice* pDevice)
 int main(char* argv[], int c)
 {
     Log::initializeLoggingSystem();
-    GraphicsInstance* instance  = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
+    GraphicsInstance* instance  = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
 
     Window* window = Window::create("Box", 0, 0, 1024, 1024, ScreenMode_Windowed);
@@ -191,7 +194,7 @@ int main(char* argv[], int c)
         devInfo.winHandle                           = window->getNativeHandle();
         devInfo.swapchainDescription.buffering      = FrameBuffering_Double;
         devInfo.swapchainDescription.desiredFrames  = 3;
-        devInfo.swapchainDescription.format         = ResourceFormat_B8G8R8A8_Unorm;
+        devInfo.swapchainDescription.format         = ResourceFormat_R8G8B8A8_Unorm;
         devInfo.swapchainDescription.renderWidth    = window->getWidth();
         devInfo.swapchainDescription.renderHeight   = window->getHeight();
         adapter->createDevice(devInfo, &device);
@@ -204,31 +207,51 @@ int main(char* argv[], int c)
     GraphicsResource* textureResource = nullptr;
     createTextureResource(&textureResource);
 
-    buildVertexLayouts(device);
+    GraphicsResource* constBuff = nullptr;
+    {
+        GraphicsResourceDescription description = { };
+        description.depthOrArraySize = 1;
+        description.height = 1;
+        description.mipLevels = 1;
+        description.samples = 1;
+        description.dimension = ResourceDimension_Buffer;
+        description.usage = ResourceUsage_ConstantBuffer;
+        description.width = 256;
+        description.memoryUsage = ResourceMemoryUsage_CpuToGpu;
+        device->createResource(&constBuff, description, ResourceState_ConstantBuffer);
+    }
+    //buildVertexLayouts(device);
     
     while (!window->shouldClose())
     {
-        context->begin();
-            //context->transition(device->getSwapchain()->getFrame(device->getSwapchain()->getCurrentFrameIndex()), ResourceState_RenderTarget);
-            //context->setShaderProgram(ShaderProgram_Box);
-            //context->setInputVertexLayout(VertexLayout_PositionNormalTexCoordColor);
-            //context->enableDepth(true);
-            //context->setDepthCompareOp(CompareOp_GreaterOrEqual);
-            //context->bindIndexBuffer(nullptr, 0, IndexType_Unsigned16);
-            //context->drawIndexedInstanced(0, 0, 0, 0, 0);
-            GraphicsResource* swapchainImage = device->getSwapchain()->getFrame(device->getSwapchain()->getCurrentFrameIndex());
-            context->transition(textureResource, ResourceState_CopySource);
-            context->transition(swapchainImage, ResourceState_CopyDestination);
-            context->copyResource(swapchainImage, textureResource);
+        if (!window->isMinimized())
+        {
+            context->begin();
+                //context->transition(device->getSwapchain()->getFrame(device->getSwapchain()->getCurrentFrameIndex()), ResourceState_RenderTarget);
+                //context->setShaderProgram(ShaderProgram_Box);
+                //context->setInputVertexLayout(VertexLayout_PositionNormalTexCoordColor);
+                //context->enableDepth(true);
+                //context->setDepthCompareOp(CompareOp_GreaterOrEqual);
+                //context->bindIndexBuffer(nullptr, 0, IndexType_Unsigned16);
+                //context->drawIndexedInstanced(0, 0, 0, 0, 0);
+                GraphicsResource* swapchainImage = device->getSwapchain()->getFrame(device->getSwapchain()->getCurrentFrameIndex());
+                context->transition(textureResource, ResourceState_CopySource);
+                context->transition(swapchainImage, ResourceState_CopyDestination);
+                context->copyResource(swapchainImage, textureResource);
+
+                //context->bindConstantBuffer(ShaderType_Vertex, 0, constBuff, 0, 256);
+                //context->drawInstanced(1, 1, 0, 0);
             
-            context->transition(device->getSwapchain()->getFrame(device->getSwapchain()->getCurrentFrameIndex()), ResourceState_Present);
-        context->end();
-        device->getSwapchain()->present();
+                context->transition(device->getSwapchain()->getFrame(device->getSwapchain()->getCurrentFrameIndex()), ResourceState_Present);
+            context->end();
+            device->getSwapchain()->present();
+        }    
         pollEvents();
     }
         
     context->wait();
 
+    device->destroyResource(constBuff);
     device->destroyResource(textureResource);
     device->releaseContext(context);
     adapter->destroyDevice(device);

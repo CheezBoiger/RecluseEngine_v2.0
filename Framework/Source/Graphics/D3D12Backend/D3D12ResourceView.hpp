@@ -56,8 +56,10 @@ private:
 namespace DescriptorViews {
 
 ResourceViewId                  makeResourceView(D3D12Device* pDevice, ID3D12Resource* pResource, const ResourceViewDescription& description);
+D3D12_CPU_DESCRIPTOR_HANDLE     makeCbv(D3D12Device* pDevice, D3D12_GPU_VIRTUAL_ADDRESS address, U32 sizeBytes);
 D3D12GraphicsResourceView*      findResourceView(ResourceViewId id);
 ResultCode                      destroyResourceView(D3D12Device* pDevice, ResourceViewId resourceId);
+ResultCode                      destroyCbv(D3D12Device* pDevice, D3D12_CPU_DESCRIPTOR_HANDLE handle);
 void                            clearAll(D3D12Device* pDevice);
 } // DescriptorViews
 } // Recluse

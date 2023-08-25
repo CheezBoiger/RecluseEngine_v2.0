@@ -57,10 +57,6 @@ struct ConstantBufferView
 
 struct RootSigLayout
 {
-    ConstantBufferView*     cbvs;
-    GraphicsResourceView**  srvs;
-    GraphicsResourceView**  uavs;
-    void**                  samplers;
     U16                     cbvCount;
     U16                     srvCount;
     U16                     uavCount;
@@ -68,7 +64,19 @@ struct RootSigLayout
     ShaderStageFlags        shaderVisibility;
 };
 
-ID3D12PipelineState* makePipelineState(D3D12Context* pContext, const PipelineStateObject& pipelineState);
-ID3D12RootSignature* makeRootSignature(D3D12Device* pDevice, const RootSigLayout& layout);
+
+struct RootSigResourceTable
+{   
+    D3D12_CPU_DESCRIPTOR_HANDLE*    cbvs;
+    D3D12_CPU_DESCRIPTOR_HANDLE*    srvs;
+    D3D12_CPU_DESCRIPTOR_HANDLE*    uavs;
+    D3D12_CPU_DESCRIPTOR_HANDLE*    samplers;   
+};
+
+ID3D12PipelineState*            makePipelineState(D3D12Context* pContext, const PipelineStateObject& pipelineState);
+ID3D12RootSignature*            makeRootSignature(D3D12Device* pDevice, const RootSigLayout& layout);
+CpuDescriptorTable              makeDescriptorSrvCbvUavTable(D3D12Device* pDevice, const RootSigLayout& layout, const RootSigResourceTable& resourceTable);
+CpuDescriptorTable              makeDescriptorSamplertable(D3D12Device* pDevice, const RootSigLayout& layout, const RootSigResourceTable& resourceTable);
+void                            cleanUpRootSigs();
 } // Pipelines
 } // Recluse

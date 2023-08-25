@@ -63,6 +63,26 @@ void clearAll(D3D12Device* pDevice)
     }
     g_resourceViewMap.clear();
 }
+
+
+D3D12_CPU_DESCRIPTOR_HANDLE makeCbv(D3D12Device* pDevice, D3D12_GPU_VIRTUAL_ADDRESS address, U32 sizeBytes)
+{
+    DescriptorHeapAllocationManager* manager = pDevice->getDescriptorHeapManager();
+    R_ASSERT(manager);
+    D3D12_CONSTANT_BUFFER_VIEW_DESC desc = { };
+    desc.BufferLocation = address;
+    desc.SizeInBytes = sizeBytes;
+    D3D12_CPU_DESCRIPTOR_HANDLE handle = manager->allocateConstantBufferView(desc);
+    return handle;
+}
+
+
+ResultCode destroyCbv(D3D12Device* pDevice, D3D12_CPU_DESCRIPTOR_HANDLE handle)
+{
+    DescriptorHeapAllocationManager* manager = pDevice->getDescriptorHeapManager();
+    R_ASSERT(manager);
+    return manager->freeConstantBufferView(handle);
+}
 } // DescriptorViews
 
 

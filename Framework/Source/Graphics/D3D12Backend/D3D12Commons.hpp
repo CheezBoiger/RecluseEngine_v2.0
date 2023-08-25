@@ -16,6 +16,10 @@
 
 #define R_CHANNEL_D3D12 "D3D12"
 
+// Useful information about differences between D3D12 and Vulkan:
+// https://asawicki.info/articles/memory_management_vulkan_direct3d_12.php5
+// Proc access to these functions when we query for instance.
+
 
 namespace Recluse {
 

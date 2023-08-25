@@ -7,10 +7,14 @@
 namespace Recluse {
 
 class D3D12Device;
+class D3D12Resource;
 
 class D3D12Queue 
 {
 public:
+    static void generateCopyResourceCommand(ID3D12GraphicsCommandList* pList, D3D12Resource* dst, D3D12Resource* src);
+    static void generateCopyBufferRegionsCommand(ID3D12GraphicsCommandList* pList, D3D12Resource* dst, D3D12Resource* src, const CopyBufferRegion* pRegions, U32 numRegions);
+
     D3D12Queue(GraphicsQueueTypeFlags queueType)
         : m_queue(nullptr)
         , pFence(nullptr)
@@ -22,15 +26,19 @@ public:
 
     void destroy();
 
-    ID3D12CommandQueue* get() const { return m_queue; }
+    ID3D12CommandQueue*     get() const { return m_queue; }
 
     // Returns the expected new fence value.
-    U64                    waitForGpu(U64 currentFenceValue);
+    U64                     waitForGpu(U64 currentFenceValue);
+    void                    copyResource(D3D12Resource* dst, D3D12Resource* src);
 
     ID3D12Fence* getFence() const { return pFence; }
     HANDLE getEvent() const { return pEvent; }
 
+    ID3D12GraphicsCommandList*  createOneTimeCommandList(U32 nodeMask, ID3D12Device* pDevice);
+    ResultCode                  endAndSubmitOneTimeCommandList(ID3D12GraphicsCommandList* pList);
 private:
+    ID3D12CommandAllocator*     m_allocator;
     ID3D12CommandQueue*         m_queue;
     ID3D12Fence*                pFence;
     HANDLE                      pEvent;

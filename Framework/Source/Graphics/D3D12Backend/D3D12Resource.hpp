@@ -20,10 +20,16 @@ public:
         : GraphicsResource()
         , m_memObj({})
         , m_isCommitted(false)
+        , m_totalSubresources(0)
         , m_pDevice(pDevice)
     {
         m_memObj.pResource = pResource; 
         setCurrentResourceState(initState);
+        if (pResource)
+        {
+            D3D12_RESOURCE_DESC desc = pResource->GetDesc();
+            m_totalSubresources = desc.MipLevels * desc.DepthOrArraySize;
+        }
     }
 
     // Initialize the resource.
@@ -51,29 +57,34 @@ public:
     Bool                        isCommitted() const { return m_isCommitted; }
 
     // Obtain struct that is used to make the actual transition on the GPU.
-    D3D12_RESOURCE_BARRIER      transition(ResourceState newState);
+    D3D12_RESOURCE_BARRIER      transition(U32 subresource, ResourceState newState);
+    void                        finalizeTransition(ResourceState newState) { setCurrentResourceState(newState); } 
 
     // Get the resource virtual address if it was created on GPU memory.
     D3D12_GPU_VIRTUAL_ADDRESS   getVirtualAddress() const { return (m_memObj.usage == ResourceMemoryUsage_GpuOnly) ? m_memObj.pResource->GetGPUVirtualAddress() : 0ULL; }
 
-    ResultCode                  map(void** pMappedMemory, MapRange* pReadRange) override { return RecluseResult_NoImpl; }
-    ResultCode                  unmap(MapRange* pWriteRange) override { return RecluseResult_NoImpl; }
+    ResultCode                  map(void** pMappedMemory, MapRange* pReadRange) override;
+    ResultCode                  unmap(MapRange* pWriteRange) override;
 
     ResourceId                  getId() const { return m_id; }
+    U16                         getTotalSubResources() const { return m_totalSubresources; }
 
     ResourceViewId              asView(const ResourceViewDescription& description) override;
 
     void                        generateId() override;
+    D3D12_CPU_DESCRIPTOR_HANDLE asCbv(U32 offsetBytes, U32 sizeBytes);
 
 private:
     Bool                        isSupportedTransitionState(ResourceState state);
 
     D3D12MemoryObject           m_memObj;
     Bool                        m_isCommitted;
+    U16                         m_totalSubresources;
     ResourceTransitionFlags     m_allowedTransitionStates;
     D3D12Device*                m_pDevice;
     ResourceId                  m_id;
-    std::map<Hash64, ResourceViewId> m_viewMap;
+    std::map<Hash64, ResourceViewId>                m_viewMap;
+    std::map<Hash64, D3D12_CPU_DESCRIPTOR_HANDLE>   m_cbvMap;
 };
 
 

@@ -69,10 +69,13 @@ void ResizeFunction(U32 x, U32 y, U32 width, U32 height)
     SwapchainCreateDescription desc = swapchain->getDesc();
     if (desc.renderWidth != width || desc.renderHeight != height)
     {
-        desc.renderWidth = width;   
-        desc.renderHeight = height;
-        pContext->wait();
-        swapchain->rebuild(desc);
+        if (width > 0 && height > 0)
+        {
+            desc.renderWidth = width;   
+            desc.renderHeight = height;
+            pContext->wait();
+            swapchain->rebuild(desc);
+        }
     }
 }
 
@@ -309,67 +312,69 @@ int main(int c, char* argv[])
     GlobalCommands::setValue("Vulkan.EnablePipelineCache", true);
     while (!pWindow->shouldClose()) 
     {
-        F32 ms = Limiter::limit(1.0f / 160.0f, 1ull, 0);
-        RealtimeTick::updateWatch(1ull, 0);
-        RealtimeTick tick = RealtimeTick::getTick(0);
-        Viewport viewport = { };
-        viewport.x = 0; viewport.y = 0;
-        viewport.width = pWindow->getWidth(), viewport.height = pWindow->getHeight();
-        viewport.minDepth = 0.0f; viewport.maxDepth = 1.0f;
+        if (!pWindow->isMinimized())
+        {
+            F32 ms = Limiter::limit(1.0f / 160.0f, 1ull, 0);
+            RealtimeTick::updateWatch(1ull, 0);
+            RealtimeTick tick = RealtimeTick::getTick(0);
+            Viewport viewport = { };
+            viewport.x = 0; viewport.y = 0;
+            viewport.width = pWindow->getWidth(), viewport.height = pWindow->getHeight();
+            viewport.minDepth = 0.0f; viewport.maxDepth = 1.0f;
 
-        Rect scissor = { };
-        scissor.x = 0; scissor.y = 0;
-        scissor.width = pWindow->getWidth(); scissor.height = pWindow->getHeight();
-        context->begin();
-            updateConstData(pData, tick, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), Math::Float2(0, 0));
-            updateConstData(pData2, tick, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), Math::Float2(0, 1));
-            context->pushState();
-            context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
-            context->setCullMode(CullMode_None);
-            context->setFrontFace(FrontFace_CounterClockwise);
-            context->setPolygonMode(PolygonMode_Fill);
-            context->setTopology(PrimitiveTopology_TriangleList);
-            context->setViewports(1, &viewport);
-            context->setScissors(1, &scissor);
-            context->setInputVertexLayout(VertexLayoutKey_PositionOnly);
-            context->setShaderProgram(ShaderKey_SimpleColor);
+            Rect scissor = { };
+            scissor.x = 0; scissor.y = 0;
+            scissor.width = pWindow->getWidth(); scissor.height = pWindow->getHeight();
+            context->begin();
+                updateConstData(pData, tick, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), Math::Float2(0, 0));
+                updateConstData(pData2, tick, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), Math::Float2(0, 1));
+                context->pushState();
+                context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
+                context->setCullMode(CullMode_None);
+                context->setFrontFace(FrontFace_CounterClockwise);
+                context->setPolygonMode(PolygonMode_Fill);
+                context->setTopology(PrimitiveTopology_TriangleList);
+                context->setViewports(1, &viewport);
+                context->setScissors(1, &scissor);
+                context->setInputVertexLayout(VertexLayoutKey_PositionOnly);
+                context->setShaderProgram(ShaderKey_SimpleColor);
             
-            ResourceViewDescription rtvDesc = { };
-            rtvDesc.type                    = ResourceViewType_RenderTarget;
-            rtvDesc.format                  = pSwapchain->getDesc().format;
-            rtvDesc.dimension               = ResourceViewDimension_2d;
-            rtvDesc.baseArrayLayer          = 0;
-            rtvDesc.baseMipLevel            = 0;
-            rtvDesc.layerCount              = 1;
-            rtvDesc.mipLevelCount           = 1;
-            ResourceViewId frameRtv = pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex())->asView(rtvDesc);
-            context->setColorWriteMask(0, Color_Rgba);
-            context->bindRenderTargets(1, &frameRtv);
-            F32 clear[4] = { 0, 0, 0, 1 };
-            Rect rect; rect.x = 0; rect.y = 0; rect.width = pSwapchain->getDesc().renderWidth; rect.height = pSwapchain->getDesc().renderHeight;
-            context->clearRenderTarget(0, clear, rect);
-            context->transition(pVertexBuffer, ResourceState_VertexBuffer);
-            context->bindVertexBuffers(1, &pVertexBuffer, &offset);
+                ResourceViewDescription rtvDesc = { };
+                rtvDesc.type                    = ResourceViewType_RenderTarget;
+                rtvDesc.format                  = pSwapchain->getDesc().format;
+                rtvDesc.dimension               = ResourceViewDimension_2d;
+                rtvDesc.baseArrayLayer          = 0;
+                rtvDesc.baseMipLevel            = 0;
+                rtvDesc.layerCount              = 1;
+                rtvDesc.mipLevelCount           = 1;
+                ResourceViewId frameRtv = pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex())->asView(rtvDesc);
+                context->setColorWriteMask(0, Color_Rgba);
+                context->bindRenderTargets(1, &frameRtv);
+                F32 clear[4] = { 0, 0, 0, 1 };
+                Rect rect; rect.x = 0; rect.y = 0; rect.width = pSwapchain->getDesc().renderWidth; rect.height = pSwapchain->getDesc().renderHeight;
+                context->clearRenderTarget(0, clear, rect);
+                context->transition(pVertexBuffer, ResourceState_VertexBuffer);
+                context->bindVertexBuffers(1, &pVertexBuffer, &offset);
 
-            KeyboardListener listener = { };
+                KeyboardListener listener = { };
 
-            if (pMouse->getButtonState(1) == InputState_Down)
-            {
-                context->bindConstantBuffer(ShaderType_Vertex, 0, pData, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), sizeof(ConstData));
-                context->drawInstanced(3, 1, 0, 0);
-            }
-            if (pMouse->getButtonState(0) == InputState_Down)
-            {
-                context->bindConstantBuffer(ShaderType_Vertex, 0, pData2, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), sizeof(ConstData));
-                context->drawInstanced(3, 1, 0, 0);
-            }
+                if (pMouse->getButtonState(1) == InputState_Down)
+                {
+                    context->bindConstantBuffer(ShaderType_Vertex, 0, pData, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), sizeof(ConstData));
+                    context->drawInstanced(3, 1, 0, 0);
+                }
+                if (pMouse->getButtonState(0) == InputState_Down)
+                {
+                    context->bindConstantBuffer(ShaderType_Vertex, 0, pData2, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), sizeof(ConstData));
+                    context->drawInstanced(3, 1, 0, 0);
+                }
 
-            context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_Present);
-            context->popState();
-        context->end();
-        //R_VERBOSE("Game", "%f fps", 1.0f / ms);
-        pSwapchain->present();
-
+                context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_Present);
+                context->popState();
+            context->end();
+            //R_VERBOSE("Game", "%f fps", 1.0f / ms);
+            pSwapchain->present();
+        }
         pollEvents();
     
     }

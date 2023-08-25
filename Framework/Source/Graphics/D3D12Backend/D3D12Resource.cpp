@@ -136,6 +136,7 @@ ResultCode D3D12Resource::initialize
     m_isCommitted               = makeCommitted;
     m_allowedTransitionStates   = desc.usage;
     m_pDevice                   = pDevice;
+    m_totalSubresources         = desc.mipLevels * desc.depthOrArraySize;
 
     setCurrentResourceState(initialState);
     m_id = generateResourceId();
@@ -151,6 +152,11 @@ ResultCode D3D12Resource::destroy()
     for (auto view : m_viewMap)
     {
         DescriptorViews::destroyResourceView(m_pDevice, view.second);
+    }
+    
+    for (auto cbv : m_cbvMap)
+    {
+        DescriptorViews::destroyCbv(m_pDevice, cbv.second);
     }
 
     if (m_memObj.pResource) 
@@ -171,6 +177,7 @@ ResultCode D3D12Resource::destroy()
         }
 
         m_viewMap.clear();
+        m_cbvMap.clear();
         m_memObj.pResource->Release();
         m_memObj.pResource = nullptr;
 
@@ -180,7 +187,7 @@ ResultCode D3D12Resource::destroy()
 }
 
 
-D3D12_RESOURCE_BARRIER D3D12Resource::transition(ResourceState newState)
+D3D12_RESOURCE_BARRIER D3D12Resource::transition(U32 subresource, ResourceState newState)
 {
     D3D12_RESOURCE_BARRIER barrier = { };
 
@@ -188,12 +195,11 @@ D3D12_RESOURCE_BARRIER D3D12Resource::transition(ResourceState newState)
     barrier.Transition.pResource    = m_memObj.pResource;
     barrier.Transition.StateBefore  = getNativeResourceState(getCurrentResourceState());
     barrier.Transition.StateAfter   = getNativeResourceState(newState);
-    barrier.Transition.Subresource  = 0u;
-
-    setCurrentResourceState(newState);
+    barrier.Transition.Subresource  = subresource;
 
     return barrier;
 }
+
 
 Bool D3D12Resource::isSupportedTransitionState(ResourceState state)
 {
@@ -243,6 +249,25 @@ ResourceViewId D3D12Resource::asView(const ResourceViewDescription& description)
 }
 
 
+D3D12_CPU_DESCRIPTOR_HANDLE D3D12Resource::asCbv(U32 offsetBytes, U32 sizeBytes)
+{
+    ResourceViewId view = 0;
+    Hash64 hash = (((U64)sizeBytes << 32) | (U64)offsetBytes);
+    auto iter = m_cbvMap.find(hash);
+    if (iter == m_cbvMap.end())
+    {   
+        D3D12_GPU_VIRTUAL_ADDRESS address = m_memObj.pResource->GetGPUVirtualAddress() + (D3D12_GPU_VIRTUAL_ADDRESS)offsetBytes;
+        D3D12_CPU_DESCRIPTOR_HANDLE handle = DescriptorViews::makeCbv(m_pDevice, address, align(sizeBytes, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT));
+        m_cbvMap.insert(std::make_pair(hash, handle));
+        return handle;
+    }
+    else
+    {
+        return iter->second;
+    }
+}
+
+
 void D3D12Resource::generateId()
 {
     m_id = generateResourceId();
@@ -283,6 +308,42 @@ ResultCode releaseResource(D3D12Resource* pResource)
     {
         delete pResource;
         m_resourceMap.erase(iter);
+    }
+    return RecluseResult_Ok;
+}
+
+
+ResultCode D3D12Resource::map(void** pMappedMemory, MapRange* pReadRange)
+{
+    HRESULT result = S_OK;
+    if (pReadRange)
+    {
+        D3D12_RANGE readRange = { };
+        readRange.Begin = pReadRange->offsetBytes;
+        readRange.End = pReadRange->sizeBytes;
+        result = m_memObj.pResource->Map(0, &readRange, pMappedMemory);
+    }
+    else
+    {
+        result = m_memObj.pResource->Map(0, nullptr, pMappedMemory);
+    }
+    return SUCCEEDED(result) ? RecluseResult_Ok : RecluseResult_Failed;
+}
+
+
+ResultCode D3D12Resource::unmap(MapRange* pWriteRange)
+{
+    HRESULT result = S_OK;
+    if (pWriteRange)
+    {
+        D3D12_RANGE range = { };
+        range.Begin = pWriteRange->offsetBytes;
+        range.End = pWriteRange->sizeBytes;
+        m_memObj.pResource->Unmap(0, &range);
+    }
+    else
+    {
+        m_memObj.pResource->Unmap(0, nullptr);
     }
     return RecluseResult_Ok;
 }

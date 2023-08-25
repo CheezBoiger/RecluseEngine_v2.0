@@ -1,9 +1,10 @@
 //
 #include "D3D12Queue.hpp"
 #include "D3D12Device.hpp"
+#include "D3D12Resource.hpp"
 
 #include "Recluse/Messaging.hpp"
-
+#include "Recluse/Math/MathCommons.hpp"
 
 namespace Recluse {
 
@@ -39,12 +40,20 @@ ResultCode D3D12Queue::initialize(D3D12Device* pDevice)
     pDevice->get()->CreateFence(0, D3D12_FENCE_FLAG_NONE, __uuidof(ID3D12Fence), (void**)&pFence);
     pEvent = CreateEvent(nullptr, false, false, nullptr);
 
+    pDevice->get()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, __uuidof(ID3D12CommandAllocator), (void**)&m_allocator);
+
     return RecluseResult_Ok;
 }
 
 
 void D3D12Queue::destroy()
 {
+    if (m_allocator)
+    {
+        m_allocator->Release();
+        m_allocator = nullptr;
+    }
+
     if (m_queue) 
     {
         R_DEBUG(R_CHANNEL_D3D12, "Releasing D3D12 queue...");
@@ -84,4 +93,143 @@ ErrType D3D12Queue::submit(const QueueSubmit* payload)
     return REC_RESULT_NOT_IMPLEMENTED;
 }
 */
+
+
+ID3D12GraphicsCommandList* D3D12Queue::createOneTimeCommandList(U32 nodeMask, ID3D12Device* pDevice)
+{
+    ID3D12GraphicsCommandList* pList = nullptr;
+    HRESULT result = pDevice->CreateCommandList(nodeMask, D3D12_COMMAND_LIST_TYPE_DIRECT, m_allocator, nullptr, __uuidof(ID3D12GraphicsCommandList), (void**)&pList);
+    
+    if (FAILED(result))
+    {
+        R_ERROR(R_CHANNEL_D3D12, "Failed to create a one time command list.");
+        return nullptr;
+    }
+    return pList;
+}
+
+
+ResultCode D3D12Queue::endAndSubmitOneTimeCommandList(ID3D12GraphicsCommandList* pList)
+{
+    ID3D12CommandList* commandList[] = { pList };
+    m_queue->ExecuteCommandLists(1, commandList);
+    U64 currentFenceValue = pFence->GetCompletedValue();
+    waitForGpu(currentFenceValue);
+    
+    pList->Release();
+    m_allocator->Reset();
+    return RecluseResult_Ok;
+}
+
+
+void D3D12Queue::copyResource(D3D12Resource* dst, D3D12Resource* src)
+{
+    ID3D12Device* pDevice = nullptr;
+    m_queue->GetDevice(__uuidof(ID3D12Device), (void**)&pDevice);
+    ID3D12GraphicsCommandList* pList = createOneTimeCommandList(0, pDevice);
+    generateCopyResourceCommand(pList, dst, src);
+    pList->Close();
+    endAndSubmitOneTimeCommandList(pList);
+    pDevice->Release();
+}
+
+R_INTERNAL
+Bool isTexture(const D3D12_RESOURCE_DIMENSION dim)
+{
+    return (dim != D3D12_RESOURCE_DIMENSION_BUFFER  && dim != D3D12_RESOURCE_DIMENSION_UNKNOWN);
+}
+
+
+void D3D12Queue::generateCopyResourceCommand(ID3D12GraphicsCommandList* pList, D3D12Resource* dst, D3D12Resource* src)
+{
+    ID3D12Resource* pDst = dst->get();
+    ID3D12Resource* pSrc = src->get();
+    D3D12_RESOURCE_DESC dstDesc = pDst->GetDesc();
+    D3D12_RESOURCE_DESC srcDesc = pSrc->GetDesc();
+    ID3D12Device* pDevice = nullptr;
+    pList->GetDevice(__uuidof(ID3D12Device), (void**)&pDevice);
+
+    if (dstDesc.Dimension == srcDesc.Dimension 
+            && dstDesc.MipLevels == srcDesc.MipLevels 
+            && dstDesc.DepthOrArraySize == srcDesc.DepthOrArraySize
+            && dstDesc.Width == srcDesc.Width
+            && dstDesc.Height == srcDesc.Height
+            && dstDesc.Format == srcDesc.Format)
+    {
+        pList->CopyResource(dst->get(), src->get());
+    }
+    else
+    {
+        if (isTexture(dstDesc.Dimension))
+        {
+            U32 subresourceCount = dst->getTotalSubResources();
+            U32 srcSubresourceCount = src->getTotalSubResources();
+            if (isTexture(srcDesc.Dimension))
+            {
+                std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT> srcFootprint(srcSubresourceCount);
+                std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT> dstFootprint(subresourceCount);
+                pDevice->GetCopyableFootprints(&srcDesc, 0, srcSubresourceCount, 0, srcFootprint.data(), nullptr, nullptr, nullptr);
+                pDevice->GetCopyableFootprints(&dstDesc, 0, subresourceCount, 0, dstFootprint.data(), nullptr, nullptr, nullptr);
+                for (U32 subresource = 0; subresource < srcSubresourceCount; ++subresource)
+                {
+                    D3D12_TEXTURE_COPY_LOCATION dstLocation = { };
+                    D3D12_TEXTURE_COPY_LOCATION srcLocation = { };
+                    dstLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+                    dstLocation.SubresourceIndex = subresource;
+                    dstLocation.pResource = pDst;
+
+                    srcLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+                    srcLocation.pResource = pSrc;
+                    srcLocation.SubresourceIndex = subresource;
+                    D3D12_BOX srcBox = { };
+                    srcBox.left = 0;
+                    srcBox.top = 0;
+                    srcBox.right = Math::minimum(srcFootprint[subresource].Footprint.Width, dstFootprint[subresource].Footprint.Width);
+                    srcBox.bottom = Math::minimum(srcFootprint[subresource].Footprint.Height, dstFootprint[subresource].Footprint.Height);
+                    srcBox.front = 0;
+                    srcBox.back = 1;
+                    pList->CopyTextureRegion(&dstLocation, 0, 0, 0, &srcLocation, &srcBox);
+                }
+            }
+            else
+            {
+                std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT> footprint(subresourceCount);
+                pDevice->GetCopyableFootprints(&dstDesc, 0, subresourceCount, 0, footprint.data(), nullptr, nullptr, nullptr); 
+                for (U32 subresource = 0; subresource < subresourceCount; ++subresource)
+                {
+                    D3D12_TEXTURE_COPY_LOCATION dstLocation = { };
+                    D3D12_TEXTURE_COPY_LOCATION srcLocation = { };
+                    dstLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+                    dstLocation.SubresourceIndex = subresource;
+                    dstLocation.pResource = pDst;
+
+                    srcLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+                    srcLocation.pResource = pSrc;
+                    srcLocation.PlacedFootprint = footprint[subresource];
+                    pList->CopyTextureRegion(&dstLocation, 0, 0, 0, &srcLocation, nullptr);
+                }
+            }
+        }
+        else
+        {
+            if (isTexture(srcDesc.Dimension))
+            {
+            }
+        }
+    }
+    // We must release the reference of device, otherwise we have a leak.
+    pDevice->Release();
+}
+
+
+void D3D12Queue::generateCopyBufferRegionsCommand(ID3D12GraphicsCommandList* pList, D3D12Resource* dst, D3D12Resource* src, const CopyBufferRegion* pRegions, U32 numRegions)
+{
+    ID3D12Resource* pDst = dst->get();
+    ID3D12Resource* pSrc = src->get();
+    D3D12_RESOURCE_DESC desc = pDst->GetDesc();
+    for (U32 i = 0; i < numRegions; ++i)
+    {
+    }
+}
+
 } // Recluse

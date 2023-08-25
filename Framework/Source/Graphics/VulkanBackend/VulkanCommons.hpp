@@ -23,7 +23,8 @@ struct VulkanMemoryPool
     void*           basePtr;           
 };
 
-
+// Useful information about differences between D3D12 and Vulkan:
+// https://asawicki.info/articles/memory_management_vulkan_direct3d_12.php5
 // Proc access to these functions when we query for instance.
 extern PFN_vkSetDebugUtilsObjectNameEXT    pfn_vkSetDebugUtilsObjectNameEXT;
 extern PFN_vkSetDebugUtilsObjectTagEXT     pfn_vkSetDebugUtilsObjectTagEXT;
