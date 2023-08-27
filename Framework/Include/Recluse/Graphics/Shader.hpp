@@ -91,6 +91,7 @@ public:
 
     static R_PUBLIC_API Shader* create();
     static R_PUBLIC_API void destroy(Shader* pShader);
+    static R_PUBLIC_API Hash64 makeShaderHash(const char* bytecode, U64 bytecodeLength);
 
 private:
 
@@ -99,7 +100,8 @@ private:
         , m_shaderType(ShaderType_None)
         , m_shaderNameHash(~0u)
         , m_permutation(0)
-        , m_entryPoint(nullptr) 
+        , m_entryPoint(nullptr)
+        , m_shaderHashId(~0)
     {
         m_shaderName[0] = '\0'; 
     }
@@ -119,16 +121,17 @@ public:
     ShaderType              getType() const { return m_shaderType; }
     const char*             getByteCode() const { return m_byteCode.data(); }
     U64                     getSzBytes() const { return m_byteCode.size(); }
-
-    // Obtain the shader hash id, this is usually equal across the same shader with different permutations.
-    // PermutationId defines the unique id between similar shaders, in order to distinguish from other combinations.
-    ShaderId                getHashId() const { return m_shaderNameHash; }
+    ShaderId                getNameHashId() const { return m_shaderNameHash; }
     
     void                    setName(const char* name) 
     {
         m_shaderName = name;
         m_shaderNameHash = recluseHashFast(m_shaderName.data(), m_shaderName.size());
     }
+
+    // Obtain the shader hash id, this is usually equal across the same shader with different permutations.
+    // PermutationId defines the unique id between similar shaders, in order to distinguish from other combinations.
+    Hash64                  getShaderHashId() const { return m_shaderHashId; }
 
     const char*             getName() const { return m_shaderName.c_str(); }
     U64                     getNameSize() const { return static_cast<U64>(m_shaderName.size()); }
@@ -138,13 +141,11 @@ public:
 
 private:
 
-    // Generate id from bytecode value.
-    void                    genHashId();
-
     ShaderIntermediateCode  m_intermediateCode;
     ShaderType              m_shaderType;
     std::vector<char>       m_byteCode;
     ShaderId                m_shaderNameHash;
+    Hash64                  m_shaderHashId;
     const char*             m_entryPoint;
     std::string             m_shaderName;
     ShaderPermutationId     m_permutation;

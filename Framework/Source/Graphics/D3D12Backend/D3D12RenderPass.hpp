@@ -21,7 +21,7 @@ public:
         , m_dsvDhAllocation(DescriptorTable::invalidCpuAddress)
     { }
 
-    ResultCode                      initialize
+    ResultCode                      update
         (
             D3D12Device* pDevice,
             U32 numRtvDescriptors, 

@@ -264,9 +264,10 @@ int main(int c, char* argv[])
     }
 
     {
+        GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
         std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
-        std::string vsSource = currDir + "/" + "test.vs.glsl";
-        std::string fsSource = currDir + "/" + "test.fs.glsl";
+        std::string vsSource = currDir + "/" + "test.vs.hlsl";
+        std::string fsSource = currDir + "/" + "test.fs.hlsl";
 
         Builder::ShaderProgramDescription description = { };
         description.pipelineType = BindType_Graphics;
@@ -280,6 +281,7 @@ int main(int c, char* argv[])
         description.graphics.gs = nullptr;
         description.graphics.hs = nullptr;
 
+        description.language = ShaderLang_Hlsl;
         Builder::buildShaderProgramDefinitions(description, ShaderKey_SimpleColor, ShaderIntermediateCode_Spirv);
         Builder::Runtime::buildShaderProgram(pDevice, 0);
         Builder::releaseShaderProgramDefinition(0);
@@ -314,7 +316,7 @@ int main(int c, char* argv[])
     {
         if (!pWindow->isMinimized())
         {
-            F32 ms = Limiter::limit(1.0f / 160.0f, 1ull, 0);
+            F32 ms = Limiter::limit(0.0f / 160.0f, 1ull, 0);
             RealtimeTick::updateWatch(1ull, 0);
             RealtimeTick tick = RealtimeTick::getTick(0);
             Viewport viewport = { };
@@ -360,19 +362,19 @@ int main(int c, char* argv[])
 
                 if (pMouse->getButtonState(1) == InputState_Down)
                 {
-                    context->bindConstantBuffer(ShaderType_Vertex, 0, pData, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), sizeof(ConstData));
+                    context->bindConstantBuffer(ShaderStage_Fragment | ShaderStage_Vertex, 0, pData, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), sizeof(ConstData));                 
                     context->drawInstanced(3, 1, 0, 0);
                 }
                 if (pMouse->getButtonState(0) == InputState_Down)
                 {
-                    context->bindConstantBuffer(ShaderType_Vertex, 0, pData2, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), sizeof(ConstData));
+                    context->bindConstantBuffer(ShaderStage_Fragment | ShaderStage_Vertex, 0, pData2, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), sizeof(ConstData));
                     context->drawInstanced(3, 1, 0, 0);
                 }
 
                 context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_Present);
                 context->popState();
             context->end();
-            //R_VERBOSE("Game", "%f fps", 1.0f / ms);
+            R_WARN("Game", "%f fps", 1.0f / ms);
             pSwapchain->present();
         }
         pollEvents();

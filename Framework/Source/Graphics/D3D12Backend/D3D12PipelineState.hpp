@@ -78,5 +78,6 @@ ID3D12RootSignature*            makeRootSignature(D3D12Device* pDevice, const Ro
 CpuDescriptorTable              makeDescriptorSrvCbvUavTable(D3D12Device* pDevice, const RootSigLayout& layout, const RootSigResourceTable& resourceTable);
 CpuDescriptorTable              makeDescriptorSamplertable(D3D12Device* pDevice, const RootSigLayout& layout, const RootSigResourceTable& resourceTable);
 void                            cleanUpRootSigs();
+void                            resetTableHeaps(D3D12Device* pDevice);
 } // Pipelines
 } // Recluse

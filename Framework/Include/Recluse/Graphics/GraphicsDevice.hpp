@@ -180,11 +180,11 @@ public:
     virtual void setLineWidth(F32 width) { }
     virtual void setDepthCompareOp(CompareOp compareOp) { }
     virtual void setPolygonMode(PolygonMode polygonMode) { }
-    virtual void bindShaderResource(ShaderType type, U32 slot, ResourceViewId view) { }
-    virtual void bindUnorderedAccessView(ShaderType type, U32 slot, ResourceViewId view) { }
-    virtual void bindConstantBuffer(ShaderType type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes) { }
+    virtual void bindShaderResource(ShaderStageFlags type, U32 slot, ResourceViewId view) { }
+    virtual void bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceViewId view) { }
+    virtual void bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes) { }
     virtual void bindRenderTargets(U32 count, ResourceViewId* ppResources, ResourceViewId pDepthStencil = 0) { }
-    virtual void bindSampler(ShaderType type, U32 slot, GraphicsSampler* ppSampler) { }
+    virtual void bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* ppSampler) { }
     virtual void bindBlendState(const BlendState& state) { }
     virtual void releaseBindingResources() { }
     virtual void setTopology(PrimitiveTopology topology) { }

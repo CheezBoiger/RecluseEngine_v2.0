@@ -144,7 +144,6 @@ ID3D12RootSignature* internalCreateRootSignatureWithTable(ID3D12Device* pDevice,
             tableParameters[1].DescriptorTable.pDescriptorRanges = &ranges[Math::clamp((U32)(rangeIdx - 1), (U32)0, (U32)ranges.size())];
             tableParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
         }
-
         desc.NumParameters = hasSamplers ? 2 : 1;
         desc.NumStaticSamplers = 0;
         desc.pParameters = tableParameters;
@@ -189,6 +188,7 @@ ID3D12PipelineState* makePipelineState(D3D12Context* pContext, const PipelineSta
     {
         // We didn't find a similar pipeline state, need to create a new one.
         
+        
     }
     retrievedPipelineState = iter->second;
     return retrievedPipelineState;
@@ -222,15 +222,27 @@ CpuDescriptorTable makeDescriptorSrvCbvUavTable(D3D12Device* pDevice, const Root
     U32 i = 0;
     for (U32 j = 0; j < layout.cbvCount; ++j)
     {
-        handles[i++] = resourceTable.cbvs[j];
+        D3D12_CPU_DESCRIPTOR_HANDLE handle = resourceTable.cbvs[j];
+        if (handle.ptr != DescriptorTable::invalidCpuAddress.ptr)
+            handles[i++] = resourceTable.cbvs[j];
+        else
+            handles[i++] = pManager->nullCbvDescriptor();
     }
     for (U32 j = 0; j < layout.srvCount; ++j)
     {
-        handles[i++] = resourceTable.srvs[j];
+        D3D12_CPU_DESCRIPTOR_HANDLE handle = resourceTable.srvs[j];
+        if (handle.ptr != DescriptorTable::invalidCpuAddress.ptr)
+            handles[i++] = resourceTable.srvs[j];
+        else
+            handles[i++] = pManager->nullSrvDescriptor();
     }
     for (U32 j = 0; j < layout.uavCount; ++j)
     {
-        handles[i++] = resourceTable.uavs[j];
+        D3D12_CPU_DESCRIPTOR_HANDLE handle = resourceTable.uavs[j];
+        if (handle.ptr != DescriptorTable::invalidCpuAddress.ptr)
+            handles[i++] = resourceTable.uavs[j];
+        else
+            handles[i++] = pManager->nullUavDescriptor();
     }
     hash = recluseHashFast(handles.data(), sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) * handles.size());
     auto iter = m_cachedCpuDescriptorTables.find(hash);
@@ -274,6 +286,15 @@ void cleanUpRootSigs()
     }
 
     m_rootSignatures.clear();
+}
+
+
+void resetTableHeaps(D3D12Device* pDevice)
+{
+    DescriptorHeapAllocationManager* pManager = pDevice->getDescriptorHeapManager();
+    pManager->resetCpuTableHeaps();
+    m_cachedCpuDescriptorTables.clear();
+    m_cachedSamplerTables.clear();
 }
 } // Pipelines
 } // Recluse

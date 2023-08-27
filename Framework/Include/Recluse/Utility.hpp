@@ -17,33 +17,83 @@ static R_FORCE_INLINE ToCast staticCast(Class obj)
     return static_cast<ToCast>(obj);
 }
 
-// Common Reference counter object. To handle references of a shared object.
+
+template<typename Object>
 class ReferenceCounter
 {
 public:
     ReferenceCounter()
+        : m_ref(0)
+    { }
+
+    ReferenceCounter(const Object& obj)
+        : m_ref(0)
+        , m_obj(obj)
+    { }
+
+    ReferenceCounter(const Object&& obj)
+        : m_ref(0)
+        , m_obj(std::move(obj))
+    { }
+
+    ReferenceCounter& operator=(const Object& obj)
+    {
+        m_obj = obj;
+        m_ref = 0;
+        return (*this);
+    }
+
+    ReferenceCounter& operator=(const Object&& obj)
+    {
+        m_obj = std::move(obj);
+        m_ref = 0;
+        return (*this);
+    }
+
+    void    addReference(U32 addition = 1) { m_ref += addition; }
+    U32     release() { (m_ref == 0) ? (m_ref = 0) : (m_ref -= 1); return m_ref; }
+    U32     getReference() const { return m_ref; }
+    Bool    hasReferences() const { return (m_ref != 0); }
+
+    Object& get() { return m_obj; }
+    const Object& get() const { return m_obj; }
+
+    Object& operator()() { return m_obj; }
+    const Object& operator()() const { return m_obj; }
+
+private:
+    U32 m_ref;
+    Object m_obj;
+};
+
+
+// Shared Reference counter object. To handle references of a shared object.
+class SharedReferenceCounter
+{
+public:
+    SharedReferenceCounter()
         : m_count(nullptr)
     {
     }
 
-    ReferenceCounter(const ReferenceCounter& ref) { m_count = ref.m_count; if (m_count) increment(); }
-    ReferenceCounter(ReferenceCounter&& ref) noexcept { m_count = ref.m_count; ref.m_count = nullptr; }
+    SharedReferenceCounter(const SharedReferenceCounter& ref) { m_count = ref.m_count; if (m_count) increment(); }
+    SharedReferenceCounter(SharedReferenceCounter&& ref) noexcept { m_count = ref.m_count; ref.m_count = nullptr; }
 
-    ReferenceCounter& operator=(const ReferenceCounter& ref)
+    SharedReferenceCounter& operator=(const SharedReferenceCounter& ref)
     {
         m_count = ref.m_count;
         increment();
         return (*this);
     }
 
-    ReferenceCounter& operator=(ReferenceCounter&& ref) noexcept
+    SharedReferenceCounter& operator=(SharedReferenceCounter&& ref) noexcept
     {
         m_count = ref.m_count;
         ref.m_count = nullptr;
         return (*this);
     }
 
-    virtual ~ReferenceCounter()
+    virtual ~SharedReferenceCounter()
     {
         if (hasNoReferences())
         {
@@ -116,27 +166,27 @@ public:
 // Smart pointer system that handles if a pointer is fully released.
 // Keeps track of all pointer references.
 template<typename ClassT, typename Deleter = DefaultDeleter<ClassT>>
-class SmartPtr : public ReferenceCounter
+class SmartPtr : public SharedReferenceCounter
 {
 public:
     SmartPtr(ClassT* pData = nullptr, Deleter deleter = Deleter())
         : m_pData(pData)
         , m_deleter(deleter)
-        , ReferenceCounter()
+        , SharedReferenceCounter()
     {
         if (m_pData)
             add();
     }
 
     SmartPtr(const SmartPtr& sp)
-        : ReferenceCounter(sp)
+        : SharedReferenceCounter(sp)
     {
         m_pData = sp.m_pData;
         m_deleter = sp.m_deleter;
     }
 
     SmartPtr(SmartPtr&& sp)
-        : ReferenceCounter(static_cast<ReferenceCounter&&>(sp))
+        : SharedReferenceCounter(static_cast<SharedReferenceCounter&&>(sp))
     {
         m_pData = sp.m_pData;
         m_deleter = sp.m_deleter;
@@ -155,7 +205,7 @@ public:
     // deletion of this object until counter is 0, towards the destruction of the smart pointer.)
     U32 release()
     {
-        U32 count = ReferenceCounter::release();
+        U32 count = SharedReferenceCounter::release();
         if (count == 0 && m_pData)
         {
             m_deleter(m_pData);
@@ -197,7 +247,7 @@ public:
 
     SmartPtr& operator=(const SmartPtr& sp)
     {
-        ReferenceCounter::operator=(sp);
+        SharedReferenceCounter::operator=(sp);
         m_deleter = sp.m_deleter;
         m_pData = sp.m_pData;
         return (*this);
@@ -205,7 +255,7 @@ public:
 
     SmartPtr& operator=(SmartPtr&& sp) noexcept
     {
-        ReferenceCounter::operator=(static_cast<ReferenceCounter&&>(sp));
+        SharedReferenceCounter::operator=(static_cast<SharedReferenceCounter&&>(sp));
         m_deleter = sp.m_deleter;
         m_pData = sp.m_pData;
         sp.m_pData = nullptr;
@@ -230,45 +280,45 @@ constexpr SmartPtr<ClassT, Deleter> makeSmartPtr(ClassT* pData, Deleter deleter 
 // Simpler reference object. This simply holds the object and tracks the number of references, but will not release it
 // if the counter hits 0!
 template<typename ClassT>
-class ReferenceObject : public ReferenceCounter
+class SharedReferenceObject : public SharedReferenceCounter
 {
 public:
-    ReferenceObject()
+    SharedReferenceObject()
     {
 
     }
 
-    ReferenceObject(const ClassT dat)
+    SharedReferenceObject(const ClassT dat)
         : m_dat(dat) { add(); }
 
-    ~ReferenceObject()
+    ~SharedReferenceObject()
     {
         release();
     }
 
-    ReferenceObject(const ReferenceObject& obj)
-        : ReferenceCounter(obj)
+    SharedReferenceObject(const SharedReferenceObject& obj)
+        : SharedReferenceCounter(obj)
     {
         m_dat = obj.m_dat;
         add();
     }
 
-    ReferenceObject(ReferenceObject&& obj)
-        : ReferenceCounter(obj)
+    SharedReferenceObject(SharedReferenceObject&& obj)
+        : SharedReferenceCounter(obj)
     {
         m_dat = obj.m_dat;
     }
 
-    ReferenceObject& operator=(const ReferenceObject& obj)
+    SharedReferenceObject& operator=(const SharedReferenceObject& obj)
     {
-        ReferenceCounter::operator=(obj);
+        SharedReferenceCounter::operator=(obj);
         m_dat = obj.m_dat;
         return (*this);
     }
 
-    ReferenceObject& operator=(ReferenceObject&& obj)
+    SharedReferenceObject& operator=(SharedReferenceObject&& obj)
     {
-        ReferenceCounter::operator=(obj);
+        SharedReferenceCounter::operator=(obj);
         m_dat = obj.m_dat;
         return (*this);
     }
@@ -284,9 +334,9 @@ private:
 
 
 template<typename ClassT>
-ReferenceObject<ClassT> makeReference(const ClassT data)
+SharedReferenceObject<ClassT> makeSharedReference(const ClassT data)
 {
-    return ReferenceObject<ClassT>(data);
+    return SharedReferenceObject<ClassT>(data);
 }
 
 

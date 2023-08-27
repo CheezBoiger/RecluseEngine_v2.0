@@ -100,11 +100,11 @@ public:
 
     void transition(GraphicsResource* pResource, ResourceState dstState, U16 baseMip, U16 mipCount, U16 baseLayer, U16 layerCount) override;
 
-    void bindShaderResource(ShaderType type, U32 slot, ResourceViewId view) override;
-    void bindUnorderedAccessView(ShaderType type, U32 slot, ResourceViewId view) override;
-    void bindConstantBuffer(ShaderType type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes) override;
+    void bindShaderResource(ShaderStageFlags type, U32 slot, ResourceViewId view) override;
+    void bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceViewId view) override;
+    void bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes) override;
     void bindRenderTargets(U32 count, ResourceViewId* ppResources, ResourceViewId pDepthStencil) override;
-    void bindSampler(ShaderType type, U32 slot, GraphicsSampler* ppSampler) override;
+    void bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* ppSampler) override;
     void bindBlendState(const BlendState& state) override { currentState().m_pipelineStructure.state.graphics.blendState = state; currentState().markPipelineDirty(); }
     void setTopology(PrimitiveTopology topology) override { currentState().m_pipelineStructure.state.graphics.primitiveTopology = topology; currentState().markPipelineDirty(); }
     void setPolygonMode(PolygonMode polygonMode) override { currentState().m_pipelineStructure.state.graphics.raster.polygonMode = polygonMode; currentState().markPipelineDirty(); }

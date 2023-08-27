@@ -191,7 +191,7 @@ void VulkanContext::resetBinds()
     m_resourceViewShaderAccessMap.clear();
     m_constantBufferShaderAccessMap.clear();
     m_samplerShaderAccessMap.clear();
-    m_pipelineState.pipeline    = VK_NULL_HANDLE;
+    m_pipelineState             = { };
     m_boundRenderPass           = VK_NULL_HANDLE;
     m_boundDescriptorSet        = VK_NULL_HANDLE;
     m_newRenderPass.nullify();
@@ -259,7 +259,6 @@ void VulkanContext::bindPipelineState(const VulkanDescriptorAllocation& set)
 
 void VulkanContext::bindDescriptorSet(const VulkanDescriptorAllocation& set)
 {
-    R_ASSERT(m_pipelineState.pipeline != NULL);
     const VulkanDescriptorAllocation::DescriptorSet descriptorSet = set.getDescriptorSet(0);
     VkPipelineLayout layout                 = Pipelines::makeLayout(getNativeDevice(), descriptorSet.layout);
     const VkPipelineBindPoint bindPoint     = m_pipelineState.bindPoint;
@@ -622,16 +621,20 @@ void VulkanContext::copyBufferRegions
 }
 
 
-void VulkanContext::bindConstantBuffer(ShaderType type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes)
+void VulkanContext::bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes)
 {
     R_ASSERT_FORMAT(currentState().m_cbvs.size() > slot, "Maximum of %d constant buffers may be bound simultaneously. Request slot %d is not allowed.", currentState().m_cbvs.size(), slot);
-    ShaderStageFlags shaderFlags = shaderTypeToShaderStageFlags(type);
-    VulkanResource* pVulkanResource = pResource->castTo<VulkanResource>();
-    R_ASSERT(pVulkanResource->isBuffer());
-    VulkanBuffer* pBuffer           = pVulkanResource->castTo<VulkanBuffer>();
-    m_constantBufferShaderAccessMap[pBuffer->getId()] |= shaderFlags;
-    currentState().m_cbvs[slot] = { pBuffer, offsetBytes, sizeBytes };
-
+    ShaderStageFlags shaderFlags = type;
+    DescriptorSets::BufferView bufferView = { nullptr, offsetBytes, sizeBytes };
+    if (pResource)
+    {
+        VulkanResource* pVulkanResource                     = pResource->castTo<VulkanResource>();
+        R_ASSERT(pVulkanResource->isBuffer());
+        VulkanBuffer* pBuffer                               = pVulkanResource->castTo<VulkanBuffer>();
+        m_constantBufferShaderAccessMap[pBuffer->getId()]   |= shaderFlags;
+        bufferView.buffer                                   = pBuffer;
+    }
+    currentState().m_cbvs[slot] = bufferView;
     currentState().m_boundDescriptorSetStructure.key.value.shaderTypeFlags |= shaderFlags;
     currentState().m_boundDescriptorSetStructure.ppConstantBuffers         = currentState().m_cbvs.data();
     currentState().m_boundDescriptorSetStructure.key.value.constantBuffers = Math::maximum(currentState().m_boundDescriptorSetStructure.key.value.constantBuffers, static_cast<U16>(slot+1));
@@ -639,12 +642,13 @@ void VulkanContext::bindConstantBuffer(ShaderType type, U32 slot, GraphicsResour
 }
 
 
-void VulkanContext::bindShaderResource(ShaderType type, U32 slot, ResourceViewId viewId)
+void VulkanContext::bindShaderResource(ShaderStageFlags type, U32 slot, ResourceViewId viewId)
 {
     R_ASSERT_FORMAT(currentState().m_srvs.size() > slot, "Maximum of %d shader resource views may be bound simulatenously. Request slot %d is not allowed.", currentState().m_srvs.size(), slot);
-    ShaderStageFlags shaderFlags = shaderTypeToShaderStageFlags(type);
+    ShaderStageFlags shaderFlags = type;
     VulkanResourceView* pVulkanResourceView = ResourceViews::obtainResourceView(viewId);
-    m_resourceViewShaderAccessMap[pVulkanResourceView->getId()] |= shaderFlags;
+    if (pVulkanResourceView)
+        m_resourceViewShaderAccessMap[pVulkanResourceView->getId()] |= shaderFlags;
     currentState().m_srvs[slot] = pVulkanResourceView;
     currentState().m_boundDescriptorSetStructure.key.value.shaderTypeFlags     |= shaderFlags;
     currentState().m_boundDescriptorSetStructure.ppShaderResources             = currentState().m_srvs.data();
@@ -653,11 +657,12 @@ void VulkanContext::bindShaderResource(ShaderType type, U32 slot, ResourceViewId
 }
 
 
-void VulkanContext::bindUnorderedAccessView(ShaderType type, U32 slot, ResourceViewId view)
+void VulkanContext::bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceViewId view)
 {
-    ShaderStageFlags shaderFlags = shaderTypeToShaderStageFlags(type);
+    ShaderStageFlags shaderFlags = type;
     VulkanResourceView* pVulkanResourceView = ResourceViews::obtainResourceView(view);
-    m_resourceViewShaderAccessMap[pVulkanResourceView->getId()] |= shaderFlags;
+    if (pVulkanResourceView)
+        m_resourceViewShaderAccessMap[pVulkanResourceView->getId()] |= shaderFlags;
     currentState().m_uavs[slot] = pVulkanResourceView;
     currentState().m_boundDescriptorSetStructure.key.value.shaderTypeFlags     |= shaderFlags;
     currentState().m_boundDescriptorSetStructure.ppUnorderedAccesses           = currentState().m_uavs.data();
@@ -666,11 +671,15 @@ void VulkanContext::bindUnorderedAccessView(ShaderType type, U32 slot, ResourceV
 }
 
 
-void VulkanContext::bindSampler(ShaderType type, U32 slot, GraphicsSampler* ppSamplers)
+void VulkanContext::bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* ppSamplers)
 {
-    ShaderStageFlags shaderFlags = shaderTypeToShaderStageFlags(type);
-    VulkanSampler* pVulkanSampler = ppSamplers->castTo<VulkanSampler>();
-    m_samplerShaderAccessMap[pVulkanSampler->getId()] |= shaderFlags;
+    ShaderStageFlags shaderFlags = type;
+    VulkanSampler* pVulkanSampler = nullptr; 
+    if (ppSamplers)
+    { 
+        pVulkanSampler = ppSamplers->castTo<VulkanSampler>();
+        m_samplerShaderAccessMap[pVulkanSampler->getId()] |= shaderFlags;
+    }
     currentState().m_samplers[slot] = pVulkanSampler;
     currentState().m_boundDescriptorSetStructure.key.value.shaderTypeFlags |= shaderFlags;
     currentState().m_boundDescriptorSetStructure.ppSamplers                = currentState().m_samplers.data();

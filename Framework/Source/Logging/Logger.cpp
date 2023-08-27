@@ -17,7 +17,7 @@ static volatile LogTypeFlags    logTypeFlags        =
 #if defined(RECLUSE_DEBUG)
 LogTypeFlags(0xFFFFFFFF);
 #else
-LogTypeFlags(0xFFFFFFFF & ~(LogDebug | LogVerbose | LogTrace | LogInfo));
+LogTypeFlags(0xFFFFFFFF & ~(LogType_Debug | LogType_Verbose | LogType_Trace | LogType_Info));
 #endif
 
 // TODO: Might look into disabling all channels, and instead enable them manually if needed.

@@ -61,8 +61,8 @@ struct Structure
 
 struct PipelineState
 {
-    U32                 lastUsed;
-    VkPipelineBindPoint bindPoint;
+    U32                 lastUsed      = 0;
+    VkPipelineBindPoint bindPoint     = VK_PIPELINE_BIND_POINT_GRAPHICS;
     VkPipeline          pipeline      = VK_NULL_HANDLE;
     VkPipelineCache     pipelineCache = VK_NULL_HANDLE;
 };

@@ -11,8 +11,9 @@
 
 namespace Recluse {
 
-std::unordered_map<Hash64, ReferenceObject<FramebufferObject>> g_fboCache;
-std::unordered_map<Hash64, VkRenderPass> g_rpCache;
+
+std::unordered_map<Hash64, ReferenceCounter<FramebufferObject>> g_fboCache;
+std::unordered_map<Hash64, ReferenceCounter<VkRenderPass>> g_rpCache;
 
 R_INTERNAL 
 U64 serialize(const VkFramebufferCreateInfo& info)
@@ -58,7 +59,7 @@ FramebufferObject* getCachedFbo(Hash64 fboId)
 
 
 R_INTERNAL
-FramebufferObject* cacheFbo(Hash64 fboId, VkFramebuffer fbo, const VkRect2D& renderArea)
+FramebufferObject* cacheFbo(Hash64 fboId, VkFramebuffer fbo, const VkRect2D& renderArea, U32 numReferences)
 {
     if (inFboCache(fboId))
     {
@@ -67,7 +68,8 @@ FramebufferObject* cacheFbo(Hash64 fboId, VkFramebuffer fbo, const VkRect2D& ren
     }
 
     FramebufferObject data = { fbo, renderArea };
-    g_fboCache[fboId] = makeReference(data);
+    g_fboCache[fboId] = data;
+    g_fboCache[fboId].addReference(numReferences);
 
     return &g_fboCache[fboId]();
 }
@@ -140,7 +142,7 @@ FramebufferObject* makeFrameBuffer(VulkanDevice* pDevice, VkRenderPass renderPas
             VkRect2D renderArea = { };
             renderArea.extent = { desc.width, desc.height };
             renderArea.offset = { 0, 0 };
-            framebuffer = cacheFbo(fboId, fbo, renderArea);
+            framebuffer = cacheFbo(fboId, fbo, renderArea, totalAttachmentCount);
         }
     }
 
@@ -254,6 +256,7 @@ VkRenderPass createRenderPass(VulkanDevice* pDevice,  const VulkanRenderPassDesc
 }
 
 
+R_INTERNAL
 VkRenderPass internalMakeRenderPass(VulkanDevice* pDevice,  const VulkanRenderPassDesc& desc, RenderPasses::RenderPassId renderPassId)
 {
     auto& iter = g_rpCache.find(renderPassId);
@@ -262,12 +265,14 @@ VkRenderPass internalMakeRenderPass(VulkanDevice* pDevice,  const VulkanRenderPa
     {
         VkRenderPass renderPass = createRenderPass(pDevice, desc);
         g_rpCache.insert(std::make_pair(renderPassId, renderPass));
-        return renderPass;
+        U32 references = desc.numRenderTargets + ((desc.pDepthStencil != 0) ? 1 : 0);
+        g_rpCache[renderPassId].addReference(references);
+        return g_rpCache[renderPassId]();
     }
     else
     {
         // We have one, let's return this one.
-        return iter->second;
+        return iter->second();
     }
 }
 
@@ -334,14 +339,14 @@ void clearCache(VulkanDevice* pDevice)
     R_ASSERT(pDevice != NULL);
     for (auto iter : g_rpCache)
     {
-        //while (iter.second.release());
-        
-        vkDestroyRenderPass(pDevice->get(), iter.second, nullptr);
+        while (iter.second.release());
+        vkDestroyRenderPass(pDevice->get(), iter.second(), nullptr);
         R_DEBUG(R_CHANNEL_VULKAN, "Destroying render pass...");
     }
 
     for (auto iter : g_fboCache)
     {   
+        while (iter.second.release());
         vkDestroyFramebuffer(pDevice->get(), iter.second().framebuffer, nullptr);
         R_DEBUG(R_CHANNEL_VULKAN, "Destroying framebuffer");
     }

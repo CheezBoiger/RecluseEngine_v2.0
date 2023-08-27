@@ -2,24 +2,38 @@
 #include "Recluse/Graphics/ShaderBuilder.hpp"
 #include "Win32/Win32Common.hpp"
 #include "Recluse/Messaging.hpp"
+#include "Recluse/Utility.hpp"
+
+#include <locale>
+#include <codecvt>
 
 #if defined RCL_DXC 
 #include <atlbase.h>
 #include <dxcapi.h>
 #endif
+
+R_DECLARE_GLOBAL_STRING(g_shaderModel, "6_0", "DXC.ShaderModel");
+
 namespace Recluse {
 
 #if defined RCL_DXC
 
-wchar_t* getShaderProfile(ShaderType type)
+std::wstring getShaderProfile(ShaderType type)
 {
+    std::wstring model;
     switch (type) 
     {
-        case ShaderType_Vertex: return L"vs_6_0";
-        case ShaderType_Pixel: return L"ps_6_0";
-        case ShaderType_Compute: return L"cs_6_0"; 
+        case ShaderType_Vertex: model = std::wstring(L"vs_"); break;
+        case ShaderType_Pixel: model = std::wstring(L"ps_"); break;
+        case ShaderType_Compute: model = std::wstring(L"cs_"); break; 
+        case ShaderType_Geometry: model = std::wstring(L"gs_"); break;
+        case ShaderType_Domain: model = std::wstring(L"ds_"); break;
+        case ShaderType_Hull: model = std::wstring(L"hs_"); break;
         default: return L"unknown";
     }
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+    std::wstring version = converter.from_bytes(g_shaderModel);
+    return model + version;
 }
 
 
@@ -72,7 +86,7 @@ public:
         CComPtr<IDxcBlobEncoding> sourceBlob;
 
         HRESULT hr                      = S_OK;
-        wchar_t* targetProfile          = getShaderProfile(shaderType);
+        std::wstring targetProfile      = getShaderProfile(shaderType);
         const wchar_t* arguments[16]    = { };
         U32 argCount                    = 0;
 
@@ -98,7 +112,7 @@ public:
                 sourceBlob, 
                 NULL, 
                 wideEntryPoint, 
-                targetProfile, 
+                targetProfile.c_str(), 
                 arguments, argCount, 
                 NULL, 0, 
                 NULL, &result

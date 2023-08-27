@@ -193,13 +193,6 @@ typedef U32 DescriptorHeapUpdateFlags;
 class ShaderVisibleDescriptorHeapInstance
 {
 public:
-    // Max limitations of hardware is standard to d3d12.
-    // These can be found in this link reference.
-    //
-    // https://learn.microsoft.com/en-us/windows/win32/direct3d12/hardware-support
-    static const U32                kMaxShaderVisibleHeapDescriptorSize;
-    static const U32                kMaxShaderVisibleHeapSamplerDescriptorSize;
-
     void                            initialize(ID3D12Device* pDevice);
     // Upload cpu handles to the shader visible descriptor heaps. This must be called when 
     // we have already uploaded to cpu staging descriptor heaps, before submitting the commandlist to the gpu.
@@ -249,7 +242,7 @@ public:
     ResultCode                                              release();
 
     void                                                    resizeShaderVisibleHeapInstances(U32 bufferIndex);
-    void                                                    resetTableHeaps();
+    void                                                    resetCpuTableHeaps();
 
     ShaderVisibleDescriptorHeapInstance*                    getShaderVisibleInstance(U32 index)
     {
@@ -269,7 +262,12 @@ public:
     D3D12_CPU_DESCRIPTOR_HANDLE                             allocateUnorderedAccessView(ID3D12Resource* pResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc);
     D3D12_CPU_DESCRIPTOR_HANDLE                             allocateRenderTargetView(ID3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC& desc);
     D3D12_CPU_DESCRIPTOR_HANDLE                             allocateDepthStencilView(ID3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& desc);
+    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateSampler(const D3D12_SAMPLER_DESC& desc);
     D3D12_CPU_DESCRIPTOR_HANDLE                             nullRtvDescriptor() const { return m_nullRtvDescriptor; }
+    D3D12_CPU_DESCRIPTOR_HANDLE                             nullSrvDescriptor() const { return m_nullSrvDescriptor; }
+    D3D12_CPU_DESCRIPTOR_HANDLE                             nullUavDescriptor() const { return m_nullUavDescriptor; }
+    D3D12_CPU_DESCRIPTOR_HANDLE                             nullCbvDescriptor() const { return m_nullCbvDescriptor; }
+    D3D12_CPU_DESCRIPTOR_HANDLE                             nullSamplerDescriptor() const { return m_nullSamplerDescriptor; }
 
     ResultCode                                              freeRenderTargetView(D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
     ResultCode                                              freeShaderResourceView(D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
@@ -292,6 +290,10 @@ private:
     // Temporary descriptor heaps in the form of tables.
     std::map<CpuHeapType, std::vector<CpuDescriptorHeap>>   m_cpuDescriptorTableHeaps;
     D3D12_CPU_DESCRIPTOR_HANDLE                             m_nullRtvDescriptor;
+    D3D12_CPU_DESCRIPTOR_HANDLE                             m_nullSrvDescriptor;
+    D3D12_CPU_DESCRIPTOR_HANDLE                             m_nullUavDescriptor;
+    D3D12_CPU_DESCRIPTOR_HANDLE                             m_nullCbvDescriptor;
+    D3D12_CPU_DESCRIPTOR_HANDLE                             m_nullSamplerDescriptor;
     ID3D12Device*                                           m_pDevice;
     U32                                                     m_currentTableHeapIndex;
     U32                                                     m_currentHeapIndex;

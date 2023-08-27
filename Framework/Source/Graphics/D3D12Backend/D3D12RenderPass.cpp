@@ -33,7 +33,7 @@ U32 D3D12RenderPass::getNumRenderTargets() const
 }
 
 
-ResultCode D3D12RenderPass::initialize(D3D12Device* pDevice, U32 numRtvDescriptors, ResourceViewId* rtvDescriptors, ResourceViewId dsvDescriptor)
+ResultCode D3D12RenderPass::update(D3D12Device* pDevice, U32 numRtvDescriptors, ResourceViewId* rtvDescriptors, ResourceViewId dsvDescriptor)
 {
     R_ASSERT(pDevice != NULL);
     R_ASSERT_FORMAT(numRtvDescriptors <= D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT, 
@@ -91,13 +91,14 @@ D3D12RenderPass* makeRenderPass(D3D12Device* pDevice, U32 numRtvs, ResourceViewI
     if (iter == g_renderPassMap.end())
     {
         D3D12RenderPass renderPass = { };
-        renderPass.initialize(pDevice, numRtvs, rtvs, dsv);
+        renderPass.update(pDevice, numRtvs, rtvs, dsv);
         g_renderPassMap.insert(std::make_pair(hash, renderPass));
         pass = &g_renderPassMap[hash];
     }
     else
     {
         pass = &iter->second;
+        pass->update(pDevice, numRtvs, rtvs, dsv);
     }
     return pass;
 }

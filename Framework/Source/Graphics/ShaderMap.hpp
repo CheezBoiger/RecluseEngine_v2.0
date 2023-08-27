@@ -2,12 +2,18 @@
 #pragma once
 
 #include "Recluse/Types.hpp"
-
+#include "Recluse/Graphics/Shader.hpp"
+#include "Recluse/Graphics/ShaderBuilder.hpp"
 #include "Recluse/Serialization/Hasher.hpp"
 
 namespace Recluse {
 
 class Shader;
+
+typedef ShaderBuilder*(*ShaderBuilderFunc)(ShaderIntermediateCode);
+
+ShaderBuilder* createGlslangShaderBuilder(ShaderIntermediateCode imm);
+ShaderBuilder* createDxcShaderBuilder(ShaderIntermediateCode imm);
 
 namespace ShaderMap {
 

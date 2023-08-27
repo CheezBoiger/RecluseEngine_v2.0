@@ -38,6 +38,7 @@ public:
             const char* entryPoint,
             const char* srcCode, 
             U64 sourceCodeBytes, 
+            ShaderPermutationId permutation,
             ShaderLang lang, 
             ShaderType shaderType,
             const std::vector<PreprocessDefine>& defines = std::vector<PreprocessDefine>()
@@ -64,8 +65,7 @@ private:
 };
 
 // Must be newly allocated.
-R_PUBLIC_API ShaderBuilder* createGlslangShaderBuilder(ShaderIntermediateCode imm);
-R_PUBLIC_API ShaderBuilder* createDxcShaderBuilder(ShaderIntermediateCode imm);
+R_PUBLIC_API ShaderBuilder* createShaderBuilder(const std::string& nameID, ShaderIntermediateCode intermediateCode);
 
 // Must call when cleaning up our shader builders.
 static void freeShaderBuilder(ShaderBuilder* pBuilder) 

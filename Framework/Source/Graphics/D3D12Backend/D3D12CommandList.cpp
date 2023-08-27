@@ -115,11 +115,14 @@ void D3D12Context::drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstVe
 }
 
 
-void D3D12Context::bindShaderResource(ShaderType type, U32 slot, ResourceViewId view)
+void D3D12Context::bindShaderResource(ShaderStageFlags type, U32 slot, ResourceViewId view)
 {
+    DescriptorHeapAllocationManager* manager = m_pDevice->getDescriptorHeapManager();
     ContextState& current = currentState();
     D3D12GraphicsResourceView* pView = DescriptorViews::findResourceView(view);
-    D3D12_CPU_DESCRIPTOR_HANDLE handle = pView->getCpuDescriptor();
+    D3D12_CPU_DESCRIPTOR_HANDLE handle = manager->nullSrvDescriptor();
+    if (pView) handle = pView->getCpuDescriptor();
+
     current.m_srvs[slot] = handle;
     current.m_rootSigLayout.srvCount = Math::maximum(current.m_rootSigLayout.srvCount, static_cast<U16>(slot+1));
     current.m_resourceTable.srvs = current.m_srvs.data();
@@ -127,12 +130,16 @@ void D3D12Context::bindShaderResource(ShaderType type, U32 slot, ResourceViewId 
 }
 
 
-void D3D12Context::bindConstantBuffer(ShaderType type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes)
+void D3D12Context::bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes)
 {
+    DescriptorHeapAllocationManager* manager = m_pDevice->getDescriptorHeapManager();
     ContextState& current = currentState();
-    D3D12Resource* pNativeResource = pResource->castTo<D3D12Resource>();
-    R_ASSERT(pNativeResource);
-    D3D12_CPU_DESCRIPTOR_HANDLE cbv = pNativeResource->asCbv(offsetBytes, sizeBytes);
+    D3D12_CPU_DESCRIPTOR_HANDLE cbv = manager->nullCbvDescriptor();
+    if (pResource)
+    {
+        D3D12Resource* pNativeResource = pResource->castTo<D3D12Resource>();
+        cbv = pNativeResource->asCbv(offsetBytes, sizeBytes);
+    }
     current.m_cbvs[slot] = cbv;
     current.m_rootSigLayout.cbvCount = Math::maximum(current.m_rootSigLayout.cbvCount, static_cast<U16>(slot+1));
     current.m_resourceTable.cbvs = current.m_cbvs.data();
@@ -140,15 +147,35 @@ void D3D12Context::bindConstantBuffer(ShaderType type, U32 slot, GraphicsResourc
 }
 
 
-void D3D12Context::bindUnorderedAccessView(ShaderType type, U32 slot, ResourceViewId view)
+void D3D12Context::bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceViewId view)
 {
+    DescriptorHeapAllocationManager* manager = m_pDevice->getDescriptorHeapManager();
     ContextState& current = currentState();
     D3D12GraphicsResourceView* pView = DescriptorViews::findResourceView(view);
-    D3D12_CPU_DESCRIPTOR_HANDLE handle = pView->getCpuDescriptor();
+    D3D12_CPU_DESCRIPTOR_HANDLE handle = manager->nullUavDescriptor(); 
+    if (pView) handle = pView->getCpuDescriptor();
     current.m_uavs[slot] = handle;
     current.m_rootSigLayout.uavCount = Math::maximum(current.m_rootSigLayout.uavCount, static_cast<U16>(slot+1));
     current.m_resourceTable.uavs = current.m_uavs.data();
     current.setDirty(ContextDirty_Descriptors);
+}
+
+
+void D3D12Context::bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* sampler)
+{
+    DescriptorHeapAllocationManager* manager = m_pDevice->getDescriptorHeapManager();
+    ContextState& current = currentState();
+    D3D12Sampler* pSampler = nullptr;
+    D3D12_CPU_DESCRIPTOR_HANDLE handle = manager->nullSamplerDescriptor();
+    if (sampler)
+    {
+        pSampler = sampler->castTo<D3D12Sampler>();
+    }
+    //if (pSampler) handle = pSampler->getCpuDescriptor();
+    current.m_samplers[slot] = handle;
+    current.m_rootSigLayout.uavCount = Math::maximum(current.m_rootSigLayout.uavCount, static_cast<U16>(slot+1));
+    current.m_resourceTable.uavs = current.m_uavs.data();
+    current.setDirty(ContextDirty_SamplerDescriptors);
 }
 
 
@@ -220,7 +247,6 @@ void D3D12Context::bindCurrentResources()
         CpuDescriptorTable table = Pipelines::makeDescriptorSrvCbvUavTable(m_pDevice, state.m_rootSigLayout, state.m_resourceTable);
         ShaderVisibleDescriptorHeapInstance* instance = m_pDevice->getDescriptorHeapManager()->getShaderVisibleInstance(currentBufferIndex());
         ShaderVisibleDescriptorTable shaderVisibleTable = instance->upload(m_pDevice->get(), GpuHeapType_CbvSrvUav, table);
-
         if (state.m_currentRootSig != rootSig)
         {
             bindRootSignature(currentList, state.m_bindType, rootSig);
@@ -229,5 +255,12 @@ void D3D12Context::bindCurrentResources()
 
         bindResourceTable(currentList, state.m_bindType, 0, shaderVisibleTable.baseGpuDescriptorHandle);
     }
+}
+
+
+void D3D12Context::setShaderProgram(ShaderProgramId program, U32 permutation)
+{
+    currentState().m_pipelineStateObject.shaderProgramId = program;
+    currentState().m_pipelineStateObject.permutation = permutation;
 }
 } // Recluse

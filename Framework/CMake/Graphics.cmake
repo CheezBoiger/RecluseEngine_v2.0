@@ -124,6 +124,7 @@ if ( RCL_DX12 )
     add_definitions( -DRCL_DX12=1 )
     set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} d3d12.lib )
     set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} dxgi.lib )
+    set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} D3DCompiler.lib )
     set ( RECLUSE_D3D12_DIR ${RECLUSE_GRAPHICS_SOURCE}/D3D12Backend )
     set ( RECLUSE_GRAPHICS_BUILD 
         ${RECLUSE_GRAPHICS_BUILD}
@@ -153,11 +154,13 @@ if ( RCL_DX12 )
         ${RECLUSE_D3D12_DIR}/D3D12ResourceView.cpp
 		${RECLUSE_D3D12_DIR}/D3D12PipelineState.hpp
 		${RECLUSE_D3D12_DIR}/D3D12PipelineState.cpp
+		${RECLUSE_D3D12_DIR}/D3D12ShaderCache.hpp
+		${RECLUSE_D3D12_DIR}/D3D12ShaderCache.cpp
     )
     if ( RCL_DXC )
-        set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} dxcompiler.lib )
+		set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} dxcompiler.lib )
         add_definitions( -DRCL_DXC=1 )
-        message(WARNING "dxcompiler.dll and dxil.dll needed with executable, since we are now including dxc...")
+        message(WARNING "d3dcompiler.dll and dxil.dll needed with executable, since we are now including dxc...")
         
     endif()
 endif()

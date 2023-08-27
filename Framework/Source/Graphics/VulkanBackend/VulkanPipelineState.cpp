@@ -16,7 +16,7 @@ namespace Recluse {
 namespace Pipelines {
 
 std::unordered_map<PipelineId, PipelineState> g_pipelineMap;
-std::unordered_map<VkDescriptorSetLayout, ReferenceObject<VkPipelineLayout>> g_pipelineLayoutMap;
+std::unordered_map<VkDescriptorSetLayout, SharedReferenceObject<VkPipelineLayout>> g_pipelineLayoutMap;
 R_DECLARE_GLOBAL_BOOLEAN(g_allowPipelineCaching, false, "Vulkan.EnablePipelineCache");
 R_DECLARE_GLOBAL_STRING(g_pipelineCacheDir, "VulkanCache", "Vulkan.PipelineCacheDir");
 

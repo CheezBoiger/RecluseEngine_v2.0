@@ -89,9 +89,11 @@ public:
     void                                setScissors(U32 numScissors, Rect* pRects) override;
     void                                setViewports(U32 numViewports, Viewport* pViewports) override;
 
-    void                                bindShaderResource(ShaderType type, U32 slot, ResourceViewId view) override;
-    void                                bindUnorderedAccessView(ShaderType type, U32 slot, ResourceViewId view) override;
-    void                                bindConstantBuffer(ShaderType type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes) override;
+    void                                setShaderProgram(ShaderProgramId program, U32 permutation) override;
+    void                                bindShaderResource(ShaderStageFlags type, U32 slot, ResourceViewId view) override;
+    void                                bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceViewId view) override;
+    void                                bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes) override;
+    void                                bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* pSampler) override;
     void                                drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstVertex, U32 firstInstance) override;
     void                                clearResourceBinds() override;
 

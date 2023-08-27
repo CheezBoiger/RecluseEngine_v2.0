@@ -61,7 +61,7 @@ public:
 
     GraphicsResource*   get() const { return m_pResource; }
 private:
-    ReferenceObject<U32>  m_stagingCount;
+    SharedReferenceObject<U32>  m_stagingCount;
     GraphicsResource*   m_pResource;
     GraphicsDevice*     m_pDevice;
     U64                 m_totalSzBytes;

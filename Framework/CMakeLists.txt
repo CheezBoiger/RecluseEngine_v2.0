@@ -37,7 +37,7 @@ endif()
 
 # Visual Studio organization. For Good purposes.
 if (WIN32)
-	target_sources(${RECLUSE_FRAMEWORK_NAME} PRIVATE Resource.rc resource.h)
+	#target_sources(${RECLUSE_FRAMEWORK_NAME} PRIVATE Resource.rc resource.h)
 	set_property(TARGET ${RECLUSE_FRAMEWORK_NAME} 
 		PROPERTY 
 		FOLDER ${RECLUSE_FRAMEWORK_NAME})

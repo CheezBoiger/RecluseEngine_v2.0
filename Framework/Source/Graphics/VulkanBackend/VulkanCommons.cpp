@@ -120,6 +120,8 @@ uint32_t getFormatSizeBytes(VkFormat format)
             
             return 1u;
     }
+
+    return 0u;
 }
 
 

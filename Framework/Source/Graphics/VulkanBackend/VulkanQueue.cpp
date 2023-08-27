@@ -292,6 +292,7 @@ ResultCode VulkanQueue::endAndSubmitOneTimeCommandBuffer(VkCommandBuffer command
     vkWaitForFences(device, 1, &m_oneTimeOnlyFence, true, UINT64_MAX);
     vkResetFences(device, 1, &m_oneTimeOnlyFence);
     freeOneTimeOnlyCommandBuffer(commandBuffer);
+    return RecluseResult_Ok;
 }
 
 

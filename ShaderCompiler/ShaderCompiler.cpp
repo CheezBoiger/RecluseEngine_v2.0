@@ -254,12 +254,12 @@ ShaderBuilder* createBuilder(Allocator* scratch, ShaderLang lang, ShaderIntermed
     {
         case ShaderLang_Hlsl:
         {
-            pBuilder = createDxcShaderBuilder(intermediateCode);
+            pBuilder = createShaderBuilder("dxc", intermediateCode);
             break;
         }
         case ShaderLang_Glsl:
         {
-            pBuilder = createGlslangShaderBuilder(intermediateCode);
+            pBuilder = createShaderBuilder("glslang", intermediateCode);
             break;
         }
         default:
@@ -373,6 +373,7 @@ ResultCode compileShaders(ShaderLang lang)
                                             shaderMetadata->entryPoint,
                                             str.c_str(), 
                                             str.size(), 
+                                            0,
                                             lang, 
                                             shaderMetadata->shaderType
                                         );

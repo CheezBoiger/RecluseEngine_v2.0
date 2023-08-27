@@ -10,6 +10,9 @@
 
 #include "Recluse/Math/Vector3.hpp"
 #include "Recluse/Math/Vector4.hpp"
+#include "Recluse/Time.hpp"
+
+#include <array>
 
 using namespace Recluse;
 
@@ -167,6 +170,7 @@ void buildVertexLayouts(GraphicsDevice* pDevice)
 int main(char* argv[], int c)
 {
     Log::initializeLoggingSystem();
+    RealtimeTick::initializeWatch(1ull, 0);
     GraphicsInstance* instance  = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
 
@@ -192,7 +196,7 @@ int main(char* argv[], int c)
     {
         DeviceCreateInfo devInfo = { };
         devInfo.winHandle                           = window->getNativeHandle();
-        devInfo.swapchainDescription.buffering      = FrameBuffering_Double;
+        devInfo.swapchainDescription.buffering      = FrameBuffering_Triple;
         devInfo.swapchainDescription.desiredFrames  = 3;
         devInfo.swapchainDescription.format         = ResourceFormat_R8G8B8A8_Unorm;
         devInfo.swapchainDescription.renderWidth    = window->getWidth();
@@ -222,8 +226,24 @@ int main(char* argv[], int c)
     }
     //buildVertexLayouts(device);
     
+    std::array<F32, 10> lastMs;
+    U32 frameCount = 0;
     while (!window->shouldClose())
-    {
+    {   
+        frameCount += 1;
+        RealtimeTick::updateWatch(1ull, 0);
+        RealtimeTick tick   = RealtimeTick::getTick(0);
+        lastMs[frameCount % lastMs.size()] = tick.delta();
+        
+        if ((frameCount % lastMs.size()) == 0)
+        {
+            F32 total = 0.f;
+            for (U32 i = 0; i < lastMs.size(); ++i)
+                total += lastMs[i];
+            total /= static_cast<F32>(lastMs.size());
+            R_WARN("Box", "Fps: %f", 1.0f / total);
+        }
+
         if (!window->isMinimized())
         {
             context->begin();
@@ -238,15 +258,12 @@ int main(char* argv[], int c)
                 context->transition(textureResource, ResourceState_CopySource);
                 context->transition(swapchainImage, ResourceState_CopyDestination);
                 context->copyResource(swapchainImage, textureResource);
-
-                //context->bindConstantBuffer(ShaderType_Vertex, 0, constBuff, 0, 256);
-                //context->drawInstanced(1, 1, 0, 0);
-            
                 context->transition(device->getSwapchain()->getFrame(device->getSwapchain()->getCurrentFrameIndex()), ResourceState_Present);
             context->end();
             device->getSwapchain()->present();
-        }    
+        }
         pollEvents();
+        
     }
         
     context->wait();

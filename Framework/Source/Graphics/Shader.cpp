@@ -28,14 +28,9 @@ void Shader::destroy(Shader* pShader)
 }
 
 
-void Shader::genHashId()
+Hash64 Shader::makeShaderHash(const char* pBytecode, U64 sizeBytes)
 {
-    // Only generate the id if it doesn't already have one.
-    if (kShaderCounter == ~0)
-    { 
-        ScopedLock _(kShaderCounterMutex);
-        m_shaderNameHash = kShaderCounter++;
-    }
+    return recluseHashFast(pBytecode, sizeBytes);
 }
 
 
@@ -48,7 +43,7 @@ ResultCode Shader::load(const char* entryPoint, const char* pByteCode, U64 szByt
     m_shaderType        = shaderType;
     m_entryPoint        = entryPoint;
 
-    genHashId();
+    m_shaderHashId = Shader::makeShaderHash(pByteCode, szBytes);
 
     return RecluseResult_Ok;
 }
@@ -60,6 +55,7 @@ ResultCode ShaderBuilder::compile
         const char* entryPoint,
         const char* sourceCode, 
         U64 sourceCodeBytes, 
+        ShaderPermutationId permutation,
         ShaderLang lang, 
         ShaderType shaderType,
         const std::vector<PreprocessDefine>& defines
@@ -79,12 +75,12 @@ ResultCode ShaderBuilder::compile
     if (result == RecluseResult_Ok) 
     {
         pShader->load(entryPoint, byteCodeString.data(), byteCodeString.size(), getIntermediateCode(), shaderType);
+        pShader->setPermutationId(permutation);
     } 
     else 
     {
         R_ERROR("Shader", "Failed to compile shader!");
     }
-
     return result;
 }
 

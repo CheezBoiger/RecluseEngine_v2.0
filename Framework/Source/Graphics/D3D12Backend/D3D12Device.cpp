@@ -9,6 +9,7 @@
 #include "D3D12Allocator.hpp"
 #include "D3D12RenderPass.hpp"
 #include "D3D12Queue.hpp"
+#include "D3D12ShaderCache.hpp"
 #include "Recluse/Types.hpp"
 #include "Recluse/Messaging.hpp"
 
@@ -291,6 +292,7 @@ void D3D12Device::destroy()
 {
     m_resourceAllocationManager.release();
     RenderPasses::clearAll(this);
+    unloadAllShaderPrograms();
     Pipelines::cleanUpRootSigs();
     DescriptorViews::clearAll(this);
     m_descHeapManager.release();
@@ -411,6 +413,7 @@ void D3D12Context::resetCurrentResources()
     m_contextStates.push_back({ });
     clearResourceBinds();
 
+    Pipelines::resetTableHeaps(m_pDevice);
     ShaderVisibleDescriptorHeapInstance* instance = m_pDevice->getDescriptorHeapManager()->getShaderVisibleInstance(getCurrentBufferIndex());
     instance->update(DescriptorHeapUpdateFlag_Reset);
 }
@@ -592,19 +595,27 @@ D3D12_FEATURE_DATA_FORMAT_SUPPORT D3D12Device::checkFormatSupport(ResourceFormat
 
 ResultCode D3D12Device::loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition)
 {
-    return RecluseResult_NoImpl;
+    if (D3D::Cache::isProgramCached(program, permutation))
+    {
+        return RecluseResult_NeedsUpdate;
+    }
+    return D3D::Cache::loadNativeShaderProgramPermutation(program, permutation, definition);
 }
 
 
 ResultCode D3D12Device::unloadShaderProgram(ShaderProgramId program)
 {
-    return RecluseResult_NoImpl;
+    if (!D3D::Cache::isProgramCached(program))
+    {
+        return RecluseResult_NotFound;
+    }
+    return D3D::Cache::unloadPrograms(program);
 }
 
 
 void D3D12Device::unloadAllShaderPrograms()
 {
-    R_NO_IMPL();
+    D3D::Cache::unloadAll();
 }
 
 

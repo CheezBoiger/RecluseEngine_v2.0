@@ -58,15 +58,14 @@ namespace ShaderPrograms {
 
     // Cache the shader, this also checks if a VkShaderModule is also present. If not,
     // Will create one.
-    ResultCode         loadNativeShaderProgramPermutation(VulkanDevice* pDevice, ShaderProgramId shaderProgram, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition);
+    ResultCode          loadNativeShaderProgramPermutation(VulkanDevice* pDevice, ShaderProgramId shaderProgram, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition);
 
     // Check if the given shader has already been cached.
-    B32             isProgramCached(ShaderProgramId shaderProgram);
-    B32             isProgramCached(ShaderProgramId shaderProgram, ShaderProgramPermutation permutation);
+    B32                 isProgramCached(ShaderProgramId shaderProgram);
+    B32                 isProgramCached(ShaderProgramId shaderProgram, ShaderProgramPermutation permutation);
 
     // Clear the whole cache from this shader. Should be called when app closes!
-    void            unloadAll(VulkanDevice* pDevice);
-
-    ResultCode unloadProgram(VulkanDevice* pDevice, ShaderProgramId program);
+    void                unloadAll(VulkanDevice* pDevice);
+    ResultCode          unloadProgram(VulkanDevice* pDevice, ShaderProgramId program);
 } // ShaderPrograms
 } // Recluse

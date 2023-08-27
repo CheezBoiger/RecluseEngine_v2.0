@@ -32,11 +32,11 @@ static VkResult createShaderModule(VkDevice device, Shader* pShader, VkShaderMod
         return VK_ERROR_INITIALIZATION_FAILED;
     }
 
-    if (shaderCache.find(pShader->getHashId()) != shaderCache.end())
+    if (shaderCache.find(pShader->getShaderHashId()) != shaderCache.end())
     {
-        if (shaderCache[pShader->getHashId()].find(pShader->getPermutationId()) != shaderCache[pShader->getHashId()].end())
+        if (shaderCache[pShader->getShaderHashId()].find(pShader->getPermutationId()) != shaderCache[pShader->getShaderHashId()].end())
         {
-            *pModule = shaderCache[pShader->getHashId()][pShader->getPermutationId()];
+            *pModule = shaderCache[pShader->getShaderHashId()][pShader->getPermutationId()];
             return VK_SUCCESS;
         }
     }

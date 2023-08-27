@@ -94,6 +94,7 @@ class R_PUBLIC_API ShaderProgramDefinition
 {
 public:
     BindType pipelineType;
+    ShaderIntermediateCode intermediateCode;
     union 
     {
         struct 
