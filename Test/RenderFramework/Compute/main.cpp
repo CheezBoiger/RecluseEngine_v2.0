@@ -211,7 +211,7 @@ int main(int c, char* argv[])
             ResourceViewId uavView = frame->asView(desc);
             context->transition(frame, ResourceState_UnorderedAccess);
             context->bindConstantBuffer(ShaderStage_Compute, 0, pData, 0, sizeof(ConstData));
-            context->bindUnorderedAccessView(ShaderType_Compute, 0, uavView);
+            context->bindUnorderedAccessView(ShaderStage_Compute, 0, uavView);
             context->setShaderProgram(ProgramId_Mandelbrot);
             context->dispatch(Math::divUp(pWindow->getWidth(), 8u), Math::divUp(pWindow->getHeight(), 8u), 1);
             context->transition(frame, ResourceState_Present);
