@@ -57,6 +57,7 @@ public:
         , m_width(0)
         , m_xPos(0)
         , m_yPos(0)
+        , m_screenMode(ScreenMode_Windowed)
         , m_isMinimized(false)
         , m_monitorIndex(0)
         , m_isShowing(false)
@@ -66,7 +67,7 @@ public:
         , m_keyCallback(nullptr)
         , m_onWindowResizeCallback(nullptr) 
     { 
-        m_status.mustChangeScreen = false; 
+        m_status.mustChangeScreen = true; 
     }
 
     // Create the window.
