@@ -32,6 +32,9 @@ struct ConstData {
     float color[4];
     float pad[2];
     float iter[2];
+    float resolution[4];
+    float time;
+    float pad0[3];
 };
 
 
@@ -40,7 +43,7 @@ enum ProgramId
     ProgramId_Mandelbrot
 };
 
-void updateConstData(GraphicsResource* pData, F32 deltaSeconds, F32 currTimeSeconds)
+void updateConstData(GraphicsResource* pData, U32 width, U32 height, F32 deltaSeconds, F32 currTimeSeconds)
 {
     static float iter = 0.005f;
     iter += deltaSeconds;
@@ -52,6 +55,9 @@ void updateConstData(GraphicsResource* pData, F32 deltaSeconds, F32 currTimeSeco
     
     dat.iter[0] = 0.0f;
     dat.iter[1] = iter;
+    dat.resolution[0] = width;
+    dat.resolution[1] = height;
+    dat.time = currTimeSeconds;
     void* ptr = nullptr;
     pData->map(&ptr, nullptr);
     memcpy(ptr, &dat, sizeof(ConstData));
@@ -136,7 +142,7 @@ int main(int c, char* argv[])
     {
         GraphicsResourceDescription desc = { };
         desc.dimension = ResourceDimension_Buffer;
-        desc.width = align(sizeof(ConstData), 256);
+        desc.width = sizeof(ConstData);
         desc.height = 1;
         desc.depthOrArraySize = 1;
         desc.mipLevels = 1;
@@ -206,45 +212,49 @@ int main(int c, char* argv[])
 
     pWindow->open();
 
-    const F32 desiredFps = 144.0f;
-    F32 desiredMs = 0.f / desiredFps;
+    const F32 desiredFps = 244.0f;
+    F32 desiredMs = 1.f / desiredFps;
     pContext = pDevice->createContext();
     pContext->setBuffers(3);
 
+    F32 seconds = 0.f;
     while (!pWindow->shouldClose()) 
     {
         RealtimeTick::updateWatch(1ull, 0);
         RealtimeTick tick = RealtimeTick::getTick(0);
         F32 frameMs = Limiter::limit(desiredMs, 1ull, 0);
-        updateConstData(pData, frameMs, tick.getCurrentTimeS());
-        GraphicsContext* context = pContext;
-        context->begin();
-            ResourceViewDescription desc   = { };
-            desc.type               = ResourceViewType_UnorderedAccess;
-            desc.dimension          = ResourceViewDimension_2d;
-            desc.format             = pSwapchain->getDesc().format;
-            desc.layerCount         = 1;
-            desc.mipLevelCount      = 1;
-            desc.baseArrayLayer     = 0;
-            desc.baseMipLevel       = 0;
+        seconds += frameMs;
+        if (!pWindow->isMinimized())
+        {
+            updateConstData(pData, pSwapchain->getDesc().renderWidth, pSwapchain->getDesc().renderHeight, frameMs, seconds);
+            GraphicsContext* context = pContext;
+            context->begin();
+                ResourceViewDescription desc   = { };
+                desc.type               = ResourceViewType_UnorderedAccess;
+                desc.dimension          = ResourceViewDimension_2d;
+                desc.format             = pSwapchain->getDesc().format;
+                desc.layerCount         = 1;
+                desc.mipLevelCount      = 1;
+                desc.baseArrayLayer     = 0;
+                desc.baseMipLevel       = 0;
 
-            GraphicsResource* frame = pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex());
-            ResourceViewId uavView = output->asView(desc);
-            context->transition(output, ResourceState_UnorderedAccess);
-            context->bindConstantBuffer(ShaderStage_Compute, 1, pData, 0, sizeof(ConstData));
-            context->bindUnorderedAccessView(ShaderStage_Compute, 0, uavView);
-            context->setShaderProgram(ProgramId_Mandelbrot);
-            context->dispatch(Math::divUp(pWindow->getWidth(), 8u), Math::divUp(pWindow->getHeight(), 8u), 1);
+                GraphicsResource* frame = pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex());
+                ResourceViewId uavView = output->asView(desc);
+                context->transition(output, ResourceState_UnorderedAccess);
+                context->bindConstantBuffer(ShaderStage_Compute, 1, pData, 0, sizeof(ConstData));
+                context->bindUnorderedAccessView(ShaderStage_Compute, 0, uavView);
+                context->setShaderProgram(ProgramId_Mandelbrot);
+                context->dispatch(Math::divUp(pWindow->getWidth(), 8u), Math::divUp(pWindow->getHeight(), 8u), 1);
 
-            context->transition(frame, ResourceState_CopyDestination);
-            context->transition(output, ResourceState_CopySource);
-            context->copyResource(frame, output);
+                context->transition(frame, ResourceState_CopyDestination);
+                context->transition(output, ResourceState_CopySource);
+                context->copyResource(frame, output);
 
-            context->transition(frame, ResourceState_Present);
-        context->end();
+                context->transition(frame, ResourceState_Present);
+            context->end();
+            pSwapchain->present();
+        }
         R_VERBOSE("Test", "Frame: %f fps", 1.0f / frameMs);
-        pSwapchain->present();
-
         pollEvents();
     }
     

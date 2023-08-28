@@ -65,6 +65,11 @@ ResultCode D3D12Resource::initialize
     if (d3d12desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
     {
         d3d12desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        // We need to align up on constant buffer resources!!
+        if (desc.usage & ResourceUsage_ConstantBuffer)
+        {
+            d3d12desc.Width = align(desc.width, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+        }
     }
     else
     {

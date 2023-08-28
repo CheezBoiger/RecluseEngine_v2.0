@@ -22,7 +22,7 @@ int main(int c, char* argv[])
     RealtimeTick::initializeWatch(1ull, 0);
     GraphicsSwapchain* pSwapchain   = nullptr;
     GraphicsDevice* pDevice         = nullptr;
-    GraphicsInstance* pInstance       = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
+    GraphicsInstance* pInstance       = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
 
     Window* pWindow = Window::create(u8"SwapchainInitialization", 0, 0, 1280, 720);
 

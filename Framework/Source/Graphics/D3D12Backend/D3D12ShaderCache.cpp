@@ -204,11 +204,11 @@ D3DShaderProgram* obtainShaderProgram(ShaderProgramId shaderProgram, ShaderProgr
 
 ResultCode loadNativeShaderProgramPermutation(ShaderProgramId shaderProgram, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition)
 {
-    //R_ASSERT_FORMAT
-    //    (
-    //        (definition.intermediateCode == ShaderIntermediateCode_Dxil || definition.intermediateCode == ShaderIntermediateCode_Dxbc),
-    //        "Shader intermediate is not supported by D3D"
-    //    );
+    R_ASSERT_FORMAT
+        (
+            (definition.intermediateCode == ShaderIntermediateCode_Dxil || definition.intermediateCode == ShaderIntermediateCode_Dxbc),
+            "Shader intermediate code from program is not supported by D3D"
+        );
     if (isProgramCached(shaderProgram, permutation))
     {
         return RecluseResult_AlreadyExists;

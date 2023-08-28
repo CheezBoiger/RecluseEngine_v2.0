@@ -101,6 +101,7 @@ ShaderProgramDescription::ShaderProgramDescription(ShaderProgramDescription&& de
 ShaderProgramDefinition::ShaderProgramDefinition(const ShaderProgramDefinition& def)
 {
     pipelineType = def.pipelineType;
+    intermediateCode = def.intermediateCode;
     switch (def.pipelineType)
     {
     case BindType_Compute:
@@ -127,6 +128,7 @@ ShaderProgramDefinition::ShaderProgramDefinition(const ShaderProgramDefinition& 
 ShaderProgramDefinition::ShaderProgramDefinition(ShaderProgramDefinition&& def)
 {
     pipelineType = def.pipelineType;
+    intermediateCode = def.intermediateCode;
     switch (def.pipelineType)
     {
     case BindType_Compute:

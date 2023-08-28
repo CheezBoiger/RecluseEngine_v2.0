@@ -220,7 +220,7 @@ int main(char* argv[], int c)
         description.samples = 1;
         description.dimension = ResourceDimension_Buffer;
         description.usage = ResourceUsage_ConstantBuffer;
-        description.width = 256;
+        description.width = 32;
         description.memoryUsage = ResourceMemoryUsage_CpuToGpu;
         device->createResource(&constBuff, description, ResourceState_ConstantBuffer);
     }
