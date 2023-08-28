@@ -41,6 +41,11 @@ ResultCode D3D12Swapchain::initialize(D3D12Device* pDevice)
         }
     }
 
+    // Per D3D12 instruction, we are not allowed to use our backbuffers for Unordered Access.
+    // This is an intentional design rework for D3D12. D3D11 will still allow it, but it is safe practice to 
+    // not use our backbuffers for unordered access views.
+    // Link to discussion:
+    // https://gamedev.net/forums/topic/673687-d3d12-use-compute-shader-to-write-to-swap-chain-backbuffer/
     swapchainDesc.Width                     = desc.renderWidth;
     swapchainDesc.Height                    = desc.renderHeight;
     swapchainDesc.BufferCount               = desc.desiredFrames;
