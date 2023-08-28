@@ -313,6 +313,7 @@ ResultCode D3D12GraphicsResourceView::initialize(D3D12Device* pDevice, ID3D12Res
             dsvDescription.ViewDimension = getDsvDimension(resourceViewDescription.dimension);
             dsvDescription.Format = Dxgi::getNativeFormat(resourceViewDescription.format);
             fillDepthStencilViewDescription(dsvDescription, resourceViewDescription);
+            m_handle = heapManager->allocateDepthStencilView(pResource, dsvDescription);
             break;
         }
 
@@ -332,6 +333,7 @@ ResultCode D3D12GraphicsResourceView::initialize(D3D12Device* pDevice, ID3D12Res
             uavDescription.ViewDimension = getUavDimension(resourceViewDescription.dimension);
             uavDescription.Format = Dxgi::getNativeFormat(resourceViewDescription.format);
             fillUnorderedAccessViewDescription(uavDescription, resourceViewDescription);
+            m_handle = heapManager->allocateUnorderedAccessView(pResource, uavDescription);
             break;
         }
 

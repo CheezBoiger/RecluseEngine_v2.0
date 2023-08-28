@@ -113,7 +113,7 @@ ResultCode D3D12Queue::endAndSubmitOneTimeCommandList(ID3D12GraphicsCommandList*
 {
     ID3D12CommandList* commandList[] = { pList };
     m_queue->ExecuteCommandLists(1, commandList);
-    U64 currentFenceValue = pFence->GetCompletedValue();
+    U64 currentFenceValue = pFence->GetCompletedValue() + 1;
     waitForGpu(currentFenceValue);
     
     pList->Release();

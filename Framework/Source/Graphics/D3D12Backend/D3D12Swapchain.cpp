@@ -44,7 +44,7 @@ ResultCode D3D12Swapchain::initialize(D3D12Device* pDevice)
     swapchainDesc.Width                     = desc.renderWidth;
     swapchainDesc.Height                    = desc.renderHeight;
     swapchainDesc.BufferCount               = desc.desiredFrames;
-    swapchainDesc.BufferUsage               = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapchainDesc.BufferUsage               = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
     swapchainDesc.Format                    = format;
     swapchainDesc.AlphaMode                 = DXGI_ALPHA_MODE_UNSPECIFIED;
     swapchainDesc.Scaling                   = DXGI_SCALING_STRETCH;
@@ -52,6 +52,7 @@ ResultCode D3D12Swapchain::initialize(D3D12Device* pDevice)
     swapchainDesc.SwapEffect                = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapchainDesc.SampleDesc.Count          = 1;
     swapchainDesc.SampleDesc.Quality        = 0;
+    swapchainDesc.Flags                     = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
     result = pFactory->CreateSwapChainForHwnd
                             (
@@ -134,11 +135,14 @@ ResultCode D3D12Swapchain::present(PresentConfig config)
     const SwapchainCreateDescription& desc = getDesc();
     UINT syncInterval           = 0;
     HRESULT result              = S_OK;
+    UINT flags                  = 0;
 
     if (desc.buffering == FrameBuffering_Double)
         syncInterval = 1;
+    if (desc.buffering == FrameBuffering_Triple)
+        flags |= DXGI_PRESENT_ALLOW_TEARING;
 
-    result = m_pSwapchain->Present(syncInterval, 0);
+    result = m_pSwapchain->Present(syncInterval, flags);
     
     if (FAILED(result)) 
     {

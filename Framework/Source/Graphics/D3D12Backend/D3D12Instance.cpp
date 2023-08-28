@@ -51,7 +51,8 @@ ResultCode D3D12Instance::onInitialize(const ApplicationInfo& appInfo, LayerFeat
 
     if (flags & LayerFeatureFlag_DebugValidation) 
     {
-        enableDebugValidation();
+        Bool enableGpuValidation = (flags & LayerFeatureFlag_GpuDebugValidation) ? true : false;
+        enableDebugValidation(enableGpuValidation);
     }    
 
     result = CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**)&m_pFactory);
@@ -79,13 +80,12 @@ void D3D12Instance::onDestroy()
 }
 
 
-void D3D12Instance::enableDebugValidation()
+void D3D12Instance::enableDebugValidation(Bool enableGpuValidation)
 {
-    R_DEBUG(R_CHANNEL_D3D12, "Enabling Debug and GPU validation...");
+    R_DEBUG(R_CHANNEL_D3D12, "Enabling Debug validation...");
 #if !defined(D3D12_IGNORE_SDK_LAYERS)
 
     ID3D12Debug* spDebugController0     = nullptr;
-    ID3D12Debug1* spDebugController1    = nullptr;
     HRESULT result                      = S_OK;
 
     result = D3D12GetDebugInterface(__uuidof(ID3D12Debug), (void**)&spDebugController0);
@@ -96,11 +96,15 @@ void D3D12Instance::enableDebugValidation()
     }
 
     spDebugController0->EnableDebugLayer();
-    spDebugController0->QueryInterface<ID3D12Debug1>(&spDebugController1);
 
-    spDebugController1->SetEnableGPUBasedValidation(true);
-
-    spDebugController1->Release();
+    if (enableGpuValidation)
+    {
+        R_DEBUG(R_CHANNEL_D3D12, "Enabling Gpu Debug Validation..."); 
+        ID3D12Debug1* spDebugController1    = nullptr;
+        spDebugController0->QueryInterface<ID3D12Debug1>(&spDebugController1);
+        spDebugController1->SetEnableGPUBasedValidation(true);
+        spDebugController1->Release();
+    }
     spDebugController0->Release();
 
 #else

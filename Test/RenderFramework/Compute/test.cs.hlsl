@@ -21,7 +21,7 @@ void main(uint3 UTid : SV_DispatchThreadID)
     
     ResultImg.GetDimensions(Width, Height);
     
-    float2 NormCoordinates = (float2(UTid.x, UTid.y) + float2(0.5)) / float2(Width, Height);
+    float2 NormCoordinates = (float2(UTid.x, UTid.y) + float2(0.5, 0.5)) / float2(Width, Height);
     float2 C = (NormCoordinates - float2(0.5, 0.5)) * 2.0 - float2(1.0, 0.0);
     
     float2 Z = float2(0, 0);

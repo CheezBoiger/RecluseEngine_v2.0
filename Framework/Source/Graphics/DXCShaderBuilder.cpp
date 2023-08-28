@@ -120,16 +120,12 @@ public:
 
         delete wideEntryPoint;
 
+        CComPtr<IDxcBlobEncoding> errorBlob;
+        result->GetErrorBuffer(&errorBlob);
+
+        R_DEBUG("DXC", "\n%s", (const char*)errorBlob->GetBufferPointer());
         if (FAILED(hr)) 
         {
-            CComPtr<IDxcBlobEncoding> errorBlob;
-            hr = result->GetErrorBuffer(&errorBlob);
-
-            if (SUCCEEDED(hr) && errorBlob) 
-            {
-                R_ERROR("DXC", "Errors found: \n%s", (const char*)errorBlob->GetBufferPointer());   
-            }   
-        
             return RecluseResult_Failed;
         }
 

@@ -157,7 +157,7 @@ R_INTERNAL Shader* compileShader(ShaderBuilder* shaderBuilder, const char* entry
     {
         FileBufferData file = { };
         ResultCode error = File::readFrom(&file, shaderPath);
-        Hash64 shaderHash = Shader::makeShaderHash(file.data(), sizeof(char*) * file.size());
+        Hash64 shaderHash = Shader::makeShaderHash(file.data(), sizeof(char) * file.size());
         shaderHash ^= permutation;
         auto& iter = g_shaderMap.find(shaderHash);
         if (iter == g_shaderMap.end())
@@ -171,7 +171,10 @@ R_INTERNAL Shader* compileShader(ShaderBuilder* shaderBuilder, const char* entry
                     Shader::destroy(shader);
                     shader = nullptr;
                 }
-                shader->setName(shaderPath.c_str());
+                else
+                {
+                    shader->setName(shaderPath.c_str());
+                }
             }
         }
         else
@@ -183,7 +186,9 @@ R_INTERNAL Shader* compileShader(ShaderBuilder* shaderBuilder, const char* entry
     return shader;
 }
 
-static ShaderProgramDefinition makeShaderProgramDefinition(const ShaderProgramDescription& description, ShaderPermutationId permutation, ShaderBuilder* shaderBuilder, ResultCode& errorOut)
+
+R_INTERNAL 
+ShaderProgramDefinition makeShaderProgramDefinition(const ShaderProgramDescription& description, ShaderPermutationId permutation, ShaderBuilder* shaderBuilder, ResultCode& errorOut)
 {
     ShaderProgramDefinition definition;
     definition.pipelineType     = description.pipelineType;

@@ -164,6 +164,17 @@ D3D12_COMPARISON_FUNC getNativeComparisonFunction(Recluse::CompareOp compareOp)
             return D3D12_COMPARISON_FUNC_NEVER;
     }
 }
+
+
+D3D12_INDEX_BUFFER_STRIP_CUT_VALUE getNativeStripCutValue(Recluse::IndexType type)
+{
+    switch (type)
+    {
+        case Recluse::IndexType_Unsigned16:     return D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFF;
+        default:
+        case Recluse::IndexType_Unsigned32:     return D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
+    }
+}
 } // Recluse
 
 

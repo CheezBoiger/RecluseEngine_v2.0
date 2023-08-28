@@ -178,7 +178,6 @@ ResultCode D3D12Resource::destroy()
 
         m_viewMap.clear();
         m_cbvMap.clear();
-        m_memObj.pResource->Release();
         m_memObj.pResource = nullptr;
 
     }

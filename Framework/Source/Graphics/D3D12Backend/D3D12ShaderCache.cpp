@@ -29,6 +29,7 @@ ID3DBlob* createBlob(SizeT sizeBytes)
 
 ID3DBlob* makeBlob(Shader* pShader)
 {
+    ID3DBlob* pOutput = nullptr;
     if (pShader)
     {
         Hash64 shaderHash = pShader->getShaderHashId();
@@ -39,11 +40,21 @@ ID3DBlob* makeBlob(Shader* pShader)
             auto permIter = shaderIter->second.find(permutation);
             if (permIter != shaderIter->second.end())
             {
-                return permIter->second;
+                permIter->second->AddRef();
+                pOutput = permIter->second;
             }
         }
+        else
+        {
+            ID3DBlob* pBlob;
+            HRESULT hr = D3DCreateBlob(pShader->getSzBytes(), &pBlob);
+            R_ASSERT(SUCCEEDED(hr));
+            memcpy(pBlob->GetBufferPointer(), pShader->getByteCode(), pShader->getSzBytes());
+            g_cachedShaderBlobs[shaderHash][permutation] = pBlob;
+            pOutput = pBlob;
+        }
     }
-    return nullptr;
+    return pOutput;
 }
 
 
@@ -77,10 +88,12 @@ Bool destroyShaderProgram(D3DShaderProgram* pProgram)
             callReleaseBlob(pProgram->graphics.hsBytecode);
             callReleaseBlob(pProgram->graphics.dsBytecode);
             callReleaseBlob(pProgram->graphics.gsBytecode);
+            break;
         }
         case BindType_Compute:
         {
             callReleaseBlob(pProgram->compute.csBytecode);
+            break;
         }
         case BindType_RayTrace:
         {
@@ -89,6 +102,7 @@ Bool destroyShaderProgram(D3DShaderProgram* pProgram)
             callReleaseBlob(pProgram->raytrace.rayGen);
             callReleaseBlob(pProgram->raytrace.rayIntersect);
             callReleaseBlob(pProgram->raytrace.rayMiss);
+            break;
         }
         default:
         {
@@ -118,11 +132,13 @@ Bool internalMakeShaderProgram(ShaderProgramId shaderProgram, ShaderProgramPermu
             program.graphics.gsMainEntry = definition.graphics.gs ? definition.graphics.gs->getEntryPointName() : nullptr;
             program.graphics.hsBytecode = makeBlob(definition.graphics.hs);
             program.graphics.hsMainEntry = definition.graphics.hs ? definition.graphics.hs->getEntryPointName() : nullptr;
+            break;
         }
         case BindType_Compute:
         {
             program.compute.csBytecode = makeBlob(definition.compute.cs);
             program.compute.csMainEntry = definition.compute.cs ? definition.compute.cs->getEntryPointName() : nullptr;
+            break;
         }
         case BindType_RayTrace:
         {
@@ -136,6 +152,7 @@ Bool internalMakeShaderProgram(ShaderProgramId shaderProgram, ShaderProgramPermu
             program.raytrace.rayIntersectMainEntry = definition.raytrace.rintersect ? definition.raytrace.rintersect->getEntryPointName() : nullptr;
             program.raytrace.rayMiss = makeBlob(definition.raytrace.rmiss);
             program.raytrace.rayMissMainEntry = definition.raytrace.rmiss ? definition.raytrace.rmiss->getEntryPointName() : nullptr;
+            break;
         }
         default: return false;
     }

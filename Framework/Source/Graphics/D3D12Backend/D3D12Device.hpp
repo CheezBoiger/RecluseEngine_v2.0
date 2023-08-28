@@ -95,7 +95,13 @@ public:
     void                                bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes) override;
     void                                bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* pSampler) override;
     void                                drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstVertex, U32 firstInstance) override;
+    void                                bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBytes, IndexType type) override;
+    void                                setDepthCompareOp(CompareOp compareOp) override;
+    void                                setDepthBiasEnable(Bool enable) override;
+    void                                setDepthClampEnable(Bool enable) override;
     void                                clearResourceBinds() override;
+    void                                setColorWriteMask(U32 rtIndex, ColorComponentMaskFlags writeMask) override;
+    void                                dispatch(U32 x, U32 y, U32 z) override;
 
     ID3D12GraphicsCommandList*          currentGraphicsCommandList() { return m_pPrimaryCommandList->get(); }
     void                                pushState(ContextFlags flags = ContextFlag_None) override;
@@ -124,9 +130,7 @@ private:
         std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 8>      m_uavs;
         std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 16>     m_cbvs;
         std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 16>     m_samplers;
-        ID3D12RootSignature*                            m_currentRootSig;
         ContextDirtyFlags                               m_dirtyFlags;
-        BindType                                        m_bindType;
 
         void setDirty(ContextDirtyFlags flags) { m_dirtyFlags |= flags; }
         void setClean() { m_dirtyFlags = ContextDirty_Clean; }
@@ -148,7 +152,6 @@ private:
     std::vector<BufferResources>        m_bufferResources;
     U32                                 m_currentBufferIndex;
     U32                                 m_bufferCount;
-    D3D12RenderPass*                    m_pRenderPass;
     ContextDirtyFlags                   m_dirtyFlags;    
     D3D12PrimaryCommandList*            m_pPrimaryCommandList;
     std::vector<ContextState>           m_contextStates;

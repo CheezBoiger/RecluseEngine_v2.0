@@ -1,9 +1,11 @@
 //
 #include "D3D12Device.hpp"
 #include "D3D12PipelineState.hpp"
+#include "D3D12RenderPass.hpp"
 #include "Recluse/Serialization/Hasher.hpp"
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Math/MathCommons.hpp"
+#include "D3D12ShaderCache.hpp"
 
 #include <unordered_map>
 #include <array>
@@ -27,36 +29,161 @@ std::unordered_map<PipelineStateId, ID3D12PipelineState*> g_pipelineStateMap;
 std::unordered_map<Hash64, ID3D12RootSignature*> m_rootSignatures;
 
 
-static PipelineStateId serializePipelineState(const PipelineStateObject& pipelineState)
+R_INTERNAL
+D3D12_PRIMITIVE_TOPOLOGY_TYPE getPrimitiveTopologyType(PrimitiveTopology topology)
+{
+    switch (topology)
+    {
+        case PrimitiveTopology_LineStrip:       
+        case PrimitiveTopology_LineList:        return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+        case PrimitiveTopology_PointList:       return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+        case PrimitiveTopology_TriangleStrip:
+        case PrimitiveTopology_TriangleList:
+        default: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    }
+}
+
+
+R_INTERNAL
+D3D12_FILL_MODE getFillMode(PolygonMode mode)
+{
+    switch (mode)
+    {
+        case PolygonMode_Line:      return D3D12_FILL_MODE_WIREFRAME;
+        case PolygonMode_Point:     return D3D12_FILL_MODE_SOLID;
+        default:
+        case PolygonMode_Fill:      return D3D12_FILL_MODE_SOLID;
+    }
+}
+
+
+R_INTERNAL 
+D3D12_CULL_MODE getCullMode(CullMode mode)
+{
+    switch (mode)
+    {
+        case CullMode_Back:             return D3D12_CULL_MODE_BACK;
+        case CullMode_Front:            return D3D12_CULL_MODE_FRONT;
+        case CullMode_FrontAndBack:     return D3D12_CULL_MODE_NONE;
+        default:
+        case CullMode_None:             return D3D12_CULL_MODE_NONE;
+    }
+}
+
+
+R_INTERNAL 
+PipelineStateId serializePipelineState(const PipelineStateObject& pipelineState)
 {
     return recluseHashFast(&pipelineState, sizeof(PipelineStateObject));
 }
 
 
-static ID3D12PipelineState* createGraphicsPipelineState(const PipelineStateObject& pipelineState)
+R_INTERNAL 
+ID3D12PipelineState* createGraphicsPipelineState(U32 nodeMask, ID3D12Device* pDevice, const D3D::Cache::D3DShaderProgram* program, const PipelineStateObject& pipelineState)
 {
-    return nullptr;
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = { };
+    desc.pRootSignature = pipelineState.rootSignature;
+    desc.NodeMask = 0;
+    desc.NumRenderTargets = pipelineState.graphics.numRenderTargets;
+    desc.IBStripCutValue = pipelineState.graphics.indexStripCut;
+    desc.PrimitiveTopologyType = getPrimitiveTopologyType(pipelineState.graphics.primitiveTopology);
+    for (U32 i = 0; i < pipelineState.graphics.numRenderTargets; ++i)
+    {
+        desc.RTVFormats[i] = pipelineState.graphics.pRenderPass->getRtvFormat(i);
+    }
+    desc.DSVFormat = pipelineState.graphics.pRenderPass->getDsvFormat();
+
+    R_ASSERT(program->graphics.vsBytecode);
+    
+    desc.VS.pShaderBytecode = program->graphics.vsBytecode->GetBufferPointer();
+    desc.VS.BytecodeLength = program->graphics.vsBytecode->GetBufferSize();
+    
+    if (program->graphics.psBytecode)
+    {
+        desc.PS.pShaderBytecode = program->graphics.psBytecode->GetBufferPointer();
+        desc.PS.BytecodeLength = program->graphics.psBytecode->GetBufferSize();
+    }
+
+    if (program->graphics.hsBytecode)
+    {
+        desc.HS.pShaderBytecode = program->graphics.hsBytecode->GetBufferPointer();
+        desc.HS.BytecodeLength = program->graphics.hsBytecode->GetBufferSize();
+    }
+
+    if (program->graphics.dsBytecode)
+    {
+        desc.DS.pShaderBytecode = program->graphics.dsBytecode->GetBufferPointer();
+        desc.DS.BytecodeLength = program->graphics.dsBytecode->GetBufferSize();
+    }
+
+    if (program->graphics.gsBytecode)
+    {
+        desc.GS.pShaderBytecode = program->graphics.gsBytecode->GetBufferPointer();
+        desc.GS.BytecodeLength = program->graphics.gsBytecode->GetBufferSize();
+    }
+
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+
+    desc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
+    desc.RasterizerState.AntialiasedLineEnable = pipelineState.graphics.antiAliasedLineEnable;
+    desc.RasterizerState.FillMode = getFillMode(pipelineState.graphics.polygonMode);
+    desc.RasterizerState.CullMode = getCullMode(pipelineState.graphics.cullMode);
+    desc.RasterizerState.DepthClipEnable = pipelineState.graphics.depthClampEnable;
+    desc.RasterizerState.DepthBias  = pipelineState.graphics.depthBiasEnable ? 1 : 0;
+    desc.RasterizerState.FrontCounterClockwise = true;
+    desc.RasterizerState.MultisampleEnable = false;
+
+    desc.DepthStencilState.DepthEnable = pipelineState.graphics.depthEnable;
+    desc.DepthStencilState.StencilEnable = pipelineState.graphics.stencilEnable;
+    desc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+    desc.DepthStencilState.DepthFunc = pipelineState.graphics.depthFunc;
+
+    desc.BlendState.IndependentBlendEnable = true;
+    desc.BlendState.AlphaToCoverageEnable = false;
+    for (U32 i = 0; i < pipelineState.graphics.numRenderTargets; ++i)
+    {
+        desc.BlendState.RenderTarget[i].RenderTargetWriteMask = pipelineState.graphics.blendState.attachments[i].colorWriteMask;
+        desc.BlendState.RenderTarget[i].BlendEnable = pipelineState.graphics.blendState.attachments[i].blendEnable;
+    }
+    
+    ID3D12PipelineState* pipeline = nullptr;
+    HRESULT result = pDevice->CreateGraphicsPipelineState(&desc, __uuidof(ID3D12PipelineState), (void**)&pipeline);
+    R_ASSERT(SUCCEEDED(result));
+    return pipeline;
 }
 
 
-static ID3D12PipelineState* createComputePipelineState(const PipelineStateObject& pipelineState)
+R_INTERNAL 
+ID3D12PipelineState* createComputePipelineState(U32 nodeMask, ID3D12Device* pDevice, const D3D::Cache::D3DShaderProgram* program, const PipelineStateObject& pipelineState)
 {
-    return nullptr;
+    ID3D12PipelineState* pPipelineState     = nullptr;
+    D3D12_COMPUTE_PIPELINE_STATE_DESC desc  = { };
+    desc.pRootSignature                     = pipelineState.rootSignature;
+    desc.CS.pShaderBytecode                 = program->compute.csBytecode->GetBufferPointer();
+    desc.CS.BytecodeLength                  = program->compute.csBytecode->GetBufferSize();
+    desc.Flags                              = D3D12_PIPELINE_STATE_FLAG_NONE;
+    desc.NodeMask                           = nodeMask;
+    HRESULT result = pDevice->CreateComputePipelineState(&desc, __uuidof(ID3D12PipelineState), (void**)&pPipelineState);
+    R_ASSERT(SUCCEEDED(result));
+    return pPipelineState;
 }
 
 
-static ID3D12PipelineState* createPipelineState(const PipelineStateObject& pipelineState)
+R_INTERNAL 
+ID3D12PipelineState* createPipelineState(U32 nodeMask, ID3D12Device* pDevice, D3D::Cache::D3DShaderProgram* program, const PipelineStateObject& pipelineState)
 {
     ID3D12PipelineState* createdPipelineState = nullptr;
     switch (pipelineState.pipelineType)
     {
         case BindType_Graphics:
-            createdPipelineState = createGraphicsPipelineState(pipelineState);
+            createdPipelineState = createGraphicsPipelineState(nodeMask, pDevice, program, pipelineState);
             break;
         case BindType_RayTrace:
+            R_NO_IMPL();
             break;
         case BindType_Compute:
-            createdPipelineState = createComputePipelineState(pipelineState);
+            createdPipelineState = createComputePipelineState(nodeMask, pDevice, program, pipelineState);
             break;
         default:
             break;        
@@ -183,14 +310,20 @@ ID3D12PipelineState* makePipelineState(D3D12Context* pContext, const PipelineSta
 {
     ID3D12PipelineState* retrievedPipelineState = nullptr;
     PipelineStateId pipelineId = serializePipelineState(pipelineState);
+    ID3D12Device* pDevice = pContext->getDevice()->castTo<D3D12Device>()->get();
     auto iter = g_pipelineStateMap.find(pipelineId);
     if (iter == g_pipelineStateMap.end())
     {
         // We didn't find a similar pipeline state, need to create a new one.
-        
-        
+        D3D::Cache::D3DShaderProgram* program = D3D::Cache::obtainShaderProgram(pipelineState.shaderProgramId, pipelineState.permutation);
+        ID3D12PipelineState* pipeline = createPipelineState(0, pDevice, program, pipelineState);
+        g_pipelineStateMap.insert(std::make_pair(pipelineId, pipeline));
+        retrievedPipelineState = g_pipelineStateMap[pipelineId];
     }
-    retrievedPipelineState = iter->second;
+    else
+    {
+        retrievedPipelineState = iter->second;
+    }
     return retrievedPipelineState;
 }
 
@@ -295,6 +428,17 @@ void resetTableHeaps(D3D12Device* pDevice)
     pManager->resetCpuTableHeaps();
     m_cachedCpuDescriptorTables.clear();
     m_cachedSamplerTables.clear();
+}
+
+
+
+void cleanUpPipelines()
+{
+    for (auto& iter : g_pipelineStateMap)
+    {
+        iter.second->Release();
+    }
+    g_pipelineStateMap.clear();
 }
 } // Pipelines
 } // Recluse

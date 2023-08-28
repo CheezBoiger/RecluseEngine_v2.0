@@ -267,6 +267,7 @@ public:
     D3D12_CPU_DESCRIPTOR_HANDLE                             nullSrvDescriptor() const { return m_nullSrvDescriptor; }
     D3D12_CPU_DESCRIPTOR_HANDLE                             nullUavDescriptor() const { return m_nullUavDescriptor; }
     D3D12_CPU_DESCRIPTOR_HANDLE                             nullCbvDescriptor() const { return m_nullCbvDescriptor; }
+    D3D12_CPU_DESCRIPTOR_HANDLE                             nullDsvDescriptor() const { return m_nullDsvDescriptor; }
     D3D12_CPU_DESCRIPTOR_HANDLE                             nullSamplerDescriptor() const { return m_nullSamplerDescriptor; }
 
     ResultCode                                              freeRenderTargetView(D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
@@ -293,6 +294,7 @@ private:
     D3D12_CPU_DESCRIPTOR_HANDLE                             m_nullSrvDescriptor;
     D3D12_CPU_DESCRIPTOR_HANDLE                             m_nullUavDescriptor;
     D3D12_CPU_DESCRIPTOR_HANDLE                             m_nullCbvDescriptor;
+    D3D12_CPU_DESCRIPTOR_HANDLE                             m_nullDsvDescriptor;
     D3D12_CPU_DESCRIPTOR_HANDLE                             m_nullSamplerDescriptor;
     ID3D12Device*                                           m_pDevice;
     U32                                                     m_currentTableHeapIndex;

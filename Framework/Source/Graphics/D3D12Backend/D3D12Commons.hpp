@@ -58,6 +58,7 @@ extern D3D12_UAV_DIMENSION getUavDimension(Recluse::ResourceViewDimension dimens
 extern D3D12_SRV_DIMENSION getSrvDimension(Recluse::ResourceViewDimension dimension);
 extern D3D12_COMPARISON_FUNC getNativeComparisonFunction(Recluse::CompareOp compareOp);
 extern D3D12_SHADER_VISIBILITY getShaderVisibilityFlags(Recluse::ShaderStageFlags shaderStageFlags);
+extern D3D12_INDEX_BUFFER_STRIP_CUT_VALUE getNativeStripCutValue(Recluse::IndexType indexType);
 
 } // Recluse
 

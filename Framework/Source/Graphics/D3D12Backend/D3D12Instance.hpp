@@ -25,7 +25,7 @@ private:
     ResultCode onInitialize(const ApplicationInfo& appInfo, LayerFeatureFlags flags) override;
     void onDestroy() override;
 
-    void enableDebugValidation();
+    void enableDebugValidation(Bool enableGpuValidation);
 
     IDXGIFactory2* m_pFactory;
 };

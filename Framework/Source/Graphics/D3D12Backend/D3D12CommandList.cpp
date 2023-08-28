@@ -3,6 +3,7 @@
 #include "D3D12Device.hpp"
 #include "D3D12Resource.hpp"
 #include "D3D12ResourceView.hpp"
+#include "D3D12ShaderCache.hpp"
 
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Math/MathCommons.hpp"
@@ -247,20 +248,88 @@ void D3D12Context::bindCurrentResources()
         CpuDescriptorTable table = Pipelines::makeDescriptorSrvCbvUavTable(m_pDevice, state.m_rootSigLayout, state.m_resourceTable);
         ShaderVisibleDescriptorHeapInstance* instance = m_pDevice->getDescriptorHeapManager()->getShaderVisibleInstance(currentBufferIndex());
         ShaderVisibleDescriptorTable shaderVisibleTable = instance->upload(m_pDevice->get(), GpuHeapType_CbvSrvUav, table);
-        if (state.m_currentRootSig != rootSig)
+        if (state.m_pipelineStateObject.rootSignature != rootSig)
         {
-            bindRootSignature(currentList, state.m_bindType, rootSig);
-            state.m_currentRootSig = rootSig;
+            bindRootSignature(currentList, state.m_pipelineStateObject.pipelineType, rootSig);
+            state.m_pipelineStateObject.rootSignature = rootSig;
         }
 
-        bindResourceTable(currentList, state.m_bindType, 0, shaderVisibleTable.baseGpuDescriptorHandle);
+        bindResourceTable(currentList, state.m_pipelineStateObject.pipelineType, 0, shaderVisibleTable.baseGpuDescriptorHandle);
     }
 }
 
 
 void D3D12Context::setShaderProgram(ShaderProgramId program, U32 permutation)
 {
-    currentState().m_pipelineStateObject.shaderProgramId = program;
-    currentState().m_pipelineStateObject.permutation = permutation;
+    D3D::Cache::D3DShaderProgram* shaderProgram = D3D::Cache::obtainShaderProgram(program, permutation);
+    R_ASSERT_FORMAT(shaderProgram, "No shader program found by the given id=%d, and permutation=%d", program, permutation);
+    if (shaderProgram)
+    {
+        currentState().m_pipelineStateObject.shaderProgramId = program;
+        currentState().m_pipelineStateObject.permutation = permutation;
+        currentState().m_pipelineStateObject.pipelineType = shaderProgram->bindType;
+        currentState().setDirty(ContextDirty_Pipeline);
+    }
+}
+
+
+void D3D12Context::bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBytes, IndexType type) 
+{
+    D3D12_INDEX_BUFFER_STRIP_CUT_VALUE currentStripValue = currentState().m_pipelineStateObject.graphics.indexStripCut;
+    D3D12_INDEX_BUFFER_STRIP_CUT_VALUE boundStripValue = getNativeStripCutValue(type);
+    if (currentStripValue != boundStripValue)
+    {
+        currentState().setDirty(ContextDirty_Pipeline);
+    }
+    ID3D12Resource* pResource = pIndexBuffer->castTo<D3D12Resource>()->get();
+    D3D12_INDEX_BUFFER_VIEW view = { };
+    D3D12_RESOURCE_DESC desc = pResource->GetDesc();
+    view.BufferLocation = pResource->GetGPUVirtualAddress() + offsetBytes;
+    view.SizeInBytes = desc.Width;
+    view.Format = desc.Format;
+    m_pPrimaryCommandList->get()->IASetIndexBuffer(&view);
+}
+
+
+void D3D12Context::setDepthClampEnable(Bool enable)
+{
+    currentState().m_pipelineStateObject.graphics.depthClampEnable = enable;
+    currentState().setDirty(ContextDirty_Pipeline);
+}
+
+
+void D3D12Context::setDepthBiasEnable(Bool enable)
+{
+    currentState().m_pipelineStateObject.graphics.depthBiasEnable = enable;
+    currentState().setDirty(ContextDirty_Pipeline);
+}
+
+
+void D3D12Context::setDepthCompareOp(CompareOp compare)
+{
+    currentState().m_pipelineStateObject.graphics.depthFunc = getNativeComparisonFunction(compare);
+    currentState().setDirty(ContextDirty_Pipeline);
+}
+
+
+void D3D12Context::setColorWriteMask(U32 rtIndex, ColorComponentMaskFlags writeMask)
+{
+    
+}
+
+
+void D3D12Context::dispatch(U32 x, U32 y, U32 z)
+{
+    ID3D12GraphicsCommandList* pList = m_pPrimaryCommandList->get();
+    ContextState& state = currentState();
+    flushBarrierTransitions();
+    bindCurrentResources();
+    if (state.isDirty(ContextDirty_Pipeline))
+    {
+        ID3D12PipelineState* pipelineState = Pipelines::makePipelineState(this, state.m_pipelineStateObject);
+        pList->SetPipelineState(pipelineState);
+    }
+    state.setClean();
+    pList->Dispatch(x, y, z);
 }
 } // Recluse

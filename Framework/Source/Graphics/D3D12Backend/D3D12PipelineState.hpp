@@ -10,6 +10,7 @@ namespace Recluse {
 
 class D3D12Context;
 class D3D12Device;
+class D3D12RenderPass;
 
 extern const char* kHlslSemanticPosition;
 extern const char* kHlslSemanticNormal;
@@ -28,13 +29,23 @@ struct PipelineStateObject
     {
         struct 
         {
-            U32                     numRenderTargets;
-            RasterState             raster;
-            BlendState              blendState;
-            DepthStencil            depthStencil;
-            VertexInputLayoutId     ia;
-            TessellationState       tess;
-            PrimitiveTopology       primitiveTopology;
+            U32                                 numRenderTargets;
+            RasterState                         raster;
+            BlendState                          blendState;
+            DepthStencil                        depthStencil;
+            VertexInputLayoutId                 ia;
+            TessellationState                   tess;
+            PrimitiveTopology                   primitiveTopology;
+            PolygonMode                         polygonMode;
+            CullMode                            cullMode;
+            Bool                                antiAliasedLineEnable;
+            Bool                                depthEnable;
+            Bool                                stencilEnable;
+            Bool                                depthBiasEnable;
+            Bool                                depthClampEnable;
+            D3D12RenderPass*                    pRenderPass;
+            D3D12_INDEX_BUFFER_STRIP_CUT_VALUE  indexStripCut;
+            D3D12_COMPARISON_FUNC               depthFunc;
         } graphics;
         struct
         {
@@ -78,6 +89,7 @@ ID3D12RootSignature*            makeRootSignature(D3D12Device* pDevice, const Ro
 CpuDescriptorTable              makeDescriptorSrvCbvUavTable(D3D12Device* pDevice, const RootSigLayout& layout, const RootSigResourceTable& resourceTable);
 CpuDescriptorTable              makeDescriptorSamplertable(D3D12Device* pDevice, const RootSigLayout& layout, const RootSigResourceTable& resourceTable);
 void                            cleanUpRootSigs();
+void                            cleanUpPipelines();
 void                            resetTableHeaps(D3D12Device* pDevice);
 } // Pipelines
 } // Recluse

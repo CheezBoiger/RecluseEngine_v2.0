@@ -13,6 +13,7 @@ namespace Recluse {
 
 
 std::unordered_map<Hash64, D3D12RenderPass> g_renderPassMap;
+std::unordered_map<Hash64, CpuDescriptorTable> g_cachedRenderPassTable;
 
 
 GraphicsResourceView* D3D12RenderPass::getRenderTarget(U32 idx)
@@ -45,19 +46,36 @@ ResultCode D3D12RenderPass::update(D3D12Device* pDevice, U32 numRtvDescriptors, 
         if (rtvDescriptors[i] != 0)
         {
             D3D12GraphicsResourceView* pView = DescriptorViews::findResourceView(rtvDescriptors[i]);
+            m_rtvFormats[i] = Dxgi::getNativeFormat(pView->getDesc().format);
             handles[i] = pView->getCpuDescriptor();
         }
         else
         {
             handles[i] = pDescriptorManager->nullRtvDescriptor();
+            m_rtvFormats[i] = DXGI_FORMAT_UNKNOWN;
         }
     }
-    m_rtvDhAllocation = pDescriptorManager->copyDescriptorsToTable(CpuHeapType_Rtv, handles, numRtvDescriptors); 
     
+    Hash64 rtvHash = recluseHashFast(handles, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) * numRtvDescriptors);
+    auto iter = g_cachedRenderPassTable.find(rtvHash);
+    if (iter == g_cachedRenderPassTable.end())
+    {
+        m_rtvDhAllocation = pDescriptorManager->copyDescriptorsToTable(CpuHeapType_Rtv, handles, numRtvDescriptors);
+        g_cachedRenderPassTable.insert(std::make_pair(rtvHash, m_rtvDhAllocation.baseCpuDescriptorHandle));
+    }
+    else
+    {
+        m_rtvDhAllocation = iter->second;
+    }
     if (dsvDescriptor != 0)
     {
         D3D12GraphicsResourceView* pDsv = DescriptorViews::findResourceView(dsvDescriptor);
+        m_dsvFormat = Dxgi::getNativeFormat(pDsv->getDesc().format);
         m_dsvDhAllocation = pDsv->getCpuDescriptor();
+    }
+    else
+    {
+        m_dsvDhAllocation = pDescriptorManager->nullDsvDescriptor();
     }
     return RecluseResult_Ok;
 }
@@ -111,6 +129,12 @@ void clearAll(D3D12Device* pDevice)
         iter.second.release(pDevice);
     }
     g_renderPassMap.clear();
+}
+
+
+void clearRenderPassCache()
+{
+    g_cachedRenderPassTable.clear();
 }
 } // RenderPasses
 } // Recluse

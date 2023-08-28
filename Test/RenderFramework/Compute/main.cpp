@@ -63,10 +63,11 @@ int main(int c, char* argv[])
     Log::initializeLoggingSystem();
     RealtimeTick::initializeWatch(1ull, 0);
 
-    GraphicsInstance* pInstance       = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
+    GraphicsInstance* pInstance       = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
     GraphicsAdapter* pAdapter       = nullptr;
     GraphicsDevice* pDevice         = nullptr;
     GraphicsResource* pData         = nullptr;
+    GraphicsResource* output        = nullptr;
     PipelineState* pPipeline        = nullptr;
     GraphicsSwapchain* pSwapchain   = nullptr;
     GraphicsContext* pContext       = nullptr;
@@ -106,7 +107,7 @@ int main(int c, char* argv[])
         info.swapchainDescription.desiredFrames = 3;
         info.swapchainDescription.renderWidth = pWindow->getWidth();
         info.swapchainDescription.renderHeight = pWindow->getHeight();
-        info.swapchainDescription.format = ResourceFormat_B8G8R8A8_Unorm;
+        info.swapchainDescription.format = ResourceFormat_R8G8B8A8_Unorm;
 
         result = pAdapter->createDevice(info, &pDevice);
     }
@@ -135,12 +136,31 @@ int main(int c, char* argv[])
     {
         GraphicsResourceDescription desc = { };
         desc.dimension = ResourceDimension_Buffer;
-        desc.width = sizeof(ConstData);
+        desc.width = align(sizeof(ConstData), 256);
+        desc.height = 1;
+        desc.depthOrArraySize = 1;
+        desc.mipLevels = 1;
         desc.memoryUsage = ResourceMemoryUsage_CpuToGpu;
         desc.usage = ResourceUsage_ConstantBuffer;
         desc.name = "ComputeConstantBuffer";
         
         result = pDevice->createResource(&pData, desc, ResourceState_ConstantBuffer);
+    }
+
+    {
+        GraphicsResourceDescription desc = { };
+        desc.dimension = ResourceDimension_2d;
+        desc.width = pDevice->getSwapchain()->getDesc().renderWidth;
+        desc.height = pDevice->getSwapchain()->getDesc().renderHeight;
+        desc.depthOrArraySize = 1;
+        desc.mipLevels = 1;
+        desc.format = pDevice->getSwapchain()->getDesc().format;
+        desc.samples = 1;
+        desc.memoryUsage = ResourceMemoryUsage_GpuOnly;
+        desc.usage = ResourceUsage_CopySource | ResourceUsage_UnorderedAccess | ResourceUsage_ShaderResource;
+        desc.name = "ComputeOutput";
+        
+        result = pDevice->createResource(&output, desc, ResourceState_UnorderedAccess);
     }
 
     if (result != RecluseResult_Ok) 
@@ -170,6 +190,7 @@ int main(int c, char* argv[])
     }
 
     {
+        GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
         std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
         FileBufferData file;
         std::string shaderPath = currDir + "/" + "test.cs.hlsl";
@@ -178,7 +199,7 @@ int main(int c, char* argv[])
         description.language = ShaderLang_Hlsl;
         description.compute.cs = shaderPath.c_str();
         description.compute.csName = "main";
-        Builder::buildShaderProgramDefinitions(description, 0, ShaderIntermediateCode_Spirv);
+        Builder::buildShaderProgramDefinitions(description, 0, ShaderIntermediateCode_Dxil);
         Builder::Runtime::buildShaderProgram(pDevice, ProgramId_Mandelbrot);
         Builder::clearShaderProgramDefinitions();
     }
@@ -186,7 +207,7 @@ int main(int c, char* argv[])
     pWindow->open();
 
     const F32 desiredFps = 144.0f;
-    F32 desiredMs = 1.f / desiredFps;
+    F32 desiredMs = 0.f / desiredFps;
     pContext = pDevice->createContext();
     pContext->setBuffers(3);
 
@@ -201,19 +222,24 @@ int main(int c, char* argv[])
             ResourceViewDescription desc   = { };
             desc.type               = ResourceViewType_UnorderedAccess;
             desc.dimension          = ResourceViewDimension_2d;
-            desc.format             = ResourceFormat_B8G8R8A8_Unorm;
+            desc.format             = pSwapchain->getDesc().format;
             desc.layerCount         = 1;
             desc.mipLevelCount      = 1;
             desc.baseArrayLayer     = 0;
             desc.baseMipLevel       = 0;
 
             GraphicsResource* frame = pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex());
-            ResourceViewId uavView = frame->asView(desc);
-            context->transition(frame, ResourceState_UnorderedAccess);
-            context->bindConstantBuffer(ShaderStage_Compute, 0, pData, 0, sizeof(ConstData));
+            ResourceViewId uavView = output->asView(desc);
+            context->transition(output, ResourceState_UnorderedAccess);
+            context->bindConstantBuffer(ShaderStage_Compute, 1, pData, 0, sizeof(ConstData));
             context->bindUnorderedAccessView(ShaderStage_Compute, 0, uavView);
             context->setShaderProgram(ProgramId_Mandelbrot);
             context->dispatch(Math::divUp(pWindow->getWidth(), 8u), Math::divUp(pWindow->getHeight(), 8u), 1);
+
+            context->transition(frame, ResourceState_CopyDestination);
+            context->transition(output, ResourceState_CopySource);
+            context->copyResource(frame, output);
+
             context->transition(frame, ResourceState_Present);
         context->end();
         R_VERBOSE("Test", "Frame: %f fps", 1.0f / frameMs);
@@ -223,6 +249,7 @@ int main(int c, char* argv[])
     }
     
     pContext->wait();
+    pDevice->destroyResource(output);
     pDevice->destroyResource(pData);
     pDevice->releaseContext(pContext);
     pAdapter->destroyDevice(pDevice);

@@ -324,7 +324,15 @@ ResultCode DescriptorHeapAllocationManager::initialize(ID3D12Device* pDevice, co
         desc.Filter                             = D3D12_FILTER_MIN_MAG_MIP_POINT;
         desc.ComparisonFunc                     = D3D12_COMPARISON_FUNC_ALWAYS;
         m_nullSamplerDescriptor                 = allocateSampler(desc);
-        
+    }
+
+    {
+        D3D12_DEPTH_STENCIL_VIEW_DESC desc = { };
+        desc.Format = DXGI_FORMAT_D32_FLOAT;
+        desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE1D;
+        desc.Texture1D.MipSlice = 0;
+        desc.Flags = D3D12_DSV_FLAG_NONE;
+        m_nullDsvDescriptor = allocateDepthStencilView(nullptr, desc);
     }
     return RecluseResult_Ok;
 }
