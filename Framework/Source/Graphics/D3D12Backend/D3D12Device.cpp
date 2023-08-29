@@ -595,7 +595,7 @@ D3D12_FEATURE_DATA_FORMAT_SUPPORT D3D12Device::checkFormatSupport(ResourceFormat
 }
 
 
-ResultCode D3D12Device::loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition)
+ResultCode D3D12Device::loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const ShaderProgramDefinition& definition)
 {
     if (D3D::Cache::isProgramCached(program, permutation))
     {

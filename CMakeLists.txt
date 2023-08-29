@@ -26,6 +26,8 @@ endforeach( OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES )
 # Framework subdirectory.
 add_subdirectory ( Framework )
 
+add_subdirectory ( Pipeline )
+
 # Add shader compiler subdirectory.
 add_subdirectory( ShaderCompiler )
 

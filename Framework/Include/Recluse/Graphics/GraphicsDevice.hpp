@@ -8,7 +8,7 @@
 #include "Recluse/Graphics/DescriptorSet.hpp"
 #include "Recluse/Graphics/GraphicsCommon.hpp"
 #include "Recluse/Graphics/PipelineState.hpp"
-#include "Recluse/Graphics/ShaderProgramBuilder.hpp"
+#include "Recluse/Graphics/ShaderProgram.hpp"
 
 namespace Recluse {
 
@@ -263,7 +263,7 @@ public:
     virtual GraphicsSwapchain*      getSwapchain() { return nullptr; }
 
     // Load up shader programs to be created on the native api.
-    virtual ResultCode              loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition) { return RecluseResult_NoImpl; }
+    virtual ResultCode              loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const ShaderProgramDefinition& definition) { return RecluseResult_NoImpl; }
     
     // Unload a shader program, as well as it's permutations, created by this device.
     virtual ResultCode              unloadShaderProgram(ShaderProgramId program) { return RecluseResult_NoImpl; }

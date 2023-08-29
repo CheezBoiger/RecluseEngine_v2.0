@@ -2,7 +2,7 @@
 #pragma once
 
 #include "D3D12Commons.hpp"
-#include "Recluse/Graphics/ShaderProgramBuilder.hpp"
+#include "Recluse/Graphics/ShaderProgram.hpp"
 
 namespace Recluse {
 
@@ -59,7 +59,7 @@ Bool                isProgramCached(ShaderProgramId shaderProgram);
 // Returns a native shader program to the caller. If no native shader program is found, will return a nullptr.
 D3DShaderProgram*   obtainShaderProgram(ShaderProgramId shaderProgram, ShaderProgramPermutation permutation);
 
-ResultCode          loadNativeShaderProgramPermutation(ShaderProgramId shaderProgram, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition);
+ResultCode          loadNativeShaderProgramPermutation(ShaderProgramId shaderProgram, ShaderProgramPermutation permutation, const ShaderProgramDefinition& definition);
 ResultCode          unloadAll();
 ResultCode          unloadPrograms(ShaderProgramId shaderProgram);
 } // Cache

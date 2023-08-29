@@ -114,7 +114,7 @@ Bool destroyShaderProgram(D3DShaderProgram* pProgram)
 
 
 R_INTERNAL
-Bool internalMakeShaderProgram(ShaderProgramId shaderProgram, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition)
+Bool internalMakeShaderProgram(ShaderProgramId shaderProgram, ShaderProgramPermutation permutation, const ShaderProgramDefinition& definition)
 {
     D3DShaderProgram program    = { };
     program.bindType            = definition.pipelineType;
@@ -202,7 +202,7 @@ D3DShaderProgram* obtainShaderProgram(ShaderProgramId shaderProgram, ShaderProgr
 }
 
 
-ResultCode loadNativeShaderProgramPermutation(ShaderProgramId shaderProgram, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition)
+ResultCode loadNativeShaderProgramPermutation(ShaderProgramId shaderProgram, ShaderProgramPermutation permutation, const ShaderProgramDefinition& definition)
 {
     R_ASSERT_FORMAT
         (

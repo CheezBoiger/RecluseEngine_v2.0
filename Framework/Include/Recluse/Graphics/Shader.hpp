@@ -4,6 +4,7 @@
 #include "Recluse/Types.hpp"
 
 #include "Recluse/Serialization/Hasher.hpp"
+#include "Recluse/Utility.hpp"
 
 #include <vector>
 
@@ -84,7 +85,7 @@ static ShaderStageFlags shaderTypeToShaderStageFlags(ShaderType type)
 typedef U64 ShaderPermutationId;
 
 // Shader is a container that uses the crc
-class Shader final
+class Shader final : public IReference
 {
 public:
     ~Shader() { }
@@ -104,6 +105,7 @@ private:
         , m_shaderHashId(~0)
     {
         m_shaderName[0] = '\0'; 
+        addReference();
     }
 
 public:

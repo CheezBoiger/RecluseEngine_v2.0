@@ -8,7 +8,7 @@
 #include "Recluse/Renderer/RendererResources.hpp"
 
 #include "Recluse/Filesystem/Filesystem.hpp"
-#include "Recluse/Graphics/ShaderProgramBuilder.hpp"
+#include "Recluse/Graphics/ShaderProgram.hpp"
 #include "Recluse/Generated/RendererPrograms.hpp"
 #include "Recluse/Messaging.hpp"
 
@@ -30,17 +30,17 @@ void initialize(GraphicsDevice* pDevice, Engine::SceneBufferDefinitions* pBuffer
 
     R_DEBUG("PreZ", "Initializing preZ render pass...");
 
-    Builder::ShaderProgramDescription description = { };
-    description.pipelineType = BindType_Graphics;
-    description.language = ShaderLang_Hlsl;
-    description.graphics.vs = Engine::getBinaryShaderPath("Geometry/VertFactoryStatic").c_str();
-    description.graphics.vsName = "main";
-    Builder::buildShaderProgramDefinitions(description, ShaderProgram_PreZDepth, ShaderIntermediateCode_Spirv);
-    Builder::Runtime::buildShaderProgram(pDevice, ShaderProgram_PreZDepth);
-    Builder::releaseShaderProgramDefinition(ShaderProgram_PreZDepth);
+    //Builder::ShaderProgramDescription description = { };
+    //description.pipelineType = BindType_Graphics;
+    //description.language = ShaderLang_Hlsl;
+    //description.graphics.vs = Engine::getBinaryShaderPath("Geometry/VertFactoryStatic").c_str();
+    //description.graphics.vsName = "main";
+    //Builder::buildShaderProgramDefinitions(description, ShaderProgram_PreZDepth, ShaderIntermediateCode_Spirv);
+    //Builder::Runtime::buildShaderProgram(pDevice, ShaderProgram_PreZDepth);
+    //Builder::releaseShaderProgramDefinition(ShaderProgram_PreZDepth);
 
     VertexInputLayout layout = { };
-    Builder::Runtime::buildVertexInputLayout(pDevice, layout, VertexLayout_PositionOnly);
+    Runtime::buildVertexInputLayout(pDevice, layout, VertexLayout_PositionOnly);
 }
 
 

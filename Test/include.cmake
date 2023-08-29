@@ -7,6 +7,11 @@ set ( RECLUSE_ENGINE_INCLUDE ${CMAKE_SOURCE_DIR}/../Engine/Include )
 set( RECLUSE_ENGINE_DEBUG_LIB ${CMAKE_SOURCE_DIR}/../Recluse/Lib/RecluseEngine.lib )
 set( RECLUSE_ENGINE_RELEASE_LIB ${CMAKE_SOURCE_DIR}/../Recluse/Lib/RecluseEngine.lib )
 
+set ( RECLUSE_PIPELINE_INCLUDE ${CMAKE_SOURCE_DIR}/../Pipeline/Include )
+set( RECLUSE_PIPELINE_DEBUG_LIB ${CMAKE_SOURCE_DIR}/../Recluse/Lib/ReclusePipeline.lib )
+set( RECLUSE_PIPELINE_RELEASE_LIB ${CMAKE_SOURCE_DIR}/../Recluse/Lib/ReclusePipeline.lib )
+
+
 set ( RECLUSE_THIRDPARTY_DIR ${CMAKE_SOURCE_DIR}/Thirdparty )
 
 function(initialize_recluse_framework TARGET_NAME )
@@ -21,6 +26,13 @@ function( initialize_recluse_engine TARGET_NAME )
     target_include_directories(${TARGET_NAME} PUBLIC ${RECLUSE_ENGINE_INCLUDE})
     target_link_libraries(${TARGET_NAME} debug ${RECLUSE_ENGINE_DEBUG_LIB})
     target_link_libraries(${TARGET_NAME} optimized ${RECLUSE_ENGINE_RELEASE_LIB})
+endfunction()
+
+function( initialize_recluse_pipeline TARGET_NAME )
+    message(STATUS "Recluse: Linking ${TARGET_NAME} with Recluse Pipeline")
+    target_include_directories(${TARGET_NAME} PUBLIC ${RECLUSE_PIPELINE_INCLUDE})
+    target_link_libraries(${TARGET_NAME} debug ${RECLUSE_PIPELINE_DEBUG_LIB})
+    target_link_libraries(${TARGET_NAME} optimized ${RECLUSE_PIPELINE_RELEASE_LIB})
 endfunction()
 
 function(initialize_gtest_framework TARGET_NAME )
@@ -57,5 +69,12 @@ macro(post_build_engine_dll TARGET_NAME)
 add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/../Recluse/Bin/RecluseEngine.dll
+        $<TARGET_FILE_DIR:${TARGET_NAME}>)
+endmacro()
+
+macro(post_build_pipeline_dll TARGET_NAME)
+add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/../Recluse/Bin/ReclusePipeline.dll
         $<TARGET_FILE_DIR:${TARGET_NAME}>)
 endmacro()

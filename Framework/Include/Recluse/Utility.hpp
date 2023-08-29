@@ -18,42 +18,59 @@ static R_FORCE_INLINE ToCast staticCast(Class obj)
 }
 
 
+class IReference
+{
+public:
+    IReference()
+        : m_ref(0) { }
+    virtual ~IReference() { }
+
+    IReference& operator=(U32 ref)
+    {
+        m_ref = ref;
+        return (*this);
+    }
+
+    void            addReference(U32 addition = 1) { m_ref += addition; }
+    virtual U32     release() { (m_ref == 0) ? (m_ref = 0) : (m_ref -= 1); return m_ref; }
+    U32             getReference() const { return m_ref; }
+    Bool            hasReferences() const { return (m_ref != 0); }
+private:
+    U32 m_ref;
+};
+
+
 template<typename Object>
-class ReferenceCounter
+class ReferenceCounter : public IReference
 {
 public:
     ReferenceCounter()
-        : m_ref(0)
+        : IReference()
     { }
 
     ReferenceCounter(const Object& obj)
-        : m_ref(0)
+        : IReference()
         , m_obj(obj)
     { }
 
     ReferenceCounter(const Object&& obj)
-        : m_ref(0)
+        : IReference()
         , m_obj(std::move(obj))
     { }
 
     ReferenceCounter& operator=(const Object& obj)
     {
+        IReference::operator=(0);
         m_obj = obj;
-        m_ref = 0;
         return (*this);
     }
 
     ReferenceCounter& operator=(const Object&& obj)
     {
+        IReference::operator=(0);
         m_obj = std::move(obj);
-        m_ref = 0;
         return (*this);
     }
-
-    void    addReference(U32 addition = 1) { m_ref += addition; }
-    U32     release() { (m_ref == 0) ? (m_ref = 0) : (m_ref -= 1); return m_ref; }
-    U32     getReference() const { return m_ref; }
-    Bool    hasReferences() const { return (m_ref != 0); }
 
     Object& get() { return m_obj; }
     const Object& get() const { return m_obj; }
@@ -62,7 +79,6 @@ public:
     const Object& operator()() const { return m_obj; }
 
 private:
-    U32 m_ref;
     Object m_obj;
 };
 

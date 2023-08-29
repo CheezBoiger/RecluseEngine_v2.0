@@ -16,7 +16,7 @@ set ( RECLUSE_GRAPHICS_BUILD
     ${RECLUSE_GRAPHICS_INCLUDE}/RenderPassMap.hpp
     ${RECLUSE_GRAPHICS_INCLUDE}/Resource.hpp
     ${RECLUSE_GRAPHICS_INCLUDE}/ResourceView.hpp
-	${RECLUSE_GRAPHICS_INCLUDE}/ShaderProgramBuilder.hpp
+	${RECLUSE_GRAPHICS_INCLUDE}/ShaderProgram.hpp
     ${RECLUSE_GRAPHICS_INCLUDE}/Shader.hpp
     ${RECLUSE_GRAPHICS_SOURCE}/Shader.cpp
     ${RECLUSE_GRAPHICS_SOURCE}/ShaderMap.hpp
@@ -25,7 +25,6 @@ set ( RECLUSE_GRAPHICS_BUILD
     ${RECLUSE_GRAPHICS_SOURCE}/DeviceFactory.cpp
     ${RECLUSE_GRAPHICS_SOURCE}/RenderPass.cpp
     ${RECLUSE_GRAPHICS_SOURCE}/RenderPassMap.cpp
-	${RECLUSE_GRAPHICS_SOURCE}/ShaderProgram.hpp
 	${RECLUSE_GRAPHICS_SOURCE}/ShaderProgram.cpp
     ${RECLUSE_GRAPHICS_INCLUDE}/ShaderBuilder.hpp
     ${RECLUSE_GRAPHICS_SOURCE}/DXCShaderBuilder.cpp

@@ -9,7 +9,9 @@
 #include "Recluse/Graphics/ResourceView.hpp"
 #include "Recluse/Graphics/RenderPass.hpp"
 #include "Recluse/Graphics/ShaderBuilder.hpp"
-#include "Recluse/Graphics/ShaderProgramBuilder.hpp"
+#include "Recluse/Graphics/ShaderProgram.hpp"
+
+#include "Recluse/Pipeline/ShaderProgramBuilder.hpp"
 
 #include "Recluse/Math/Vector2.hpp"
 #include "Recluse/Memory/MemoryCommon.hpp"
@@ -102,6 +104,7 @@ int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
     RealtimeTick::initializeWatch(1ull, 0);
+    ShaderProgramDatabase database          = { };
     GraphicsInstance* pInstance             = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
     GraphicsAdapter* pAdapter               = nullptr;
     GraphicsResource* pData                 = nullptr;
@@ -264,12 +267,12 @@ int main(int c, char* argv[])
     }
 
     {
-        GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
+        //GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
         std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
         std::string vsSource = currDir + "/" + "test.vs.hlsl";
         std::string fsSource = currDir + "/" + "test.fs.hlsl";
 
-        Builder::ShaderProgramDescription description = { };
+        Pipeline::Builder::ShaderProgramDescription description = { };
         description.pipelineType = BindType_Graphics;
         description.graphics.vs = vsSource.c_str();
         description.graphics.vsName = "main";
@@ -282,9 +285,9 @@ int main(int c, char* argv[])
         description.graphics.hs = nullptr;
 
         description.language = ShaderLang_Hlsl;
-        Builder::buildShaderProgramDefinitions(description, ShaderKey_SimpleColor, ShaderIntermediateCode_Spirv);
-        Builder::Runtime::buildShaderProgram(pDevice, 0);
-        Builder::releaseShaderProgramDefinition(0);
+        Pipeline::Builder::buildShaderProgramDefinitions(database, description, ShaderKey_SimpleColor, ShaderIntermediateCode_Spirv);
+        Runtime::buildShaderProgram(pDevice, database, 0);
+        database.clearShaderProgramDefinitions();
 
 
         VertexInputLayout layout    = { };
@@ -303,7 +306,7 @@ int main(int c, char* argv[])
 
         layout.numVertexBindings = 1;
 
-        Builder::Runtime::buildVertexInputLayout(pDevice, layout, VertexLayoutKey_PositionOnly);
+        Runtime::buildVertexInputLayout(pDevice, layout, VertexLayoutKey_PositionOnly);
     }
     
     pWindow->open();

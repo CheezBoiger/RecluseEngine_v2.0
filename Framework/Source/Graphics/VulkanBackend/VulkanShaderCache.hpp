@@ -3,8 +3,7 @@
 
 #include "Recluse/Types.hpp"
 #include "VulkanCommons.hpp"
-#include "Graphics/ShaderProgram.hpp"
-#include "Recluse/Graphics/ShaderProgramBuilder.hpp"
+#include "Recluse/Graphics/ShaderProgram.hpp"
 #include <unordered_map>
 
 namespace Recluse {
@@ -58,7 +57,7 @@ namespace ShaderPrograms {
 
     // Cache the shader, this also checks if a VkShaderModule is also present. If not,
     // Will create one.
-    ResultCode          loadNativeShaderProgramPermutation(VulkanDevice* pDevice, ShaderProgramId shaderProgram, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition);
+    ResultCode          loadNativeShaderProgramPermutation(VulkanDevice* pDevice, ShaderProgramId shaderProgram, ShaderProgramPermutation permutation, const ShaderProgramDefinition& definition);
 
     // Check if the given shader has already been cached.
     B32                 isProgramCached(ShaderProgramId shaderProgram);

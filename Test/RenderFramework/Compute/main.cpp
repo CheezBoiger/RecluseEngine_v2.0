@@ -10,7 +10,7 @@
 #include "Recluse/Graphics/ResourceView.hpp"
 #include "Recluse/Graphics/RenderPass.hpp"
 #include "Recluse/Graphics/ShaderBuilder.hpp"
-#include "Recluse/Graphics/ShaderProgramBuilder.hpp"
+#include "Recluse/Graphics/ShaderProgram.hpp"
 
 #include "Recluse/Memory/MemoryCommon.hpp"
 #include "Recluse/System/Window.hpp"
@@ -20,6 +20,8 @@
 #include "Recluse/Filesystem/Filesystem.hpp"
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Math/MathCommons.hpp"
+
+#include "Recluse/Pipeline/ShaderProgramBuilder.hpp"
 
 #include "Recluse/System/Limiter.hpp"
 
@@ -68,7 +70,8 @@ int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
     RealtimeTick::initializeWatch(1ull, 0);
-
+    enableLogTypes(LogType_Notify);
+    ShaderProgramDatabase           database;
     GraphicsInstance* pInstance       = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
     GraphicsAdapter* pAdapter       = nullptr;
     GraphicsDevice* pDevice         = nullptr;
@@ -80,6 +83,7 @@ int main(int c, char* argv[])
     Window* pWindow                 = Window::create("Compute", 0, 0, 1024, 1024);
     ResultCode result                  = RecluseResult_Ok;
 
+    pWindow->open();
     std::vector<GraphicsResourceView*> views;
 
     if (!pInstance) 
@@ -200,23 +204,21 @@ int main(int c, char* argv[])
         std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
         FileBufferData file;
         std::string shaderPath = currDir + "/" + "test.cs.hlsl";
-        Builder::ShaderProgramDescription description = { };
+        Pipeline::Builder::ShaderProgramDescription description = { };
         description.pipelineType = BindType_Compute;
         description.language = ShaderLang_Hlsl;
         description.compute.cs = shaderPath.c_str();
         description.compute.csName = "main";
-        Builder::buildShaderProgramDefinitions(description, 0, ShaderIntermediateCode_Dxil);
-        Builder::Runtime::buildShaderProgram(pDevice, ProgramId_Mandelbrot);
-        Builder::clearShaderProgramDefinitions();
+        Pipeline::Builder::buildShaderProgramDefinitions(database, description, 0, ShaderIntermediateCode_Dxil);
+        Runtime::buildShaderProgram(pDevice, database, ProgramId_Mandelbrot);
+        database.clearShaderProgramDefinitions();
     }
-
-    pWindow->open();
 
     const F32 desiredFps = 244.0f;
     F32 desiredMs = 1.f / desiredFps;
     pContext = pDevice->createContext();
     pContext->setBuffers(3);
-
+    R_NOTIFY("Compute", "Window width=%d, height=%d", pWindow->getWidth(), pWindow->getHeight());
     F32 seconds = 0.f;
     while (!pWindow->shouldClose()) 
     {

@@ -78,7 +78,7 @@ static VkResult createShaderModule(VkDevice device, Shader* pShader, VkShaderMod
 }
 
 
-VulkanShaderProgram createShaderProgram(VkDevice device, const Builder::ShaderProgramDefinition& definition)
+VulkanShaderProgram createShaderProgram(VkDevice device, const ShaderProgramDefinition& definition)
 {
     VulkanShaderProgram programOut = { };
 
@@ -153,7 +153,7 @@ ResultCode createDebugShaderNames(VulkanDevice* pDevice, const VulkanShaderProgr
 }
 
 
-ResultCode loadNativeShaderProgramPermutation(VulkanDevice* pDevice, ShaderProgramId shaderProgram, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition)
+ResultCode loadNativeShaderProgramPermutation(VulkanDevice* pDevice, ShaderProgramId shaderProgram, ShaderProgramPermutation permutation, const ShaderProgramDefinition& definition)
 {
     auto& it = cache[shaderProgram].find(permutation);
     if (it != cache[shaderProgram].end())

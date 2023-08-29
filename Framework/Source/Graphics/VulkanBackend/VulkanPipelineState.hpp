@@ -5,7 +5,7 @@
 #include "Recluse/Graphics/PipelineState.hpp"
 #include "VulkanObjects.hpp"
 
-#include "Graphics/ShaderProgram.hpp"
+#include "Recluse/Graphics/ShaderProgram.hpp"
 
 namespace Recluse {
 

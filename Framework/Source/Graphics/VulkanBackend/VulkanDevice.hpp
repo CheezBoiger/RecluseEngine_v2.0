@@ -314,7 +314,7 @@ public:
     ResultCode          createSampler(GraphicsSampler** ppSampler, const SamplerDescription& desc) override;
     ResultCode          destroySampler(GraphicsSampler* pSampler) override;
     ResultCode          destroyResource(GraphicsResource* pResource) override;
-    ResultCode          loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition) override;
+    ResultCode          loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const ShaderProgramDefinition& definition) override;
     ResultCode          unloadShaderProgram(ShaderProgramId program) override;
     void                unloadAllShaderPrograms() override;
     Bool                makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout) override;

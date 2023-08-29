@@ -995,7 +995,7 @@ ResultCode VulkanDevice::destroySampler(GraphicsSampler* pSampler)
 }
 
 
-ResultCode VulkanDevice::loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const Builder::ShaderProgramDefinition& definition)
+ResultCode VulkanDevice::loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const ShaderProgramDefinition& definition)
 {
     if (ShaderPrograms::isProgramCached(program, permutation))
     {

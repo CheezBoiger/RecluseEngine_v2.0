@@ -202,7 +202,7 @@ public:
                                             (
                                                 ShaderProgramId program, 
                                                 ShaderProgramPermutation permutation, 
-                                                const Builder::ShaderProgramDefinition& definition
+                                                const ShaderProgramDefinition& definition
                                             ) override;
 
     ResultCode                          unloadShaderProgram(ShaderProgramId program) override;

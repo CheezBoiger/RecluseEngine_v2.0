@@ -4,7 +4,7 @@
 #include "Recluse/Graphics/GraphicsCommon.hpp"
 #include "Recluse/Types.hpp"
 #include "D3D12Commons.hpp"
-#include "Recluse/Graphics/ShaderProgramBuilder.hpp"
+#include "Recluse/Graphics/ShaderProgram.hpp"
 
 namespace Recluse {
 

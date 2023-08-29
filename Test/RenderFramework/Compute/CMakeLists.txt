@@ -12,4 +12,6 @@ include( ../../include.cmake )
 
 add_executable(${APP_NAME} ${APP_FILES})
 initialize_recluse_framework(${APP_NAME})
+initialize_recluse_pipeline(${APP_NAME})
 post_build_dll(${APP_NAME})
+post_build_pipeline_dll(${APP_NAME})
