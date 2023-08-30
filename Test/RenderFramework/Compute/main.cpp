@@ -19,6 +19,7 @@
 #include "Recluse/Time.hpp"
 #include "Recluse/Filesystem/Filesystem.hpp"
 #include "Recluse/Messaging.hpp"
+#include "Recluse/Filesystem/Archive.hpp"
 #include "Recluse/Math/MathCommons.hpp"
 
 #include "Recluse/Pipeline/ShaderProgramBuilder.hpp"
@@ -45,6 +46,31 @@ enum ProgramId
     ProgramId_Mandelbrot
 };
 
+GraphicsContext* pContext               = nullptr;
+GraphicsDevice* pDevice                 = nullptr;
+GraphicsResource* output                = nullptr;
+
+
+GraphicsResource* createUavResource(GraphicsResource*);
+
+void ResizeFunction(U32 x, U32 y, U32 width, U32 height)
+{
+    GraphicsSwapchain* swapchain = pDevice->getSwapchain();
+    SwapchainCreateDescription desc = swapchain->getDesc();
+    if (desc.renderWidth != width || desc.renderHeight != height)
+    {
+        if (width > 0 && height > 0)
+        {
+            desc.renderWidth = width;   
+            desc.renderHeight = height;
+            pContext->wait();
+            swapchain->rebuild(desc);
+
+            output = createUavResource(output);
+        }
+    }
+}
+
 void updateConstData(GraphicsResource* pData, U32 width, U32 height, F32 deltaSeconds, F32 currTimeSeconds)
 {
     static float iter = 0.005f;
@@ -66,24 +92,44 @@ void updateConstData(GraphicsResource* pData, U32 width, U32 height, F32 deltaSe
     pData->unmap(nullptr);
 }
 
+
+GraphicsResource* createUavResource(GraphicsResource* pPrevious)
+{
+    if (pPrevious)
+    {
+        pDevice->destroyResource(pPrevious);
+    }
+    GraphicsResource* output = nullptr;
+    GraphicsResourceDescription desc = { };
+    desc.dimension = ResourceDimension_2d;
+    desc.width = pDevice->getSwapchain()->getDesc().renderWidth;
+    desc.height = pDevice->getSwapchain()->getDesc().renderHeight;
+    desc.depthOrArraySize = 1;
+    desc.mipLevels = 1;
+    desc.format = pDevice->getSwapchain()->getDesc().format;
+    desc.samples = 1;
+    desc.memoryUsage = ResourceMemoryUsage_GpuOnly;
+    desc.usage = ResourceUsage_CopySource | ResourceUsage_UnorderedAccess | ResourceUsage_ShaderResource;
+    desc.name = "ComputeOutput";
+        
+    pDevice->createResource(&output, desc, ResourceState_UnorderedAccess);
+    return output;
+}
+
 int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
     RealtimeTick::initializeWatch(1ull, 0);
     enableLogTypes(LogType_Notify);
-    ShaderProgramDatabase           database;
-    GraphicsInstance* pInstance       = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
+    GraphicsInstance* pInstance     = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
     GraphicsAdapter* pAdapter       = nullptr;
-    GraphicsDevice* pDevice         = nullptr;
     GraphicsResource* pData         = nullptr;
-    GraphicsResource* output        = nullptr;
     PipelineState* pPipeline        = nullptr;
     GraphicsSwapchain* pSwapchain   = nullptr;
-    GraphicsContext* pContext       = nullptr;
     Window* pWindow                 = Window::create("Compute", 0, 0, 1024, 1024);
-    ResultCode result                  = RecluseResult_Ok;
+    ResultCode result               = RecluseResult_Ok;
 
-    pWindow->open();
+    pWindow->setOnWindowResize(ResizeFunction);
     std::vector<GraphicsResourceView*> views;
 
     if (!pInstance) 
@@ -157,21 +203,7 @@ int main(int c, char* argv[])
         result = pDevice->createResource(&pData, desc, ResourceState_ConstantBuffer);
     }
 
-    {
-        GraphicsResourceDescription desc = { };
-        desc.dimension = ResourceDimension_2d;
-        desc.width = pDevice->getSwapchain()->getDesc().renderWidth;
-        desc.height = pDevice->getSwapchain()->getDesc().renderHeight;
-        desc.depthOrArraySize = 1;
-        desc.mipLevels = 1;
-        desc.format = pDevice->getSwapchain()->getDesc().format;
-        desc.samples = 1;
-        desc.memoryUsage = ResourceMemoryUsage_GpuOnly;
-        desc.usage = ResourceUsage_CopySource | ResourceUsage_UnorderedAccess | ResourceUsage_ShaderResource;
-        desc.name = "ComputeOutput";
-        
-        result = pDevice->createResource(&output, desc, ResourceState_UnorderedAccess);
-    }
+    output = createUavResource(nullptr);
 
     if (result != RecluseResult_Ok) 
     {
@@ -201,6 +233,7 @@ int main(int c, char* argv[])
 
     {
         GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
+        ShaderProgramDatabase database = ShaderProgramDatabase("Compute.Database");
         std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
         FileBufferData file;
         std::string shaderPath = currDir + "/" + "test.cs.hlsl";
@@ -209,11 +242,13 @@ int main(int c, char* argv[])
         description.language = ShaderLang_Hlsl;
         description.compute.cs = shaderPath.c_str();
         description.compute.csName = "main";
+
         Pipeline::Builder::buildShaderProgramDefinitions(database, description, 0, ShaderIntermediateCode_Dxil);
         Runtime::buildShaderProgram(pDevice, database, ProgramId_Mandelbrot);
         database.clearShaderProgramDefinitions();
     }
 
+    pWindow->open();
     const F32 desiredFps = 244.0f;
     F32 desiredMs = 1.f / desiredFps;
     pContext = pDevice->createContext();

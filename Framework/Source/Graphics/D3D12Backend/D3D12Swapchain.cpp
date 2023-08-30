@@ -57,8 +57,12 @@ ResultCode D3D12Swapchain::initialize(D3D12Device* pDevice)
     swapchainDesc.SwapEffect                = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapchainDesc.SampleDesc.Count          = 1;
     swapchainDesc.SampleDesc.Quality        = 0;
-    swapchainDesc.Flags                     = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
+    swapchainDesc.Flags                     = 0;
 
+    if (pInstance->hasTearingSupport())
+    {
+        swapchainDesc.Flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
+    }
     result = pFactory->CreateSwapChainForHwnd
                             (
                                 pNativeQueue, 
@@ -91,6 +95,7 @@ ResultCode D3D12Swapchain::initialize(D3D12Device* pDevice)
     m_maxFrames         = desc.desiredFrames;
     m_pDevice           = pDevice;
     m_pBackbufferQueue  = pQueue;
+    m_flags             = swapchainDesc.Flags;
 
     // Initialize our frame resources, make sure to assign device and other values before calling this.
     initializeFrameResources();
@@ -144,7 +149,7 @@ ResultCode D3D12Swapchain::present(PresentConfig config)
 
     if (desc.buffering == FrameBuffering_Double)
         syncInterval = 1;
-    if (desc.buffering == FrameBuffering_Triple)
+    if (desc.buffering == FrameBuffering_Triple && (m_flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING))
         flags |= DXGI_PRESENT_ALLOW_TEARING;
 
     result = m_pSwapchain->Present(syncInterval, flags);

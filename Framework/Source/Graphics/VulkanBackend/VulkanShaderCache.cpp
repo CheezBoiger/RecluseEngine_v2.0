@@ -78,10 +78,21 @@ static VkResult createShaderModule(VkDevice device, Shader* pShader, VkShaderMod
 }
 
 
+void copyName(char* dst, Shader* pShader)
+{
+    if (pShader)
+    {
+        size_t lenBytes = strlen(pShader->getEntryPointName());
+        R_ASSERT_FORMAT(lenBytes < 36, "Entry point size must be less than 36 characters! EntryName=%s", pShader->getEntryPointName());
+        memcpy(dst, pShader->getEntryPointName(), lenBytes);
+    }
+}
+
+
 VulkanShaderProgram createShaderProgram(VkDevice device, const ShaderProgramDefinition& definition)
 {
     VulkanShaderProgram programOut = { };
-
+    memset(&programOut, 0, sizeof(VulkanShaderProgram));
     switch (definition.pipelineType)
     {
     case BindType_Graphics: 
@@ -92,17 +103,17 @@ VulkanShaderProgram createShaderProgram(VkDevice device, const ShaderProgramDefi
         createShaderModule(device, definition.graphics.gs, &programOut.graphics.gs);
         createShaderModule(device, definition.graphics.hs, &programOut.graphics.hs);
         createShaderModule(device, definition.graphics.ds, &programOut.graphics.ds);
-        programOut.graphics.vsEntry = definition.graphics.vs->getEntryPointName();
-        programOut.graphics.psEntry = definition.graphics.ps ? definition.graphics.ps->getEntryPointName() : nullptr;
-        programOut.graphics.gsEntry = definition.graphics.gs ? definition.graphics.gs->getEntryPointName() : nullptr;
-        programOut.graphics.dsEntry = definition.graphics.ds ? definition.graphics.ds->getEntryPointName() : nullptr;
-        programOut.graphics.hsEntry = definition.graphics.hs ? definition.graphics.hs->getEntryPointName() : nullptr;
+        copyName(programOut.graphics.vsEntry, definition.graphics.vs);
+        copyName(programOut.graphics.psEntry, definition.graphics.ps);
+        copyName(programOut.graphics.gsEntry, definition.graphics.gs);
+        copyName(programOut.graphics.dsEntry, definition.graphics.ds);
+        copyName(programOut.graphics.hsEntry, definition.graphics.hs);
         break;
     case BindType_Compute: 
         programOut.bindPoint = VK_PIPELINE_BIND_POINT_COMPUTE; 
         R_ASSERT_FORMAT(definition.compute.cs, "Must have at least a compute shader in order to build shader program for Vulkan!");
         createShaderModule(device, definition.compute.cs, &programOut.compute.cs);
-        programOut.compute.csEntry = definition.compute.cs->getEntryPointName();
+        copyName(programOut.compute.csEntry, definition.compute.cs);
         break;
     case BindType_RayTrace: 
         programOut.bindPoint = VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR; 
@@ -111,11 +122,11 @@ VulkanShaderProgram createShaderProgram(VkDevice device, const ShaderProgramDefi
         createShaderModule(device, definition.raytrace.rgen, &programOut.raytrace.rayGen);
         createShaderModule(device, definition.raytrace.rintersect, &programOut.raytrace.rayIntersect);
         createShaderModule(device, definition.raytrace.rmiss, &programOut.raytrace.rayMiss);
-        programOut.raytrace.rayAnyHitEntry = definition.raytrace.rany ? definition.raytrace.rany->getEntryPointName() : nullptr;
-        programOut.raytrace.rayClosestEntry = definition.raytrace.rclosest ? definition.raytrace.rclosest->getEntryPointName() : nullptr;
-        programOut.raytrace.rayGenEntry = definition.raytrace.rgen ? definition.raytrace.rgen->getEntryPointName() : nullptr;
-        programOut.raytrace.rayIntersectEntry = definition.raytrace.rintersect ? definition.raytrace.rintersect->getEntryPointName() : nullptr;
-        programOut.raytrace.rayMissEntry = definition.raytrace.rmiss ? definition.raytrace.rmiss->getEntryPointName() : nullptr;
+        copyName(programOut.raytrace.rayAnyHitEntry, definition.raytrace.rany);
+        copyName(programOut.raytrace.rayClosestEntry, definition.raytrace.rclosest);
+        copyName(programOut.raytrace.rayGenEntry, definition.raytrace.rgen);
+        copyName(programOut.raytrace.rayIntersectEntry, definition.raytrace.rintersect);
+        copyName(programOut.raytrace.rayMissEntry, definition.raytrace.rmiss);
         break;
     }
 

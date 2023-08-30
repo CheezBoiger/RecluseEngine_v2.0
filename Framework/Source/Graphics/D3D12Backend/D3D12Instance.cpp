@@ -3,7 +3,7 @@
 #include "D3D12Adapter.hpp"
 
 #include "Recluse/Messaging.hpp"
-
+#include <dxgi1_5.h>
 
 namespace Recluse {
 
@@ -110,5 +110,20 @@ void D3D12Instance::enableDebugValidation(Bool enableGpuValidation)
 #else
     R_WARN(R_CHANNEL_D3D12, "Can not enable GPU based validation for d3d12 device.");
 #endif
+}
+
+
+Bool D3D12Instance::hasTearingSupport() const
+{
+    IDXGIFactory5* factory5;
+    HRESULT result = m_pFactory->QueryInterface<IDXGIFactory5>(&factory5);
+    if (SUCCEEDED(result))
+    {
+        BOOL allowTearing = false;
+        result = factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing));
+        factory5->Release();
+        return SUCCEEDED(result) && allowTearing;
+    }
+    return false;
 }
 } // Recluse

@@ -25,6 +25,7 @@ public:
         , GraphicsSwapchain(desc)
         , m_pDevice(nullptr)
         , m_currentFrameIndex(0)
+        , m_flags(0)
         , m_pBackbufferQueue(pBackbufferQueue) { }
 
     ResultCode initialize(D3D12Device* pDevice);
@@ -48,7 +49,6 @@ public:
     U64                     getCurrentCompletedValue();
 
 private:
-
     ResultCode              initializeFrameResources();
     ResultCode              destroyFrameResources();
     
@@ -58,5 +58,6 @@ private:
     U32                         m_currentFrameIndex;        // Current frame index notifies current frame resource to run.
     std::vector<FrameResource>  m_frameResources;
     D3D12Queue*                 m_pBackbufferQueue;
+    UINT                        m_flags;
 };
 } // Recluse

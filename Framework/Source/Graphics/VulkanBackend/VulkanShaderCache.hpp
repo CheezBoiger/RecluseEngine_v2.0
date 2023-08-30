@@ -11,7 +11,6 @@ namespace Recluse {
 class Shader;
 class VulkanDevice;
 
-
 namespace ShaderPrograms {
     struct VulkanShaderProgram
     {
@@ -21,33 +20,33 @@ namespace ShaderPrograms {
             struct 
             {
                 VkShaderModule vs;
-                const char* vsEntry;
+                char vsEntry[36];
                 VkShaderModule ps;
-                const char* psEntry;
+                char psEntry[36];
                 VkShaderModule gs;
-                const char* gsEntry;
+                char gsEntry[36];
                 VkShaderModule hs;
-                const char* hsEntry;
+                char hsEntry[36];
                 VkShaderModule ds;
-                const char* dsEntry;
+                char dsEntry[36];
             } graphics;
             struct
             {
                 VkShaderModule cs;
-                const char* csEntry;
+                char csEntry[36];
             } compute;
             struct
             {
                 VkShaderModule rayGen;
-                const char* rayGenEntry;
+                char rayGenEntry[36];
                 VkShaderModule rayMiss;
-                const char* rayMissEntry;
+                char rayMissEntry[36];
                 VkShaderModule rayIntersect;
-                const char* rayIntersectEntry;
+                char rayIntersectEntry[36];
                 VkShaderModule rayAnyHit;
-                const char* rayAnyHitEntry;
+                char rayAnyHitEntry[36];
                 VkShaderModule rayClosest;
-                const char* rayClosestEntry;
+                char rayClosestEntry[36];
             } raytrace;
         };
     };

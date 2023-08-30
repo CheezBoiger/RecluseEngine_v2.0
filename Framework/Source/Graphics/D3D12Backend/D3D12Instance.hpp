@@ -18,6 +18,7 @@ public:
     virtual ~D3D12Instance() { }
 
     IDXGIFactory2* get() const { return m_pFactory; }
+    Bool                    hasTearingSupport() const;
 
 private:
     void queryGraphicsAdapters() override;

@@ -12,6 +12,7 @@
 #include "Recluse/Graphics/ShaderProgram.hpp"
 
 #include "Recluse/Pipeline/ShaderProgramBuilder.hpp"
+#include "Recluse/Filesystem/Archive.hpp"
 
 #include "Recluse/Math/Vector2.hpp"
 #include "Recluse/Memory/MemoryCommon.hpp"
@@ -104,7 +105,6 @@ int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
     RealtimeTick::initializeWatch(1ull, 0);
-    ShaderProgramDatabase database          = { };
     GraphicsInstance* pInstance             = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
     GraphicsAdapter* pAdapter               = nullptr;
     GraphicsResource* pData                 = nullptr;
@@ -268,6 +268,7 @@ int main(int c, char* argv[])
 
     {
         //GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
+        ShaderProgramDatabase database          = ShaderProgramDatabase("PipelineInitialization.Vulkan.Database");
         std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
         std::string vsSource = currDir + "/" + "test.vs.hlsl";
         std::string fsSource = currDir + "/" + "test.fs.hlsl";
@@ -288,7 +289,6 @@ int main(int c, char* argv[])
         Pipeline::Builder::buildShaderProgramDefinitions(database, description, ShaderKey_SimpleColor, ShaderIntermediateCode_Spirv);
         Runtime::buildShaderProgram(pDevice, database, 0);
         database.clearShaderProgramDefinitions();
-
 
         VertexInputLayout layout    = { };
         VertexAttribute attrib      = { };

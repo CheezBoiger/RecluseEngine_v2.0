@@ -4,6 +4,7 @@
 #include "Recluse/Types.hpp"
 
 #include "Recluse/Serialization/Hasher.hpp"
+#include "Recluse/Serialization/Serializable.hpp"
 #include "Recluse/Utility.hpp"
 
 #include <vector>
@@ -85,7 +86,7 @@ static ShaderStageFlags shaderTypeToShaderStageFlags(ShaderType type)
 typedef U64 ShaderPermutationId;
 
 // Shader is a container that uses the crc
-class Shader final : public IReference
+class Shader final : public IReference, public Serializable
 {
 public:
     ~Shader() { }
@@ -101,7 +102,6 @@ private:
         , m_shaderType(ShaderType_None)
         , m_shaderNameHash(~0u)
         , m_permutation(0)
-        , m_entryPoint(nullptr)
         , m_shaderHashId(~0)
     {
         m_shaderName[0] = '\0'; 
@@ -119,7 +119,7 @@ public:
     R_PUBLIC_API ResultCode saveToFile(const char* filePath);
 
     R_PUBLIC_API Shader*    convertTo(ShaderIntermediateCode intermediateCode);
-    const char*             getEntryPointName() const { return m_entryPoint; }
+    const char*             getEntryPointName() const { return m_entryPoint.c_str(); }
     ShaderType              getType() const { return m_shaderType; }
     const char*             getByteCode() const { return m_byteCode.data(); }
     U64                     getSzBytes() const { return m_byteCode.size(); }
@@ -141,6 +141,9 @@ public:
     void                    setPermutationId(ShaderPermutationId permutation) { m_permutation = permutation; }
     ShaderPermutationId     getPermutationId() const { return m_permutation; }
 
+    R_PUBLIC_API ResultCode serialize(Archive* archive) override;
+    R_PUBLIC_API ResultCode deserialize(Archive* archive) override;
+
 private:
 
     ShaderIntermediateCode  m_intermediateCode;
@@ -148,7 +151,7 @@ private:
     std::vector<char>       m_byteCode;
     ShaderId                m_shaderNameHash;
     Hash64                  m_shaderHashId;
-    const char*             m_entryPoint;
+    std::string             m_entryPoint;
     std::string             m_shaderName;
     ShaderPermutationId     m_permutation;
 };
