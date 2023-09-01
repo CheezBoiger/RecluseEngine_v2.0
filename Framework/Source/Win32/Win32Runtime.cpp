@@ -243,7 +243,6 @@ RealtimeTick RealtimeTick::getTick(U32 watchType)
   }
 
 
-#pragma optimize("", off)
 LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     // Reinterpret hwnd to window pointer.
@@ -433,7 +432,7 @@ void pollEvents()
         }
     }
 }
-#pragma optimize("", on)
+
 
 U64 getMainThreadId()
 {
