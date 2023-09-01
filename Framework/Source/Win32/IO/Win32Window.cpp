@@ -112,7 +112,7 @@ Window* Window::create(const std::string& title, U32 x, U32 y, U32 width, U32 he
 
         hwnd = CreateWindowExW
                     (
-                        NULL, 
+                        NULL,
                         R_WIN32_WINDOW_NAME,
                         ltitle, 
                         (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_BORDER | WS_SIZEBOX), 
@@ -241,6 +241,7 @@ void Window::open()
 {
     HWND hwnd = (HWND)getNativeHandle();
     ShowWindow(hwnd, SW_SHOW);
+    //SetForegroundWindow(hwnd);
     UpdateWindow(hwnd);
     m_isShowing = true;
 }

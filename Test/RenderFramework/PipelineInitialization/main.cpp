@@ -68,6 +68,7 @@ GraphicsDevice* pDevice                 = nullptr;
 
 void ResizeFunction(U32 x, U32 y, U32 width, U32 height)
 {
+    if (!pDevice) return;
     GraphicsSwapchain* swapchain = pDevice->getSwapchain();
     SwapchainCreateDescription desc = swapchain->getDesc();
     if (desc.renderWidth != width || desc.renderHeight != height)
@@ -121,7 +122,7 @@ int main(int c, char* argv[])
     pWindow->setMouseHandle(pMouse);
     pWindow->setOnWindowResize(ResizeFunction);
     pWindow->setToCenter();
-
+    pWindow->open();
     std::vector<RenderPass*> passes;
 
     if (!pInstance) 
@@ -149,7 +150,7 @@ int main(int c, char* argv[])
         DeviceCreateInfo info                       = { };
         info.winHandle                              = pWindow->getNativeHandle();
         info.swapchainDescription                   = { };
-        info.swapchainDescription.buffering         = FrameBuffering_Single;
+        info.swapchainDescription.buffering         = FrameBuffering_Triple;
         info.swapchainDescription.desiredFrames     = 3;
         info.swapchainDescription.format            = ResourceFormat_R8G8B8A8_Unorm;
         info.swapchainDescription.renderWidth       = pWindow->getWidth();
@@ -308,8 +309,6 @@ int main(int c, char* argv[])
 
         Runtime::buildVertexInputLayout(pDevice, layout, VertexLayoutKey_PositionOnly);
     }
-    
-    pWindow->open();
 
     U64 offset = 0;
 
@@ -377,7 +376,7 @@ int main(int c, char* argv[])
                 context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_Present);
                 context->popState();
             context->end();
-            //R_WARN("Game", "%f fps", 1.0f / ms);
+            R_WARN("Game", "%f fps", 1.0f / ms);
             pSwapchain->present();
         }
         pollEvents();

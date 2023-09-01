@@ -409,10 +409,10 @@ void pollEvents()
 {
     MSG msg;
     // Poll win32 information (keyboard, mouse, etc...)
-    while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) 
+    while (PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE)) 
     {
         TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        DispatchMessageW(&msg);
     }
     
     // Poll controller information if needed.
