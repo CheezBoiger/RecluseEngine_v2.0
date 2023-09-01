@@ -180,6 +180,8 @@ void D3D12Context::bindRenderTargets(U32 count, ResourceViewId* ppResources, Res
         pList->OMSetRenderTargets(count, &rtvHandle, true, dsvHandle.ptr == DescriptorTable::invalidCpuAddress.ptr ? nullptr : &dsvHandle);
     
         currentState().m_pipelineStateObject.graphics.pRenderPass = pRenderPass;
+        currentState().m_pipelineStateObject.graphics.numRenderTargets = count;
+        currentState().setDirty(ContextDirty_Pipeline);
     }
 }
 
@@ -292,6 +294,7 @@ void D3D12Device::destroy()
 {
     m_resourceAllocationManager.release();
     RenderPasses::clearAll(this);
+    Pipelines::VertexInputs::unloadAll();
     Pipelines::cleanUpPipelines();
     unloadAllShaderPrograms();
     Pipelines::cleanUpRootSigs();
@@ -553,7 +556,14 @@ void D3D12Context::copyBufferRegions
         U32 numRegions
     )
 {  
-    R_NO_IMPL();
+    ID3D12GraphicsCommandList* pList = m_pPrimaryCommandList->get();
+    ID3D12Resource* dstRes = dst->castTo<D3D12Resource>()->get();
+    ID3D12Resource* srcRes = src->castTo<D3D12Resource>()->get();
+    for (U32 i = 0; i < numRegions; ++i)
+    {
+        const CopyBufferRegion& region = pRegions[i];
+        pList->CopyBufferRegion(dstRes, region.dstOffsetBytes, srcRes, region.srcOffsetBytes, region.szBytes);
+    }
 }
 
 
@@ -623,15 +633,13 @@ void D3D12Device::unloadAllShaderPrograms()
 
 Bool D3D12Device::makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout)
 {
-    R_NO_IMPL();
-    return false;
+    return Pipelines::VertexInputs::make(id, layout);
 }
 
 
 Bool D3D12Device::destroyVertexLayout(VertexInputLayoutId id)
 {
-    R_NO_IMPL();
-    return false;
+    return Pipelines::VertexInputs::unload(id);
 }
 
 
@@ -680,5 +688,6 @@ void D3D12Device::copyResource(GraphicsResource* dst, GraphicsResource* src)
 
 void D3D12Device::copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, const CopyBufferRegion* regions, U32 numRegions)
 {
+    m_graphicsQueue->copyBufferRegions(dst->castTo<D3D12Resource>(), src->castTo<D3D12Resource>(), regions, numRegions);
 }
 } // Recluse

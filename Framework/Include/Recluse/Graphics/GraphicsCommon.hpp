@@ -252,8 +252,23 @@ typedef U32 ClearFlags;
 struct CopyBufferRegion 
 {
     U64               srcOffsetBytes;
-    U16               dstOffsetBytes;
+    U64               dstOffsetBytes;
     U64               szBytes;
+};
+
+
+struct CopyTextureRegion
+{
+    union
+    {
+        struct 
+        {
+            U32 width;
+            U32 height;
+            U32 arrayLayerOrDepth;
+            U32 mipLevel;
+        } texture;
+    };
 };
 
 

@@ -105,7 +105,7 @@ int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
     RealtimeTick::initializeWatch(1ull, 0);
-    GraphicsInstance* pInstance             = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
+    GraphicsInstance* pInstance             = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
     GraphicsAdapter* pAdapter               = nullptr;
     GraphicsResource* pData                 = nullptr;
     GraphicsResource* pData2                = nullptr;
@@ -134,7 +134,7 @@ int main(int c, char* argv[])
         ApplicationInfo app     = { };
         app.engineName          = "Cat";
         app.appName             = "PipelineInitialization";
-        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation;
+        LayerFeatureFlags flags = 0;//LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
         result                  = pInstance->initialize(app, flags);
     }
     
@@ -267,7 +267,7 @@ int main(int c, char* argv[])
     }
 
     {
-        //GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
+        GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
         ShaderProgramDatabase database          = ShaderProgramDatabase("PipelineInitialization.Vulkan.Database");
         std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
         std::string vsSource = currDir + "/" + "test.vs.hlsl";
@@ -286,7 +286,7 @@ int main(int c, char* argv[])
         description.graphics.hs = nullptr;
 
         description.language = ShaderLang_Hlsl;
-        Pipeline::Builder::buildShaderProgramDefinitions(database, description, ShaderKey_SimpleColor, ShaderIntermediateCode_Spirv);
+        Pipeline::Builder::buildShaderProgramDefinitions(database, description, ShaderKey_SimpleColor, ShaderIntermediateCode_Dxil);
         Runtime::buildShaderProgram(pDevice, database, 0);
         database.clearShaderProgramDefinitions();
 
@@ -336,7 +336,7 @@ int main(int c, char* argv[])
                 context->pushState();
                 context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
                 context->setCullMode(CullMode_None);
-                context->setFrontFace(FrontFace_CounterClockwise);
+                context->setFrontFace(FrontFace_Clockwise);
                 context->setPolygonMode(PolygonMode_Fill);
                 context->setTopology(PrimitiveTopology_TriangleList);
                 context->setViewports(1, &viewport);
@@ -377,11 +377,10 @@ int main(int c, char* argv[])
                 context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_Present);
                 context->popState();
             context->end();
-            R_WARN("Game", "%f fps", 1.0f / ms);
+            //R_WARN("Game", "%f fps", 1.0f / ms);
             pSwapchain->present();
         }
         pollEvents();
-    
     }
 
     pContext->wait();

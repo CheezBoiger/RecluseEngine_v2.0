@@ -76,6 +76,7 @@ ResultCode D3D12RenderPass::update(D3D12Device* pDevice, U32 numRtvDescriptors, 
     else
     {
         m_dsvDhAllocation = pDescriptorManager->nullDsvDescriptor();
+        m_dsvFormat = DXGI_FORMAT_UNKNOWN;
     }
     return RecluseResult_Ok;
 }

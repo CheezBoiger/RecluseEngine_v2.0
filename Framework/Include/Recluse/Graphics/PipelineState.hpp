@@ -24,9 +24,6 @@ struct StencilOpState
     StencilOp   passOp;
     StencilOp   depthFailOp;
     CompareOp   compareOp;
-    U32         readMask;
-    U32         writeMask;
-    U32         reference;
 };
 
 
@@ -93,8 +90,11 @@ struct VertexAttribute
 };
 
 
+// VertexBinding identifies one vertex data unit, within a vertex buffer.
+// Each VertexBinding identifies a vertex buffer each.
 struct VertexBinding 
 {
+    // Binding index, which is maxed between 0, to (VertexInputLayout_BindingCount - 1)
     U32                 binding;
     U32                 stride;                         // Data Step rate between consecutive elements.
     InputRate           inputRate;
@@ -183,8 +183,8 @@ struct RenderTargetBlendState
 
 struct VertexInputLayout 
 {
-    enum { VertexInputLayout_Count = 16 };
-    VertexBinding   vertexBindings[VertexInputLayout_Count];
+    enum { VertexInputLayout_BindingCount = 16 };
+    VertexBinding   vertexBindings[VertexInputLayout_BindingCount];
     U32             numVertexBindings;
 };
 
@@ -196,6 +196,9 @@ struct DepthStencil
     B8  depthTestEnable;
     B8  stencilTestEnable;
     B8  depthWriteEnable;
+    U8         stencilReadMask;
+    U8         stencilWriteMask;
+    U8         stencilReference;
     F32 minDepthBounds;
     F32 maxDepthBounds;
     CompareOp depthCompareOp;

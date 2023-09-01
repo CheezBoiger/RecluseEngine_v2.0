@@ -175,6 +175,121 @@ D3D12_INDEX_BUFFER_STRIP_CUT_VALUE getNativeStripCutValue(Recluse::IndexType typ
         case Recluse::IndexType_Unsigned32:     return D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
     }
 }
+
+
+D3D12_BLEND_OP getBlendOp(Recluse::BlendOp blendOp)
+{
+    switch (blendOp)
+    { 
+        case BlendOp_Subtract:          return D3D12_BLEND_OP_SUBTRACT;
+        case BlendOp_ReverseSubtract:   return D3D12_BLEND_OP_REV_SUBTRACT;
+        case BlendOp_Max:               return D3D12_BLEND_OP_MAX;
+        case BlendOp_Min:               return D3D12_BLEND_OP_MIN;
+        case BlendOp_Add:               
+        default:                        return D3D12_BLEND_OP_ADD;
+    }
+}
+
+
+D3D12_BLEND getBlendFactor(Recluse::BlendFactor blendFactor)
+{
+    switch (blendFactor)
+    {
+        case BlendFactor_DestinationAlpha:              return D3D12_BLEND_DEST_ALPHA;
+        case BlendFactor_DestinationColor:              return D3D12_BLEND_DEST_COLOR;
+        case BlendFactor_One:                           return D3D12_BLEND_ONE;
+        case BlendFactor_OneMinusSourceAlpha:           return D3D12_BLEND_INV_SRC_ALPHA;
+        case BlendFactor_OneMinusSourceColor:           return D3D12_BLEND_INV_SRC_COLOR;
+        case BlendFactor_OneMinusSourceOneAlpha:        return D3D12_BLEND_INV_SRC1_ALPHA;
+        case BlendFactor_OneMinusSourceOneColor:        return D3D12_BLEND_INV_SRC1_COLOR;
+        case BlendFactor_SourceAlpha:                   return D3D12_BLEND_SRC_ALPHA;
+        case BlendFactor_SourceAlphaSaturate:           return D3D12_BLEND_SRC_ALPHA_SAT;
+        case BlendFactor_SourceColor:                   return D3D12_BLEND_SRC_COLOR;
+        case BlendFactor_SourceOneAlpha:                return D3D12_BLEND_SRC1_ALPHA;
+        case BlendFactor_SourceOneColor:                return D3D12_BLEND_SRC1_COLOR;
+        case BlendFactor_Zero:                          return D3D12_BLEND_ZERO;
+        case BlendFactor_ConstantAlpha: 
+        case BlendFactor_ConstantColor:
+        case BlendFactor_OneMinusConstantAlpha:         
+        case BlendFactor_OneMinusConstantColor:
+        case BlendFactor_OneMinusDestinationAlpha:
+        case BlendFactor_OneMinusDestinationColor:      return D3D12_BLEND_BLEND_FACTOR;
+    }
+}
+
+
+D3D12_LOGIC_OP getLogicOp(Recluse::LogicOp logicOp)
+{
+    switch (logicOp)
+    {
+        case LogicOp_And:               return D3D12_LOGIC_OP_AND;
+        case LogicOp_AndInverted:       return D3D12_LOGIC_OP_AND_INVERTED;
+        case LogicOp_AndReverse:        return D3D12_LOGIC_OP_AND_REVERSE;
+        case LogicOp_Clear:             return D3D12_LOGIC_OP_CLEAR;
+        case LogicOp_Copy:              return D3D12_LOGIC_OP_COPY;
+        case LogicOp_CopyInverted:      return D3D12_LOGIC_OP_COPY_INVERTED;
+        case LogicOp_Equivalent:        return D3D12_LOGIC_OP_EQUIV;
+        case LogicOp_Invert:            return D3D12_LOGIC_OP_INVERT;
+        case LogicOp_Nand:              return D3D12_LOGIC_OP_NAND;
+        case LogicOp_NoOp:              return D3D12_LOGIC_OP_NOOP;
+        case LogicOp_Nor:               return D3D12_LOGIC_OP_NOR;
+        case LogicOp_Or:                return D3D12_LOGIC_OP_OR;
+        case LogicOp_OrInverted:        return D3D12_LOGIC_OP_OR_INVERTED;
+        case LogicOp_OrReverse:         return D3D12_LOGIC_OP_OR_REVERSE;
+        case LogicOp_Set:               return D3D12_LOGIC_OP_SET;
+        case LogicOp_Xor:               return D3D12_LOGIC_OP_XOR;
+    }
+}
+
+
+D3D12_STENCIL_OP getStencilOp(Recluse::StencilOp stencilOp)
+{
+    switch (stencilOp)
+    {
+        case StencilOp_DecrementAndClamp:   return D3D12_STENCIL_OP_DECR_SAT;
+        case StencilOp_DecrementAndWrap:    return D3D12_STENCIL_OP_DECR;
+        case StencilOp_IncrementAndClamp:   return D3D12_STENCIL_OP_INCR_SAT;
+        case StencilOp_IncrementAndWrap:    return D3D12_STENCIL_OP_INCR;
+        case StencilOp_Invert:              return D3D12_STENCIL_OP_INVERT;
+        case StencilOp_Keep:                return D3D12_STENCIL_OP_KEEP;
+        case StencilOp_Replace:             return D3D12_STENCIL_OP_REPLACE;
+        case StencilOp_Zero:                return D3D12_STENCIL_OP_ZERO;
+    }
+}
+
+
+D3D12_PRIMITIVE_TOPOLOGY_TYPE getPrimitiveTopologyType(PrimitiveTopology topology)
+{
+    switch (topology)
+    {
+        case PrimitiveTopology_LineStrip:       
+        case PrimitiveTopology_LineList:        return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+        case PrimitiveTopology_PointList:       return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+        case PrimitiveTopology_TriangleStrip:
+        case PrimitiveTopology_TriangleList:
+        default: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    }
+}
+
+
+D3D12_PRIMITIVE_TOPOLOGY getPrimitiveTopology(Recluse::PrimitiveTopology topology)
+{
+    switch (topology)
+    {
+        case PrimitiveTopology_LineList:        return D3D_PRIMITIVE_TOPOLOGY_LINELIST;
+        case PrimitiveTopology_LineStrip:       return D3D_PRIMITIVE_TOPOLOGY_LINESTRIP;
+        case PrimitiveTopology_PointList:       return D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+        case PrimitiveTopology_TriangleList:    return D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        case PrimitiveTopology_TriangleStrip:   return D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+        default:                                return D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+    }
+}
+
+
+UINT calculateSubresource(UINT MipSlice, UINT ArraySlice, UINT PlaneSlice, UINT MipLevels, UINT ArraySize)
+{ 
+    return MipSlice + (ArraySlice * MipLevels) + (PlaneSlice * MipLevels * ArraySize); 
+}
 } // Recluse
 
 
@@ -193,6 +308,28 @@ DXGI_FORMAT getNativeFormat(Recluse::ResourceFormat format)
             return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
         case Recluse::ResourceFormat_R32G32B32_Float:
             return DXGI_FORMAT_R32G32B32_FLOAT;
+        case Recluse::ResourceFormat_R32G32_Float:
+            return DXGI_FORMAT_R32G32_FLOAT;
+        case Recluse::ResourceFormat_R16_Float:
+            return DXGI_FORMAT_R16_FLOAT;
+        case Recluse::ResourceFormat_D24_Unorm_S8_Uint:
+            return DXGI_FORMAT_D24_UNORM_S8_UINT;
+        case Recluse::ResourceFormat_D32_Float:
+            return DXGI_FORMAT_D32_FLOAT;
+        case Recluse::ResourceFormat_R16G16_Float:
+            return DXGI_FORMAT_R16G16_FLOAT;
+        case Recluse::ResourceFormat_R11G11B10_Float:
+            return DXGI_FORMAT_R11G11B10_FLOAT;
+        case Recluse::ResourceFormat_R32_Float:
+            return DXGI_FORMAT_R32_FLOAT;
+        case Recluse::ResourceFormat_R8_Uint:
+            return DXGI_FORMAT_R8_UINT;
+        case Recluse::ResourceFormat_R16G16B16A16_Float:
+            return DXGI_FORMAT_R16G16B16A16_FLOAT;
+        case Recluse::ResourceFormat_R32G32B32A32_Float:
+            return DXGI_FORMAT_R32G32B32A32_FLOAT;
+        case Recluse::ResourceFormat_R32G32_Uint:
+            return DXGI_FORMAT_R32G32_UINT;
         default:
             break;
     }

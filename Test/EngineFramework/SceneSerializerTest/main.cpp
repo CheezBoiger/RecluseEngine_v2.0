@@ -86,17 +86,15 @@ int main(int c, char* argv[])
         pScene->update(tick);
     }
 
-    Archive testArchive("Test.archive");
-
-    testArchive.open("w");
-    pScene->save(&testArchive);
-    testArchive.close();
+    ArchiveWriter archiveWriter("Test.archive");
+    pScene->save(&archiveWriter);
+    archiveWriter.close();
 
     pScene->destroy();
 
-    testArchive.open("r");
-    pScene->load(&testArchive);
-    testArchive.close();    
+    ArchiveReader reader("Test.archive");
+    pScene->load(&reader);
+    reader.close();    
     
     R_TRACE("TEST", "Scene Name: %s", pScene->getName().c_str());
 

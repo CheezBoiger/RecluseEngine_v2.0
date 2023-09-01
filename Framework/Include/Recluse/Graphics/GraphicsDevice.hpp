@@ -27,6 +27,8 @@ struct GraphicsResourceDescription
 {
     U32                 width;
     U32                 height;
+    // Depth or Array Size. If the Resource has 3D dimensions, then it implies depth.
+    // Otherwise any other dimenions will specify array size.
     U32                 depthOrArraySize;
     U32                 mipLevels;
     ResourceDimension   dimension;
@@ -113,7 +115,7 @@ public:
     virtual void copyResource(GraphicsResource* dst, GraphicsResource* src) 
         { }
 
-    // Submits copy of regions from src resource to dst resource.
+    // Submits copy of regions from src resource to dst resource. Source may be a texture.
     virtual void  copyBufferRegions
                         (
                             GraphicsResource* dst, 
@@ -123,18 +125,8 @@ public:
                         )
         { }
 
-    // A more asyncronous alternative, which will utilize a separate, one time only command list
-    // and will ultimately need to be checked when finished. 
-    // This ONLY WORKS IF asyncronous queue is supported, otherwise, will return with fail.
-    virtual void copyBufferRegionsAsync
-                        (
-                            GraphicsResource* dst,
-                            GraphicsResource* src,
-                            const CopyBufferRegion* pRegions,
-                            U32 numRegions,
-                            Bool* isFinished
-                        ) 
-        { }
+    // Copies texture regions to the destination texture resource. Source may be a buffer.
+    virtual void copyTextureRegions(GraphicsResource* dst, GraphicsResource* src, const CopyTextureRegion* pRegions, U32 numRegions) { }
 
     // Requests a host-side wait on the device. This is useful if there is mutual exclusivity of resources that the device is 
     // in the middle of using. For instance, trying to clean up resources at the end of an application, would require waiting until
@@ -159,8 +151,6 @@ public:
 
     virtual void clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) { }
     virtual void clearDepthStencil(ClearFlags clearFlags, F32 clearDepth, U8 clearStencil, const Rect& rect) { }
-
-    virtual void copyBufferRegions(CopyBufferRegion* pRegions, U32 numRegions) { }
 
     // Transitiion a resource to a given state. This is a modern API specific feature,
     // which is handled by managed drivers for older APIs, yet we reinforce this for older 
@@ -190,11 +180,15 @@ public:
     virtual void setTopology(PrimitiveTopology topology) { }
     virtual void setShaderProgram(ShaderProgramId program, U32 permutation = 0u) { }
     virtual void enableDepth(Bool enable) { }
+    virtual void enableDepthWrite(Bool enable) { }
     virtual void enableStencil(Bool enable) { }
     virtual void setInputVertexLayout(VertexInputLayoutId inputLayout) { }
     virtual void setDepthClampEnable(Bool enable) { }
     virtual void setDepthBiasEnable(Bool enable) { }
     virtual void setDepthBiasClamp(F32 value) { }
+    virtual void setStencilReference(U8 stencilRef) { }
+    virtual void setStencilWriteMask(U8 mask) { }
+    virtual void setStencilReadMask(U8 mask) { }
     virtual void setFrontStencilState(const StencilOpState& state) { }
     virtual void setBackStencilState(const StencilOpState& state) { }
 

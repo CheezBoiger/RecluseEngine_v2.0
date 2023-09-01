@@ -381,16 +381,16 @@ static VkPipelineInputAssemblyStateCreateInfo getAssemblyInfo(PrimitiveTopology 
 }
 
 
-static VkStencilOpState fillStencilStateOp(const StencilOpState& opState)
+static VkStencilOpState fillStencilStateOp(const StencilOpState& opState, U8 stencilReadMask, U8 stencilWriteMask, U8 ref)
 {
     VkStencilOpState state = { };
     state.compareOp     = Vulkan::getNativeCompareOp(opState.compareOp);
     state.depthFailOp   = Vulkan::getNativeStencilOp(opState.depthFailOp);
     state.failOp        = Vulkan::getNativeStencilOp(opState.failOp);
     state.passOp        = Vulkan::getNativeStencilOp(opState.passOp);
-    state.compareMask   = opState.readMask;
-    state.reference     = opState.reference;
-    state.writeMask     = opState.writeMask;
+    state.compareMask   = stencilReadMask;
+    state.reference     = ref;
+    state.writeMask     = stencilWriteMask;
     return state;
 } 
 
@@ -406,8 +406,8 @@ static VkPipelineDepthStencilStateCreateInfo getDepthStencilInfo(const DepthSten
     info.maxDepthBounds                         = ds.maxDepthBounds;
     info.minDepthBounds                         = ds.minDepthBounds;
     info.stencilTestEnable                      = (VkBool32)ds.stencilTestEnable;
-    info.back                                   = fillStencilStateOp(ds.back);
-    info.front                                  = fillStencilStateOp(ds.front);
+    info.back                                   = fillStencilStateOp(ds.back, ds.stencilReadMask, ds.stencilWriteMask, ds.stencilReference);
+    info.front                                  = fillStencilStateOp(ds.front, ds.stencilReadMask, ds.stencilWriteMask, ds.stencilReference);
     return info;
 }
 
@@ -540,7 +540,7 @@ std::unordered_map<VertexInputLayoutId, VulkanVertexLayout> g_vertexLayoutMap;
 
 static VulkanVertexLayout createVertexInput(const VertexInputLayout& vi)
 {
-    R_ASSERT(vi.numVertexBindings < VertexInputLayout::VertexInputLayout_Count);
+    R_ASSERT(vi.numVertexBindings < VertexInputLayout::VertexInputLayout_BindingCount);
     VulkanVertexLayout layout = { };
     
     for (U32 i = 0; i < vi.numVertexBindings; ++i) 

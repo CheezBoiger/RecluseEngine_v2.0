@@ -31,6 +31,7 @@ public:
     // Returns the expected new fence value.
     U64                     waitForGpu(U64 currentFenceValue);
     void                    copyResource(D3D12Resource* dst, D3D12Resource* src);
+    void                    copyBufferRegions(D3D12Resource* dst, D3D12Resource* src, const CopyBufferRegion* regions, U32 numRegions);
 
     ID3D12Fence* getFence() const { return pFence; }
     HANDLE getEvent() const { return pEvent; }

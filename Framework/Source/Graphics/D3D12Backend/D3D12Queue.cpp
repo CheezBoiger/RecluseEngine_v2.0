@@ -229,7 +229,19 @@ void D3D12Queue::generateCopyBufferRegionsCommand(ID3D12GraphicsCommandList* pLi
     D3D12_RESOURCE_DESC desc = pDst->GetDesc();
     for (U32 i = 0; i < numRegions; ++i)
     {
+        pList->CopyBufferRegion(pDst, pRegions[i].dstOffsetBytes, pSrc, pRegions[i].srcOffsetBytes, pRegions[i].szBytes);
     }
 }
 
+
+void D3D12Queue::copyBufferRegions(D3D12Resource* dst, D3D12Resource* src, const CopyBufferRegion* regions, U32 numRegions)
+{
+    ID3D12Device* pDevice = nullptr;
+    m_queue->GetDevice(__uuidof(ID3D12Device), (void**)&pDevice);
+    ID3D12GraphicsCommandList* pList = createOneTimeCommandList(0, pDevice);
+    generateCopyBufferRegionsCommand(pList, dst, src, regions, numRegions);
+    pList->Close();
+    endAndSubmitOneTimeCommandList(pList);
+    pDevice->Release();
+}
 } // Recluse

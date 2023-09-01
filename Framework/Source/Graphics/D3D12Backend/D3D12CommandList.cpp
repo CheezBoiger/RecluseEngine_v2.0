@@ -111,8 +111,42 @@ void D3D12PrimaryCommandList::bindDescriptorHeaps(ID3D12DescriptorHeap* const* p
 
 void D3D12Context::drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstVertex, U32 firstInstance)
 {
+    ContextState& state = currentState();
+    ID3D12GraphicsCommandList* list = m_pPrimaryCommandList->get();
+    flushBarrierTransitions();
+    bindRootSignature(list, state);
+    bindPipeline(list, state);
     bindCurrentResources();
+    internalBindVertexBuffersAndIndexBuffer(list, state);
     currentState().setClean();
+    list->DrawInstanced(vertexCount, instanceCount, firstVertex, firstInstance);
+}
+
+
+void D3D12Context::drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 firstIndex, U32 vertexOffset, U32 firstInstance)
+{
+    ContextState& state = currentState();
+    ID3D12GraphicsCommandList* list = m_pPrimaryCommandList->get();
+    flushBarrierTransitions();
+    bindRootSignature(list, state);
+    bindPipeline(list, state);
+    bindCurrentResources();
+    internalBindVertexBuffersAndIndexBuffer(list, state);
+    currentState().setClean();
+    list->DrawIndexedInstanced(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+}
+
+
+void D3D12Context::dispatch(U32 x, U32 y, U32 z)
+{
+    ID3D12GraphicsCommandList* pList = m_pPrimaryCommandList->get();
+    ContextState& state = currentState();
+    flushBarrierTransitions();
+    bindRootSignature(pList, state);
+    bindPipeline(pList, state);
+    bindCurrentResources();
+    state.setClean();
+    pList->Dispatch(x, y, z);
 }
 
 
@@ -215,24 +249,38 @@ void bindResourceTable(ID3D12GraphicsCommandList* pList, BindType bindType, UINT
 } 
 
 
-R_INTERNAL
-void bindRootSignature(ID3D12GraphicsCommandList* pList, BindType bindType, ID3D12RootSignature* rootSig)
+void D3D12Context::bindRootSignature(ID3D12GraphicsCommandList* pList, ContextState& state)
 {
-    switch (bindType)
+    if (state.isDirty(ContextDirty_Descriptors))
     {
-        case BindType_Graphics:
+        if (state.m_pipelineStateObject.pipelineType == BindType_Graphics)
         {
-            pList->SetGraphicsRootSignature(rootSig);
-            break;
+            state.m_rootSigLayout.flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
         }
-        case BindType_Compute:
+        ID3D12RootSignature* rootSig = Pipelines::makeRootSignature(m_pDevice, state.m_rootSigLayout);
+    
+        if (state.m_pipelineStateObject.rootSignature != rootSig)
         {
-            pList->SetComputeRootSignature(rootSig);
-            break;
-        }
-        default:
-        {
-            break;
+            state.m_pipelineStateObject.rootSignature = rootSig;
+            switch (state.m_pipelineStateObject.pipelineType)
+            {
+                case BindType_Graphics:
+                {
+                    pList->SetGraphicsRootSignature(rootSig);
+                    break;
+                }
+                case BindType_Compute:
+                {
+                    pList->SetComputeRootSignature(rootSig);
+                    break;
+                }
+                default:
+                {
+                    break;
+                }
+            }
+            // Since our pipeline relies on root signature, any changes will need to retrigger pipeline setup.
+            state.setDirty(ContextDirty_Pipeline);
         }
     }
 }
@@ -244,16 +292,9 @@ void D3D12Context::bindCurrentResources()
     if (state.isDirty(ContextDirty_Descriptors))
     {
         ID3D12GraphicsCommandList* currentList = m_pPrimaryCommandList->get();
-        ID3D12RootSignature* rootSig = Pipelines::makeRootSignature(m_pDevice, state.m_rootSigLayout);
         CpuDescriptorTable table = Pipelines::makeDescriptorSrvCbvUavTable(m_pDevice, state.m_rootSigLayout, state.m_resourceTable);
         ShaderVisibleDescriptorHeapInstance* instance = m_pDevice->getDescriptorHeapManager()->getShaderVisibleInstance(currentBufferIndex());
         ShaderVisibleDescriptorTable shaderVisibleTable = instance->upload(m_pDevice->get(), GpuHeapType_CbvSrvUav, table);
-        if (state.m_pipelineStateObject.rootSignature != rootSig)
-        {
-            bindRootSignature(currentList, state.m_pipelineStateObject.pipelineType, rootSig);
-            state.m_pipelineStateObject.rootSignature = rootSig;
-        }
-
         bindResourceTable(currentList, state.m_pipelineStateObject.pipelineType, 0, shaderVisibleTable.baseGpuDescriptorHandle);
     }
 }
@@ -307,29 +348,147 @@ void D3D12Context::setDepthBiasEnable(Bool enable)
 
 void D3D12Context::setDepthCompareOp(CompareOp compare)
 {
-    currentState().m_pipelineStateObject.graphics.depthFunc = getNativeComparisonFunction(compare);
+    currentState().m_pipelineStateObject.graphics.depthStencil.depthCompareOp = compare;
     currentState().setDirty(ContextDirty_Pipeline);
+}
+
+
+void D3D12Context::enableDepthWrite(Bool enable)
+{
+    currentState().m_pipelineStateObject.graphics.depthStencil.depthWriteEnable = enable;
+    currentState().setDirty(ContextDirty_Pipeline);
+}
+
+
+void D3D12Context::setStencilReadMask(U8 mask)
+{
+    currentState().m_pipelineStateObject.graphics.depthStencil.stencilReadMask = mask;
+    currentState().setDirty(ContextDirty_Pipeline);
+}
+
+
+void D3D12Context::setTopology(PrimitiveTopology topology)
+{
+    D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType = getPrimitiveTopologyType(topology);
+    if (currentState().m_pipelineStateObject.graphics.topologyType != topologyType)
+    {
+        currentState().m_pipelineStateObject.graphics.topologyType = topologyType;
+        currentState().setDirty(ContextDirty_Pipeline);
+    }
+    currentState().m_primitiveTopology = topology;
+    currentState().setDirty(ContextDirty_Topology);
+}
+
+
+void D3D12Context::setStencilWriteMask(U8 mask)
+{
+    currentState().m_pipelineStateObject.graphics.depthStencil.stencilWriteMask = mask;
+    currentState().setDirty(ContextDirty_Pipeline);
+}
+
+
+void D3D12Context::setStencilReference(U8 ref)
+{
+    currentState().m_pipelineStateObject.graphics.depthStencil.stencilReference = ref;
+    currentState().setDirty(ContextDirty_StencilRef);
 }
 
 
 void D3D12Context::setColorWriteMask(U32 rtIndex, ColorComponentMaskFlags writeMask)
 {
-    
+    currentState().m_pipelineStateObject.graphics.blendState.attachments[rtIndex].colorWriteMask = writeMask;
+    currentState().setDirty(ContextDirty_Pipeline);
 }
 
 
-void D3D12Context::dispatch(U32 x, U32 y, U32 z)
+void D3D12Context::setInputVertexLayout(VertexInputLayoutId vertexLayout)
+{
+    VertexInputLayoutId currentId = currentState().m_pipelineStateObject.graphics.inputLayoutId;
+    if (currentId != vertexLayout)
+    {
+        currentState().m_pipelineStateObject.graphics.inputLayoutId = vertexLayout;
+        currentState().setDirty(ContextDirty_Pipeline);
+    }
+}
+
+
+void D3D12Context::setFrontFace(FrontFace frontFace)
+{
+    currentState().m_pipelineStateObject.graphics.frontFace = frontFace;
+    currentState().setDirty(ContextDirty_Pipeline);
+}
+
+
+void D3D12Context::enableDepth(Bool enable)
+{
+    currentState().m_pipelineStateObject.graphics.depthStencil.depthTestEnable = enable;
+    currentState().setDirty(ContextDirty_Pipeline);
+}
+
+
+void D3D12Context::enableStencil(Bool enable)
+{
+    currentState().m_pipelineStateObject.graphics.depthStencil.stencilTestEnable = enable;
+    currentState().setDirty(ContextDirty_Pipeline);
+}
+
+
+void D3D12Context::bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* offsets)
 {
     ID3D12GraphicsCommandList* pList = m_pPrimaryCommandList->get();
-    ContextState& state = currentState();
-    flushBarrierTransitions();
-    bindCurrentResources();
+    currentState().m_numBoundVertexBuffers = numBuffers;
+    for (U32 i = 0; i < numBuffers; ++i)
+    {
+        D3D12_VERTEX_BUFFER_VIEW bufferView = { };
+        D3D12Resource* pVertexBuffer = ppVertexBuffers[i]->castTo<D3D12Resource>();
+        ID3D12Resource* resource = pVertexBuffer->get();
+        D3D12_RESOURCE_DESC desc = resource->GetDesc();
+        bufferView.BufferLocation = resource->GetGPUVirtualAddress() + offsets[i];
+        bufferView.SizeInBytes = desc.Width - offsets[i];
+
+        // We will need help from the input layout, to determine this transparently.
+        bufferView.StrideInBytes = 0;
+
+        currentState().m_vertexBuffers[i] = bufferView;
+    }
+    currentState().setDirty(ContextDirty_VertexBuffers);
+}
+
+
+void D3D12Context::internalBindVertexBuffersAndIndexBuffer(ID3D12GraphicsCommandList* list, ContextState& state)
+{
+    if (state.isDirty(ContextDirty_VertexBuffers))
+    {
+        for (U32 i = 0; i < state.m_numBoundVertexBuffers; ++i)
+        {
+            D3D12_VERTEX_BUFFER_VIEW& bufferView = state.m_vertexBuffers[i];
+            Pipelines::VertexInputs::D3DVertexInput* vertexLayout = Pipelines::VertexInputs::obtain(currentState().m_pipelineStateObject.graphics.inputLayoutId);
+            R_ASSERT_FORMAT(vertexLayout, "Vertex Layout is required in order to know the stride of the vertex buffer!!");
+            bufferView.StrideInBytes = vertexLayout->vertexByteStrides[i];
+        }
+        list->IASetVertexBuffers(0, state.m_numBoundVertexBuffers, state.m_vertexBuffers.data());
+    }
+    if (state.isDirty(ContextDirty_IndexBuffer))
+    {
+        // TODO: need to implement.
+    }
+}
+
+
+void D3D12Context::bindPipeline(ID3D12GraphicsCommandList* list, ContextState& state)
+{
     if (state.isDirty(ContextDirty_Pipeline))
     {
         ID3D12PipelineState* pipelineState = Pipelines::makePipelineState(this, state.m_pipelineStateObject);
-        pList->SetPipelineState(pipelineState);
+        list->SetPipelineState(pipelineState);
     }
-    state.setClean();
-    pList->Dispatch(x, y, z);
+    if (state.isDirty(ContextDirty_StencilRef))
+    {
+        list->OMSetStencilRef(static_cast<UINT>(state.m_pipelineStateObject.graphics.depthStencil.stencilReference));
+    }
+    if (state.isDirty(ContextDirty_Topology))
+    {
+        list->IASetPrimitiveTopology(getPrimitiveTopology(state.m_primitiveTopology));
+    }
 }
 } // Recluse

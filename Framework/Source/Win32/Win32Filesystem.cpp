@@ -61,6 +61,29 @@ ResultCode File::writeTo(FileBufferData* pFile, const std::string& filePath)
     return result;
 }
 
+
+void File::setCursor(U64 szBytes)
+{
+    LARGE_INTEGER dist = { };
+    dist.QuadPart = szBytes;
+    LARGE_INTEGER ptr = { };
+    SetFilePointerEx((HANDLE)m_fileHandle, dist, &ptr, FILE_BEGIN);
+}
+
+
+U64 File::getCursor()
+{
+    LARGE_INTEGER ptr = { };
+    LARGE_INTEGER dist; 
+    dist.QuadPart = 0;
+    BOOL result = SetFilePointerEx((HANDLE)m_fileHandle, dist, &ptr, FILE_CURRENT); 
+    if (result)
+    {
+        return ptr.QuadPart;
+    }
+    return 0ull;
+}
+
 typedef struct
 {
     FileBufferDataAsync*    pAsyncBuffer;

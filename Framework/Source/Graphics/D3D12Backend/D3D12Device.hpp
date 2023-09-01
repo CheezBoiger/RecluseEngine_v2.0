@@ -95,13 +95,25 @@ public:
     void                                bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes) override;
     void                                bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* pSampler) override;
     void                                drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstVertex, U32 firstInstance) override;
+    void                                drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 firstIndex, U32 vertexOffset, U32 firstInstance) override;
     void                                bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBytes, IndexType type) override;
     void                                setDepthCompareOp(CompareOp compareOp) override;
     void                                setDepthBiasEnable(Bool enable) override;
     void                                setDepthClampEnable(Bool enable) override;
+    void                                enableDepthWrite(Bool enable) override;
+    void                                enableDepth(Bool enable) override;
+    void                                enableStencil(Bool enable) override;
     void                                clearResourceBinds() override;
     void                                setColorWriteMask(U32 rtIndex, ColorComponentMaskFlags writeMask) override;
+    void                                setStencilReference(U8 stencilRef) override;
+    void                                setStencilWriteMask(U8 mask) override;
+    void                                setStencilReadMask(U8 mask) override;
+    void                                setInputVertexLayout(VertexInputLayoutId inputLayout) override;
+    void                                setTopology(PrimitiveTopology topology) override;
+    void                                setFrontFace(FrontFace frontFace) override;
     void                                dispatch(U32 x, U32 y, U32 z) override;
+
+    void                                bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* pOffsets) override;
 
     ID3D12GraphicsCommandList*          currentGraphicsCommandList() { return m_pPrimaryCommandList->get(); }
     void                                pushState(ContextFlags flags = ContextFlag_None) override;
@@ -118,7 +130,11 @@ private:
         ContextDirty_Clean      = 0,
         ContextDirty_Descriptors  = (1 << 0),
         ContextDirty_SamplerDescriptors = (1 << 1),
-        ContextDirty_Pipeline = (1 << 2)
+        ContextDirty_Pipeline = (1 << 2),
+        ContextDirty_StencilRef = (1 << 3),
+        ContextDirty_VertexBuffers = (1 << 4),
+        ContextDirty_IndexBuffer = (1 << 5),
+        ContextDirty_Topology = (1 << 6),
     };
 
     struct ContextState
@@ -130,7 +146,10 @@ private:
         std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 8>      m_uavs;
         std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 16>     m_cbvs;
         std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 16>     m_samplers;
+        std::array<D3D12_VERTEX_BUFFER_VIEW, 16>        m_vertexBuffers;
+        PrimitiveTopology                               m_primitiveTopology;
         ContextDirtyFlags                               m_dirtyFlags;
+        U32                                             m_numBoundVertexBuffers;
 
         void setDirty(ContextDirtyFlags flags) { m_dirtyFlags |= flags; }
         void setClean() { m_dirtyFlags = ContextDirty_Clean; }
@@ -143,10 +162,17 @@ private:
     void                                prepare();
     ContextState&                       currentState() { return m_contextStates.back(); }
 
+    // Binds the pipeline state. Must be called after a Root signature call!!
+    void                                bindPipeline(ID3D12GraphicsCommandList* list, ContextState& state);
+
     ResultCode                          createCommandList(D3D12PrimaryCommandList** ppList, GraphicsQueueTypeFlags flags);
     ResultCode                          destroyCommandList(D3D12PrimaryCommandList* pList);
     ShaderVisibleDescriptorTable        uploadToShaderVisible(CpuDescriptorTable table, GpuHeapType shaderVisibleType);
     void                                bindCurrentResources();
+    void                                internalBindVertexBuffersAndIndexBuffer(ID3D12GraphicsCommandList* list, ContextState& state);
+
+    // Bind the root signature, must be called before bindPipeline!
+    void                                bindRootSignature(ID3D12GraphicsCommandList* pList, ContextState& state);
 
     D3D12Device*                        m_pDevice;
     std::vector<BufferResources>        m_bufferResources;

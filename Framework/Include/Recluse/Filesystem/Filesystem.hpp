@@ -58,6 +58,11 @@ struct R_PUBLIC_API File
     // Check if the file object is open.
     B32 isOpen() { return m_isOpen; }
 
+    // Set the file cursor from the start.
+    void setCursor(U64 bytes);
+
+    U64 getCursor();
+
 private:
     B32     m_isOpen;
     void*   m_fileHandle;

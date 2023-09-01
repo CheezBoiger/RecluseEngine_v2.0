@@ -5,7 +5,7 @@ struct TestData {
 };
 
 struct PSInput {
-    float4 Position : VS_POSITION;
+    float4 Position : SV_POSITION;
 };
 
 ConstantBuffer<TestData> Test : register(b0);

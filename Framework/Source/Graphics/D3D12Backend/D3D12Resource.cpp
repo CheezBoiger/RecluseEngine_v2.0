@@ -322,10 +322,16 @@ ResultCode D3D12Resource::map(void** pMappedMemory, MapRange* pReadRange)
     HRESULT result = S_OK;
     if (pReadRange)
     {
+        // Api read-write range is a vector, so we need to compensate for this in D3D12.
         D3D12_RANGE readRange = { };
         readRange.Begin = pReadRange->offsetBytes;
-        readRange.End = pReadRange->sizeBytes;
+        readRange.End = readRange.Begin + pReadRange->sizeBytes;
         result = m_memObj.pResource->Map(0, &readRange, pMappedMemory);
+        // Since we are obtaining the buffer ptr location at the start of the resource, 
+        // we need to adjust the memory pointer to the beginning offset.
+        UPtr memoryPtr =(UPtr)*pMappedMemory;
+        memoryPtr = memoryPtr + readRange.Begin;
+        *pMappedMemory = (void*)memoryPtr;
     }
     else
     {
@@ -340,9 +346,10 @@ ResultCode D3D12Resource::unmap(MapRange* pWriteRange)
     HRESULT result = S_OK;
     if (pWriteRange)
     {
+        // Api read-write range is a vector, so we need to compensate for this in D3D12.
         D3D12_RANGE range = { };
         range.Begin = pWriteRange->offsetBytes;
-        range.End = pWriteRange->sizeBytes;
+        range.End = range.Begin + pWriteRange->sizeBytes;
         m_memObj.pResource->Unmap(0, &range);
     }
     else

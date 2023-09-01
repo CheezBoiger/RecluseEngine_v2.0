@@ -5,6 +5,9 @@
 #include "Recluse/Types.hpp"
 #include "D3D12Commons.hpp"
 #include "Recluse/Graphics/ShaderProgram.hpp"
+#include "D3D12ShaderCache.hpp"
+
+#include <vector>
 
 namespace Recluse {
 
@@ -12,14 +15,24 @@ class D3D12Context;
 class D3D12Device;
 class D3D12RenderPass;
 
-extern const char* kHlslSemanticPosition;
-extern const char* kHlslSemanticNormal;
-extern const char* kHlslSemanticTexcoord;
-extern const char* kHlslSemanticTangent;
-
 typedef Hash64 PipelineStateId;
 
 namespace Pipelines {
+namespace VertexInputs {
+
+
+struct D3DVertexInput
+{
+    std::vector<D3D12_INPUT_ELEMENT_DESC> elements;
+    std::vector<U32> vertexByteStrides;
+};
+
+
+ResultCode make(VertexInputLayoutId id, const VertexInputLayout& layout);
+ResultCode unload(VertexInputLayoutId id);
+D3DVertexInput* obtain(VertexInputLayoutId id);
+Bool unloadAll();
+} // VertexInputs
 
 
 struct PipelineStateObject
@@ -33,19 +46,17 @@ struct PipelineStateObject
             RasterState                         raster;
             BlendState                          blendState;
             DepthStencil                        depthStencil;
-            VertexInputLayoutId                 ia;
+            VertexInputLayoutId                 inputLayoutId;
             TessellationState                   tess;
-            PrimitiveTopology                   primitiveTopology;
+            D3D12_PRIMITIVE_TOPOLOGY_TYPE       topologyType;
             PolygonMode                         polygonMode;
             CullMode                            cullMode;
+            FrontFace                           frontFace;
             Bool                                antiAliasedLineEnable;
-            Bool                                depthEnable;
-            Bool                                stencilEnable;
             Bool                                depthBiasEnable;
             Bool                                depthClampEnable;
             D3D12RenderPass*                    pRenderPass;
             D3D12_INDEX_BUFFER_STRIP_CUT_VALUE  indexStripCut;
-            D3D12_COMPARISON_FUNC               depthFunc;
         } graphics;
         struct
         {
@@ -68,11 +79,12 @@ struct ConstantBufferView
 
 struct RootSigLayout
 {
-    U16                     cbvCount;
-    U16                     srvCount;
-    U16                     uavCount;
-    U16                     samplerCount;
-    ShaderStageFlags        shaderVisibility;
+    U16                         cbvCount;
+    U16                         srvCount;
+    U16                         uavCount;
+    U16                         samplerCount;
+    ShaderStageFlags            shaderVisibility;
+    D3D12_ROOT_SIGNATURE_FLAGS  flags;
 };
 
 

@@ -242,6 +242,8 @@ RealtimeTick RealtimeTick::getTick(U32 watchType)
     if (~(s & 0x8000)) registerFn(I32(keyCode), WM_KEYUP); \
   }
 
+
+#pragma optimize("", off)
 LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     // Reinterpret hwnd to window pointer.
@@ -257,15 +259,19 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
                 pWindow->close();
                 break;
             }
+            case WM_LBUTTONDOWN:
+            case WM_RBUTTONDOWN:
+            case WM_LBUTTONUP:
+            case WM_RBUTTONUP:
             case WM_INPUT:
             {
-                Mouse* pMouse           = pWindow->getMouseHandle();
-                if (pMouse) 
-                {
-                    RAWINPUT* raw           = gWin32Runtime.lpb;
-                    UINT dwSize;
-                    UINT result = GetRawInputData((HRAWINPUT)lParam, RID_INPUT, raw, &dwSize, sizeof(RAWINPUTHEADER)); 
-                    if (result != (UINT)-1) 
+                RAWINPUT* raw   = gWin32Runtime.lpb;
+                UINT dwSize;
+                UINT result     = GetRawInputData((HRAWINPUT)lParam, RID_INPUT, raw, &dwSize, sizeof(RAWINPUTHEADER)); 
+                Mouse* pMouse   = pWindow->getMouseHandle();
+                if (result != (UINT)-1) 
+                {                
+                    if (pMouse) 
                     {
                         IInputFeedback feedback = { };
                         I32 dx = 0, dy = 0;
@@ -301,9 +307,9 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
                         // TODO: Set the mouse position.
                         pMouse->integrateInput(feedback);
                     }
-                    else // I am not sure why we need this, but the compiler keeps optimizing the code above out, without it.
-                        R_WARN("Raw Input", "Raw Input returned incorrect results");
                 }
+                else // I am not sure why we need this, but the compiler keeps optimizing the code above out, without it.
+                    R_WARN("Raw Input", "Raw Input returned incorrect results");
                 break;
             }
             case WM_SYSKEYDOWN:
@@ -386,17 +392,13 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
                 }
                 break;
             }
-            case WM_MOUSEMOVE:
-            case WM_SYSCOMMAND:
-            case WM_LBUTTONDOWN:
-            case WM_RBUTTONDOWN:
-            case WM_LBUTTONUP:
-            case WM_RBUTTONUP:
-            case WM_SHOWWINDOW:
-            {
-                break;
-            }
-            case WM_PAINT:
+            //case WM_MOUSEMOVE:
+            //case WM_SYSCOMMAND:
+            //case WM_SHOWWINDOW:
+            //{
+            //    break;
+            //}
+            //case WM_PAINT:
             default: break;
         }    
     }
@@ -431,7 +433,7 @@ void pollEvents()
         }
     }
 }
-
+#pragma optimize("", on)
 
 U64 getMainThreadId()
 {

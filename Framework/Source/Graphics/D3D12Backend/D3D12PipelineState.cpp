@@ -6,16 +6,24 @@
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Math/MathCommons.hpp"
 #include "D3D12ShaderCache.hpp"
+#include "D3D12RenderPass.hpp"
 
+#include <map>
 #include <unordered_map>
 #include <array>
 
 namespace Recluse {
 
-const char* kHlslSemanticPosition   = "POSITION";
-const char* kHlslSemanticNormal     = "NORMAL";
-const char* kHlslSemanticTexcoord   = "TEXCOORD";
-const char* kHlslSemanticTangent    = "TANGENT";
+
+std::map<Semantic, const char*> g_semanticMap = {
+    { Semantic_Position, "POSITION" },
+    { Semantic_Normal, "NORMAL" },
+    { Semantic_Texcoord, "TEXCOORD" },
+    { Semantic_Tangent, "TANGENT" },
+    { Semantic_Binormal, "BINORMAL" },
+    { Semantic_Color, "COLOR" },
+    { Semantic_TessFactor, "TESSFACTOR" }
+};
 
 
 std::unordered_map<Hash64, CpuDescriptorTable> m_cachedCpuDescriptorTables;
@@ -29,19 +37,102 @@ std::unordered_map<PipelineStateId, ID3D12PipelineState*> g_pipelineStateMap;
 std::unordered_map<Hash64, ID3D12RootSignature*> m_rootSignatures;
 
 
-R_INTERNAL
-D3D12_PRIMITIVE_TOPOLOGY_TYPE getPrimitiveTopologyType(PrimitiveTopology topology)
+namespace VertexInputs {
+
+
+std::unordered_map<VertexInputLayoutId, D3DVertexInput> g_vertexLayouts;
+
+
+D3D12_INPUT_CLASSIFICATION getInputClassification(InputRate inputRate)
 {
-    switch (topology)
+    switch (inputRate)
     {
-        case PrimitiveTopology_LineStrip:       
-        case PrimitiveTopology_LineList:        return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
-        case PrimitiveTopology_PointList:       return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
-        case PrimitiveTopology_TriangleStrip:
-        case PrimitiveTopology_TriangleList:
-        default: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+        case InputRate_PerInstance: return D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA;
+        default:
+        case InputRate_PerVertex:   return D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
     }
 }
+
+
+ResultCode make(VertexInputLayoutId id, const VertexInputLayout& layout)
+{
+    R_ASSERT(layout.numVertexBindings < VertexInputLayout::VertexInputLayout_BindingCount);
+    auto iter = g_vertexLayouts.find(id);
+    if (iter != g_vertexLayouts.end())
+    {
+        return RecluseResult_AlreadyExists;
+    }
+    else
+    {
+        D3DVertexInput inputs;
+        for (U32 i = 0; i < layout.numVertexBindings; ++i)
+        {
+            const VertexBinding& vertexBinding = layout.vertexBindings[i];
+            U32 inputSlot = vertexBinding.binding;
+            D3D12_INPUT_CLASSIFICATION classification = getInputClassification(vertexBinding.inputRate);
+            UINT strideBytes = 0;
+            for (U32 attribIndex = 0; attribIndex < vertexBinding.numVertexAttributes; ++attribIndex)
+            {
+                VertexAttribute& attrib             = vertexBinding.pVertexAttributes[attribIndex];
+                D3D12_INPUT_ELEMENT_DESC element    = { };
+                element.InputSlot                   = inputSlot;
+                element.InputSlotClass              = classification;
+                element.Format                      = Dxgi::getNativeFormat(attrib.format);
+                element.InstanceDataStepRate        = classification != D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA ? 1 : 0;
+                element.SemanticIndex               = attrib.semanticIndex;
+                element.SemanticName                = g_semanticMap[attrib.semantic];
+                if (attrib.offsetBytes == VertexAttribute::OffsetAppend)
+                {
+                    element.AlignedByteOffset           = D3D12_APPEND_ALIGNED_ELEMENT;
+                }
+                else
+                {
+                    element.AlignedByteOffset           = attrib.offsetBytes;
+                } 
+                strideBytes += static_cast<UINT>(Dxgi::getNativeFormatSize(element.Format));
+                inputs.elements.push_back(element);
+            }
+            inputs.vertexByteStrides.push_back(strideBytes);
+        }
+
+        g_vertexLayouts.insert(std::make_pair(id, inputs));
+    }
+    return RecluseResult_Ok;
+}
+
+
+ResultCode unload(VertexInputLayoutId id)
+{
+    auto& iter = g_vertexLayouts.find(id);
+    if (iter != g_vertexLayouts.end())
+    {
+        g_vertexLayouts.erase(iter);
+        return RecluseResult_Ok;
+    }
+    return RecluseResult_NotFound;
+}
+
+
+Bool unloadAll()
+{
+    g_vertexLayouts.clear();
+    return true;
+}
+
+
+D3DVertexInput* obtain(VertexInputLayoutId layoutId)
+{
+    auto& iter = g_vertexLayouts.find(layoutId);
+    if (iter != g_vertexLayouts.end())
+    {
+        return &iter->second;
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+} // VertexInputs
 
 
 R_INTERNAL
@@ -78,6 +169,17 @@ PipelineStateId serializePipelineState(const PipelineStateObject& pipelineState)
 }
 
 
+D3D12_DEPTH_STENCILOP_DESC fillStencilState(const StencilOpState& apiState)
+{
+    D3D12_DEPTH_STENCILOP_DESC descriptor   = { };
+    descriptor.StencilDepthFailOp           = getStencilOp(apiState.depthFailOp);
+    descriptor.StencilFailOp                = getStencilOp(apiState.failOp);
+    descriptor.StencilPassOp                = getStencilOp(apiState.passOp);
+    descriptor.StencilFunc                  = getNativeComparisonFunction(apiState.compareOp);
+    return descriptor;
+}
+
+
 R_INTERNAL 
 ID3D12PipelineState* createGraphicsPipelineState(U32 nodeMask, ID3D12Device* pDevice, const D3D::Cache::D3DShaderProgram* program, const PipelineStateObject& pipelineState)
 {
@@ -86,7 +188,8 @@ ID3D12PipelineState* createGraphicsPipelineState(U32 nodeMask, ID3D12Device* pDe
     desc.NodeMask = 0;
     desc.NumRenderTargets = pipelineState.graphics.numRenderTargets;
     desc.IBStripCutValue = pipelineState.graphics.indexStripCut;
-    desc.PrimitiveTopologyType = getPrimitiveTopologyType(pipelineState.graphics.primitiveTopology);
+    desc.PrimitiveTopologyType = pipelineState.graphics.topologyType;
+    D3D12RenderPass* pRenderPass = pipelineState.graphics.pRenderPass;
     for (U32 i = 0; i < pipelineState.graphics.numRenderTargets; ++i)
     {
         desc.RTVFormats[i] = pipelineState.graphics.pRenderPass->getRtvFormat(i);
@@ -131,20 +234,57 @@ ID3D12PipelineState* createGraphicsPipelineState(U32 nodeMask, ID3D12Device* pDe
     desc.RasterizerState.CullMode = getCullMode(pipelineState.graphics.cullMode);
     desc.RasterizerState.DepthClipEnable = pipelineState.graphics.depthClampEnable;
     desc.RasterizerState.DepthBias  = pipelineState.graphics.depthBiasEnable ? 1 : 0;
-    desc.RasterizerState.FrontCounterClockwise = true;
+    desc.RasterizerState.FrontCounterClockwise = (pipelineState.graphics.frontFace == FrontFace_CounterClockwise ? true : false);
     desc.RasterizerState.MultisampleEnable = false;
+    desc.RasterizerState.AntialiasedLineEnable = false;
+    desc.RasterizerState.SlopeScaledDepthBias = 0.0f;
 
-    desc.DepthStencilState.DepthEnable = pipelineState.graphics.depthEnable;
-    desc.DepthStencilState.StencilEnable = pipelineState.graphics.stencilEnable;
-    desc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-    desc.DepthStencilState.DepthFunc = pipelineState.graphics.depthFunc;
-
-    desc.BlendState.IndependentBlendEnable = true;
-    desc.BlendState.AlphaToCoverageEnable = false;
+    desc.DepthStencilState.DepthEnable = pipelineState.graphics.depthStencil.depthTestEnable;
+    desc.DepthStencilState.StencilEnable = pipelineState.graphics.depthStencil.stencilTestEnable;
+    desc.DepthStencilState.DepthWriteMask = pipelineState.graphics.depthStencil.depthWriteEnable ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
+    desc.DepthStencilState.DepthFunc = getNativeComparisonFunction(pipelineState.graphics.depthStencil.depthCompareOp);
+    desc.DepthStencilState.StencilReadMask = pipelineState.graphics.depthStencil.stencilReadMask;
+    desc.DepthStencilState.StencilWriteMask = pipelineState.graphics.depthStencil.stencilWriteMask;
+    desc.DepthStencilState.FrontFace = fillStencilState(pipelineState.graphics.depthStencil.front);
+    desc.DepthStencilState.BackFace = fillStencilState(pipelineState.graphics.depthStencil.back);
+    Bool independentBlendEnable = false;
     for (U32 i = 0; i < pipelineState.graphics.numRenderTargets; ++i)
     {
-        desc.BlendState.RenderTarget[i].RenderTargetWriteMask = pipelineState.graphics.blendState.attachments[i].colorWriteMask;
-        desc.BlendState.RenderTarget[i].BlendEnable = pipelineState.graphics.blendState.attachments[i].blendEnable;
+        D3D12_RENDER_TARGET_BLEND_DESC& rtBlend     = desc.BlendState.RenderTarget[i];
+        const RenderTargetBlendState& rtBlendState  = pipelineState.graphics.blendState.attachments[i];
+        rtBlend.RenderTargetWriteMask               = rtBlendState.colorWriteMask;
+        rtBlend.BlendEnable                         = rtBlendState.blendEnable;
+        rtBlend.BlendOp                             = getBlendOp(rtBlendState.colorBlendOp);
+        rtBlend.BlendOpAlpha                        = getBlendOp(rtBlendState.alphaBlendOp);
+        rtBlend.LogicOp                             = getLogicOp(pipelineState.graphics.blendState.logicOp);
+        rtBlend.DestBlend                           = getBlendFactor(rtBlendState.dstColorBlendFactor);
+        rtBlend.DestBlendAlpha                      = getBlendFactor(rtBlendState.dstAlphaBlendFactor);
+        rtBlend.SrcBlend                            = getBlendFactor(rtBlendState.srcColorBlendFactor);
+        rtBlend.SrcBlendAlpha                       = getBlendFactor(rtBlendState.srcAlphaBlendFactor);
+        independentBlendEnable |= rtBlend.BlendEnable;
+    }
+
+    if (pRenderPass)
+    {
+        for (U32 i = 0; i < pipelineState.graphics.numRenderTargets; ++i)
+        {
+            desc.RTVFormats[i] = pRenderPass->getRtvFormat(i);
+        }
+        desc.DSVFormat = pRenderPass->getDsvFormat();
+    }
+    desc.BlendState.IndependentBlendEnable = independentBlendEnable;
+    desc.BlendState.AlphaToCoverageEnable = false;
+
+    D3D12_INPUT_LAYOUT_DESC& inputDesc = desc.InputLayout;
+    inputDesc.NumElements = 0;
+    inputDesc.pInputElementDescs = nullptr;
+    {
+        VertexInputs::D3DVertexInput* layout = VertexInputs::obtain(pipelineState.graphics.inputLayoutId);
+        if (layout)
+        {
+            inputDesc.NumElements = static_cast<U32>(layout->elements.size());
+            inputDesc.pInputElementDescs = layout->elements.data();
+        }
     }
     
     ID3D12PipelineState* pipeline = nullptr;
@@ -271,11 +411,12 @@ ID3D12RootSignature* internalCreateRootSignatureWithTable(ID3D12Device* pDevice,
             tableParameters[1].DescriptorTable.pDescriptorRanges = &ranges[Math::clamp((U32)(rangeIdx - 1), (U32)0, (U32)ranges.size())];
             tableParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
         }
+
         desc.NumParameters = hasSamplers ? 2 : 1;
         desc.NumStaticSamplers = 0;
         desc.pParameters = tableParameters;
         desc.pStaticSamplers = nullptr;
-        desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE; // TODO: None for now, but we might want to try and optimize this?
+        desc.Flags = layout.flags; // TODO: None for now, but we might want to try and optimize this?
 
         ID3DBlob* pSignature;
         ID3DBlob* pErrorBlob;

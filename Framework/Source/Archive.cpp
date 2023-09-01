@@ -5,7 +5,7 @@
 namespace Recluse {
 
 
-ResultCode Archive::open(char* access)
+ResultCode Archive::openFile(char* access)
 {
     ResultCode result = RecluseResult_Ok;
 

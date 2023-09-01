@@ -126,8 +126,8 @@ Bool internalMakeShaderProgram(ShaderProgramId shaderProgram, ShaderProgramPermu
             program.graphics.vsMainEntry = definition.graphics.vs ? definition.graphics.vs->getEntryPointName() : nullptr;
             program.graphics.dsBytecode = makeBlob(definition.graphics.ds);
             program.graphics.dsMainEntry = definition.graphics.ds ? definition.graphics.ds->getEntryPointName() : nullptr;
-            program.graphics.dsBytecode = makeBlob(definition.graphics.ps);
-            program.graphics.dsMainEntry = definition.graphics.ps ? definition.graphics.ps->getEntryPointName() : nullptr;
+            program.graphics.psBytecode = makeBlob(definition.graphics.ps);
+            program.graphics.psMainEntry = definition.graphics.ps ? definition.graphics.ps->getEntryPointName() : nullptr;
             program.graphics.gsBytecode = makeBlob(definition.graphics.gs);
             program.graphics.gsMainEntry = definition.graphics.gs ? definition.graphics.gs->getEntryPointName() : nullptr;
             program.graphics.hsBytecode = makeBlob(definition.graphics.hs);

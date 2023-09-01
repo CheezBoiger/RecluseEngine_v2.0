@@ -5,6 +5,7 @@
 
 #include "Recluse/Graphics/Format.hpp"
 #include "Recluse/Graphics/GraphicsCommon.hpp"
+#include "Recluse/Graphics/PipelineState.hpp"
 #include "Recluse/Graphics/Shader.hpp"
 
 // D3D12 headers.
@@ -51,14 +52,21 @@ struct D3D12MemoryObject
 
 
 // Get the native resource state.
-extern D3D12_RESOURCE_STATES getNativeResourceState(Recluse::ResourceState state);
-extern D3D12_RTV_DIMENSION getRtvDimension(Recluse::ResourceViewDimension dimension);
-extern D3D12_DSV_DIMENSION getDsvDimension(Recluse::ResourceViewDimension dimension);
-extern D3D12_UAV_DIMENSION getUavDimension(Recluse::ResourceViewDimension dimension);
-extern D3D12_SRV_DIMENSION getSrvDimension(Recluse::ResourceViewDimension dimension);
-extern D3D12_COMPARISON_FUNC getNativeComparisonFunction(Recluse::CompareOp compareOp);
-extern D3D12_SHADER_VISIBILITY getShaderVisibilityFlags(Recluse::ShaderStageFlags shaderStageFlags);
-extern D3D12_INDEX_BUFFER_STRIP_CUT_VALUE getNativeStripCutValue(Recluse::IndexType indexType);
+extern D3D12_RESOURCE_STATES                getNativeResourceState(Recluse::ResourceState state);
+extern D3D12_RTV_DIMENSION                  getRtvDimension(Recluse::ResourceViewDimension dimension);
+extern D3D12_DSV_DIMENSION                  getDsvDimension(Recluse::ResourceViewDimension dimension);
+extern D3D12_UAV_DIMENSION                  getUavDimension(Recluse::ResourceViewDimension dimension);
+extern D3D12_SRV_DIMENSION                  getSrvDimension(Recluse::ResourceViewDimension dimension);
+extern D3D12_COMPARISON_FUNC                getNativeComparisonFunction(Recluse::CompareOp compareOp);
+extern D3D12_BLEND_OP                       getBlendOp(Recluse::BlendOp blendOp);
+extern D3D12_PRIMITIVE_TOPOLOGY             getPrimitiveTopology(Recluse::PrimitiveTopology topology);
+extern D3D12_PRIMITIVE_TOPOLOGY_TYPE        getPrimitiveTopologyType(PrimitiveTopology topology);
+extern D3D12_BLEND                          getBlendFactor(Recluse::BlendFactor blendFactor);
+extern D3D12_LOGIC_OP                       getLogicOp(Recluse::LogicOp logicOp);
+extern D3D12_STENCIL_OP                     getStencilOp(Recluse::StencilOp stencilOp);
+extern D3D12_SHADER_VISIBILITY              getShaderVisibilityFlags(Recluse::ShaderStageFlags shaderStageFlags);
+extern D3D12_INDEX_BUFFER_STRIP_CUT_VALUE   getNativeStripCutValue(Recluse::IndexType indexType);
+extern UINT                                 calculateSubresource(UINT MipSlice, UINT ArraySlice, UINT PlaneSlice, UINT MipLevels, UINT ArraySize);
 
 } // Recluse
 

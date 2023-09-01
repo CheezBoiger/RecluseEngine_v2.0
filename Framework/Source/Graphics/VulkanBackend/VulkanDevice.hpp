@@ -117,6 +117,10 @@ public:
     void setBlendEnable(U32 rtIndex, Bool enable) override { currentState().m_pipelineStructure.state.graphics.blendState.attachments[rtIndex].blendEnable = enable; currentState().markPipelineDirty(); }
     void setBlendLogicOpEnable(Bool enable) override { currentState().m_pipelineStructure.state.graphics.blendState.logicOpEnable = enable; }
     void setBlendLogicOp(LogicOp logicOp) override { currentState().m_pipelineStructure.state.graphics.blendState.logicOp = logicOp; }
+    void enableDepthWrite(Bool enable) override { currentState().m_pipelineStructure.state.graphics.depthStencil.depthWriteEnable = enable; currentState().markPipelineDirty(); }
+    void setStencilReference(U8 ref) override { currentState().m_pipelineStructure.state.graphics.depthStencil.stencilReference = ref; currentState().markPipelineDirty(); }
+    void setStencilReadMask(U8 mask) override { currentState().m_pipelineStructure.state.graphics.depthStencil.stencilReadMask = mask; currentState().markPipelineDirty(); }
+    void setStencilWriteMask(U8 mask) override { currentState().m_pipelineStructure.state.graphics.depthStencil.stencilWriteMask = mask; currentState().markPipelineDirty(); }
     void clearResourceBinds() override;
     
     void setBlendConstants(F32 blendConstants[4]) override 

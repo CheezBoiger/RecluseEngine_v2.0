@@ -19,6 +19,7 @@ public:
     D3D12RenderPass()
         : m_rtvDhAllocation(DescriptorTable::invalidCpuAddress)
         , m_dsvDhAllocation(DescriptorTable::invalidCpuAddress)
+        , m_dsvFormat(DXGI_FORMAT_UNKNOWN)
     { }
 
     ResultCode                      update
