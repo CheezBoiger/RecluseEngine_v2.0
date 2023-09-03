@@ -25,6 +25,7 @@
 #include "Recluse/Pipeline/ShaderProgramBuilder.hpp"
 
 #include "Recluse/System/Limiter.hpp"
+#include "Recluse/System/KeyboardInput.hpp"
 
 #include <cmath>
 
@@ -126,7 +127,7 @@ int main(int c, char* argv[])
     GraphicsResource* pData         = nullptr;
     PipelineState* pPipeline        = nullptr;
     GraphicsSwapchain* pSwapchain   = nullptr;
-    Window* pWindow                 = Window::create("Compute", 0, 0, 1024, 1024);
+    Window* pWindow                 = Window::create("Compute", 0, 0, 1024, 1024, ScreenMode_Fullscreen);
     ResultCode result               = RecluseResult_Ok;
 
     pWindow->setOnWindowResize(ResizeFunction);
@@ -143,7 +144,7 @@ int main(int c, char* argv[])
         app.engineName = "Cat";
         app.appName = "Compute";
 
-        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation | LayerFeatureFlag_Raytracing | LayerFeatureFlag_MeshShading | LayerFeatureFlag_DebugMarking;
+        LayerFeatureFlags flags = /*LayerFeatureFlag_DebugValidation | */ LayerFeatureFlag_Raytracing | LayerFeatureFlag_MeshShading /*| LayerFeatureFlag_DebugMarking*/;
 
         result = pInstance->initialize(app, flags);
     }
@@ -293,6 +294,12 @@ int main(int c, char* argv[])
         }
         R_VERBOSE("Test", "Frame: %f fps", 1.0f / frameMs);
         pollEvents();
+
+        KeyboardListener listener;
+        if (listener.isKeyDown(KeyCode_Escape))
+        {
+            pWindow->close();
+        }
     }
     
     pContext->wait();

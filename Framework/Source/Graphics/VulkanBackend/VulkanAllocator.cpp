@@ -11,7 +11,7 @@
 
 namespace Recluse {
 
-VkDeviceSize VulkanAllocationManager::kPerMemoryPageSizeBytes = R_MB(8);
+VkDeviceSize VulkanAllocationManager::kPerMemoryPageSizeBytes = R_MB(64);
 
 // Understanding buffer-image granularity is one of the pains of Vulkan.
 // Here is a quick visual reference description by akeley98 who describes this well:
@@ -255,7 +255,7 @@ VulkanPagedAllocator* VulkanAllocationManager::getAllocator(ResourceMemoryUsage 
     auto it = m_resourceAllocators.find(memoryTypeIndex);
     if (it == m_resourceAllocators.end())
     {
-        pAllocator = allocateMemoryPage(memoryTypeIndex, usage);
+        pAllocator = allocateMemoryPage(memoryTypeIndex, usage, align(sizeBytes, alignment));
     }
     else
     {
@@ -273,7 +273,7 @@ VulkanPagedAllocator* VulkanAllocationManager::getAllocator(ResourceMemoryUsage 
 
     if (!pAllocator)
     {
-        pAllocator = allocateMemoryPage(memoryTypeIndex, usage);
+        pAllocator = allocateMemoryPage(memoryTypeIndex, usage, align(sizeBytes, alignment));
     }
     
     return pAllocator;
@@ -329,7 +329,7 @@ ResultCode VulkanAllocationManager::free(VulkanMemory* pOut, Bool immediate)
 }
 
 
-VulkanPagedAllocator* VulkanAllocationManager::allocateMemoryPage(MemoryTypeIndex memoryTypeIndex, ResourceMemoryUsage usage)
+VulkanPagedAllocator* VulkanAllocationManager::allocateMemoryPage(MemoryTypeIndex memoryTypeIndex, ResourceMemoryUsage usage, VkDeviceSize pageSizeBytes)
 {
     VkDevice device                     = m_pDevice->get();
     
@@ -345,7 +345,7 @@ VulkanPagedAllocator* VulkanAllocationManager::allocateMemoryPage(MemoryTypeInde
    m_resourceAllocators[memoryTypeIndex].push_back(makeSmartPtr(new VulkanPagedAllocator()));
     VulkanPagedAllocator* pAllocator    = m_resourceAllocators[memoryTypeIndex].back();
     const U32 allocationId              = (m_resourceAllocators[memoryTypeIndex].size() - 1);
-    pAllocator->initialize(device, new LinearAllocator(), memoryTypeIndex, kPerMemoryPageSizeBytes, usage, allocationId);
+    pAllocator->initialize(device, new LinearAllocator(), memoryTypeIndex, Math::maximum(align(pageSizeBytes, m_bufferImageGranularityBytes), align(kPerMemoryPageSizeBytes, m_bufferImageGranularityBytes)), usage, allocationId);
     m_totalAllocationSizeBytes          += pAllocator->getTotalSizeBytes();
     return pAllocator;
 }

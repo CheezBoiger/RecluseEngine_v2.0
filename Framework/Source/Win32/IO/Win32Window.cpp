@@ -68,6 +68,8 @@ DWORD getWindowStyle(ScreenMode screenMode)
 {
     switch (screenMode)
     {
+        case ScreenMode_Fullscreen:
+            return (WS_POPUP | WS_VISIBLE);
         case ScreenMode_WindowBorderless:
         case ScreenMode_FullscreenBorderless:
             return (WS_POPUP);
@@ -252,7 +254,29 @@ void Window::update()
     if (mustChangeScreen())
     {
         HWND hwnd = (HWND)m_handle;
-        if (isBorderless())
+        if (isFullscreen())
+        {
+            // Are we fullscreen borderless window?
+            if (isBorderless())
+            {
+                // Fullscreen borderless.
+            }
+            else
+            {
+                // Exclusive fullscreen
+                DWORD dwStyle = GetWindowLongW(hwnd, GWL_STYLE);
+                DWORD exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+                MONITORINFO monitorInfo = { };
+                monitorInfo.cbSize = sizeof(MONITORINFO);
+                SetWindowLongW(hwnd, GWL_STYLE, dwStyle & ~(WS_CAPTION | WS_THICKFRAME) & (WS_POPUP | WS_VISIBLE));
+                SetWindowLongW(hwnd, GWL_EXSTYLE, exStyle & ~(WS_EX_DLGMODALFRAME | WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE) & (WS_EX_TOPMOST)); 
+                GetMonitorInfoW(MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST), &monitorInfo);
+                const RECT rect = monitorInfo.rcMonitor;
+                SetWindowPos(hwnd, NULL, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, (SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED));
+                UpdateWindow(hwnd);
+            }
+        }
+        else if (isBorderless())
         {
             SetWindowLongW(hwnd, GWL_EXSTYLE, 0);
             SetWindowLongW(hwnd, GWL_STYLE, (WS_POPUP));

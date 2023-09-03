@@ -13,7 +13,7 @@
 namespace Recluse {
 
 
-const U32 DescriptorAllocatorInstance::kMaxSetsPerPool              = 1000;
+const U32 DescriptorAllocatorInstance::kMaxSetsPerPool              = 1024;
 const F32 DescriptorAllocatorInstance::kDescriptorChunkSize         = 512.f;
 const F32 DescriptorAllocatorInstance::kDescriptorSamplerChunkSize  = 64.f;
 const U32 DescriptorAllocator::kMaxReservedBufferInstances          = 16;

@@ -18,6 +18,12 @@ namespace Recluse {
 class D3D12ResourcePagedAllocator 
 {
 public:
+    struct OutputBlock
+    {
+        UPtr address;
+        class D3D12ResourcePagedAllocator* alloc;
+    };
+
     D3D12ResourcePagedAllocator();
 
     ResultCode initialize(ID3D12Device* pDevice, Allocator* pAllocator, U64 totalSizeBytes, ResourceMemoryUsage usage, U32 allocatorIndex);
@@ -26,13 +32,13 @@ public:
     ResultCode allocate
                 (
                     ID3D12Device* pDevice, 
-                    D3D12MemoryObject* pOut, 
-                    const D3D12_RESOURCE_DESC& desc, 
-                    D3D12_CLEAR_VALUE* clearValue,
-                    D3D12_RESOURCE_STATES initialState
+                    const D3D12_RESOURCE_ALLOCATION_INFO& allocInfo,
+                    OutputBlock& blockAddress
                 );
 
     ResultCode free(D3D12MemoryObject* pObject);
+    ID3D12Heap* get() const { return m_pool.pHeap; }
+    U32         getAllocatorIndex() const { return m_allocatorIndex; }
     
     void    clear();
     
