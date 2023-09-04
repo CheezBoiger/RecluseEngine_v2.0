@@ -55,8 +55,8 @@ void generate(GraphicsContext* context, Engine::RenderCommandList* pMeshCommandL
     Rect depthRect                              = { };
     depthRect.x         = depthRect.y           = 0.f;
 
-    depthRect.width     = context->getDevice()->getSwapchain()->getDesc().renderWidth;
-    depthRect.height    = context->getDevice()->getSwapchain()->getDesc().renderHeight;
+    //depthRect.width     = context->getDevice()->getSwapchain()->getDesc().renderWidth;
+    //depthRect.height    = context->getDevice()->getSwapchain()->getDesc().renderHeight;
 
     // Set the PreZ pass.
     context->pushState();

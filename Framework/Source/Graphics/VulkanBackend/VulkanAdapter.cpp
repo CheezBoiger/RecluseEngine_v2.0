@@ -248,10 +248,10 @@ std::vector<VkExtensionProperties> VulkanAdapter::getDeviceExtensionProperties()
 }
 
 
-B32 VulkanAdapter::checkSurfaceSupport(U32 queueIndex, VkSurfaceKHR surface) const
+B32 VulkanAdapter::checkSurfaceSupport(U32 familyQueueIndex, VkSurfaceKHR surface) const
 {
     VkBool32 supported = VK_FALSE;
-    vkGetPhysicalDeviceSurfaceSupportKHR(m_phyDevice, queueIndex, surface, &supported);
+    vkGetPhysicalDeviceSurfaceSupportKHR(m_phyDevice, familyQueueIndex, surface, &supported);
     return (B32)supported;
 }
 

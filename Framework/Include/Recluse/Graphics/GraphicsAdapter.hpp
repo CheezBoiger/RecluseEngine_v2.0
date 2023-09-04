@@ -31,8 +31,7 @@ struct R_PUBLIC_API AdapterLimits
 
 struct R_PUBLIC_API DeviceCreateInfo 
 {
-    void*                       winHandle;
-    SwapchainCreateDescription  swapchainDescription; // Swapchain description, if a window handle is present.
+    Bool supportPresent;
 };
 
 class GraphicsDevice;

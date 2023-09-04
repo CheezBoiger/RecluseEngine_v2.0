@@ -254,7 +254,8 @@ public:
     virtual GraphicsContext*        createContext() { return nullptr; }
     virtual ResultCode              releaseContext(GraphicsContext* pContext) { return RecluseResult_NoImpl; }
     
-    virtual GraphicsSwapchain*      getSwapchain() { return nullptr; }
+    virtual GraphicsSwapchain*      createSwapchain(const SwapchainCreateDescription& description, void* windowHandle) { return nullptr; }
+    virtual ResultCode              destroySwapchain(GraphicsSwapchain* pSwapchain) { return RecluseResult_NoImpl; }
 
     // Load up shader programs to be created on the native api.
     virtual ResultCode              loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const ShaderProgramDefinition& definition) { return RecluseResult_NoImpl; }
@@ -317,8 +318,10 @@ public:
         return onRebuild(); 
     }
 
+    // Prepares the next frame for rendering, this also begins the next command recording session.
+    R_PUBLIC_API virtual ResultCode         prepare(GraphicsContext* context) { return RecluseResult_NoImpl; }
     // Present the current image.
-    R_PUBLIC_API virtual ResultCode         present(PresentConfig config = PresentConfig_Present) { return RecluseResult_NoImpl; }
+    R_PUBLIC_API virtual ResultCode         present(GraphicsContext* context) { return RecluseResult_NoImpl; }
 
     // Get the current frame index, updates after every present call.
     R_PUBLIC_API virtual U32                getCurrentFrameIndex() { return RecluseResult_NoImpl; }

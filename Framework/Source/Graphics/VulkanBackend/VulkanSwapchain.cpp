@@ -21,11 +21,10 @@ GraphicsResource* VulkanSwapchain::getFrame(U32 idx)
 }
 
 
-ResultCode VulkanSwapchain::build(VulkanDevice* pDevice)
+ResultCode VulkanSwapchain::build(VulkanDevice* pDevice, void* windowHandle)
 {
     VkSwapchainCreateInfoKHR createInfo         = { };
     const SwapchainCreateDescription& pDesc     = getDesc();
-    VkSurfaceKHR surface                        = pDevice->getSurface();
     VkResult result                             = VK_SUCCESS;
     VkFormat surfaceFormat                      = VK_FORMAT_UNDEFINED;
     VkColorSpaceKHR colorSpace                  = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
@@ -33,10 +32,10 @@ ResultCode VulkanSwapchain::build(VulkanDevice* pDevice)
     U32 renderWidth                             = pDesc.renderWidth;
     U32 renderHeight                            = pDesc.renderHeight;
     VkImageUsageFlags imageUsageBits            = 0;
-    m_pBackbufferQueue                          = pDevice->getBackbufferQueue();
+    VkSurfaceKHR surface                        = pDevice->getAdapter()->getInstance()->makeSurface(windowHandle);
     m_pDevice                                   = pDevice;
-
-    if (pDesc.renderWidth <= 0 || pDesc.renderHeight <= 0) 
+ 
+   if (pDesc.renderWidth <= 0 || pDesc.renderHeight <= 0) 
     {
         R_ERROR(R_CHANNEL_VULKAN, "Can not define a RenderWidth or Height less than 1! Width=%d, Height=%d", pDesc.renderWidth, pDesc.renderHeight);
 
@@ -125,7 +124,8 @@ ResultCode VulkanSwapchain::build(VulkanDevice* pDevice)
     requestOverrideFrameCount(frameCount);
     requestOverrideRenderResolution(renderWidth, renderHeight);
     buildFrameResources(Vulkan::getResourceFormat(surfaceFormat));
-    queryCommandPools();
+
+    m_windowHandle = windowHandle;
 
     //VkSemaphore imageAvailableSema = getWaitSemaphore(m_currentFrameIndex);
 
@@ -153,8 +153,8 @@ ResultCode VulkanSwapchain::build(VulkanDevice* pDevice)
 ResultCode VulkanSwapchain::onRebuild()
 {
     // Destroy and rebuild the swapchain.
-    destroy();
-    build(m_pDevice);
+    release();
+    build(m_pDevice, m_windowHandle);
     // TODO(Garcia): Application frame index has to match with native API image index
     //                  This might need to be reinvestigated, as I feel either we need to remove one of these,
     //                  or syncronize them both.
@@ -164,15 +164,11 @@ ResultCode VulkanSwapchain::onRebuild()
 }
 
 
-ResultCode VulkanSwapchain::destroy()
+ResultCode VulkanSwapchain::release()
 {
     VkDevice device     = m_pDevice->get();
-    VkInstance instance = m_pDevice->getAdapter()->getInstance()->get();    
-
     if (m_swapchain) 
     {
-        m_frameResources.destroy(this);
-
         for (U32 i = 0; i < m_frameImages.size(); ++i) 
         {   
             // Do not call m_frameResources[i]->destroy(), images are originally handled
@@ -187,77 +183,122 @@ ResultCode VulkanSwapchain::destroy()
         R_DEBUG(R_CHANNEL_VULKAN, "Destroyed swapchain.");
     }
 
-    VkCommandPool pool = m_pBackbufferQueue->getTemporaryCommandPool();
-    for (U32 i = 0; i < m_commandbuffers.size(); ++i) 
-    {
-        vkFreeCommandBuffers
-            (
-                device, 
-                pool,
-                1, 
-                &m_commandbuffers[i]
-            );   
-    }
-
-    //vkDestroyCommandPool(device, m_commandPool, nullptr);
-
     return RecluseResult_Ok;
 }
 
 
-ResultCode VulkanSwapchain::present(PresentConfig config)
+ResultCode VulkanSwapchain::present(GraphicsContext* context)
 {
     R_ASSERT(m_pBackbufferQueue != NULL);
-    VkResult result                 = VK_SUCCESS;
-    ResultCode err                     = RecluseResult_Ok;
+    VulkanContext* vulkanContext        = context->castTo<VulkanContext>();
+    const U32 contextIndex              = vulkanContext->getCurrentBufferIndex();
+    VulkanContextFrame& contextFrame    = vulkanContext->getContextFrame(contextIndex);
+    VkResult result                     = VK_SUCCESS;
+    ResultCode err                      = RecluseResult_Ok;
 
-    const U32 currentFrameIndex     = getCurrentFrameIndex();
+    VkSwapchainKHR swapchains[]         = { m_swapchain };
+    VkSemaphore pWaitSemaphores[]       = { contextFrame.signalSemaphore };
+    VkDevice device                     = m_pDevice->get();
 
-    if (config & PresentConfig_DelayPresent)
-    {
-        return RecluseResult_Ok;
-    }
-
-    VkSwapchainKHR swapchains[]     = { m_swapchain };
-    VkSemaphore pWaitSemaphores[]   = { getSignalSemaphore(m_currentFrameIndex) };
-    VkDevice device                 = m_pDevice->get();
+    R_ASSERT_FORMAT(contextIndex < m_frames.size(), "Context frame is larger than the actual number of swapchain images! This will cause problems!!");
+    validateSwapchainImageIsPresentable();
     
-    if (!(config & PresentConfig_SkipPresent))
-    {
-        VkPresentInfoKHR info       = { };
-        info.swapchainCount         = 1;
-        info.pSwapchains            = swapchains;
-        info.sType                  = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-        info.pWaitSemaphores        = pWaitSemaphores;
-        info.waitSemaphoreCount     = 1;
-        info.pResults               = nullptr;
-        info.pImageIndices          = &m_currentImageIndex;
+    VkPresentInfoKHR info       = { };
+    info.swapchainCount         = 1;
+    info.pSwapchains            = swapchains;
+    info.sType                  = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    info.pWaitSemaphores        = pWaitSemaphores;
+    info.waitSemaphoreCount     = 1;
+    info.pResults               = nullptr;
+    info.pImageIndices          = &m_currentImageIndex;
     
-        result = vkQueuePresentKHR(m_pBackbufferQueue->get(), &info);
+    result = vkQueuePresentKHR(m_pBackbufferQueue->get(), &info);
 
-        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) 
-        {
-            err = RecluseResult_NeedsUpdate;
-        }
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) 
+    {
+        err = RecluseResult_NeedsUpdate;
     }
 
     incrementFrameIndex();
-
     return err;
 }
 
 
-ResultCode VulkanSwapchain::prepareFrame(VkFence cpuFence)
+void VulkanSwapchain::validateSwapchainImageIsPresentable()
 {
-    R_ASSERT(m_pBackbufferQueue != NULL);
-    VkResult result                 = VK_SUCCESS;
-    const U32 currentFrameIndex     = getCurrentFrameIndex();
-    VkFence frameFence              = cpuFence ? cpuFence : m_frameResources.getFence(currentFrameIndex);
-    VkSemaphore imageAvailableSema  = getWaitSemaphore(currentFrameIndex);
-    ResultCode err = RecluseResult_Ok;
+    VulkanImage* frame                  = m_frameImages[m_currentFrameIndex];
 
-    vkWaitForFences(m_pDevice->get(), 1, &frameFence, VK_TRUE, UINT64_MAX);
-    vkResetFences(m_pDevice->get(), 1, &frameFence);
+    if (frame->getCurrentLayout() != VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) 
+    {
+        R_WARN
+            (
+                R_CHANNEL_VULKAN, 
+                "Submitting command buffer on frame %d without transitioning back swapchain buffer to PRESENT!"
+                " Will require a transition after all rendering is done!",
+                m_currentFrameIndex
+            );
+    }
+
+    
+    //range.aspectMask        = VK_IMAGE_ASPECT_COLOR_BIT;
+    //range.baseArrayLayer    = 0;
+    //range.baseMipLevel      = 0;
+    //range.layerCount        = 1;
+    //range.levelCount        = 1;
+
+    //imgBarrier = frame->transition(ResourceState_Present, range);    
+
+    //VkCommandBuffer singleUseCmdBuf     = m_queue->;
+    //vkResetCommandBuffer(singleUseCmdBuf, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+
+    //{
+    //    VkCommandBufferBeginInfo begin = { };
+    //    begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    //    begin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    //    vkBeginCommandBuffer(singleUseCmdBuf, &begin);
+    //}
+
+    //vkCmdPipelineBarrier
+    //    (
+    //        singleUseCmdBuf, 
+    //        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+    //        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 
+    //        VK_DEPENDENCY_BY_REGION_BIT, 
+    //        0, nullptr, 
+    //        0, nullptr, 
+    //        1, &imgBarrier
+    //    );
+
+    //vkEndCommandBuffer(singleUseCmdBuf);
+
+    //VkSubmitInfo submitInfo             = { };
+    //VkPipelineStageFlags waitStages[]   = { VK_PIPELINE_STAGE_ALL_COMMANDS_BIT };
+    //VkCommandBuffer buffers[2]          = { primaryCmdBuf, singleUseCmdBuf };
+    //submitInfo.sType                    = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    //submitInfo.signalSemaphoreCount     = 1; 
+    //submitInfo.commandBufferCount       = 2;
+    //submitInfo.pSignalSemaphores        = &signalSemaphore;
+    //submitInfo.waitSemaphoreCount       = 1;
+    //submitInfo.pWaitSemaphores          = &waitSemaphore;
+    //submitInfo.pCommandBuffers          = buffers;
+    //submitInfo.pWaitDstStageMask        = waitStages;
+
+    //vkQueueSubmit(m_pBackbufferQueue->get(), 1, &submitInfo, fence);
+}
+
+
+ResultCode VulkanSwapchain::prepare(GraphicsContext* context)
+{
+    //R_ASSERT_FORMAT(context != NULL, "Swapchain requires a context, in order to increment the next frame!");
+    R_ASSERT(m_pBackbufferQueue != NULL);
+    VulkanContext* vulkanContext    = context->castTo<VulkanContext>();
+
+    vulkanContext->begin();
+
+    VulkanContextFrame& contextFrame = vulkanContext->getContextFrame(vulkanContext->getCurrentBufferIndex());
+    VkResult result                 = VK_SUCCESS;
+    VkSemaphore imageAvailableSema  = contextFrame.waitSemaphore;
+    ResultCode err = RecluseResult_Ok;
 
     result = vkAcquireNextImageKHR
                 (
@@ -281,9 +322,14 @@ ResultCode VulkanSwapchain::prepareFrame(VkFence cpuFence)
 
 void VulkanSwapchain::buildFrameResources(ResourceFormat resourceFormat)
 {
-    m_frameResources.build(this);
+    // Obtain the swapchain images.
+    VkDevice device = m_pDevice->get();
+    U32 swapchainImageCount = 0;
+    vkGetSwapchainImagesKHR(device, m_swapchain, &swapchainImageCount, nullptr);
+    m_frames.resize(swapchainImageCount);
+    vkGetSwapchainImagesKHR(device, m_swapchain, &swapchainImageCount, m_frames.data());
 
-    U32 numMaxFrames                                = m_frameResources.getNumMaxFrames();
+    U32 numMaxFrames                                = m_frames.size();
     const SwapchainCreateDescription& swapchainDesc = getDesc();
 
     m_frameImages.resize(numMaxFrames);
@@ -295,7 +341,7 @@ void VulkanSwapchain::buildFrameResources(ResourceFormat resourceFormat)
     // We do need to create our view resources however.
     for (U32 i = 0; i < numMaxFrames; ++i) 
     {
-        VkImage frame = m_frameResources.getImage(i);
+        VkImage frame = m_frames[i];
 
         GraphicsResourceDescription desc = { };
         desc.width          = swapchainDesc.renderWidth;
@@ -313,135 +359,6 @@ void VulkanSwapchain::buildFrameResources(ResourceFormat resourceFormat)
         m_frameImages[i]->generateId();
         m_frameImages[i]->setDevice(m_pDevice);
     }
-}
-
-
-void VulkanSwapchain::queryCommandPools()
-{
-    //const std::vector<QueueFamily>& queueFamilies = m_pDevice->getQueueFamilies();
-    VkDevice device = m_pDevice->get();
-
-    //for (U32 i = 0; i < queueFamilies.size(); ++i) 
-    //{
-    //    if (queueFamilies[i].flags & (VK_QUEUE_TRANSFER_BIT | VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT)) 
-    //    {
-
-    //        m_queueFamily = &queueFamilies[i];
-
-    //        {
-    //            VkCommandPoolCreateInfo poolCreateInfo = { };
-    //            poolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    //            poolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    //            poolCreateInfo.queueFamilyIndex = m_queueFamily->queueFamilyIndex;
-
-    //            vkCreateCommandPool(device, &poolCreateInfo, nullptr, &m_commandPool);
-    //        }
-    //        break;
-    //    }
-    //}
-
-    // For the back buffer queue to be able to handle one time only command buffers, set it up from
-    // the swapchain command pool.
-    VkCommandPool pool = m_pBackbufferQueue->getTemporaryCommandPool();
-    m_commandbuffers.resize(m_frameResources.getNumMaxFrames());
-    for (U32 j = 0; j < m_commandbuffers.size(); ++j) 
-    {    
-        VkCommandBufferAllocateInfo allocIf = { };
-        allocIf.sType                       = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        allocIf.commandBufferCount          = 1;
-        allocIf.level                       = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocIf.commandPool                 = pool;
-        vkAllocateCommandBuffers(device, &allocIf, &m_commandbuffers[j]);
-    }
-    
-}
-
-
-ResultCode VulkanSwapchain::submitFinalCommandBuffer(VkCommandBuffer commandBuffer, VkFence cpuFence)
-{
-    VulkanImage* frame                  = m_frameImages[m_currentFrameIndex];
-    VkDevice device                     = m_pDevice->get();
-    VkImageMemoryBarrier imgBarrier     = { };
-    VkImageSubresourceRange range       = { };
-    VkCommandBuffer primaryCmdBuf       = commandBuffer;
-    VkCommandBuffer singleUseCmdBuf     = m_commandbuffers[m_currentFrameIndex];
-    VkFence fence                       = cpuFence ? cpuFence : m_frameResources.getFence(m_currentFrameIndex);
-    VkSemaphore signalSemaphore         = m_frameResources.getSignalSemaphore(m_currentFrameIndex);
-    VkSemaphore waitSemaphore           = m_frameResources.getWaitSemaphore(m_currentFrameIndex);
-
-    R_ASSERT(primaryCmdBuf != NULL);
-
-    if (frame->getCurrentLayout() == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) 
-    {
-        // Push an empty submittal, in order to signal the semaphores.
-        VkSubmitInfo submitInfo             = { };
-        VkPipelineStageFlags waitStages[]   = { VK_PIPELINE_STAGE_ALL_COMMANDS_BIT };
-        submitInfo.sType                    = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.signalSemaphoreCount     = 1;
-        submitInfo.commandBufferCount       = 1;
-        submitInfo.pSignalSemaphores        = &signalSemaphore;
-        submitInfo.waitSemaphoreCount       = 1;
-        submitInfo.pWaitSemaphores          = &waitSemaphore;
-        submitInfo.pCommandBuffers          = &primaryCmdBuf;
-        submitInfo.pWaitDstStageMask        = waitStages;
-
-        vkQueueSubmit(m_pBackbufferQueue->get(), 1, &submitInfo, fence);
-
-        return RecluseResult_Ok;
-    }
-
-    R_WARN
-        (
-            R_CHANNEL_VULKAN, 
-            "Submitting command buffer %#010llx without transitioning back swapchain buffer to PRESENT!"
-            " Will require an additional command buffer to transition it.",
-            reinterpret_cast<UPtr>(commandBuffer)
-        );
-    
-    range.aspectMask        = VK_IMAGE_ASPECT_COLOR_BIT;
-    range.baseArrayLayer    = 0;
-    range.baseMipLevel      = 0;
-    range.layerCount        = 1;
-    range.levelCount        = 1;
-
-    imgBarrier = frame->transition(ResourceState_Present, range);    
-
-    vkResetCommandBuffer(singleUseCmdBuf, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
-
-    {
-        VkCommandBufferBeginInfo begin = { };
-        begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-        begin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        vkBeginCommandBuffer(singleUseCmdBuf, &begin);
-    }
-
-    vkCmdPipelineBarrier
-        (
-            singleUseCmdBuf, 
-            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 
-            VK_DEPENDENCY_BY_REGION_BIT, 
-            0, nullptr, 
-            0, nullptr, 
-            1, &imgBarrier
-        );
-
-    vkEndCommandBuffer(singleUseCmdBuf);
-
-    VkSubmitInfo submitInfo             = { };
-    VkPipelineStageFlags waitStages[]   = { VK_PIPELINE_STAGE_ALL_COMMANDS_BIT };
-    VkCommandBuffer buffers[2]          = { primaryCmdBuf, singleUseCmdBuf };
-    submitInfo.sType                    = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.signalSemaphoreCount     = 1; 
-    submitInfo.commandBufferCount       = 2;
-    submitInfo.pSignalSemaphores        = &signalSemaphore;
-    submitInfo.waitSemaphoreCount       = 1;
-    submitInfo.pWaitSemaphores          = &waitSemaphore;
-    submitInfo.pCommandBuffers          = buffers;
-    submitInfo.pWaitDstStageMask        = waitStages;
-
-    vkQueueSubmit(m_pBackbufferQueue->get(), 1, &submitInfo, fence);
-    return RecluseResult_Ok;
 }
 
 

@@ -48,6 +48,9 @@ public:
 
     LayerFeatureFlags   getRequestedDeviceFeatures() const { return m_requestedDeviceFeatures; }
     
+    VkSurfaceKHR        makeSurface(void* windowHandle);
+    ResultCode          destroySurface(void* windowHandle);
+    
 private:
     void                nullify();
     void                setDebugCallback();
@@ -66,5 +69,6 @@ private:
 
     // Callback if needed.
     VkDebugReportCallbackEXT m_debugReportCallback;
+    std::map<UPtr, VkSurfaceKHR>  m_surfaces;
 };
 } // Recluse

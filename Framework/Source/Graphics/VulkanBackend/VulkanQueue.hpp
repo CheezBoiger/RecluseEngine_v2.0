@@ -9,29 +9,28 @@ namespace Recluse {
 
 
 class VulkanDevice;
-
+class VulkanAdapter;
 struct QueueFamily;
 
 // Vulkan queue implementation, inherits from GraphicsQueue API.
 class VulkanQueue 
 {
 public:
-
+    static const U32 failedIndex = 0xffffffff;
     static void             generateCopyResource(VkCommandBuffer commandBuffer, GraphicsResource* dst, GraphicsResource* src);
 
-    VulkanQueue(VkQueueFlags type, B32 isPresentSupported = false) 
+    VulkanQueue(VkQueueFlags type = 0) 
         : m_queue(nullptr)
         , m_pDevice(nullptr)
         , m_fence(VK_NULL_HANDLE)
         , m_oneTimeOnlyFence(VK_NULL_HANDLE)
         , m_pFamilyRef(nullptr)
-        , m_isPresentSupported(isPresentSupported)
         , m_tempCommandPool(VK_NULL_HANDLE)
         , m_queueFlags(type) { }
 
     ~VulkanQueue();
 
-    ResultCode              initialize(VulkanDevice* device, QueueFamily* pFamily, U32 queueFamilyIndex, U32 queueIndex);
+    ResultCode              initialize(VulkanDevice* device, QueueFamily* pFamily, U32 queueIndex);
     void                    destroy();
 
     //ErrType submit(const QueueSubmit* payload);
@@ -42,8 +41,9 @@ public:
     void                    wait();
     VkQueue                 operator()() const { return m_queue; }
     VkQueue                 get() const { return m_queue; }
-    B32                     isPresentSupported() const { return m_isPresentSupported; }
+    B32                     isPresentSupported(VulkanAdapter* pAdapter, VkSurfaceKHR surface) const;
     VkQueueFlags            getQueueFlags() const { return m_queueFlags; }
+    QueueFamily*            getFamily() const { return m_pFamilyRef; }
 
     // Generate an internal one-time only command buffer for copy operations.
     // Mainly a quick way to copy buffers and textures.
@@ -63,7 +63,6 @@ private:
     QueueFamily*            m_pFamilyRef;
     VkFence                 m_fence;
     VkFence                 m_oneTimeOnlyFence;
-    B32                     m_isPresentSupported;
     VkQueueFlags            m_queueFlags;
     VkCommandPool           m_tempCommandPool;
 };

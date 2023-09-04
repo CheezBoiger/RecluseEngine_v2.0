@@ -58,11 +58,11 @@ int main(int c, char* argv[])
     }
 
     DeviceCreateInfo deviceCreate   = { };
-    deviceCreate.winHandle = pWindow->getNativeHandle();
-    deviceCreate.swapchainDescription.buffering                    = FrameBuffering_Triple;
-    deviceCreate.swapchainDescription.desiredFrames                = 3;
-    deviceCreate.swapchainDescription.renderHeight                 = 128;
-    deviceCreate.swapchainDescription.renderWidth                  = 128;
+    SwapchainCreateDescription swapchainDescription = { };
+    swapchainDescription.buffering                    = FrameBuffering_Triple;
+    swapchainDescription.desiredFrames                = 3;
+    swapchainDescription.renderHeight                 = 128;
+    swapchainDescription.renderWidth                  = 128;
 
     result = adapters[0]->createDevice(deviceCreate, &pDevice);
 
@@ -72,7 +72,7 @@ int main(int c, char* argv[])
 
     }
 
-    pSwapchain = pDevice->getSwapchain();
+    pSwapchain = pDevice->createSwapchain(swapchainDescription, pWindow->getNativeHandle());
     
     if (!pSwapchain) {
     
@@ -88,9 +88,10 @@ int main(int c, char* argv[])
             RealtimeTick::updateWatch(1ull, 0);
             RealtimeTick tick = RealtimeTick::getTick(0);
             R_TRACE("Graphics", "FPS: %f", 1.f / tick.delta());
+            pSwapchain->prepare(pContext);
             pContext->begin(); 
             pContext->end();
-            pSwapchain->present();
+            pSwapchain->present(pContext);
             pollEvents();
                     
         }
@@ -99,6 +100,8 @@ int main(int c, char* argv[])
         pContext->wait();
     }
 
+    pDevice->destroySwapchain(pSwapchain);
+    pDevice->releaseContext(pContext);
     adapters[0]->destroyDevice(pDevice);
 
    GraphicsInstance::destroyInstance(pInstance);

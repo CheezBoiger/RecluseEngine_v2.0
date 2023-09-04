@@ -43,7 +43,7 @@ void VulkanContext::initialize(U32 bufferCount)
     release();
 
     // Create the command pool.
-    createFences(bufferCount);
+    createContextFrames(bufferCount);
     createCommandPools(bufferCount);
     createPrimaryCommandList(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_TRANSFER_BIT | VK_QUEUE_COMPUTE_BIT);
     DescriptorAllocator* descriptorAllocator = pDevice->getDescriptorAllocator();
@@ -71,7 +71,7 @@ void VulkanContext::release()
 {
     destroyPrimaryCommandList();
     destroyCommandPools();
-    destroyFences();
+    destroyContextFrames();
     // Ensure we no longer have any buffers.
     m_bufferCount = 0;
     m_currentBufferIndex = 0;
@@ -93,11 +93,14 @@ DescriptorAllocatorInstance* VulkanContext::currentDescriptorAllocator()
 void VulkanContext::begin()
 {    
     R_ASSERT(getBufferCount() > 0);
-    VulkanSwapchain* pSwapchain = getNativeDevice()->getSwapchain()->castTo<VulkanSwapchain>();
-    const U32 numFrames         = pSwapchain->getFrameCount();
-    const U32 bufferCount       = getBufferCount();
+    incrementBufferIndex();
+    VulkanContextFrame& contextFrame    = getContextFrame(getCurrentBufferIndex());
+    VkFence frameFence                  = contextFrame.fence;
 
-    pSwapchain->prepareFrame((numFrames > bufferCount ? getCurrentFence() : VK_NULL_HANDLE));
+    // We need to wait for our fences, before we can begin to reset resources.
+    vkWaitForFences(m_pDevice->get(), 1, &frameFence, VK_TRUE, UINT64_MAX);
+    vkResetFences(m_pDevice->get(), 1, &frameFence);
+
     prepare();
 
     m_primaryCommandList.use(getCurrentBufferIndex());
@@ -123,8 +126,7 @@ void VulkanContext::endRenderPass(VkCommandBuffer buffer)
 
 Bool VulkanContext::supportsAsyncCompute() const
 {
-    R_ASSERT(m_pDevice != NULL);
-    return (m_pDevice->getAsyncQueue() != NULL);
+    return false;
 }
 
 
@@ -133,19 +135,47 @@ void VulkanContext::end()
     endRenderPass(m_primaryCommandList.get());
     flushBarrierTransitions(m_primaryCommandList.get());
     m_primaryCommandList.end();
-    // This performance our submittal.
-    VulkanDevice* pDevice       = getNativeDevice();
-    VulkanSwapchain* pSwapchain = pDevice->getSwapchain()->castTo<VulkanSwapchain>();
-    const U32 frameCount        = pSwapchain->getFrameCount();
-    const U32 bufferCount       = getBufferCount();
-    VkFence fence               = (frameCount > bufferCount ? getCurrentFence() : VK_NULL_HANDLE);
 
     // Flush all copies down for this run.
     m_pDevice->flushAllMappedRanges();
     m_pDevice->invalidateAllMappedRanges();
 
-    pSwapchain->submitFinalCommandBuffer(m_primaryCommandList.get(), fence);
-    incrementBufferIndex();
+    submitFinalCommandBuffer(m_primaryCommandList.get());
+}
+
+
+
+
+ResultCode VulkanContext::submitFinalCommandBuffer(VkCommandBuffer commandBuffer)
+{
+    U32 currentFrameIndex               = getCurrentBufferIndex();
+    VkDevice device                     = m_pDevice->get();
+    VulkanContextFrame& contextFrame    = getContextFrame(currentFrameIndex);
+    VkImageMemoryBarrier imgBarrier     = { };
+    VkImageSubresourceRange range       = { };
+    VkCommandBuffer primaryCmdBuf       = commandBuffer;
+    VkFence fence                       = contextFrame.fence;
+    VkSemaphore signalSemaphore         = contextFrame.signalSemaphore;
+    VkSemaphore waitSemaphore           = contextFrame.waitSemaphore;
+
+    R_ASSERT(primaryCmdBuf != NULL);
+
+
+    // Push a submittal, in order to signal the semaphores.
+    VkSubmitInfo submitInfo             = { };
+    VkPipelineStageFlags waitStages[]   = { VK_PIPELINE_STAGE_ALL_COMMANDS_BIT };
+    submitInfo.sType                    = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.signalSemaphoreCount     = 1;
+    submitInfo.commandBufferCount       = 1;
+    submitInfo.pSignalSemaphores        = &signalSemaphore;
+    submitInfo.waitSemaphoreCount       = 1;
+    submitInfo.pWaitSemaphores          = &waitSemaphore;
+    submitInfo.pCommandBuffers          = &primaryCmdBuf;
+    submitInfo.pWaitDstStageMask        = waitStages;
+
+    vkQueueSubmit(m_queue->get(), 1, &submitInfo, fence);
+
+    return RecluseResult_Ok;
 }
 
 
@@ -196,23 +226,8 @@ ResultCode VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& in
 
     createInfo.sType                                    = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
-    if (info.winHandle) 
+    if (info.supportPresent) 
     {
-        R_DEBUG(R_CHANNEL_VULKAN, "Creating surface handle.");
-
-        // Create surface
-        ResultCode builtSurface = createSurface(pVc->get(), info.winHandle);
-
-        if (builtSurface != RecluseResult_Ok) 
-        {
-            R_ERROR(R_CHANNEL_VULKAN, "Surface failed to create! Aborting build");
-            return builtSurface;
-        }
- 
-        m_windowHandle              = info.winHandle;
-
-        R_DEBUG(R_CHANNEL_VULKAN, "Successfully created vulkan handle.");
-        
         // Add swapchain extension capability.
         deviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
     }
@@ -228,23 +243,9 @@ ResultCode VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& in
         VkQueueFamilyProperties queueFamProps   = queueFamilies[i];
         B32 shouldCreateQueues                  = false;
 
-        queueFamily.isPresentSupported  = false;
         queueFamily.flags               = queueFamProps.queueFlags;
         queueInfo.queueCount            = 0;
         queueInfo.sType                 = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-
-        if (m_surface) 
-        {
-            if (adapter->checkSurfaceSupport(i, m_surface)) 
-            {   
-                R_DEBUG(R_CHANNEL_VULKAN, "Device supports present...");
-
-                queueInfo.queueCount += 1;
-                queueFamily.isPresentSupported = true;
-                shouldCreateQueues = true;
-            }
-        
-        }
 
         if (queueFamProps.queueFlags & VK_QUEUE_GRAPHICS_BIT) 
         {
@@ -317,12 +318,6 @@ ResultCode VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& in
         R_ERROR(R_CHANNEL_VULKAN, "Failed to initialize the allocation manager!");
     }
 
-    // Create a swapchain if we have our info.
-    if (info.winHandle) 
-    {
-        createSwapchain(&m_swapchain, info.swapchainDescription, getBackbufferQueue());
-    }
-
     m_enabledFeatures = features;
 
     return 0;
@@ -351,13 +346,6 @@ void VulkanDevice::release(VkInstance instance)
     Pipelines::VertexLayout::unloadAll();
     Pipelines::clearPipelineCache(this);
 
-    if (m_surface) 
-    {
-        vkDestroySurfaceKHR(instance, m_surface, nullptr);
-        m_surface = VK_NULL_HANDLE;
-        R_DEBUG(R_CHANNEL_VULKAN, "Destroyed surface.");
-    }
-
     if (m_device != VK_NULL_HANDLE) 
     {
         vkDestroyDevice(m_device, nullptr);
@@ -374,28 +362,49 @@ VkDeviceSize VulkanDevice::getNonCoherentSize() const
 }
 
 
-ResultCode VulkanDevice::createSwapchain
+GraphicsSwapchain* VulkanDevice::createSwapchain
     (
-        VulkanSwapchain** ppSwapchain,
         const SwapchainCreateDescription& pDesc,
-        VulkanQueue* pPresentationQueue
+        void* windowHandle
     )
 {
+    VkSurfaceKHR surface                = getAdapter()->getInstance()->makeSurface(windowHandle); 
+    VulkanQueue* pQueue                 = getPresentableQueue(surface);
+    VulkanSwapchain* pSwapchain         = new VulkanSwapchain(pDesc, pQueue);
+    VulkanInstance*   pNativeContext    = m_adapter->getInstance();
 
-    VulkanSwapchain* pSwapchain     = new VulkanSwapchain(pDesc, pPresentationQueue);
-    VulkanInstance*   pNativeContext = m_adapter->getInstance();
+    ResultCode result = pSwapchain->build(this, windowHandle);
 
-    ResultCode result = pSwapchain->build(this);
-
-    if (result != 0) 
+    if (result != RecluseResult_Ok) 
     {
         R_ERROR(R_CHANNEL_VULKAN, "Swapchain failed to create");
-        return -1;
+        delete pSwapchain;
+        return nullptr;
     }
 
-    *ppSwapchain = pSwapchain;
+    return pSwapchain;
+}
 
-    return result;
+
+VulkanQueue* VulkanDevice::getPresentableQueue(VkSurfaceKHR surface)
+{
+    VkQueueFlags flags = (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT);
+    VulkanQueue* pQueue = getQueue(flags);
+    if (!pQueue->isPresentSupported(getAdapter(), surface))
+    {
+        // If the current queue doesn't support the given surface present, we need to find a new one.
+        // TODO: We will need to figure out how to update other resources that might be using the old queue!!
+        VulkanQueue queue = makeQueue((VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT), true, surface);
+        auto& iter = m_queues.find(flags);
+        if (iter != m_queues.end())
+        {
+            iter->second.destroy();
+            m_queues.erase(iter);
+            m_queues.insert(std::make_pair(flags, queue));
+            pQueue = &m_queues[flags];
+        }
+    }
+    return pQueue;
 }
 
 
@@ -418,7 +427,7 @@ ResultCode VulkanDevice::destroySwapchain(VulkanSwapchain* pSwapchain)
 
     }
 
-    result = pSwapchain->destroy();
+    result = pSwapchain->release();
 
     if (result != RecluseResult_Ok) 
     {
@@ -433,51 +442,6 @@ ResultCode VulkanDevice::destroySwapchain(VulkanSwapchain* pSwapchain)
 
 
     return result;
-}
-
-
-ResultCode VulkanDevice::createSurface(VkInstance instance, void* handle)
-{
-    VkResult result             = VK_SUCCESS;
-
-    if (m_surface && (handle == m_windowHandle)) 
-    {
-        R_DEBUG(R_CHANNEL_VULKAN, "Surface is already created for handle. Skipping surface create...");
-        
-        return RecluseResult_Ok;    
-    }
-
-    if (!handle) 
-    {
-        R_ERROR(R_CHANNEL_VULKAN, "Null window handle for surface creation.");
-        return RecluseResult_NullPtrExcept;
-    }
-
-    if (m_surface) 
-    {
-        vkDestroySurfaceKHR(instance, m_surface, nullptr);
-        m_surface = VK_NULL_HANDLE;
-    }
-
-#if defined(RECLUSE_WINDOWS)
-    VkWin32SurfaceCreateInfoKHR createInfo = { };
-
-    createInfo.sType            = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-    createInfo.hinstance        = GetModuleHandle(NULL);
-    createInfo.hwnd             = (HWND)handle;
-    createInfo.pNext            = nullptr;
-    createInfo.flags            = 0;            // future use, not needed.
-
-    result = vkCreateWin32SurfaceKHR(instance, &createInfo, nullptr, &m_surface);
-    
-    if (result != VK_SUCCESS) 
-    {
-        R_ERROR(R_CHANNEL_VULKAN, "Failed to create win32 surface.");
-        return RecluseResult_Failed;
-    }
-#endif
-
-    return RecluseResult_Ok;    
 }
 
 
@@ -509,99 +473,100 @@ ResultCode VulkanDevice::reserveMemory(const MemoryReserveDescription& desc)
 ResultCode VulkanDevice::createQueues()
 {
     // Lets create the primary queue.
-    ResultCode result          = RecluseResult_Ok;
-    VkQueueFlags flags      = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT;
-    B32 isPresentSupported  = false;
+    VulkanQueue queue;
+    ResultCode result       = RecluseResult_Ok;
+    queue = makeQueue((VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT));
 
-    if (hasSurface()) 
-    {
-        isPresentSupported = true;
-    }
-
-    result = createQueue(&m_pGraphicsQueue, flags, isPresentSupported);
-
-    if (result != RecluseResult_Ok) 
+    if (queue.get() == VK_NULL_HANDLE) 
     { 
         R_ERROR(R_CHANNEL_VULKAN, "Failed to create main RHI queue!");
+        result = RecluseResult_Failed;
+    }
+    else
+    {
+        m_queues[(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT)] = queue;
     }
 
-    result = createQueue(&m_pAsyncComputeQueue, VK_QUEUE_COMPUTE_BIT, false);
+    queue = makeQueue(VK_QUEUE_COMPUTE_BIT);
 
-    if (result != RecluseResult_Ok)
+    if (queue.get() == VK_NULL_HANDLE)
     {
         R_DEBUG(R_CHANNEL_VULKAN, "Async Compute not supported. No queue was created for this...");
-        m_pAsyncComputeQueue = nullptr;
+        result = RecluseResult_Failed;
+    }
+    else
+    {
+        m_queues[VK_QUEUE_COMPUTE_BIT] = queue;
     }
 
     return result;
 }
 
 
-ResultCode VulkanDevice::createQueue(VulkanQueue** ppQueue, VkQueueFlags flags, B32 isPresentable)
+VulkanQueue VulkanDevice::makeQueue(VkQueueFlags flags, Bool reuse, VkSurfaceKHR surfaceToPresent)
 {
-    U32 queueFamilyIndex    = 0xFFFFFFFF;
     U32 queueIndex          = 0xFFFFFFFF;
-    VulkanQueue* pQueue     = nullptr;
+    VulkanQueue queue       = { };
     QueueFamily* pFamily    = nullptr;
-
-    // Main queue first.
+    VulkanAdapter* pAdapter = getAdapter();
 
     for (U32 i = 0; i < m_queueFamilies.size(); ++i) 
     {
         QueueFamily& family = m_queueFamilies[i];
 
+        // Passing the surface will mean we want a queue that supports it.
+        if (surfaceToPresent && !pAdapter->checkSurfaceSupport(family.queueFamilyIndex, surfaceToPresent))
+        {
+            // If this queue family is not present supported, then check the next.
+            continue;
+        }
+
         if (family.flags & flags) 
         {
-            if (isPresentable && !family.isPresentSupported) 
+            if (!reuse)
             {
-                // If this queue family is not present supported, then check the next.
-                continue;
-            }
-
-            // Check if we can get a queue from this family.
-            if (family.currentAvailableQueueIndex < family.maxQueueCount) 
-            {    
-                queueFamilyIndex    = family.queueFamilyIndex;
-                queueIndex          = family.currentAvailableQueueIndex++;
                 pFamily             = &family;
-                break;   
+                // Check if we can get a queue from this family.
+                if (family.currentAvailableQueueIndex < family.maxQueueCount) 
+                {
+                    queueIndex          = family.currentAvailableQueueIndex++;
+                    break;   
+                }
+            }
+            else
+            {
+                // We reuse the same queue.
+                queueIndex = family.currentAvailableQueueIndex;
+                break;
             }
         }
     }
 
-    if (queueFamilyIndex == 0xFFFFFFFF || queueIndex == 0xFFFFFFFF) 
+    if (queueIndex == 0xFFFFFFFF) 
     {
         // Can not find proper queue family, fails to create a queue!
-        return RecluseResult_Failed;
+        return queue;
     }
 
-    pQueue = new VulkanQueue(flags, isPresentable);
+    queue = VulkanQueue(flags);
 
-    ResultCode err = pQueue->initialize(this, pFamily, queueFamilyIndex, queueIndex);
-
-    if (err == RecluseResult_Ok) 
+    ResultCode err = queue.initialize(this, pFamily, queueIndex);
+    if (err != RecluseResult_Ok) 
     {
-        *ppQueue = pQueue;
+        queue.destroy();
     }
 
-    return err;
+    return queue;
 }
 
 
 ResultCode VulkanDevice::destroyQueues()
 {
-    if (m_pGraphicsQueue) 
+    for (auto& iter : m_queues)
     {
-        delete m_pGraphicsQueue;
-        m_pGraphicsQueue = nullptr;
+        iter.second.destroy();
     }
-
-    if (m_pAsyncComputeQueue)
-    {
-        delete m_pAsyncComputeQueue;
-        m_pAsyncComputeQueue = nullptr;
-    }
-
+    m_queues.clear();
     return RecluseResult_Ok;
 }
 
@@ -632,39 +597,27 @@ ResultCode VulkanContext::createCommandPools(U32 buffers)
     VkCommandPoolCreateInfo poolIf                  = { };
     poolIf.sType                                    = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     poolIf.flags                                    = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    VkQueueFlags queueFlags                         = (VK_QUEUE_COMPUTE_BIT | VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_TRANSFER_BIT);
-    const std::vector<QueueFamily>& queueFamilies   = m_pDevice->getQueueFamilies(); 
-    VkResult result                                 = VK_SUCCESS;
+    VkQueueFlags queueFlags                         = (VK_QUEUE_COMPUTE_BIT | VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_TRANSFER_BIT); 
+    ResultCode result                               = RecluseResult_Ok;
+    poolIf.queueFamilyIndex = m_queue->getFamily()->queueFamilyIndex;
+    m_commandPools.resize(buffers);
+    for (U32 j = 0; j < m_commandPools.size(); ++j) 
+    { 
+        result = vkCreateCommandPool
+                            (
+                                m_pDevice->get(),
+                                &poolIf, 
+                                nullptr, 
+                                &m_commandPools[j]
+                            );
 
-    for (U32 i = 0; i < queueFamilies.size(); ++i) 
-    {
-        if (queueFamilies[i].flags & queueFlags)
+        if (result != VK_SUCCESS) 
         {
-            poolIf.queueFamilyIndex = queueFamilies[i].queueFamilyIndex;
-            m_queueFamilyIndex      = poolIf.queueFamilyIndex;
-            m_commandPools.resize(buffers);
-            for (U32 j = 0; j < m_commandPools.size(); ++j) 
-            { 
-                result = vkCreateCommandPool
-                                    (
-                                        m_pDevice->get(),
-                                        &poolIf, 
-                                        nullptr, 
-                                        &m_commandPools[j]
-                                    );
-
-                if (result != VK_SUCCESS) 
-                {
-                    R_ERROR(R_CHANNEL_VULKAN, "Failed to create command pool for queue family...");
-                    destroyCommandPools();
-                    break;
-                }
-            }
-            
+            R_ERROR(R_CHANNEL_VULKAN, "Failed to create command pool for queue family...");
+            destroyCommandPools();
             break;
         }
     }
-
     return ((result != VK_SUCCESS) ? RecluseResult_Failed : RecluseResult_Ok);
 }
 
@@ -688,7 +641,7 @@ void VulkanContext::destroyCommandPools()
 ResultCode VulkanContext::createPrimaryCommandList(VkQueueFlags flags)
 {
     ResultCode result = RecluseResult_Ok;
-    U32 queueFamilyIndex = m_queueFamilyIndex;
+    U32 queueFamilyIndex = m_queue->getFamily()->queueFamilyIndex;
     R_DEBUG(R_CHANNEL_VULKAN, "Creating command list...");
     result = m_primaryCommandList.initialize
                 (
@@ -756,28 +709,38 @@ void VulkanContext::prepare()
 }
 
 
-void VulkanContext::createFences(U32 buffering)
+void VulkanContext::createContextFrames(U32 buffering)
 {
-    m_fences.resize(buffering);
-    for (U32 i = 0; i < m_fences.size(); ++i) 
+    m_frameResources.resize(buffering);
+    for (U32 i = 0; i < m_frameResources.size(); ++i) 
     {
+        VulkanContextFrame frame = { };
         // Create fences with signalled bit, in order for the swapchain to properly 
         // wait on our fences, this should handle initial startup of application rendering, and not cause a block.
         VkFenceCreateInfo info = { };
         info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-        vkCreateFence(m_pDevice->get(), &info, nullptr, &m_fences[i]);
+        vkCreateFence(m_pDevice->get(), &info, nullptr, &frame.fence);
+
+        VkSemaphoreCreateInfo semaphoreInfo = { };
+        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+        semaphoreInfo.flags = 0;
+        vkCreateSemaphore(m_pDevice->get(), &semaphoreInfo, nullptr, &frame.waitSemaphore);
+        vkCreateSemaphore(m_pDevice->get(), &semaphoreInfo, nullptr, &frame.signalSemaphore);
+        m_frameResources[i] = frame;
     }
 }
 
 
-void VulkanContext::destroyFences()
+void VulkanContext::destroyContextFrames()
 {
-    for (U32 i = 0; i < m_fences.size(); ++i) 
+    for (U32 i = 0; i < m_frameResources.size(); ++i) 
     {
-        vkDestroyFence(m_pDevice->get(), m_fences[i], nullptr);
+        vkDestroyFence(m_pDevice->get(), m_frameResources[i].fence, nullptr);
+        vkDestroySemaphore(m_pDevice->get(), m_frameResources[i].waitSemaphore, nullptr);
+        vkDestroySemaphore(m_pDevice->get(), m_frameResources[i].signalSemaphore, nullptr);
     }
-    m_fences.clear();
+    m_frameResources.clear();
 }
 
 
@@ -967,15 +930,9 @@ void VulkanDevice::pushInvalidateMemoryRange(const VkMappedMemoryRange& mappedRa
 }
 
 
-GraphicsSwapchain* VulkanDevice::getSwapchain()
-{
-    return m_swapchain;
-}
-
-
 ResultCode VulkanContext::wait()
 {
-    m_pDevice->getBackbufferQueue()->wait();
+    m_queue->wait();
     return RecluseResult_Ok;
 }
 
@@ -1046,7 +1003,7 @@ GraphicsContext* VulkanDevice::createContext()
         return nullptr;
     }
 
-    VulkanContext* pContext = new VulkanContext(this);
+    VulkanContext* pContext = new VulkanContext(this, getQueue(VK_QUEUE_COMPUTE_BIT | VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_TRANSFER_BIT));
     m_allocatedContexts.push_back(pContext);
     return pContext;
 }
@@ -1070,5 +1027,14 @@ void VulkanDevice::copyBufferRegions(GraphicsResource* dst, GraphicsResource* sr
 void VulkanDevice::copyResource(GraphicsResource* dst, GraphicsResource* src)
 {
     m_swapchain->getPresentationQueue()->copyResource(dst, src);
+}
+
+
+ResultCode VulkanDevice::destroySwapchain(GraphicsSwapchain* pSwapchain)
+{
+    VulkanSwapchain* vulkanSwapchain = pSwapchain->castTo<VulkanSwapchain>();
+    vulkanSwapchain->release();
+    delete pSwapchain;
+    return RecluseResult_Ok;
 }
 } // Recluse

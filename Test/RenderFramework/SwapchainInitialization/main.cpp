@@ -22,9 +22,10 @@ int main(int c, char* argv[])
     RealtimeTick::initializeWatch(1ull, 0);
     GraphicsSwapchain* pSwapchain   = nullptr;
     GraphicsDevice* pDevice         = nullptr;
-    GraphicsInstance* pInstance       = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
+    GraphicsInstance* pInstance       = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
 
     Window* pWindow = Window::create(u8"SwapchainInitialization", 0, 0, 1280, 720);
+    //Window* pWindow2 = Window::create(u8"Window2", 0, 0, 800, 800, ScreenMode_Windowed);
 
     if (!pInstance || !pWindow) {
         goto Exit;
@@ -61,13 +62,14 @@ int main(int c, char* argv[])
 
     }
 
-    DeviceCreateInfo deviceCreate   = { };
-    deviceCreate.winHandle = pWindow->getNativeHandle();
-    deviceCreate.swapchainDescription.buffering                    = FrameBuffering_Triple;
-    deviceCreate.swapchainDescription.desiredFrames                = 3;
-    deviceCreate.swapchainDescription.renderHeight                 = 720;
-    deviceCreate.swapchainDescription.renderWidth                  = 1280;
-    deviceCreate.swapchainDescription.format                       = ResourceFormat_B8G8R8A8_Unorm;
+    DeviceCreateInfo deviceCreate   = { true };
+
+    SwapchainCreateDescription swapchainDescription = { };
+    swapchainDescription.buffering                    = FrameBuffering_Triple;
+    swapchainDescription.desiredFrames                = 3;
+    swapchainDescription.renderHeight                 = 720;
+    swapchainDescription.renderWidth                  = 1280;
+    swapchainDescription.format                       = ResourceFormat_B8G8R8A8_Unorm;
 
     result = adapters[0]->createDevice(deviceCreate, &pDevice);
 
@@ -80,7 +82,7 @@ int main(int c, char* argv[])
     pContext->setBuffers(2);
     pWindow->setToCenter();
 
-    pSwapchain = pDevice->getSwapchain();
+    pSwapchain = pDevice->createSwapchain(swapchainDescription, pWindow->getNativeHandle());
     
     if (!pSwapchain) {
     
@@ -91,6 +93,7 @@ int main(int c, char* argv[])
         R_TRACE("Graphics", "Succeeded swapchain creation!");
 
         pWindow->open();
+        //pWindow2->open();
         while (!pWindow->shouldClose()) 
         {
             RealtimeTick::updateWatch(1ull, 0);
@@ -98,8 +101,7 @@ int main(int c, char* argv[])
             //R_TRACE("Graphics", "FPS: %f", 1.f / tick.delta());
             if (!pWindow->isMinimized())
             {
-                pContext->begin();
-                
+                pSwapchain->prepare(pContext);
                     ResourceViewDescription rtvDescription = { };
                     rtvDescription.type = ResourceViewType_RenderTarget;
                     rtvDescription.baseArrayLayer = 0;
@@ -121,19 +123,21 @@ int main(int c, char* argv[])
                     pContext->clearRenderTarget(0, color, rect);
                     pContext->transition(swapchainResource, ResourceState_Present);
                 pContext->end();
-                pSwapchain->present();
+                pSwapchain->present(pContext);
             }
             pollEvents();
                     
         }
     }
     pContext->wait();
+    pDevice->destroySwapchain(pSwapchain);
     pDevice->releaseContext(pContext);
     adapters[0]->destroyDevice(pDevice);
 
    GraphicsInstance::destroyInstance(pInstance);
     
     pWindow->close();
+    //pWindow2->close();
     Window::destroy(pWindow);
 
 Exit:

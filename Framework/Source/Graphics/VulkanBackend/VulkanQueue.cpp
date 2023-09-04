@@ -1,6 +1,7 @@
 //
 #include "VulkanQueue.hpp"
 #include "VulkanDevice.hpp"
+#include "VulkanAdapter.hpp"
 #include "VulkanResource.hpp"
 
 #include "VulkanCommandList.hpp"
@@ -13,13 +14,12 @@ namespace Recluse {
 
 VulkanQueue::~VulkanQueue()
 {
-    destroy();
 }
 
 
-ResultCode VulkanQueue::initialize(VulkanDevice* device, QueueFamily* pFamily, U32 queueFamilyIndex, U32 queueIndex)
+ResultCode VulkanQueue::initialize(VulkanDevice* device, QueueFamily* pFamily, U32 queueIndex)
 {
-    vkGetDeviceQueue(device->get(), queueFamilyIndex, queueIndex, &m_queue);
+    vkGetDeviceQueue(device->get(), pFamily->queueFamilyIndex, queueIndex, &m_queue);
 
     m_pDevice                   = device;
     m_pFamilyRef                = pFamily;
@@ -33,10 +33,9 @@ ResultCode VulkanQueue::initialize(VulkanDevice* device, QueueFamily* pFamily, U
     VkCommandPoolCreateInfo poolCreateInfo = { };
     poolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     poolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    poolCreateInfo.queueFamilyIndex = queueFamilyIndex;
+    poolCreateInfo.queueFamilyIndex = pFamily->queueFamilyIndex;
 
-    vkCreateCommandPool(device->get(), &poolCreateInfo, nullptr, &m_tempCommandPool);
-    
+    vkCreateCommandPool(device->get(), &poolCreateInfo, nullptr, &m_tempCommandPool); 
     return RecluseResult_Ok;
 }
 
@@ -331,5 +330,11 @@ void VulkanQueue::freeOneTimeOnlyCommandBuffer(VkCommandBuffer commandBuffer)
 {
     VkDevice device = m_pDevice->get();
     vkFreeCommandBuffers(device, m_tempCommandPool, 1, &commandBuffer);
+}
+
+
+B32 VulkanQueue::isPresentSupported(VulkanAdapter* pAdapter, VkSurfaceKHR surface) const
+{
+    return pAdapter->checkSurfaceSupport(m_pFamilyRef->queueFamilyIndex, surface);
 }
 } // Recluse

@@ -18,6 +18,7 @@ using namespace Recluse;
 
 GraphicsDevice* device = nullptr;
 GraphicsContext* context = nullptr;
+GraphicsSwapchain* swapchain = nullptr;
 static const U32 g_textureWidth = 64;
 static const U32 g_textureHeight = 64;
 
@@ -55,7 +56,6 @@ enum ShaderProgram
 
 void ResizeFunction(U32 x, U32 y, U32 width, U32 height)
 {
-    GraphicsSwapchain* swapchain = device->getSwapchain();
     SwapchainCreateDescription desc = swapchain->getDesc();
     if (desc.renderHeight != height || desc.renderWidth != width)
     {
@@ -195,12 +195,6 @@ int main(char* argv[], int c)
     
     {
         DeviceCreateInfo devInfo = { };
-        devInfo.winHandle                           = window->getNativeHandle();
-        devInfo.swapchainDescription.buffering      = FrameBuffering_Triple;
-        devInfo.swapchainDescription.desiredFrames  = 3;
-        devInfo.swapchainDescription.format         = ResourceFormat_R8G8B8A8_Unorm;
-        devInfo.swapchainDescription.renderWidth    = window->getWidth();
-        devInfo.swapchainDescription.renderHeight   = window->getHeight();
         adapter->createDevice(devInfo, &device);
     }
 
@@ -225,6 +219,14 @@ int main(char* argv[], int c)
         device->createResource(&constBuff, description, ResourceState_ConstantBuffer);
     }
     //buildVertexLayouts(device);
+
+    SwapchainCreateDescription swapchainDescription = { };
+    swapchainDescription.buffering      = FrameBuffering_Triple;
+    swapchainDescription.desiredFrames  = 3;
+    swapchainDescription.format         = ResourceFormat_R8G8B8A8_Unorm;
+    swapchainDescription.renderWidth    = window->getWidth();
+    swapchainDescription.renderHeight   = window->getHeight();
+    swapchain = device->createSwapchain(swapchainDescription, window->getNativeHandle()); 
     
     std::array<F32, 10> lastMs;
     U32 frameCount = 0;
@@ -246,7 +248,7 @@ int main(char* argv[], int c)
 
         if (!window->isMinimized())
         {
-            context->begin();
+            swapchain->prepare(context);
                 //context->transition(device->getSwapchain()->getFrame(device->getSwapchain()->getCurrentFrameIndex()), ResourceState_RenderTarget);
                 //context->setShaderProgram(ShaderProgram_Box);
                 //context->setInputVertexLayout(VertexLayout_PositionNormalTexCoordColor);
@@ -254,13 +256,13 @@ int main(char* argv[], int c)
                 //context->setDepthCompareOp(CompareOp_GreaterOrEqual);
                 //context->bindIndexBuffer(nullptr, 0, IndexType_Unsigned16);
                 //context->drawIndexedInstanced(0, 0, 0, 0, 0);
-                GraphicsResource* swapchainImage = device->getSwapchain()->getFrame(device->getSwapchain()->getCurrentFrameIndex());
+                GraphicsResource* swapchainImage = swapchain->getFrame(swapchain->getCurrentFrameIndex());
                 context->transition(textureResource, ResourceState_CopySource);
                 context->transition(swapchainImage, ResourceState_CopyDestination);
                 context->copyResource(swapchainImage, textureResource);
-                context->transition(device->getSwapchain()->getFrame(device->getSwapchain()->getCurrentFrameIndex()), ResourceState_Present);
+                context->transition(swapchain->getFrame(swapchain->getCurrentFrameIndex()), ResourceState_Present);
             context->end();
-            device->getSwapchain()->present();
+            swapchain->present(context);
         }
         pollEvents();
         

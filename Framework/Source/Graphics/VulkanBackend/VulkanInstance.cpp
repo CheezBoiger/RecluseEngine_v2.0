@@ -271,6 +271,12 @@ void VulkanInstance::onDestroy()
 
     destroyDebugCallback();
 
+    for (auto& surface : m_surfaces)
+    {
+        vkDestroySurfaceKHR(m_instance, surface.second, nullptr);
+    }
+    m_surfaces.clear();
+
     if (m_instance) 
     {
         R_DEBUG(R_CHANNEL_VULKAN, "Destroying context...");
@@ -346,5 +352,60 @@ void VulkanInstance::queryFunctions()
         if (!pfn_vkSetDebugUtilsObjectTagEXT)
             pfn_vkSetDebugUtilsObjectTagEXT = (PFN_vkSetDebugUtilsObjectTagEXT)getProcAddr("vkSetDebugUtilsObjectTagEXT");
     }
+}
+
+
+VkSurfaceKHR VulkanInstance::makeSurface(void* handle)
+{        
+    R_DEBUG(R_CHANNEL_VULKAN, "Creating surface handle.");
+    VkSurfaceKHR surface        = VK_NULL_HANDLE;
+    VkResult result             = VK_SUCCESS;
+
+    if (!handle) 
+    {
+        R_ERROR(R_CHANNEL_VULKAN, "Null window handle for surface creation.");
+        return VK_NULL_HANDLE;
+    }
+
+    if (m_surfaces.find((UPtr)handle) != m_surfaces.end()) 
+    {
+        return m_surfaces[(UPtr)handle];    
+    }
+
+#if defined(RECLUSE_WINDOWS)
+    VkWin32SurfaceCreateInfoKHR createInfo = { };
+
+    createInfo.sType            = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+    createInfo.hinstance        = GetModuleHandle(NULL);
+    createInfo.hwnd             = (HWND)handle;
+    createInfo.pNext            = nullptr;
+    createInfo.flags            = 0;            // future use, not needed.
+
+    result = vkCreateWin32SurfaceKHR(m_instance, &createInfo, nullptr, &surface);
+    
+    if (result != VK_SUCCESS) 
+    {
+        R_ERROR(R_CHANNEL_VULKAN, "Failed to create win32 surface.");
+        return VK_NULL_HANDLE;
+    }
+#endif
+
+    m_surfaces.insert(std::make_pair((UPtr)handle, surface));
+
+    return surface;    
+}
+
+
+ResultCode VulkanInstance::destroySurface(void* windowHandle)
+{
+    auto& iter = m_surfaces.find((UPtr)windowHandle);
+    if (iter == m_surfaces.end())
+    {
+        return RecluseResult_NotFound;
+    }
+    VkSurfaceKHR surface = iter->second;
+    vkDestroySurfaceKHR(m_instance, surface, nullptr);
+    m_surfaces.erase(iter);
+    return RecluseResult_Ok;
 }
 } // Recluse

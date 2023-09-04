@@ -88,7 +88,7 @@ int main(int c, char* argv[])
     pWindow = Window::create(u8"DescriptorSetInitialization", 0, 0, 1024, 1024, ScreenMode_WindowBorderless);
     pWindow->setToCenter();
 
-    pInstance = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
+    pInstance = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
 
     if (!pInstance) {
 
@@ -121,13 +121,7 @@ int main(int c, char* argv[])
     pAdapter = adapters[0];
 
     {
-        DeviceCreateInfo info = { };
-        info.winHandle = pWindow->getNativeHandle();
-        info.swapchainDescription.buffering = FrameBuffering_Triple;
-        info.swapchainDescription.desiredFrames = 2;
-        info.swapchainDescription.renderWidth = 1024;
-        info.swapchainDescription.renderHeight = 1024;
-        info.swapchainDescription.format = ResourceFormat_B8G8R8A8_Unorm;
+        DeviceCreateInfo info = { true };
         result = pAdapter->createDevice(info, &pDevice);
     }
 
@@ -250,7 +244,13 @@ int main(int c, char* argv[])
     // Enter game loop.
     R_TRACE("TEST", "Entering game loop...");
 
-    pSwapchain = pDevice->getSwapchain();
+    SwapchainCreateDescription swapchainDescription = { };
+    swapchainDescription.buffering = FrameBuffering_Triple;
+    swapchainDescription.desiredFrames = 2;
+    swapchainDescription.renderWidth = 1024;
+    swapchainDescription.renderHeight = 1024;
+    swapchainDescription.format = ResourceFormat_B8G8R8A8_Unorm;
+    pSwapchain = pDevice->createSwapchain(swapchainDescription, pWindow->getNativeHandle());
     context = pContext;
     context->setBuffers(3);
     F32 index = 200;
@@ -300,7 +300,7 @@ int main(int c, char* argv[])
         Rect rect           = { box.mmin.x, box.mmin.y, boxSize.x, boxSize.y };
         Rect rect2          = { bounds.mmin.x, bounds.mmin.y, bounds.mmax.x, bounds.mmax.y };
 
-        context->begin();
+        pSwapchain->prepare(context);
             ResourceViewDescription rtvDesc = { };
             rtvDesc.type = ResourceViewType_RenderTarget;
             rtvDesc.baseArrayLayer = 0;
@@ -322,7 +322,7 @@ int main(int c, char* argv[])
             context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_Present);
         context->end();
         //R_FATAL_ERROR("TEST", "%f Fps", 1.0f / ms);
-        pSwapchain->present();
+        pSwapchain->present(context);
 
         KeyboardListener listener;
         if (listener.isKeyDown(KeyCode_Escape))
@@ -337,6 +337,7 @@ int main(int c, char* argv[])
 
     pContext->wait();    
     //pDevice->destroyResource(pData); 
+    pDevice->destroySwapchain(pSwapchain);
     pDevice->releaseContext(context);
     pAdapter->destroyDevice(pDevice);
     Window::destroy(pWindow);

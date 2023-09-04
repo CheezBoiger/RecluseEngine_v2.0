@@ -15,12 +15,12 @@ public:
     static void generateCopyResourceCommand(ID3D12GraphicsCommandList* pList, D3D12Resource* dst, D3D12Resource* src);
     static void generateCopyBufferRegionsCommand(ID3D12GraphicsCommandList* pList, D3D12Resource* dst, D3D12Resource* src, const CopyBufferRegion* pRegions, U32 numRegions);
 
-    D3D12Queue(GraphicsQueueTypeFlags queueType)
+    D3D12Queue()
         : m_queue(nullptr)
         , pFence(nullptr)
         , pEvent(nullptr) { }
 
-    ResultCode initialize(D3D12Device* pDevice);
+    ResultCode initialize(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type);
     
     //ErrType submit(const QueueSubmit* payload);
 

@@ -56,32 +56,32 @@ ResultCode D3D12Context::setBuffers(U32 bufferCount)
 
 ResultCode D3D12Context::wait()
 {
-    D3D12Queue* pqueue = m_pDevice->getBackbufferQueue();
-    D3D12Swapchain* swapchain = m_pDevice->getSwapchain()->castTo<D3D12Swapchain>();
-    pqueue->waitForGpu(swapchain->getCurrentFenceValue());
+    D3D12Queue* pqueue = m_queue;
+    pqueue->waitForGpu(getBufferResource(getCurrentBufferIndex()).fenceValue);
     return RecluseResult_Ok;
 }
 
 
 void D3D12Context::begin()
 {
-    D3D12Swapchain* swapchain               = m_pDevice->getSwapchain()->castTo<D3D12Swapchain>();
+    ID3D12Fence* fence = m_queue->getFence();
+    HANDLE e = m_queue->getEvent();
+    const U64 previousFenceValue = getBufferResource(getCurrentBufferIndex()).fenceValue;
 
-    // TODO: We will want to fix this garbage if statement. If the buffer count is less than the frame count, then
-    //       we need to rely on waiting for the buffer fencevalue to finish, instead of the frame fence (resources rely on buffer count.)
-    //       If the frame count is less than the buffer count, that is ok, we resort to using the frame fence values instead.
-    //       There has to be a cleaner solution, rather than simply using the if statement to determine which is the best strategy.
-    if (swapchain->getDesc().desiredFrames <= m_bufferCount)
+    incrementBufferIndex();
+
+    const U64 currentFrameValue = getBufferResource(getCurrentBufferIndex()).fenceValue;
+    m_queue->get()->Signal(fence, previousFenceValue);
+    const U64 completedValue = fence->GetCompletedValue();
+    if (completedValue < currentFrameValue)
     {
-        swapchain->prepareNextFrame();    
-        incrementBufferIndex();
+        fence->SetEventOnCompletion(currentFrameValue, e);
+        WaitForSingleObject(e, INFINITE);
     }
-    else
-    {
-        const U64 currentEventValue = m_bufferResources[getCurrentBufferIndex()].fenceValue;
-        incrementBufferIndex();
-        swapchain->prepareNextFrameOverride(currentEventValue, m_bufferResources[getCurrentBufferIndex()].fenceValue);
-    }
+    // Reset the current fence value with the previous + 1. This will ensure we 
+    // are ahead of the fence value for the next frame work.
+    setNewFenceValue(getCurrentBufferIndex(), previousFenceValue + 1);
+
     resetCurrentResources();
     m_pPrimaryCommandList->use(currentBufferIndex());
     m_pPrimaryCommandList->reset();
@@ -90,15 +90,26 @@ void D3D12Context::begin()
 }
 
 
+ResultCode D3D12Context::submitPrimaryCommandList(ID3D12GraphicsCommandList* pCommandList)
+{
+    ID3D12CommandQueue* pPresentationQueue = m_queue->get();
+    ID3D12CommandList* pLists[] = { pCommandList };
+
+    R_ASSERT(pPresentationQueue != NULL);
+    R_ASSERT(pCommandList != NULL);
+
+    pPresentationQueue->ExecuteCommandLists(1, pLists);
+    return RecluseResult_Ok;
+}
+
+
 void D3D12Context::end()
 {
     // We should always flush any remaining barrier transitions, especially if they involve transiting our back buffer back to present state.
     flushBarrierTransitions();
-    D3D12Swapchain* pSwapchain          = m_pDevice->getSwapchain()->castTo<D3D12Swapchain>();
-
     m_pPrimaryCommandList->end();
     // Fire off our command list!
-    pSwapchain->submitPrimaryCommandList(m_pPrimaryCommandList->get());
+    submitPrimaryCommandList(m_pPrimaryCommandList->get());
 }
 
 
@@ -269,24 +280,30 @@ ResultCode D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo
 
     m_pAdapter = adapter;
 
-    if (info.winHandle) 
-    {
-        m_windowHandle = (HWND)info.winHandle;
-        createCommandQueue(&m_graphicsQueue, QUEUE_TYPE_PRESENT);
-    }
-
-    R_DEBUG(R_CHANNEL_D3D12, "Successfully created D3D12 device!");
-
-    if (m_windowHandle) 
-    {
-        createSwapchain(&m_swapchain, info.swapchainDescription);
-    }
+    createCommandQueues();
 
     DescriptorHeapAllocationManager::DescriptorCoreSize descriptorSizes = { };
     m_descHeapManager.initialize(m_device, descriptorSizes, 0);
     m_resourceAllocationManager.initialize(m_device);
-
+    R_DEBUG(R_CHANNEL_D3D12, "Successfully created D3D12 device!");
     return RecluseResult_Ok;
+}
+
+
+void D3D12Device::createCommandQueues()
+{
+    D3D12Queue queue = createCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+    m_queues.insert(std::make_pair(D3D12_COMMAND_LIST_TYPE_DIRECT, queue));
+}
+
+
+void D3D12Device::destroyCommandQueues()
+{
+    for (auto& iter : m_queues)
+    {
+        destroyCommandQueue(iter.second);
+    }
+    m_queues.clear();
 }
 
 
@@ -300,17 +317,8 @@ void D3D12Device::destroy()
     Pipelines::cleanUpRootSigs();
     DescriptorViews::clearAll(this);
     m_descHeapManager.release();
-    if (m_swapchain) 
-    {
-        destroySwapchain(m_swapchain);
-        m_swapchain = nullptr;
-    }
 
-    if (m_graphicsQueue) 
-    {
-        destroyCommandQueue(m_graphicsQueue);
-        m_graphicsQueue = nullptr;
-    }
+    destroyCommandQueues();
 
     if (m_device) 
     {
@@ -321,12 +329,12 @@ void D3D12Device::destroy()
 }
 
 
-ResultCode D3D12Device::createSwapchain(D3D12Swapchain** ppSwapchain, const SwapchainCreateDescription& desc)
+GraphicsSwapchain* D3D12Device::createSwapchain(const SwapchainCreateDescription& desc, void* windowHandle)
 {
     ResultCode result = RecluseResult_Ok;
-    D3D12Swapchain* pSwapchain = new D3D12Swapchain(desc, m_graphicsQueue);
+    D3D12Swapchain* pSwapchain = new D3D12Swapchain(desc, getQueue(D3D12_COMMAND_LIST_TYPE_DIRECT));
 
-    result = pSwapchain->initialize(this);
+    result = pSwapchain->initialize(this, (HWND)windowHandle);
 
     if (result != RecluseResult_Ok) 
     {
@@ -334,62 +342,42 @@ ResultCode D3D12Device::createSwapchain(D3D12Swapchain** ppSwapchain, const Swap
 
         pSwapchain->destroy();
         delete pSwapchain;
-        return result;
     }
 
-    *ppSwapchain = pSwapchain;
-
-    return result;
+    return pSwapchain;
 }
 
 
-ResultCode D3D12Device::destroySwapchain(D3D12Swapchain* pSwapchain)
+ResultCode D3D12Device::destroySwapchain(GraphicsSwapchain* pSwapchain)
 {
     ResultCode result = RecluseResult_Ok;
-
-    pSwapchain->destroy();
-    delete pSwapchain;
+    D3D12Swapchain* d3dSwapchain = pSwapchain->castTo<D3D12Swapchain>();
+    d3dSwapchain->destroy();
+    delete d3dSwapchain;
    
     return result;
 }
 
 
-ResultCode D3D12Device::createCommandQueue(D3D12Queue** ppQueue, GraphicsQueueTypeFlags type)
+D3D12Queue D3D12Device::createCommandQueue(D3D12_COMMAND_LIST_TYPE type)
 {
-    D3D12Queue* pD3D12Queue = new D3D12Queue(type);
+    D3D12Queue pD3D12Queue = { };
     ResultCode result          = RecluseResult_Ok;
 
-    result = pD3D12Queue->initialize(this);
+    result = pD3D12Queue.initialize(get(), type);
 
     if (result != RecluseResult_Ok) 
     {
         R_ERROR(R_CHANNEL_D3D12, "Failed to create d3d12 queue!");
-
-        pD3D12Queue->destroy();
-        delete pD3D12Queue;
-
-        return result;    
+        pD3D12Queue.destroy();    
     }
-
-    *ppQueue = pD3D12Queue;
-
-    return result;
+    return pD3D12Queue;
 }
 
 
-ResultCode D3D12Device::destroyCommandQueue(D3D12Queue* pQueue)
+ResultCode D3D12Device::destroyCommandQueue(D3D12Queue& queue)
 {
-    if (!pQueue) 
-    {
-        return RecluseResult_NullPtrExcept;
-    }
-
-    D3D12Queue* pD3D12Queue = pQueue;
-
-    pD3D12Queue->destroy();
-
-    delete pD3D12Queue;
-
+    queue.destroy();
     return RecluseResult_Ok;
 }
 
@@ -431,7 +419,6 @@ void D3D12Context::initializeBufferResources(U32 buffering)
     m_bufferResources.resize(buffering);
 
     R_DEBUG(R_CHANNEL_D3D12, "Initializing buffer resources.");
-    D3D12Swapchain* swapchain = m_pDevice->getSwapchain()->castTo<D3D12Swapchain>();
     for (U32 i = 0; i < m_bufferResources.size(); ++i) 
     {    
         result = m_pDevice->get()->CreateCommandAllocator
@@ -442,9 +429,9 @@ void D3D12Context::initializeBufferResources(U32 buffering)
                                 );
 
         R_ASSERT(result == S_OK);
-        m_bufferResources[i].fenceValue = swapchain->getCurrentCompletedValue();
+        m_bufferResources[i].fenceValue = m_queue->getFence()->GetCompletedValue();
     }
-    m_bufferResources[m_currentBufferIndex].fenceValue = m_pDevice->getBackbufferQueue()->waitForGpu(m_bufferResources[m_currentBufferIndex].fenceValue);
+    m_bufferResources[m_currentBufferIndex].fenceValue = m_queue->waitForGpu(m_bufferResources[m_currentBufferIndex].fenceValue);
 }
 
 
@@ -567,12 +554,6 @@ void D3D12Context::copyBufferRegions
 }
 
 
-GraphicsSwapchain* D3D12Device::getSwapchain()
-{
-    return m_swapchain;
-}
-
-
 void D3D12Device::createSampler(const D3D12_SAMPLER_DESC& desc)
 {
     R_NO_IMPL();
@@ -645,7 +626,7 @@ Bool D3D12Device::destroyVertexLayout(VertexInputLayoutId id)
 
 GraphicsContext* D3D12Device::createContext()
 {
-    D3D12Context* pContext = new D3D12Context(this, 0);
+    D3D12Context* pContext = new D3D12Context(this, 0, getQueue(D3D12_COMMAND_LIST_TYPE_DIRECT));
     return pContext;
 }
 
@@ -682,12 +663,12 @@ ResultCode D3D12Device::destroyResource(GraphicsResource* pResource)
 
 void D3D12Device::copyResource(GraphicsResource* dst, GraphicsResource* src)
 {
-    m_graphicsQueue->copyResource(dst->castTo<D3D12Resource>(), src->castTo<D3D12Resource>());
+    getQueue(D3D12_COMMAND_LIST_TYPE_DIRECT)->copyResource(dst->castTo<D3D12Resource>(), src->castTo<D3D12Resource>());
 }
 
 
 void D3D12Device::copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, const CopyBufferRegion* regions, U32 numRegions)
 {
-    m_graphicsQueue->copyBufferRegions(dst->castTo<D3D12Resource>(), src->castTo<D3D12Resource>(), regions, numRegions);
+    getQueue(D3D12_COMMAND_LIST_TYPE_DIRECT)->copyBufferRegions(dst->castTo<D3D12Resource>(), src->castTo<D3D12Resource>(), regions, numRegions);
 }
 } // Recluse

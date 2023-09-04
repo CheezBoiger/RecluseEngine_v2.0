@@ -78,7 +78,7 @@ public:
     std::vector<VkPresentModeKHR>           getSupportedPresentModes(VkSurfaceKHR surface) const;
     VkSurfaceCapabilitiesKHR                getSurfaceCapabilities(VkSurfaceKHR surface) const;
 
-    B32                                     checkSurfaceSupport(U32 queueIndex, VkSurfaceKHR surface) const;
+    B32                                     checkSurfaceSupport(U32 familyQueueIndex, VkSurfaceKHR surface) const;
     U32                                     getId() const { return m_id; }
     
     VulkanInstance*                         getInstance() const { return m_instance; }

@@ -9,22 +9,16 @@
 namespace Recluse {
 
 
-ResultCode D3D12Queue::initialize(D3D12Device* pDevice)
+ResultCode D3D12Queue::initialize(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE newType)
 {
     R_DEBUG(R_CHANNEL_D3D12, "Creating command queue...");
 
-    D3D12_COMMAND_LIST_TYPE type        = D3D12_COMMAND_LIST_TYPE_DIRECT;
-    ID3D12Device* device                = pDevice->get();
+    D3D12_COMMAND_LIST_TYPE type        = newType;
+    ID3D12Device* device                = pDevice;
     HRESULT result                      = S_OK;
     D3D12_COMMAND_QUEUE_DESC desc       = { };
     desc.NodeMask                       = 0;
     desc.Priority                       = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-    GraphicsQueueTypeFlags queueType    = QUEUE_TYPE_PRESENT;
-
-    if (queueType & QUEUE_TYPE_COMPUTE) type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
-    if (queueType & QUEUE_TYPE_COPY) type = D3D12_COMMAND_LIST_TYPE_COPY;
-    if (queueType & QUEUE_TYPE_PRESENT) type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-    if (queueType & QUEUE_TYPE_GRAPHICS) type = D3D12_COMMAND_LIST_TYPE_DIRECT;
     
     desc.Type                           = type;
     
@@ -37,10 +31,10 @@ ResultCode D3D12Queue::initialize(D3D12Device* pDevice)
         return RecluseResult_Failed;        
     }    
 
-    pDevice->get()->CreateFence(0, D3D12_FENCE_FLAG_NONE, __uuidof(ID3D12Fence), (void**)&pFence);
+    pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, __uuidof(ID3D12Fence), (void**)&pFence);
     pEvent = CreateEvent(nullptr, false, false, nullptr);
 
-    pDevice->get()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, __uuidof(ID3D12CommandAllocator), (void**)&m_allocator);
+    pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, __uuidof(ID3D12CommandAllocator), (void**)&m_allocator);
 
     return RecluseResult_Ok;
 }

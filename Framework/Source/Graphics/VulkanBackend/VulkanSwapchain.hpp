@@ -30,15 +30,16 @@ public:
         , m_currentImageIndex(0)
         , m_pBackbufferQueue(pBackbufferQueue)
         , m_pDevice(nullptr)
-        , m_queueFamily(nullptr) { }
+        , m_queueFamily(nullptr)
+        , m_windowHandle(nullptr) { }
 
     // Build the vulkan swapchain. This will return the total number of frames that 
     // were created.
-    ResultCode                  build(VulkanDevice* pDevice);
+    ResultCode                  build(VulkanDevice* pDevice, void* windowHandle);
     ResultCode                  onRebuild() override;
-    ResultCode                  present(PresentConfig config = PresentConfig_Present) override; 
+    ResultCode                  present(GraphicsContext* context) override; 
     U32                         getCurrentFrameIndex() override { return m_currentFrameIndex; }
-    U32                         getFrameCount() const { return m_frameResources.getNumMaxFrames(); }
+    U32                         getFrameCount() const { return m_frames.size(); }
     GraphicsResource*           getFrame(U32 idx) override;
 
     // Call this function before the start of a primary command buffer record!
@@ -46,7 +47,7 @@ public:
     // Pass a manual override of a fence object, if we need to wait for another fence,
     // this will override the frame fence wait, and can potentially cause a hang if we lose that
     // fence!
-    ResultCode                 prepareFrame(VkFence cpuFence = VK_NULL_HANDLE);
+    ResultCode                 prepare(GraphicsContext* context) override;
     
     VkSwapchainKHR operator()() {
         return m_swapchain;
@@ -54,30 +55,20 @@ public:
 
     VkSwapchainKHR              get() const { return m_swapchain; }
 
-    // Destroy the vulkan swapchain, including surface.
-    ResultCode                  destroy();
+    // Release the swapchain resources, frames, etc... This does not destroy the surface.
+    ResultCode                  release();
 
     VulkanDevice*               getDevice() const { return m_pDevice; }
 
-    VkFramebuffer               getFramebuffer(U32 idx) const { return m_frameResources.getFrameBuffer(idx); }
-    VkSemaphore                 getWaitSemaphore(U32 idx) const { return m_frameResources.getWaitSemaphore(idx); }
-    VkSemaphore                 getSignalSemaphore(U32 idx) const { return m_frameResources.getSignalSemaphore(idx); }
-    VkFence                     getFence(U32 idx) const { return m_frameResources.getFence(idx); }
-
     VulkanQueue*                getPresentationQueue() const { return m_pBackbufferQueue; }
     VkPresentModeKHR            checkAvailablePresentMode(VkSurfaceKHR surface, VkPresentModeKHR presentMode);
-
-    // Submit the final command buffer, which will utilize the wait and signal semphores for the current frame.
-    // Can optionally override the frame inflight fence with your own fence if needed. Keep in mind this can be 
-    // dangerous!
-    ResultCode                  submitFinalCommandBuffer(VkCommandBuffer commandBuffer, VkFence cpuFence = VK_NULL_HANDLE);
+    void                        validateSwapchainImageIsPresentable();
 
 private:
 
     void                        buildFrameResources(ResourceFormat resourceFormat);
-    void                        queryCommandPools();
     inline void                 incrementFrameIndex() 
-        { m_currentFrameIndex = (m_currentFrameIndex + 1) % m_frameResources.getNumMaxFrames(); }
+        { m_currentFrameIndex = (m_currentFrameIndex + 1) % m_frames.size(); }
 
     VkSwapchainKHR                      m_swapchain;
     VulkanQueue*                        m_pBackbufferQueue;
@@ -87,11 +78,10 @@ private:
     // This is the native image index that is provided from the vulkan API.
     // Use m_currentFrameIndex to find the application frame index instead!
     U32                                 m_currentImageIndex;
-    VulkanFrameResources                m_frameResources;
+    std::vector<VkImage>                m_frames;
     std::vector<VulkanImage*>           m_frameImages;
-    std::vector<VkCommandBuffer>        m_commandbuffers;
     //VkCommandPool                     m_commandPool;
     const QueueFamily*                  m_queueFamily;
-    
+    void*                               m_windowHandle;
 };
 } // Recluse

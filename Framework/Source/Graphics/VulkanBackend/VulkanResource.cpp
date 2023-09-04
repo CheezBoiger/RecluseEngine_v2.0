@@ -585,7 +585,7 @@ ResourceViewId VulkanResource::asView(const ResourceViewDescription& description
 void VulkanImage::performInitialLayout(VulkanDevice* pDevice, ResourceState initialState)
 {
     VkImageLayout layout = Vulkan::getVulkanImageLayout(initialState);
-    VulkanQueue* pQueue = pDevice->getBackbufferQueue();
+    VulkanQueue* pQueue = pDevice->getQueue((VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT));
 
     if (layout == VK_IMAGE_LAYOUT_UNDEFINED)
     {
@@ -608,7 +608,7 @@ void VulkanImage::performInitialLayout(VulkanDevice* pDevice, ResourceState init
 
 void VulkanBuffer::performInitialLayout(VulkanDevice* pDevice, ResourceState initialState)
 {
-    VulkanQueue* pQueue = pDevice->getBackbufferQueue();
+    VulkanQueue* pQueue = pDevice->getQueue((VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT));
 
     VkCommandBuffer transitionCmd = pQueue->beginOneTimeCommandBuffer();
     VkBufferMemoryBarrier barrier = transition(initialState);

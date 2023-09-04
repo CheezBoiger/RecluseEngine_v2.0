@@ -65,11 +65,13 @@ enum ShaderKey
 
 GraphicsContext* pContext               = nullptr;
 GraphicsDevice* pDevice                 = nullptr;
+GraphicsSwapchain* pSwapchain           = nullptr;
 
 void ResizeFunction(U32 x, U32 y, U32 width, U32 height)
 {
     if (!pDevice) return;
-    GraphicsSwapchain* swapchain = pDevice->getSwapchain();
+    if (!pSwapchain) return;
+    GraphicsSwapchain* swapchain = pSwapchain;
     SwapchainCreateDescription desc = swapchain->getDesc();
     if (desc.renderWidth != width || desc.renderHeight != height)
     {
@@ -148,13 +150,6 @@ int main(int c, char* argv[])
 
     {
         DeviceCreateInfo info                       = { };
-        info.winHandle                              = pWindow->getNativeHandle();
-        info.swapchainDescription                   = { };
-        info.swapchainDescription.buffering         = FrameBuffering_Triple;
-        info.swapchainDescription.desiredFrames     = 3;
-        info.swapchainDescription.format            = ResourceFormat_R8G8B8A8_Unorm;
-        info.swapchainDescription.renderWidth       = pWindow->getWidth();
-        info.swapchainDescription.renderHeight      = pWindow->getHeight();
         result                                      = pAdapter->createDevice(info, &pDevice);
     }
 
@@ -192,7 +187,13 @@ int main(int c, char* argv[])
         R_ERROR("TEST", "Failed to create descriptor set layout...");
     }
     
-    pSwapchain = pDevice->getSwapchain();
+    SwapchainCreateDescription swapchainDescription = { };
+    swapchainDescription.buffering         = FrameBuffering_Triple;
+    swapchainDescription.desiredFrames     = 3;
+    swapchainDescription.format            = ResourceFormat_R8G8B8A8_Unorm;
+    swapchainDescription.renderWidth       = pWindow->getWidth();
+    swapchainDescription.renderHeight      = pWindow->getHeight();
+    pSwapchain = pDevice->createSwapchain(swapchainDescription, pWindow->getNativeHandle());
    
     {
         GraphicsResourceDescription desc = { };
@@ -329,7 +330,7 @@ int main(int c, char* argv[])
             Rect scissor = { };
             scissor.x = 0; scissor.y = 0;
             scissor.width = pWindow->getWidth(); scissor.height = pWindow->getHeight();
-            context->begin();
+            pSwapchain->prepare(pContext);
                 updateConstData(pData, tick, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), Math::Float2(0, 0));
                 updateConstData(pData2, tick, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), Math::Float2(0, 1));
                 context->pushState();
@@ -377,13 +378,14 @@ int main(int c, char* argv[])
                 context->popState();
             context->end();
             R_WARN("Game", "%f fps", 1.0f / ms);
-            pSwapchain->present();
+            pSwapchain->present(pContext);
         }
         pollEvents();
     }
 
     pContext->wait();
 
+    pDevice->destroySwapchain(pSwapchain);
     pDevice->destroyResource(pVertexBuffer);
     pDevice->destroyResource(pData);
     pDevice->destroyResource(pData2);

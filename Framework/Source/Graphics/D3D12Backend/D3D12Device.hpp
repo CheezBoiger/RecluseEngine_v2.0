@@ -6,6 +6,7 @@
 #include "D3D12DescriptorTableManager.hpp"
 #include "D3D12Allocator.hpp"
 #include "D3D12CommandList.hpp"
+#include "D3D12Queue.hpp"
 
 #include "Recluse/Graphics/GraphicsAdapter.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
@@ -35,11 +36,12 @@ struct BufferResources
 class D3D12Context : public GraphicsContext
 {
 public:
-    D3D12Context(D3D12Device* pDevice, U32 bufferCount)
+    D3D12Context(D3D12Device* pDevice, U32 bufferCount, D3D12Queue* pQueue)
         : m_pDevice(pDevice)
         , m_currentBufferIndex(0)
         , m_pPrimaryCommandList(nullptr)
         , m_bufferCount(bufferCount)
+        , m_queue(pQueue)
     {
 
     }
@@ -121,7 +123,8 @@ public:
 
     void                                transition(GraphicsResource* pResource, ResourceState newState, U16 baseMip, U16 mipCount, U16 baseLayer, U16 layerCount) override;
     GraphicsDevice*                     getDevice() override;
-    
+    const BufferResources&              getBufferResource(U32 idx) const { return m_bufferResources[idx]; }
+    void                                setNewFenceValue(U32 idx, U64 value) { m_bufferResources[idx].fenceValue = value; }   
 
 private:
     typedef U32 ContextDirtyFlags;
@@ -161,6 +164,7 @@ private:
     void                                destroyBufferResources();
     void                                prepare();
     ContextState&                       currentState() { return m_contextStates.back(); }
+    ResultCode                          submitPrimaryCommandList(ID3D12GraphicsCommandList* pCommandList);                
 
     // Binds the pipeline state. Must be called after a Root signature call!!
     void                                bindPipeline(ID3D12GraphicsCommandList* list, ContextState& state);
@@ -182,17 +186,15 @@ private:
     D3D12PrimaryCommandList*            m_pPrimaryCommandList;
     std::vector<ContextState>           m_contextStates;
     std::vector<D3D12_RESOURCE_BARRIER> m_barrierTransitions;
+    D3D12Queue*                         m_queue;
 };
 
 class D3D12Device : public GraphicsDevice 
 {
 public:
     D3D12Device()
-        : m_windowHandle(nullptr)
-        , m_device(nullptr)
-        , m_pAdapter(nullptr)
-        , m_graphicsQueue(nullptr)
-        , m_swapchain(nullptr) { }
+        : m_device(nullptr)
+        , m_pAdapter(nullptr) { }
 
     ResultCode                          initialize(D3D12Adapter* adapter, const DeviceCreateInfo& info);
     void                                destroy();
@@ -200,19 +202,17 @@ public:
     ID3D12Device*                       get() const { return m_device; }
     D3D12Adapter*                       getAdapter() const { return m_pAdapter; }
 
-    ResultCode                          createSwapchain(D3D12Swapchain** ppSwapchain, const SwapchainCreateDescription& desc);
-    ResultCode                          destroySwapchain(D3D12Swapchain* pSwapchain);
+    ResultCode                          destroySwapchain(GraphicsSwapchain* pSwapchain) override;
 
-    ResultCode                          createCommandQueue(D3D12Queue** ppQueue, GraphicsQueueTypeFlags type);
-    ResultCode                          destroyCommandQueue(D3D12Queue* pQueue);
+    D3D12Queue                          createCommandQueue(D3D12_COMMAND_LIST_TYPE type);
+    ResultCode                          destroyCommandQueue(D3D12Queue& pQueue);
+    D3D12Queue*                         getQueue(D3D12_COMMAND_LIST_TYPE type) { auto& iter = m_queues.find(type); if (iter != m_queues.end()) return &iter->second; return nullptr; }
 
     GraphicsContext*                    createContext() override;
     ResultCode                          releaseContext(GraphicsContext* pContext) override;
-    HWND                                getWindowHandle() const { return m_windowHandle; }
 
     ResultCode                          reserveMemory(const MemoryReserveDescription& desc) override;
-    D3D12Queue*                         getBackbufferQueue() const { return m_graphicsQueue; }
-    GraphicsSwapchain*                  getSwapchain() override;
+    GraphicsSwapchain*                  createSwapchain(const SwapchainCreateDescription& desciption, void* windowHandle) override;
 
     // Helper descriptor creators for the device.
     void                                createSampler(const D3D12_SAMPLER_DESC& desc);
@@ -240,15 +240,14 @@ public:
     D3D12ResourceAllocationManager*     resourceAllocationManager() { return &m_resourceAllocationManager; }
 
 private:
+    void                                createCommandQueues();
+    void                                destroyCommandQueues();
     // Resource pools.
     D3D12ResourceAllocationManager      m_resourceAllocationManager;
     ID3D12Device*                       m_device;
     D3D12Adapter*                       m_pAdapter;
-    D3D12Queue*                         m_graphicsQueue;
-    D3D12Swapchain*                     m_swapchain;
 
     DescriptorHeapAllocationManager     m_descHeapManager;
-
-    HWND                                m_windowHandle;
+    std::map<D3D12_COMMAND_LIST_TYPE, D3D12Queue> m_queues;
 };
 } // Recluse

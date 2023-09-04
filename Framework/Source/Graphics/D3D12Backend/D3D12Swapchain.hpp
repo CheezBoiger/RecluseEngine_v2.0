@@ -10,10 +10,10 @@ namespace Recluse {
 
 class D3D12Device;
 class D3D12Queue;
+class D3D12Context;
 
 struct FrameResource {
     D3D12Resource*              frameResource;
-    U64                         fenceValue;
 };
 
 class D3D12Swapchain : public GraphicsSwapchain 
@@ -25,32 +25,32 @@ public:
         , GraphicsSwapchain(desc)
         , m_pDevice(nullptr)
         , m_currentFrameIndex(0)
+        , m_hwnd(NULL)
         , m_flags(0)
         , m_pBackbufferQueue(pBackbufferQueue) { }
 
-    ResultCode initialize(D3D12Device* pDevice);
+    ResultCode initialize(D3D12Device* pDevice, HWND windowHandle);
     void destroy();
 
     // Present to our window display.
-    ResultCode              present(PresentConfig config = PresentConfig_Present) override;
+    ResultCode              prepare(GraphicsContext* context) override;
+    ResultCode              present(GraphicsContext* context) override;
     ResultCode              onRebuild() override;
 
     GraphicsResource*       getFrame(U32 idx) override;
 
-    ResultCode              submitPrimaryCommandList(ID3D12GraphicsCommandList* pCommandList);
     // Run the basic frame sync.
-    ResultCode              prepareNextFrame();
+    //ResultCode              prepareNextFrame();
     // Override the frame fence sync with your own buffer value sync. This could help against buffer resources 
     // needing to be lower than the frame sync.
     ResultCode              prepareNextFrameOverride(U64 currentBufferFenceValue, U64& nextBufferFenceValue);
 
-    U64                     getCurrentFenceValue() { return m_frameResources[m_currentFrameIndex].fenceValue; }
-    U32                     getCurrentFrameIndex() override { return m_currentFrameIndex; }
     U64                     getCurrentCompletedValue();
+    U32                     getCurrentFrameIndex() override { return m_currentFrameIndex; }
 
 private:
-    ResultCode              initializeFrameResources();
-    ResultCode              destroyFrameResources();
+    ResultCode                  initializeFrameResources();
+    ResultCode                  destroyFrameResources();
     
     IDXGISwapChain3*            m_pSwapchain;
     D3D12Device*                m_pDevice;
@@ -59,5 +59,6 @@ private:
     std::vector<FrameResource>  m_frameResources;
     D3D12Queue*                 m_pBackbufferQueue;
     UINT                        m_flags;
+    HWND                        m_hwnd;
 };
 } // Recluse

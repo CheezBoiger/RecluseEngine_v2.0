@@ -8,6 +8,7 @@
 #include "VulkanResource.hpp"
 #include "VulkanObjects.hpp"
 #include "VulkanViews.hpp"
+#include "VulkanQueue.hpp"
 #include "VulkanDescriptorManager.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 #include "VulkanCommandList.hpp"
@@ -36,18 +37,26 @@ struct QueueFamily
     U32                                     queueFamilyIndex;
     U32                                     currentAvailableQueueIndex;
     VkQueueFlags                            flags;
-    B32                                     isPresentSupported;
+};
+
+
+struct VulkanContextFrame
+{   
+    VkSemaphore waitSemaphore;
+    VkSemaphore signalSemaphore;
+    VkFence     fence;
 };
 
 
 class VulkanContext : public GraphicsContext
 {
 public:
-    VulkanContext(VulkanDevice* pDevice)
+    VulkanContext(VulkanDevice* pDevice, VulkanQueue* queue)
         : m_bufferCount(0)
         , m_currentBufferIndex(0)
         , m_boundRenderPass(nullptr)
         , m_pDevice(pDevice) 
+        , m_queue(queue)
     { 
     }
 
@@ -59,7 +68,7 @@ public:
 
     inline U32                      getBufferCount() const { return m_bufferCount; }
     inline U32                      getCurrentBufferIndex() const { return m_currentBufferIndex; }
-    inline VkFence                  getCurrentFence() const { return m_fences[m_currentBufferIndex]; }
+    inline VkFence                  getCurrentFence() const { return m_frameResources[m_currentBufferIndex].fence; }
     ResultCode                      createPrimaryCommandList(VkQueueFlags flags);
     ResultCode                      destroyPrimaryCommandList();
     ResultCode                      setBuffers(U32 newBufferCount);
@@ -197,6 +206,7 @@ public:
 
     VkCommandPool* getCommandPools() { return m_commandPools.data(); }
     U32 getNumCommandPools() const { return static_cast<U32>(m_commandPools.size()); }
+    VulkanContextFrame& getContextFrame(U32 idx) { return m_frameResources[idx]; }
 
 private:
     enum ContextDirtyFlag
@@ -237,14 +247,19 @@ private:
 
     void prepare();
     void initialize(U32 bufferCount);
-    void destroyFences();
-    void createFences(U32 buffered);
+    void destroyContextFrames();
+    void createContextFrames(U32 buffered);
     void bindPipelineState(const VulkanDescriptorAllocation& set);
     // Flushes barrier transitions if we need to. This must be called on any resources that will be accessed by 
 // specific api calls that require the state of the resource to be the desired target at the time.
     void flushBarrierTransitions(VkCommandBuffer cmdBuffer);
     void setRenderPass(const VulkanRenderPass& pPass);
     void bindDescriptorSet(const VulkanDescriptorAllocation& set);
+
+    // Submit the final command buffer, which will utilize the wait and signal semphores for the current frame.
+    // Can optionally override the frame inflight fence with your own fence if needed. Keep in mind this can be 
+    // dangerous!
+    ResultCode                  submitFinalCommandBuffer(VkCommandBuffer commandBuffer);
     
     inline void incrementBufferIndex() 
     { 
@@ -261,7 +276,7 @@ private:
     // buffer count 
     U32                                                                 m_bufferCount;
     U32                                                                 m_currentBufferIndex;
-    ::std::vector<VkFence>                                              m_fences;
+    ::std::vector<VulkanContextFrame>                                   m_frameResources;
     VulkanDevice*                                                       m_pDevice;
     ::std::vector<VkBufferMemoryBarrier>                                m_bufferMemoryBarriers;
     ::std::vector<VkImageMemoryBarrier>                                 m_imageMemoryBarriers;
@@ -277,7 +292,7 @@ private:
     std::vector<ContextState>                                           m_contextStates;
     VkDescriptorSet                                                     m_boundDescriptorSet;
     U32                                                                 m_currentStateIdx;
-    U32                                                                 m_queueFamilyIndex;
+    VulkanQueue*                                                        m_queue;
 };
 
 
@@ -286,11 +301,7 @@ class VulkanDevice : public GraphicsDevice
 public:
     VulkanDevice()
         : m_device(VK_NULL_HANDLE)
-        , m_surface(VK_NULL_HANDLE)
-        , m_windowHandle(nullptr)
         , m_adapter(nullptr)
-        , m_pGraphicsQueue(nullptr)
-        , m_pAsyncComputeQueue(nullptr)
         , m_enabledFeatures({ })
         , m_memCache({ })
         , m_swapchain(nullptr)
@@ -298,17 +309,15 @@ public:
     }
 
     ResultCode          initialize(VulkanAdapter* iadapter, DeviceCreateInfo& info);
-    VulkanQueue*        getBackbufferQueue() { return m_pGraphicsQueue; }
-    VulkanQueue*        getAsyncQueue() { return m_pAsyncComputeQueue; }
     ResultCode          createQueues();
     const std::vector<QueueFamily>& getQueueFamilies() const { return m_queueFamilies; }    
 
 
-    ResultCode          createQueue(VulkanQueue** ppQueue, VkQueueFlags flags, B32 isPresentable);
+    VulkanQueue         makeQueue(VkQueueFlags flags, Bool reuse = false, VkSurfaceKHR surfaceToPresent = VK_NULL_HANDLE);
     ResultCode          destroyQueues();
 
-    ResultCode          createSwapchain(VulkanSwapchain** ppSwapchain, 
-                            const SwapchainCreateDescription& pDesc, VulkanQueue* pPresentationQueue);
+    GraphicsSwapchain*  createSwapchain(const SwapchainCreateDescription& description, void* windowHandle) override;
+    ResultCode          destroySwapchain(GraphicsSwapchain* pSwapchain) override;
 
     GraphicsContext*    createContext() override;
     ResultCode          releaseContext(GraphicsContext* pContext) override;
@@ -326,6 +335,8 @@ public:
     void                release(VkInstance instance);
     void                copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, const CopyBufferRegion* regions, U32 numRegions) override;
     void                copyResource(GraphicsResource* dst, GraphicsResource* src) override;
+    VulkanQueue*        getQueue(VkQueueFlags flags) { auto& iter = m_queues.find(flags); if (iter != m_queues.end()) return &iter->second; return nullptr; }
+    VulkanQueue*        getPresentableQueue(VkSurfaceKHR surface);
 
     DescriptorAllocatorInstance*    getDescriptorAllocatorInstance(U32 bufferIndex)
     {
@@ -344,7 +355,6 @@ public:
         return m_device;
     }
 
-    VkSurfaceKHR                    getSurface() const { return m_surface; }
     ResultCode                      reserveMemory(const MemoryReserveDescription& desc) override;
     VulkanAdapter*                  getAdapter() const { return m_adapter; }
 
@@ -360,14 +370,11 @@ public:
     void                            flushAllMappedRanges();
     void                            invalidateAllMappedRanges();
     VkDeviceSize                    getNonCoherentSize() const;
-    GraphicsSwapchain*              getSwapchain() override;
-    Bool                            hasSurface() const { return m_surface != VK_NULL_HANDLE; }
 
     const VkPhysicalDeviceFeatures& getEnabledFeatures() const { return m_enabledFeatures; }
 
 private:
 
-    ResultCode                      createSurface(VkInstance instance, void* handle);
     void                            allocateMemCache();
     void                            createDescriptorHeap();
     void                            destroyDescriptorHeap();
@@ -375,7 +382,6 @@ private:
 
     VulkanAdapter*                  m_adapter;
     VkDevice                        m_device;
-    VkSurfaceKHR                    m_surface;
     struct 
     {
         CriticalSection m_invalidCs;
@@ -398,13 +404,10 @@ private:
     VulkanSwapchain*                    m_swapchain;
     std::vector<VulkanContext*>         m_allocatedContexts;
     std::vector<QueueFamily>            m_queueFamilies;
-    VulkanQueue*                        m_pGraphicsQueue;
-    VulkanQueue*                        m_pAsyncComputeQueue;
     DescriptorAllocator                 m_descriptorAllocator;
-    
-    void*                               m_windowHandle;
 
     // Cache the enabled features that are available for this device.
     VkPhysicalDeviceFeatures            m_enabledFeatures;
+    std::map<VkQueueFlags, VulkanQueue> m_queues;
 };
 } // Recluse

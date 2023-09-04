@@ -49,6 +49,7 @@ enum ProgramId
 
 GraphicsContext* pContext               = nullptr;
 GraphicsDevice* pDevice                 = nullptr;
+GraphicsSwapchain* pSwapchain           = nullptr;
 GraphicsResource* output                = nullptr;
 
 
@@ -56,7 +57,7 @@ GraphicsResource* createUavResource(GraphicsResource*);
 
 void ResizeFunction(U32 x, U32 y, U32 width, U32 height)
 {
-    GraphicsSwapchain* swapchain = pDevice->getSwapchain();
+    GraphicsSwapchain* swapchain = pSwapchain;
     SwapchainCreateDescription desc = swapchain->getDesc();
     if (desc.renderWidth != width || desc.renderHeight != height)
     {
@@ -103,11 +104,11 @@ GraphicsResource* createUavResource(GraphicsResource* pPrevious)
     GraphicsResource* output = nullptr;
     GraphicsResourceDescription desc = { };
     desc.dimension = ResourceDimension_2d;
-    desc.width = pDevice->getSwapchain()->getDesc().renderWidth;
-    desc.height = pDevice->getSwapchain()->getDesc().renderHeight;
+    desc.width = pSwapchain->getDesc().renderWidth;
+    desc.height = pSwapchain->getDesc().renderHeight;
     desc.depthOrArraySize = 1;
     desc.mipLevels = 1;
-    desc.format = pDevice->getSwapchain()->getDesc().format;
+    desc.format = pSwapchain->getDesc().format;
     desc.samples = 1;
     desc.memoryUsage = ResourceMemoryUsage_GpuOnly;
     desc.usage = ResourceUsage_CopySource | ResourceUsage_UnorderedAccess | ResourceUsage_ShaderResource;
@@ -126,7 +127,6 @@ int main(int c, char* argv[])
     GraphicsAdapter* pAdapter       = nullptr;
     GraphicsResource* pData         = nullptr;
     PipelineState* pPipeline        = nullptr;
-    GraphicsSwapchain* pSwapchain   = nullptr;
     Window* pWindow                 = Window::create("Compute", 0, 0, 1024, 1024, ScreenMode_Fullscreen);
     ResultCode result               = RecluseResult_Ok;
 
@@ -144,7 +144,7 @@ int main(int c, char* argv[])
         app.engineName = "Cat";
         app.appName = "Compute";
 
-        LayerFeatureFlags flags = /*LayerFeatureFlag_DebugValidation | */ LayerFeatureFlag_Raytracing | LayerFeatureFlag_MeshShading /*| LayerFeatureFlag_DebugMarking*/;
+        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation | LayerFeatureFlag_Raytracing | LayerFeatureFlag_MeshShading /*| LayerFeatureFlag_DebugMarking*/;
 
         result = pInstance->initialize(app, flags);
     }
@@ -157,17 +157,18 @@ int main(int c, char* argv[])
     pAdapter = pInstance->getGraphicsAdapters()[0];
 
     {
-        DeviceCreateInfo info = { };
-        info.winHandle = pWindow->getNativeHandle();
-        info.swapchainDescription = { };
-        info.swapchainDescription.buffering = FrameBuffering_Triple;
-        info.swapchainDescription.desiredFrames = 3;
-        info.swapchainDescription.renderWidth = pWindow->getWidth();
-        info.swapchainDescription.renderHeight = pWindow->getHeight();
-        info.swapchainDescription.format = ResourceFormat_R8G8B8A8_Unorm;
-
+        DeviceCreateInfo info = { true };
         result = pAdapter->createDevice(info, &pDevice);
     }
+
+    SwapchainCreateDescription swapchainDescription = { };
+    swapchainDescription = { };
+    swapchainDescription.buffering = FrameBuffering_Triple;
+    swapchainDescription.desiredFrames = 3;
+    swapchainDescription.renderWidth = pWindow->getWidth();
+    swapchainDescription.renderHeight = pWindow->getHeight();
+    swapchainDescription.format = ResourceFormat_R8G8B8A8_Unorm;
+    pSwapchain = pDevice->createSwapchain(swapchainDescription, pWindow->getNativeHandle());
 
     if (result != RecluseResult_Ok) 
     {
@@ -210,8 +211,6 @@ int main(int c, char* argv[])
     {
         R_ERROR("TEST", "Failed to create data resource!");
     }
-
-    pSwapchain = pDevice->getSwapchain();
 
     {
         ConstData dat = { };
@@ -266,7 +265,7 @@ int main(int c, char* argv[])
         {
             updateConstData(pData, pSwapchain->getDesc().renderWidth, pSwapchain->getDesc().renderHeight, frameMs, seconds);
             GraphicsContext* context = pContext;
-            context->begin();
+            pSwapchain->prepare(context);
                 ResourceViewDescription desc   = { };
                 desc.type               = ResourceViewType_UnorderedAccess;
                 desc.dimension          = ResourceViewDimension_2d;
@@ -290,7 +289,7 @@ int main(int c, char* argv[])
 
                 context->transition(frame, ResourceState_Present);
             context->end();
-            pSwapchain->present();
+            pSwapchain->present(context);
         }
         R_VERBOSE("Test", "Frame: %f fps", 1.0f / frameMs);
         pollEvents();
@@ -303,6 +302,7 @@ int main(int c, char* argv[])
     }
     
     pContext->wait();
+    pDevice->destroySwapchain(pSwapchain);
     pDevice->destroyResource(output);
     pDevice->destroyResource(pData);
     pDevice->releaseContext(pContext);

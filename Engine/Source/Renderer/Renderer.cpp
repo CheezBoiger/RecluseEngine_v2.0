@@ -77,7 +77,7 @@ void Renderer::initialize()
 
     createDevice(m_currentRendererConfigs);
     m_pContext = m_pDevice->createContext();
-    m_pSwapchain = m_pDevice->getSwapchain();
+    //m_pSwapchain = m_pDevice->getSwapchain();
 
     {
         MemoryReserveDescription reserveDesc = { };
@@ -118,12 +118,12 @@ void Renderer::cleanUp()
 
 void Renderer::present(Bool delayPresent)
 {
-    ResultCode result = m_pSwapchain->present(delayPresent ? GraphicsSwapchain::PresentConfig_SkipPresent : GraphicsSwapchain::PresentConfig_Present);
-
-    if (result != RecluseResult_Ok) 
-    {
-        R_WARN("Renderer", "Swapchain present returns with err code: %d", result);
-    }
+//    ResultCode result = m_pSwapchain->present(delayPresent ? GraphicsSwapchain::PresentConfig_SkipPresent : GraphicsSwapchain::PresentConfig_Present);
+//
+//    if (result != RecluseResult_Ok) 
+//    {
+//        R_WARN("Renderer", "Swapchain present returns with err code: %d", result);
+//    }
 }
 
 
@@ -186,7 +186,7 @@ void Renderer::render()
 #endif
     context->end();
     // Present.
-    m_pSwapchain->present();
+   // m_pSwapchain->present();
     
     resetCommandKeys();
 }
@@ -220,12 +220,12 @@ void Renderer::determineAdapter(std::vector<GraphicsAdapter*>& adapters)
 void Renderer::createDevice(const RendererConfigs& configs)
 {
     DeviceCreateInfo info                   = { };
-    info.winHandle                          = m_windowHandle;
-    info.swapchainDescription.buffering     = FrameBuffering_Single;
-    info.swapchainDescription.desiredFrames = 3;
-    info.swapchainDescription.format        = ResourceFormat_R8G8B8A8_Unorm;
-    info.swapchainDescription.renderWidth   = configs.renderWidth;
-    info.swapchainDescription.renderHeight  = configs.renderHeight;
+    //info.winHandle                          = m_windowHandle;
+    //info.swapchainDescription.buffering     = FrameBuffering_Single;
+    //info.swapchainDescription.desiredFrames = 3;
+    //info.swapchainDescription.format        = ResourceFormat_R8G8B8A8_Unorm;
+    //info.swapchainDescription.renderWidth   = configs.renderWidth;
+    //info.swapchainDescription.renderHeight  = configs.renderHeight;
 
     ResultCode result          = RecluseResult_Ok;
     
