@@ -16,7 +16,7 @@ ResultCode D3D12PrimaryCommandList::initialize(D3D12Context* pDeviceContext, Gra
     flags;
 
     HRESULT result                                      = S_OK;
-    const std::vector<BufferResources>& bufferResources = pDeviceContext->getBufferResources();
+    const std::vector<ContextFrame>& bufferResources = pDeviceContext->getContextFrames();
     ID3D12Device* device                                = staticCast<D3D12Device*>(pDeviceContext->getDevice())->get();
 
     m_allocators.resize(bufferResources.size());

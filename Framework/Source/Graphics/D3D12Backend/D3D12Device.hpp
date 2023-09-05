@@ -26,7 +26,7 @@ class D3D12RenderPass;
 class D3D12Resource;
 class D3D12Device;
 
-struct BufferResources 
+struct ContextFrame 
 {
     ID3D12CommandAllocator* pAllocator;
     U64                     fenceValue;
@@ -77,12 +77,12 @@ public:
                                                 U32 numRegions
                                             ) override;
 
-    BufferResources*                    getCurrentBufferResource() { return &m_bufferResources[m_currentBufferIndex]; }
+    ContextFrame*                    getCurrentContextFrame() { return &m_contextFrames[m_currentBufferIndex]; }
     U32                                 getCurrentBufferIndex() const { return m_currentBufferIndex; }
     U32                                 obtainCurrentBufferIndex() const { return getCurrentBufferIndex(); }
     U32                                 obtainBufferCount() const { return m_bufferCount; }
 
-    const std::vector<BufferResources>& getBufferResources() const { return m_bufferResources; }
+    const std::vector<ContextFrame>& getContextFrames() const { return m_contextFrames; }
     void                                resetCurrentResources();
    
     void                                bindRenderTargets(U32 count, ResourceViewId* ppResources, ResourceViewId pDepthStencil = 0) override;
@@ -123,8 +123,8 @@ public:
 
     void                                transition(GraphicsResource* pResource, ResourceState newState, U16 baseMip, U16 mipCount, U16 baseLayer, U16 layerCount) override;
     GraphicsDevice*                     getDevice() override;
-    const BufferResources&              getBufferResource(U32 idx) const { return m_bufferResources[idx]; }
-    void                                setNewFenceValue(U32 idx, U64 value) { m_bufferResources[idx].fenceValue = value; }   
+    const ContextFrame&              getContextFrame(U32 idx) const { return m_contextFrames[idx]; }
+    void                                setNewFenceValue(U32 idx, U64 value) { m_contextFrames[idx].fenceValue = value; }   
 
 private:
     typedef U32 ContextDirtyFlags;
@@ -179,7 +179,7 @@ private:
     void                                bindRootSignature(ID3D12GraphicsCommandList* pList, ContextState& state);
 
     D3D12Device*                        m_pDevice;
-    std::vector<BufferResources>        m_bufferResources;
+    std::vector<ContextFrame>           m_contextFrames;
     U32                                 m_currentBufferIndex;
     U32                                 m_bufferCount;
     ContextDirtyFlags                   m_dirtyFlags;    

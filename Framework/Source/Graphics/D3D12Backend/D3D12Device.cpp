@@ -57,7 +57,7 @@ ResultCode D3D12Context::setBuffers(U32 bufferCount)
 ResultCode D3D12Context::wait()
 {
     D3D12Queue* pqueue = m_queue;
-    pqueue->waitForGpu(getBufferResource(getCurrentBufferIndex()).fenceValue);
+    pqueue->waitForGpu(getContextFrame(getCurrentBufferIndex()).fenceValue);
     return RecluseResult_Ok;
 }
 
@@ -66,11 +66,11 @@ void D3D12Context::begin()
 {
     ID3D12Fence* fence = m_queue->getFence();
     HANDLE e = m_queue->getEvent();
-    const U64 previousFenceValue = getBufferResource(getCurrentBufferIndex()).fenceValue;
+    const U64 previousFenceValue = getContextFrame(getCurrentBufferIndex()).fenceValue;
 
     incrementBufferIndex();
 
-    const U64 currentFrameValue = getBufferResource(getCurrentBufferIndex()).fenceValue;
+    const U64 currentFrameValue = getContextFrame(getCurrentBufferIndex()).fenceValue;
     m_queue->get()->Signal(fence, previousFenceValue);
     const U64 completedValue = fence->GetCompletedValue();
     if (completedValue < currentFrameValue)
@@ -391,7 +391,7 @@ ResultCode D3D12Device::reserveMemory(const MemoryReserveDescription& desc)
 void D3D12Context::resetCurrentResources()
 {
     HRESULT result = S_OK;
-    BufferResources& buffer = m_bufferResources[m_currentBufferIndex];
+    ContextFrame& buffer = m_contextFrames[m_currentBufferIndex];
         
     result = buffer.pAllocator->Reset();
 
@@ -416,22 +416,22 @@ void D3D12Context::initializeBufferResources(U32 buffering)
 {
     if (buffering == 0) return;
     HRESULT result      = S_OK;
-    m_bufferResources.resize(buffering);
+    m_contextFrames.resize(buffering);
 
     R_DEBUG(R_CHANNEL_D3D12, "Initializing buffer resources.");
-    for (U32 i = 0; i < m_bufferResources.size(); ++i) 
+    for (U32 i = 0; i < m_contextFrames.size(); ++i) 
     {    
         result = m_pDevice->get()->CreateCommandAllocator
                                 (
                                     D3D12_COMMAND_LIST_TYPE_DIRECT, 
                                     __uuidof(ID3D12CommandAllocator), 
-                                    (void**)&m_bufferResources[i].pAllocator
+                                    (void**)&m_contextFrames[i].pAllocator
                                 );
 
         R_ASSERT(result == S_OK);
-        m_bufferResources[i].fenceValue = m_queue->getFence()->GetCompletedValue();
+        m_contextFrames[i].fenceValue = m_queue->getFence()->GetCompletedValue();
     }
-    m_bufferResources[m_currentBufferIndex].fenceValue = m_queue->waitForGpu(m_bufferResources[m_currentBufferIndex].fenceValue);
+    m_contextFrames[m_currentBufferIndex].fenceValue = m_queue->waitForGpu(m_contextFrames[m_currentBufferIndex].fenceValue);
 }
 
 
@@ -439,17 +439,17 @@ void D3D12Context::destroyBufferResources()
 {
     R_DEBUG(R_CHANNEL_D3D12, "Destroying buffer resources.");
 
-    for (U32 i = 0; i < m_bufferResources.size(); ++i) 
+    for (U32 i = 0; i < m_contextFrames.size(); ++i) 
     {
-        if (m_bufferResources[i].pAllocator) 
+        if (m_contextFrames[i].pAllocator) 
         {
-            m_bufferResources[i].pAllocator->Reset();
-            m_bufferResources[i].pAllocator->Release();
-            m_bufferResources[i].pAllocator = nullptr;
+            m_contextFrames[i].pAllocator->Reset();
+            m_contextFrames[i].pAllocator->Release();
+            m_contextFrames[i].pAllocator = nullptr;
         }
     }
 
-    m_bufferResources.clear();
+    m_contextFrames.clear();
 }
 
 

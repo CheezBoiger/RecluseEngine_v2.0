@@ -304,7 +304,6 @@ public:
         , m_adapter(nullptr)
         , m_enabledFeatures({ })
         , m_memCache({ })
-        , m_swapchain(nullptr)
     { 
     }
 
@@ -401,7 +400,6 @@ private:
     } m_memCache;
 
     SmartPtr<VulkanAllocationManager>   m_allocationManager;
-    VulkanSwapchain*                    m_swapchain;
     std::vector<VulkanContext*>         m_allocatedContexts;
     std::vector<QueueFamily>            m_queueFamilies;
     DescriptorAllocator                 m_descriptorAllocator;

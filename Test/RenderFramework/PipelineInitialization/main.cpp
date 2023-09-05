@@ -108,14 +108,13 @@ int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
     RealtimeTick::initializeWatch(1ull, 0);
-    GraphicsInstance* pInstance             = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
+    GraphicsInstance* pInstance             = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
     GraphicsAdapter* pAdapter               = nullptr;
     GraphicsResource* pData                 = nullptr;
     GraphicsResource* pData2                = nullptr;
 
     GraphicsResource* pVertexBuffer         = nullptr;
     PipelineState* pPipeline                = nullptr;
-    GraphicsSwapchain* pSwapchain           = nullptr;
     Window* pWindow                         = Window::create(u8"猫はいいですPipelineInitialization", 0, 0, 512, 512);
     Mouse* pMouse                           = new Mouse();
     ResultCode result                       = RecluseResult_Ok;
@@ -149,7 +148,7 @@ int main(int c, char* argv[])
     pAdapter = pInstance->getGraphicsAdapters()[0];
 
     {
-        DeviceCreateInfo info                       = { };
+        DeviceCreateInfo info                       = { true };
         result                                      = pAdapter->createDevice(info, &pDevice);
     }
 
@@ -269,7 +268,7 @@ int main(int c, char* argv[])
     }
 
     {
-        //GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
+        GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
         ShaderProgramDatabase database          = ShaderProgramDatabase("PipelineInitialization.Vulkan.Database");
         std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
         std::string vsSource = currDir + "/" + "test.vs.hlsl";
@@ -288,7 +287,7 @@ int main(int c, char* argv[])
         description.graphics.hs = nullptr;
 
         description.language = ShaderLang_Hlsl;
-        Pipeline::Builder::buildShaderProgramDefinitions(database, description, ShaderKey_SimpleColor, ShaderIntermediateCode_Spirv);
+        Pipeline::Builder::buildShaderProgramDefinitions(database, description, ShaderKey_SimpleColor, ShaderIntermediateCode_Dxil);
         Runtime::buildShaderProgram(pDevice, database, 0);
         database.clearShaderProgramDefinitions();
 

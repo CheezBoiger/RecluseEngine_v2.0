@@ -327,12 +327,6 @@ ResultCode VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& in
 void VulkanDevice::release(VkInstance instance)
 {
     vkDeviceWaitIdle(m_device);
-
-    if (m_swapchain) 
-    {
-        destroySwapchain(m_swapchain);
-        m_swapchain = nullptr;
-    }
     
     DescriptorSets::clearDescriptorLayoutCache(this);
     m_allocationManager->release();
@@ -1020,13 +1014,13 @@ ResultCode VulkanDevice::releaseContext(GraphicsContext* pContext)
 
 void VulkanDevice::copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, const CopyBufferRegion* regions, U32 numRegions)
 {
-    m_swapchain->getPresentationQueue()->copyBufferRegions(dst, src, regions, numRegions);
+    getQueue(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT)->copyBufferRegions(dst, src, regions, numRegions);
 }
 
 
 void VulkanDevice::copyResource(GraphicsResource* dst, GraphicsResource* src)
 {
-    m_swapchain->getPresentationQueue()->copyResource(dst, src);
+    getQueue(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT)->copyResource(dst, src);
 }
 
 
