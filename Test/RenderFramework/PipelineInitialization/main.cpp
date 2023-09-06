@@ -108,7 +108,7 @@ int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
     RealtimeTick::initializeWatch(1ull, 0);
-    GraphicsInstance* pInstance             = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
+    GraphicsInstance* pInstance             = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
     GraphicsAdapter* pAdapter               = nullptr;
     GraphicsResource* pData                 = nullptr;
     GraphicsResource* pData2                = nullptr;
@@ -136,7 +136,7 @@ int main(int c, char* argv[])
         ApplicationInfo app     = { };
         app.engineName          = "Cat";
         app.appName             = "PipelineInitialization";
-        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
+        LayerFeatureFlags flags = 0;// LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
         result                  = pInstance->initialize(app, flags);
     }
     
@@ -148,7 +148,7 @@ int main(int c, char* argv[])
     pAdapter = pInstance->getGraphicsAdapters()[0];
 
     {
-        DeviceCreateInfo info                       = { true };
+        DeviceCreateInfo info                       = { };
         result                                      = pAdapter->createDevice(info, &pDevice);
     }
 
@@ -158,7 +158,7 @@ int main(int c, char* argv[])
     }
 
     pContext = pDevice->createContext();
-    pContext->setBuffers(3);
+    pContext->setFrames(3);
 
     {
         MemoryReserveDescription desc = { };
@@ -197,7 +197,7 @@ int main(int c, char* argv[])
     {
         GraphicsResourceDescription desc = { };
         desc.dimension = ResourceDimension_Buffer;
-        desc.width              = pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainBufferCount();
+        desc.width              = pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainFrameCount();
         desc.height             = 1;
         desc.depthOrArraySize   = 1;
         desc.mipLevels          = 1;
@@ -268,8 +268,8 @@ int main(int c, char* argv[])
     }
 
     {
-        GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
-        ShaderProgramDatabase database          = ShaderProgramDatabase("PipelineInitialization.Vulkan.Database");
+        //GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
+        ShaderProgramDatabase database          = ShaderProgramDatabase("PipelineInitialization.D3D12.Database");
         std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
         std::string vsSource = currDir + "/" + "test.vs.hlsl";
         std::string fsSource = currDir + "/" + "test.fs.hlsl";
@@ -287,7 +287,7 @@ int main(int c, char* argv[])
         description.graphics.hs = nullptr;
 
         description.language = ShaderLang_Hlsl;
-        Pipeline::Builder::buildShaderProgramDefinitions(database, description, ShaderKey_SimpleColor, ShaderIntermediateCode_Dxil);
+        Pipeline::Builder::buildShaderProgramDefinitions(database, description, ShaderKey_SimpleColor, ShaderIntermediateCode_Spirv);
         Runtime::buildShaderProgram(pDevice, database, 0);
         database.clearShaderProgramDefinitions();
 
@@ -330,8 +330,8 @@ int main(int c, char* argv[])
             scissor.x = 0; scissor.y = 0;
             scissor.width = pWindow->getWidth(); scissor.height = pWindow->getHeight();
             pSwapchain->prepare(pContext);
-                updateConstData(pData, tick, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), Math::Float2(0, 0));
-                updateConstData(pData2, tick, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), Math::Float2(0, 1));
+                updateConstData(pData, tick, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentFrameIndex(), Math::Float2(0, 0));
+                updateConstData(pData2, tick, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentFrameIndex(), Math::Float2(0, 1));
                 context->pushState();
                 context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
                 context->setCullMode(CullMode_None);
@@ -364,12 +364,12 @@ int main(int c, char* argv[])
 
                 if (pMouse->getButtonState(1) == InputState_Down)
                 {
-                    context->bindConstantBuffer(ShaderStage_Fragment | ShaderStage_Vertex, 0, pData, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), sizeof(ConstData));                 
+                    context->bindConstantBuffer(ShaderStage_Fragment | ShaderStage_Vertex, 0, pData, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentFrameIndex(), sizeof(ConstData));                 
                     context->drawInstanced(3, 1, 0, 0);
                 }
                 if (pMouse->getButtonState(0) == InputState_Down)
                 {
-                    context->bindConstantBuffer(ShaderStage_Fragment | ShaderStage_Vertex, 0, pData2, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentBufferIndex(), sizeof(ConstData));
+                    context->bindConstantBuffer(ShaderStage_Fragment | ShaderStage_Vertex, 0, pData2, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentFrameIndex(), sizeof(ConstData));
                     context->drawInstanced(3, 1, 0, 0);
                 }
 

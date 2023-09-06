@@ -172,12 +172,14 @@ enum R_PUBLIC_API LayerFeatureFlag
     // Checks if gpu has dedicated mesh shading.
     LayerFeatureFlag_MeshShading        = (1 << 1),
     // Enables cpu related validation, validation messages and errors.
+    // This will slow down performance, in order to debug cpu to gpu related issues.
     LayerFeatureFlag_DebugValidation    = (1 << 2),
     // 
     LayerFeatureFlag_ApiDump            = (1 << 3),
     // Enable marking debugging. This allows graphics objects to be marked or named.
     LayerFeatureFlag_DebugMarking       = (1 << 4),
-    // Enable Gpu related validation, messages and errors.
+    // Enable Gpu related validation, messages and errors. 
+    // Warning: This will slow down performance, in order to debug gpu related issues.
     LayerFeatureFlag_GpuDebugValidation      = (1 << 5)
 };
 

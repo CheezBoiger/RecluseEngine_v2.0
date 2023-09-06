@@ -95,21 +95,23 @@ public:
     // Get the current device associated with this context.
     virtual GraphicsDevice* getDevice() { return nullptr; }
     
-    // Sets up the number of buffers to use for rendering. These buffers are the resources that 
-    // essentially are used by the gpu per frame. Each buffer will usually correspond to each frame
+    // Sets up the number of context frames to use for rendering. These are the resources that 
+    // essentially are used by the gpu per iteration. Each context frame is independent of the swapchain frame
     // in order to avoid the cpu from waiting to record and utilize resources when ready. We can essentially
-    // have the cpu working on buffers that are ready to be used, while buffers that are pending are being used
+    // have the cpu working on context frames that are ready to be used, while frames that are pending are being used
     // and displayed by the gpu. 
-    // Note: If there are less buffers then there are frames, you might incur a gpu stall on the cpu side, which might 
+    // Note: If there are less context frames then there are swapchain frames, you might incur a gpu stall on the cpu side, which might 
     //       not be as prevalent on lower-end hardware than higher-end. This is because the cpu side will be busy working on 
-    //       resources, while the gpu is waiting for the next batch. More buffers require more memory, but will lower the possibility of 
-    //       gpu stalls due to cpu usage, but too many buffers may potentially lead to stall as well! You need a sweet spot, which is usually
-    //       around 2-3 buffers. 
-    virtual ResultCode setBuffers(U32 newBufferCount) { return RecluseResult_NoImpl; }
-    virtual U32 obtainBufferCount() const { return 0; }
+    //       resources, while the gpu is waiting for the next batch. More context frames require more memory, but will lower the possibility of 
+    //       gpu stalls due to cpu usage. Keep in mind you can not have more context frames than there are swapchain frames! You need a sweet spot, which is usually
+    //       around 2-3 context frames. 
+    virtual ResultCode  setFrames(U32 newBufferCount) { return RecluseResult_NoImpl; }
 
-    // Obtain the current buffer index from this context.
-    virtual U32 obtainCurrentBufferIndex() const { return 0; }
+    // Obtain the current number of frames for this context.
+    virtual U32         obtainFrameCount() const { return 0; }
+
+    // Obtain the current context frame index from this context.
+    virtual U32         obtainCurrentFrameIndex() const { return 0; }
 
     // Not recommended, but submits a copy to this queue.
     virtual void copyResource(GraphicsResource* dst, GraphicsResource* src) 

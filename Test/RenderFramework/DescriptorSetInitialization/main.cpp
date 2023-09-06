@@ -252,7 +252,7 @@ int main(int c, char* argv[])
     swapchainDescription.format = ResourceFormat_B8G8R8A8_Unorm;
     pSwapchain = pDevice->createSwapchain(swapchainDescription, pWindow->getNativeHandle());
     context = pContext;
-    context->setBuffers(3);
+    context->setFrames(3);
     F32 index = 200;
     F32 counterFps = 0.f;
     F32 desiredFps = 1.f / 60.f;

@@ -87,6 +87,7 @@ public:
 
     Bool                                    checkSupportsExtension(LayerFeatureFlags flags) const { return (m_supportedDeviceExtensionFlags & flags); }
     Bool                                    supportsRayTracing() const { return checkSupportsExtension(LayerFeatureFlag_Raytracing); }
+    Bool                                    checkSupportsDeviceExtension(const char* extension);
 
 private:
 

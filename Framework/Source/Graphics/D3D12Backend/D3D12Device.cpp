@@ -43,7 +43,7 @@ GraphicsDevice* D3D12Context::getDevice()
 }
 
 
-ResultCode D3D12Context::setBuffers(U32 bufferCount)
+ResultCode D3D12Context::setFrames(U32 bufferCount)
 {
     release();
     m_bufferCount = bufferCount;
@@ -57,7 +57,7 @@ ResultCode D3D12Context::setBuffers(U32 bufferCount)
 ResultCode D3D12Context::wait()
 {
     D3D12Queue* pqueue = m_queue;
-    pqueue->waitForGpu(getContextFrame(getCurrentBufferIndex()).fenceValue);
+    pqueue->waitForGpu(getContextFrame(getCurrentFrameIndex()).fenceValue);
     return RecluseResult_Ok;
 }
 
@@ -66,11 +66,11 @@ void D3D12Context::begin()
 {
     ID3D12Fence* fence = m_queue->getFence();
     HANDLE e = m_queue->getEvent();
-    const U64 previousFenceValue = getContextFrame(getCurrentBufferIndex()).fenceValue;
+    const U64 previousFenceValue = getContextFrame(getCurrentFrameIndex()).fenceValue;
 
     incrementBufferIndex();
 
-    const U64 currentFrameValue = getContextFrame(getCurrentBufferIndex()).fenceValue;
+    const U64 currentFrameValue = getContextFrame(getCurrentFrameIndex()).fenceValue;
     m_queue->get()->Signal(fence, previousFenceValue);
     const U64 completedValue = fence->GetCompletedValue();
     if (completedValue < currentFrameValue)
@@ -80,7 +80,7 @@ void D3D12Context::begin()
     }
     // Reset the current fence value with the previous + 1. This will ensure we 
     // are ahead of the fence value for the next frame work.
-    setNewFenceValue(getCurrentBufferIndex(), previousFenceValue + 1);
+    setNewFenceValue(getCurrentFrameIndex(), previousFenceValue + 1);
 
     resetCurrentResources();
     m_pPrimaryCommandList->use(currentBufferIndex());
@@ -245,7 +245,7 @@ void D3D12Context::clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect)
 
 void D3D12Context::prepare()
 {
-    ShaderVisibleDescriptorHeapInstance* shaderVisibleHeap = m_pDevice->getDescriptorHeapManager()->getShaderVisibleInstance(getCurrentBufferIndex());
+    ShaderVisibleDescriptorHeapInstance* shaderVisibleHeap = m_pDevice->getDescriptorHeapManager()->getShaderVisibleInstance(getCurrentFrameIndex());
     shaderVisibleHeap->update(DescriptorHeapUpdateFlag_Reset);
 
     // We should bind the descriptor heaps at the start of the commandlist.
@@ -259,7 +259,7 @@ void D3D12Context::prepare()
 ShaderVisibleDescriptorTable D3D12Context::uploadToShaderVisible(CpuDescriptorTable table, GpuHeapType shaderVisibleType)
 {
     DescriptorHeapAllocationManager* manager        = m_pDevice->getDescriptorHeapManager();
-    ShaderVisibleDescriptorHeapInstance* instance   = manager->getShaderVisibleInstance(getCurrentBufferIndex());
+    ShaderVisibleDescriptorHeapInstance* instance   = manager->getShaderVisibleInstance(getCurrentFrameIndex());
     return instance->upload(m_pDevice->get(), shaderVisibleType, table);
 }
 
@@ -270,6 +270,9 @@ ResultCode D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo
 
     IDXGIAdapter* pAdapter  = adapter->get();
     HRESULT result          = S_OK;
+
+    DXGI_ADAPTER_DESC adapterDescription;
+    pAdapter->GetDesc(&adapterDescription);
 
     result = D3D12CreateDevice(pAdapter, D3D_FEATURE_LEVEL_11_1, __uuidof(ID3D12Device), (void**)&m_device);
 
@@ -407,7 +410,7 @@ void D3D12Context::resetCurrentResources()
 
     Pipelines::resetTableHeaps(m_pDevice);
     RenderPasses::clearRenderPassCache();
-    ShaderVisibleDescriptorHeapInstance* instance = m_pDevice->getDescriptorHeapManager()->getShaderVisibleInstance(getCurrentBufferIndex());
+    ShaderVisibleDescriptorHeapInstance* instance = m_pDevice->getDescriptorHeapManager()->getShaderVisibleInstance(getCurrentFrameIndex());
     instance->update(DescriptorHeapUpdateFlag_Reset);
 }
 

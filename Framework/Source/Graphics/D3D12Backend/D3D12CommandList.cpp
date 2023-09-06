@@ -45,9 +45,31 @@ ResultCode D3D12PrimaryCommandList::initialize(D3D12Context* pDeviceContext, Gra
 
         // Close first.
         m_graphicsCommandLists[i]->Close();
-
     }
 
+    D3D12_COMMAND_SIGNATURE_DESC signatureDescription = { };
+    D3D12_INDIRECT_ARGUMENT_DESC indirectArgsDescription = { };
+    signatureDescription.NumArgumentDescs = 1;
+    signatureDescription.pArgumentDescs = &indirectArgsDescription;
+
+    indirectArgsDescription.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW;
+    signatureDescription.ByteStride = sizeof(D3D12_DRAW_ARGUMENTS);
+    ID3D12CommandSignature* signature = nullptr;
+    result = device->CreateCommandSignature(&signatureDescription, nullptr, __uuidof(ID3D12CommandSignature), (void**)&signature);
+    R_ASSERT(SUCCEEDED(result));
+    m_signatureMap[D3D12_INDIRECT_ARGUMENT_TYPE_DRAW] = signature;
+    
+    indirectArgsDescription.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED;
+    signatureDescription.ByteStride = sizeof(D3D12_DRAW_INDEXED_ARGUMENTS);
+    result = device->CreateCommandSignature(&signatureDescription, nullptr, __uuidof(ID3D12CommandSignature), (void**)&signature);
+    R_ASSERT(SUCCEEDED(result));
+    m_signatureMap[D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED] = signature;
+
+    indirectArgsDescription.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH;
+    signatureDescription.ByteStride = sizeof(D3D12_DISPATCH_ARGUMENTS);
+    result = device->CreateCommandSignature(&signatureDescription, nullptr, __uuidof(ID3D12CommandSignature), (void**)&signature);
+    R_ASSERT(SUCCEEDED(result));
+    m_signatureMap[D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH] = signature;
     return RecluseResult_Ok;
 }
 
@@ -58,6 +80,11 @@ ResultCode D3D12PrimaryCommandList::destroy()
     {
         m_graphicsCommandLists[i]->Release();
     }
+    for (auto& iter : m_signatureMap)
+    {
+        iter.second->Release();
+    }
+    m_signatureMap.clear();
     return RecluseResult_Ok;
 }
 
@@ -490,5 +517,16 @@ void D3D12Context::bindPipeline(ID3D12GraphicsCommandList* list, ContextState& s
     {
         list->IASetPrimitiveTopology(getPrimitiveTopology(state.m_primitiveTopology));
     }
+}
+
+
+ID3D12CommandSignature* D3D12PrimaryCommandList::obtainSignature(D3D12_INDIRECT_ARGUMENT_TYPE type)
+{
+    auto& iter = m_signatureMap.find(type);
+    if (iter == m_signatureMap.end())
+    {
+        return nullptr;
+    }
+    return iter->second;
 }
 } // Recluse

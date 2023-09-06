@@ -252,7 +252,7 @@ int main(int c, char* argv[])
     const F32 desiredFps = 244.0f;
     F32 desiredMs = 1.f / desiredFps;
     pContext = pDevice->createContext();
-    pContext->setBuffers(3);
+    pContext->setFrames(3);
     R_NOTIFY("Compute", "Window width=%d, height=%d", pWindow->getWidth(), pWindow->getHeight());
     F32 seconds = 0.f;
     while (!pWindow->shouldClose()) 

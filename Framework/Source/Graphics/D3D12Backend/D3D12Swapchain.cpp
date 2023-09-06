@@ -124,9 +124,29 @@ void D3D12Swapchain::destroy()
 ResultCode D3D12Swapchain::onRebuild()
 {
     // Destroy the current swapchain and recreate it with the new descriptions.
-    m_currentFrameIndex = 0;
-    destroy();
-    return initialize(m_pDevice, m_hwnd);
+    m_currentFrameIndex                             = 0;
+    const SwapchainCreateDescription& description   = getDesc();
+    UINT swapchainFlags                             = 0;
+
+    // Destroy the current d3d12 swapchain resources.
+    destroyFrameResources();
+
+    if (m_pDevice->getAdapter()->getInstance()->hasTearingSupport())
+    {
+        swapchainFlags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
+    }
+
+    HRESULT result = m_pSwapchain->ResizeBuffers(description.desiredFrames, description.renderWidth, description.renderHeight, Dxgi::getNativeFormat(description.format), swapchainFlags);
+
+    if (FAILED(result))
+    {
+        R_ERROR(R_CHANNEL_D3D12, "Failed to rebuild the swapchain!!");
+        return RecluseResult_Failed;
+    }
+
+    // Rebuild the new d3d12 swapchain resource.s
+    initializeFrameResources();
+    return RecluseResult_Ok;
 }
 
 
@@ -142,6 +162,7 @@ ResultCode D3D12Swapchain::prepare(GraphicsContext* context)
     D3D12Context* d3dContext = context->castTo<D3D12Context>();
 
     d3dContext->begin();
+    R_ASSERT_FORMAT(d3dContext->obtainFrameCount() <= getDesc().desiredFrames, "Context frame count is higher than the actual swapchain buffer count! This will cause a crash!");
 
     // We still need to query for our next frame, as it is essential, but overall we wait by buffer instead of frame index.
     m_currentFrameIndex = m_pSwapchain->GetCurrentBackBufferIndex();

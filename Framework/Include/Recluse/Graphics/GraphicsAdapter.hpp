@@ -31,7 +31,7 @@ struct R_PUBLIC_API AdapterLimits
 
 struct R_PUBLIC_API DeviceCreateInfo 
 {
-    Bool supportPresent;
+    U32 reserved0;
 };
 
 class GraphicsDevice;

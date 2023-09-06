@@ -200,7 +200,7 @@ int main(char* argv[], int c)
 
     context = device->createContext();
     R_ASSERT(context);
-    context->setBuffers(2);
+    context->setFrames(2);
 
     GraphicsResource* textureResource = nullptr;
     createTextureResource(&textureResource);
@@ -270,6 +270,7 @@ int main(char* argv[], int c)
         
     context->wait();
 
+    device->destroySwapchain(swapchain);
     device->destroyResource(constBuff);
     device->destroyResource(textureResource);
     device->releaseContext(context);

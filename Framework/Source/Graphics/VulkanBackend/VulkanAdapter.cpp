@@ -457,4 +457,20 @@ VkSurfaceCapabilitiesKHR VulkanAdapter::getSurfaceCapabilities(VkSurfaceKHR surf
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_phyDevice, surface, &capabilities);
     return capabilities;
 }
+
+
+Bool VulkanAdapter::checkSupportsDeviceExtension(const char* ext)
+{
+    std::vector<VkExtensionProperties> deviceExtensions = getDeviceExtensionProperties();
+    for (U32 i = 0; i < deviceExtensions.size(); ++i)
+    {
+        // We found the right extension
+        if (strcmp(ext, deviceExtensions[i].extensionName) == 0)
+        {
+            return true;
+        }
+    }
+    // No supported extension found, return false.
+    return false;
+}
 } // Recluse 

@@ -191,7 +191,7 @@ ResultCode VulkanSwapchain::present(GraphicsContext* context)
 {
     R_ASSERT(m_pBackbufferQueue != NULL);
     VulkanContext* vulkanContext        = context->castTo<VulkanContext>();
-    const U32 contextIndex              = vulkanContext->getCurrentBufferIndex();
+    const U32 contextIndex              = vulkanContext->getCurrentFrameIndex();
     VulkanContextFrame& contextFrame    = vulkanContext->getContextFrame(contextIndex);
     VkResult result                     = VK_SUCCESS;
     ResultCode err                      = RecluseResult_Ok;
@@ -292,10 +292,10 @@ ResultCode VulkanSwapchain::prepare(GraphicsContext* context)
     //R_ASSERT_FORMAT(context != NULL, "Swapchain requires a context, in order to increment the next frame!");
     R_ASSERT(m_pBackbufferQueue != NULL);
     VulkanContext* vulkanContext    = context->castTo<VulkanContext>();
-
+    R_ASSERT_FORMAT(vulkanContext->getFrameCount() <= m_frameImages.size(), "Context frame count is higher than the actual swapchain buffer count! This will cause a crash!");
     vulkanContext->begin();
 
-    VulkanContextFrame& contextFrame = vulkanContext->getContextFrame(vulkanContext->getCurrentBufferIndex());
+    VulkanContextFrame& contextFrame = vulkanContext->getContextFrame(vulkanContext->getCurrentFrameIndex());
     VkResult result                 = VK_SUCCESS;
     VkSemaphore imageAvailableSema  = contextFrame.waitSemaphore;
     ResultCode err = RecluseResult_Ok;

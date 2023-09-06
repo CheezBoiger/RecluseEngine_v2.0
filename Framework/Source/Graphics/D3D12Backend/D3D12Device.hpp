@@ -50,7 +50,7 @@ public:
     void                                release();
     virtual void                        begin() override;
     virtual void                        end() override;
-    ResultCode                          setBuffers(U32 bufferCount) override;
+    ResultCode                          setFrames(U32 bufferCount) override;
     ResultCode                          wait() override;
 
     inline void                         incrementBufferIndex() 
@@ -77,12 +77,12 @@ public:
                                                 U32 numRegions
                                             ) override;
 
-    ContextFrame*                    getCurrentContextFrame() { return &m_contextFrames[m_currentBufferIndex]; }
-    U32                                 getCurrentBufferIndex() const { return m_currentBufferIndex; }
-    U32                                 obtainCurrentBufferIndex() const { return getCurrentBufferIndex(); }
-    U32                                 obtainBufferCount() const { return m_bufferCount; }
+    ContextFrame*                       getCurrentContextFrame() { return &m_contextFrames[m_currentBufferIndex]; }
+    U32                                 getCurrentFrameIndex() const { return m_currentBufferIndex; }
+    U32                                 obtainCurrentFrameIndex() const override { return getCurrentFrameIndex(); }
+    U32                                 obtainFrameCount() const override { return m_bufferCount; }
 
-    const std::vector<ContextFrame>& getContextFrames() const { return m_contextFrames; }
+    const std::vector<ContextFrame>&    getContextFrames() const { return m_contextFrames; }
     void                                resetCurrentResources();
    
     void                                bindRenderTargets(U32 count, ResourceViewId* ppResources, ResourceViewId pDepthStencil = 0) override;

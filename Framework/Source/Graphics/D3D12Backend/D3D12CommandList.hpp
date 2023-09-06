@@ -29,11 +29,15 @@ public:
 
     ID3D12GraphicsCommandList* get() { return m_currentCmdList; }
 
+    ID3D12CommandSignature* obtainSignature(D3D12_INDIRECT_ARGUMENT_TYPE type);
+
 private:
     std::vector<ID3D12GraphicsCommandList4*>    m_graphicsCommandLists;
     std::vector<ID3D12CommandAllocator*>        m_allocators;
     ID3D12GraphicsCommandList4*                 m_currentCmdList;
     ID3D12CommandAllocator*                     m_currentAllocator;
     CommandListStatus                           m_status;
+    
+    std::map<D3D12_INDIRECT_ARGUMENT_TYPE, ID3D12CommandSignature*> m_signatureMap;
 };
 } // Recluse

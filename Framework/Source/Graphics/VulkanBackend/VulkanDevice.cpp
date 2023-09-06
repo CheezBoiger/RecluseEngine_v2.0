@@ -59,7 +59,7 @@ void VulkanContext::initialize(U32 bufferCount)
 }
 
 
-ResultCode VulkanContext::setBuffers(U32 bufferCount)
+ResultCode VulkanContext::setFrames(U32 bufferCount)
 {
     initialize(bufferCount);
     m_bufferCount = bufferCount;
@@ -86,15 +86,15 @@ GraphicsDevice* VulkanContext::getDevice()
 
 DescriptorAllocatorInstance* VulkanContext::currentDescriptorAllocator()
 {
-    return m_pDevice->getDescriptorAllocatorInstance(getCurrentBufferIndex());
+    return m_pDevice->getDescriptorAllocatorInstance(getCurrentFrameIndex());
 }
 
 
 void VulkanContext::begin()
 {    
-    R_ASSERT(getBufferCount() > 0);
+    R_ASSERT(getFrameCount() > 0);
     incrementBufferIndex();
-    VulkanContextFrame& contextFrame    = getContextFrame(getCurrentBufferIndex());
+    VulkanContextFrame& contextFrame    = getContextFrame(getCurrentFrameIndex());
     VkFence frameFence                  = contextFrame.fence;
 
     // We need to wait for our fences, before we can begin to reset resources.
@@ -103,7 +103,7 @@ void VulkanContext::begin()
 
     prepare();
 
-    m_primaryCommandList.use(getCurrentBufferIndex());
+    m_primaryCommandList.use(getCurrentFrameIndex());
     m_primaryCommandList.reset();
     m_primaryCommandList.begin();
 
@@ -148,7 +148,7 @@ void VulkanContext::end()
 
 ResultCode VulkanContext::submitFinalCommandBuffer(VkCommandBuffer commandBuffer)
 {
-    U32 currentFrameIndex               = getCurrentBufferIndex();
+    U32 currentFrameIndex               = getCurrentFrameIndex();
     VkDevice device                     = m_pDevice->get();
     VulkanContextFrame& contextFrame    = getContextFrame(currentFrameIndex);
     VkImageMemoryBarrier imgBarrier     = { };
@@ -226,10 +226,12 @@ ResultCode VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& in
 
     createInfo.sType                                    = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
-    if (info.supportPresent) 
+    // Add swapchain extension capability.
+    if (adapter->checkSupportsDeviceExtension(VK_KHR_SWAPCHAIN_EXTENSION_NAME))
     {
-        // Add swapchain extension capability.
+        // Query for swapchain creation.
         deviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+        m_supportsSwapchainCreation = true;
     }
 
     // we just need one priority bit, since we are only allocating one queue for both graphics and compute. 
@@ -362,6 +364,7 @@ GraphicsSwapchain* VulkanDevice::createSwapchain
         void* windowHandle
     )
 {
+    R_ASSERT_FORMAT(m_supportsSwapchainCreation, "This device does not support swapchain creation. Be sure to use a physical device that does!!");
     VkSurfaceKHR surface                = getAdapter()->getInstance()->makeSurface(windowHandle); 
     VulkanQueue* pQueue                 = getPresentableQueue(surface);
     VulkanSwapchain* pSwapchain         = new VulkanSwapchain(pDesc, pQueue);
@@ -681,7 +684,7 @@ void VulkanContext::prepare()
 {
     // NOTE(): Get the current buffer index, this is usually the buffer that we recently have 
     // access to.
-    U32 currentBufferIndex = getCurrentBufferIndex();
+    U32 currentBufferIndex = getCurrentFrameIndex();
 
     // Reset the current buffer's command pools.
     resetCommandPool(currentBufferIndex, true);

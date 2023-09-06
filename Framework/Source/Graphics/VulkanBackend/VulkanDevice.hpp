@@ -66,14 +66,14 @@ public:
     void                            begin() override;
     void                            end() override;
 
-    inline U32                      getBufferCount() const { return m_bufferCount; }
-    inline U32                      getCurrentBufferIndex() const { return m_currentBufferIndex; }
+    inline U32                      getFrameCount() const { return m_bufferCount; }
+    inline U32                      getCurrentFrameIndex() const { return m_currentBufferIndex; }
     inline VkFence                  getCurrentFence() const { return m_frameResources[m_currentBufferIndex].fence; }
     ResultCode                      createPrimaryCommandList(VkQueueFlags flags);
     ResultCode                      destroyPrimaryCommandList();
-    ResultCode                      setBuffers(U32 newBufferCount);
-    U32                             obtainCurrentBufferIndex() const { return getCurrentBufferIndex(); }
-    U32                             obtainBufferCount() const { return getBufferCount(); }
+    ResultCode                      setFrames(U32 newBufferCount) override;
+    U32                             obtainCurrentFrameIndex() const override { return getCurrentFrameIndex(); }
+    U32                             obtainFrameCount() const override { return getFrameCount(); }
     DescriptorAllocatorInstance*    currentDescriptorAllocator();
 
     // Not recommended, but submits a copy to this queue, and waits until the command has 
@@ -304,6 +304,7 @@ public:
         , m_adapter(nullptr)
         , m_enabledFeatures({ })
         , m_memCache({ })
+        , m_supportsSwapchainCreation(false)
     { 
     }
 
@@ -407,5 +408,6 @@ private:
     // Cache the enabled features that are available for this device.
     VkPhysicalDeviceFeatures            m_enabledFeatures;
     std::map<VkQueueFlags, VulkanQueue> m_queues;
+    Bool                                m_supportsSwapchainCreation;
 };
 } // Recluse
