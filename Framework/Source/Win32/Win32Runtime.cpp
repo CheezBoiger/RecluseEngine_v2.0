@@ -375,22 +375,25 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
             if (pWindow)
             {
                 pWindow->setScreenSize(width, height);
-                switch (wParam)
+                if (!pWindow->isFullscreen())
                 {
-                    case SIZE_MINIMIZED:
+                    switch (wParam)
                     {
-                        pWindow->overrideMinimized(true);
-                        break;
-                    }
-                    case SIZE_RESTORED:
-                    {
-                        pWindow->overrideMinimized(false);
-                        break;
-                    }
-                    case SIZE_MAXIMIZED:
-                    {
-                        pWindow->overrideMinimized(false);
-                        break;
+                        case SIZE_MINIMIZED:
+                        {
+                            pWindow->overrideMinimized(true);
+                            break;
+                        }
+                        case SIZE_RESTORED:
+                        {
+                            pWindow->overrideRestored(true);
+                            break;
+                        }
+                        case SIZE_MAXIMIZED:
+                        {
+                            pWindow->overrideMinimized(false);
+                            break;
+                        }
                     }
                 }
             }
@@ -400,7 +403,7 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
         {
             if (wParam == true)
             {
-                if (!pWindow->isShowing())
+                if (!pWindow->isShowing() && pWindow->isFullscreen())
                 {
                     R_WARN("Win32", "Restoring window. hwnd=0x%08x, wParam=0x%08x, lParam=0x%08x", hwnd, wParam, lParam);
                     //SetForegroundWindow(hwnd);

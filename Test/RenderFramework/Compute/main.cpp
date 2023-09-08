@@ -233,7 +233,8 @@ int main(int c, char* argv[])
     }
 
     {
-        GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
+        if (pInstance->getApi() == GraphicsApi_Direct3D12)
+            GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
         ShaderProgramDatabase database = ShaderProgramDatabase("Compute.Database");
         std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
         FileBufferData file;
@@ -244,7 +245,7 @@ int main(int c, char* argv[])
         description.compute.cs = shaderPath.c_str();
         description.compute.csName = "main";
 
-        Pipeline::Builder::buildShaderProgramDefinitions(database, description, 0, ShaderIntermediateCode_Dxil);
+        Pipeline::Builder::buildShaderProgramDefinitions(database, description, 0, pInstance->getApi() == GraphicsApi_Vulkan ? ShaderIntermediateCode_Spirv : ShaderIntermediateCode_Dxil);
         Runtime::buildShaderProgram(pDevice, database, ProgramId_Mandelbrot);
         database.clearShaderProgramDefinitions();
     }

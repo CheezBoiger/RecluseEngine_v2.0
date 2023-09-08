@@ -7,30 +7,41 @@
 #include "Recluse/System/Window.hpp"
 #include "Recluse/Time.hpp"
 #include "Recluse/System/Input.hpp"
+#include "Recluse/System/KeyboardInput.hpp"
 
 using namespace Recluse;
 
 
+GraphicsSwapchain* pSwapchain   = nullptr;
+GraphicsDevice* pDevice         = nullptr;
+GraphicsContext* pContext       = nullptr;
+
 void resizeFunc(U32 x, U32 y, U32 width, U32 height)
 {
-    
+    if (!pSwapchain || !pDevice || !pContext) return;
+    if (width > 0 && height > 0)
+    {
+        SwapchainCreateDescription description = pSwapchain->getDesc();
+        description.renderWidth = width;
+        description.renderHeight = height;
+        pContext->wait();
+        pSwapchain->rebuild(description);
+    }
 }
 
 int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
     RealtimeTick::initializeWatch(1ull, 0);
-    GraphicsSwapchain* pSwapchain   = nullptr;
-    GraphicsDevice* pDevice         = nullptr;
-    GraphicsInstance* pInstance       = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
+    GraphicsInstance* pInstance       = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
 
-    Window* pWindow = Window::create(u8"SwapchainInitialization", 0, 0, 1280, 720);
+    Window* pWindow = Window::create(u8"SwapchainInitialization", 0, 0, 1280, 720, ScreenMode_Windowed);
     //Window* pWindow2 = Window::create(u8"Window2", 0, 0, 800, 800, ScreenMode_Windowed);
 
     if (!pInstance || !pWindow) {
         goto Exit;
     }
-    
+    pWindow->setOnWindowResize(resizeFunc);
     ApplicationInfo appInfo = { };
 
     appInfo.appMajor    = 0;
@@ -78,7 +89,7 @@ int main(int c, char* argv[])
         R_ERROR("Graphics", "Failed to create device!");
 
     }
-    GraphicsContext* pContext = pDevice->createContext();
+    pContext = pDevice->createContext();
     pContext->setFrames(2);
     pWindow->setToCenter();
 
@@ -98,7 +109,7 @@ int main(int c, char* argv[])
         {
             RealtimeTick::updateWatch(1ull, 0);
             RealtimeTick tick = RealtimeTick::getTick(0);
-            //R_TRACE("Graphics", "FPS: %f", 1.f / tick.delta());
+            R_TRACE("Graphics", "FPS: %f", 1.f / tick.delta());
             if (!pWindow->isMinimized())
             {
                 pSwapchain->prepare(pContext);
@@ -125,8 +136,15 @@ int main(int c, char* argv[])
                 pContext->end();
                 pSwapchain->present(pContext);
             }
+
+            KeyboardListener listener;
+            if (listener.isKeyDown(KeyCode_Escape))
+            {
+                pWindow->close();
+            }
+
             pollEvents();
-                    
+            
         }
     }
     pContext->wait();
