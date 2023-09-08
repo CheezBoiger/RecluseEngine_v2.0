@@ -7,7 +7,53 @@
 #include "D3D12CommandList.hpp"
 #include "Recluse/Messaging.hpp"
 
+#include "../../Win32/IO/Win32Window.hpp"
+
 namespace Recluse {
+
+
+Bool shouldFullscreen(HWND handle)
+{
+    Window* pWindow = getWindowAssociatedWithHwnd(handle);
+    if (pWindow)
+    {
+        if (pWindow->isFullscreen() && !pWindow->isBorderless())
+        {
+            // Disable allow tearing, as it only works in windowed mode.
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    return false;
+}
+
+
+UINT setFullscreenState(IDXGISwapChain* swapchain, Bool fullscreen, UINT currentFlags)
+{
+    UINT flags = currentFlags;
+    BOOL isAlreadyInFullscreenState = false;
+    swapchain->GetFullscreenState(&isAlreadyInFullscreenState, nullptr);
+    if (fullscreen)
+    {
+        // Disable allow tearing, as it only works in windowed mode.
+        if (!isAlreadyInFullscreenState)
+        {
+            swapchain->SetFullscreenState(true, nullptr);
+        }
+        flags &= ~(DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING);
+    }
+    else
+    {
+        if (isAlreadyInFullscreenState)
+        {
+            swapchain->SetFullscreenState(false, nullptr);
+        }
+    }
+    return flags;
+}
 
 
 ResultCode D3D12Swapchain::initialize(D3D12Device* pDevice, HWND windowHandle)
@@ -97,6 +143,11 @@ ResultCode D3D12Swapchain::initialize(D3D12Device* pDevice, HWND windowHandle)
     m_flags             = swapchainDesc.Flags;
     m_hwnd              = windowHandle;
 
+    if (shouldFullscreen(windowHandle))
+    {
+        m_flags = setFullscreenState(m_pSwapchain, true, m_flags);
+        m_pSwapchain->ResizeBuffers(swapchainDesc.BufferCount, swapchainDesc.Width, swapchainDesc.Height, swapchainDesc.Format, swapchainDesc.Flags);
+    }
     // Initialize our frame resources, make sure to assign device and other values before calling this.
     initializeFrameResources();
 
@@ -112,7 +163,12 @@ void D3D12Swapchain::destroy()
     if (m_pSwapchain) 
     { 
         R_DEBUG(R_CHANNEL_D3D12, "Destroying swapchain...");
-
+        BOOL isFullscreen = false;
+        m_pSwapchain->GetFullscreenState(&isFullscreen, nullptr);
+        if (isFullscreen)
+        {
+            m_pSwapchain->SetFullscreenState(false, nullptr);
+        }
         m_pSwapchain->Release();
         m_pSwapchain = nullptr;
     }
@@ -123,10 +179,11 @@ void D3D12Swapchain::destroy()
 
 ResultCode D3D12Swapchain::onRebuild()
 {
+    R_DEBUG(R_CHANNEL_D3D12, "Rebuilding swapchain buffer.");
     // Destroy the current swapchain and recreate it with the new descriptions.
     m_currentFrameIndex                             = 0;
     const SwapchainCreateDescription& description   = getDesc();
-    UINT swapchainFlags                             = 0;
+    UINT swapchainFlags                             = m_flags;
 
     // Destroy the current d3d12 swapchain resources.
     destroyFrameResources();
@@ -135,6 +192,10 @@ ResultCode D3D12Swapchain::onRebuild()
     {
         swapchainFlags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
     }
+
+    // Set the fullscreen state if we need to.
+    m_flags = swapchainFlags;
+    m_flags = setFullscreenState(m_pSwapchain, shouldFullscreen(m_hwnd), m_flags);
 
     HRESULT result = m_pSwapchain->ResizeBuffers(description.desiredFrames, description.renderWidth, description.renderHeight, Dxgi::getNativeFormat(description.format), swapchainFlags);
 

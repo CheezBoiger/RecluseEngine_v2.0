@@ -7,6 +7,7 @@
 #include "Win32/IO/Win32Window.hpp"
 
 #include <hidusage.h>
+#include <map>
 
 namespace Recluse {
 
@@ -18,6 +19,7 @@ static struct
 
 CriticalSection windowCs = { };
 
+std::map<HWND, Window*> g_hwndToWindowMap;
 
 static void setRawInputDevices(HWND hwnd)
 {
@@ -151,10 +153,11 @@ Window* Window::create(const std::string& title, U32 x, U32 y, U32 width, U32 he
 
     pWindow->setScreenMode(screenMode);
     pWindow->update();
-
     setRawInputDevices(hwnd);
 
     UpdateWindow(hwnd);
+
+    g_hwndToWindowMap.insert(std::make_pair(hwnd, pWindow));
 
     R_DEBUG(R_CHANNEL_WIN32, "Successfully created window!");
 
@@ -207,6 +210,7 @@ ResultCode Window::destroy(Window* pWindow)
         pWindow->close();
     }
 
+    g_hwndToWindowMap.erase((HWND)pWindow->getNativeHandle());
     // delete the API window handle.
     delete pWindow;
 
@@ -239,51 +243,28 @@ void Window::setToCenter()
 }
 
 
-void Window::open()
+void Window::show()
 {
     HWND hwnd = (HWND)getNativeHandle();
     ShowWindow(hwnd, SW_SHOW);
     //SetForegroundWindow(hwnd);
     UpdateWindow(hwnd);
     m_isShowing = true;
+    // It is no longer minimized.
+    m_isMinimized = false;
 }
 
 
-void Window::update()
+void Window::setScreenMode(ScreenMode mode)
 {
-    if (mustChangeScreen())
+    if (m_screenMode != mode)
     {
-        HWND hwnd = (HWND)m_handle;
-        if (isFullscreen())
+        HWND hwnd = (HWND)getNativeHandle();
+        m_screenMode = mode;
+        if (m_screenMode == ScreenMode_Windowed)
         {
-            // Are we fullscreen borderless window?
-            if (isBorderless())
-            {
-                // Fullscreen borderless.
-            }
-            else
-            {
-                // Exclusive fullscreen
-                DWORD dwStyle = GetWindowLongW(hwnd, GWL_STYLE);
-                DWORD exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
-                MONITORINFO monitorInfo = { };
-                monitorInfo.cbSize = sizeof(MONITORINFO);
-                SetWindowLongW(hwnd, GWL_STYLE, dwStyle & ~(WS_CAPTION | WS_THICKFRAME) & (WS_POPUP | WS_VISIBLE));
-                SetWindowLongW(hwnd, GWL_EXSTYLE, exStyle & ~(WS_EX_DLGMODALFRAME | WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE) & (WS_EX_TOPMOST)); 
-                GetMonitorInfoW(MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST), &monitorInfo);
-                const RECT rect = monitorInfo.rcMonitor;
-                SetWindowPos(hwnd, NULL, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, (SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED));
-                UpdateWindow(hwnd);
-            }
-        }
-        else if (isBorderless())
-        {
-            SetWindowLongW(hwnd, GWL_EXSTYLE, 0);
-            SetWindowLongW(hwnd, GWL_STYLE, (WS_POPUP));
-            SetWindowPos(hwnd, HWND_NOTOPMOST, m_xPos, m_yPos, m_width, m_height, (SWP_FRAMECHANGED));
-        }
-        else
-        {
+            m_isBorderless = false;
+            m_isFullscreen = false;
             // Adjust window size due to possible menu.
             RECT windowRect = { (LONG)m_xPos, (LONG)m_yPos, (LONG)m_width, (LONG)m_height };
 
@@ -297,23 +278,102 @@ void Window::update()
                     windowRect.bottom - windowRect.top, 
                     FALSE
                 );
+            UpdateWindow(hwnd);
         }
-        screenChanged();
-    }
+        
+        if (m_screenMode == ScreenMode_WindowBorderless)
+        {
+            m_isBorderless = true;
+            m_isFullscreen = false;
+            SetWindowLongW(hwnd, GWL_EXSTYLE, 0);
+            SetWindowLongW(hwnd, GWL_STYLE, (WS_POPUP));
+            SetWindowPos(hwnd, HWND_NOTOPMOST, m_xPos, m_yPos, m_width, m_height, (SWP_FRAMECHANGED));
+        }
 
+        if (m_screenMode == ScreenMode_FullscreenBorderless)
+        {
+            m_isBorderless = true;
+            m_isFullscreen = true;
+        }
+
+        if (m_screenMode == ScreenMode_Fullscreen)
+        {
+            m_isBorderless = false;
+            m_isFullscreen = true;
+            // Exclusive fullscreen
+            DWORD dwStyle = GetWindowLongW(hwnd, GWL_STYLE);
+            DWORD exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+            MONITORINFO monitorInfo = { };
+            monitorInfo.cbSize = sizeof(MONITORINFO);
+            SetWindowLongW(hwnd, GWL_STYLE, dwStyle & ~(WS_CAPTION | WS_THICKFRAME) & (WS_POPUP | WS_VISIBLE));
+            SetWindowLongW(hwnd, GWL_EXSTYLE, exStyle & ~(WS_EX_DLGMODALFRAME | WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE) & (WS_EX_TOPMOST)); 
+            GetMonitorInfoW(MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST), &monitorInfo);
+            const RECT rect = monitorInfo.rcMonitor;
+            SetWindowPos(hwnd, NULL, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, (SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED));
+            UpdateWindow(hwnd);
+        }
+    }
+}
+
+
+void Window::minimize()
+{
+    HWND hwnd = (HWND)m_handle;
+    ShowWindow(hwnd, SW_SHOWMINNOACTIVE);
+    m_status.mustMinimize = true;
+}
+
+
+void Window::restore()
+{
+    HWND hwnd = (HWND)m_handle;
+    ShowWindow(hwnd, SW_RESTORE);
+    m_status.mustRestore = true;
+}
+
+
+void Window::update()
+{
+    HWND hwnd = (HWND)m_handle;
     if (mustResize())
     {
-        onWindowResize(m_xPos, m_yPos, m_width, m_height);
         resized();
+        onWindowResize(m_xPos, m_yPos, m_width, m_height);
+    }
+    if (m_status.mustMinimize)
+    {
+        m_status.mustMinimize = false;
+        m_isShowing = false; 
+        m_isMinimized = true;
+    }
+    if (m_status.mustRestore)
+    {
+        m_isShowing = true;
+        m_isMinimized = false;
+        m_status.mustRestore = false;
+        onWindowResize(m_xPos, m_yPos, m_width, m_height);
     }
 }
 
 
 void Window::setScreenSize(U32 width, U32 height)
 {
-    m_width = width;
-    m_height = height;
-    m_status.mustResize = true;
-    update();
+    if (m_width != width || m_height != height)
+    {
+        m_width = width;
+        m_height = height;
+        m_status.mustResize = true;
+    }
+}
+
+
+Window* getWindowAssociatedWithHwnd(HWND hwnd)
+{
+    auto& iter = g_hwndToWindowMap.find(hwnd);
+    if (iter != g_hwndToWindowMap.end())
+    {
+        return iter->second;
+    }
+    return nullptr;
 }
 } // Recluse

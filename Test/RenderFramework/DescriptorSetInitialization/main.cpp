@@ -237,7 +237,7 @@ int main(int c, char* argv[])
     //    }
     //}
     
-    pWindow->open();
+    pWindow->show();
 
     // TODO: Still needs more work!!
 

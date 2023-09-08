@@ -396,6 +396,30 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
             }
             break;
         }
+        case WM_ACTIVATEAPP:
+        {
+            if (wParam == true)
+            {
+                if (!pWindow->isShowing())
+                {
+                    R_WARN("Win32", "Restoring window. hwnd=0x%08x, wParam=0x%08x, lParam=0x%08x", hwnd, wParam, lParam);
+                    //SetForegroundWindow(hwnd);
+                    //pWindow->restore();
+                    //pWindow->setScreenSize(pWindow->getWidth(), pWindow->getHeight());
+                    pWindow->overrideRestored(true);
+                }
+            }
+            if (wParam == false)
+            {
+                if (pWindow->isShowing() && pWindow->isFullscreen())
+                {
+                    R_WARN("Win32", "Minimizing window. hwnd=0x%08x, wParam=0x%08x, lParam=0x%08x", hwnd, wParam, lParam);
+                    pWindow->minimize();
+                    //pWindow->overrideMinimized(true);
+                }
+            }
+            break;
+        }
         //case WM_MOUSEMOVE:
         //case WM_SYSCOMMAND:
         //case WM_SHOWWINDOW:
@@ -406,6 +430,10 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
         default: break;
     }    
 
+    if (pWindow)
+    {
+        pWindow->update();
+    }
     return DefWindowProcW(hwnd, uMsg, wParam, lParam);
 }
 

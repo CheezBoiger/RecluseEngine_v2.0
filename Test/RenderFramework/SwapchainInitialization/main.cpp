@@ -92,7 +92,7 @@ int main(int c, char* argv[])
     
         R_TRACE("Graphics", "Succeeded swapchain creation!");
 
-        pWindow->open();
+        pWindow->show();
         //pWindow2->open();
         while (!pWindow->shouldClose()) 
         {

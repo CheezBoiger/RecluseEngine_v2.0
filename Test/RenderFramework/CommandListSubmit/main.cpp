@@ -82,7 +82,7 @@ int main(int c, char* argv[])
     
         R_TRACE("Graphics", "Succeeded swapchain creation!");
 
-        pWindow->open();
+        pWindow->show();
         
         while (!pWindow->shouldClose()) {
             RealtimeTick::updateWatch(1ull, 0);

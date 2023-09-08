@@ -123,7 +123,7 @@ int main(int c, char* argv[])
     pWindow->setMouseHandle(pMouse);
     pWindow->setOnWindowResize(ResizeFunction);
     pWindow->setToCenter();
-    pWindow->open();
+    pWindow->show();
     std::vector<RenderPass*> passes;
 
     if (!pInstance) 

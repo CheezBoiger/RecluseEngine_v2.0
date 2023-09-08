@@ -93,7 +93,7 @@ ResultCode initialize()
     k_pMessageBus->initialize();
 
     k_pWindow = Window::create(u8"TestApp", 0, 0, 800, 600);
-    k_pWindow->open();
+    k_pWindow->show();
 
     k_mainLoopInitialized = true;
 

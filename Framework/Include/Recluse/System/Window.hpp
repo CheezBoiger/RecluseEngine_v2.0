@@ -11,7 +11,8 @@ enum ScreenMode
     ScreenMode_Windowed,
     ScreenMode_Fullscreen,
     ScreenMode_WindowBorderless,
-    ScreenMode_FullscreenBorderless
+    ScreenMode_FullscreenBorderless,
+    ScreenMode_NumScreenModes
 };
 
 class Mouse;
@@ -57,7 +58,7 @@ public:
         , m_width(0)
         , m_xPos(0)
         , m_yPos(0)
-        , m_screenMode(ScreenMode_Windowed)
+        , m_screenMode(ScreenMode_NumScreenModes)
         , m_isMinimized(false)
         , m_monitorIndex(0)
         , m_isShowing(false)
@@ -68,6 +69,10 @@ public:
         , m_onWindowResizeCallback(nullptr) 
     { 
         m_status.mustChangeScreen = true; 
+        m_status.mustMinimize = false;
+        m_status.mustResize = false;
+        m_status.mustMaximize = false;
+        m_status.mustRestore = false;
     }
 
     // Create the window.
@@ -78,8 +83,8 @@ public:
 
     // close the window.
     R_OS_CALL R_PUBLIC_API void close();
-    // Open the window,
-    R_OS_CALL R_PUBLIC_API void open();
+    // Show the window,
+    R_OS_CALL R_PUBLIC_API void show();
     // obtain the native window handle.
     void*                       getNativeHandle() { return m_handle; }
     // Set the title of the window.
@@ -90,8 +95,8 @@ public:
     R_OS_CALL R_PUBLIC_API void setToCenter();
     // Set the window to a location on your screen.
     R_OS_CALL R_PUBLIC_API void setToPosition(U32 x, U32 y);
-    void                        restore();
-    void                        minimize();
+    R_OS_CALL R_PUBLIC_API void restore();
+    R_OS_CALL R_PUBLIC_API void minimize();
     void                        maximize();
     B32                         isMinimized() const { return m_isMinimized; }
     B32                         isFullscreen() const { return m_isFullscreen; }
@@ -108,6 +113,7 @@ public:
 
     // Check if we should close the window.
     B32                         shouldClose() const { return m_shouldClose; }
+    Bool                        isShowing() const { return m_isShowing; }
 
     // set a mouse handle for this window. Only one mouse can be set per window.
     void                        setMouseHandle(Mouse* pMouse) { m_pMouseHandle = pMouse; }
@@ -125,17 +131,13 @@ public:
     void                        setOnWindowResize(OnWindowResizeFunction func) { m_onWindowResizeCallback = func; }
 
     // Set the screen mode.
-    R_PUBLIC_API void setScreenMode(ScreenMode mode)
-    {
-        if (m_screenMode != mode)
-        {
-            m_screenMode = mode;
-            m_status.mustChangeScreen = true;
-        }
-    }
+    R_PUBLIC_API void setScreenMode(ScreenMode mode);
     
     void                        overridePosition(U32 x, U32 y) { m_xPos = x; m_yPos = y; }
-    void                        overrideMinimized(Bool isMinimized) { m_isMinimized = isMinimized; }
+    void                        overrideMinimized(Bool isMinimized) { m_status.mustMinimize = isMinimized; }
+    void                        overrideRestored(Bool isRestored) { m_status.mustRestore = true; }
+
+    void update();
 
 private:
 
@@ -143,7 +145,6 @@ private:
     B32 mustResize() const { return m_status.mustResize; }
     void screenChanged() { m_status.mustChangeScreen = false; }
     void resized() { m_status.mustResize = false; }
-    void update();
 
     // The window width
     U32                         m_width;
@@ -170,6 +171,9 @@ private:
     {
         B32     mustChangeScreen : 1;
         B32     mustResize : 1;
+        B32     mustMinimize : 1;
+        B32     mustMaximize : 1;
+        B32     mustRestore : 1;
     } m_status;
 
     // Title of the window.

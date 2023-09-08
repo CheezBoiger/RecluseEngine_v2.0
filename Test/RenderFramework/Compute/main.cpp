@@ -57,9 +57,10 @@ GraphicsResource* createUavResource(GraphicsResource*);
 
 void ResizeFunction(U32 x, U32 y, U32 width, U32 height)
 {
+    if (!pSwapchain || !pDevice || !pContext) return;
     GraphicsSwapchain* swapchain = pSwapchain;
     SwapchainCreateDescription desc = swapchain->getDesc();
-    if (desc.renderWidth != width || desc.renderHeight != height)
+    //if (desc.renderWidth != width || desc.renderHeight != height)
     {
         if (width > 0 && height > 0)
         {
@@ -248,8 +249,9 @@ int main(int c, char* argv[])
         database.clearShaderProgramDefinitions();
     }
 
-    pWindow->open();
-    const F32 desiredFps = 244.0f;
+    pWindow->show();
+    pWindow->setToCenter();
+    const F32 desiredFps = 240.0f;
     F32 desiredMs = 1.f / desiredFps;
     pContext = pDevice->createContext();
     pContext->setFrames(3);
@@ -290,15 +292,15 @@ int main(int c, char* argv[])
                 context->transition(frame, ResourceState_Present);
             context->end();
             pSwapchain->present(context);
+            R_VERBOSE("Test", "Frame: %f fps", 1.0f / frameMs);
         }
-        R_VERBOSE("Test", "Frame: %f fps", 1.0f / frameMs);
-        pollEvents();
 
         KeyboardListener listener;
         if (listener.isKeyDown(KeyCode_Escape))
         {
             pWindow->close();
         }
+        pollEvents();
     }
     
     pContext->wait();
