@@ -107,11 +107,11 @@ int main(int c, char* argv[])
         //pWindow2->open();
         while (!pWindow->shouldClose()) 
         {
-            RealtimeTick::updateWatch(1ull, 0);
-            RealtimeTick tick = RealtimeTick::getTick(0);
-            R_TRACE("Graphics", "FPS: %f", 1.f / tick.delta());
             if (!pWindow->isMinimized())
             {
+                RealtimeTick::updateWatch(1ull, 0);
+                RealtimeTick tick = RealtimeTick::getTick(0);
+                R_WARN("Graphics", "FPS: %f", 1.f / tick.delta());
                 pSwapchain->prepare(pContext);
                     ResourceViewDescription rtvDescription = { };
                     rtvDescription.type = ResourceViewType_RenderTarget;

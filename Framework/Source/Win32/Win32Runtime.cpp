@@ -391,7 +391,7 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
                         }
                         case SIZE_MAXIMIZED:
                         {
-                            pWindow->overrideMinimized(false);
+                            pWindow->overrideRestored(true);
                             break;
                         }
                     }

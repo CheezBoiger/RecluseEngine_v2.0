@@ -10,6 +10,7 @@
 
 #include "Recluse/Pipeline/ShaderProgramBuilder.hpp"
 #include "Recluse/Filesystem/Filesystem.hpp"
+#include "Recluse/System/KeyboardInput.hpp"
 
 #include "Recluse/Math/Matrix33.hpp"
 #include "Recluse/Math/Matrix44.hpp"
@@ -568,7 +569,7 @@ int main(char* argv[], int c)
     instance  = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
 
-    Window* window = Window::create("Box", 0, 0, 1024, 1024, ScreenMode_Windowed);
+    Window* window = Window::create("Box", 0, 0, 1024, 1024, ScreenMode_Fullscreen);
     window->show();
     window->setToCenter();
     window->setOnWindowResize(ResizeFunction);
@@ -580,7 +581,7 @@ int main(char* argv[], int c)
         appInfo.appMinor = 0;
         appInfo.appMajor = 0;
         appInfo.appPatch = 0;
-        LayerFeatureFlags flags = 0;// LayerFeatureFlag_DebugValidation;
+        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation;
         instance->initialize(appInfo, flags);
     }
     
@@ -686,8 +687,20 @@ int main(char* argv[], int c)
                 context->drawIndexedInstanced(36, 1, 0, 0, 0);
                 context->transition(swapchain->getFrame(swapchain->getCurrentFrameIndex()), ResourceState_Present);
             context->end();
-            swapchain->present(context);
+            if (swapchain->present(context) == RecluseResult_NeedsUpdate)
+            {
+                context->wait();
+                swapchain->rebuild(swapchain->getDesc());
+            }
+
+            KeyboardListener listener;
+            if (listener.isKeyDown(KeyCode_Escape))
+            {
+                window->close();
+            }
         }
+
+        
         pollEvents();
         
     }
