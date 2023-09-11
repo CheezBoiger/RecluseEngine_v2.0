@@ -262,7 +262,7 @@ Recluse::ResourceFormat getResourceFormat(VkFormat format)
 
 VkImageAspectFlags getDepthStencilAspectFlags(VkFormat format)
 {
-    VkImageAspectFlags flags = VK_IMAGE_ASPECT_NONE; 
+    VkImageAspectFlags flags = 0; 
 
     // If it is just a stencil buffer.
     if (format != VK_FORMAT_S8_UINT)
