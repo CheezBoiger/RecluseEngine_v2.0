@@ -122,7 +122,7 @@ GraphicsResource* createUavResource(GraphicsResource* pPrevious)
 int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
-    enableLogTypes(LogType_Debug);
+    //enableLogTypes(LogType_Debug);
     RealtimeTick::initializeWatch(1ull, 0);
     enableLogTypes(LogType_Notify);
     GraphicsInstance* pInstance     = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
@@ -161,6 +161,9 @@ int main(int c, char* argv[])
     {
         DeviceCreateInfo info = { true };
         result = pAdapter->createDevice(info, &pDevice);
+        AdapterInfo adapterInfo = { };
+        pAdapter->getAdapterInfo(&adapterInfo);
+        R_NOTIFY("Game", "%s", adapterInfo.deviceName);
     }
 
     SwapchainCreateDescription swapchainDescription = { };

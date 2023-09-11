@@ -237,7 +237,7 @@ ResultCode D3D12Swapchain::present(GraphicsContext* context)
     UINT syncInterval           = 0;
     HRESULT result              = S_OK;
     UINT flags                  = 0;
-
+    ResultCode err              = RecluseResult_Ok;
     if (desc.buffering == FrameBuffering_Double)
         syncInterval = 1;
     if (desc.buffering == FrameBuffering_Triple && (m_flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING))
@@ -247,10 +247,19 @@ ResultCode D3D12Swapchain::present(GraphicsContext* context)
     
     if (FAILED(result)) 
     {
-        R_ERROR(R_CHANNEL_D3D12, "Failed to present current frame: %d", getCurrentFrameIndex());        
+        switch (result)
+        {
+            case DXGI_ERROR_INVALID_CALL:
+                err = RecluseResult_NeedsUpdate;
+                break;
+            default:
+                R_ERROR(R_CHANNEL_D3D12, "Failed to present current frame: %d", getCurrentFrameIndex());
+                err = RecluseResult_Failed;
+                break;
+        }
     }
 
-    return RecluseResult_Ok;
+    return err;
 }
 
 
