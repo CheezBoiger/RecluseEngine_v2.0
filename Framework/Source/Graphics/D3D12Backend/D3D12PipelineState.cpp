@@ -92,7 +92,7 @@ ResultCode make(VertexInputLayoutId id, const VertexInputLayout& layout)
                 strideBytes += static_cast<UINT>(Dxgi::getNativeFormatSize(element.Format));
                 inputs.elements.push_back(element);
             }
-            inputs.vertexByteStrides.push_back(strideBytes);
+            inputs.vertexByteStrides.push_back(vertexBinding.stride == 0 ? strideBytes : vertexBinding.stride);
         }
 
         g_vertexLayouts.insert(std::make_pair(id, inputs));

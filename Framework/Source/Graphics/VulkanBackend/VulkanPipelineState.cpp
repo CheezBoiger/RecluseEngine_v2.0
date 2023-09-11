@@ -548,14 +548,11 @@ static VulkanVertexLayout createVertexInput(const VertexInputLayout& vi)
         U32 offsetBytes                     = 0;
         const VertexBinding& vertexBind     = vi.vertexBindings[i];
         U32 binding                         = vertexBind.binding;
-        {
-            U32 elementStride                                   = vertexBind.stride;
-            VkVertexInputBindingDescription bindingDescription  = { };
-            bindingDescription.binding                          = binding;
-            bindingDescription.stride                           = elementStride;
-            bindingDescription.inputRate                        = getNativeVertexInputRate(vertexBind.inputRate);
-            layout.bindings.push_back(bindingDescription);
-        }
+        U32 elementStride                                   = 0;
+        VkVertexInputBindingDescription bindingDescription  = { };
+        bindingDescription.binding                          = binding;
+        bindingDescription.stride                           = elementStride;
+        bindingDescription.inputRate                        = getNativeVertexInputRate(vertexBind.inputRate);
 
         for (U32 attribIdx = 0; attribIdx < vertexBind.numVertexAttributes; ++attribIdx) 
         {
@@ -578,8 +575,10 @@ static VulkanVertexLayout createVertexInput(const VertexInputLayout& vi)
                 offsetBytes += formatSizeBytes;
             }
             layout.descriptions.push_back(attribute);   
-
+            elementStride = offsetBytes;
         }
+        bindingDescription.stride = vertexBind.stride == 0 ? elementStride : vertexBind.stride;
+        layout.bindings.push_back(bindingDescription);
     }
 
     return layout;

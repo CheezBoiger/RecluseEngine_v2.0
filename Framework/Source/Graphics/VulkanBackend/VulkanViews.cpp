@@ -151,7 +151,7 @@ ResultCode VulkanImageView::onInitialize(VulkanDevice* pDevice, VulkanResource* 
 
     if (desc.type == ResourceViewType_DepthStencil) 
     {
-        info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+        info.subresourceRange.aspectMask = Vulkan::getDepthStencilAspectFlags(info.format);
     } 
     else 
     {
@@ -162,7 +162,7 @@ ResultCode VulkanImageView::onInitialize(VulkanDevice* pDevice, VulkanResource* 
 
     switch (desc.type) 
     {
-        case ResourceViewType_DepthStencil:     m_expectedLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL; break;
+        case ResourceViewType_DepthStencil:     m_expectedLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL; break;
         case ResourceViewType_RenderTarget:     m_expectedLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; break;
         case ResourceViewType_ShaderResource:   m_expectedLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL; break;
         case ResourceViewType_UnorderedAccess:  m_expectedLayout = VK_IMAGE_LAYOUT_GENERAL; break;

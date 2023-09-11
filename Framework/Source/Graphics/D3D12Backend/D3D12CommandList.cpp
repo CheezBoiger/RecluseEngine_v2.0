@@ -354,7 +354,7 @@ void D3D12Context::bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetByt
     D3D12_RESOURCE_DESC desc = pResource->GetDesc();
     view.BufferLocation = pResource->GetGPUVirtualAddress() + offsetBytes;
     view.SizeInBytes = desc.Width;
-    view.Format = desc.Format;
+    view.Format = type == IndexType_Unsigned16 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
     m_pPrimaryCommandList->get()->IASetIndexBuffer(&view);
 }
 

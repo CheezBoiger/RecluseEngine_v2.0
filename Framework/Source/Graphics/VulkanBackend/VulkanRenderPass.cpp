@@ -104,7 +104,7 @@ FramebufferObject* makeFrameBuffer(VulkanDevice* pDevice, VkRenderPass renderPas
 
     if (desc.pDepthStencil)
     {
-        VulkanImageView* pView = ResourceViews::obtainResourceView(desc.ppRenderTargetViews[i])->castTo<VulkanImageView>();
+        VulkanImageView* pView = ResourceViews::obtainResourceView(desc.pDepthStencil)->castTo<VulkanImageView>();
         viewAttachments[i] = pView->get();
         hasDepthStencil = true;
     }
@@ -199,7 +199,7 @@ VkRenderPass createRenderPass(VulkanDevice* pDevice,  const VulkanRenderPassDesc
         descriptions[i].flags           = 0;
     
         references[i].attachment        = i;
-        references[i].layout            = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+        references[i].layout            = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
     };
     
     U32 i = 0;
@@ -238,8 +238,13 @@ VkRenderPass createRenderPass(VulkanDevice* pDevice,  const VulkanRenderPassDesc
     
     if (depthStencilIncluded) 
     {
-        dependencies[0].dstAccessMask |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-        dependencies[1].srcAccessMask |= dependencies[1].dstAccessMask;
+        dependencies[0].dstAccessMask |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        dependencies[1].srcAccessMask |= dependencies[0].dstAccessMask;
+
+        dependencies[0].srcStageMask    |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+        dependencies[0].dstStageMask    |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+        dependencies[1].srcStageMask    |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+        dependencies[1].dstStageMask    |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
     }
 
     rpIf.sType                      = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;

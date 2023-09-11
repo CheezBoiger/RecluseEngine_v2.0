@@ -200,6 +200,10 @@ VkFormat getVulkanFormat(Recluse::ResourceFormat format)
           return VK_FORMAT_B8G8R8A8_UNORM;
         case Recluse::ResourceFormat_R32G32B32_Float:
           return VK_FORMAT_R32G32B32_SFLOAT;
+        case Recluse::ResourceFormat_R32_Uint:
+          return VK_FORMAT_R32_UINT;
+        case Recluse::ResourceFormat_R32_Int:
+          return VK_FORMAT_R32_SINT;
         default:
             return VK_FORMAT_UNDEFINED;
     }
@@ -246,8 +250,36 @@ Recluse::ResourceFormat getResourceFormat(VkFormat format)
         return Recluse::ResourceFormat_B8G8R8A8_Unorm;
     case VK_FORMAT_R32G32B32_SFLOAT:
         return Recluse::ResourceFormat_R32G32B32_Float;
+    case VK_FORMAT_R32_UINT:
+        return Recluse::ResourceFormat_R32_Uint;
+    case VK_FORMAT_R32_SINT:
+        return Recluse::ResourceFormat_R32_Int;
     default:
         return Recluse::ResourceFormat_Unknown;
     }
+}
+
+
+VkImageAspectFlags getDepthStencilAspectFlags(VkFormat format)
+{
+    VkImageAspectFlags flags = VK_IMAGE_ASPECT_NONE; 
+
+    // If it is just a stencil buffer.
+    if (format != VK_FORMAT_S8_UINT)
+        flags |= VK_IMAGE_ASPECT_DEPTH_BIT;
+
+    // If we have depth and stencil, check here.
+    switch (format)
+    {
+        case VK_FORMAT_D32_SFLOAT_S8_UINT:
+        case VK_FORMAT_D24_UNORM_S8_UINT:
+        case VK_FORMAT_D16_UNORM_S8_UINT:
+        case VK_FORMAT_X8_D24_UNORM_PACK32:
+        case VK_FORMAT_S8_UINT:
+            flags |= VK_IMAGE_ASPECT_STENCIL_BIT;
+            break;
+    }
+
+    return flags;
 }
 } // Vulkan

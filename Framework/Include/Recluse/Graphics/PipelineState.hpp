@@ -96,7 +96,7 @@ struct VertexBinding
 {
     // Binding index, which is maxed between 0, to (VertexInputLayout_BindingCount - 1)
     U32                 binding;
-    U32                 stride;                         // Data Step rate between consecutive elements.
+    U32                 stride;                         // Data Step rate between consecutive elements, in bytes. If 0, will use tight packing of vertex.
     InputRate           inputRate;
     VertexAttribute*    pVertexAttributes;
     U32                 numVertexAttributes;

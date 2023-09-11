@@ -134,6 +134,7 @@ void fillRenderTargetViewDescription(D3D12_RENDER_TARGET_VIEW_DESC& nativeDesc, 
 R_INTERNAL
 void fillDepthStencilViewDescription(D3D12_DEPTH_STENCIL_VIEW_DESC& nativeDesc, const ResourceViewDescription& description)
 {
+    nativeDesc.Flags = D3D12_DSV_FLAG_NONE;
     switch (nativeDesc.ViewDimension)
     {
         case D3D12_DSV_DIMENSION_TEXTURE1D:

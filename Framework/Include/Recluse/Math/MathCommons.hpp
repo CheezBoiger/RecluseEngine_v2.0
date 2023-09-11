@@ -18,8 +18,8 @@
 #define R_MIN(a, b)             ((a) > (b) ? (b) : (a)) 
 #define R_LERP(a, b, t)         ((a) * (1.0f - (t)) + (b) * (t))
 #define R_SMOOTHSTEP(e0, e, t)  R_CLAMP(((t) - (e0)) / ((e1) - (e0))), 0.0f, 1.0f)
-#define R_RADIANS(deg)          ((deg) * (static_cast<R32>(CONST_PI) / 180.0f))
-#define R_DEGREES(rad)          ((rad) * (180.0f / static_cast<R32>(CONST_PI)))
+#define R_RADIANS(deg)          ((deg) * (static_cast<F32>(R_CONST_PI) / 180.0f))
+#define R_DEGREES(rad)          ((rad) * (180.0f / static_cast<F32>(R_CONST_PI)))
 #define R_ABS(a)                ((a) >= 0.0f ? (a) : -(a))
 
 #define R_FLOOR(a)              floorf((a))

@@ -8,6 +8,7 @@
 namespace Recluse {
 namespace Math {
 
+struct Float4;
 
 struct Bool3
 {

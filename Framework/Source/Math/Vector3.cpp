@@ -1,5 +1,6 @@
 //
 #include "Recluse/Math/Vector3.hpp"
+#include "Recluse/Math/Vector4.hpp"
 
 namespace Recluse {
 namespace Math {

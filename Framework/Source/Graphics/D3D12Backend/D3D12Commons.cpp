@@ -330,6 +330,10 @@ DXGI_FORMAT getNativeFormat(Recluse::ResourceFormat format)
             return DXGI_FORMAT_R32G32B32A32_FLOAT;
         case Recluse::ResourceFormat_R32G32_Uint:
             return DXGI_FORMAT_R32G32_UINT;
+        case Recluse::ResourceFormat_R32_Uint:
+            return DXGI_FORMAT_R32_UINT;
+        case Recluse::ResourceFormat_R32_Int:
+            return DXGI_FORMAT_R32_SINT;
         default:
             break;
     }

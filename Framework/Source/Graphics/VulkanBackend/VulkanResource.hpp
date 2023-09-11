@@ -169,6 +169,7 @@ private:
     U16                 m_mipLevels;
     U32                 m_width;
     U32                 m_height;
+    VkFormat            m_format;
 };
 
 

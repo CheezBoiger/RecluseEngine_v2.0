@@ -2,9 +2,9 @@
 
 struct VSOut
 {
-	float3 vPosition 	: SV_POSITION;
+	float4 vPosition 	: SV_POSITION;
 	float3 vNormal 		: TEXCOORD0;
-	float2 vTextCoord0	: TEXCOORD1;	
+	float2 vTexCoord0	: TEXCOORD1;	
 	float4 color 		: TEXCOORD2;
 };
 
@@ -12,18 +12,28 @@ struct VSOut
 cbuffer PerVert : register(b0)
 {
 	float4x4 mModelViewProjection;
-	float3x3 mNormal;
+	float4x4 mNormal;
 	uint   	 useTexturing;
 	uint2	 pad0;
 };
 
 
-VSOut Main(float3 vPosition, float3 vNormal, float2 vTexCoord)
+struct VSIn
 {
-	VSOut Out = { };
-	Out.vPosition = mul(mPosition, mModelViewProjection);
-	Out.vNormal = mul(vNormal, mNormal);
-	Out.color = color;
-	Out.vTexCoord0 = vTextCoord;
+	float3 vPosition : POSITION; 
+	float3 vNormal		: TEXCOORD0; 
+	float2 vTexCoord : TEXCOORD1; 
+	float4 color		: TEXCOORD2;
+};
+
+
+VSOut Main(VSIn inVerts)
+{
+	VSOut Out;
+	float4 localPos = float4(inVerts.vPosition.xyz, 1);
+	Out.vPosition = mul(mModelViewProjection, localPos);
+	Out.vNormal = mul(float4(inVerts.vNormal.xyz, 1.0), mNormal);
+	Out.color = inVerts.color;
+	Out.vTexCoord0 = inVerts.vTexCoord;
 	return Out;
 }

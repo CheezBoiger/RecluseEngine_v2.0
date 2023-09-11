@@ -47,6 +47,8 @@ struct R_PUBLIC_API Float4
         : x(xyz.x), y(xyz.y), z(xyz.z), w(w) { }
     inline Float4(const Float2& xy, const Float2& zw)
         : x(xy.x), y(xy.y), z(zw.x), w(zw.y) { }
+    inline Float4(const Float2& xy, F32 z = 0.f, F32 w = 0.f)
+        : x(xy.x), y(xy.y), z(z), w(w) { }
 
     F32& operator[](U32 i) { return (&x)[i]; }
     F32 operator[](U32 i) const { return (&x)[i]; }
@@ -79,7 +81,6 @@ struct R_PUBLIC_API Float4
     inline friend Float4    operator-(F32 scalar, const Float4& rh);
     inline friend Float4    operator*(F32 scalar, const Float4& rh);
     inline friend Float4    operator/(F32 scalar, const Float4& rh);
-    
 };
 
 

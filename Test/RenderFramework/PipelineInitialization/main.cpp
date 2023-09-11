@@ -108,7 +108,7 @@ int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
     RealtimeTick::initializeWatch(1ull, 0);
-    GraphicsInstance* pInstance             = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
+    GraphicsInstance* pInstance             = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
     GraphicsAdapter* pAdapter               = nullptr;
     GraphicsResource* pData                 = nullptr;
     GraphicsResource* pData2                = nullptr;
@@ -268,7 +268,8 @@ int main(int c, char* argv[])
     }
 
     {
-        //GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
+        if (pInstance->getApi() == GraphicsApi_Direct3D12)
+            GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
         ShaderProgramDatabase database          = ShaderProgramDatabase("PipelineInitialization.D3D12.Database");
         std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
         std::string vsSource = currDir + "/" + "test.vs.hlsl";
@@ -287,7 +288,7 @@ int main(int c, char* argv[])
         description.graphics.hs = nullptr;
 
         description.language = ShaderLang_Hlsl;
-        Pipeline::Builder::buildShaderProgramDefinitions(database, description, ShaderKey_SimpleColor, ShaderIntermediateCode_Spirv);
+        Pipeline::Builder::buildShaderProgramDefinitions(database, description, ShaderKey_SimpleColor, pInstance->getApi() == GraphicsApi_Direct3D12 ? ShaderIntermediateCode_Dxil : ShaderIntermediateCode_Spirv);
         Runtime::buildShaderProgram(pDevice, database, 0);
         database.clearShaderProgramDefinitions();
 
@@ -303,7 +304,7 @@ int main(int c, char* argv[])
         layout.vertexBindings[0].inputRate = InputRate_PerVertex;
         layout.vertexBindings[0].numVertexAttributes = 1;
         layout.vertexBindings[0].pVertexAttributes = &attrib;
-        layout.vertexBindings[0].stride = 8; // 1 float == 4 bytes.
+        //layout.vertexBindings[0].stride = 8; // 1 float == 4 bytes.
 
         layout.numVertexBindings = 1;
 

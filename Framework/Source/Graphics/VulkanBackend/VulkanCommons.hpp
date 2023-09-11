@@ -47,6 +47,7 @@ extern VkFormat                 getVulkanFormat(Recluse::ResourceFormat format);
 extern Recluse::ResourceFormat  getResourceFormat(VkFormat format);
 extern VkStencilOp              getNativeStencilOp(Recluse::StencilOp op);
 extern uint32_t                 getFormatSizeBytes(VkFormat format);
+extern VkImageAspectFlags       getDepthStencilAspectFlags(VkFormat format);
 
 static VkSampleCountFlagBits getSamples(Recluse::U32 count)
 {

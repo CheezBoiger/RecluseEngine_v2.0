@@ -321,6 +321,7 @@ ResultCode VulkanImage::onCreate(VulkanDevice* pDevice, const GraphicsResourceDe
     m_width             = desc.width;
     m_height            = desc.height;
     m_depthOrArraySize  = desc.depthOrArraySize;   
+    m_format            = format;
 
     return result;
 }
@@ -545,7 +546,7 @@ VkImageSubresourceRange VulkanImage::makeSubresourceRange(ResourceState dstState
                 dstState == ResourceState_DepthStencilWrite
             )
         {
-            range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+            range.aspectMask = Vulkan::getDepthStencilAspectFlags(m_format);
         }
     return range;
 }
@@ -638,5 +639,6 @@ void VulkanImage::initializeMetadata(const GraphicsResourceDescription& descript
     m_width = description.width;
     m_height = description.height;
     m_mipLevels = description.mipLevels;
+    m_format = Vulkan::getVulkanFormat(description.format);
 }
 } // Recluse
