@@ -29,6 +29,8 @@ static const U32 g_textureWidth = 64;
 static const U32 g_textureHeight = 64;
 typedef Math::Float4 Vector4;
 
+// TODO: Need to figure out how to better handle resolution resizing.
+GraphicsResource* depthBuffer = nullptr;
 
 struct ConstBuffer
 {
@@ -288,11 +290,12 @@ enum ShaderProgram
     ShaderProgram_Box = 12354343
 };
 
+GraphicsResource* buildDepthBuffer(U32, U32);
 
 void ResizeFunction(U32 x, U32 y, U32 width, U32 height)
 {
     SwapchainCreateDescription desc = swapchain->getDesc();
-    if (desc.renderHeight != height || desc.renderWidth != width)
+    //if (desc.renderHeight != height || desc.renderWidth != width)
     {
         if (width > 0 && height > 0)
         {
@@ -300,6 +303,8 @@ void ResizeFunction(U32 x, U32 y, U32 width, U32 height)
             desc.renderWidth = width;
             desc.renderHeight = height;
             swapchain->rebuild(desc);
+            device->destroyResource(depthBuffer);
+            depthBuffer = buildDepthBuffer(width, height);
         }
     }
 }
@@ -560,7 +565,7 @@ int main(char* argv[], int c)
     Log::initializeLoggingSystem();
     enableLogTypes(LogType_Debug);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
+    instance  = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
 
     Window* window = Window::create("Box", 0, 0, 1024, 1024, ScreenMode_Windowed);
@@ -609,28 +614,28 @@ int main(char* argv[], int c)
     GraphicsResource* indexBuffer = buildIndexBuffer();
     GraphicsResource* constantBuffer = buildConstantBuffer(device);
 
-    GraphicsResource* depthBuffer = buildDepthBuffer(window->getWidth(), window->getHeight());    
+    depthBuffer = buildDepthBuffer(window->getWidth(), window->getHeight());    
 
     std::array<F32, 10> lastMs;
     U32 frameCount = 0;
     while (!window->shouldClose())
-    {   
-        frameCount += 1;
-        RealtimeTick::updateWatch(1ull, 0);
-        RealtimeTick tick   = RealtimeTick::getTick(0);
-        lastMs[frameCount % lastMs.size()] = tick.delta();
-        
-        if ((frameCount % lastMs.size()) == 0)
-        {
-            F32 total = 0.f;
-            for (U32 i = 0; i < lastMs.size(); ++i)
-                total += lastMs[i];
-            total /= static_cast<F32>(lastMs.size());
-            R_WARN("Box", "Fps: %f", 1.0f / total);
-        }
+    {
 
         if (!window->isMinimized())
-        {
+        {   
+            frameCount += 1;
+            RealtimeTick::updateWatch(1ull, 0);
+            RealtimeTick tick   = RealtimeTick::getTick(0);
+            lastMs[frameCount % lastMs.size()] = tick.delta();
+        
+            if ((frameCount % lastMs.size()) == 0)
+            {
+                F32 total = 0.f;
+                for (U32 i = 0; i < lastMs.size(); ++i)
+                    total += lastMs[i];
+                total /= static_cast<F32>(lastMs.size());
+                R_WARN("Box", "Fps: %f", 1.0f / total);
+            }
             swapchain->prepare(context);
                 updateConstBuffer(constantBuffer, window->getWidth(), window->getHeight());
                 GraphicsResource* swapchainImage = swapchain->getFrame(swapchain->getCurrentFrameIndex());
