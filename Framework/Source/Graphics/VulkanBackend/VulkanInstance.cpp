@@ -356,8 +356,7 @@ void VulkanInstance::queryFunctions()
 
 
 VkSurfaceKHR VulkanInstance::makeSurface(void* handle)
-{        
-    R_DEBUG(R_CHANNEL_VULKAN, "Creating surface handle.");
+{
     VkSurfaceKHR surface        = VK_NULL_HANDLE;
     VkResult result             = VK_SUCCESS;
 
@@ -371,7 +370,8 @@ VkSurfaceKHR VulkanInstance::makeSurface(void* handle)
     {
         return m_surfaces[(UPtr)handle];    
     }
-
+       
+    R_DEBUG(R_CHANNEL_VULKAN, "Creating surface handle.");
 #if defined(RECLUSE_WINDOWS)
     VkWin32SurfaceCreateInfoKHR createInfo = { };
 

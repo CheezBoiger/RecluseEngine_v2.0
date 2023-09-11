@@ -50,6 +50,16 @@ ResultCode VulkanSwapchain::build(VulkanDevice* pDevice, void* windowHandle)
         frameCount                                          = Math::clamp(frameCount, capabilities.minImageCount, capabilities.maxImageCount);
         renderWidth                                         = Math::clamp(renderWidth, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
         renderHeight                                        = Math::clamp(renderHeight, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
+        if (renderWidth <= 0 || renderHeight <= 0)
+        {
+            R_ERROR
+                (
+                    R_CHANNEL_VULKAN, 
+                    "Device capabilities seems to have returned zero values for min and max extents. Can not create swapchain! MinImageExtent=(%d, %d), MaxImageExtent=(%d, %d)", 
+                    capabilities.minImageExtent.width, capabilities.minImageExtent.height, capabilities.maxImageExtent.width, capabilities.maxImageExtent.height
+                );
+            return RecluseResult_InvalidArgs;
+        }
         for (VkSurfaceFormatKHR& sF : supportedFormats) 
         {
             if (sF.format == wantedSurfaceFormat) 
@@ -153,14 +163,30 @@ ResultCode VulkanSwapchain::build(VulkanDevice* pDevice, void* windowHandle)
 ResultCode VulkanSwapchain::onRebuild()
 {
     // Destroy and rebuild the swapchain.
-    release();
-    build(m_pDevice, m_windowHandle);
-    // TODO(Garcia): Application frame index has to match with native API image index
-    //                  This might need to be reinvestigated, as I feel either we need to remove one of these,
-    //                  or syncronize them both.
-    m_currentFrameIndex = 0;
-    m_currentImageIndex = 0;
-    return RecluseResult_Ok;
+
+    VkSurfaceKHR surface                        = m_pDevice->getAdapter()->getInstance()->makeSurface(m_windowHandle);
+    ResultCode result                           = RecluseResult_Failed;
+    if (surface)
+    {
+        VkSurfaceCapabilitiesKHR capabilities = m_pDevice->getAdapter()->getSurfaceCapabilities(surface);
+        U32 renderWidth                                         = capabilities.currentExtent.width;
+        U32 renderHeight                                        = capabilities.currentExtent.height;
+        if (renderWidth > 0 && renderHeight > 0)
+        {
+            release();
+            result = build(m_pDevice, m_windowHandle);
+            // TODO(Garcia): Application frame index has to match with native API image index
+            //                  This might need to be reinvestigated, as I feel either we need to remove one of these,
+            //                  or syncronize them both.
+            m_currentFrameIndex = 0;
+            m_currentImageIndex = 0;
+        }
+        else
+        {
+            R_WARN(R_CHANNEL_VULKAN, "Vulkan surface capabilities returned 0 extent size. This could mean that the window is restoring from minimized state. OS should restore this on Proc.");
+        }
+    }
+    return result;
 }
 
 
@@ -216,6 +242,7 @@ ResultCode VulkanSwapchain::present(GraphicsContext* context)
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) 
     {
+        R_DEBUG(R_CHANNEL_VULKAN, "Swapchain is out of date, needs to be recreated...");    
         err = RecluseResult_NeedsUpdate;
     }
 
@@ -226,7 +253,7 @@ ResultCode VulkanSwapchain::present(GraphicsContext* context)
 
 void VulkanSwapchain::validateSwapchainImageIsPresentable()
 {
-    VulkanImage* frame                  = m_frameImages[m_currentFrameIndex];
+    VulkanImage* frame                  = m_frameImages[m_currentImageIndex];
 
     if (frame->getCurrentLayout() != VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) 
     {
@@ -235,7 +262,7 @@ void VulkanSwapchain::validateSwapchainImageIsPresentable()
                 R_CHANNEL_VULKAN, 
                 "Submitting command buffer on frame %d without transitioning back swapchain buffer to PRESENT!"
                 " Will require a transition after all rendering is done!",
-                m_currentFrameIndex
+                m_currentImageIndex
             );
     }
 
@@ -295,10 +322,10 @@ ResultCode VulkanSwapchain::prepare(GraphicsContext* context)
     R_ASSERT_FORMAT(vulkanContext->getFrameCount() <= m_frameImages.size(), "Context frame count is higher than the actual swapchain buffer count! This will cause a crash!");
     vulkanContext->begin();
 
-    VulkanContextFrame& contextFrame = vulkanContext->getContextFrame(vulkanContext->getCurrentFrameIndex());
-    VkResult result                 = VK_SUCCESS;
-    VkSemaphore imageAvailableSema  = contextFrame.waitSemaphore;
-    ResultCode err = RecluseResult_Ok;
+    VulkanContextFrame& contextFrame    = vulkanContext->getContextFrame(vulkanContext->getCurrentFrameIndex());
+    VkResult result                     = VK_SUCCESS;
+    VkSemaphore imageAvailableSema      = contextFrame.waitSemaphore;
+    ResultCode err                      = RecluseResult_Ok;
 
     result = vkAcquireNextImageKHR
                 (
@@ -309,11 +336,20 @@ ResultCode VulkanSwapchain::prepare(GraphicsContext* context)
                     VK_NULL_HANDLE, 
                     &m_currentImageIndex
                 );
+
     if (result != VK_SUCCESS) 
     {
-        R_WARN(R_CHANNEL_VULKAN, "AcquireNextImage was not successful...");    
-
-        err = RecluseResult_Failed;
+        switch (result)
+        {
+            case VK_ERROR_OUT_OF_DATE_KHR:
+                R_DEBUG(R_CHANNEL_VULKAN, "Swapchain is out of date, needs to be recreated...");    
+                err = RecluseResult_NeedsUpdate;
+                break;
+            default:
+                R_WARN(R_CHANNEL_VULKAN, "Swapchain acquire next image was unsuccessfull. This may lead to errors!");
+                break;
+        }
+        
     }
 
     return err;

@@ -5,6 +5,7 @@
 #include "MainEditorFrame.hpp"
 
 #include "Recluse/Renderer/Renderer.hpp"
+#include "WxFrame.hpp"
 
 namespace Recluse {
 
@@ -29,12 +30,22 @@ public:
         Close(true);
     }
     void onAbout(wxCommandEvent& ev) { }
+
+    void onDraw(wxPaintEvent& event)
+    {
+        m_panel->onDraw();
+    }
+
+    void onIdle(wxIdleEvent& event)
+    {
+        m_panel->onDraw();
+    }
     
 private:
     wxMenu* m_menu;
     wxMenu* m_menuHelp;
     wxMenuBar* m_menuBar;
-    wxPanel* m_panel;
+    RenderPanel* m_panel;
 };
 
 RecluseEditorFrame::RecluseEditorFrame()
@@ -49,12 +60,14 @@ RecluseEditorFrame::RecluseEditorFrame()
     m_menuHelp->Append(wxID_ABOUT);
 
     m_menuBar = new wxMenuBar;
-    m_menuBar->SetBackgroundColour(*wxRED);
     m_menuBar->Append(m_menu, "File");
     m_menuBar->Append(m_menuHelp, "Help");
 
-    m_panel = new wxPanel(this);
-
+    m_panel = new RenderPanel(this);
+    m_panel->initialize();
+    m_panel->Connect(wxEVT_PAINT, wxPaintEventHandler(RecluseEditorFrame::onDraw), NULL, this);
+    m_panel->Connect(wxEVT_IDLE, wxIdleEventHandler(RecluseEditorFrame::onIdle), NULL, this);
+    m_panel->Show();
     SetMenuBar(m_menuBar);
     
     CreateStatusBar();
@@ -65,6 +78,12 @@ RecluseEditorFrame::RecluseEditorFrame()
     Bind(wxEVT_MENU, &RecluseEditorFrame::onExit, this, wxID_EXIT);
     wxColour color(50, 50, 50, 255);
     SetBackgroundColour(color);
+
+    wxWindow* pWindow = wxTheApp->GetTopWindow();
+    if (pWindow)
+    {
+        
+    }
     R_DEBUG("WxWidgets", "Initialized RecluseEditorFrame...");
 }
 

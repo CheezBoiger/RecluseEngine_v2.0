@@ -38,7 +38,7 @@ public:
     ResultCode                  build(VulkanDevice* pDevice, void* windowHandle);
     ResultCode                  onRebuild() override;
     ResultCode                  present(GraphicsContext* context) override; 
-    U32                         getCurrentFrameIndex() override { return m_currentFrameIndex; }
+    U32                         getCurrentFrameIndex() override { return m_currentImageIndex; }
     U32                         getFrameCount() const { return m_frames.size(); }
     GraphicsResource*           getFrame(U32 idx) override;
 

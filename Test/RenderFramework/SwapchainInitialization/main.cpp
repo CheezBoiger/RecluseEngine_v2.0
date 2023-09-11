@@ -33,7 +33,7 @@ int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
     RealtimeTick::initializeWatch(1ull, 0);
-    GraphicsInstance* pInstance       = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
+    GraphicsInstance* pInstance       = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
 
     Window* pWindow = Window::create(u8"SwapchainInitialization", 0, 0, 1280, 720, ScreenMode_Windowed);
     //Window* pWindow2 = Window::create(u8"Window2", 0, 0, 800, 800, ScreenMode_Windowed);
@@ -76,7 +76,7 @@ int main(int c, char* argv[])
     DeviceCreateInfo deviceCreate   = { true };
 
     SwapchainCreateDescription swapchainDescription = { };
-    swapchainDescription.buffering                    = FrameBuffering_Triple;
+    swapchainDescription.buffering                    = FrameBuffering_Double;
     swapchainDescription.desiredFrames                = 3;
     swapchainDescription.renderHeight                 = 720;
     swapchainDescription.renderWidth                  = 1280;
@@ -90,7 +90,7 @@ int main(int c, char* argv[])
 
     }
     pContext = pDevice->createContext();
-    pContext->setFrames(2);
+    pContext->setFrames(3);
     pWindow->setToCenter();
 
     pSwapchain = pDevice->createSwapchain(swapchainDescription, pWindow->getNativeHandle());

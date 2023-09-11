@@ -150,6 +150,13 @@ void VulkanResource::releaseViews()
 }
 
 
+void VulkanResource::initializeMetadata(const GraphicsResourceDescription& description)
+{
+    m_dimension     = description.dimension;
+    m_memoryUsage   = description.memoryUsage;
+}
+
+
 ResultCode VulkanBuffer::onCreate(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState) 
 {
     ResultCode result                  = RecluseResult_Ok;
@@ -626,6 +633,7 @@ void VulkanBuffer::performInitialLayout(VulkanDevice* pDevice, ResourceState ini
 
 void VulkanImage::initializeMetadata(const GraphicsResourceDescription& description)
 {
+    VulkanResource::initializeMetadata(description);
     m_depthOrArraySize = description.depthOrArraySize;
     m_width = description.width;
     m_height = description.height;

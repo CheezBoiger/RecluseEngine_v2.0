@@ -65,7 +65,7 @@ protected:
     void                setCurrentAccessMask(VkAccessFlags flags) { m_currentAccessMask = flags; }
     VkAccessFlags       getCurrentAccessMask() const { return m_currentAccessMask; }
     virtual void        performInitialLayout(VulkanDevice* pDevice, ResourceState initState) { }
-
+    virtual void        initializeMetadata(const GraphicsResourceDescription& description);
 private:
     static ResourceId   kResourceCreationCounter;
     static MutexGuard   kResourceCreationMutex;
@@ -143,7 +143,7 @@ public:
     VkImageLayout           getCurrentLayout() const { return m_currentLayout; }
 
     void                    overrideCurrentLayout(VkImageLayout layout) { m_currentLayout = layout; }
-    void                    initializeMetadata(const GraphicsResourceDescription& description);
+    void                    initializeMetadata(const GraphicsResourceDescription& description) override;
 
     // Create memory barrier object to transition the layout of this image to the 
     // specified destination layout.

@@ -122,9 +122,10 @@ GraphicsResource* createUavResource(GraphicsResource* pPrevious)
 int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
+    enableLogTypes(LogType_Debug);
     RealtimeTick::initializeWatch(1ull, 0);
     enableLogTypes(LogType_Notify);
-    GraphicsInstance* pInstance     = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
+    GraphicsInstance* pInstance     = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
     GraphicsAdapter* pAdapter       = nullptr;
     GraphicsResource* pData         = nullptr;
     PipelineState* pPipeline        = nullptr;
@@ -145,7 +146,7 @@ int main(int c, char* argv[])
         app.engineName = "Cat";
         app.appName = "Compute";
 
-        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation | LayerFeatureFlag_Raytracing | LayerFeatureFlag_MeshShading /*| LayerFeatureFlag_DebugMarking*/;
+        LayerFeatureFlags flags = 0;//LayerFeatureFlag_DebugValidation | LayerFeatureFlag_Raytracing | LayerFeatureFlag_MeshShading /*| LayerFeatureFlag_DebugMarking*/;
 
         result = pInstance->initialize(app, flags);
     }
@@ -292,7 +293,11 @@ int main(int c, char* argv[])
 
                 context->transition(frame, ResourceState_Present);
             context->end();
-            pSwapchain->present(context);
+            if (pSwapchain->present(context) == RecluseResult_NeedsUpdate)
+            {
+                pContext->wait();
+                pSwapchain->rebuild(pSwapchain->getDesc());
+            }
             R_VERBOSE("Test", "Frame: %f fps", 1.0f / frameMs);
         }
 

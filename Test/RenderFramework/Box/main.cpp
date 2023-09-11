@@ -171,7 +171,7 @@ int main(char* argv[], int c)
 {
     Log::initializeLoggingSystem();
     RealtimeTick::initializeWatch(1ull, 0);
-    GraphicsInstance* instance  = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
+    GraphicsInstance* instance  = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
     GraphicsAdapter* adapter    = nullptr;
 
     Window* window = Window::create("Box", 0, 0, 1024, 1024, ScreenMode_Windowed);

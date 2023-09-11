@@ -405,7 +405,7 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
             {
                 if (!pWindow->isShowing() && pWindow->isFullscreen())
                 {
-                    R_WARN("Win32", "Restoring window. hwnd=0x%08x, wParam=0x%08x, lParam=0x%08x", hwnd, wParam, lParam);
+                    R_DEBUG("Win32", "Restoring window. hwnd=0x%08x, wParam=0x%08x, lParam=0x%08x", hwnd, wParam, lParam);
                     //SetForegroundWindow(hwnd);
                     //pWindow->restore();
                     //pWindow->setScreenSize(pWindow->getWidth(), pWindow->getHeight());
@@ -416,7 +416,7 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
             {
                 if (pWindow->isShowing() && pWindow->isFullscreen())
                 {
-                    R_WARN("Win32", "Minimizing window. hwnd=0x%08x, wParam=0x%08x, lParam=0x%08x", hwnd, wParam, lParam);
+                    R_DEBUG("Win32", "Minimizing window. hwnd=0x%08x, wParam=0x%08x, lParam=0x%08x", hwnd, wParam, lParam);
                     pWindow->minimize();
                     //pWindow->overrideMinimized(true);
                 }
