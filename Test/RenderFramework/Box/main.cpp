@@ -516,10 +516,10 @@ GraphicsResource* buildConstantBuffer(GraphicsDevice* device)
 }
 
 
-void updateConstBuffer(GraphicsResource* resource, U32 width, U32 height)
+void updateConstBuffer(GraphicsResource* resource, U32 width, U32 height, F32 delta)
 {
     static F32 t = 0;
-    t += 0.01f;
+    t += 20.f * delta;
     void* dat = nullptr;
     resource->map(&dat, nullptr);
     Math::Matrix44 T = Math::translate(Math::Matrix44::identity(), Math::Float3(0, 0, 6));
@@ -566,7 +566,7 @@ int main(char* argv[], int c)
     Log::initializeLoggingSystem();
     enableLogTypes(LogType_Debug);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
+    instance  = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
     GraphicsAdapter* adapter    = nullptr;
 
     Window* window = Window::create("Box", 0, 0, 1024, 1024, ScreenMode_Fullscreen);
@@ -638,7 +638,7 @@ int main(char* argv[], int c)
                 R_WARN("Box", "Fps: %f", 1.0f / total);
             }
             swapchain->prepare(context);
-                updateConstBuffer(constantBuffer, window->getWidth(), window->getHeight());
+                updateConstBuffer(constantBuffer, window->getWidth(), window->getHeight(), tick.delta());
                 GraphicsResource* swapchainImage = swapchain->getFrame(swapchain->getCurrentFrameIndex());
                 context->transition(textureResource, ResourceState_CopySource);
                 context->transition(swapchainImage, ResourceState_CopyDestination);
