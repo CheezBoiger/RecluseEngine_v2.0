@@ -232,11 +232,11 @@ void D3D12Context::bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler*
     if (sampler)
     {
         pSampler = sampler->castTo<D3D12Sampler>();
+        handle = pSampler->getDescriptor();
     }
-    //if (pSampler) handle = pSampler->getCpuDescriptor();
     current.m_samplers[slot] = handle;
-    current.m_rootSigLayout.uavCount = Math::maximum(current.m_rootSigLayout.uavCount, static_cast<U16>(slot+1));
-    current.m_resourceTable.uavs = current.m_uavs.data();
+    current.m_rootSigLayout.samplerCount = Math::maximum(current.m_rootSigLayout.samplerCount, static_cast<U16>(slot+1));
+    current.m_resourceTable.samplers = current.m_samplers.data();
     current.setDirty(ContextDirty_SamplerDescriptors);
 }
 
@@ -261,12 +261,12 @@ void bindResourceTable(ID3D12GraphicsCommandList* pList, BindType bindType, UINT
         {
             case BindType_Graphics:
             {
-                pList->SetGraphicsRootDescriptorTable(0, handle);
+                pList->SetGraphicsRootDescriptorTable(rootIndex, handle);
                 break;
             }
             case BindType_Compute:
             {
-                pList->SetComputeRootDescriptorTable(0, handle);
+                pList->SetComputeRootDescriptorTable(rootIndex, handle);
             }
             default:
             {
@@ -316,13 +316,20 @@ void D3D12Context::bindRootSignature(ID3D12GraphicsCommandList* pList, ContextSt
 void D3D12Context::bindCurrentResources()
 {
     ContextState& state = currentState();
+    ID3D12GraphicsCommandList* currentList = m_pPrimaryCommandList->get();
     if (state.isDirty(ContextDirty_Descriptors))
     {
-        ID3D12GraphicsCommandList* currentList = m_pPrimaryCommandList->get();
         CpuDescriptorTable table = Pipelines::makeDescriptorSrvCbvUavTable(m_pDevice, state.m_rootSigLayout, state.m_resourceTable);
         ShaderVisibleDescriptorHeapInstance* instance = m_pDevice->getDescriptorHeapManager()->getShaderVisibleInstance(currentBufferIndex());
         ShaderVisibleDescriptorTable shaderVisibleTable = instance->upload(m_pDevice->get(), GpuHeapType_CbvSrvUav, table);
         bindResourceTable(currentList, state.m_pipelineStateObject.pipelineType, 0, shaderVisibleTable.baseGpuDescriptorHandle);
+    }
+    if (state.isDirty(ContextDirty_SamplerDescriptors))
+    {
+        CpuDescriptorTable table = Pipelines::makeDescriptorSamplertable(m_pDevice, state.m_rootSigLayout, state.m_resourceTable);
+        ShaderVisibleDescriptorHeapInstance* instance = m_pDevice->getDescriptorHeapManager()->getShaderVisibleInstance(currentBufferIndex());
+        ShaderVisibleDescriptorTable shaderVisibleTable = instance->upload(m_pDevice->get(), GpuHeapType_Sampler, table);
+        bindResourceTable(currentList, state.m_pipelineStateObject.pipelineType, 1, shaderVisibleTable.baseGpuDescriptorHandle);
     }
 }
 

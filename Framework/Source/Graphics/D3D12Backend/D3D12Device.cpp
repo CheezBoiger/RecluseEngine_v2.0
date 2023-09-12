@@ -557,9 +557,23 @@ void D3D12Context::copyBufferRegions
 }
 
 
-void D3D12Device::createSampler(const D3D12_SAMPLER_DESC& desc)
+ResultCode D3D12Device::createSampler(GraphicsSampler** sampler, const SamplerDescription& desc)
 {
-    R_NO_IMPL();
+    D3D12Sampler* d3d12Sampler = DescriptorViews::makeSampler(this, desc);
+    *sampler = d3d12Sampler;
+    return RecluseResult_Ok;
+}
+
+
+ResultCode D3D12Device::destroySampler(GraphicsSampler* sampler)
+{
+    D3D12Sampler* d3d12Sampler = sampler->castTo<D3D12Sampler>();
+    if (!d3d12Sampler)
+    {
+        return RecluseResult_NullPtrExcept;
+    }
+    DescriptorViews::destroySampler(this, d3d12Sampler);
+    return RecluseResult_Ok;
 }
 
 

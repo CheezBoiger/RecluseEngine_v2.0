@@ -135,10 +135,18 @@ struct R_PUBLIC_API UByte4
         struct { U8 r, g, b, a; };
     };
 
+    UByte4(U8 x = 0, U8 y = 0, U8 z = 0, U8 w = 0)
+        : x(x), y(y), z(z), w(w) { }
+
     inline U8& operator[](U32 idx) { return (&x)[idx]; }
     inline U8 operator[](U32 idx) const { return (&x)[idx]; }
 };
 
+
+typedef UByte4 Color4;
+
+R_PUBLIC_API Float4 colorToFloat(const Color4& color);
+R_PUBLIC_API Color4 floatToColor(const Float4& color);
 R_PUBLIC_API F32 dot(const Float4& a, const Float4& b);
 R_PUBLIC_API F32 length(const Float4& a);
 R_PUBLIC_API F32 length2(const Float4& a);

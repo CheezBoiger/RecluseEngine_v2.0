@@ -197,14 +197,18 @@ public:
 
             shader.setEnvInput(glslang::EShSourceHlsl, stage, client, clientVersion);            
             shader.setHlslIoMapping(true);
+            shader.setAutoMapBindings(true);
             messages = (EShMessages)((I32)messages | (I32)EShMsgReadHlsl);
+        }
+        else
+        {
+            shader.setAutoMapLocations(true);   // --aml, which will allow for implicit location mapping 
+                                                // for builtin blocks.
         }
 
         shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_3);
         shader.setStrings(&str, 1);
         shader.setEntryPoint(entryPoint);
-        shader.setAutoMapLocations(true);   // --aml, which will allow for implicit location mapping 
-                                            // for builtin blocks.
     
         if (!shader.parse(&DefaultTBuiltInResource, 450, false, messages)) 
         {

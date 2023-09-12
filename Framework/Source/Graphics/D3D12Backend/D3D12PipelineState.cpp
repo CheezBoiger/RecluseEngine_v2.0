@@ -356,11 +356,11 @@ ID3D12RootSignature* internalCreateRootSignatureWithTable(ID3D12Device* pDevice,
         D3D12_ROOT_PARAMETER tableParameters[2] = { };
         std::array<D3D12_DESCRIPTOR_RANGE, 4> ranges = { };
         const Bool hasSamplers = (layout.samplerCount > 0);
-        U32 rangeIdx = 0;
+        U32 cbvSrvUavRangeIdx = 0;
         U32 offsetInDescriptors = 0;
         if (layout.cbvCount > 0)
         {
-            D3D12_DESCRIPTOR_RANGE& range = ranges[rangeIdx++];
+            D3D12_DESCRIPTOR_RANGE& range = ranges[cbvSrvUavRangeIdx++];
             range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
             range.NumDescriptors = layout.cbvCount;
             range.BaseShaderRegister = 0;
@@ -370,7 +370,7 @@ ID3D12RootSignature* internalCreateRootSignatureWithTable(ID3D12Device* pDevice,
         }
         if (layout.srvCount > 0)
         {
-            D3D12_DESCRIPTOR_RANGE& range = ranges[rangeIdx++];
+            D3D12_DESCRIPTOR_RANGE& range = ranges[cbvSrvUavRangeIdx++];
             range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
             range.NumDescriptors = layout.srvCount;
             range.BaseShaderRegister = 0;
@@ -380,7 +380,7 @@ ID3D12RootSignature* internalCreateRootSignatureWithTable(ID3D12Device* pDevice,
         }
         if (layout.uavCount > 0)
         {
-            D3D12_DESCRIPTOR_RANGE& range = ranges[rangeIdx++];
+            D3D12_DESCRIPTOR_RANGE& range = ranges[cbvSrvUavRangeIdx++];
             range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
             range.NumDescriptors = layout.uavCount;
             range.BaseShaderRegister = 0;
@@ -390,17 +390,17 @@ ID3D12RootSignature* internalCreateRootSignatureWithTable(ID3D12Device* pDevice,
         }
         if (layout.samplerCount > 0)
         {
-            D3D12_DESCRIPTOR_RANGE& range = ranges[rangeIdx++];
+            D3D12_DESCRIPTOR_RANGE& range = ranges[cbvSrvUavRangeIdx];
             range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
             range.NumDescriptors = layout.samplerCount;
             range.BaseShaderRegister = 0;
             range.RegisterSpace = 0;
-            range.OffsetInDescriptorsFromTableStart = offsetInDescriptors;
+            range.OffsetInDescriptorsFromTableStart = 0; // Doesn't need to have an offset, since samplers will be in their own table.
             offsetInDescriptors += layout.samplerCount;
         }
 
         tableParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-        tableParameters[0].DescriptorTable.NumDescriptorRanges = rangeIdx;
+        tableParameters[0].DescriptorTable.NumDescriptorRanges = cbvSrvUavRangeIdx;
         tableParameters[0].DescriptorTable.pDescriptorRanges = ranges.data();
         tableParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
@@ -408,7 +408,7 @@ ID3D12RootSignature* internalCreateRootSignatureWithTable(ID3D12Device* pDevice,
         {    
             tableParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
             tableParameters[1].DescriptorTable.NumDescriptorRanges = 1;
-            tableParameters[1].DescriptorTable.pDescriptorRanges = &ranges[Math::clamp((U32)(rangeIdx - 1), (U32)0, (U32)ranges.size())];
+            tableParameters[1].DescriptorTable.pDescriptorRanges = &ranges[Math::clamp(cbvSrvUavRangeIdx, (U32)0, (U32)ranges.size())];
             tableParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
         }
 
@@ -418,8 +418,8 @@ ID3D12RootSignature* internalCreateRootSignatureWithTable(ID3D12Device* pDevice,
         desc.pStaticSamplers = nullptr;
         desc.Flags = layout.flags; // TODO: None for now, but we might want to try and optimize this?
 
-        ID3DBlob* pSignature;
-        ID3DBlob* pErrorBlob;
+        ID3DBlob* pSignature = nullptr;
+        ID3DBlob* pErrorBlob = nullptr;
         HRESULT result = D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &pSignature, &pErrorBlob);
         if (SUCCEEDED(result))
         {
@@ -433,8 +433,10 @@ ID3D12RootSignature* internalCreateRootSignatureWithTable(ID3D12Device* pDevice,
         {
             R_ERROR(R_CHANNEL_D3D12, "Failed to serialize RootSig, Error: %s", (const char*)pErrorBlob->GetBufferPointer());
         }
-        pSignature->Release();
-        pSignature->Release();
+        if (pSignature)
+        {
+            pSignature->Release();
+        }
     }
     return pRootSig;
 }
@@ -541,7 +543,7 @@ CpuDescriptorTable              makeDescriptorSamplertable(D3D12Device* pDevice,
     auto iter = m_cachedSamplerTables.find(hash);
     if (iter == m_cachedSamplerTables.end())
     {
-        CpuDescriptorTable table = pManager->copyDescriptorsToTable(CpuHeapType_CbvSrvUav, resourceTable.samplers, descriptorCount);
+        CpuDescriptorTable table = pManager->copyDescriptorsToTable(CpuHeapType_Sampler, resourceTable.samplers, descriptorCount);
         m_cachedSamplerTables.insert(std::make_pair(hash, table));
         return table; 
     }

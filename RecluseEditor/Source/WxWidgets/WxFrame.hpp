@@ -17,14 +17,14 @@ class RenderPanel : public wxPanel
 {
 public:
     RenderPanel(wxWindow* window)
-        : wxPanel(window)
+        : wxPanel(window, -1, wxPoint(0, 0), wxSize(100, 100))
         , pContext(nullptr) { }
     virtual ~RenderPanel() { destroy(); }
 
     void initialize()
     {
         ResultCode result = RecluseResult_Ok;
-        pInstance = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
+        pInstance = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
         ApplicationInfo appInfo = { };
         appInfo.appName = "RecluseEditor";
         appInfo.engineName = "RecluseEngine";

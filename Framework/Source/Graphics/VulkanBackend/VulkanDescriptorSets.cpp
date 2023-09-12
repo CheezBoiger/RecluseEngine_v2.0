@@ -61,6 +61,22 @@ VkDescriptorSetLayout createDescriptorSetLayout(VulkanContext* pContext, const D
     std::vector<VkDescriptorSetLayoutBinding> bindings(numBindings);
 
     U32 binding = 0;
+
+    for (U32 i = 0; i < structure.key.value.constantBuffers; ++i)
+    {
+        VulkanBuffer* pBuffer = structure.ppConstantBuffers[i].buffer;
+        
+        // No pBuffer means no slot occupied.
+        if (!pBuffer)
+            continue;
+
+        bindings[binding].binding               = binding;
+        bindings[binding].descriptorCount       = 1;
+        bindings[binding].descriptorType        = getDescriptorType(ResourceViewDimension_Buffer, DescriptorBindType_ConstantBuffer);
+        bindings[binding].stageFlags            = Vulkan::getShaderStages(pContext->obtainConstantBufferShaderFlags(pBuffer->getId()));
+        bindings[binding].pImmutableSamplers    = nullptr;
+        binding++;
+    }
     
     for (U32 i = 0; i < structure.key.value.srvs; ++i) 
     {
@@ -93,22 +109,6 @@ VkDescriptorSetLayout createDescriptorSetLayout(VulkanContext* pContext, const D
         bindings[binding].descriptorType      = getDescriptorType(description.dimension, DescriptorBindType_UnorderedAccess);
         bindings[binding].stageFlags          = Vulkan::getShaderStages(pContext->obtainResourceViewShaderFlags(pView->getId()));
         bindings[binding].pImmutableSamplers  = nullptr;
-        binding++;
-    }
-
-    for (U32 i = 0; i < structure.key.value.constantBuffers; ++i)
-    {
-        VulkanBuffer* pBuffer = structure.ppConstantBuffers[i].buffer;
-        
-        // No pBuffer means no slot occupied.
-        if (!pBuffer)
-            continue;
-
-        bindings[binding].binding               = binding;
-        bindings[binding].descriptorCount       = 1;
-        bindings[binding].descriptorType        = getDescriptorType(ResourceViewDimension_Buffer, DescriptorBindType_ConstantBuffer);
-        bindings[binding].stageFlags            = Vulkan::getShaderStages(pContext->obtainConstantBufferShaderFlags(pBuffer->getId()));
-        bindings[binding].pImmutableSamplers    = nullptr;
         binding++;
     }
 
@@ -216,6 +216,31 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
     //         Since most descriptor sets will likely need to be created with the same format.
 
     // TODO: This needs to support multiple descriptor Counts!!
+    for (U32 i = 0; i < structure.key.value.constantBuffers; ++i)
+    {
+        VkWriteDescriptorSet write      = { };
+        VulkanBuffer* pBuffer           = structure.ppConstantBuffers[i].buffer;
+
+        // No constant buffer means the slot is unoccupied.
+        if (!pBuffer)
+            continue;
+        R_ASSERT_FORMAT(pBuffer->isInResourceState(ResourceState_ConstantBuffer), "Resource must be in constant buffer state!");
+
+        VkDeviceSize minUBOAlignOffsetBytes = VulkanAdapter::obtainMinUniformBufferOffsetAlignment(pContext->getDevice()->castTo<VulkanDevice>());
+        VkDeviceSize alignedMemoryOffset    = align(structure.ppConstantBuffers[i].offset, minUBOAlignOffsetBytes);
+        VkDescriptorBufferInfo info         = makeDescriptorBufferInfo(pBuffer, alignedMemoryOffset, structure.ppConstantBuffers[i].sizeBytes);
+
+        bufferInfo.push_back(info);
+
+        write.sType             = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.descriptorType    = getDescriptorType(ResourceViewDimension_Buffer, DescriptorBindType_ConstantBuffer);
+        write.descriptorCount   = 1;
+        write.dstBinding        = binding++;
+        write.dstSet            = set;
+        write.pBufferInfo       = &bufferInfo.back();
+        writeSet.push_back(write);
+    }
+
     for (U32 i = 0; i < structure.key.value.srvs; ++i)
     {
         VkWriteDescriptorSet write = { };
@@ -247,6 +272,7 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
             VulkanImageView* pImageView = pView->castTo<VulkanImageView>();
             VkDescriptorImageInfo info = makeDescriptorImageInfo(pImageView);
             imageInfo.push_back(info);
+            write.pImageInfo = &imageInfo.back();
         }
 
         writeSet.push_back(write);
@@ -288,31 +314,6 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
         writeSet.push_back(write);
     }
 
-    for (U32 i = 0; i < structure.key.value.constantBuffers; ++i)
-    {
-        VkWriteDescriptorSet write      = { };
-        VulkanBuffer* pBuffer           = structure.ppConstantBuffers[i].buffer;
-
-        // No constant buffer means the slot is unoccupied.
-        if (!pBuffer)
-            continue;
-        R_ASSERT_FORMAT(pBuffer->isInResourceState(ResourceState_ConstantBuffer), "Resource must be in constant buffer state!");
-
-        VkDeviceSize minUBOAlignOffsetBytes = VulkanAdapter::obtainMinUniformBufferOffsetAlignment(pContext->getDevice()->castTo<VulkanDevice>());
-        VkDeviceSize alignedMemoryOffset    = align(structure.ppConstantBuffers[i].offset, minUBOAlignOffsetBytes);
-        VkDescriptorBufferInfo info         = makeDescriptorBufferInfo(pBuffer, alignedMemoryOffset, structure.ppConstantBuffers[i].sizeBytes);
-
-        bufferInfo.push_back(info);
-
-        write.sType             = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write.descriptorType    = getDescriptorType(ResourceViewDimension_Buffer, DescriptorBindType_ConstantBuffer);
-        write.descriptorCount   = 1;
-        write.dstBinding        = binding++;
-        write.dstSet            = set;
-        write.pBufferInfo       = &bufferInfo.back();
-        writeSet.push_back(write);
-    }
-
     for (U32 i = 0; i < structure.key.value.samplers; ++i)
     {
         VkWriteDescriptorSet write = { };
@@ -329,6 +330,7 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
         write.dstSet            = set;
         write.dstBinding        = binding++;
         write.pImageInfo        = &imageInfo.back();
+        writeSet.push_back(write);
     }
 
     const U32 sz = static_cast<U32>(writeSet.size());

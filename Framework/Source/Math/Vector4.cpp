@@ -256,5 +256,27 @@ Bool all(const Float4& a)
 {
     return (a[0] != 0.f) && (a[1] != 0.f) && (a[2] != 0.f) && (a[3] != 0.f);
 }
+
+
+Float4 colorToFloat(const Color4& color)
+{
+    F32 inv = 1.0f / 255.f;
+    F32 R = static_cast<F32>(color.r);
+    F32 G = static_cast<F32>(color.g);
+    F32 B = static_cast<F32>(color.b);
+    F32 A = static_cast<F32>(color.a);
+    return Float4(R * inv, G * inv, B * inv, A * inv);
+}
+
+
+Color4 floatToColor(const Float4& color)
+{
+    F32 maxChroma = 255.f;
+    U8 R = static_cast<U8>(color.r * maxChroma);
+    U8 G = static_cast<U8>(color.g * maxChroma);
+    U8 B = static_cast<U8>(color.b * maxChroma);
+    U8 A = static_cast<U8>(color.a * maxChroma);
+    return Color4(R, G, B, A);
+}
 } // Math
 } // Recluse

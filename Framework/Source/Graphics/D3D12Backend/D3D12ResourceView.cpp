@@ -11,8 +11,11 @@ namespace Recluse {
 
 
 U64 D3D12GraphicsResourceView::kViewCreationCounter = 0;
+U64 D3D12Sampler::kSamplerCreationCounter = 0;
+MutexGuard D3D12Sampler::kSamplerMutex = MutexGuard("D3D12SamplerMutex");
 MutexGuard D3D12GraphicsResourceView::kViewMutex = MutexGuard("D3D12GraphicsResourceViewMutex");
 std::unordered_map<ResourceViewId, D3D12GraphicsResourceView*> g_resourceViewMap;
+std::unordered_map<Hash64, D3D12Sampler> g_samplerMap;
 
 
 namespace DescriptorViews {
@@ -62,6 +65,42 @@ void clearAll(D3D12Device* pDevice)
         delete iter.second;
     }
     g_resourceViewMap.clear();
+    for (auto iter : g_samplerMap)
+    {
+        iter.second.destroy(pDevice);
+    }
+    g_samplerMap.clear();
+}
+
+
+D3D12Sampler* makeSampler(D3D12Device* pDevice, const SamplerDescription& description)
+{
+    Hash64 hash = recluseHashFast(&description, sizeof(SamplerDescription));
+    auto iter = g_samplerMap.find(hash);
+    if (iter == g_samplerMap.end())
+    {
+        D3D12Sampler sampler = D3D12Sampler();
+        sampler.initialize(pDevice, description);
+        sampler.generateId();
+        g_samplerMap.insert(std::make_pair(hash, sampler));
+        return &g_samplerMap[hash];
+    }
+    else
+    {
+        return &iter->second;
+    }
+}
+
+ResultCode destroySampler(D3D12Device* pDevice, D3D12Sampler* sampler)
+{
+    Hash64 hash = sampler->getHash();
+    auto iter = g_samplerMap.find(hash);
+    if (iter != g_samplerMap.end())
+    {
+        iter->second.destroy(pDevice);
+        g_samplerMap.erase(iter);
+    }
+    return RecluseResult_Ok;
 }
 
 
@@ -169,6 +208,7 @@ void fillDepthStencilViewDescription(D3D12_DEPTH_STENCIL_VIEW_DESC& nativeDesc, 
 R_INTERNAL
 void fillShaderResourceViewDescription(D3D12_SHADER_RESOURCE_VIEW_DESC& nativeDesc, const ResourceViewDescription& description)
 {
+     nativeDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     switch (nativeDesc.ViewDimension)
     {
         default:
@@ -422,7 +462,7 @@ R_INTERNAL D3D12_FILTER getFilterMode(Filter minFilter, Filter magFilter, Sample
 {
     MinMagMipFilterType filterType = makeBitset32(0, 3, minFilter) 
                                         | makeBitset32(3, 3, magFilter)
-                                        | makeBitset32(3, 6, mipMode);
+                                        | makeBitset32(6, 3, mipMode);
     auto it = g_nativeFilterMap.find(filterType);
     if (it != g_nativeFilterMap.end())
         return it->second;
@@ -446,16 +486,18 @@ ResultCode D3D12Sampler::initialize(D3D12Device* pDevice, const SamplerDescripti
     samplerDesc.MaxLOD                  = desc.maxLod;
     samplerDesc.MipLODBias              = desc.mipLodBias;
 
-    m_samplerDesc = samplerDesc;
-
-    return RecluseResult_NoImpl;
+    m_hashId = recluseHashFast(&desc, sizeof(SamplerDescription));
+    DescriptorHeapAllocationManager* manager = pDevice->getDescriptorHeapManager();
+    m_handle = manager->allocateSampler(samplerDesc);
+    return RecluseResult_Ok;
 }
 
 
 ResultCode D3D12Sampler::destroy(D3D12Device* pDevice)
 {
     R_ASSERT(pDevice != NULL);
-    ID3D12Device* device = pDevice->get();
+    DescriptorHeapAllocationManager* manager = pDevice->getDescriptorHeapManager();
+    // Need to free descriptor handle!!
     return RecluseResult_NoImpl;
 }
 } // Recluse

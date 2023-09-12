@@ -534,7 +534,9 @@ void updateConstBuffer(GraphicsResource* resource, U32 width, U32 height, F32 de
     ConstBuffer buf = { };
     buf.modelViewProjection = mvp;
     buf.normal = Math::Matrix44::identity();
-    buf.useTexturing = 0;
+    KeyboardListener listener;
+    if (listener.isKeyDown(KeyCode_A))
+        buf.useTexturing = 1;
     memcpy(dat, &buf, sizeof(ConstBuffer));
     resource->unmap(nullptr);
 }
@@ -561,13 +563,34 @@ void createShaderProgram(GraphicsDevice* device)
 }
 
 
+GraphicsSampler* createSampler(GraphicsDevice* device)
+{
+    SamplerDescription samplerDescription = { };
+    samplerDescription.addressModeU = SamplerAddressMode_ClampToBorder;
+    samplerDescription.addressModeV = SamplerAddressMode_ClampToBorder;
+    samplerDescription.addressModeW = SamplerAddressMode_ClampToBorder;
+    samplerDescription.borderColor = BorderColor_OpaqueBlack;
+    samplerDescription.compareOp = CompareOp_Always;
+    samplerDescription.magFilter = Filter_Nearest;
+    samplerDescription.maxAnisotropy = 1.0f;
+    samplerDescription.maxLod = 16;
+    samplerDescription.minFilter = Filter_Nearest;
+    samplerDescription.mipLodBias = 0.0f;
+    samplerDescription.mipMapMode = SamplerMipMapMode_Nearest;
+    GraphicsSampler* sampler = nullptr;
+    device->createSampler(&sampler, samplerDescription);
+    return sampler;
+}
+
+
 int main(char* argv[], int c)
 {
     Log::initializeLoggingSystem();
     enableLogTypes(LogType_Debug);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
+    instance  = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
+    GraphicsSampler* sampler    = nullptr;
 
     Window* window = Window::create("Box", 0, 0, 1024, 1024, ScreenMode_Fullscreen);
     window->show();
@@ -607,6 +630,7 @@ int main(char* argv[], int c)
 
     GraphicsResource* textureResource = nullptr;
     createTextureResource(&textureResource);
+    sampler = createSampler(device);
 
     buildVertexLayouts(device);
     createShaderProgram(device);
@@ -647,6 +671,7 @@ int main(char* argv[], int c)
                 context->transition(vertexbuffer, ResourceState_VertexBuffer);
                 context->transition(indexBuffer, ResourceState_IndexBuffer);
                 context->transition(depthBuffer, ResourceState_DepthStencilWrite);
+                context->transition(textureResource, ResourceState_ShaderResource);
                 ResourceViewDescription viewDescription = { };
                 viewDescription.type = ResourceViewType_RenderTarget;
                 viewDescription.format = swapchain->getDesc().format;
@@ -665,22 +690,33 @@ int main(char* argv[], int c)
                 depthDescription.layerCount = 1;
                 depthDescription.mipLevelCount = 1;
                 ResourceViewId depthId = depthBuffer->asView(depthDescription);
+                ResourceViewDescription textureDescription = { };
+                textureDescription.baseArrayLayer = 0;
+                textureDescription.baseMipLevel = 0;
+                textureDescription.format = ResourceFormat_R8G8B8A8_Unorm;
+                textureDescription.dimension = ResourceViewDimension_2d;
+                textureDescription.layerCount = 1;
+                textureDescription.mipLevelCount = 1;
+                textureDescription.type = ResourceViewType_ShaderResource;
+                ResourceViewId textureView = textureResource->asView(textureDescription);
                 Viewport viewport = { 0, 0, swapchain->getDesc().renderWidth, swapchain->getDesc().renderHeight, 1, 0 };
                 Rect scissor = { 0, 0, swapchain->getDesc().renderWidth, swapchain->getDesc().renderHeight };
                 Math::Float4 clearColor = { 0, 0, 0, 1.0f };
+                U64 offset[] = { 0 };
                 context->bindRenderTargets(1, &viewId, depthId);
                 context->clearDepthStencil(ClearFlag_Depth, 0.f, 0, scissor);
                 context->clearRenderTarget(0, &clearColor.x, scissor);
                 context->setInputVertexLayout(VertexLayout_PositionNormalTexCoordColor);
                 context->setColorWriteMask(0, Color_Rgba);
                 context->setShaderProgram(ShaderProgram_Box);
-                U64 offset[] = { 0 };
                 context->enableDepth(true);
                 context->enableDepthWrite(true);
                 context->bindVertexBuffers(1, &vertexbuffer, offset);
                 context->bindIndexBuffer(indexBuffer, 0, IndexType_Unsigned32);
                 context->setDepthCompareOp(CompareOp_GreaterOrEqual);
                 context->bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, constantBuffer, 0, sizeof(ConstBuffer));
+                context->bindShaderResource(ShaderStage_Pixel, 0, textureView);
+                context->bindSampler(ShaderStage_Pixel, 0, sampler);
                 context->setTopology(PrimitiveTopology_TriangleList);
                 context->setViewports(1, &viewport);
                 context->setScissors(1, &scissor);
@@ -708,6 +744,7 @@ int main(char* argv[], int c)
     context->wait();
 
     device->destroySwapchain(swapchain);
+    device->destroySampler(sampler);
     device->destroyResource(constantBuffer);
     device->destroyResource(depthBuffer);
     device->destroyResource(vertexbuffer);

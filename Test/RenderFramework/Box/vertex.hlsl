@@ -9,12 +9,12 @@ struct VSOut
 };
 
 
-cbuffer PerVert : register(b0)
+[[vk::binding(0)]] cbuffer PerVert : register(b0)
 {
 	float4x4 mModelViewProjection;
 	float4x4 mNormal;
 	uint   	 useTexturing;
-	uint2	 pad0;
+	uint3	 pad0;
 };
 
 

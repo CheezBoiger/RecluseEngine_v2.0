@@ -215,7 +215,8 @@ public:
     GraphicsSwapchain*                  createSwapchain(const SwapchainCreateDescription& desciption, void* windowHandle) override;
 
     // Helper descriptor creators for the device.
-    void                                createSampler(const D3D12_SAMPLER_DESC& desc);
+    ResultCode                          createSampler(GraphicsSampler** sampler, const SamplerDescription& desc) override;
+    ResultCode                          destroySampler(GraphicsSampler* sampler) override;
     ResultCode                          createResource(GraphicsResource** ppResource, const GraphicsResourceDescription& description, ResourceState initState) override;
     ResultCode                          destroyResource(GraphicsResource* pResource) override;
     void                                copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, const CopyBufferRegion* regions, U32 numRegions) override;
