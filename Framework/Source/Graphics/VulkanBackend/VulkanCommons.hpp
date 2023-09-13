@@ -103,8 +103,8 @@ static VkImageLayout getVulkanImageLayout(Recluse::ResourceState state)
         case Recluse::ResourceState_CopyDestination:        return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
         case Recluse::ResourceState_CopySource:             return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
         case Recluse::ResourceState_RenderTarget:           return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        case Recluse::ResourceState_DepthStencilReadOnly:   return VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL;
-        case Recluse::ResourceState_DepthStencilWrite:      return VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+        case Recluse::ResourceState_DepthStencilReadOnly:   return VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+        case Recluse::ResourceState_DepthStencilWrite:      return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
         case Recluse::ResourceState_Present:                return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
         default: return VK_IMAGE_LAYOUT_UNDEFINED;
     }
