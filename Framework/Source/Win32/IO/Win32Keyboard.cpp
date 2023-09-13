@@ -123,4 +123,16 @@ KeyStatus KeyboardListener::getKeyStatus(KeyCode code)
 {
     return kWin32InputKeyCodes[code];
 }
+
+
+Bool KeyboardListener::isKeyStillDown(KeyCode keyCode)
+{
+    return kWin32InputKeyCodes[keyCode] == KeyStatus_StillDown;
+}
+
+
+Bool KeyboardListener::isKeyDownOnce(KeyCode keyCode)
+{
+    return kWin32InputKeyCodes[keyCode] == KeyStatus_Down;
+}
 } // Recluse

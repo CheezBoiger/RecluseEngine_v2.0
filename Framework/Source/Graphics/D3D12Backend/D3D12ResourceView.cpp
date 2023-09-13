@@ -455,7 +455,9 @@ std::unordered_map<MinMagMipFilterType, D3D12_FILTER> g_nativeFilterMap = {
     { (makeBitset32(0, 3, Filter_Linear)    | makeBitset32(3, 3, Filter_Nearest)    | makeBitset32(6, 3, SamplerMipMapMode_Nearest)),   D3D12_FILTER_MIN_LINEAR_MAG_MIP_POINT },
     { (makeBitset32(0, 3, Filter_Linear)    | makeBitset32(3, 3, Filter_Nearest)    | makeBitset32(6, 3, SamplerMipMapMode_Linear)),    D3D12_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR },
     { (makeBitset32(0, 3, Filter_Linear)    | makeBitset32(3, 3, Filter_Linear)     | makeBitset32(6, 3, SamplerMipMapMode_Nearest)),   D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT },
-    { (makeBitset32(0, 3, Filter_Nearest)   | makeBitset32(3, 3, Filter_Nearest)    | makeBitset32(6, 3, SamplerMipMapMode_Linear)),    D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR }
+    { (makeBitset32(0, 3, Filter_Nearest)   | makeBitset32(3, 3, Filter_Nearest)    | makeBitset32(6, 3, SamplerMipMapMode_Linear)),    D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR },
+    { (makeBitset32(0, 3, Filter_Nearest)   | makeBitset32(3, 3, Filter_Linear)     | makeBitset32(6, 3, SamplerMipMapMode_Nearest)),   D3D12_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT },
+    { (makeBitset32(0, 3, Filter_Nearest)   | makeBitset32(3, 3, Filter_Linear)     | makeBitset32(6, 3, SamplerMipMapMode_Linear)),    D3D12_FILTER_MIN_POINT_MAG_MIP_LINEAR }
 };
 
 R_INTERNAL D3D12_FILTER getFilterMode(Filter minFilter, Filter magFilter, SamplerMipMapMode mipMode)

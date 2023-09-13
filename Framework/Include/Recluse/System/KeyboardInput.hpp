@@ -139,6 +139,8 @@ public:
 	Bool		isKeyUp(KeyCode code);
 	// Check if the key is pressed down.
 	Bool		isKeyDown(KeyCode code);
+	Bool		isKeyStillDown(KeyCode code);
+	Bool		isKeyDownOnce(KeyCode code);
 	// Get the key status.
 	KeyStatus	getKeyStatus(KeyCode code);
 };

@@ -76,15 +76,16 @@ ResultCode D3D12Resource::initialize
         d3d12desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
     }
 
-    if (desc.usage & ResourceUsage_DepthStencil) d3d12desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-    if (desc.usage & ResourceUsage_RenderTarget) d3d12desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+    if (desc.usage & ResourceUsage_DepthStencil)    d3d12desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+    if (desc.usage & ResourceUsage_RenderTarget)    d3d12desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
     if (desc.usage & ResourceUsage_UnorderedAccess) d3d12desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-    if (desc.usage & ResourceUsage_ShaderResource) d3d12desc.Flags &= ~(D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE);
+    if (desc.usage & ResourceUsage_ShaderResource)  d3d12desc.Flags &= ~(D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE);
 
-    D3D12_CLEAR_VALUE* clearValue = d3d12desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER ? nullptr : &optimizedClearValue;
+    D3D12_CLEAR_VALUE* clearValue = nullptr;
 
-    if (d3d12desc.Flags & (D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET))
+    if ((d3d12desc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER) && (d3d12desc.Flags & (D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET)))
     {
+        optimizedClearValue.Format = d3d12desc.Format;
         clearValue = &optimizedClearValue;
     }
 
@@ -108,7 +109,7 @@ ResultCode D3D12Resource::initialize
         d3d12desc.Alignment                         = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
         R_ASSERT_FORMAT(pAllocator, "No allocator exists for the given dimension! Is the resource unknown?");
 
-        ResultCode result  = pAllocator->allocate(&m_memObj, d3d12desc, desc.memoryUsage, nullptr, state);
+        ResultCode result  = pAllocator->allocate(&m_memObj, d3d12desc, desc.memoryUsage, clearValue, state);
 
         if (result != RecluseResult_Ok)    
         {
