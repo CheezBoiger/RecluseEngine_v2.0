@@ -28,6 +28,9 @@ ResultCode unloadLayout(VertexInputLayoutId id);
 Bool unloadAll();
 } // VertexLayout
 
+
+// TODO: VkRenderPass AND VkDescriptorSetLayout are causing bad cache keys.
+//      We need a better way to identify these structures.
 struct Structure
 {
     struct 
@@ -47,7 +50,8 @@ struct Structure
             } graphics;
             struct
             {
-                U32 unused0;
+                U32 rayRecursionDepth;
+                
             } raytrace;
         };
         VkDescriptorSetLayout       descriptorLayout;

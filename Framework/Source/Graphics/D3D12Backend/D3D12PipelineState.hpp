@@ -62,6 +62,7 @@ struct PipelineStateObject
         {
             ID3D12RootSignature*    localRootSignature;
             Bool                    usingLocalRootSignature;               //< If using local root signature, otherwise use global.
+            U32                     rayRecursionDepth;
         } raytrace;
     };
     ShaderProgramId                 shaderProgramId;

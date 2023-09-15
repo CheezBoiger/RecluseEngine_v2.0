@@ -690,7 +690,7 @@ void VulkanContext::prepare()
     resetCommandPool(currentBufferIndex, true);
     DescriptorSets::clearDescriptorSetCache(this);
 
-    const VulkanAllocationManager::Flags allocUpdate = (VulkanAllocationManager::Flag_SetFrameIndex & VulkanAllocationManager::Flag_Update);
+    const VulkanAllocationManager::Flags allocUpdate = (VulkanAllocationManager::Flag_SetFrameIndex | VulkanAllocationManager::Flag_Update);
 
     VulkanAllocationManager::UpdateConfig config;
 

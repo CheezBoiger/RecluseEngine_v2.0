@@ -56,6 +56,21 @@ class D3D12ResourceAllocationManager
 public:
     static const U64 kAllocationPageSizeBytes;
 
+    enum UpdateFlag
+    {
+        UpdateFlag_Update = (1 << 0),
+        UpdateFlag_ResizeGarbage = (1 << 1),
+        UpdateFlag_SetFrameIndex = (1 << 2)
+    };
+    typedef U32 UpdateFlags;
+
+    struct Update
+    {
+        UpdateFlags     flags;
+        U16             frameIndex;
+        U16             frameSize;
+    };
+
     D3D12ResourceAllocationManager()
         : m_pDevice(nullptr) 
     { }
@@ -65,7 +80,7 @@ public:
     
     ResultCode allocate(D3D12MemoryObject* pOut, const D3D12_RESOURCE_DESC& desc, ResourceMemoryUsage usage, D3D12_CLEAR_VALUE* clearValue, D3D12_RESOURCE_STATES initialState);
     ResultCode free(D3D12MemoryObject* pObject);
-    ResultCode update();
+    ResultCode update(const Update& update);
     ResultCode reserveMemory(const MemoryReserveDescription& description);
 
 private:
@@ -74,6 +89,7 @@ private:
     ID3D12Device*                                                                       m_pDevice;
     std::map<ResourceMemoryUsage, std::vector<SmartPtr<D3D12ResourcePagedAllocator>>>   m_pagedAllocators;
     U32                                                                                 m_garbageIndex;
+    std::vector<std::vector<D3D12MemoryObject>>                                         m_garbage;
     MemoryReserveDescription                                                            m_description;
     CriticalSection                                                                     m_allocateCs;
 };

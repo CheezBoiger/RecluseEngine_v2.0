@@ -20,6 +20,13 @@ void D3D12Context::initialize()
 {
     initializeBufferResources(m_bufferCount);
     createCommandList(&m_pPrimaryCommandList, QUEUE_TYPE_PRESENT | QUEUE_TYPE_GRAPHICS);
+    
+    D3D12ResourceAllocationManager* manager = m_pDevice->resourceAllocationManager();
+    D3D12ResourceAllocationManager::Update update = { };
+    update.flags = D3D12ResourceAllocationManager::UpdateFlag_SetFrameIndex | D3D12ResourceAllocationManager::UpdateFlag_ResizeGarbage;
+    update.frameIndex = getCurrentFrameIndex();
+    update.frameSize = m_bufferCount;
+    manager->update(update);    
     // Preallocate to 256 possible barriers in a sitting.
     m_barrierTransitions.reserve(256);
 }
@@ -245,6 +252,12 @@ void D3D12Context::clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect)
 
 void D3D12Context::prepare()
 {
+    D3D12ResourceAllocationManager* manager = m_pDevice->resourceAllocationManager();
+    D3D12ResourceAllocationManager::Update update = { };
+    update.flags = D3D12ResourceAllocationManager::UpdateFlag_SetFrameIndex | D3D12ResourceAllocationManager::UpdateFlag_Update;
+    update.frameIndex = getCurrentFrameIndex();
+    manager->update(update);    
+
     ShaderVisibleDescriptorHeapInstance* shaderVisibleHeap = m_pDevice->getDescriptorHeapManager()->getShaderVisibleInstance(getCurrentFrameIndex());
     shaderVisibleHeap->update(DescriptorHeapUpdateFlag_Reset);
 

@@ -213,21 +213,44 @@ ResultCode D3D12ResourceAllocationManager::free(D3D12MemoryObject* pObject)
     {
         return RecluseResult_NullPtrExcept;
     }
-    std::vector<SmartPtr<D3D12ResourcePagedAllocator>>& pagedAllocators = m_pagedAllocators[pObject->usage];
-    D3D12ResourcePagedAllocator* pagedAllocator = pagedAllocators[pObject->allocatorIndex];
-    return pagedAllocator->free(pObject);
+    m_garbage[m_garbageIndex].push_back(*pObject);
+    return RecluseResult_Ok;
 }
 
 
-ResultCode D3D12ResourceAllocationManager::update()
+ResultCode D3D12ResourceAllocationManager::update(const Update& update)
 {
-    cleanGarbage(m_garbageIndex);
+    if (update.flags & UpdateFlag_ResizeGarbage)
+    {
+        for (U32 i = 0; i < m_garbage.size(); ++i)
+            cleanGarbage(i);
+        m_garbage.resize(update.frameSize);
+    }
+
+    if (update.flags & UpdateFlag_SetFrameIndex)
+    {
+        m_garbageIndex = update.frameIndex;
+    }
+
+    if (update.flags & UpdateFlag_Update)
+    {
+        cleanGarbage(m_garbageIndex);
+    }
     return RecluseResult_Ok;
 }
 
 
 ResultCode D3D12ResourceAllocationManager::cleanGarbage(U32 index)
 {
+    std::vector<D3D12MemoryObject>& garbage = m_garbage[index];
+    for (U32 i = 0; i < garbage.size(); ++i)
+    {
+        D3D12MemoryObject& object = garbage[i];
+        std::vector<SmartPtr<D3D12ResourcePagedAllocator>>& pagedAllocators = m_pagedAllocators[object.usage];
+        D3D12ResourcePagedAllocator* pagedAllocator = pagedAllocators[object.allocatorIndex];
+        pagedAllocator->free(&object);
+    }
+    garbage.clear();
     return RecluseResult_NoImpl;
 }
 
@@ -242,6 +265,13 @@ ResultCode D3D12ResourceAllocationManager::reserveMemory(const MemoryReserveDesc
 ResultCode D3D12ResourceAllocationManager::release()
 {
     m_allocateCs.release();
+
+    for (U32 i = 0; i < m_garbage.size(); ++i)
+    {
+        cleanGarbage(i);
+    }
+    m_garbage.clear();
+
     for (auto pagedAllocators : m_pagedAllocators)
     {
         for (auto heap : pagedAllocators.second)

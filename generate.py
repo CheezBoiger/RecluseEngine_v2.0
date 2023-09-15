@@ -19,6 +19,7 @@ def parse_arguments():
     global parsed_commands
     parser = argparse.ArgumentParser(description="Parsable arguments for the Recluse build system.")
     parser.add_argument("-vulkan", dest="vulkan", action="store_true", help="Enable vulkan", default=False)
+    parser.add_argument("-dx11", dest="dx11", action="store_true", help="Enable DX11", default=False)
     parser.add_argument("-dx12", dest="dx12", action="store_true", help="Enable DX12", default=False)
     parser.add_argument("-glsl", dest="glsl", action="store_true", help="Enable GLSlang compiler use.", default=False)
     parser.add_argument("-glsl.older", dest="glsl_older", action="store_true", help="Fallback to an older version of GLSlang compiler api.", default=False)
@@ -68,6 +69,11 @@ def add_additional_cmake_commands():
         cmds.append("-DR_DEVELOPER=True")
     else:
         cmds.append("-DR_DEVELOPER=False")
+        
+    if parsed_commands.dx11 == True:
+        cmds.append("-DRCL_DX11=True")
+    else:
+        cmds.append("-DRCL_DX11=False")
         
     return cmds
 

@@ -16,6 +16,10 @@
 
 #define R_CHANNEL_VULKAN "Vulkan"
 
+#if (VK_HEADER_VERSION >= 236)
+#define RECLUSE_RAYTRACING_HEADER
+#endif
+
 struct VulkanMemoryPool 
 {
     VkDeviceMemory  memory;
@@ -29,6 +33,9 @@ struct VulkanMemoryPool
 extern PFN_vkSetDebugUtilsObjectNameEXT    pfn_vkSetDebugUtilsObjectNameEXT;
 extern PFN_vkSetDebugUtilsObjectTagEXT     pfn_vkSetDebugUtilsObjectTagEXT;
 
+#if defined(RECLUSE_RAYTRACING_HEADER)
+extern PFN_vkCreateRayTracingPipelinesKHR  pfn_vkCreateRayTracingPipelinesKHR;
+#endif
 
 namespace Recluse {
 

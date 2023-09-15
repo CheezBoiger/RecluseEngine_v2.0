@@ -450,21 +450,31 @@ typedef SamplerMipMapMode MipFilter;
 typedef U32 MinMagMipFilterType;
 
 std::unordered_map<MinMagMipFilterType, D3D12_FILTER> g_nativeFilterMap = {
-    { (makeBitset32(0, 3, Filter_Linear)    | makeBitset32(3, 3, Filter_Linear)     | makeBitset32(6, 3, SamplerMipMapMode_Linear)),    D3D12_FILTER_MIN_MAG_MIP_LINEAR },
-    { (makeBitset32(0, 3, Filter_Nearest)   | makeBitset32(3, 3, Filter_Nearest)    | makeBitset32(6, 3, SamplerMipMapMode_Nearest)),   D3D12_FILTER_MIN_MAG_MIP_POINT },
-    { (makeBitset32(0, 3, Filter_Linear)    | makeBitset32(3, 3, Filter_Nearest)    | makeBitset32(6, 3, SamplerMipMapMode_Nearest)),   D3D12_FILTER_MIN_LINEAR_MAG_MIP_POINT },
-    { (makeBitset32(0, 3, Filter_Linear)    | makeBitset32(3, 3, Filter_Nearest)    | makeBitset32(6, 3, SamplerMipMapMode_Linear)),    D3D12_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR },
-    { (makeBitset32(0, 3, Filter_Linear)    | makeBitset32(3, 3, Filter_Linear)     | makeBitset32(6, 3, SamplerMipMapMode_Nearest)),   D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT },
-    { (makeBitset32(0, 3, Filter_Nearest)   | makeBitset32(3, 3, Filter_Nearest)    | makeBitset32(6, 3, SamplerMipMapMode_Linear)),    D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR },
-    { (makeBitset32(0, 3, Filter_Nearest)   | makeBitset32(3, 3, Filter_Linear)     | makeBitset32(6, 3, SamplerMipMapMode_Nearest)),   D3D12_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT },
-    { (makeBitset32(0, 3, Filter_Nearest)   | makeBitset32(3, 3, Filter_Linear)     | makeBitset32(6, 3, SamplerMipMapMode_Linear)),    D3D12_FILTER_MIN_POINT_MAG_MIP_LINEAR }
+    { (makeBitset32(0, 3, Filter_Linear)    | makeBitset32(3, 3, Filter_Linear)     | makeBitset32(6, 3, SamplerMipMapMode_Linear)  | makeBitset32(9, 1, 0)),   D3D12_FILTER_MIN_MAG_MIP_LINEAR },
+    { (makeBitset32(0, 3, Filter_Nearest)   | makeBitset32(3, 3, Filter_Nearest)    | makeBitset32(6, 3, SamplerMipMapMode_Nearest) | makeBitset32(9, 1, 0)),   D3D12_FILTER_MIN_MAG_MIP_POINT },
+    { (makeBitset32(0, 3, Filter_Linear)    | makeBitset32(3, 3, Filter_Nearest)    | makeBitset32(6, 3, SamplerMipMapMode_Nearest) | makeBitset32(9, 1, 0)),   D3D12_FILTER_MIN_LINEAR_MAG_MIP_POINT },
+    { (makeBitset32(0, 3, Filter_Linear)    | makeBitset32(3, 3, Filter_Nearest)    | makeBitset32(6, 3, SamplerMipMapMode_Linear)  | makeBitset32(9, 1, 0)),   D3D12_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR },
+    { (makeBitset32(0, 3, Filter_Linear)    | makeBitset32(3, 3, Filter_Linear)     | makeBitset32(6, 3, SamplerMipMapMode_Nearest) | makeBitset32(9, 1, 0)),   D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT },
+    { (makeBitset32(0, 3, Filter_Nearest)   | makeBitset32(3, 3, Filter_Nearest)    | makeBitset32(6, 3, SamplerMipMapMode_Linear)  | makeBitset32(9, 1, 0)),   D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR },
+    { (makeBitset32(0, 3, Filter_Nearest)   | makeBitset32(3, 3, Filter_Linear)     | makeBitset32(6, 3, SamplerMipMapMode_Nearest) | makeBitset32(9, 1, 0)),   D3D12_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT },
+    { (makeBitset32(0, 3, Filter_Nearest)   | makeBitset32(3, 3, Filter_Linear)     | makeBitset32(6, 3, SamplerMipMapMode_Linear)  | makeBitset32(9, 1, 0)),   D3D12_FILTER_MIN_POINT_MAG_MIP_LINEAR },
+
+    { (makeBitset32(0, 3, Filter_Linear)    | makeBitset32(3, 3, Filter_Linear)     | makeBitset32(6, 3, SamplerMipMapMode_Linear)  | makeBitset32(9, 1, 1)),   D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR },
+    { (makeBitset32(0, 3, Filter_Nearest)   | makeBitset32(3, 3, Filter_Nearest)    | makeBitset32(6, 3, SamplerMipMapMode_Nearest) | makeBitset32(9, 1, 1)),   D3D12_FILTER_COMPARISON_MIN_MAG_MIP_POINT },
+    { (makeBitset32(0, 3, Filter_Linear)    | makeBitset32(3, 3, Filter_Nearest)    | makeBitset32(6, 3, SamplerMipMapMode_Nearest) | makeBitset32(9, 1, 1)),   D3D12_FILTER_COMPARISON_MIN_LINEAR_MAG_MIP_POINT },
+    { (makeBitset32(0, 3, Filter_Linear)    | makeBitset32(3, 3, Filter_Nearest)    | makeBitset32(6, 3, SamplerMipMapMode_Linear)  | makeBitset32(9, 1, 1)),   D3D12_FILTER_COMPARISON_MIN_LINEAR_MAG_POINT_MIP_LINEAR },
+    { (makeBitset32(0, 3, Filter_Linear)    | makeBitset32(3, 3, Filter_Linear)     | makeBitset32(6, 3, SamplerMipMapMode_Nearest) | makeBitset32(9, 1, 1)),   D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT },
+    { (makeBitset32(0, 3, Filter_Nearest)   | makeBitset32(3, 3, Filter_Nearest)    | makeBitset32(6, 3, SamplerMipMapMode_Linear)  | makeBitset32(9, 1, 1)),   D3D12_FILTER_COMPARISON_MIN_MAG_POINT_MIP_LINEAR },
+    { (makeBitset32(0, 3, Filter_Nearest)   | makeBitset32(3, 3, Filter_Linear)     | makeBitset32(6, 3, SamplerMipMapMode_Nearest) | makeBitset32(9, 1, 1)),   D3D12_FILTER_COMPARISON_MIN_POINT_MAG_LINEAR_MIP_POINT },
+    { (makeBitset32(0, 3, Filter_Nearest)   | makeBitset32(3, 3, Filter_Linear)     | makeBitset32(6, 3, SamplerMipMapMode_Linear)  | makeBitset32(9, 1, 1)),   D3D12_FILTER_COMPARISON_MIN_POINT_MAG_MIP_LINEAR }
 };
 
-R_INTERNAL D3D12_FILTER getFilterMode(Filter minFilter, Filter magFilter, SamplerMipMapMode mipMode)
+R_INTERNAL D3D12_FILTER getFilterMode(Filter minFilter, Filter magFilter, SamplerMipMapMode mipMode, Bool isCompare)
 {
     MinMagMipFilterType filterType = makeBitset32(0, 3, minFilter) 
                                         | makeBitset32(3, 3, magFilter)
-                                        | makeBitset32(6, 3, mipMode);
+                                        | makeBitset32(6, 3, mipMode)
+                                        | makeBitset32(9, 1, isCompare);
     auto it = g_nativeFilterMap.find(filterType);
     if (it != g_nativeFilterMap.end())
         return it->second;
@@ -475,14 +485,14 @@ R_INTERNAL D3D12_FILTER getFilterMode(Filter minFilter, Filter magFilter, Sample
 ResultCode D3D12Sampler::initialize(D3D12Device* pDevice, const SamplerDescription& desc)
 {
     R_ASSERT(pDevice != NULL);
-
-    D3D12_SAMPLER_DESC samplerDesc = { };
+    const Bool isCompare                = (desc.compareOp != CompareOp_Never);
+    D3D12_SAMPLER_DESC samplerDesc      = { };
     samplerDesc.AddressU                = getAddressMode(desc.addressModeU);
     samplerDesc.AddressV                = getAddressMode(desc.addressModeV);
     samplerDesc.AddressW                = getAddressMode(desc.addressModeW);
     samplerDesc.BorderColor;
     samplerDesc.ComparisonFunc          = getNativeComparisonFunction(desc.compareOp);
-    samplerDesc.Filter                  = getFilterMode(desc.minFilter, desc.magFilter, desc.mipMapMode);
+    samplerDesc.Filter                  = getFilterMode(desc.minFilter, desc.magFilter, desc.mipMapMode, isCompare);
     samplerDesc.MaxAnisotropy           = desc.maxAnisotropy;
     samplerDesc.MinLOD                  = desc.minLod;
     samplerDesc.MaxLOD                  = desc.maxLod;

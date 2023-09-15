@@ -119,11 +119,33 @@ if ( RCL_VULKAN )
     endif(Vulkan_FOUND)
 endif()
 
+if ( RCL_DX11 OR RCL_DX12 )
+    set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} dxgi.lib )
+    set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} D3DCompiler.lib )
+	if ( RCL_DXC )
+		set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} dxcompiler.lib )
+        add_definitions( -DRCL_DXC=1 )
+        message(WARNING "d3dcompiler.dll and dxil.dll needed with executable, since we are now including dxc...")
+    endif()
+endif()
+
+if ( RCL_DX11 )
+	add_definitions( -DRCL_DX11=1 )
+	set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} d3d11.lib )
+	set ( RECLUSE_D3D11_DIR ${RECLUSE_GRAPHICS_SOURCE}/D3D11Backend )
+	set ( RECLUSE_GRAPHICS_BUILD 
+		${RECLUSE_GRAPHICS_BUILD}
+		${RECLUSE_D3D11_DIR}/D3D11Commons.hpp
+		${RECLUSE_D3D11_DIR}/D3D11Device.hpp
+		${RECLUSE_D3D11_DIR}/D3D11Device.cpp
+		${RECLUSE_D3D11_DIR}/D3D11Instance.hpp
+		${RECLUSE_D3D11_DIR}/D3D11Instance.cpp
+	)
+endif()
+
 if ( RCL_DX12 )
     add_definitions( -DRCL_DX12=1 )
     set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} d3d12.lib )
-    set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} dxgi.lib )
-    set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} D3DCompiler.lib )
     set ( RECLUSE_D3D12_DIR ${RECLUSE_GRAPHICS_SOURCE}/D3D12Backend )
     set ( RECLUSE_GRAPHICS_BUILD 
         ${RECLUSE_GRAPHICS_BUILD}
@@ -156,12 +178,6 @@ if ( RCL_DX12 )
 		${RECLUSE_D3D12_DIR}/D3D12ShaderCache.hpp
 		${RECLUSE_D3D12_DIR}/D3D12ShaderCache.cpp
     )
-    if ( RCL_DXC )
-		set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} dxcompiler.lib )
-        add_definitions( -DRCL_DXC=1 )
-        message(WARNING "d3dcompiler.dll and dxil.dll needed with executable, since we are now including dxc...")
-        
-    endif()
 endif()
 
 set ( RECLUSE_FRAMEWORK_COMPILE_FILES

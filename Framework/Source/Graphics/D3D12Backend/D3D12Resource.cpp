@@ -61,7 +61,7 @@ ResultCode D3D12Resource::initialize
     d3d12desc.SampleDesc.Quality                = 0;
     d3d12desc.Alignment                         = 0;
     d3d12desc.Flags                             = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
-
+    
     if (d3d12desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
     {
         d3d12desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;

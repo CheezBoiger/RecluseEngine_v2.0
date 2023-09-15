@@ -39,7 +39,8 @@ public:
     virtual                                     ~GraphicsInstance() { }
     
     // Create the graphics instance. This should be the starting point for your graphics rendering 
-    // devices.
+    // devices. Only one instance is allowed to be created at a time. If you desire to use a different
+    // API during runtime, be sure to destroy the current instance first, before creating a new one.
     static R_PUBLIC_API GraphicsInstance*       createInstance(enum GraphicsAPI api = GraphicsApi_Vulkan);
 
     // Destroy the graphics instance. Be sure to clean up any memory or objects that were allocated by 

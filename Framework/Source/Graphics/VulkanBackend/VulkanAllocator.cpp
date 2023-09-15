@@ -298,6 +298,13 @@ ResultCode VulkanAllocationManager::allocate(VulkanMemory* pOut, ResourceMemoryU
 
     result = pagedAllocator->allocate(pOut, requirements, m_bufferImageGranularityBytes, tiling);
 
+    // PagedAllocator is out of memory, let's attempt to create a new page and allocate from there.
+    if (result == RecluseResult_OutOfMemory)
+    {
+        pagedAllocator = allocateMemoryPage(memoryTypeIndex, usage, align(requirements.size, requirements.alignment));
+        result = pagedAllocator->allocate(pOut, requirements, m_bufferImageGranularityBytes, tiling);
+    }
+
     if (result != RecluseResult_Ok)
     {
         return result;
@@ -346,8 +353,9 @@ VulkanPagedAllocator* VulkanAllocationManager::allocateMemoryPage(MemoryTypeInde
    m_resourceAllocators[memoryTypeIndex].push_back(makeSmartPtr(new VulkanPagedAllocator()));
     VulkanPagedAllocator* pAllocator    = m_resourceAllocators[memoryTypeIndex].back();
     const U32 allocationId              = (m_resourceAllocators[memoryTypeIndex].size() - 1);
-    pAllocator->initialize(device, new BuddyAllocator(), memoryTypeIndex, Math::maximum(align(pageSizeBytes, m_bufferImageGranularityBytes), align(kPerMemoryPageSizeBytes, m_bufferImageGranularityBytes)), usage, allocationId);
+    ResultCode result = pAllocator->initialize(device, new BuddyAllocator(), memoryTypeIndex, Math::maximum(align(pageSizeBytes, m_bufferImageGranularityBytes), align(kPerMemoryPageSizeBytes, m_bufferImageGranularityBytes)), usage, allocationId);
     m_totalAllocationSizeBytes          += pAllocator->getTotalSizeBytes();
+    R_ASSERT_FORMAT(result == RecluseResult_Ok, "Failed to create new allocator for vulkan!");
     return pAllocator;
 }
 

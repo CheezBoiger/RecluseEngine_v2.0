@@ -86,7 +86,8 @@ enum ResourceUsage
     ResourceUsage_CopySource            = ResourceUsage_TransferSource,
     ResourceUsage_IndirectBuffer        = (1 << 7),
     ResourceUsage_DepthStencil          = (1 << 8),
-    ResourceUsage_UnorderedAccess       = (1 << 9)
+    ResourceUsage_UnorderedAccess       = (1 << 9),
+    ResourceUsage_AccelerationStructure = (1 << 10)
 };
 
 
@@ -152,7 +153,9 @@ enum ResourceState
     // Presentation state, used mainly for presenting resources to the display engine.
     ResourceState_Present,
     // Indirect argument buffer state.
-    ResourceState_IndirectArgs
+    ResourceState_IndirectArgs,
+ 
+    ResourceState_AccelerationStructure
 };
 
 

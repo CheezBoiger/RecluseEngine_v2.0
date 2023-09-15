@@ -818,11 +818,63 @@ PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure)
 
 static VkPipeline createRayTracingPipeline(VulkanDevice* pDevice, VkPipelineCache cache, const Structure& structure, ShaderPrograms::VulkanShaderProgram* program)
 {
-#if (VK_HEADER_VERSION >= 236)
-    VkRayTracingPipelineCreateInfoKHR rayTracingInfo = { };
-    rayTracingInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR;
+    VkPipeline pipeline = VK_NULL_HANDLE;
+#if defined(RECLUSE_RAYTRACING_HEADER)
+    std::vector<VkRayTracingShaderGroupCreateInfoKHR> shaderGroups;
+    std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
+    VkPipelineLayout pipelineLayout = makeLayout(pDevice, structure.state.descriptorLayout);
+    VkRayTracingPipelineCreateInfoKHR rayTracingInfo    = { };
+    rayTracingInfo.sType                                = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR;
+    rayTracingInfo.maxPipelineRayRecursionDepth         = structure.state.raytrace.rayRecursionDepth;
+    rayTracingInfo.layout                               = pipelineLayout;
+    rayTracingInfo.stageCount                           = 0;
+
+    VkPipelineShaderStageCreateInfo shaderInfo = { };
+    shaderInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    if (program->raytrace.rayAnyHit)
+    {
+        shaderInfo.pName    = program->raytrace.rayAnyHitEntry;
+        shaderInfo.stage    = VK_SHADER_STAGE_ANY_HIT_BIT_KHR;
+        shaderInfo.module   = program->raytrace.rayAnyHit;
+        shaderStages.push_back(shaderInfo);
+    }
+
+    if (program->raytrace.rayClosest)
+    {
+        shaderInfo.pName    = program->raytrace.rayClosestEntry;
+        shaderInfo.stage    = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
+        shaderInfo.module   = program->raytrace.rayClosest;
+        shaderStages.push_back(shaderInfo);
+    }
+
+    if (program->raytrace.rayGen)
+    {
+        shaderInfo.pName    = program->raytrace.rayGenEntry;
+        shaderInfo.stage    = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
+        shaderInfo.module   = program->raytrace.rayGen;
+        shaderStages.push_back(shaderInfo);
+    }
+
+    if (program->raytrace.rayIntersect)
+    {
+        shaderInfo.pName    = program->raytrace.rayIntersectEntry;
+        shaderInfo.stage    = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
+        shaderInfo.module   = program->raytrace.rayIntersect;
+        shaderStages.push_back(shaderInfo);
+    }
+
+    if (program->raytrace.rayMiss)
+    {
+        shaderInfo.pName    = program->raytrace.rayMissEntry;
+        shaderInfo.stage    = VK_SHADER_STAGE_MISS_BIT_KHR;
+        shaderInfo.module   = program->raytrace.rayMiss;
+        shaderStages.push_back(shaderInfo);
+    }
+
+    VkDeferredOperationKHR deferredOperation            = VK_NULL_HANDLE;
+    vkCreateRayTracingPipelinesKHR(pDevice->get(), deferredOperation, cache, 1, &rayTracingInfo, nullptr, &pipeline);
 #endif
-    return nullptr;
+    return pipeline;
 }
 
 

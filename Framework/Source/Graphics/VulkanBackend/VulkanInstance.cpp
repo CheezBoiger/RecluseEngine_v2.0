@@ -352,6 +352,16 @@ void VulkanInstance::queryFunctions()
         if (!pfn_vkSetDebugUtilsObjectTagEXT)
             pfn_vkSetDebugUtilsObjectTagEXT = (PFN_vkSetDebugUtilsObjectTagEXT)getProcAddr("vkSetDebugUtilsObjectTagEXT");
     }
+
+#if defined(RECLUSE_RAYTRACING_HEADER)
+    if (supportsLayers(LayerFeatureFlag_Raytracing))
+    {
+        if (!pfn_vkCreateRayTracingPipelinesKHR)
+        {
+            pfn_vkCreateRayTracingPipelinesKHR = (PFN_vkCreateRayTracingPipelinesKHR)getProcAddr("vkCreateRayTracingPipelinesKHR");
+        }
+    }
+#endif
 }
 
 

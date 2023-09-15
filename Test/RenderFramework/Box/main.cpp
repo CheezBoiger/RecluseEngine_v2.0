@@ -602,7 +602,7 @@ int main(char* argv[], int c)
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 
-    Window* window = Window::create("Box", 0, 0, 1024, 1024, ScreenMode_Fullscreen);
+    Window* window = Window::create("Box", 0, 0, 1024, 1024, ScreenMode_Windowed);
     window->show();
     window->setToCenter();
     window->setOnWindowResize(ResizeFunction);

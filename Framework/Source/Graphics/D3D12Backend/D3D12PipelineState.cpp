@@ -311,18 +311,36 @@ ID3D12PipelineState* createComputePipelineState(U32 nodeMask, ID3D12Device* pDev
 
 
 R_INTERNAL 
-ID3D12PipelineState* createRaytracingPipeline(U32 nodeMask, ID3D12Device* pDevice, const D3D::Cache::D3DShaderProgram* program)
+ID3D12PipelineState* createRaytracingPipeline(U32 nodeMask, ID3D12Device* pDevice, const D3D::Cache::D3DShaderProgram* program, const PipelineStateObject& pipelineState)
 {
+    ID3D12PipelineState* pipeline = nullptr;
+    ID3D12Device5* pDevice5 = nullptr;
+    pDevice->QueryInterface<ID3D12Device5>(&pDevice5);
+
     D3D12_STATE_OBJECT_DESC pipelineDesc = { };
     pipelineDesc.Type = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
     std::vector<D3D12_STATE_SUBOBJECT> subobjects;
+ 
+    // DXIL Library shader setup.
     D3D12_STATE_SUBOBJECT lib;
     lib.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
     D3D12_STATE_SUBOBJECT subob;
     subob.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
     lib.pDesc = nullptr;
     subobjects.push_back(lib);
-    return nullptr;
+    
+    // Pipeline config.
+    D3D12_RAYTRACING_PIPELINE_CONFIG pipelineConfig = { };
+    pipelineConfig.MaxTraceRecursionDepth = pipelineState.raytrace.rayRecursionDepth;
+    D3D12_STATE_SUBOBJECT pipeConfigObj = {};
+    pipeConfigObj.Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG;
+    pipeConfigObj.pDesc = &pipelineConfig;
+    subobjects.push_back(pipeConfigObj);
+
+    HRESULT result = pDevice5->CreateStateObject(&pipelineDesc, __uuidof(ID3D12PipelineState), (void**)&pipeline);
+    R_ASSERT(result == S_OK);
+    pDevice5->Release();    
+    return pipeline;
 }
 
 
@@ -337,7 +355,7 @@ ID3D12PipelineState* createPipelineState(U32 nodeMask, ID3D12Device* pDevice, D3
             break;
         case BindType_RayTrace:
             R_NO_IMPL();
-            createdPipelineState = createRaytracingPipeline(nodeMask, pDevice, program);
+            createdPipelineState = createRaytracingPipeline(nodeMask, pDevice, program, pipelineState);
             break;
         case BindType_Compute:
             createdPipelineState = createComputePipelineState(nodeMask, pDevice, program, pipelineState);
