@@ -1,5 +1,6 @@
 //
 #include "D3D12Device.hpp"
+#include "D3D12Instance.hpp"
 #include "D3D12Adapter.hpp"
 #include "D3D12Queue.hpp"
 #include "D3D12Swapchain.hpp"
@@ -301,6 +302,12 @@ ResultCode D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo
     DescriptorHeapAllocationManager::DescriptorCoreSize descriptorSizes = { };
     m_descHeapManager.initialize(m_device, descriptorSizes, 0);
     m_resourceAllocationManager.initialize(m_device);
+
+    if (adapter->getInstance()->isLayerFeatureEnabled(LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation))
+    {
+        m_debugCookie = adapter->getInstance()->registerDebugMessageCallback(m_device);
+    }
+
     R_DEBUG(R_CHANNEL_D3D12, "Successfully created D3D12 device!");
     return RecluseResult_Ok;
 }
@@ -325,6 +332,11 @@ void D3D12Device::destroyCommandQueues()
 
 void D3D12Device::destroy()
 {
+    if (m_debugCookie > 0)
+    {
+        m_pAdapter->getInstance()->unregisterDebugMessageCallback(m_device, m_debugCookie);
+    }
+
     m_resourceAllocationManager.release();
     RenderPasses::clearAll(this);
     Pipelines::VertexInputs::unloadAll();

@@ -8,6 +8,35 @@
 namespace Recluse {
 
 
+R_INTERNAL
+void pfnD3D12MessageFunc(
+    D3D12_MESSAGE_CATEGORY Category, 
+    D3D12_MESSAGE_SEVERITY Severity, 
+    D3D12_MESSAGE_ID ID, 
+    LPCSTR pDescription, 
+    void* pContext)
+{
+    switch (Severity)
+    {
+        case D3D12_MESSAGE_SEVERITY_CORRUPTION:
+            R_ERROR(R_CHANNEL_D3D12, "CORRUPTION: %s", pDescription);
+            break;
+        case D3D12_MESSAGE_SEVERITY_ERROR:
+            R_ERROR(R_CHANNEL_D3D12, "ERROR: %s", pDescription);
+            break;
+        case D3D12_MESSAGE_SEVERITY_INFO:
+            R_INFO(R_CHANNEL_D3D12, "INFO: %s", pDescription);
+            break;
+        case D3D12_MESSAGE_SEVERITY_WARNING:
+            R_WARN(R_CHANNEL_D3D12, "WARNING: %s", pDescription);
+        case D3D12_MESSAGE_SEVERITY_MESSAGE:
+        default:    
+            R_INFO(R_CHANNEL_D3D12, "MESSAGE: %s", pDescription);
+            break;
+    }
+}
+
+
 void D3D12Instance::queryGraphicsAdapters()
 {
     std::vector<IDXGIAdapter*> adapters = D3D12Adapter::getAdapters(this);
@@ -61,6 +90,8 @@ ResultCode D3D12Instance::onInitialize(const ApplicationInfo& appInfo, LayerFeat
     {
         return RecluseResult_Failed;
     }
+
+    m_enabledFlags = flags;
 
     return RecluseResult_Ok;
 }
@@ -125,5 +156,25 @@ Bool D3D12Instance::hasTearingSupport() const
         return SUCCEEDED(result) && allowTearing;
     }
     return false;
+}
+
+
+DWORD D3D12Instance::registerDebugMessageCallback(ID3D12Device* pDevice)
+{
+    DWORD cookie = 0u;
+    ID3D12InfoQueue1* infoQueue = nullptr;
+    pDevice->QueryInterface<ID3D12InfoQueue1>(&infoQueue);
+    infoQueue->RegisterMessageCallback(pfnD3D12MessageFunc, D3D12_MESSAGE_CALLBACK_FLAG_NONE, nullptr, &cookie);
+    infoQueue->Release();
+    return cookie;
+}
+
+
+void D3D12Instance::unregisterDebugMessageCallback(ID3D12Device* pDevice, DWORD cookie)
+{
+    ID3D12InfoQueue1* infoQueue = nullptr;
+    pDevice->QueryInterface<ID3D12InfoQueue1>(&infoQueue);
+    infoQueue->UnregisterMessageCallback(cookie);
+    infoQueue->Release();
 }
 } // Recluse

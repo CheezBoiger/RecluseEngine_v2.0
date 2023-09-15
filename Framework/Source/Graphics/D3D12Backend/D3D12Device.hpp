@@ -194,6 +194,7 @@ class D3D12Device : public GraphicsDevice
 public:
     D3D12Device()
         : m_device(nullptr)
+        , m_debugCookie(0)
         , m_pAdapter(nullptr) { }
 
     ResultCode                          initialize(D3D12Adapter* adapter, const DeviceCreateInfo& info);
@@ -247,6 +248,7 @@ private:
     D3D12ResourceAllocationManager      m_resourceAllocationManager;
     ID3D12Device*                       m_device;
     D3D12Adapter*                       m_pAdapter;
+    DWORD                               m_debugCookie;
 
     DescriptorHeapAllocationManager     m_descHeapManager;
     std::map<D3D12_COMMAND_LIST_TYPE, D3D12Queue> m_queues;

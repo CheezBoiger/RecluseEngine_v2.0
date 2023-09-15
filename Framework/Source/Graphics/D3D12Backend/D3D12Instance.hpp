@@ -19,7 +19,9 @@ public:
 
     IDXGIFactory2* get() const { return m_pFactory; }
     Bool                    hasTearingSupport() const;
-
+    DWORD            registerDebugMessageCallback(ID3D12Device* pDevice);
+    void            unregisterDebugMessageCallback(ID3D12Device* pDevice, DWORD cookie);
+    Bool            isLayerFeatureEnabled(LayerFeatureFlags flags) const { return (m_enabledFlags & flags); }
 private:
     void queryGraphicsAdapters() override;
     void freeGraphicsAdapters() override;
@@ -29,5 +31,6 @@ private:
     void enableDebugValidation(Bool enableGpuValidation);
 
     IDXGIFactory2* m_pFactory;
+    LayerFeatureFlags m_enabledFlags;
 };
 } // Recluse
