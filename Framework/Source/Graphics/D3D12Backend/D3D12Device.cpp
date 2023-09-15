@@ -631,7 +631,8 @@ void D3D12Device::unloadAllShaderPrograms()
 
 Bool D3D12Device::makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout)
 {
-    return Pipelines::VertexInputs::make(id, layout);
+    ResultCode result = Pipelines::VertexInputs::make(id, layout);
+    return (result == RecluseResult_Ok) || (result == RecluseResult_AlreadyExists);
 }
 
 

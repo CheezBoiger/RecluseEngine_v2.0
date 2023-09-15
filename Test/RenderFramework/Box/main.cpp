@@ -519,6 +519,8 @@ GraphicsResource* buildConstantBuffer(GraphicsDevice* device)
 void updateConstBuffer(GraphicsResource* resource, U32 width, U32 height, F32 delta)
 {
     static F32 t = 0;
+    static Bool isTexturing = false;
+    static Bool keyAlreadyDown = false;
     t += 20.f * delta;
     void* dat = nullptr;
     resource->map(&dat, nullptr);
@@ -535,8 +537,16 @@ void updateConstBuffer(GraphicsResource* resource, U32 width, U32 height, F32 de
     buf.modelViewProjection = mvp;
     buf.normal = Math::Matrix44::identity();
     KeyboardListener listener;
-    if (listener.isKeyDown(KeyCode_A))
-        buf.useTexturing = 1;
+    if (listener.isKeyDown(KeyCode_A) && !keyAlreadyDown)
+    {
+        isTexturing = isTexturing ? false : true;
+        keyAlreadyDown = true;
+    }
+    if (listener.isKeyUp(KeyCode_A))
+    {
+        keyAlreadyDown = false;
+    }
+    buf.useTexturing = isTexturing;
     memcpy(dat, &buf, sizeof(ConstBuffer));
     resource->unmap(nullptr);
 }
@@ -570,9 +580,9 @@ GraphicsSampler* createSampler(GraphicsDevice* device)
     samplerDescription.addressModeV = SamplerAddressMode_ClampToBorder;
     samplerDescription.addressModeW = SamplerAddressMode_ClampToBorder;
     samplerDescription.borderColor = BorderColor_OpaqueBlack;
-    samplerDescription.compareOp = CompareOp_Always;
+    samplerDescription.compareOp = CompareOp_Never;
     samplerDescription.magFilter = Filter_Nearest;
-    samplerDescription.maxAnisotropy = 1.0f;
+    samplerDescription.maxAnisotropy = 16.0f;
     samplerDescription.maxLod = 16;
     samplerDescription.minFilter = Filter_Nearest;
     samplerDescription.mipLodBias = 0.0f;
@@ -592,7 +602,7 @@ int main(char* argv[], int c)
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 
-    Window* window = Window::create("Box", 0, 0, 1024, 1024, ScreenMode_Windowed);
+    Window* window = Window::create("Box", 0, 0, 1024, 1024, ScreenMode_Fullscreen);
     window->show();
     window->setToCenter();
     window->setOnWindowResize(ResizeFunction);

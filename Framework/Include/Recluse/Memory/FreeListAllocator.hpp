@@ -17,9 +17,6 @@ private:
     {
         U64         addressOffsetBytes;
         U64         blockSizeBytes;
-
-        MemBlock*   pPrev;
-        MemBlock*   pNext;
     };
 
 public:

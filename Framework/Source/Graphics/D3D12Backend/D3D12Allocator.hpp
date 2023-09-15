@@ -71,10 +71,10 @@ public:
 private:
     ResultCode cleanGarbage(U32 index);
 
-    ID3D12Device*                                                               m_pDevice;
-    std::map<ResourceMemoryUsage, std::vector<D3D12ResourcePagedAllocator*>>    m_pagedAllocators;
-    U32                                                                         m_garbageIndex;
-    MemoryReserveDescription                                                    m_description;
-    CriticalSection                                                             m_allocateCs;
+    ID3D12Device*                                                                       m_pDevice;
+    std::map<ResourceMemoryUsage, std::vector<SmartPtr<D3D12ResourcePagedAllocator>>>   m_pagedAllocators;
+    U32                                                                                 m_garbageIndex;
+    MemoryReserveDescription                                                            m_description;
+    CriticalSection                                                                     m_allocateCs;
 };
 } // Recluse

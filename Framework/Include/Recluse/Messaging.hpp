@@ -47,7 +47,14 @@
     } // Recluse 
 
     // Debugging macros and definitions. To be ignored on building release.
+    #if defined(NDEBUG) && defined(RECLUSE_DEVELOPER)
+    #define NDEBUG_V NDEBUG
+    #undef NDEBUG
+    #endif
     #include <assert.h>
+    #if defined(RECLUSE_DEVELOPER) && !defined(_DEBUG)
+    #define NDEBUG NDEBUG_V
+    #endif
     #define R_ASSERT_LOG()
     #if !defined(R_IGNORE_ASSERT)
         #if defined(RECLUSE_WINDOWS)
@@ -85,20 +92,20 @@
     #if defined(RECLUSE_DEBUG)
         #define R_ERROR(chan, format, ...) \
             do { \
-                R_LOG(chan, Recluse::LogError, format, __VA_ARGS__); \
+                R_LOG(chan, Recluse::LogType_Error, format, __VA_ARGS__); \
                 R_DEBUG_BREAK(); \
             } while (false)
 
         // Call an interrupt to instruct a fatal error.
         #define R_FATAL_ERROR(chan, format, ...) \
             do { \
-                R_LOG(chan, Recluse::LogFatal, format, __VA_ARGS__); \
+                R_LOG(chan, Recluse::LogType_Fatal, format, __VA_ARGS__); \
                 R_DEBUG_BREAK(); \
                 R_FORCE_CRASH(-1); \
             } while (false)
     #else
-        #define R_ERROR(chan, format, ...) do { R_LOG(chan, Recluse::LogFatal, format, __VA_ARGS__); } while (false)
-        #define R_FATAL_ERROR(chan, format, ...) do { R_LOG(chan, Recluse::LogFatal, format, __VA_ARGS__); } while (false)
+        #define R_ERROR(chan, format, ...) do { R_LOG(chan, Recluse::LogType_Fatal, format, __VA_ARGS__); } while (false)
+        #define R_FATAL_ERROR(chan, format, ...) do { R_LOG(chan, Recluse::LogType_Fatal, format, __VA_ARGS__); } while (false)
     #endif
     // NOTE(): We should always be implementing a function when needed, but for development purposes,
     // we can simply place a warning assert to let us know it is not written. Otherwise, to 

@@ -5,6 +5,7 @@
 #include "VulkanQueue.hpp"
 #include "Recluse/Memory/MemoryCommon.hpp"
 #include "Recluse/Memory/LinearAllocator.hpp"
+#include "Recluse/Memory/BuddyAllocator.hpp"
 
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Math/MathCommons.hpp"
@@ -345,7 +346,7 @@ VulkanPagedAllocator* VulkanAllocationManager::allocateMemoryPage(MemoryTypeInde
    m_resourceAllocators[memoryTypeIndex].push_back(makeSmartPtr(new VulkanPagedAllocator()));
     VulkanPagedAllocator* pAllocator    = m_resourceAllocators[memoryTypeIndex].back();
     const U32 allocationId              = (m_resourceAllocators[memoryTypeIndex].size() - 1);
-    pAllocator->initialize(device, new LinearAllocator(), memoryTypeIndex, Math::maximum(align(pageSizeBytes, m_bufferImageGranularityBytes), align(kPerMemoryPageSizeBytes, m_bufferImageGranularityBytes)), usage, allocationId);
+    pAllocator->initialize(device, new BuddyAllocator(), memoryTypeIndex, Math::maximum(align(pageSizeBytes, m_bufferImageGranularityBytes), align(kPerMemoryPageSizeBytes, m_bufferImageGranularityBytes)), usage, allocationId);
     m_totalAllocationSizeBytes          += pAllocator->getTotalSizeBytes();
     return pAllocator;
 }

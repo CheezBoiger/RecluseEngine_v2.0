@@ -202,6 +202,7 @@ void VulkanContext::clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect
 {
     flushBarrierTransitions(m_primaryCommandList.get());
     setRenderPass(m_newRenderPass);
+    R_ASSERT(m_boundRenderPass != NULL);
 
     VkClearAttachment attachment    = { };
     VkClearValue color              = { };
@@ -445,11 +446,10 @@ void VulkanContext::drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 
 
 void VulkanContext::clearDepthStencil(ClearFlags clearFlags, F32 clearDepth, U8 clearStencil, const Rect& rect)
 {
-    R_ASSERT(m_boundRenderPass != NULL);
-    
     flushBarrierTransitions(m_primaryCommandList.get());
     setRenderPass(m_newRenderPass);
-
+    R_ASSERT(m_boundRenderPass != NULL);
+    
     VkClearRect clearRect                       = { };
     VkClearAttachment attachment                = { };
 

@@ -23,6 +23,10 @@ include ( CMake/Graphics.cmake )
 include ( CMake/Animation.cmake )
 include ( CMake/Math.cmake )
 
+if (R_DEVELOPER)
+	add_definitions(-DRECLUSE_DEVELOPER=1)
+endif(R_DEVELOPER)
+
 add_library (               ${RECLUSE_FRAMEWORK_NAME} SHARED    ${RECLUSE_FRAMEWORK_COMPILE_FILES} ) 
 target_include_directories( ${RECLUSE_FRAMEWORK_NAME} PUBLIC    ${RECLUSE_FRAMEWORK_INCLUDE_FILES} ${RECLUSE_FRAMEWORK_SOURCE} ${RECLUSE_FRAMEWORK_THIRD_PARTY})
 target_link_libraries (     ${RECLUSE_FRAMEWORK_NAME}           ${RECLUSE_FRAMEWORK_LINK_BINARIES} )

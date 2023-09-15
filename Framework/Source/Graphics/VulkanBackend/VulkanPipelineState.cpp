@@ -816,7 +816,7 @@ PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure)
 }
 
 
-static VkPipeline createRayTracingPipeline()
+static VkPipeline createRayTracingPipeline(VulkanDevice* pDevice, VkPipelineCache cache, const Structure& structure, ShaderPrograms::VulkanShaderProgram* program)
 {
 #if (VK_HEADER_VERSION >= 236)
     VkRayTracingPipelineCreateInfoKHR rayTracingInfo = { };
@@ -854,7 +854,7 @@ PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure, Pi
             break;
         case VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR:
             R_ERROR(R_CHANNEL_VULKAN, "Ray tracing pipelines are not supported currently!");
-            pipeline.pipeline = createRayTracingPipeline();
+            pipeline.pipeline = createRayTracingPipeline(pDevice, pipeline.pipelineCache, structure, program);
             break;
         }
 

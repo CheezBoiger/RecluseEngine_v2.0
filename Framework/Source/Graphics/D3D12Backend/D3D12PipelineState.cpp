@@ -311,6 +311,22 @@ ID3D12PipelineState* createComputePipelineState(U32 nodeMask, ID3D12Device* pDev
 
 
 R_INTERNAL 
+ID3D12PipelineState* createRaytracingPipeline(U32 nodeMask, ID3D12Device* pDevice, const D3D::Cache::D3DShaderProgram* program)
+{
+    D3D12_STATE_OBJECT_DESC pipelineDesc = { };
+    pipelineDesc.Type = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
+    std::vector<D3D12_STATE_SUBOBJECT> subobjects;
+    D3D12_STATE_SUBOBJECT lib;
+    lib.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
+    D3D12_STATE_SUBOBJECT subob;
+    subob.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
+    lib.pDesc = nullptr;
+    subobjects.push_back(lib);
+    return nullptr;
+}
+
+
+R_INTERNAL 
 ID3D12PipelineState* createPipelineState(U32 nodeMask, ID3D12Device* pDevice, D3D::Cache::D3DShaderProgram* program, const PipelineStateObject& pipelineState)
 {
     ID3D12PipelineState* createdPipelineState = nullptr;
@@ -321,6 +337,7 @@ ID3D12PipelineState* createPipelineState(U32 nodeMask, ID3D12Device* pDevice, D3
             break;
         case BindType_RayTrace:
             R_NO_IMPL();
+            createdPipelineState = createRaytracingPipeline(nodeMask, pDevice, program);
             break;
         case BindType_Compute:
             createdPipelineState = createComputePipelineState(nodeMask, pDevice, program, pipelineState);
