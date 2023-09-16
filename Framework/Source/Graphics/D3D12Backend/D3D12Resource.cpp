@@ -89,6 +89,14 @@ ResultCode D3D12Resource::initialize
         clearValue = &optimizedClearValue;
     }
 
+    Bool shouldTransition = false;
+    if (desc.memoryUsage == ResourceMemoryUsage_CpuToGpu || desc.memoryUsage == ResourceMemoryUsage_CpuOnly)
+    {
+        // If the memoryUsage is CpuToGpu or CpuOnly, then d3d12 requires that we are in GENERIC_READ as initial state.
+        shouldTransition = (D3D12_RESOURCE_STATE_GENERIC_READ & state);
+        state = D3D12_RESOURCE_STATE_GENERIC_READ;
+    }
+
     if (makeCommitted == true) 
     {
         D3D12_HEAP_PROPERTIES heapProps = { };
@@ -146,6 +154,21 @@ ResultCode D3D12Resource::initialize
 
     setCurrentResourceState(initialState);
     m_id = generateResourceId();
+
+    if (shouldTransition)
+    {
+        D3D12Queue* pQueue = m_pDevice->getQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+        ID3D12GraphicsCommandList* list = pQueue->createOneTimeCommandList(0, m_pDevice->get());
+        D3D12_RESOURCE_BARRIER barrier = { };
+        barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        barrier.Transition.pResource = m_memObj.pResource;
+        barrier.Transition.StateBefore = state;
+        barrier.Transition.StateAfter = getNativeResourceState(getCurrentResourceState());
+        barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+        list->ResourceBarrier(1, &barrier);
+        list->Close();
+        pQueue->endAndSubmitOneTimeCommandList(list);
+    }
 
     return RecluseResult_Ok;
 }
