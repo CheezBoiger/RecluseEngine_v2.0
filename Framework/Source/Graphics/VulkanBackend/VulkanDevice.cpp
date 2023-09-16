@@ -141,6 +141,7 @@ void VulkanContext::end()
     m_pDevice->invalidateAllMappedRanges();
 
     submitFinalCommandBuffer(m_primaryCommandList.get());
+    RenderPasses::checkLruCache(m_pDevice->get());
 }
 
 
@@ -703,6 +704,7 @@ void VulkanContext::prepare()
     // TODO: probably want to figure out a cleaner way of doing this.
     DescriptorSets::clearDescriptorSetCache(this, DescriptorSets::ClearCacheFlag_DescriptorPoolFastClear);
     resetBinds();
+    RenderPasses::updateTick();
 }
 
 

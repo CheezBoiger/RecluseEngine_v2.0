@@ -32,6 +32,8 @@ struct FramebufferObject
 {
     VkFramebuffer framebuffer;
     VkRect2D      renderArea;
+    Hash64        id;
+    U32           age;
 };
 
 class VulkanRenderPass
@@ -61,7 +63,9 @@ typedef Hash64 FrameBufferId;
 
 VulkanRenderPass        makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, ResourceViewId* ppRenderTargetViews, ResourceViewId pDepthStencil);
 void                    clearCache(VulkanDevice* pDevice);
-} // RenderPassManager
+void                    updateTick();
+void                    checkLruCache(VkDevice device);
+} // RenderPass
 
 
 namespace DescriptorSets {

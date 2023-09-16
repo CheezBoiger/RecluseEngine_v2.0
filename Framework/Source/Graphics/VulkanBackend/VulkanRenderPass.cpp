@@ -8,12 +8,28 @@
 #include "Recluse/Serialization/Hasher.hpp"
 #include "Recluse/Math/MathCommons.hpp"
 #include <vector>
+#include <list>
 
 namespace Recluse {
 
 
-std::unordered_map<Hash64, ReferenceCounter<FramebufferObject>> g_fboCache;
-std::unordered_map<Hash64, ReferenceCounter<VkRenderPass>> g_rpCache;
+struct RenderPassLiveObject
+{
+    ReferenceCounter<VkRenderPass>  rp;
+    RenderPasses::RenderPassId      id;
+    U32                             age;
+};
+
+std::list<RenderPassLiveObject*>                                                             g_rpList;
+std::list<FramebufferObject*>                                                                g_fbList;
+std::unordered_map<RenderPasses::RenderPassId, std::list<RenderPassLiveObject*>::iterator>   g_rpCache;
+std::unordered_map<Hash64, std::list<FramebufferObject*>::iterator>                          g_fbCache;
+
+// Tick occurs every new iteration of the engine. This needs to increment every new frame.
+U32                                                                                          g_tick = 0;
+
+R_DECLARE_GLOBAL_U32(g_renderPassMaxAge, 12, "Vulkan.RenderPassMaxAge");
+R_DECLARE_GLOBAL_U32(g_frameBufferMaxAge, 12, "Vulkan.FramebufferMaxAge");
 
 R_INTERNAL 
 U64 serialize(const VkFramebufferCreateInfo& info)
@@ -34,6 +50,36 @@ U64 serialize(const VkFramebufferCreateInfo& info)
 }
 
 
+R_INTERNAL
+void cacheRenderPass(RenderPasses::RenderPassId renderpassId, VkRenderPass renderPass)
+{
+    RenderPassLiveObject* obj = new RenderPassLiveObject();
+    obj->rp = renderPass;
+    obj->id = renderpassId;
+    obj->age = g_tick;
+    g_rpList.push_front(obj);
+    g_rpCache.insert(std::make_pair(renderpassId, g_rpList.begin()));
+}
+
+
+R_INTERNAL 
+VkRenderPass referRenderPass(RenderPasses::RenderPassId renderPassId)
+{
+    if (g_rpCache.find(renderPassId) != g_rpCache.end())
+    {
+        RenderPassLiveObject* obj = nullptr;
+        obj = *g_rpCache[renderPassId];
+        g_rpList.erase(g_rpCache[renderPassId]);
+        obj->age = g_tick;
+
+        g_rpList.push_front(obj);
+        g_rpCache[renderPassId] = g_rpList.begin();
+        return obj->rp();
+    }
+    return nullptr; 
+}
+
+
 R_INTERNAL 
 U64 serialize(const VkRenderPassCreateInfo& info)
 {
@@ -44,46 +90,40 @@ U64 serialize(const VkRenderPassCreateInfo& info)
 R_INTERNAL
 Bool inFboCache(Hash64 fboId)
 {
-    auto it = g_fboCache.find(fboId);
-    if (it == g_fboCache.end())
+    auto it = g_fbCache.find(fboId);
+    if (it == g_fbCache.end())
         return false;
-    return it->second.hasReferences();
+    return true;
 }
 
 
 R_INTERNAL
 FramebufferObject* getCachedFbo(Hash64 fboId)
 {
-    return &g_fboCache[fboId]();
+    if (g_fbCache.find(fboId) != g_fbCache.end())
+    {
+        FramebufferObject* obj = *g_fbCache[fboId];
+        g_fbList.erase(g_fbCache[fboId]);
+        obj->age = g_tick;
+        g_fbList.push_front(obj);
+        g_fbCache[fboId] = g_fbList.begin();
+        return obj;
+    }
+    return nullptr;
 }
 
 
 R_INTERNAL
 FramebufferObject* cacheFbo(Hash64 fboId, VkFramebuffer fbo, const VkRect2D& renderArea, U32 numReferences)
 {
-    if (inFboCache(fboId))
-    {
-        R_VERBOSE(R_CHANNEL_VULKAN, "Fbo is already in cache! Can not cache unless deleting the existing one...");
-        return getCachedFbo(fboId);
-    }
-
-    FramebufferObject data = { fbo, renderArea };
-    g_fboCache[fboId] = data;
-    g_fboCache[fboId].addReference(numReferences);
-
-    return &g_fboCache[fboId]();
-}
-
-
-R_INTERNAL 
-void destroyFbo(Hash64 fboId, VkDevice device)
-{
-    if (!g_fboCache[fboId].release())
-    {
-        VkFramebuffer fbo = g_fboCache[fboId]().framebuffer;
-        vkDestroyFramebuffer(device, fbo, nullptr);
-        g_fboCache.erase(fboId);
-    }
+    FramebufferObject* data = new FramebufferObject();
+    data->framebuffer = fbo;
+    data->renderArea = renderArea;
+    data->age = g_tick;
+    data->id = fboId;
+    g_fbList.push_front(data);
+    g_fbCache.insert(std::make_pair(fboId, g_fbList.begin()));
+    return data;
 }
 
 
@@ -264,25 +304,64 @@ VkRenderPass createRenderPass(VulkanDevice* pDevice,  const VulkanRenderPassDesc
 R_INTERNAL
 VkRenderPass internalMakeRenderPass(VulkanDevice* pDevice,  const VulkanRenderPassDesc& desc, RenderPasses::RenderPassId renderPassId)
 {
-    auto& iter = g_rpCache.find(renderPassId);
+    auto iter = g_rpCache.find(renderPassId);
     // Failed to find a suitable render pass, make a new one.
     if (iter == g_rpCache.end())
     {
         VkRenderPass renderPass = createRenderPass(pDevice, desc);
-        g_rpCache.insert(std::make_pair(renderPassId, renderPass));
         U32 references = desc.numRenderTargets + ((desc.pDepthStencil != 0) ? 1 : 0);
-        g_rpCache[renderPassId].addReference(references);
-        return g_rpCache[renderPassId]();
+        cacheRenderPass(renderPassId, renderPass);
+        (*g_rpCache[renderPassId])->rp.addReference(references);
+        return (*g_rpCache[renderPassId])->rp();
     }
     else
     {
         // We have one, let's return this one.
-        return iter->second();
+        return referRenderPass(renderPassId);
     }
 }
 
 
 namespace RenderPasses {
+
+
+void checkLruCache(VkDevice device)
+{
+    const U32 currentTick = g_tick;
+
+    // Check Render Pass cache.
+    if (!g_rpList.empty())
+    {
+        RenderPassLiveObject* obj = g_rpList.back();
+        const U32 ageRate = g_tick - obj->age;
+        if (ageRate >= g_renderPassMaxAge)
+        {
+            R_DEBUG("Vulkan", "Destroy Render Pass.");
+            g_rpList.pop_back();
+            g_rpCache.erase(obj->id);
+            VkRenderPass rp = obj->rp();
+            vkDestroyRenderPass(device, rp, nullptr);
+            delete obj;
+        }
+    }
+
+    // Now check fbo cache.
+    if (!g_fbList.empty())
+    {
+        FramebufferObject* obj = g_fbList.back();
+        const U32 ageRate = g_tick - obj->age;
+        if (ageRate >= g_renderPassMaxAge)
+        {
+            R_DEBUG("Vulkan", "Cleaning up framebuffer.");
+            g_fbList.pop_back();
+            g_fbCache.erase(obj->id);
+            VkFramebuffer fbo = obj->framebuffer;
+            vkDestroyFramebuffer(device, fbo, nullptr);
+            delete obj;
+        }
+    }
+}
+
 
 VulkanRenderPass makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, ResourceViewId* ppRenderTargetViews, ResourceViewId pDepthStencil)
 {
@@ -342,21 +421,30 @@ VulkanRenderPass makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, Res
 void clearCache(VulkanDevice* pDevice)
 {
     R_ASSERT(pDevice != NULL);
-    for (auto iter : g_rpCache)
+    for (auto iter : g_rpList)
     {
-        while (iter.second.release());
-        vkDestroyRenderPass(pDevice->get(), iter.second(), nullptr);
+        while (iter->rp.release());
+        vkDestroyRenderPass(pDevice->get(), iter->rp(), nullptr);
+        delete iter;
         R_DEBUG(R_CHANNEL_VULKAN, "Destroying render pass...");
     }
 
-    for (auto iter : g_fboCache)
-    {   
-        while (iter.second.release());
-        vkDestroyFramebuffer(pDevice->get(), iter.second().framebuffer, nullptr);
+    for (auto iter : g_fbList)
+    {
+        vkDestroyFramebuffer(pDevice->get(), iter->framebuffer, nullptr);
+        delete iter;
         R_DEBUG(R_CHANNEL_VULKAN, "Destroying framebuffer");
     }
+    g_fbList.clear();
+    g_fbCache.clear();
+    g_rpList.clear();
     g_rpCache.clear();
-    g_fboCache.clear();
+}
+
+
+void updateTick()
+{
+    g_tick += 1;
 }
 } // RenderPass
 } // Recluse
