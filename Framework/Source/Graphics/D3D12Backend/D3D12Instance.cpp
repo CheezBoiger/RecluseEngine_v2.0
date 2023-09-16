@@ -5,6 +5,8 @@
 #include "Recluse/Messaging.hpp"
 #include <dxgi1_5.h>
 
+#include "Recluse/Threading/Threading.hpp"
+
 namespace Recluse {
 
 
@@ -36,6 +38,59 @@ void pfnD3D12MessageFunc(
     }
 }
 
+#if !defined(__ID3D12InfoQueue1_FWD_DEFINED__)
+struct ThreadInfo
+{
+    U32 cookie;
+    ID3D12Device* device;
+    MutexGuard mut;
+    Bool closed;
+    Thread thr;
+};
+MutexGuard finishMutex;
+std::map<U32, ThreadInfo> g_threadFinish;
+U32 D3D12HandleDebugMessageCallback(void* data)
+{
+    U32 id = *(U32*)data;
+    Bool shouldClose = false;
+
+    do
+    {
+        
+        ThreadInfo* info = nullptr;
+        {
+            ScopedLock _(finishMutex);
+            info = &g_threadFinish[id];
+        }
+        ScopedLock _(info->mut);
+        shouldClose = info->closed;
+        if (!shouldClose)
+        {
+            ID3D12InfoQueue* infoQueue = nullptr;
+            info->device->QueryInterface<ID3D12InfoQueue>(&infoQueue);
+            if (infoQueue)
+            {
+                UINT64 messageCount = infoQueue->GetNumStoredMessages();
+                for (UINT64 messageIdx = 0; messageIdx < messageCount; ++messageIdx)
+                {
+                    SIZE_T sizeLength = 0;
+                    HRESULT result = infoQueue->GetMessageA(messageIdx, nullptr, &sizeLength);
+                    D3D12_MESSAGE* message = (D3D12_MESSAGE*)malloc(sizeLength);
+                    result = infoQueue->GetMessageA(messageIdx, message, &sizeLength);
+                    if (result == S_OK)
+                    {
+                        pfnD3D12MessageFunc(message->Category, message->Severity, message->ID, message->pDescription, nullptr);
+                    }
+                    free(message);
+                }
+                infoQueue->ClearStoredMessages();
+                infoQueue->Release();
+            }
+        }
+    } while (!shouldClose);
+    return 0;
+}
+#endif
 
 void D3D12Instance::queryGraphicsAdapters()
 {
@@ -162,19 +217,39 @@ Bool D3D12Instance::hasTearingSupport() const
 DWORD D3D12Instance::registerDebugMessageCallback(ID3D12Device* pDevice)
 {
     DWORD cookie = 0u;
+#if defined(__ID3D12InfoQueue1_FWD_DEFINED__)
     ID3D12InfoQueue1* infoQueue = nullptr;
     pDevice->QueryInterface<ID3D12InfoQueue1>(&infoQueue);
     infoQueue->RegisterMessageCallback(pfnD3D12MessageFunc, D3D12_MESSAGE_CALLBACK_FLAG_NONE, nullptr, &cookie);
     infoQueue->Release();
+#else
+    static DWORD cookei = 0;
+    cookie = ++cookei;
+    ScopedLock _(finishMutex);
+    ThreadInfo& info = g_threadFinish[cookie];
+    info.device = pDevice;
+    info.closed = false;
+    info.cookie = cookie;
+    info.thr.payload = &g_threadFinish[cookie].cookie;
+    createThread(&info.thr, D3D12HandleDebugMessageCallback);
+#endif
     return cookie;
 }
 
 
 void D3D12Instance::unregisterDebugMessageCallback(ID3D12Device* pDevice, DWORD cookie)
 {
+#if defined(__ID3D12InfoQueue1_FWD_DEFINED__)
     ID3D12InfoQueue1* infoQueue = nullptr;
     pDevice->QueryInterface<ID3D12InfoQueue1>(&infoQueue);
     infoQueue->UnregisterMessageCallback(cookie);
     infoQueue->Release();
+#else
+    ThreadInfo& info = g_threadFinish[cookie];
+    info.closed = true;
+    joinThread(&info.thr);
+    ScopedLock _(info.mut);
+    g_threadFinish.erase(cookie);
+#endif
 }
 } // Recluse

@@ -504,7 +504,7 @@ GraphicsResource* buildConstantBuffer(GraphicsDevice* device)
     GraphicsResource* constBuffer = nullptr;
     GraphicsResourceDescription description = { };
     description.depthOrArraySize = 1;
-    description.height = 1;
+    description.height = 0;
     description.mipLevels = 1;
     description.samples = 1;
     description.dimension = ResourceDimension_Buffer;
@@ -596,7 +596,7 @@ GraphicsSampler* createSampler(GraphicsDevice* device)
 int main(char* argv[], int c)
 {
     Log::initializeLoggingSystem();
-    enableLogTypes(LogType_Debug);
+    enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
     instance  = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
@@ -614,7 +614,7 @@ int main(char* argv[], int c)
         appInfo.appMinor = 0;
         appInfo.appMajor = 0;
         appInfo.appPatch = 0;
-        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation;
+        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
         instance->initialize(appInfo, flags);
     }
     
