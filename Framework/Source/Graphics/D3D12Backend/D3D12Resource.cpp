@@ -93,7 +93,7 @@ ResultCode D3D12Resource::initialize
     if (desc.memoryUsage == ResourceMemoryUsage_CpuToGpu || desc.memoryUsage == ResourceMemoryUsage_CpuOnly)
     {
         // If the memoryUsage is CpuToGpu or CpuOnly, then d3d12 requires that we are in GENERIC_READ as initial state.
-        shouldTransition = (D3D12_RESOURCE_STATE_GENERIC_READ & state);
+        shouldTransition = !(D3D12_RESOURCE_STATE_GENERIC_READ & state);
         state = D3D12_RESOURCE_STATE_GENERIC_READ;
     }
 
