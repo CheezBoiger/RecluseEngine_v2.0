@@ -504,7 +504,7 @@ GraphicsResource* buildConstantBuffer(GraphicsDevice* device)
     GraphicsResource* constBuffer = nullptr;
     GraphicsResourceDescription description = { };
     description.depthOrArraySize = 1;
-    description.height = 0;
+    description.height = 1;
     description.mipLevels = 1;
     description.samples = 1;
     description.dimension = ResourceDimension_Buffer;
