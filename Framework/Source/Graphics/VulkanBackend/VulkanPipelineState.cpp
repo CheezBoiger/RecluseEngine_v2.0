@@ -713,7 +713,7 @@ VkPipeline createGraphicsPipeline(VulkanDevice* pDevice, VkPipelineCache pipelin
         {
             shaderStages[ci.stageCount]         = { };
             shaderStages[ci.stageCount].module  = program->graphics.as;
-            shaderStages[ci.stageCount].stage   = VK_SHADER_STAGE_TASK_BIT_EXT;
+            shaderStages[ci.stageCount].stage   = VK_SHADER_STAGE_TASK_BIT_NV;
             shaderStages[ci.stageCount].pName   = program->graphics.asEntry;
             shaderStages[ci.stageCount].sType   = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
             ci.stageCount += 1;
@@ -722,7 +722,7 @@ VkPipeline createGraphicsPipeline(VulkanDevice* pDevice, VkPipelineCache pipelin
         {
             shaderStages[ci.stageCount]         = { };
             shaderStages[ci.stageCount].module  = program->graphics.ms;
-            shaderStages[ci.stageCount].stage   = VK_SHADER_STAGE_MESH_BIT_EXT;
+            shaderStages[ci.stageCount].stage   = VK_SHADER_STAGE_MESH_BIT_NV;
             shaderStages[ci.stageCount].pName   = program->graphics.msEntry;
             shaderStages[ci.stageCount].sType   = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
             ci.stageCount += 1;
