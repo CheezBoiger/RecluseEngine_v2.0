@@ -46,6 +46,7 @@ enum ShaderType
     ShaderType_RayIntersect,
     ShaderType_RayMiss,
     ShaderType_Amplification,
+    ShaderType_Task = ShaderType_Amplification,
     ShaderType_Mesh,
     ShaderType_Compute,
     ShaderType_Count
@@ -68,6 +69,7 @@ enum ShaderStage
     ShaderStage_RayIntersect             = (1<<ShaderType_RayIntersect),
     ShaderStage_RayMiss                  = (1<<ShaderType_RayMiss),
     ShaderStage_Amplification            = (1<<ShaderType_Amplification),
+    ShaderStage_Task                     = ShaderStage_Amplification,
     ShaderStage_Mesh                     = (1<<ShaderType_Mesh),
     ShaderStage_Compute                  = (1<<ShaderType_Compute),
     ShaderStage_All                      = (0xFFFFFFFF)

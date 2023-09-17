@@ -699,21 +699,76 @@ VkPipeline createGraphicsPipeline(VulkanDevice* pDevice, VkPipelineCache pipelin
     ci.pRasterizationState  = &rasterState;
     ci.pColorBlendState     = &blendState;
     ci.pDepthStencilState   = &depthStencilState;
-    ci.pInputAssemblyState  = &inputAssemblyState;
-    ci.pVertexInputState    = &vertInputState;
+    // We don't need vertex input descriptions if the pipeline is using mesh shaders.
+    ci.pInputAssemblyState  = program->graphics.usesMeshShaders ? nullptr : &inputAssemblyState; 
+    ci.pVertexInputState    = program->graphics.usesMeshShaders ? nullptr : &vertInputState;
     ci.pViewportState       = &viewportState;
     ci.pDynamicState        = &dynamicState;
     ci.pMultisampleState    = &multisampleState;
     ci.stageCount           = 0;
     
-    if (program->graphics.vs) 
+    if (program->graphics.usesMeshShaders)
     {
-        shaderStages[ci.stageCount]         = { };
-        shaderStages[ci.stageCount].module  = program->graphics.vs;
-        shaderStages[ci.stageCount].stage   = VK_SHADER_STAGE_VERTEX_BIT;
-        shaderStages[ci.stageCount].pName   = program->graphics.vsEntry;
-        shaderStages[ci.stageCount].sType   = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        ci.stageCount += 1;
+        if (program->graphics.as)
+        {
+            shaderStages[ci.stageCount]         = { };
+            shaderStages[ci.stageCount].module  = program->graphics.as;
+            shaderStages[ci.stageCount].stage   = VK_SHADER_STAGE_TASK_BIT_EXT;
+            shaderStages[ci.stageCount].pName   = program->graphics.asEntry;
+            shaderStages[ci.stageCount].sType   = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+            ci.stageCount += 1;
+        }
+        if (program->graphics.ms)
+        {
+            shaderStages[ci.stageCount]         = { };
+            shaderStages[ci.stageCount].module  = program->graphics.ms;
+            shaderStages[ci.stageCount].stage   = VK_SHADER_STAGE_MESH_BIT_EXT;
+            shaderStages[ci.stageCount].pName   = program->graphics.msEntry;
+            shaderStages[ci.stageCount].sType   = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+            ci.stageCount += 1;
+        }
+    }
+    else
+    {
+        if (program->graphics.vs) 
+        {
+            shaderStages[ci.stageCount]         = { };
+            shaderStages[ci.stageCount].module  = program->graphics.vs;
+            shaderStages[ci.stageCount].stage   = VK_SHADER_STAGE_VERTEX_BIT;
+            shaderStages[ci.stageCount].pName   = program->graphics.vsEntry;
+            shaderStages[ci.stageCount].sType   = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+            ci.stageCount += 1;
+        }
+
+        if (program->graphics.gs)
+        {
+            shaderStages[ci.stageCount] = { };
+            shaderStages[ci.stageCount].module = program->graphics.gs;
+            shaderStages[ci.stageCount].stage = VK_SHADER_STAGE_GEOMETRY_BIT;
+            shaderStages[ci.stageCount].pName = program->graphics.gsEntry;
+            shaderStages[ci.stageCount].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+            ci.stageCount += 1;
+        }
+
+        if (program->graphics.ds)
+        {
+            shaderStages[ci.stageCount] = { };
+            shaderStages[ci.stageCount].module = program->graphics.ds;
+            shaderStages[ci.stageCount].stage = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+            shaderStages[ci.stageCount].pName = program->graphics.dsEntry;
+            shaderStages[ci.stageCount].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+            ci.stageCount += 1;
+        }
+
+        if (program->graphics.hs)
+        {
+            shaderStages[ci.stageCount] = { };
+            shaderStages[ci.stageCount].module = program->graphics.hs;
+            shaderStages[ci.stageCount].stage = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+            shaderStages[ci.stageCount].pName = program->graphics.hsEntry;
+            shaderStages[ci.stageCount].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+            ci.stageCount += 1;
+        }
     }
 
     if (program->graphics.ps) 
@@ -723,26 +778,6 @@ VkPipeline createGraphicsPipeline(VulkanDevice* pDevice, VkPipelineCache pipelin
         shaderStages[ci.stageCount].stage   = VK_SHADER_STAGE_FRAGMENT_BIT;
         shaderStages[ci.stageCount].pName   = program->graphics.psEntry;
         shaderStages[ci.stageCount].sType   = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        ci.stageCount += 1;
-    }
-
-    if (program->graphics.ds)
-    {
-        shaderStages[ci.stageCount] = { };
-        shaderStages[ci.stageCount].module = program->graphics.ds;
-        shaderStages[ci.stageCount].stage = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-        shaderStages[ci.stageCount].pName = program->graphics.dsEntry;
-        shaderStages[ci.stageCount].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        ci.stageCount += 1;
-    }
-
-    if (program->graphics.hs)
-    {
-        shaderStages[ci.stageCount] = { };
-        shaderStages[ci.stageCount].module = program->graphics.hs;
-        shaderStages[ci.stageCount].stage = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-        shaderStages[ci.stageCount].pName = program->graphics.hsEntry;
-        shaderStages[ci.stageCount].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         ci.stageCount += 1;
     }
 

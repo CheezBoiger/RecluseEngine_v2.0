@@ -39,6 +39,7 @@ typedef U32                 B32;
 typedef U64                 B64;
 typedef bool                Bool;
 typedef B32                 Bool32;
+typedef B64                 Bool64;
 
 // Error type to use for error checking.
 typedef U32                 ResultCode;

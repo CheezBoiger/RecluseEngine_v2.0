@@ -42,11 +42,23 @@ struct ShaderProgramPermutationHeader
     {
         struct
         {
-            Hash64 vs;
+            Bool64 usesMeshShaders;
+            union
+            {
+                struct
+                {
+                    Hash64 vs;
+                    Hash64 gs;
+                    Hash64 hs;
+                    Hash64 ds;
+                };
+                struct
+                {
+                    Hash64 as;
+                    Hash64 ms;
+                };
+            };
             Hash64 ps;
-            Hash64 gs;
-            Hash64 hs;
-            Hash64 ds;
         } graphics;
         struct
         {
@@ -74,11 +86,20 @@ ShaderProgramDefinition::ShaderProgramDefinition(const ShaderProgramDefinition& 
         compute.cs = def.compute.cs;
         break;
     case BindType_Graphics:
+        graphics.usesMeshShaders = def.graphics.usesMeshShaders;
+        if (graphics.usesMeshShaders)
+        {
+            graphics.as = def.graphics.as;
+            graphics.ms = def.graphics.ms;
+        }
+        else
+        {
+            graphics.vs = def.graphics.vs;
+            graphics.gs = def.graphics.ds;
+            graphics.hs = def.graphics.hs;
+            graphics.ds = def.graphics.ds;
+        }
         graphics.ps = def.graphics.ps;
-        graphics.vs = def.graphics.vs;
-        graphics.gs = def.graphics.ds;
-        graphics.hs = def.graphics.hs;
-        graphics.ds = def.graphics.ds;
         break;
     case BindType_RayTrace:
         raytrace.rgen = def.raytrace.rgen;
@@ -101,11 +122,20 @@ ShaderProgramDefinition::ShaderProgramDefinition(ShaderProgramDefinition&& def)
         compute.cs = std::move(def.compute.cs);
         break;
     case BindType_Graphics:
+        graphics.usesMeshShaders = def.graphics.usesMeshShaders;
+        if (graphics.usesMeshShaders)
+        {
+            graphics.as = std::move(def.graphics.as);
+            graphics.ms = std::move(def.graphics.ms);
+        }
+        else
+        {
+            graphics.vs = std::move(def.graphics.vs);
+            graphics.gs = std::move(def.graphics.gs);
+            graphics.hs = std::move(def.graphics.hs);
+            graphics.ds = std::move(def.graphics.ds);
+        }
         graphics.ps = std::move(def.graphics.ps);
-        graphics.vs = std::move(def.graphics.vs);
-        graphics.gs = std::move(def.graphics.ds);
-        graphics.hs = std::move(def.graphics.hs);
-        graphics.ds = std::move(def.graphics.ds);
         break;
     case BindType_RayTrace:
         raytrace.rgen = std::move(def.raytrace.rgen);
@@ -128,11 +158,20 @@ ShaderProgramDefinition& ShaderProgramDefinition::operator=(const ShaderProgramD
         compute.cs = def.compute.cs;
         break;
     case BindType_Graphics:
+        graphics.usesMeshShaders = def.graphics.usesMeshShaders;
+        if (graphics.usesMeshShaders)
+        {
+            graphics.as = def.graphics.as;
+            graphics.ms = def.graphics.ms;
+        }
+        else
+        {
+            graphics.vs = def.graphics.vs;
+            graphics.gs = def.graphics.gs;
+            graphics.hs = def.graphics.hs;
+            graphics.ds = def.graphics.ds;
+        }
         graphics.ps = def.graphics.ps;
-        graphics.vs = def.graphics.vs;
-        graphics.gs = def.graphics.ds;
-        graphics.hs = def.graphics.hs;
-        graphics.ds = def.graphics.ds;
         break;
     case BindType_RayTrace:
         raytrace.rgen = def.raytrace.rgen;
@@ -156,11 +195,20 @@ ShaderProgramDefinition& ShaderProgramDefinition::operator=(ShaderProgramDefinit
         compute.cs = std::move(def.compute.cs);
         break;
     case BindType_Graphics:
+        graphics.usesMeshShaders = def.graphics.usesMeshShaders;
+        if (graphics.usesMeshShaders)
+        {
+            graphics.as = std::move(def.graphics.as);
+            graphics.ms = std::move(def.graphics.ms);
+        }
+        else
+        {
+            graphics.vs = std::move(def.graphics.vs);
+            graphics.gs = std::move(def.graphics.gs);
+            graphics.hs = std::move(def.graphics.hs);
+            graphics.ds = std::move(def.graphics.ds);
+        }
         graphics.ps = std::move(def.graphics.ps);
-        graphics.vs = std::move(def.graphics.vs);
-        graphics.gs = std::move(def.graphics.ds);
-        graphics.hs = std::move(def.graphics.hs);
-        graphics.ds = std::move(def.graphics.ds);
         break;
     case BindType_RayTrace:
         raytrace.rgen = std::move(def.raytrace.rgen);
@@ -215,11 +263,19 @@ void ShaderProgramDatabase::cleanUpShaderProgramDefinition(const ShaderProgramDe
     {
         case BindType_Graphics:
         {
-            removeShader(definition.graphics.vs);
+            if (definition.graphics.usesMeshShaders)
+            {
+                removeShader(definition.graphics.as);
+                removeShader(definition.graphics.ms);
+            }
+            else
+            {
+                removeShader(definition.graphics.vs);
+                removeShader(definition.graphics.gs);
+                removeShader(definition.graphics.ds);
+                removeShader(definition.graphics.hs);
+            }
             removeShader(definition.graphics.ps);
-            removeShader(definition.graphics.gs);
-            removeShader(definition.graphics.ds);
-            removeShader(definition.graphics.hs);
             break;
         }
         case BindType_Compute:
@@ -287,11 +343,19 @@ void ShaderProgramDatabase::storeShaderProgramDefinition(const ShaderProgramDefi
     {
         case BindType_Graphics:
         {
-            storeShader(storedDefinition.graphics.vs);
+            if (storedDefinition.graphics.usesMeshShaders)
+            {
+                storeShader(storedDefinition.graphics.as);
+                storeShader(storedDefinition.graphics.ms);
+            }
+            else
+            {
+                storeShader(storedDefinition.graphics.vs);
+                storeShader(storedDefinition.graphics.gs);
+                storeShader(storedDefinition.graphics.ds);
+                storeShader(storedDefinition.graphics.hs);
+            }
             storeShader(storedDefinition.graphics.ps);
-            storeShader(storedDefinition.graphics.gs);
-            storeShader(storedDefinition.graphics.ds);
-            storeShader(storedDefinition.graphics.hs);
             break;
         }
         case BindType_Compute:
@@ -388,11 +452,20 @@ ResultCode ShaderProgramDatabase::serialize(Archive* pArchive)
             {
                 case BindType_Graphics:
                 {
-                    permHeader.graphics.vs = definition.graphics.vs ? ShaderProgramDatabase::makeShaderHash(definition.graphics.vs->getByteCode(), definition.graphics.vs->getSzBytes(), permutation) : 0;
+                    permHeader.graphics.usesMeshShaders = definition.graphics.usesMeshShaders;
+                    if (permHeader.graphics.usesMeshShaders)
+                    {
+                        permHeader.graphics.as = definition.graphics.as ? ShaderProgramDatabase::makeShaderHash(definition.graphics.as->getByteCode(), definition.graphics.as->getSzBytes(), permutation) : 0;
+                        permHeader.graphics.ms = definition.graphics.ms ? ShaderProgramDatabase::makeShaderHash(definition.graphics.ms->getByteCode(), definition.graphics.ms->getSzBytes(), permutation) : 0;
+                    }
+                    else
+                    {
+                        permHeader.graphics.vs = definition.graphics.vs ? ShaderProgramDatabase::makeShaderHash(definition.graphics.vs->getByteCode(), definition.graphics.vs->getSzBytes(), permutation) : 0;
+                        permHeader.graphics.gs = definition.graphics.gs ? ShaderProgramDatabase::makeShaderHash(definition.graphics.gs->getByteCode(), definition.graphics.gs->getSzBytes(), permutation) : 0;
+                        permHeader.graphics.ds = definition.graphics.ds ? ShaderProgramDatabase::makeShaderHash(definition.graphics.ds->getByteCode(), definition.graphics.ds->getSzBytes(), permutation) : 0;
+                        permHeader.graphics.hs = definition.graphics.hs ? ShaderProgramDatabase::makeShaderHash(definition.graphics.hs->getByteCode(), definition.graphics.hs->getSzBytes(), permutation) : 0;
+                    }
                     permHeader.graphics.ps = definition.graphics.ps ? ShaderProgramDatabase::makeShaderHash(definition.graphics.ps->getByteCode(), definition.graphics.ps->getSzBytes(), permutation) : 0;
-                    permHeader.graphics.gs = definition.graphics.gs ? ShaderProgramDatabase::makeShaderHash(definition.graphics.gs->getByteCode(), definition.graphics.gs->getSzBytes(), permutation) : 0;
-                    permHeader.graphics.ds = definition.graphics.ds ? ShaderProgramDatabase::makeShaderHash(definition.graphics.ds->getByteCode(), definition.graphics.ds->getSzBytes(), permutation) : 0;
-                    permHeader.graphics.hs = definition.graphics.hs ? ShaderProgramDatabase::makeShaderHash(definition.graphics.hs->getByteCode(), definition.graphics.hs->getSzBytes(), permutation) : 0;
                     break;
                 }
                 case BindType_Compute:
@@ -457,11 +530,20 @@ ResultCode ShaderProgramDatabase::deserialize(Archive* pArchive)
             {
                 case BindType_Graphics:
                 {
-                    definition.graphics.vs = obtainShader(permHeader.graphics.vs);
+                    definition.graphics.usesMeshShaders = !!permHeader.graphics.usesMeshShaders;
+                    if (permHeader.graphics.usesMeshShaders)
+                    {
+                        definition.graphics.as = obtainShader(permHeader.graphics.as);
+                        definition.graphics.ms = obtainShader(permHeader.graphics.ms);
+                    }
+                    else
+                    {
+                        definition.graphics.vs = obtainShader(permHeader.graphics.vs);
+                        definition.graphics.gs = obtainShader(permHeader.graphics.gs);
+                        definition.graphics.ds = obtainShader(permHeader.graphics.ds);
+                        definition.graphics.hs = obtainShader(permHeader.graphics.hs);
+                    }
                     definition.graphics.ps = obtainShader(permHeader.graphics.ps);
-                    definition.graphics.gs = obtainShader(permHeader.graphics.gs);
-                    definition.graphics.ds = obtainShader(permHeader.graphics.ds);
-                    definition.graphics.hs = obtainShader(permHeader.graphics.hs);
                     break;
                 }
                 case BindType_Compute:

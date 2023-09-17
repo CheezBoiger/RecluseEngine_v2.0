@@ -4,8 +4,13 @@
 
 set ( RECLUSE_THIRDPARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty)
 
-# TODO: Disable for now, until we can figure out what we need to do to properly compile this, and not have to use an existing binary :D.
-#add_subdirectory ( ${RECLUSE_THIRDPARTY_DIR}/DirectXShaderCompiler )
+if ( RCL_DX11 OR RCL_DX12)
+	# TODO: Disable for now, until we can figure out what we need to do to properly compile this, and not have to use an existing binary :D.
+	# add_subdirectory ( ${RECLUSE_THIRDPARTY_DIR}/DirectXShaderCompiler )
+	#if ( RCL_DX12 )
+	#	add_subdirectory( ${RECLUSE_THIRDPARTY_DIR}/DirectX-Headers )
+	#endif()
+endif()
 add_subdirectory ( ${RECLUSE_THIRDPARTY_DIR}/wxWidgets )
 #add_subdirectory ( ${RECLUSE_THIRDPARTY_DIR}/zlib )
 add_subdirectory ( ${RECLUSE_THIRDPARTY_DIR}/googletest )

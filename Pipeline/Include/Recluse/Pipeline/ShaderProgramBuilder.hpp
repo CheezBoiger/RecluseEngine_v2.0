@@ -26,27 +26,41 @@ struct R_PUBLIC_API ShaderProgramDescription
         {
             const char* ps;
             const char* psName;
-            const char* vs;
-            const char* vsName;
-            const char* gs;
-            const char* gsName;
-            union 
+            union
             {
                 struct 
                 {
-                    const char* hs;
-                    const char* hsName;
-                    const char* ds;
-                    const char* dsName;
+                    const char* vs;
+                    const char* vsName;
+                    const char* gs;
+                    const char* gsName;
+                    union 
+                    {
+                        struct 
+                        {
+                            const char* hs;
+                            const char* hsName;
+                            const char* ds;
+                            const char* dsName;
+                        };
+                        struct 
+                        {
+                            const char* tessc;
+                            const char* tesscName;
+                            const char* tesse;
+                            const char* tesseName;
+                        };
+                    };
                 };
-                struct 
+                struct
                 {
-                    const char* tessc;
-                    const char* tesscName;
-                    const char* tesse;
-                    const char* tesseName;
-                };
+                    const char* as;
+                    const char* asName;
+                    const char* ms;
+                    const char* msName;
+                };              
             };
+            Bool usesMeshShaders;
         } graphics;
         struct 
         {

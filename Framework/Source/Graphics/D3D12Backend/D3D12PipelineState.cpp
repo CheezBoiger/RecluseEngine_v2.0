@@ -289,6 +289,97 @@ ID3D12PipelineState* createGraphicsPipelineState(U32 nodeMask, ID3D12Device* pDe
     
     ID3D12PipelineState* pipeline = nullptr;
     HRESULT result = pDevice->CreateGraphicsPipelineState(&desc, __uuidof(ID3D12PipelineState), (void**)&pipeline);
+    
+    R_ASSERT(SUCCEEDED(result));
+    return pipeline;
+}
+
+
+R_INTERNAL
+ID3D12PipelineState* createMeshGraphicsPipeline(U32 nodeMask, ID3D12Device* pDevice, const D3D::Cache::D3DShaderProgram* program, const PipelineStateObject& pipelineState)
+{
+    R_D3D12_MESH_SHADER_PIPELINE_STATE_DESC desc = { };
+    desc.pRootSignature = pipelineState.rootSignature;
+    desc.NodeMask = 0;
+    desc.NumRenderTargets = pipelineState.graphics.numRenderTargets;
+    desc.PrimitiveTopologyType = pipelineState.graphics.topologyType;
+    D3D12RenderPass* pRenderPass = pipelineState.graphics.pRenderPass;
+    for (U32 i = 0; i < pipelineState.graphics.numRenderTargets; ++i)
+    {
+        desc.RTVFormats[i] = pipelineState.graphics.pRenderPass->getRtvFormat(i);
+    }
+    desc.DSVFormat = pipelineState.graphics.pRenderPass->getDsvFormat();
+
+    R_ASSERT(program->graphics.vsBytecode);
+    
+    if (program->graphics.psBytecode)
+    {
+        desc.PS.pShaderBytecode = program->graphics.psBytecode->GetBufferPointer();
+        desc.PS.BytecodeLength = program->graphics.psBytecode->GetBufferSize();
+    }
+
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+
+    desc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
+    desc.RasterizerState.AntialiasedLineEnable = pipelineState.graphics.antiAliasedLineEnable;
+    desc.RasterizerState.FillMode = getFillMode(pipelineState.graphics.polygonMode);
+    desc.RasterizerState.CullMode = getCullMode(pipelineState.graphics.cullMode);
+    desc.RasterizerState.DepthClipEnable = pipelineState.graphics.depthClampEnable;
+    desc.RasterizerState.DepthBias  = pipelineState.graphics.depthBiasEnable ? 1 : 0;
+    desc.RasterizerState.FrontCounterClockwise = (pipelineState.graphics.frontFace == FrontFace_CounterClockwise ? true : false);
+    desc.RasterizerState.MultisampleEnable = false;
+    desc.RasterizerState.AntialiasedLineEnable = false;
+    desc.RasterizerState.SlopeScaledDepthBias = 0.0f;
+
+    desc.DepthStencilState.DepthEnable = pipelineState.graphics.depthStencil.depthTestEnable;
+    desc.DepthStencilState.StencilEnable = pipelineState.graphics.depthStencil.stencilTestEnable;
+    desc.DepthStencilState.DepthWriteMask = pipelineState.graphics.depthStencil.depthWriteEnable ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
+    desc.DepthStencilState.DepthFunc = getNativeComparisonFunction(pipelineState.graphics.depthStencil.depthCompareOp);
+    desc.DepthStencilState.StencilReadMask = pipelineState.graphics.depthStencil.stencilReadMask;
+    desc.DepthStencilState.StencilWriteMask = pipelineState.graphics.depthStencil.stencilWriteMask;
+    desc.DepthStencilState.FrontFace = fillStencilState(pipelineState.graphics.depthStencil.front);
+    desc.DepthStencilState.BackFace = fillStencilState(pipelineState.graphics.depthStencil.back);
+    Bool independentBlendEnable = false;
+    for (U32 i = 0; i < pipelineState.graphics.numRenderTargets; ++i)
+    {
+        D3D12_RENDER_TARGET_BLEND_DESC& rtBlend     = desc.BlendState.RenderTarget[i];
+        const RenderTargetBlendState& rtBlendState  = pipelineState.graphics.blendState.attachments[i];
+        rtBlend.RenderTargetWriteMask               = rtBlendState.colorWriteMask;
+        rtBlend.BlendEnable                         = rtBlendState.blendEnable;
+        rtBlend.BlendOp                             = getBlendOp(rtBlendState.colorBlendOp);
+        rtBlend.BlendOpAlpha                        = getBlendOp(rtBlendState.alphaBlendOp);
+        rtBlend.LogicOp                             = getLogicOp(pipelineState.graphics.blendState.logicOp);
+        rtBlend.DestBlend                           = getBlendFactor(rtBlendState.dstColorBlendFactor);
+        rtBlend.DestBlendAlpha                      = getBlendFactor(rtBlendState.dstAlphaBlendFactor);
+        rtBlend.SrcBlend                            = getBlendFactor(rtBlendState.srcColorBlendFactor);
+        rtBlend.SrcBlendAlpha                       = getBlendFactor(rtBlendState.srcAlphaBlendFactor);
+        independentBlendEnable |= rtBlend.BlendEnable;
+    }
+
+    if (pRenderPass)
+    {
+        for (U32 i = 0; i < pipelineState.graphics.numRenderTargets; ++i)
+        {
+            desc.RTVFormats[i] = pRenderPass->getRtvFormat(i);
+        }
+        desc.DSVFormat = pRenderPass->getDsvFormat();
+    }
+    desc.BlendState.IndependentBlendEnable = independentBlendEnable;
+    desc.BlendState.AlphaToCoverageEnable = false;
+    
+    ID3D12PipelineState* pipeline = nullptr;
+    ID3D12Device2* pDevice2 = nullptr;
+    HRESULT result = pDevice->QueryInterface<ID3D12Device2>(&pDevice2);
+    if (SUCCEEDED(result))
+    {
+        RD3D12MeshShaderStreamDescription meshStreamDesc = RD3D12MeshShaderStreamDescription(desc);
+        D3D12_PIPELINE_STATE_STREAM_DESC pipelineDesc = { };
+        pipelineDesc.pPipelineStateSubobjectStream = &meshStreamDesc;
+        pipelineDesc.SizeInBytes = sizeof(meshStreamDesc);
+        result = pDevice2->CreatePipelineState(&pipelineDesc, __uuidof(ID3D12PipelineState), (void**)&pipeline);
+        pDevice2->Release();
+    }
     R_ASSERT(SUCCEEDED(result));
     return pipeline;
 }
@@ -351,7 +442,9 @@ ID3D12PipelineState* createPipelineState(U32 nodeMask, ID3D12Device* pDevice, D3
     switch (pipelineState.pipelineType)
     {
         case BindType_Graphics:
-            createdPipelineState = createGraphicsPipelineState(nodeMask, pDevice, program, pipelineState);
+            // A separate pipeline creation function is needed if we plan on creating a pipeline with mesh shaders.
+            createdPipelineState = program->graphics.usesMeshShaders ? createMeshGraphicsPipeline(nodeMask, pDevice, program, pipelineState) 
+                : createGraphicsPipelineState(nodeMask, pDevice, program, pipelineState);
             break;
         case BindType_RayTrace:
             R_NO_IMPL();

@@ -28,11 +28,23 @@ public:
     {
         struct 
         {
-            Shader* vs;
+            union
+            {
+                struct
+                {
+                    Shader* vs;
+                    Shader* gs;
+                    Shader* hs;
+                    Shader* ds;
+                };
+                struct 
+                {
+                    Shader* as;
+                    Shader* ms;
+                };
+            };
             Shader* ps;
-            Shader* gs;
-            Shader* hs;
-            Shader* ds;
+            Bool    usesMeshShaders;
         } graphics;
         struct 
         {

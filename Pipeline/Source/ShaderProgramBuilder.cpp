@@ -27,16 +27,27 @@ ShaderProgramDescription::ShaderProgramDescription(const ShaderProgramDescriptio
         compute.csName = description.compute.csName;
         break;
     case BindType_Graphics:
-        graphics.vs = description.graphics.vs;
+        graphics.usesMeshShaders = description.graphics.usesMeshShaders;
+        if (graphics.usesMeshShaders)
+        {
+            graphics.as = description.graphics.as;
+            graphics.ms = description.graphics.ms;
+            graphics.asName = description.graphics.asName;
+            graphics.msName = description.graphics.msName;
+        }
+        else
+        {
+            graphics.vs = description.graphics.vs;
+            graphics.vsName = description.graphics.vsName;
+            graphics.ds = description.graphics.ds;
+            graphics.gs = description.graphics.gs;
+            graphics.hs = description.graphics.hs;
+            graphics.gsName = description.graphics.gsName;
+            graphics.dsName = description.graphics.dsName;
+            graphics.hsName = description.graphics.hsName;
+        }
         graphics.ps = description.graphics.ps;
-        graphics.ds = description.graphics.ds;
-        graphics.gs = description.graphics.gs;
-        graphics.hs = description.graphics.hs;
-        graphics.vsName = description.graphics.vsName;
         graphics.psName = description.graphics.psName;
-        graphics.gsName = description.graphics.gsName;
-        graphics.dsName = description.graphics.dsName;
-        graphics.hsName = description.graphics.hsName;
         break;
     case BindType_RayTrace:
         raytrace.rany = description.raytrace.rany;
@@ -66,16 +77,27 @@ ShaderProgramDescription::ShaderProgramDescription(ShaderProgramDescription&& de
         compute.csName = description.compute.csName;
         break;
     case BindType_Graphics:
-        graphics.vs = std::move(description.graphics.vs);
+        graphics.usesMeshShaders = description.graphics.usesMeshShaders;
+        if (graphics.usesMeshShaders)
+        {
+            graphics.as = std::move(description.graphics.as);
+            graphics.ms = std::move(description.graphics.ms);
+            graphics.asName = description.graphics.asName;
+            graphics.msName = description.graphics.msName;
+        }
+        else
+        {
+            graphics.vs = std::move(description.graphics.vs);
+            graphics.ds = std::move(description.graphics.ds);
+            graphics.gs = std::move(description.graphics.gs);
+            graphics.hs = std::move(description.graphics.hs);
+            graphics.vsName = description.graphics.vsName;
+            graphics.gsName = description.graphics.gsName;
+            graphics.dsName = description.graphics.dsName;
+            graphics.hsName = description.graphics.hsName;
+        }
         graphics.ps = std::move(description.graphics.ps);
-        graphics.ds = std::move(description.graphics.ds);
-        graphics.gs = std::move(description.graphics.gs);
-        graphics.hs = std::move(description.graphics.hs);
-        graphics.vsName = description.graphics.vsName;
         graphics.psName = description.graphics.psName;
-        graphics.gsName = description.graphics.gsName;
-        graphics.dsName = description.graphics.dsName;
-        graphics.hsName = description.graphics.hsName;
         break;
     case BindType_RayTrace:
         raytrace.rany = std::move(description.raytrace.rany);
@@ -114,11 +136,19 @@ void destroyShaderProgramDefinition(ShaderProgramDatabase& db, ShaderProgramDefi
         destroyShader(db, definition.compute.cs);
         break;
     case BindType_Graphics:
-        destroyShader(db, definition.graphics.ds);
-        destroyShader(db, definition.graphics.gs);
-        destroyShader(db, definition.graphics.hs);
         destroyShader(db, definition.graphics.ps);
-        destroyShader(db, definition.graphics.vs);
+        if (definition.graphics.usesMeshShaders)
+        {
+            destroyShader(db, definition.graphics.as);
+            destroyShader(db, definition.graphics.ms);
+        }
+        else
+        {
+            destroyShader(db, definition.graphics.vs);
+            destroyShader(db, definition.graphics.ds);
+            destroyShader(db, definition.graphics.gs);
+            destroyShader(db, definition.graphics.hs);
+        }
         break;
     case BindType_RayTrace:
         destroyShader(db, definition.raytrace.rany);
@@ -192,11 +222,20 @@ ShaderProgramDefinition makeShaderProgramDefinition(ShaderProgramDatabase& db, c
         break;
     case BindType_Graphics:
         R_ASSERT_FORMAT(description.graphics.vs, "Must have at least a valid vertex shader, in order to build a ShaderProgram!");
-        definition.graphics.vs              = compileShader(shaderBuilder, db, description.graphics.vsName, description.graphics.vs, permutation, language, ShaderType_Vertex, errorOut);
+        definition.graphics.usesMeshShaders = description.graphics.usesMeshShaders;
+        if (description.graphics.usesMeshShaders)
+        {
+            definition.graphics.as          = description.graphics.as ? compileShader(shaderBuilder, db, description.graphics.asName, description.graphics.as, permutation, language, ShaderType_Amplification, errorOut) : nullptr;
+            definition.graphics.ms          = compileShader(shaderBuilder, db, description.graphics.msName, description.graphics.ms, permutation, language, ShaderType_Mesh, errorOut);
+        }
+        else
+        {
+            definition.graphics.vs              = compileShader(shaderBuilder, db, description.graphics.vsName, description.graphics.vs, permutation, language, ShaderType_Vertex, errorOut);
+            definition.graphics.gs              = description.graphics.gs ? compileShader(shaderBuilder, db, description.graphics.gsName, description.graphics.gs, permutation, language, ShaderType_Geometry, errorOut) : nullptr;
+            definition.graphics.hs              = description.graphics.hs ? compileShader(shaderBuilder, db, description.graphics.hsName, description.graphics.hs, permutation, language, ShaderType_Hull, errorOut) : nullptr;
+            definition.graphics.ds              = description.graphics.ds ? compileShader(shaderBuilder, db, description.graphics.dsName, description.graphics.ds, permutation, language, ShaderType_Domain, errorOut) : nullptr;
+        }
         definition.graphics.ps              = description.graphics.ps ? compileShader(shaderBuilder, db, description.graphics.psName, description.graphics.ps, permutation, language, ShaderType_Pixel, errorOut) : nullptr;
-        definition.graphics.gs              = description.graphics.gs ? compileShader(shaderBuilder, db, description.graphics.gsName, description.graphics.gs, permutation, language, ShaderType_Geometry, errorOut) : nullptr;
-        definition.graphics.hs              = description.graphics.hs ? compileShader(shaderBuilder, db, description.graphics.hsName, description.graphics.hs, permutation, language, ShaderType_Hull, errorOut) : nullptr;
-        definition.graphics.ds              = description.graphics.ds ? compileShader(shaderBuilder, db, description.graphics.dsName, description.graphics.ds, permutation, language, ShaderType_Domain, errorOut) : nullptr;
         break;
     case BindType_RayTrace:
         definition.raytrace.rany            = description.raytrace.rany ? compileShader(shaderBuilder, db, description.raytrace.ranyName, description.raytrace.rany, permutation, language, ShaderType_RayAnyHit, errorOut) : nullptr;

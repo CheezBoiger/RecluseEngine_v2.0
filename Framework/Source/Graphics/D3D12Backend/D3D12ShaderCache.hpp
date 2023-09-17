@@ -22,14 +22,28 @@ struct D3DShaderProgram
         {
             ID3DBlob* psBytecode;
             const char* psMainEntry;
-            ID3DBlob* vsBytecode;
-            const char* vsMainEntry;
-            ID3DBlob* hsBytecode;
-            const char* hsMainEntry;
-            ID3DBlob* dsBytecode;
-            const char* dsMainEntry;
-            ID3DBlob* gsBytecode;
-            const char* gsMainEntry;
+            union
+            {
+                struct
+                {
+                    ID3DBlob* asBytecode;
+                    const char* asMainEntry;
+                    ID3DBlob* msBytecode;
+                    const char* msMainEntry;
+                };
+                struct
+                {
+                    ID3DBlob* vsBytecode;
+                    const char* vsMainEntry;
+                    ID3DBlob* hsBytecode;
+                    const char* hsMainEntry;
+                    ID3DBlob* dsBytecode;
+                    const char* dsMainEntry;
+                    ID3DBlob* gsBytecode;
+                    const char* gsMainEntry;
+                };
+            };
+            Bool usesMeshShaders;
         } graphics;
         struct
         {

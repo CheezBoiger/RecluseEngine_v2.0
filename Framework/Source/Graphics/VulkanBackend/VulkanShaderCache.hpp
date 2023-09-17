@@ -19,16 +19,30 @@ namespace ShaderPrograms {
         {
             struct 
             {
-                VkShaderModule vs;
-                char vsEntry[36];
+                union
+                {
+                    struct
+                    {
+                        VkShaderModule as;
+                        char asEntry[36];
+                        VkShaderModule ms;
+                        char msEntry[36];
+                    };
+                    struct
+                    {
+                        VkShaderModule vs;
+                        char vsEntry[36];
+                        VkShaderModule gs;
+                        char gsEntry[36];
+                        VkShaderModule hs;
+                        char hsEntry[36];
+                        VkShaderModule ds;
+                        char dsEntry[36];
+                    };
+                };
                 VkShaderModule ps;
                 char psEntry[36];
-                VkShaderModule gs;
-                char gsEntry[36];
-                VkShaderModule hs;
-                char hsEntry[36];
-                VkShaderModule ds;
-                char dsEntry[36];
+                Bool usesMeshShaders;
             } graphics;
             struct
             {

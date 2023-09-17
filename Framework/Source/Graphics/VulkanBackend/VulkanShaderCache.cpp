@@ -97,17 +97,29 @@ VulkanShaderProgram createShaderProgram(VkDevice device, const ShaderProgramDefi
     {
     case BindType_Graphics: 
         programOut.bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-        R_ASSERT_FORMAT(definition.graphics.vs, "Must be able to have at least a vertex shader in order to build shader program for Vulkan!");
-        createShaderModule(device, definition.graphics.vs, &programOut.graphics.vs);
+        programOut.graphics.usesMeshShaders = definition.graphics.usesMeshShaders;
+        if (programOut.graphics.usesMeshShaders)
+        {
+            R_ASSERT_FORMAT(definition.graphics.as && definition.graphics.ms, "Both Task and Mesh shaders must be available when building this shader program for Vulkan!");
+            createShaderModule(device, definition.graphics.as, &programOut.graphics.as);
+            createShaderModule(device, definition.graphics.ms, &programOut.graphics.ms);
+            copyName(programOut.graphics.asEntry, definition.graphics.as);
+            copyName(programOut.graphics.msEntry, definition.graphics.ms);
+        }
+        else
+        {
+            R_ASSERT_FORMAT(definition.graphics.vs, "Must be able to have at least a vertex shader in order to build shader program for Vulkan!");
+            createShaderModule(device, definition.graphics.vs, &programOut.graphics.vs);
+            createShaderModule(device, definition.graphics.gs, &programOut.graphics.gs);
+            createShaderModule(device, definition.graphics.hs, &programOut.graphics.hs);
+            createShaderModule(device, definition.graphics.ds, &programOut.graphics.ds);
+            copyName(programOut.graphics.vsEntry, definition.graphics.vs);
+            copyName(programOut.graphics.gsEntry, definition.graphics.gs);
+            copyName(programOut.graphics.dsEntry, definition.graphics.ds);
+            copyName(programOut.graphics.hsEntry, definition.graphics.hs);
+        }
         createShaderModule(device, definition.graphics.ps, &programOut.graphics.ps);
-        createShaderModule(device, definition.graphics.gs, &programOut.graphics.gs);
-        createShaderModule(device, definition.graphics.hs, &programOut.graphics.hs);
-        createShaderModule(device, definition.graphics.ds, &programOut.graphics.ds);
-        copyName(programOut.graphics.vsEntry, definition.graphics.vs);
         copyName(programOut.graphics.psEntry, definition.graphics.ps);
-        copyName(programOut.graphics.gsEntry, definition.graphics.gs);
-        copyName(programOut.graphics.dsEntry, definition.graphics.ds);
-        copyName(programOut.graphics.hsEntry, definition.graphics.hs);
         break;
     case BindType_Compute: 
         programOut.bindPoint = VK_PIPELINE_BIND_POINT_COMPUTE; 
@@ -201,11 +213,19 @@ static void destroyShaderProgramModules(VkDevice device, VulkanShaderProgram& pr
     switch (program.bindPoint)
     {
     case VK_PIPELINE_BIND_POINT_GRAPHICS:
-        vkDestroyShaderModule(device, program.graphics.vs, nullptr);
+        if (program.graphics.usesMeshShaders)
+        {
+            vkDestroyShaderModule(device, program.graphics.as, nullptr);
+            vkDestroyShaderModule(device, program.graphics.ms, nullptr);
+        }
+        else
+        {
+            vkDestroyShaderModule(device, program.graphics.vs, nullptr);
+            vkDestroyShaderModule(device, program.graphics.gs, nullptr);
+            vkDestroyShaderModule(device, program.graphics.hs, nullptr);
+            vkDestroyShaderModule(device, program.graphics.ds, nullptr);
+        }
         vkDestroyShaderModule(device, program.graphics.ps, nullptr);
-        vkDestroyShaderModule(device, program.graphics.gs, nullptr);
-        vkDestroyShaderModule(device, program.graphics.hs, nullptr);
-        vkDestroyShaderModule(device, program.graphics.ds, nullptr);
         break;
     case VK_PIPELINE_BIND_POINT_COMPUTE:
         vkDestroyShaderModule(device, program.compute.cs, nullptr);

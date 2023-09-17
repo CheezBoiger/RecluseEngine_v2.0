@@ -21,4 +21,4 @@
 	url = https://github.com/Cyan4973/xxHash.git
 [submodule "ThirdParty/zlib"]
 	path = ThirdParty/zlib
-	url = https://github.com/madler/zlib
+	url = https://github.com/madler/zlib 

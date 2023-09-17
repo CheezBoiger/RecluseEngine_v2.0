@@ -83,11 +83,19 @@ Bool destroyShaderProgram(D3DShaderProgram* pProgram)
     {
         case BindType_Graphics:
         {
+            if (pProgram->graphics.usesMeshShaders)
+            {
+                callReleaseBlob(pProgram->graphics.asBytecode);
+                callReleaseBlob(pProgram->graphics.msBytecode);
+            }
+            else
+            {
+                callReleaseBlob(pProgram->graphics.vsBytecode);
+                callReleaseBlob(pProgram->graphics.hsBytecode);
+                callReleaseBlob(pProgram->graphics.dsBytecode);
+                callReleaseBlob(pProgram->graphics.gsBytecode);
+            }
             callReleaseBlob(pProgram->graphics.psBytecode);
-            callReleaseBlob(pProgram->graphics.vsBytecode);
-            callReleaseBlob(pProgram->graphics.hsBytecode);
-            callReleaseBlob(pProgram->graphics.dsBytecode);
-            callReleaseBlob(pProgram->graphics.gsBytecode);
             break;
         }
         case BindType_Compute:
@@ -122,16 +130,27 @@ Bool internalMakeShaderProgram(ShaderProgramId shaderProgram, ShaderProgramPermu
     {
         case BindType_Graphics:
         {
-            program.graphics.vsBytecode = makeBlob(definition.graphics.vs);
-            program.graphics.vsMainEntry = definition.graphics.vs ? definition.graphics.vs->getEntryPointName() : nullptr;
-            program.graphics.dsBytecode = makeBlob(definition.graphics.ds);
-            program.graphics.dsMainEntry = definition.graphics.ds ? definition.graphics.ds->getEntryPointName() : nullptr;
+            program.graphics.usesMeshShaders = definition.graphics.usesMeshShaders;
+            if (program.graphics.usesMeshShaders)
+            {
+                program.graphics.asBytecode = makeBlob(definition.graphics.as);
+                program.graphics.asMainEntry = definition.graphics.as ? definition.graphics.as->getEntryPointName() : nullptr;
+                program.graphics.msBytecode = makeBlob(definition.graphics.ms);
+                program.graphics.msMainEntry = definition.graphics.ms ? definition.graphics.ms->getEntryPointName() : nullptr;
+            }
+            else
+            {
+                program.graphics.vsBytecode = makeBlob(definition.graphics.vs);
+                program.graphics.vsMainEntry = definition.graphics.vs ? definition.graphics.vs->getEntryPointName() : nullptr;
+                program.graphics.gsBytecode = makeBlob(definition.graphics.gs);
+                program.graphics.gsMainEntry = definition.graphics.gs ? definition.graphics.gs->getEntryPointName() : nullptr;
+                program.graphics.hsBytecode = makeBlob(definition.graphics.hs);
+                program.graphics.hsMainEntry = definition.graphics.hs ? definition.graphics.hs->getEntryPointName() : nullptr;
+                program.graphics.dsBytecode = makeBlob(definition.graphics.ds);
+                program.graphics.dsMainEntry = definition.graphics.ds ? definition.graphics.ds->getEntryPointName() : nullptr;
+            }
             program.graphics.psBytecode = makeBlob(definition.graphics.ps);
             program.graphics.psMainEntry = definition.graphics.ps ? definition.graphics.ps->getEntryPointName() : nullptr;
-            program.graphics.gsBytecode = makeBlob(definition.graphics.gs);
-            program.graphics.gsMainEntry = definition.graphics.gs ? definition.graphics.gs->getEntryPointName() : nullptr;
-            program.graphics.hsBytecode = makeBlob(definition.graphics.hs);
-            program.graphics.hsMainEntry = definition.graphics.hs ? definition.graphics.hs->getEntryPointName() : nullptr;
             break;
         }
         case BindType_Compute:
