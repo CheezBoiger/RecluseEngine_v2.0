@@ -7,6 +7,8 @@
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Serialization/Hasher.hpp"
 #include "Recluse/Math/MathCommons.hpp"
+#include "Graphics/LifetimeCache.hpp"
+
 #include <vector>
 #include <list>
 
@@ -16,8 +18,10 @@ namespace Recluse {
 struct RenderPassLiveObject
 {
     ReferenceCounter<VkRenderPass>  rp;
+#if defined(USE_STD_LRU_IMPL)
     RenderPasses::RenderPassId      id;
     U32                             age;
+#endif
 };
 
 // TODO: std::list calls malloc and free on nodes whenever we push objects to the fronst of the queue.
@@ -25,13 +29,17 @@ struct RenderPassLiveObject
 //       We need to optimize this data structure to eliminate these mallocs and frees when possible.
 //       An idea would be to create our own linked list, and perform assignments by moving data from those
 //       nodes, and reassigning back to the top.
+#if defined(USE_STD_LRU_IMPL)
 std::list<std::unique_ptr<RenderPassLiveObject>>                                                            g_rpList;
-std::list<std::unique_ptr<FramebufferObject>>                                                               g_fbList;
 std::unordered_map<RenderPasses::RenderPassId, std::list<std::unique_ptr<RenderPassLiveObject>>::iterator>  g_rpCache;
+std::list<std::unique_ptr<FramebufferObject>>                                                               g_fbList;
 std::unordered_map<Hash64, std::list<std::unique_ptr<FramebufferObject>>::iterator>                         g_fbCache;
-
 // Tick occurs every new iteration of the engine. This needs to increment every new frame.
-U32                                                                                          g_tick = 0;
+U32                                                                                                         g_tick = 0;
+#else
+LifetimeCache<Hash64, std::unique_ptr<FramebufferObject>>                                                   g_fbCache;
+LifetimeCache<RenderPasses::RenderPassId, std::unique_ptr<RenderPassLiveObject>>                            g_rpCache;
+#endif
 
 R_DECLARE_GLOBAL_U32(g_renderPassMaxAge, 12, "Vulkan.RenderPassMaxAge");
 R_DECLARE_GLOBAL_U32(g_frameBufferMaxAge, 12, "Vulkan.FramebufferMaxAge");
@@ -55,16 +63,21 @@ void cacheRenderPass(RenderPasses::RenderPassId renderpassId, VkRenderPass rende
 {
     std::unique_ptr<RenderPassLiveObject> obj = std::make_unique<RenderPassLiveObject>();
     obj->rp = renderPass;
+#if defined(USE_STD_LRU_IMPL)
     obj->id = renderpassId;
     obj->age = g_tick;
     g_rpList.push_front(std::move(obj));
     g_rpCache.insert(std::make_pair(renderpassId, g_rpList.begin()));
+#else
+    g_rpCache.insert(renderpassId, std::move(obj));
+#endif
 }
 
 
 R_INTERNAL 
 VkRenderPass referRenderPass(RenderPasses::RenderPassId renderPassId)
 {
+#if defined(USE_STD_LRU_IMPL)
     if (g_rpCache.find(renderPassId) != g_rpCache.end())
     {
         std::unique_ptr<RenderPassLiveObject> obj = std::move((*g_rpCache[renderPassId]));
@@ -75,6 +88,11 @@ VkRenderPass referRenderPass(RenderPasses::RenderPassId renderPassId)
         g_rpCache[renderPassId] = g_rpList.begin();
         return (*g_rpCache[renderPassId])->rp();
     }
+#else
+    std::unique_ptr<RenderPassLiveObject>* obj = g_rpCache.refer(renderPassId);
+    if (obj)
+        return obj->get()->rp();
+#endif
     return nullptr; 
 }
 
@@ -89,16 +107,21 @@ U64 serialize(const VkRenderPassCreateInfo& info)
 R_INTERNAL
 Bool inFboCache(Hash64 fboId)
 {
+#if defined(USE_STD_LRU_IMPL)
     auto it = g_fbCache.find(fboId);
     if (it == g_fbCache.end())
         return false;
     return true;
+#else
+    return g_fbCache.inCache(fboId);
+#endif
 }
 
 
 R_INTERNAL
 FramebufferObject* getCachedFbo(Hash64 fboId)
 {
+#if defined(USE_STD_LRU_IMPL)
     if (g_fbCache.find(fboId) != g_fbCache.end())
     {
         std::unique_ptr<FramebufferObject> obj = std::move(*g_fbCache[fboId]);
@@ -108,6 +131,10 @@ FramebufferObject* getCachedFbo(Hash64 fboId)
         g_fbCache[fboId] = g_fbList.begin();
         return g_fbCache[fboId]->get();
     }
+#else
+    std::unique_ptr<FramebufferObject>* ptr = g_fbCache.refer(fboId);
+    if (ptr) return ptr->get();
+#endif
     return nullptr;
 }
 
@@ -118,11 +145,15 @@ FramebufferObject* cacheFbo(Hash64 fboId, VkFramebuffer fbo, const VkRect2D& ren
     std::unique_ptr<FramebufferObject> data = std::make_unique<FramebufferObject>();
     data->framebuffer = fbo;
     data->renderArea = renderArea;
-    data->age = g_tick;
+#if defined(USE_STD_LRU_IMPL)
     data->id = fboId;
+    data->age = g_tick;
     g_fbList.push_front(std::move(data));
     g_fbCache.insert(std::make_pair(fboId, g_fbList.begin()));
     return g_fbCache[fboId]->get();
+#else
+    return g_fbCache.insert(fboId, std::move(data))->get();
+#endif
 }
 
 
@@ -303,15 +334,23 @@ VkRenderPass createRenderPass(VulkanDevice* pDevice,  const VulkanRenderPassDesc
 R_INTERNAL
 VkRenderPass internalMakeRenderPass(VulkanDevice* pDevice,  const VulkanRenderPassDesc& desc, RenderPasses::RenderPassId renderPassId)
 {
+#if defined(USE_STD_LRU_IMPL)
     auto iter = g_rpCache.find(renderPassId);
     // Failed to find a suitable render pass, make a new one.
     if (iter == g_rpCache.end())
+#else
+    if (!g_rpCache.inCache(renderPassId))
+#endif
     {
         VkRenderPass renderPass = createRenderPass(pDevice, desc);
         U32 references = desc.numRenderTargets + ((desc.pDepthStencil != 0) ? 1 : 0);
         cacheRenderPass(renderPassId, renderPass);
+#if defined(USE_STD_LRU_IMPL)
         (*g_rpCache[renderPassId])->rp.addReference(references);
         return (*g_rpCache[renderPassId])->rp();
+#else
+        return g_rpCache.refer(renderPassId)->get()->rp();
+#endif
     }
     else
     {
@@ -326,6 +365,7 @@ namespace RenderPasses {
 
 void checkLruCache(VkDevice device)
 {
+#if defined(USE_STD_LRU_IMPL)
     const U32 currentTick = g_tick;
 
     // Check Render Pass cache.
@@ -358,6 +398,20 @@ void checkLruCache(VkDevice device)
             vkDestroyFramebuffer(device, fbo, nullptr);
         }
     }
+#else
+    g_rpCache.check(g_renderPassMaxAge,
+                        [device] (std::unique_ptr<RenderPassLiveObject>& obj) -> void
+                        {
+                            R_DEBUG("Vulkan", "Cleaning up render pass");
+                            vkDestroyRenderPass(device, obj->rp(), nullptr);
+                        });
+    g_fbCache.check(g_frameBufferMaxAge, 
+                        [device] (std::unique_ptr<FramebufferObject>& obj) -> void 
+                        {
+                            R_DEBUG("Vulkan", "Cleaning up framebuffer."); 
+                            vkDestroyFramebuffer(device, obj->framebuffer, nullptr); 
+                        });
+#endif
 }
 
 
@@ -419,13 +473,13 @@ VulkanRenderPass makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, Res
 void clearCache(VulkanDevice* pDevice)
 {
     R_ASSERT(pDevice != NULL);
+#if defined(USE_STD_LRU_IMPL)
     for (auto& iter : g_rpList)
     {
         while (iter.get()->rp.release());
         vkDestroyRenderPass(pDevice->get(), iter->rp(), nullptr);
         R_DEBUG(R_CHANNEL_VULKAN, "Destroying render pass...");
     }
-
     for (auto& iter : g_fbList)
     {
         vkDestroyFramebuffer(pDevice->get(), iter->framebuffer, nullptr);
@@ -435,12 +489,37 @@ void clearCache(VulkanDevice* pDevice)
     g_fbCache.clear();
     g_rpList.clear();
     g_rpCache.clear();
+#else
+    g_rpCache.forEach
+        (
+            [pDevice] (std::unique_ptr<RenderPassLiveObject>& obj) -> void
+            {
+                R_DEBUG(R_CHANNEL_VULKAN, "Destorying RenderPass");
+                vkDestroyRenderPass(pDevice->get(), obj->rp(), nullptr);
+            }
+        );
+    g_fbCache.forEach
+        (
+            [pDevice] (std::unique_ptr<FramebufferObject>& obj) -> void 
+            { 
+                R_DEBUG(R_CHANNEL_VULKAN, "Destroying framebuffer");
+                vkDestroyFramebuffer(pDevice->get(), obj->framebuffer, nullptr); 
+            }
+        );
+    g_rpCache.clear();
+    g_fbCache.clear();
+#endif
 }
 
 
 void updateTick()
 {
+#if defined(USE_STD_LRU_IMPL)
     g_tick += 1;
+#else
+    g_rpCache.updateTick();
+    g_fbCache.updateTick();
+#endif
 }
 } // RenderPass
 } // Recluse

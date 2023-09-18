@@ -32,8 +32,10 @@ struct FramebufferObject
 {
     VkFramebuffer framebuffer;
     VkRect2D      renderArea;
+#if defined(USE_STD_LRU_IMPL)
     Hash64        id;
     U32           age;
+#endif
 };
 
 class VulkanRenderPass
