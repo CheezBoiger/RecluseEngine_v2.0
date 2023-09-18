@@ -957,6 +957,11 @@ ResultCode VulkanDevice::loadShaderProgram(ShaderProgramId program, ShaderProgra
     {
         return RecluseResult_NeedsUpdate;
     }
+    if (definition.intermediateCode != ShaderIntermediateCode_Spirv)
+    {
+        R_ERROR(R_CHANNEL_VULKAN, "Unable to load ShaderProgramDefinition! Compiled shaders are not SPIR-V!!");
+        return RecluseResult_Failed;
+    }
     return ShaderPrograms::loadNativeShaderProgramPermutation(this, program, permutation, definition);
 }
 

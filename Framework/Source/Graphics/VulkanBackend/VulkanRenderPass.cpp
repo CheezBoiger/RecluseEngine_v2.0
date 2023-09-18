@@ -20,10 +20,15 @@ struct RenderPassLiveObject
     U32                             age;
 };
 
-std::list<RenderPassLiveObject*>                                                             g_rpList;
-std::list<FramebufferObject*>                                                                g_fbList;
-std::unordered_map<RenderPasses::RenderPassId, std::list<RenderPassLiveObject*>::iterator>   g_rpCache;
-std::unordered_map<Hash64, std::list<FramebufferObject*>::iterator>                          g_fbCache;
+// TODO: std::list calls malloc and free on nodes whenever we push objects to the fronst of the queue.
+//       This can cause a performance drop, when we start to have many renderpasses and framebuffers.
+//       We need to optimize this data structure to eliminate these mallocs and frees when possible.
+//       An idea would be to create our own linked list, and perform assignments by moving data from those
+//       nodes, and reassigning back to the top.
+std::list<std::unique_ptr<RenderPassLiveObject>>                                                            g_rpList;
+std::list<std::unique_ptr<FramebufferObject>>                                                               g_fbList;
+std::unordered_map<RenderPasses::RenderPassId, std::list<std::unique_ptr<RenderPassLiveObject>>::iterator>  g_rpCache;
+std::unordered_map<Hash64, std::list<std::unique_ptr<FramebufferObject>>::iterator>                         g_fbCache;
 
 // Tick occurs every new iteration of the engine. This needs to increment every new frame.
 U32                                                                                          g_tick = 0;
@@ -36,16 +41,11 @@ U64 serialize(const VkFramebufferCreateInfo& info)
 {
     Hash64 uniqueId = 0ull;
 
-    uniqueId += static_cast<U64>( info.attachmentCount + info.width + info.height );
-    uniqueId += static_cast<U64>( info.layers + info.flags );
+    uniqueId += static_cast<Hash64>( info.attachmentCount ^ info.width ^ info.height );
+    uniqueId += static_cast<Hash64>( info.layers ^ info.flags );
 
-    for (U32 i = 0; i < info.attachmentCount; ++i)
-    {
-        VkImageView ref = info.pAttachments[i];
-        uniqueId ^= reinterpret_cast<Hash64>(ref);
-    }
-
-    uniqueId = recluseHashFast(&uniqueId, sizeof(Hash64));
+    uniqueId =  recluseHashFast(&uniqueId, sizeof(Hash64));
+    uniqueId ^= recluseHashFast(info.pAttachments, sizeof(VkImageView) * info.attachmentCount);
     return uniqueId;
 }
 
@@ -53,11 +53,11 @@ U64 serialize(const VkFramebufferCreateInfo& info)
 R_INTERNAL
 void cacheRenderPass(RenderPasses::RenderPassId renderpassId, VkRenderPass renderPass)
 {
-    RenderPassLiveObject* obj = new RenderPassLiveObject();
+    std::unique_ptr<RenderPassLiveObject> obj = std::make_unique<RenderPassLiveObject>();
     obj->rp = renderPass;
     obj->id = renderpassId;
     obj->age = g_tick;
-    g_rpList.push_front(obj);
+    g_rpList.push_front(std::move(obj));
     g_rpCache.insert(std::make_pair(renderpassId, g_rpList.begin()));
 }
 
@@ -67,14 +67,13 @@ VkRenderPass referRenderPass(RenderPasses::RenderPassId renderPassId)
 {
     if (g_rpCache.find(renderPassId) != g_rpCache.end())
     {
-        RenderPassLiveObject* obj = nullptr;
-        obj = *g_rpCache[renderPassId];
+        std::unique_ptr<RenderPassLiveObject> obj = std::move((*g_rpCache[renderPassId]));
         g_rpList.erase(g_rpCache[renderPassId]);
         obj->age = g_tick;
 
-        g_rpList.push_front(obj);
+        g_rpList.push_front(std::move(obj));
         g_rpCache[renderPassId] = g_rpList.begin();
-        return obj->rp();
+        return (*g_rpCache[renderPassId])->rp();
     }
     return nullptr; 
 }
@@ -102,12 +101,12 @@ FramebufferObject* getCachedFbo(Hash64 fboId)
 {
     if (g_fbCache.find(fboId) != g_fbCache.end())
     {
-        FramebufferObject* obj = *g_fbCache[fboId];
+        std::unique_ptr<FramebufferObject> obj = std::move(*g_fbCache[fboId]);
         g_fbList.erase(g_fbCache[fboId]);
         obj->age = g_tick;
-        g_fbList.push_front(obj);
+        g_fbList.push_front(std::move(obj));
         g_fbCache[fboId] = g_fbList.begin();
-        return obj;
+        return g_fbCache[fboId]->get();
     }
     return nullptr;
 }
@@ -116,14 +115,14 @@ FramebufferObject* getCachedFbo(Hash64 fboId)
 R_INTERNAL
 FramebufferObject* cacheFbo(Hash64 fboId, VkFramebuffer fbo, const VkRect2D& renderArea, U32 numReferences)
 {
-    FramebufferObject* data = new FramebufferObject();
+    std::unique_ptr<FramebufferObject> data = std::make_unique<FramebufferObject>();
     data->framebuffer = fbo;
     data->renderArea = renderArea;
     data->age = g_tick;
     data->id = fboId;
-    g_fbList.push_front(data);
+    g_fbList.push_front(std::move(data));
     g_fbCache.insert(std::make_pair(fboId, g_fbList.begin()));
-    return data;
+    return g_fbCache[fboId]->get();
 }
 
 
@@ -332,7 +331,7 @@ void checkLruCache(VkDevice device)
     // Check Render Pass cache.
     if (!g_rpList.empty())
     {
-        RenderPassLiveObject* obj = g_rpList.back();
+        RenderPassLiveObject* obj = g_rpList.back().get();
         const U32 ageRate = g_tick - obj->age;
         if (ageRate >= g_renderPassMaxAge)
         {
@@ -341,14 +340,14 @@ void checkLruCache(VkDevice device)
             g_rpCache.erase(obj->id);
             VkRenderPass rp = obj->rp();
             vkDestroyRenderPass(device, rp, nullptr);
-            delete obj;
+            // the render pass live object is then cleaned up since it is managed ptr.
         }
     }
 
     // Now check fbo cache.
     if (!g_fbList.empty())
     {
-        FramebufferObject* obj = g_fbList.back();
+        FramebufferObject* obj = g_fbList.back().get();
         const U32 ageRate = g_tick - obj->age;
         if (ageRate >= g_renderPassMaxAge)
         {
@@ -357,7 +356,6 @@ void checkLruCache(VkDevice device)
             g_fbCache.erase(obj->id);
             VkFramebuffer fbo = obj->framebuffer;
             vkDestroyFramebuffer(device, fbo, nullptr);
-            delete obj;
         }
     }
 }
@@ -421,18 +419,16 @@ VulkanRenderPass makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, Res
 void clearCache(VulkanDevice* pDevice)
 {
     R_ASSERT(pDevice != NULL);
-    for (auto iter : g_rpList)
+    for (auto& iter : g_rpList)
     {
-        while (iter->rp.release());
+        while (iter.get()->rp.release());
         vkDestroyRenderPass(pDevice->get(), iter->rp(), nullptr);
-        delete iter;
         R_DEBUG(R_CHANNEL_VULKAN, "Destroying render pass...");
     }
 
-    for (auto iter : g_fbList)
+    for (auto& iter : g_fbList)
     {
         vkDestroyFramebuffer(pDevice->get(), iter->framebuffer, nullptr);
-        delete iter;
         R_DEBUG(R_CHANNEL_VULKAN, "Destroying framebuffer");
     }
     g_fbList.clear();

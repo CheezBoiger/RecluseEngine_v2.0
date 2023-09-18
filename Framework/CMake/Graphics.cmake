@@ -29,6 +29,7 @@ set ( RECLUSE_GRAPHICS_BUILD
     ${RECLUSE_GRAPHICS_INCLUDE}/ShaderBuilder.hpp
     ${RECLUSE_GRAPHICS_SOURCE}/DXCShaderBuilder.cpp
     ${RECLUSE_GRAPHICS_SOURCE}/GlslangShaderBuilder.cpp
+	${RECLUSE_GRAPHICS_SOURCE}/LifetimeCache.hpp
     ${RECLUSE_GRAPHICS_INCLUDE}/GraphicsCommon.hpp
 )
 
