@@ -115,6 +115,8 @@ public:
         }
     }
 
+    // Check if an object with the input key, already exists in this 
+    // cache. True if the key-object pair exists. False otherwise.
     Bool inCache(IdentificationKey key)
     {
         return (m_cacheMap.find(key) != m_cacheMap.end());
@@ -165,7 +167,8 @@ public:
     Bool empty() const { return (m_nodes == 0); }
 
 private:
-
+    // Push node to the front of the linked list.
+    // This will perform an inplace move, which has no performance impact.
     void pushFront(LifetimeNode* node)
     {
         if (!node) return;
@@ -200,7 +203,9 @@ private:
     // Actual data is stored in linked list.
     std::unordered_map<IdentificationKey, LifetimeNode*> m_cacheMap;
 
-    // The link list data structure. Houses the actual node and data associated.
+    // The link list data structure. Houses the actual node and data associated. Has poor cache locality,
+    // but might not be totally bad since we aren't iterating through all resources sequentially. Still though,
+    // it might be worth exploring an array type of data structure.
     LifetimeNode*   m_root;
     LifetimeNode*   m_tail;
     U32             m_nodes;

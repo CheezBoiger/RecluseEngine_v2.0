@@ -294,6 +294,16 @@ void Window::setScreenMode(ScreenMode mode)
         {
             m_isBorderless = true;
             m_isFullscreen = true;
+            MONITORINFO monitorInfo = { };
+            monitorInfo.cbSize = sizeof(MONITORINFO);
+            GetMonitorInfoW(MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST), &monitorInfo);
+            const RECT rect = monitorInfo.rcMonitor;
+            SetWindowLongW(hwnd, GWL_EXSTYLE, 0);
+            SetWindowLongW(hwnd, GWL_STYLE, (WS_POPUP));
+            SetWindowPos(hwnd, NULL, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, (SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED));
+            UpdateWindow(hwnd);
+            m_xPos = rect.left;
+            m_yPos = rect.top;
         }
 
         if (m_screenMode == ScreenMode_Fullscreen)
@@ -311,6 +321,8 @@ void Window::setScreenMode(ScreenMode mode)
             const RECT rect = monitorInfo.rcMonitor;
             SetWindowPos(hwnd, NULL, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, (SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED));
             UpdateWindow(hwnd);
+            m_xPos = rect.left;
+            m_yPos = rect.top;
         }
     }
 }

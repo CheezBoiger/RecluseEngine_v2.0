@@ -403,7 +403,7 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
         {
             if (wParam == true)
             {
-                if (!pWindow->isShowing() && pWindow->isFullscreen())
+                if (!pWindow->isShowing() && (pWindow->isFullscreen() && !pWindow->isBorderless()))
                 {
                     R_DEBUG("Win32", "Restoring window. hwnd=0x%08x, wParam=0x%08x, lParam=0x%08x", hwnd, wParam, lParam);
                     //SetForegroundWindow(hwnd);
@@ -414,7 +414,7 @@ LRESULT CALLBACK win32RuntimeProc(HWND hwnd,UINT uMsg, WPARAM wParam, LPARAM lPa
             }
             if (wParam == false)
             {
-                if (pWindow->isShowing() && pWindow->isFullscreen())
+                if (pWindow->isShowing() && (pWindow->isFullscreen() && !pWindow->isBorderless()))
                 {
                     R_DEBUG("Win32", "Minimizing window. hwnd=0x%08x, wParam=0x%08x, lParam=0x%08x", hwnd, wParam, lParam);
                     pWindow->minimize();
