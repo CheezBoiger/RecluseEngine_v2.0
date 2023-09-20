@@ -579,11 +579,11 @@ ResultCode VulkanDevice::createResource(GraphicsResource** ppResource, const Gra
 }
 
 
-ResultCode VulkanDevice::destroyResource(GraphicsResource* pResource)
+ResultCode VulkanDevice::destroyResource(GraphicsResource* pResource, Bool immediate)
 {
     if (pResource) 
     {
-        return Resources::releaseResource(this, pResource->getId());
+        return Resources::releaseResource(this, pResource->getId(), immediate);
     }
 
     return RecluseResult_Failed;

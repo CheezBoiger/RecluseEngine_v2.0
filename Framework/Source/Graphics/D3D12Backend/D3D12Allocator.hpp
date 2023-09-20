@@ -79,7 +79,7 @@ public:
     ResultCode release();
     
     ResultCode allocate(D3D12MemoryObject* pOut, const D3D12_RESOURCE_DESC& desc, ResourceMemoryUsage usage, D3D12_CLEAR_VALUE* clearValue, D3D12_RESOURCE_STATES initialState);
-    ResultCode free(D3D12MemoryObject* pObject);
+    ResultCode free(D3D12MemoryObject* pObject, Bool immediate = false);
     ResultCode update(const Update& update);
     ResultCode reserveMemory(const MemoryReserveDescription& description);
 

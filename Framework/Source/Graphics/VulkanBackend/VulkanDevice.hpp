@@ -326,7 +326,7 @@ public:
     ResultCode          createResource(GraphicsResource** ppResource, const GraphicsResourceDescription& pDesc, ResourceState initState) override;
     ResultCode          createSampler(GraphicsSampler** ppSampler, const SamplerDescription& desc) override;
     ResultCode          destroySampler(GraphicsSampler* pSampler) override;
-    ResultCode          destroyResource(GraphicsResource* pResource) override;
+    ResultCode          destroyResource(GraphicsResource* pResource, Bool immediate) override;
     ResultCode          loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const ShaderProgramDefinition& definition) override;
     ResultCode          unloadShaderProgram(ShaderProgramId program) override;
     void                unloadAllShaderPrograms() override;

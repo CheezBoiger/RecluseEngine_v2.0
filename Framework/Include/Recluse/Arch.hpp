@@ -20,6 +20,8 @@
     #define R_NOVTABLE __declspec(novtable)
     #define R_DEBUG_BREAK() do { __debugbreak(); } while(0)
     #define R_FORCE_CRASH(c) do { ExitProcess(c); } while(0)
+    #define R_LIKELY(exp) __assume(exp)
+    #define R_UNLIKELY(exp) __assume(!(exp))
     #if defined(_M_X64) || defined(_M_AMD64)
         #define RECLUSE_64BIT
     #else
@@ -34,6 +36,8 @@
     #define R_NOVTABLE
     #define R_DEBUG_BREAK()
     #define R_FORCE_CRASH(c)
+    #define R_LIKELY(exp)
+    #define R_UNLIKELY(exp)
 #else
     #error "Architecture not supported for Recluse!"
 #endif 

@@ -174,7 +174,7 @@ ResultCode D3D12Resource::initialize
 }
 
 
-ResultCode D3D12Resource::destroy()
+ResultCode D3D12Resource::destroy(Bool immediate)
 {
     R_ASSERT(m_pDevice != nullptr);
 
@@ -196,7 +196,7 @@ ResultCode D3D12Resource::destroy()
             // Get the allocator from the device maybe?
             R_ASSERT(pAllocator != NULL);
             
-            ResultCode result = pAllocator->free(&m_memObj);
+            ResultCode result = pAllocator->free(&m_memObj, immediate);
 
             if (result != RecluseResult_Ok) 
             {
@@ -320,7 +320,7 @@ D3D12Resource* makeResource(D3D12Device* pDevice, const GraphicsResourceDescript
 }
 
 
-ResultCode releaseResource(D3D12Resource* pResource)
+ResultCode releaseResource(D3D12Resource* pResource, Bool immediate)
 {
     if (!pResource)
     {
@@ -331,7 +331,7 @@ ResultCode releaseResource(D3D12Resource* pResource)
     {
         return RecluseResult_NotFound;
     }
-    ResultCode result = pResource->destroy();
+    ResultCode result = pResource->destroy(immediate);
     if (result == RecluseResult_Ok)
     {
         delete pResource;

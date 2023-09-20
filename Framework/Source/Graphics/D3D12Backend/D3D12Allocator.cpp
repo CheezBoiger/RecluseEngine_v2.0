@@ -207,14 +207,25 @@ ResultCode D3D12ResourceAllocationManager::allocate(D3D12MemoryObject* pOut, con
 }
 
 
-ResultCode D3D12ResourceAllocationManager::free(D3D12MemoryObject* pObject)
+ResultCode D3D12ResourceAllocationManager::free(D3D12MemoryObject* pObject, Bool immediate)
 {
     if (!pObject)
     {
         return RecluseResult_NullPtrExcept;
     }
-    m_garbage[m_garbageIndex].push_back(*pObject);
-    return RecluseResult_Ok;
+    ResultCode result = RecluseResult_Ok;
+    if (!immediate)
+    {
+        m_garbage[m_garbageIndex].push_back(*pObject);
+    }
+    else
+    {
+        D3D12MemoryObject& object = *pObject;
+        std::vector<SmartPtr<D3D12ResourcePagedAllocator>>& pagedAllocators = m_pagedAllocators[object.usage];
+        D3D12ResourcePagedAllocator* pagedAllocator = pagedAllocators[object.allocatorIndex];
+        result = pagedAllocator->free(&object);
+    }
+    return result;
 }
 
 

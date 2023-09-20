@@ -162,7 +162,7 @@ public:
         , m_pDevice(nullptr)
         , m_bufferImageGranularityBytes(0ull)
     {
-    }
+    } 
 
     ResultCode              initialize(VulkanDevice* pDevice);
     void                    clear();

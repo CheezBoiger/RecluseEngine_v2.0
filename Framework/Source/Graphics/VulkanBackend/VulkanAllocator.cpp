@@ -331,9 +331,41 @@ ResultCode VulkanAllocationManager::allocateImage(VulkanMemory* pOut, ResourceMe
 
 ResultCode VulkanAllocationManager::free(VulkanMemory* pOut, Bool immediate)
 {
-    std::vector<VulkanMemory>& garbageChute = m_frameGarbage[m_garbageIndex];
-    garbageChute.push_back(*pOut);
-    return RecluseResult_Ok;
+    if (!pOut)
+    {
+        return RecluseResult_NullPtrExcept;
+    }
+
+    ResultCode result                   = RecluseResult_Ok;
+    if (!immediate)
+    {
+        std::vector<VulkanMemory>& garbageChute = m_frameGarbage[m_garbageIndex];
+        garbageChute.push_back(*pOut);
+    }
+    else
+    {
+        VulkanMemory& mrange                = *pOut;
+        Allocation alloc                    = { };
+        VulkanPagedAllocator* allocator     = m_resourceAllocators[mrange.memoryTypeIndex][mrange.allocatorIndex];
+
+        alloc.baseAddress                   = mrange.offsetBytes;
+        alloc.sizeBytes                     = mrange.sizeBytes;
+
+        result = allocator->free(&mrange);
+
+        if (result != RecluseResult_Ok) 
+        {
+            const U64 baseAddress = reinterpret_cast<U64>(mrange.baseAddr);
+            R_ERROR
+                (
+                    "Allocator", 
+                    "Failed to free garbage addr=%llu, at base addr=%llu", 
+                    (U64)baseAddress + mrange.offsetBytes,
+                    (U64)baseAddress
+                );
+        }
+    }
+    return result;
 }
 
 

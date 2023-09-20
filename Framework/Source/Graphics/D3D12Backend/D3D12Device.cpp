@@ -700,11 +700,11 @@ ResultCode D3D12Device::createResource(GraphicsResource** ppResource, const Grap
 }
 
 
-ResultCode D3D12Device::destroyResource(GraphicsResource* pResource)
+ResultCode D3D12Device::destroyResource(GraphicsResource* pResource, Bool immediate)
 {
     R_ASSERT(pResource != NULL);
     D3D12Resource* pD3D12Resource = pResource->castTo<D3D12Resource>();
-    return releaseResource(pD3D12Resource);
+    return releaseResource(pD3D12Resource, immediate);
 }
 
 

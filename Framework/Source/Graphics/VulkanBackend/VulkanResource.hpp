@@ -32,7 +32,7 @@ public:
     // Destroy native handle that is managed by this resource object.
     // Must be called before deleting this object.
     //
-    void                release();
+    void                release(Bool immediate = false);
 
     // Simply releases views associated with this resource.
     void                releaseViews();
@@ -176,7 +176,7 @@ private:
 namespace Resources {
 
 VulkanResource*     makeResource(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState);
-ResultCode          releaseResource(VulkanDevice* pDevice, ResourceId id);
+ResultCode          releaseResource(VulkanDevice* pDevice, ResourceId id, Bool immediate);
 VulkanResource*     obtainResource(ResourceId id);
 } // Resources
 } // Recluse

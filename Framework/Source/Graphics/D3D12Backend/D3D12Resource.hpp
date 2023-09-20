@@ -47,7 +47,7 @@ public:
                                 );
 
     // Destroy the resource.
-    ResultCode                  destroy();
+    ResultCode                  destroy(Bool immediate = false);
 
     // Get the memory object.
     ID3D12Resource*             get() {         return m_memObj.pResource; }
@@ -89,5 +89,5 @@ private:
 
 
 D3D12Resource* makeResource(D3D12Device* pDevice, const GraphicsResourceDescription& description, ResourceState initialState);
-ResultCode     releaseResource(D3D12Resource* pResource);
+ResultCode     releaseResource(D3D12Resource* pResource, Bool immediate);
 } // Recluse

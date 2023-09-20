@@ -305,7 +305,7 @@ void ResizeFunction(U32 x, U32 y, U32 width, U32 height)
             desc.renderWidth = width;
             desc.renderHeight = height;
             swapchain->rebuild(desc);
-            device->destroyResource(depthBuffer);
+            device->destroyResource(depthBuffer, true);
             depthBuffer = buildDepthBuffer(width, height);
         }
     }
@@ -600,7 +600,7 @@ int main(char* argv[], int c)
     Log::initializeLoggingSystem();
     enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
+    instance  = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 

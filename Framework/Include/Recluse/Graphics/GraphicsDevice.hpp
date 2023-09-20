@@ -247,7 +247,12 @@ public:
         { return RecluseResult_NoImpl; }
 
     virtual ResultCode              destroySampler(GraphicsSampler* pSampler) { return RecluseResult_NoImpl; }
-    virtual ResultCode              destroyResource(GraphicsResource* pResource) { return RecluseResult_NoImpl; }
+
+    // Destroy the resource, this will release memory associated with the resource, back to the memory pool.
+    // When calling this function, will actually queue the resource for freeing, which is then picked up the next time 
+    // the frame is available for cpu work. If you plan to release immediately, flip the immediate flag to true, but be sure
+    // that the resource is not currently being read/written to by the gpu during inflight!!
+    virtual ResultCode              destroyResource(GraphicsResource* pResource, Bool immediate = false) { return RecluseResult_NoImpl; }
 
     // Makes a vertex layout, will return a layout id if one already exists.
     virtual Bool                    makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout) { return false; }

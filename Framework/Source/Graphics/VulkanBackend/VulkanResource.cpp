@@ -40,12 +40,12 @@ VulkanResource* makeResource(VulkanDevice* pDevice, const GraphicsResourceDescri
 }
 
 
-ResultCode releaseResource(VulkanDevice* pDevice, ResourceId id)
+ResultCode releaseResource(VulkanDevice* pDevice, ResourceId id, Bool immediate)
 {
     auto& iter = g_resourcesMap.find(id);
     if (iter != g_resourcesMap.end())
     {
-        iter->second->release();
+        iter->second->release(immediate);
         g_resourcesMap.erase(iter);
         return RecluseResult_Ok;
     }
@@ -116,7 +116,7 @@ ResultCode VulkanResource::initialize(VulkanDevice* pDevice, const GraphicsResou
 }
 
 
-void VulkanResource::release()
+void VulkanResource::release(Bool immediate)
 {
     VulkanAllocationManager* allocator      = m_pDevice->getAllocationManager();
     ResultCode result                          = RecluseResult_Ok;
@@ -127,7 +127,7 @@ void VulkanResource::release()
 
     if (m_memory.deviceMemory) 
     {
-        result = allocator->free(&m_memory);
+        result = allocator->free(&m_memory, immediate);
         if (result != RecluseResult_Ok) 
         {
             R_ERROR(R_CHANNEL_VULKAN, "Vulkan resource memory failed to free!");
