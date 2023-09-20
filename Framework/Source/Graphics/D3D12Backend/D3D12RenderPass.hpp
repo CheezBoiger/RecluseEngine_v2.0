@@ -54,5 +54,7 @@ namespace RenderPasses {
 void                clearAll(D3D12Device* pDevice);
 D3D12RenderPass*    makeRenderPass(D3D12Device* pDevice, U32 numRtvs, ResourceViewId* rtvs, ResourceViewId dsv = 0);
 void                clearRenderPassCache();
+void                update();
+void                sweep(D3D12Device* pDevice);
 } // Renderpasses
 } // Recluse

@@ -109,6 +109,8 @@ public:
                 // Delete the data, destroy the isolated node,
                 // and decrement the number of nodes in the linked list.
                 deleteFunc(tail->data);
+                // Don't forget to erase the mapped portion too.
+                m_cacheMap.erase(tail->key);
                 delete tail;
                 m_nodes -= 1;
             }

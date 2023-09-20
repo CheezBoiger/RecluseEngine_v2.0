@@ -108,6 +108,8 @@ int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
     RealtimeTick::initializeWatch(1ull, 0);
+    enableLogTypes(LogType_Debug);
+    disableLogTypes(LogType_Warn);
     GraphicsInstance* pInstance             = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
     GraphicsAdapter* pAdapter               = nullptr;
     GraphicsResource* pData                 = nullptr;
@@ -187,7 +189,7 @@ int main(int c, char* argv[])
     }
     
     SwapchainCreateDescription swapchainDescription = { };
-    swapchainDescription.buffering         = FrameBuffering_Triple;
+    swapchainDescription.buffering         = FrameBuffering_Double;
     swapchainDescription.desiredFrames     = 3;
     swapchainDescription.format            = ResourceFormat_R8G8B8A8_Unorm;
     swapchainDescription.renderWidth       = pWindow->getWidth();
@@ -314,7 +316,8 @@ int main(int c, char* argv[])
     U64 offset = 0;
 
     GraphicsContext* context = pContext;
-    GlobalCommands::setValue("Vulkan.EnablePipelineCache", true);
+    GlobalCommands::setValue("Vulkan.EnablePipelineCache", false);
+    GlobalCommands::setValue("Vulkan.PipelineMaxAge", 144);
     while (!pWindow->shouldClose()) 
     {
         if (!pWindow->isMinimized())

@@ -63,6 +63,7 @@ ResultCode D3D12Adapter::getAdapterInfo(AdapterInfo* out) const
         case NVIDIA_VENDOR_ID: out->vendorName = "Nvidia Corporation"; break;
         case AMD_VENDOR_ID: out->vendorName = "Advanced Micro Devices"; break;
         case MSFT_VENDOR_ID: out->vendorName = "Microsoft"; break;
+        case QUALCOMM_VENDOR_ID: out->vendorName = "Qualcomm Technologies"; break;
         default: out->vendorName = "Unknown"; break;
     } 
 

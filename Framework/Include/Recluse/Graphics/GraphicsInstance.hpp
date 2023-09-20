@@ -10,6 +10,7 @@
 #define INTEL_VENDOR_ID         0x8086
 #define AMD_VENDOR_ID           0x1022
 #define MSFT_VENDOR_ID          0x1414
+#define QUALCOMM_VENDOR_ID      0x5143
 
 namespace Recluse {
 

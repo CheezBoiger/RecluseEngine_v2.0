@@ -151,6 +151,8 @@ ResultCode VulkanAdapter::getAdapterInfo(AdapterInfo* out) const
 
         case MSFT_VENDOR_ID: out->vendorName = "Microsoft"; break;
 
+        case QUALCOMM_VENDOR_ID: out->vendorName = "Qualcomm Technologies"; break;
+
         default:
             out->vendorName = "Unknown"; break;
     }    

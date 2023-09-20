@@ -118,6 +118,7 @@ void D3D12Context::end()
     m_pPrimaryCommandList->end();
     // Fire off our command list!
     submitPrimaryCommandList(m_pPrimaryCommandList->get());
+    RenderPasses::sweep(m_pDevice);
 }
 
 
@@ -261,6 +262,9 @@ void D3D12Context::prepare()
 
     ShaderVisibleDescriptorHeapInstance* shaderVisibleHeap = m_pDevice->getDescriptorHeapManager()->getShaderVisibleInstance(getCurrentFrameIndex());
     shaderVisibleHeap->update(DescriptorHeapUpdateFlag_Reset);
+
+    // Update the age tick for renderpasses.
+    RenderPasses::update();
 
     // We should bind the descriptor heaps at the start of the commandlist.
     ID3D12DescriptorHeap* pHeaps[2] = { nullptr, nullptr };

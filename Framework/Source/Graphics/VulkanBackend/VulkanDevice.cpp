@@ -142,6 +142,7 @@ void VulkanContext::end()
 
     submitFinalCommandBuffer(m_primaryCommandList.get());
     RenderPasses::checkLruCache(m_pDevice->get());
+    Pipelines::clean(m_pDevice);
 }
 
 
@@ -198,6 +199,7 @@ VkPhysicalDeviceFeatures checkEnableFeatures(VulkanAdapter* adapter)
     VkPhysicalDeviceFeatures availableFeatures  = adapter->getFeatures();
 
     CHECK_AND_ENABLE_FEATURE_IF_AVAILABLE(enabledFeatures, availableFeatures, geometryShader);
+    CHECK_AND_ENABLE_FEATURE_IF_AVAILABLE(enabledFeatures, availableFeatures, tessellationShader);
     CHECK_AND_ENABLE_FEATURE_IF_AVAILABLE(enabledFeatures, availableFeatures, fillModeNonSolid);
     CHECK_AND_ENABLE_FEATURE_IF_AVAILABLE(enabledFeatures, availableFeatures, imageCubeArray);
     CHECK_AND_ENABLE_FEATURE_IF_AVAILABLE(enabledFeatures, availableFeatures, tessellationShader);
@@ -705,6 +707,7 @@ void VulkanContext::prepare()
     DescriptorSets::clearDescriptorSetCache(this, DescriptorSets::ClearCacheFlag_DescriptorPoolFastClear);
     resetBinds();
     RenderPasses::updateTick();
+    Pipelines::update();
 }
 
 

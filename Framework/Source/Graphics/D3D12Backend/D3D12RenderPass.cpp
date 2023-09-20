@@ -6,14 +6,18 @@
 #include "D3D12DescriptorTableManager.hpp"
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Logger.hpp"
+#include "Graphics/LifetimeCache.hpp"
 
 #include <unordered_map>
 
 namespace Recluse {
 
 
-std::unordered_map<Hash64, D3D12RenderPass> g_renderPassMap;
+LifetimeCache<Hash64, D3D12RenderPass> g_renderPassMap;
 std::unordered_map<Hash64, CpuDescriptorTable> g_cachedRenderPassTable;
+
+
+R_DECLARE_GLOBAL_U32(g_d3d12RenderPassMaxAge, 12u, "D3D12.RenderPassMaxAge");
 
 
 GraphicsResourceView* D3D12RenderPass::getRenderTarget(U32 idx)
@@ -106,17 +110,15 @@ D3D12RenderPass* makeRenderPass(D3D12Device* pDevice, U32 numRtvs, ResourceViewI
         targets[numTargets++] = dsv;
 
     Hash64 hash = recluseHashFast(targets, sizeof(ResourceViewId) * numTargets);
-    auto iter = g_renderPassMap.find(hash);
-    if (iter == g_renderPassMap.end())
+    if (!g_renderPassMap.inCache(hash))
     {
         D3D12RenderPass renderPass = { };
         renderPass.update(pDevice, numRtvs, rtvs, dsv);
-        g_renderPassMap.insert(std::make_pair(hash, renderPass));
-        pass = &g_renderPassMap[hash];
+        pass = g_renderPassMap.insert(hash, std::move(renderPass));
     }
     else
     {
-        pass = &iter->second;
+        pass = g_renderPassMap.refer(hash);
         pass->update(pDevice, numRtvs, rtvs, dsv);
     }
     return pass;
@@ -125,17 +127,36 @@ D3D12RenderPass* makeRenderPass(D3D12Device* pDevice, U32 numRtvs, ResourceViewI
 
 void clearAll(D3D12Device* pDevice)
 {
-    for (auto iter : g_renderPassMap)
-    {
-        iter.second.release(pDevice);
-    }
+    g_renderPassMap.forEach([pDevice] (D3D12RenderPass& renderPass) -> void
+        {
+            R_DEBUG(R_CHANNEL_D3D12, "Cleaning up renderpass.");
+            renderPass.release(pDevice);
+        });
     g_renderPassMap.clear();
+    g_cachedRenderPassTable.clear();
 }
 
 
 void clearRenderPassCache()
 {
     g_cachedRenderPassTable.clear();
+}
+
+
+void sweep(D3D12Device* pDevice)
+{
+    // Perform a check to sweep up any old render pass.
+    g_renderPassMap.check(g_d3d12RenderPassMaxAge, [pDevice] (D3D12RenderPass& renderPass) -> void 
+        {
+            R_DEBUG(R_CHANNEL_D3D12, "Cleaning up renderpass.");
+            renderPass.release(pDevice);
+        });
+}
+
+
+void update()
+{
+    g_renderPassMap.updateTick();
 }
 } // RenderPasses
 } // Recluse

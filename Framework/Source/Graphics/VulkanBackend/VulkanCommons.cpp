@@ -159,6 +159,14 @@ VkShaderStageFlags getShaderStages(Recluse::ShaderStageFlags flags)
         {
             vkFlags |= VK_SHADER_STAGE_COMPUTE_BIT;
         }
+        if (flags & Recluse::ShaderStage_Mesh)
+        {
+            vkFlags |= VK_SHADER_STAGE_MESH_BIT_NV;
+        }
+        if (flags & Recluse::ShaderStage_Task)
+        {
+            vkFlags |= VK_SHADER_STAGE_TASK_BIT_NV;
+        }
     }
 
     return vkFlags;

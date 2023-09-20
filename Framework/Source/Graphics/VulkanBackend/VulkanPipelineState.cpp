@@ -10,15 +10,18 @@
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Filesystem/Filesystem.hpp"
 
+#include "Graphics/LifetimeCache.hpp"
+
 #include "VulkanShaderCache.hpp"
 
 namespace Recluse {
 namespace Pipelines {
 
-std::unordered_map<PipelineId, PipelineState> g_pipelineMap;
-std::unordered_map<VkDescriptorSetLayout, SharedReferenceObject<VkPipelineLayout>> g_pipelineLayoutMap;
+LifetimeCache<PipelineId, PipelineState>                                            g_pipelineMap;
+std::unordered_map<VkDescriptorSetLayout, SharedReferenceObject<VkPipelineLayout>>  g_pipelineLayoutMap;
 R_DECLARE_GLOBAL_BOOLEAN(g_allowPipelineCaching, false, "Vulkan.EnablePipelineCache");
 R_DECLARE_GLOBAL_STRING(g_pipelineCacheDir, "VulkanCache", "Vulkan.PipelineCacheDir");
+R_DECLARE_GLOBAL_U32(g_vulkanPipelineMaxAge, 256, "Vulkan.PipelineMaxAge");
 
 
 namespace PipelineCache {
@@ -516,9 +519,7 @@ VkPipelineLayout createPipelineLayout(VulkanDevice* pDevice, const VkDescriptorS
 
 
 void destroyPipeline(VulkanDevice* pDevice, VkPipeline pipeline)
-{   
-    R_DEBUG(R_CHANNEL_VULKAN, "Destroying vulkan pipeline state...");
-    
+{
     if (pipeline) 
     {
         vkDestroyPipeline(pDevice->get(), pipeline, nullptr);
@@ -917,8 +918,7 @@ PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure, Pi
 {
     PipelineState pipeline          = { };
     pipeline.lastUsed               = 0;
-    auto iter                       = g_pipelineMap.find(id);
-    if (iter == g_pipelineMap.end())
+    if (!g_pipelineMap.inCache(id))
     {
         ShaderPrograms::VulkanShaderProgram* program = ShaderPrograms::obtainShaderProgram(structure.state.shaderProgramId, structure.state.shaderPermutation);
         Bool pipelineCacheHit = findPipelineCache(pDevice, id, pipeline.pipelineCache);
@@ -949,14 +949,13 @@ PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure, Pi
         {
             if (!pipelineCacheHit)
                 cachePipeline(pDevice, id, pipeline.pipelineCache);
-            g_pipelineMap.insert(std::make_pair(id, pipeline));
+            g_pipelineMap.insert(id, std::move(pipeline));
         }
     }
     else
     {
         // Increment the count every time we use this pipeline.
-        iter->second.lastUsed += 1;
-        pipeline = iter->second;
+        pipeline = *g_pipelineMap.refer(id);
     }
     return pipeline;
 }
@@ -980,11 +979,12 @@ ResultCode clearPipelineCache(VulkanDevice* pDevice)
         destroyPipelineLayout(pDevice, *pipelineLayoutIt.second);
     }
 
-    for (auto pipelineIt : g_pipelineMap)
-    {
-        destroyPipeline(pDevice, pipelineIt.second.pipeline);
-        destroyPipelineCache(pDevice, pipelineIt.second.pipelineCache);
-    }
+    g_pipelineMap.forEach([pDevice] (PipelineState& state) -> void
+        {
+            R_DEBUG(R_CHANNEL_VULKAN, "Destroying pipeline.");
+            destroyPipeline(pDevice, state.pipeline);
+            destroyPipelineCache(pDevice, state.pipelineCache);
+        });
 
     g_pipelineLayoutMap.clear();
     g_pipelineMap.clear();
@@ -1003,6 +1003,26 @@ ResultCode releasePipeline(VulkanDevice* pDevice, PipelineId pipelineId)
 void Structure::nullify()
 {
     memset(&state, 0, sizeof(state));
+}
+
+
+void update()
+{
+    g_pipelineMap.updateTick();
+}
+
+
+void clean(VulkanDevice* device)
+{
+    g_pipelineMap.check
+        (
+            g_vulkanPipelineMaxAge, [device] (PipelineState& state) -> void 
+            {
+                R_DEBUG(R_CHANNEL_VULKAN, "Destroying pipeline.");
+                destroyPipeline(device, state.pipeline);
+                destroyPipelineCache(device, state.pipelineCache);
+            }
+        ); 
 }
 } // Pipelines
 } // Recluse

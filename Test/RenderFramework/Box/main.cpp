@@ -522,14 +522,13 @@ void updateConstBuffer(GraphicsResource* resource, U32 width, U32 height, F32 de
     static F32 t = 0;
     static Bool isTexturing = false;
     static Bool keyAlreadyDown = false;
-    if (t > 360.0f)
-        t = t - 360.0f;
-    t += 20.f * delta;
+    t += 20.0f * delta;
+    t = fmod(t, 360.0f);
     void* dat = nullptr;
     resource->map(&dat, nullptr);
     Math::Matrix44 T = Math::translate(Math::Matrix44::identity(), Math::Float3(0, 0, 6));
     Math::Matrix44 R = Math::rotate(Math::Matrix44::identity(), Math::Float3(0.0f, 1.0f, 0.0f), Math::deg2Rad(45.0f));
-    Math::Matrix44 R2 = Math::rotate(Math::Matrix44::identity(), Math::Float3(0.0f, 0.0f, 1.0f), Math::deg2Rad(t));
+    Math::Matrix44 R2 = Math::rotate(Math::Matrix44::identity(), Math::Float3(1.0f, 0.0f, 1.0f), Math::deg2Rad(t));
     Math::Matrix44 model = R2 * R * T;
     Math::Matrix44 view = Math::translate(Math::Matrix44::identity(), Math::Float3(0, 0, 0));
     Math::Matrix44 proj = Math::perspectiveLH_Aspect(Math::deg2Rad(45.0f), (F32)width / (F32)height, 0.001f, 1000.0f);
@@ -605,7 +604,7 @@ int main(char* argv[], int c)
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 
-    Window* window = Window::create("Box", 0, 0, 1024, 1024, ScreenMode_Fullscreen);
+    Window* window = Window::create("Box", 0, 0, 1024, 1024, ScreenMode_Windowed);
     window->show();
     window->setToCenter();
     window->setOnWindowResize(ResizeFunction);
