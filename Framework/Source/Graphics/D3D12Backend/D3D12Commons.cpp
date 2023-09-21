@@ -334,6 +334,18 @@ DXGI_FORMAT getNativeFormat(Recluse::ResourceFormat format)
             return DXGI_FORMAT_R32_UINT;
         case Recluse::ResourceFormat_R32_Int:
             return DXGI_FORMAT_R32_SINT;
+        case Recluse::ResourceFormat_BC1_Unorm:
+            return DXGI_FORMAT_BC1_UNORM;
+        case Recluse::ResourceFormat_BC2_Unorm:
+            return DXGI_FORMAT_BC2_UNORM;
+        case Recluse::ResourceFormat_BC3_Unorm:
+            return DXGI_FORMAT_BC3_UNORM;
+        case Recluse::ResourceFormat_BC4_Unorm:
+            return DXGI_FORMAT_BC4_UNORM;
+        case Recluse::ResourceFormat_BC5_Unorm:
+            return DXGI_FORMAT_BC5_UNORM;
+        case Recluse::ResourceFormat_BC7_Unorm:
+            return DXGI_FORMAT_BC7_UNORM;
         default:
             break;
     }
@@ -391,6 +403,12 @@ SIZE_T getNativeFormatSize(DXGI_FORMAT format)
         case DXGI_FORMAT_R32G32_UINT:
         case DXGI_FORMAT_R32G32_TYPELESS:
         case DXGI_FORMAT_R32G8X24_TYPELESS:
+
+            return 8ull;
+
+        case DXGI_FORMAT_BC1_TYPELESS:
+        case DXGI_FORMAT_BC1_UNORM:
+        case DXGI_FORMAT_BC1_UNORM_SRGB:
 
             return 8ull;
 

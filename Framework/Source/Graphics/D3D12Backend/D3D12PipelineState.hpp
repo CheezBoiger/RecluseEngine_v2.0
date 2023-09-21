@@ -55,6 +55,8 @@ struct PipelineStateObject
             Bool                                antiAliasedLineEnable;
             Bool                                depthBiasEnable;
             Bool                                depthClampEnable;
+            // TODO: Probably best to pass a renderpass id, or something that will identify
+            //       a general render pass, it doesn't need to be unique.
             D3D12RenderPass*                    pRenderPass;
             D3D12_INDEX_BUFFER_STRIP_CUT_VALUE  indexStripCut;
         } graphics;
@@ -104,5 +106,7 @@ CpuDescriptorTable              makeDescriptorSamplertable(D3D12Device* pDevice,
 void                            cleanUpRootSigs();
 void                            cleanUpPipelines();
 void                            resetTableHeaps(D3D12Device* pDevice);
+void                            updateT(D3D12Device* pDevice);
+void                            checkPipelines(D3D12Device* pDevice);
 } // Pipelines
 } // Recluse

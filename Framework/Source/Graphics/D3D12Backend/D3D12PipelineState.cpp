@@ -8,6 +8,8 @@
 #include "D3D12ShaderCache.hpp"
 #include "D3D12RenderPass.hpp"
 
+#include "Graphics/LifetimeCache.hpp"
+
 #include <map>
 #include <unordered_map>
 #include <array>
@@ -33,8 +35,11 @@ std::unordered_map<Hash64, CpuDescriptorTable> m_cachedSamplerTables;
 namespace Pipelines {
 
 
-std::unordered_map<PipelineStateId, ID3D12PipelineState*> g_pipelineStateMap;
+LifetimeCache<PipelineStateId, ID3D12PipelineState*> g_pipelineStateMap;
 std::unordered_map<Hash64, ID3D12RootSignature*> m_rootSignatures;
+
+
+R_DECLARE_GLOBAL_U32(g_d3d12MaxPipelineAge, 256, "D3D12.MaxPipelineAge");
 
 
 namespace VertexInputs {
@@ -582,18 +587,16 @@ ID3D12PipelineState* makePipelineState(D3D12Context* pContext, const PipelineSta
     ID3D12PipelineState* retrievedPipelineState = nullptr;
     PipelineStateId pipelineId = serializePipelineState(pipelineState);
     ID3D12Device* pDevice = pContext->getDevice()->castTo<D3D12Device>()->get();
-    auto iter = g_pipelineStateMap.find(pipelineId);
-    if (iter == g_pipelineStateMap.end())
+    if (!g_pipelineStateMap.inCache(pipelineId))
     {
         // We didn't find a similar pipeline state, need to create a new one.
         D3D::Cache::D3DShaderProgram* program = D3D::Cache::obtainShaderProgram(pipelineState.shaderProgramId, pipelineState.permutation);
         ID3D12PipelineState* pipeline = createPipelineState(0, pDevice, program, pipelineState);
-        g_pipelineStateMap.insert(std::make_pair(pipelineId, pipeline));
-        retrievedPipelineState = g_pipelineStateMap[pipelineId];
+        retrievedPipelineState = *g_pipelineStateMap.insert(pipelineId, std::move(pipeline));
     }
     else
     {
-        retrievedPipelineState = iter->second;
+        retrievedPipelineState = *g_pipelineStateMap.refer(pipelineId);
     }
     return retrievedPipelineState;
 }
@@ -705,11 +708,29 @@ void resetTableHeaps(D3D12Device* pDevice)
 
 void cleanUpPipelines()
 {
-    for (auto& iter : g_pipelineStateMap)
-    {
-        iter.second->Release();
-    }
+    g_pipelineStateMap.forEach(
+        [] (ID3D12PipelineState* pipelineState) -> void
+        {
+            R_DEBUG(R_CHANNEL_D3D12, "Destroying pipeline.");
+            pipelineState->Release();
+        });
     g_pipelineStateMap.clear();
+}
+
+
+void updateT(D3D12Device* pDevice)
+{
+    g_pipelineStateMap.updateTick();
+}
+
+
+void checkPipelines(D3D12Device* pDevice)
+{
+    g_pipelineStateMap.check(g_d3d12MaxPipelineAge, [] (ID3D12PipelineState* pipelineState) -> void
+        {
+            R_DEBUG(R_CHANNEL_D3D12, "Destroying pipeline.");
+            pipelineState->Release();
+        });
 }
 } // Pipelines
 } // Recluse

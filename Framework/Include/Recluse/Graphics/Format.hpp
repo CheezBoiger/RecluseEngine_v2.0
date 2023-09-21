@@ -28,7 +28,13 @@ enum ResourceFormat
     ResourceFormat_B8G8R8A8_Unorm,
     ResourceFormat_R32G32B32_Float,
     ResourceFormat_R32_Uint,
-    ResourceFormat_R32_Int
+    ResourceFormat_R32_Int,
+    ResourceFormat_BC1_Unorm,
+    ResourceFormat_BC2_Unorm,
+    ResourceFormat_BC3_Unorm,
+    ResourceFormat_BC4_Unorm,
+    ResourceFormat_BC5_Unorm,
+    ResourceFormat_BC7_Unorm,
 };
 
 

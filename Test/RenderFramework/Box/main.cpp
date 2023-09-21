@@ -600,11 +600,11 @@ int main(char* argv[], int c)
     Log::initializeLoggingSystem();
     enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
+    instance  = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 
-    Window* window = Window::create("Box", 0, 0, 1024, 1024, ScreenMode_Windowed);
+    Window* window = Window::create("Box", 0, 0, 1024, 1024, ScreenMode_FullscreenBorderless);
     window->show();
     window->setToCenter();
     window->setOnWindowResize(ResizeFunction);

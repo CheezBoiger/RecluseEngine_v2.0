@@ -22,3 +22,6 @@
 [submodule "ThirdParty/zlib"]
 	path = ThirdParty/zlib
 	url = https://github.com/madler/zlib 
+[submodule "ThirdParty/imgui"]
+	path = ThirdParty/imgui
+	url = https://github.com/ocornut/imgui.git

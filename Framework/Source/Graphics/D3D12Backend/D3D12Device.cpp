@@ -119,6 +119,7 @@ void D3D12Context::end()
     // Fire off our command list!
     submitPrimaryCommandList(m_pPrimaryCommandList->get());
     RenderPasses::sweep(m_pDevice);
+    Pipelines::checkPipelines(m_pDevice);
 }
 
 
@@ -265,6 +266,7 @@ void D3D12Context::prepare()
 
     // Update the age tick for renderpasses.
     RenderPasses::update();
+    Pipelines::updateT(m_pDevice);
 
     // We should bind the descriptor heaps at the start of the commandlist.
     ID3D12DescriptorHeap* pHeaps[2] = { nullptr, nullptr };
