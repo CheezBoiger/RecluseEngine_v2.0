@@ -194,12 +194,11 @@ ID3D12PipelineState* createGraphicsPipelineState(U32 nodeMask, ID3D12Device* pDe
     desc.NumRenderTargets = pipelineState.graphics.numRenderTargets;
     desc.IBStripCutValue = pipelineState.graphics.indexStripCut;
     desc.PrimitiveTopologyType = pipelineState.graphics.topologyType;
-    D3D12RenderPass* pRenderPass = pipelineState.graphics.pRenderPass;
     for (U32 i = 0; i < pipelineState.graphics.numRenderTargets; ++i)
     {
-        desc.RTVFormats[i] = pipelineState.graphics.pRenderPass->getRtvFormat(i);
+        desc.RTVFormats[i] = pipelineState.graphics.rtvFormats[i];
     }
-    desc.DSVFormat = pipelineState.graphics.pRenderPass->getDsvFormat();
+    desc.DSVFormat = pipelineState.graphics.dsvFormat;
 
     R_ASSERT(program->graphics.vsBytecode);
     
@@ -269,14 +268,6 @@ ID3D12PipelineState* createGraphicsPipelineState(U32 nodeMask, ID3D12Device* pDe
         independentBlendEnable |= rtBlend.BlendEnable;
     }
 
-    if (pRenderPass)
-    {
-        for (U32 i = 0; i < pipelineState.graphics.numRenderTargets; ++i)
-        {
-            desc.RTVFormats[i] = pRenderPass->getRtvFormat(i);
-        }
-        desc.DSVFormat = pRenderPass->getDsvFormat();
-    }
     desc.BlendState.IndependentBlendEnable = independentBlendEnable;
     desc.BlendState.AlphaToCoverageEnable = false;
 
@@ -308,12 +299,11 @@ ID3D12PipelineState* createMeshGraphicsPipeline(U32 nodeMask, ID3D12Device* pDev
     desc.NodeMask = 0;
     desc.NumRenderTargets = pipelineState.graphics.numRenderTargets;
     desc.PrimitiveTopologyType = pipelineState.graphics.topologyType;
-    D3D12RenderPass* pRenderPass = pipelineState.graphics.pRenderPass;
     for (U32 i = 0; i < pipelineState.graphics.numRenderTargets; ++i)
     {
-        desc.RTVFormats[i] = pipelineState.graphics.pRenderPass->getRtvFormat(i);
+        desc.RTVFormats[i] = pipelineState.graphics.rtvFormats[i];
     }
-    desc.DSVFormat = pipelineState.graphics.pRenderPass->getDsvFormat();
+    desc.DSVFormat = pipelineState.graphics.dsvFormat;
 
     R_ASSERT(program->graphics.vsBytecode);
     
@@ -362,14 +352,6 @@ ID3D12PipelineState* createMeshGraphicsPipeline(U32 nodeMask, ID3D12Device* pDev
         independentBlendEnable |= rtBlend.BlendEnable;
     }
 
-    if (pRenderPass)
-    {
-        for (U32 i = 0; i < pipelineState.graphics.numRenderTargets; ++i)
-        {
-            desc.RTVFormats[i] = pRenderPass->getRtvFormat(i);
-        }
-        desc.DSVFormat = pRenderPass->getDsvFormat();
-    }
     desc.BlendState.IndependentBlendEnable = independentBlendEnable;
     desc.BlendState.AlphaToCoverageEnable = false;
     
@@ -448,7 +430,8 @@ ID3D12PipelineState* createPipelineState(U32 nodeMask, ID3D12Device* pDevice, D3
     {
         case BindType_Graphics:
             // A separate pipeline creation function is needed if we plan on creating a pipeline with mesh shaders.
-            createdPipelineState = program->graphics.usesMeshShaders ? createMeshGraphicsPipeline(nodeMask, pDevice, program, pipelineState) 
+            createdPipelineState = program->graphics.usesMeshShaders 
+                ? createMeshGraphicsPipeline(nodeMask, pDevice, program, pipelineState) 
                 : createGraphicsPipelineState(nodeMask, pDevice, program, pipelineState);
             break;
         case BindType_RayTrace:

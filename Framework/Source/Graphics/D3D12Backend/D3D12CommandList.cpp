@@ -249,6 +249,7 @@ void D3D12Context::clearResourceBinds()
     memset(contextState.m_uavs.data(), 0, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) * contextState.m_uavs.size());
     memset(contextState.m_samplers.data(), 0, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) * contextState.m_samplers.size());
     memset(&contextState.m_rootSigLayout, 0, sizeof(Pipelines::RootSigLayout));
+    contextState.m_currentRenderPass = nullptr;
     // contextState.m_currentRootSig = nullptr;
     // contextState.setDirty(ContextDirty_CbvSrvUav);
 }

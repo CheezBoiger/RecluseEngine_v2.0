@@ -29,7 +29,7 @@ Bool unloadAll();
 } // VertexLayout
 
 
-// TODO: VkRenderPass AND VkDescriptorSetLayout are causing bad cache keys.
+// TODO: VkRenderPass is causing bad cache keys.
 //      We need a better way to identify these structures.
 struct Structure
 {

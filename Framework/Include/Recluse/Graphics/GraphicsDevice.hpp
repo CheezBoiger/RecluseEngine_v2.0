@@ -148,8 +148,14 @@ public:
     virtual void setScissors(U32 numScissors, Rect* pRects) { }
     virtual void setViewports(U32 numViewports, Viewport* pViewports) { }
 
+    // Compute shader siaptch.
     virtual void dispatch(U32 x, U32 y, U32 z) { }
+
+    // Dispatch rays for Ray tracing pipelines. Only use if Ray Tracing is supported!
     virtual void dispatchRays(U32 x, U32 y, U32 z) { }
+
+    // Mesh shader dispatch, only used if mesh shaders are supported!
+    virtual void dispatchMesh(U32 x, U32 y, U32 z) { }
 
     virtual void clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) { }
     virtual void clearDepthStencil(ClearFlags clearFlags, F32 clearDepth, U8 clearStencil, const Rect& rect) { }

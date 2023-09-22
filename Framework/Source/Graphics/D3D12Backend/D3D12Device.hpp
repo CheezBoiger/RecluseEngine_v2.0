@@ -153,6 +153,9 @@ private:
         PrimitiveTopology                               m_primitiveTopology;
         ContextDirtyFlags                               m_dirtyFlags;
         U32                                             m_numBoundVertexBuffers;
+        // Should be outside of pipeline state object, since it is holding on to 
+        // differrent render target views, but only care about the dxgi formats.
+        D3D12RenderPass*                                m_currentRenderPass;
 
         void setDirty(ContextDirtyFlags flags) { m_dirtyFlags |= flags; }
         void setClean() { m_dirtyFlags = ContextDirty_Clean; }

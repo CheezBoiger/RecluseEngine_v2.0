@@ -55,9 +55,8 @@ struct PipelineStateObject
             Bool                                antiAliasedLineEnable;
             Bool                                depthBiasEnable;
             Bool                                depthClampEnable;
-            // TODO: Probably best to pass a renderpass id, or something that will identify
-            //       a general render pass, it doesn't need to be unique.
-            D3D12RenderPass*                    pRenderPass;
+            DXGI_FORMAT                         rtvFormats[D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT];
+            DXGI_FORMAT                         dsvFormat;
             D3D12_INDEX_BUFFER_STRIP_CUT_VALUE  indexStripCut;
         } graphics;
         struct

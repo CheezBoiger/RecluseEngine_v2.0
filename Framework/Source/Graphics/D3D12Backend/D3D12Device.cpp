@@ -193,15 +193,34 @@ void D3D12Context::bindRenderTargets(U32 count, ResourceViewId* ppResources, Res
 {
     ID3D12GraphicsCommandList* pList = m_pPrimaryCommandList->get();
     D3D12RenderPass* pRenderPass = RenderPasses::makeRenderPass(m_pDevice, count, ppResources, pDepthStencil);
-    if (currentState().m_pipelineStateObject.graphics.pRenderPass != pRenderPass)
+    if (currentState().m_currentRenderPass != pRenderPass)
     {
         R_ASSERT_FORMAT(pRenderPass, "D3D12RenderPass was passed nullptr!");
         D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = pRenderPass->getRtvDescriptor();
         D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = pRenderPass->getDsvDescriptor();
         pList->OMSetRenderTargets(count, &rtvHandle, true, dsvHandle.ptr == DescriptorTable::invalidCpuAddress.ptr ? nullptr : &dsvHandle);
     
-        currentState().m_pipelineStateObject.graphics.pRenderPass = pRenderPass;
+        currentState().m_currentRenderPass = pRenderPass;
         currentState().m_pipelineStateObject.graphics.numRenderTargets = count;
+
+        Bool shouldConfigPipeline = false;
+        for (U32 i = 0; i < count; ++i)
+        {
+            DXGI_FORMAT format = pRenderPass->getRtvFormat(i);
+            if (format != currentState().m_pipelineStateObject.graphics.rtvFormats[i])
+                shouldConfigPipeline = true;
+            currentState().m_pipelineStateObject.graphics.rtvFormats[i] = format;
+        }
+
+        if (dsvHandle.ptr != DescriptorTable::invalidCpuAddress.ptr)
+        {
+            DXGI_FORMAT format = pRenderPass->getDsvFormat();
+            if (format != currentState().m_pipelineStateObject.graphics.dsvFormat)
+            {
+                shouldConfigPipeline = true;
+            }
+            currentState().m_pipelineStateObject.graphics.dsvFormat = format;
+        }
         currentState().setDirty(ContextDirty_Pipeline);
     }
 }
@@ -210,8 +229,8 @@ void D3D12Context::bindRenderTargets(U32 count, ResourceViewId* ppResources, Res
 void D3D12Context::clearDepthStencil(ClearFlags clearFlags, F32 clearDepth, U8 clearStencil, const Rect& rect)
 {
     ID3D12GraphicsCommandList* pList = m_pPrimaryCommandList->get();
-    R_ASSERT_FORMAT(currentState().m_pipelineStateObject.graphics.pRenderPass, "No render pass was set for clear! Be sure to call bindRenderTargets() to set up a render pass!");
-    D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = currentState().m_pipelineStateObject.graphics.pRenderPass->getDsvDescriptor();
+    R_ASSERT_FORMAT(currentState().m_currentRenderPass, "No render pass was set for clear! Be sure to call bindRenderTargets() to set up a render pass!");
+    D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = currentState().m_currentRenderPass->getDsvDescriptor();
     R_ASSERT_FORMAT(dsvHandle.ptr != 0, "Null depth descriptor handle passed to clearDepthStencil()!");
 
     D3D12_CLEAR_FLAGS flags = (D3D12_CLEAR_FLAGS)0;
@@ -233,10 +252,10 @@ void D3D12Context::clearDepthStencil(ClearFlags clearFlags, F32 clearDepth, U8 c
 void D3D12Context::clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect)
 {
     ID3D12GraphicsCommandList* pList = m_pPrimaryCommandList->get();
-    R_ASSERT_FORMAT(currentState().m_pipelineStateObject.graphics.pRenderPass, "No render pass was set for clear! Be sure to call bindRenderTargets() to set up a render pass!");
+    R_ASSERT_FORMAT(currentState().m_currentRenderPass, "No render pass was set for clear! Be sure to call bindRenderTargets() to set up a render pass!");
     flushBarrierTransitions();
    
-    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = currentState().m_pipelineStateObject.graphics.pRenderPass->getRtvDescriptor(idx);
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = currentState().m_currentRenderPass->getRtvDescriptor(idx);
     FLOAT clearValue[4];
     D3D12_RECT d3d12Rect = { };
 
