@@ -88,7 +88,9 @@ void ResizeFunction(U32 x, U32 y, U32 width, U32 height)
 void updateConstData(GraphicsResource* pData, RealtimeTick& tick, U64 offsetBytes, const Math::Float2& posOffset)
 {
     ConstData dat = { };
-    dat.color[0] = abs(sinf(tick.getCurrentTimeS() * 0.0000001f));
+    static F32 t = 0.f;
+    t += 1.0f * tick.delta();
+    dat.color[0] = abs(sinf(t));
     dat.color[1] = 0.0f;
     dat.color[2] = 1.0f;
     dat.color[3] = 0.0f;

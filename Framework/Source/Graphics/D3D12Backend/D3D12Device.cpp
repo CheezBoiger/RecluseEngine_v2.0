@@ -221,7 +221,9 @@ void D3D12Context::bindRenderTargets(U32 count, ResourceViewId* ppResources, Res
             }
             currentState().m_pipelineStateObject.graphics.dsvFormat = format;
         }
-        currentState().setDirty(ContextDirty_Pipeline);
+
+        if (shouldConfigPipeline)
+            currentState().setDirty(ContextDirty_Pipeline);
     }
 }
 
