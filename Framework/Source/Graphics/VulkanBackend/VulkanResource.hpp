@@ -155,6 +155,7 @@ public:
     U32                     getWidth() const { return m_width; }
     U32                     getHeight() const { return m_height; }
     VkFormat                getFormat() const { return m_format; }
+    ResourceDimension       getDimension() const { return m_dimension; }
 
 private:
     void                    performInitialLayout(VulkanDevice* pDevice, ResourceState initState) override;
@@ -171,6 +172,7 @@ private:
     U32                 m_width;
     U32                 m_height;
     VkFormat            m_format;
+    ResourceDimension   m_dimension;
 };
 
 

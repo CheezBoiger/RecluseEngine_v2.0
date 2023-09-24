@@ -321,32 +321,35 @@ void createTextureResource(GraphicsResource** textureResource)
     textureDesc.format = ResourceFormat_R8G8B8A8_Unorm;
     textureDesc.width = g_textureWidth;
     textureDesc.height = g_textureHeight;
-    textureDesc.depthOrArraySize = 1;
+    textureDesc.depthOrArraySize = 16;
     textureDesc.memoryUsage = ResourceMemoryUsage_GpuOnly;
-    textureDesc.mipLevels = 3;
+    textureDesc.mipLevels = 4;
     textureDesc.miscFlags = 0;
     textureDesc.samples = 1;
     textureDesc.usage = ResourceUsage_ShaderResource | ResourceUsage_CopyDestination | ResourceUsage_CopySource;
     result = device->createResource(textureResource, textureDesc, ResourceState_CopyDestination);
 
     R_ASSERT(result == RecluseResult_Ok);
-    Recluse::Pipeline::Texture texture("Name", g_textureWidth, g_textureHeight, 1u, 3u, ResourceFormat_R8G8B8A8_Unorm);
+    Recluse::Pipeline::Texture texture("Name", g_textureWidth, g_textureHeight, 16u, 4u, ResourceFormat_R8G8B8A8_Unorm);
     UPtr baseAddress = texture.getBaseAddress();
-    for (U32 mipmap = 0; mipmap < texture.getMipCount(); ++mipmap)
+    for (U32 layer = 0; layer < texture.getArrayLayers(); ++layer)
     {
-        Pipeline::Subresource& subresource = texture.getSubresource(0, mipmap);
-        UPtr subresourceAddress = baseAddress + subresource.getOffsetAddress();
-        U8* data = (U8*)subresourceAddress;
-        for (int y = 0; y < subresource.getHeight(); y++) 
+        for (U32 mipmap = 0; mipmap < texture.getMipCount(); ++mipmap)
         {
-            for (int x = 0; x < subresource.getWidth(); x++) 
+            Pipeline::Subresource& subresource = texture.getSubresource(layer, mipmap);
+            UPtr subresourceAddress = baseAddress + subresource.getOffsetAddress();
+            U8* data = (U8*)subresourceAddress;
+            for (int y = 0; y < subresource.getHeight(); y++) 
             {
-                U8 c = (((y & 0x8) == 0) ^ ((x & 0x8)  == 0)) * 255;
-                Math::UByte4& output = (Math::UByte4&)data[(x*4) + texture.getRowPitch() * y];
-                output[0] = c;
-                output[1] = c;
-                output[2] = c;
-                output[3] = 255;
+                for (int x = 0; x < subresource.getWidth(); x++) 
+                {
+                    U8 c = (((y & 0x8) == 0) ^ ((x & 0x8)  == 0)) * 255;
+                    Math::UByte4& output = (Math::UByte4&)data[(x*4) + texture.getRowPitch() * y];
+                    output[0] = c;
+                    output[1] = c;
+                    output[2] = c;
+                    output[3] = 255;
+                }
             }
         }
     }
@@ -592,8 +595,9 @@ GraphicsSampler* createSampler(GraphicsDevice* device)
     samplerDescription.magFilter = Filter_Nearest;
     samplerDescription.maxAnisotropy = 16.0f;
     samplerDescription.maxLod = 16;
+    samplerDescription.minLod = 0;
     samplerDescription.minFilter = Filter_Nearest;
-    samplerDescription.mipLodBias = 0.0f;
+    samplerDescription.mipLodBias = 0.f;
     samplerDescription.mipMapMode = SamplerMipMapMode_Nearest;
     GraphicsSampler* sampler = nullptr;
     device->createSampler(&sampler, samplerDescription);
@@ -606,7 +610,7 @@ int main(char* argv[], int c)
     Log::initializeLoggingSystem();
     enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
+    instance  = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 

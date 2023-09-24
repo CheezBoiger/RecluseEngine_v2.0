@@ -52,21 +52,21 @@ Texture::Texture(const std::string& name, U32 initialWidth, U32 initialHeight, U
     , m_baseAddressPtr(nullptr)
 {
     U32 sizeBytes   = 0u;
-    U32 mipWidth    = initialWidth;
-    U32 mipHeight   = initialHeight;
     U32 pixelBytes  = obtainFormatBytes(pixelFormat);
     // Ideally it might end up needing to be used for alignment.
     m_rowPitch = initialWidth * pixelBytes;
     m_subresources.resize(arrayLayers);
     for (U32 layer = 0; layer < arrayLayers; ++layer)
     {
+        U32 mipWidth    = initialWidth;
+        U32 mipHeight   = initialHeight;
         m_subresources[layer].resize(mipLevels);
         for (U32 mip = 0; mip < mipLevels; ++mip)
         {
             m_subresources[layer][mip] = Subresource(mipWidth, mipHeight, sizeBytes);
             sizeBytes += mipHeight * m_rowPitch;
-            mipWidth /= 2;
-            mipHeight /= 2;
+            mipWidth >>= 1;
+            mipHeight >>= 1;
         }
     }
 

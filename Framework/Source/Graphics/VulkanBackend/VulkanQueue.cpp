@@ -177,32 +177,35 @@ void VulkanQueue::generateCopyResource(VkCommandBuffer cmdBuffer, GraphicsResour
         {
             VulkanBuffer* srcBuffer = src->castTo<VulkanBuffer>();
             VkImageSubresourceRange sub             = dstImage->makeSubresourceRange(dstImage->getCurrentResourceState());
-            std::vector<VkBufferImageCopy> regions(sub.levelCount);
+            std::vector<VkBufferImageCopy> regions(sub.levelCount * sub.layerCount);
             // Must be done for each mip level.
             U32 offsetBytes = 0;
             U32 rowPitch = Vulkan::getFormatSizeBytes(dstImage->getFormat()) * dstImage->getWidth();
-            for (U32 mipLevel = sub.baseMipLevel; mipLevel < sub.levelCount; ++mipLevel)
+            for (U32 layer = sub.baseArrayLayer; layer < sub.layerCount; ++layer)
             {
-                U32 imgWidth                            = dstImage->getWidth() >> mipLevel;
-                U32 imgHeight                           = dstImage->getHeight() >> mipLevel;
-                VkBufferImageCopy region                = { };
-                region.imageSubresource.aspectMask      = sub.aspectMask;
-                region.imageSubresource.baseArrayLayer  = sub.baseArrayLayer;
-                region.imageSubresource.layerCount      = sub.layerCount;
-                region.imageSubresource.mipLevel        = mipLevel;
-                region.imageExtent.width                = imgWidth;
-                region.imageExtent.height               = imgHeight;
-                region.imageExtent.depth                = dstImage->getDepthOrArraySize();
-                region.imageOffset.x                    = 0;
-                region.imageOffset.y                    = 0;
-                region.imageOffset.z                    = 0;
+                for (U32 mipLevel = sub.baseMipLevel; mipLevel < sub.levelCount; ++mipLevel)
+                {
+                    U32 imgWidth                            = dstImage->getWidth() >> mipLevel;
+                    U32 imgHeight                           = dstImage->getHeight() >> mipLevel;
+                    VkBufferImageCopy region                = { };
+                    region.imageSubresource.aspectMask      = sub.aspectMask;
+                    region.imageSubresource.baseArrayLayer  = layer;
+                    region.imageSubresource.layerCount      = 1;
+                    region.imageSubresource.mipLevel        = mipLevel;
+                    region.imageExtent.width                = imgWidth;
+                    region.imageExtent.height               = imgHeight;
+                    region.imageExtent.depth                = (dstImage->getDimension() == ResourceDimension_3d) ? dstImage->getDepthOrArraySize() : 1u;
+                    region.imageOffset.x                    = 0;
+                    region.imageOffset.y                    = 0;
+                    region.imageOffset.z                    = 0;
 
-                // Buffer offset is ideally the image height*rowPitch for uncompressed textures.
-                region.bufferOffset                     = offsetBytes;
-                region.bufferRowLength                  = dstImage->getWidth();
-                region.bufferImageHeight                = imgHeight;
-                offsetBytes                             += imgHeight * rowPitch;
-                regions[mipLevel] = region;
+                    // Buffer offset is ideally the image height*rowPitch for uncompressed textures.
+                    region.bufferOffset                     = offsetBytes;
+                    region.bufferRowLength                  = dstImage->getWidth();
+                    region.bufferImageHeight                = imgHeight;
+                    offsetBytes                             += imgHeight * rowPitch;
+                    regions[mipLevel + layer * sub.levelCount] = region;
+                }
             }
             vkCmdCopyBufferToImage(cmdBuffer, srcBuffer->get(), dstImage->get(), dstImage->getCurrentLayout(), regions.size(), regions.data());
         }
@@ -229,7 +232,7 @@ void VulkanQueue::generateCopyResource(VkCommandBuffer cmdBuffer, GraphicsResour
             region.dstSubresource.mipLevel          = dstRange.baseMipLevel;
             region.srcSubresource.aspectMask        = srcRange.aspectMask;
             region.srcSubresource.baseArrayLayer    = srcRange.baseArrayLayer;
-            region.srcSubresource.layerCount        = srcRange.layerCount;
+            region.srcSubresource.layerCount        = Math::minimum(srcRange.layerCount, dstRange.layerCount);
             region.srcSubresource.mipLevel          = srcRange.baseMipLevel;
             vkCmdCopyImage
                 (

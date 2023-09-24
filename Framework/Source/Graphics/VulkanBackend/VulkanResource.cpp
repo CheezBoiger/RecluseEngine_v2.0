@@ -266,10 +266,10 @@ ResultCode VulkanImage::onCreate(VulkanDevice* pDevice, const GraphicsResourceDe
     
     VkImageCreateInfo info  = { };
     info.sType              = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    info.arrayLayers        = (info.imageType != ResourceDimension_3d) ? desc.depthOrArraySize : 1;
+    info.arrayLayers        = (desc.dimension != ResourceDimension_3d) ? desc.depthOrArraySize : 1;
     info.extent.width       = desc.width;   
     info.extent.height      = desc.height;
-    info.extent.depth       = (info.imageType == ResourceDimension_3d) ? desc.depthOrArraySize : 1;
+    info.extent.depth       = (desc.dimension == ResourceDimension_3d) ? desc.depthOrArraySize : 1;
     info.initialLayout      = VK_IMAGE_LAYOUT_UNDEFINED; // this is a must, since the vulkan spec states it needs to be either UNDEFINED, or PREINITIALIZED.
     info.mipLevels          = desc.mipLevels;
     info.imageType          = VK_IMAGE_TYPE_2D;         
@@ -322,6 +322,7 @@ ResultCode VulkanImage::onCreate(VulkanDevice* pDevice, const GraphicsResourceDe
     m_height            = desc.height;
     m_depthOrArraySize  = desc.depthOrArraySize;   
     m_format            = format;
+    m_dimension         = desc.dimension;
 
     return result;
 }
