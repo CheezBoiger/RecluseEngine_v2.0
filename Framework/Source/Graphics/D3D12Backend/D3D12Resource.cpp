@@ -73,6 +73,10 @@ ResultCode D3D12Resource::initialize
     }
     else
     {
+        // Textures should remain using an optimal layout strategy, which is mainly device dependent. This
+        // means the device decides on the best layout for our texture, which should be at best performance.
+        // Should a texture need to be rowmajor, will require a rowpitch to read, as layout will require padding 
+        // for better reads, but performance can be heavily impacted.
         d3d12desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
     }
 

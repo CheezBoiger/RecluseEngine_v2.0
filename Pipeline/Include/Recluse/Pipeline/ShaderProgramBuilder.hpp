@@ -1,4 +1,5 @@
 //
+#pragma once
 #include "Recluse/Graphics/ShaderProgram.hpp"
 
 

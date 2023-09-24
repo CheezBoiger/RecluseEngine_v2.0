@@ -9,6 +9,7 @@
 #include "Recluse/Messaging.hpp"
 
 #include "Recluse/Pipeline/ShaderProgramBuilder.hpp"
+#include "Recluse/Pipeline/Texture.hpp"
 #include "Recluse/Filesystem/Filesystem.hpp"
 #include "Recluse/System/KeyboardInput.hpp"
 #include "Recluse/Filesystem/Archive.hpp"
@@ -329,26 +330,28 @@ void createTextureResource(GraphicsResource** textureResource)
     result = device->createResource(textureResource, textureDesc, ResourceState_CopyDestination);
 
     R_ASSERT(result == RecluseResult_Ok);
-
-    Math::UByte4 texture[g_textureWidth][g_textureHeight];
-    U64 textureTotalSizeBytes = sizeof(Math::UByte4) * g_textureWidth * g_textureHeight;
-
-    for ( int i = 0; i < g_textureHeight; i++ ) 
+    Recluse::Pipeline::Texture texture("Name", g_textureWidth, g_textureHeight, 1u, 1u, ResourceFormat_R8G8B8A8_Unorm);
+    Pipeline::Subresource& subresource = texture.getSubresource(0, 0);
+    UPtr baseAddress = texture.getBaseAddress();
+    UPtr subresourceAddress = baseAddress + subresource.getOffsetAddress();
+    Math::UByte4* colorData = (Math::UByte4*)subresourceAddress;
+    for (int y = 0; y < subresource.getHeight(); y++) 
     {
-        for ( int j = 0; j < g_textureWidth; j++ ) 
+        for (int x = 0; x < subresource.getWidth(); x++) 
         {
-            U8 c = (((i & 0x8) == 0) ^ ((j & 0x8)  == 0)) * 255;
-            texture[i][j][0]  = c;
-            texture[i][j][1]  = c;
-            texture[i][j][2]  = c;
-            texture[i][j][3]  = 255;
+            U8 c = (((y & 0x8) == 0) ^ ((x & 0x8)  == 0)) * 255;
+            Math::UByte4& output = colorData[x + subresource.getHeight() * y];
+            output[0] = c;
+            output[1] = c;
+            output[2] = c;
+            output[3] = 255;
         }
     }
     
     GraphicsResourceDescription staging = { };
     staging.dimension = ResourceDimension_Buffer;
     staging.format = ResourceFormat_Unknown;
-    staging.width = g_textureWidth * g_textureHeight * sizeof(Math::UByte4);
+    staging.width = texture.getTotalSizeBytes();
     staging.height = 1;
     staging.depthOrArraySize = 1;
     staging.memoryUsage = ResourceMemoryUsage_CpuOnly;
@@ -363,7 +366,7 @@ void createTextureResource(GraphicsResource** textureResource)
 
     void* stagingMem = nullptr;
     stagingBuffer->map(&stagingMem, nullptr);
-    memcpy(stagingMem, texture, textureTotalSizeBytes);
+    memcpy(stagingMem, (void*)texture.getBaseAddress(), texture.getTotalSizeBytes());
     stagingBuffer->unmap(nullptr);
     
     device->copyResource(*textureResource, stagingBuffer);
