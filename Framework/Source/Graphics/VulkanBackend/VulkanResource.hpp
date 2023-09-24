@@ -154,6 +154,7 @@ public:
     U32                     getDepthOrArraySize() const { return m_depthOrArraySize; }
     U32                     getWidth() const { return m_width; }
     U32                     getHeight() const { return m_height; }
+    VkFormat                getFormat() const { return m_format; }
 
 private:
     void                    performInitialLayout(VulkanDevice* pDevice, ResourceState initState) override;

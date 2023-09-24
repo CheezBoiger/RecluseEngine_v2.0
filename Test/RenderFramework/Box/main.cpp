@@ -323,28 +323,31 @@ void createTextureResource(GraphicsResource** textureResource)
     textureDesc.height = g_textureHeight;
     textureDesc.depthOrArraySize = 1;
     textureDesc.memoryUsage = ResourceMemoryUsage_GpuOnly;
-    textureDesc.mipLevels = 1;
+    textureDesc.mipLevels = 3;
     textureDesc.miscFlags = 0;
     textureDesc.samples = 1;
     textureDesc.usage = ResourceUsage_ShaderResource | ResourceUsage_CopyDestination | ResourceUsage_CopySource;
     result = device->createResource(textureResource, textureDesc, ResourceState_CopyDestination);
 
     R_ASSERT(result == RecluseResult_Ok);
-    Recluse::Pipeline::Texture texture("Name", g_textureWidth, g_textureHeight, 1u, 1u, ResourceFormat_R8G8B8A8_Unorm);
-    Pipeline::Subresource& subresource = texture.getSubresource(0, 0);
+    Recluse::Pipeline::Texture texture("Name", g_textureWidth, g_textureHeight, 1u, 3u, ResourceFormat_R8G8B8A8_Unorm);
     UPtr baseAddress = texture.getBaseAddress();
-    UPtr subresourceAddress = baseAddress + subresource.getOffsetAddress();
-    Math::UByte4* colorData = (Math::UByte4*)subresourceAddress;
-    for (int y = 0; y < subresource.getHeight(); y++) 
+    for (U32 mipmap = 0; mipmap < texture.getMipCount(); ++mipmap)
     {
-        for (int x = 0; x < subresource.getWidth(); x++) 
+        Pipeline::Subresource& subresource = texture.getSubresource(0, mipmap);
+        UPtr subresourceAddress = baseAddress + subresource.getOffsetAddress();
+        U8* data = (U8*)subresourceAddress;
+        for (int y = 0; y < subresource.getHeight(); y++) 
         {
-            U8 c = (((y & 0x8) == 0) ^ ((x & 0x8)  == 0)) * 255;
-            Math::UByte4& output = colorData[x + subresource.getHeight() * y];
-            output[0] = c;
-            output[1] = c;
-            output[2] = c;
-            output[3] = 255;
+            for (int x = 0; x < subresource.getWidth(); x++) 
+            {
+                U8 c = (((y & 0x8) == 0) ^ ((x & 0x8)  == 0)) * 255;
+                Math::UByte4& output = (Math::UByte4&)data[(x*4) + texture.getRowPitch() * y];
+                output[0] = c;
+                output[1] = c;
+                output[2] = c;
+                output[3] = 255;
+            }
         }
     }
     
@@ -607,7 +610,7 @@ int main(char* argv[], int c)
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 
-    Window* window = Window::create("Box", 0, 0, 1024, 1024, ScreenMode_FullscreenBorderless);
+    Window* window = Window::create("Box", 0, 0, 1024, 1024, ScreenMode_Windowed);
     window->show();
     window->setToCenter();
     window->setOnWindowResize(ResizeFunction);
@@ -619,7 +622,7 @@ int main(char* argv[], int c)
         appInfo.appMinor = 0;
         appInfo.appMajor = 0;
         appInfo.appPatch = 0;
-        LayerFeatureFlags flags = 0;//LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
+        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
         instance->initialize(appInfo, flags);
     }
     

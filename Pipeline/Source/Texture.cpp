@@ -64,7 +64,7 @@ Texture::Texture(const std::string& name, U32 initialWidth, U32 initialHeight, U
         for (U32 mip = 0; mip < mipLevels; ++mip)
         {
             m_subresources[layer][mip] = Subresource(mipWidth, mipHeight, sizeBytes);
-            sizeBytes += mipHeight * m_rowPitch; 
+            sizeBytes += mipHeight * m_rowPitch;
             mipWidth /= 2;
             mipHeight /= 2;
         }

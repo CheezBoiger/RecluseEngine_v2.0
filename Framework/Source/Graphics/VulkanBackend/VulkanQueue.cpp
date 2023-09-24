@@ -137,30 +137,35 @@ void VulkanQueue::generateCopyResource(VkCommandBuffer cmdBuffer, GraphicsResour
         else 
         {
             VulkanImage* srcImage                   = static_cast<VulkanImage*>(src);
-            VkBufferImageCopy region                = { };
             VkImageSubresourceRange sub             = srcImage->makeSubresourceRange(srcImage->getCurrentResourceState());
-            region.imageSubresource.aspectMask      = sub.aspectMask;
-            region.imageSubresource.baseArrayLayer  = sub.baseArrayLayer;
-            region.imageSubresource.layerCount      = sub.layerCount;
-            region.imageSubresource.mipLevel        = sub.baseMipLevel;
-            region.imageExtent.width                = srcImage->getWidth();
-            region.imageExtent.height               = srcImage->getHeight();
-            region.imageExtent.depth                = srcImage->getDepthOrArraySize();
-            region.imageOffset.x                    = 0;
-            region.imageOffset.y                    = 0;
-            region.imageOffset.z                    = 0;
+            std::vector<VkBufferImageCopy> regions(sub.levelCount);
+            for (U32 mipLevel = 0; mipLevel < sub.levelCount; ++mipLevel)
+            {
+                VkBufferImageCopy region                = { };
+                region.imageSubresource.aspectMask      = sub.aspectMask;
+                region.imageSubresource.baseArrayLayer  = sub.baseArrayLayer;
+                region.imageSubresource.layerCount      = sub.layerCount;
+                region.imageSubresource.mipLevel        = mipLevel;
+                region.imageExtent.width                = srcImage->getWidth();
+                region.imageExtent.height               = srcImage->getHeight();
+                region.imageExtent.depth                = srcImage->getDepthOrArraySize();
+                region.imageOffset.x                    = 0;
+                region.imageOffset.y                    = 0;
+                region.imageOffset.z                    = 0;
 
-            region.bufferOffset                     = 0;
-            region.bufferRowLength                  = 0;
-            region.bufferImageHeight                = 0;
+                region.bufferOffset                     = 0;
+                region.bufferRowLength                  = 0;
+                region.bufferImageHeight                = 0;
+                regions[mipLevel] = region;
+            }
             vkCmdCopyImageToBuffer
                 (
                     cmdBuffer, 
                     srcImage->get(), 
                     srcImage->getCurrentLayout(),
                     dstBuffer->get(), 
-                    1, 
-                    &region
+                    regions.size(), 
+                    regions.data()
                 );
         }
     }
@@ -171,24 +176,35 @@ void VulkanQueue::generateCopyResource(VkCommandBuffer cmdBuffer, GraphicsResour
         if (srcDim == ResourceDimension_Buffer)
         {
             VulkanBuffer* srcBuffer = src->castTo<VulkanBuffer>();
-            VkBufferImageCopy region = { };
-            // TODO:
             VkImageSubresourceRange sub             = dstImage->makeSubresourceRange(dstImage->getCurrentResourceState());
-            region.imageSubresource.aspectMask      = sub.aspectMask;
-            region.imageSubresource.baseArrayLayer  = sub.baseArrayLayer;
-            region.imageSubresource.layerCount      = sub.layerCount;
-            region.imageSubresource.mipLevel        = sub.baseMipLevel;
-            region.imageExtent.width                = dstImage->getWidth();
-            region.imageExtent.height               = dstImage->getHeight();
-            region.imageExtent.depth                = dstImage->getDepthOrArraySize();
-            region.imageOffset.x                    = 0;
-            region.imageOffset.y                    = 0;
-            region.imageOffset.z                    = 0;
+            std::vector<VkBufferImageCopy> regions(sub.levelCount);
+            // Must be done for each mip level.
+            U32 offsetBytes = 0;
+            U32 rowPitch = Vulkan::getFormatSizeBytes(dstImage->getFormat()) * dstImage->getWidth();
+            for (U32 mipLevel = sub.baseMipLevel; mipLevel < sub.levelCount; ++mipLevel)
+            {
+                U32 imgWidth                            = dstImage->getWidth() >> mipLevel;
+                U32 imgHeight                           = dstImage->getHeight() >> mipLevel;
+                VkBufferImageCopy region                = { };
+                region.imageSubresource.aspectMask      = sub.aspectMask;
+                region.imageSubresource.baseArrayLayer  = sub.baseArrayLayer;
+                region.imageSubresource.layerCount      = sub.layerCount;
+                region.imageSubresource.mipLevel        = mipLevel;
+                region.imageExtent.width                = imgWidth;
+                region.imageExtent.height               = imgHeight;
+                region.imageExtent.depth                = dstImage->getDepthOrArraySize();
+                region.imageOffset.x                    = 0;
+                region.imageOffset.y                    = 0;
+                region.imageOffset.z                    = 0;
 
-            region.bufferOffset                     = 0;
-            region.bufferRowLength                  = 0;
-            region.bufferImageHeight                = 0;
-            vkCmdCopyBufferToImage(cmdBuffer, srcBuffer->get(), dstImage->get(), dstImage->getCurrentLayout(), 1, &region);
+                // Buffer offset is ideally the image height*rowPitch for uncompressed textures.
+                region.bufferOffset                     = offsetBytes;
+                region.bufferRowLength                  = dstImage->getWidth();
+                region.bufferImageHeight                = imgHeight;
+                offsetBytes                             += imgHeight * rowPitch;
+                regions[mipLevel] = region;
+            }
+            vkCmdCopyBufferToImage(cmdBuffer, srcBuffer->get(), dstImage->get(), dstImage->getCurrentLayout(), regions.size(), regions.data());
         }
         else
         {

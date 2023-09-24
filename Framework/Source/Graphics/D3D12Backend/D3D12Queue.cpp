@@ -166,23 +166,26 @@ void D3D12Queue::generateCopyResourceCommand(ID3D12GraphicsCommandList* pList, D
                 pDevice->GetCopyableFootprints(&dstDesc, 0, subresourceCount, 0, dstFootprint.data(), nullptr, nullptr, nullptr);
                 for (U32 subresource = 0; subresource < srcSubresourceCount; ++subresource)
                 {
-                    D3D12_TEXTURE_COPY_LOCATION dstLocation = { };
                     D3D12_TEXTURE_COPY_LOCATION srcLocation = { };
-                    dstLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-                    dstLocation.SubresourceIndex = subresource;
-                    dstLocation.pResource = pDst;
-
                     srcLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
                     srcLocation.pResource = pSrc;
                     srcLocation.SubresourceIndex = subresource;
-                    D3D12_BOX srcBox = { };
-                    srcBox.left = 0;
-                    srcBox.top = 0;
-                    srcBox.right = Math::minimum(srcFootprint[subresource].Footprint.Width, dstFootprint[subresource].Footprint.Width);
-                    srcBox.bottom = Math::minimum(srcFootprint[subresource].Footprint.Height, dstFootprint[subresource].Footprint.Height);
-                    srcBox.front = 0;
-                    srcBox.back = 1;
-                    pList->CopyTextureRegion(&dstLocation, 0, 0, 0, &srcLocation, &srcBox);
+                    for (U32 dstSubresource = 0; dstSubresource < subresourceCount; ++dstSubresource)
+                    {
+                        D3D12_TEXTURE_COPY_LOCATION dstLocation = { };
+                        dstLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+                        dstLocation.SubresourceIndex = dstSubresource;
+                        dstLocation.pResource = pDst;
+
+                        D3D12_BOX srcBox = { };
+                        srcBox.left = 0;
+                        srcBox.top = 0;
+                        srcBox.right = Math::minimum(srcFootprint[subresource].Footprint.Width, dstFootprint[dstSubresource].Footprint.Width);
+                        srcBox.bottom = Math::minimum(srcFootprint[subresource].Footprint.Height, dstFootprint[dstSubresource].Footprint.Height);
+                        srcBox.front = 0;
+                        srcBox.back = 1;
+                        pList->CopyTextureRegion(&dstLocation, 0, 0, 0, &srcLocation, &srcBox);
+                    }
                 }
             }
             else
