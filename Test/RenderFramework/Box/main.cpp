@@ -28,7 +28,7 @@ GraphicsDevice* device = nullptr;
 GraphicsContext* context = nullptr;
 GraphicsSwapchain* swapchain = nullptr;
 GraphicsInstance* instance = nullptr;
-static const U32 g_textureWidth = 128;
+static const U32 g_textureWidth = 64;
 static const U32 g_textureHeight = 64;
 typedef Math::Float4 Vector4;
 
@@ -610,7 +610,7 @@ int main(char* argv[], int c)
     Log::initializeLoggingSystem();
     enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
+    instance  = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 
@@ -686,9 +686,6 @@ int main(char* argv[], int c)
             swapchain->prepare(context);
                 updateConstBuffer(constantBuffer, window->getWidth(), window->getHeight(), tick.delta());
                 GraphicsResource* swapchainImage = swapchain->getFrame(swapchain->getCurrentFrameIndex());
-                context->transition(textureResource, ResourceState_CopySource);
-                context->transition(swapchainImage, ResourceState_CopyDestination);
-                context->copyResource(swapchainImage, textureResource);
                 context->transition(swapchainImage, ResourceState_RenderTarget);
                 context->transition(vertexbuffer, ResourceState_VertexBuffer);
                 context->transition(indexBuffer, ResourceState_IndexBuffer);
@@ -743,6 +740,9 @@ int main(char* argv[], int c)
                 context->setViewports(1, &viewport);
                 context->setScissors(1, &scissor);
                 context->drawIndexedInstanced(36, 1, 0, 0, 0);
+                context->transition(textureResource, ResourceState_CopySource);
+                context->transition(swapchainImage, ResourceState_CopyDestination);
+                context->copyResource(swapchainImage, textureResource);
                 context->transition(swapchain->getFrame(swapchain->getCurrentFrameIndex()), ResourceState_Present);
             context->end();
             if (swapchain->present(context) == RecluseResult_NeedsUpdate)
