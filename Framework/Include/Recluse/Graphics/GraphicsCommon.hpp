@@ -264,16 +264,21 @@ struct CopyBufferRegion
 
 struct CopyTextureRegion
 {
-    union
+    struct 
     {
-        struct 
-        {
-            U32 width;
-            U32 height;
-            U32 arrayLayerOrDepth;
-            U32 mipLevel;
-        } texture;
-    };
+        U32 width;
+        U32 height;
+        U32 rowPitch;
+        U32 arrayLayerOrDepth;
+        U32 mipLevel;
+        ResourceFormat format;
+    } src;
+    struct
+    {
+        U32 mipLevel;
+        U32 arrayLayer;
+        U32 offsetX, offsetY, offsetZ;
+    } dst;
 };
 
 

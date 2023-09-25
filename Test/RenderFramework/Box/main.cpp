@@ -28,7 +28,7 @@ GraphicsDevice* device = nullptr;
 GraphicsContext* context = nullptr;
 GraphicsSwapchain* swapchain = nullptr;
 GraphicsInstance* instance = nullptr;
-static const U32 g_textureWidth = 64;
+static const U32 g_textureWidth = 128;
 static const U32 g_textureHeight = 64;
 typedef Math::Float4 Vector4;
 
@@ -330,14 +330,14 @@ void createTextureResource(GraphicsResource** textureResource)
     result = device->createResource(textureResource, textureDesc, ResourceState_CopyDestination);
 
     R_ASSERT(result == RecluseResult_Ok);
-    Recluse::Pipeline::Texture texture("Name", g_textureWidth, g_textureHeight, 16u, 4u, ResourceFormat_R8G8B8A8_Unorm);
+    Pipeline::Texture texture = Pipeline::Texture("Name", g_textureWidth, g_textureHeight, 16u, 4u, ResourceFormat_R8G8B8A8_Unorm);
     UPtr baseAddress = texture.getBaseAddress();
     for (U32 layer = 0; layer < texture.getArrayLayers(); ++layer)
     {
         for (U32 mipmap = 0; mipmap < texture.getMipCount(); ++mipmap)
         {
             Pipeline::Subresource& subresource = texture.getSubresource(layer, mipmap);
-            UPtr subresourceAddress = baseAddress + subresource.getOffsetAddress();
+            UPtr subresourceAddress = baseAddress + subresource.getOffsteBytes();
             U8* data = (U8*)subresourceAddress;
             for (int y = 0; y < subresource.getHeight(); y++) 
             {
@@ -610,7 +610,7 @@ int main(char* argv[], int c)
     Log::initializeLoggingSystem();
     enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
+    instance  = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 

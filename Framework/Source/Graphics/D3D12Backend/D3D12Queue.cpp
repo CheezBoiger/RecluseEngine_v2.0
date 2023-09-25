@@ -192,6 +192,8 @@ void D3D12Queue::generateCopyResourceCommand(ID3D12GraphicsCommandList* pList, D
             {
                 std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT> footprint(subresourceCount);
                 pDevice->GetCopyableFootprints(&dstDesc, 0, subresourceCount, 0, footprint.data(), nullptr, nullptr, nullptr); 
+                U32 offsetBytes = 0;
+                U32 rowPitch = footprint[0].Footprint.Width * Dxgi::getNativeFormatSize(footprint[0].Footprint.Format);
                 for (U32 subresource = 0; subresource < subresourceCount; ++subresource)
                 {
                     D3D12_TEXTURE_COPY_LOCATION dstLocation = { };
@@ -200,9 +202,18 @@ void D3D12Queue::generateCopyResourceCommand(ID3D12GraphicsCommandList* pList, D
                     dstLocation.SubresourceIndex = subresource;
                     dstLocation.pResource = pDst;
 
+                    // For the source, since it is a buffer, we need to override the rowPitch, since we are based on the size of the total width!
+                    D3D12_PLACED_SUBRESOURCE_FOOTPRINT fp = { };
+                    fp.Offset = offsetBytes;
+                    fp.Footprint.Depth = footprint[subresource].Footprint.Depth;
+                    fp.Footprint.Format = footprint[subresource].Footprint.Format;
+                    fp.Footprint.Height = footprint[subresource].Footprint.Height;
+                    fp.Footprint.Width = footprint[subresource].Footprint.Width;
+                    fp.Footprint.RowPitch = rowPitch;
+                    offsetBytes += fp.Footprint.Height * rowPitch;
                     srcLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
                     srcLocation.pResource = pSrc;
-                    srcLocation.PlacedFootprint = footprint[subresource];
+                    srcLocation.PlacedFootprint = fp;//footprint[subresource];
                     pList->CopyTextureRegion(&dstLocation, 0, 0, 0, &srcLocation, nullptr);
                 }
             }

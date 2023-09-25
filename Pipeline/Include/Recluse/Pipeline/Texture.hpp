@@ -47,8 +47,8 @@ public:
     // Get the height of the subresource.
     U32                 getHeight() const { return m_height; }
 
-    // Offset address of the subresource, in bytes.
-    UPtr                getOffsetAddress() const { return m_offsetAddress; }
+    // Offset of the subresource, in bytes. Use this to get the actual address of the texture resource.
+    UPtr                getOffsteBytes() const { return m_offsetAddress; }
 
 private:
     UPtr                m_offsetAddress;
@@ -56,7 +56,9 @@ private:
     U32                 m_height;
 };
 
+// 
 R_PUBLIC_API U32 obtainFormatBytes(U32 resourceFormat);
+
 // Texture which is stored in host side memory, from raw perspective.
 // This structure does not determine the layout of images from certain formats (PNG, JPG, etc...)
 // For that, the programmer will need to figure out how to read those formats, and store the information into Texture structure, in order to use Pipeline features.
@@ -66,8 +68,21 @@ R_PUBLIC_API U32 obtainFormatBytes(U32 resourceFormat);
 class R_PUBLIC_API Texture
 {
 public:
-    Texture(const std::string& name, U32 initialWidth, U32 initialHeight, U32 arrayLayers, U32 mipLevels, ResourceFormat pixelFormat);
+    Texture();
+    Texture(const std::string& name, U32 initialWidth = 1u, U32 initialHeight = 1u, U32 arrayLayers = 1u, U32 mipLevels = 1u, ResourceFormat pixelFormat = ResourceFormat_R8G8B8A8_Unorm);
     ~Texture();
+
+    // Move the contents of one texture to this structure.
+    Texture(Texture&& texture) noexcept;
+
+    // 
+    explicit Texture(const Texture& texture);
+
+    // Copies the contents of param texture, into this texture.
+    Texture& operator=(const Texture& texture);
+
+    // Moves the contents of texture into this texture.
+    Texture& operator=(Texture&& texture) noexcept;
 
     // Get the array layers of the texture.
     U32                 getArrayLayers() const { return m_arrayLayers; }
@@ -98,6 +113,9 @@ public:
     
     // Get the total size of texture in bytes.
     U32                 getTotalSizeBytes() const { return m_totalSizeBytes; }
+
+    template<typename Type>
+    Type&               operator[](size_t index) { return (Type&)((U8*)m_baseAddressPtr)[index]; }
 
 private:
     void*                                   m_baseAddressPtr;
