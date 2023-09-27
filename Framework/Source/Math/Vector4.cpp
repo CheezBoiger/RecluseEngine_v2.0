@@ -212,6 +212,19 @@ F32 dot(const Float4& a, const Float4& b)
     return (a[0] * b[0]) + (a[1] * b[1]) + (a[2] * b[2]) + (a[3] * b[3]);
 }
 
+U32 dot(const UByte4& a, const UByte4& b)
+{
+    U32 a0 = static_cast<U32>(a[0]);
+    U32 a1 = static_cast<U32>(a[1]);
+    U32 a2 = static_cast<U32>(a[2]);
+    U32 a3 = static_cast<U32>(a[3]);
+    U32 b0 = static_cast<U32>(b[0]);
+    U32 b1 = static_cast<U32>(b[1]);
+    U32 b2 = static_cast<U32>(b[2]);
+    U32 b3 = static_cast<U32>(b[3]);
+    return (a0 * b0) + (a1 * b1) + (a2 * b2) + (a3 * b3);
+}
+
 
 F32 length(const Float4& a)
 {
@@ -246,6 +259,18 @@ Float4 normalize(const Float4& lh)
 }
 
 
+U32 dot(const UInt4& a, const UInt4& b)
+{
+    return (a[0] * b[0]) + (a[1] * b[1]) + (a[2] * b[2]) + (a[3] * b[3]);
+}
+
+
+U32 dot(const Int4& a, const Int4& b)
+{
+    return (a[0] * b[0]) + (a[1] * b[1]) + (a[2] * b[2]) + (a[3] * b[3]);
+}
+
+
 Bool any(const Float4& a)
 {
     return (a[0] != 0.f) || (a[1] != 0.f) || (a[2] != 0.f) || (a[3] != 0.f);
@@ -260,23 +285,38 @@ Bool all(const Float4& a)
 
 Float4 colorToFloat(const Color4& color)
 {
-    F32 inv = 1.0f / 255.f;
-    F32 R = static_cast<F32>(color.r);
-    F32 G = static_cast<F32>(color.g);
-    F32 B = static_cast<F32>(color.b);
-    F32 A = static_cast<F32>(color.a);
+    const F32 inv = 1.0f / 255.f;
+    const F32 R = static_cast<F32>(color.r);
+    const F32 G = static_cast<F32>(color.g);
+    const F32 B = static_cast<F32>(color.b);
+    const F32 A = static_cast<F32>(color.a);
     return Float4(R * inv, G * inv, B * inv, A * inv);
 }
 
 
 Color4 floatToColor(const Float4& color)
 {
-    F32 maxChroma = 255.f;
-    U8 R = static_cast<U8>(color.r * maxChroma);
-    U8 G = static_cast<U8>(color.g * maxChroma);
-    U8 B = static_cast<U8>(color.b * maxChroma);
-    U8 A = static_cast<U8>(color.a * maxChroma);
+    const F32 maxChroma = 255.f;
+    const U8 R = static_cast<U8>(color.r * maxChroma);
+    const U8 G = static_cast<U8>(color.g * maxChroma);
+    const U8 B = static_cast<U8>(color.b * maxChroma);
+    const U8 A = static_cast<U8>(color.a * maxChroma);
     return Color4(R, G, B, A);
+}
+
+
+F32 dist(const Float4& p0, const Float4& p1)
+{
+    return length(p1 - p0);
+}
+
+
+I32 dist(const UByte4& p0, const UByte4& p1)
+{
+    const Int4 ip0 = Int4(p0[0], p0[1], p0[2], p0[3]);
+    const Int4 ip1 = Int4(p1[0], p1[1], p1[2], p1[3]);
+    const Int4 q = ip1 - ip0;
+    return isqrt(dot(q, q));
 }
 } // Math
 } // Recluse

@@ -174,6 +174,12 @@ F32 dot(const Float3& lh, const Float3& rh)
 }
 
 
+U32 dot(const Int3& lh, const Int3& rh)
+{
+    return ((lh[0] * rh[0]) + (lh[1] * rh[1]) + (lh[2] * rh[2]));
+}
+
+
 F32 length(const Float3& v)
 {
     return sqrtf(dot(v, v));
@@ -233,6 +239,41 @@ Float3 refract(const Float3& incidence, const Float3& normal, F32 eta)
         R = eta * incidence - (eta * NoI + sqrtf(k)) * normal;
     }
     return R;
+}
+
+
+Color3 floatToColor(const Float3& color)
+{
+    const F32 maxChroma = 255.f;
+    const U8 R = static_cast<U8>(color.r * maxChroma);
+    const U8 G = static_cast<U8>(color.g * maxChroma);
+    const U8 B = static_cast<U8>(color.b * maxChroma);
+    return Color3(R, G, B);
+}
+
+
+Float3 colorToFloat(const Color3& color)
+{
+    const F32 inv = 1.f / 255.f;
+    const F32 R = static_cast<F32>(color.r);
+    const F32 G = static_cast<F32>(color.g);
+    const F32 B = static_cast<F32>(color.b);
+    return Float3(R * inv, G * inv, B * inv);
+}
+
+
+F32 dist(const Float3& p0, const Float3& p1)
+{
+    return length(p1 - p0);
+}
+
+
+U32 dist(const UByte3& p0, const UByte3& p1)
+{
+    const Int3 ip0 = Int3(p0[0], p0[1], p0[2]);
+    const Int3 ip1 = Int3(p1[0], p1[1], p1[2]);
+    const Int3 q = ip1 - ip0;
+    return isqrt(dot(q, q));
 }
 } // Math
 } // Recluse

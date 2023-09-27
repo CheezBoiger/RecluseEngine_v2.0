@@ -126,6 +126,38 @@ struct R_PUBLIC_API UInt4
 };
 
 
+struct R_PUBLIC_API Int4
+{
+    union
+    {
+        struct { I32 x, y, z, w; };
+        struct { I32 s, t, r, q; };
+        struct { I32 r, g, b, a; };
+    };
+
+    Int4(I32 x = 0, I32 y = 0, I32 z = 0, I32 w = 0)
+        : x(x), y(y), z(z), w(w) { }
+
+    inline I32& operator[](U32 i) { return (&x)[i]; }
+    inline I32 operator[](U32 i) const { return (&x)[i]; }
+
+    inline Int4 operator+(const Int4& rh) const
+    {
+        return Int4(x + rh.x, y + rh.y, z + rh.z, w + rh.w);
+    }
+
+    inline Int4 operator-(const Int4& rh) const
+    {
+        return Int4(x - rh.x, y - rh.y, z - rh.z, w - rh.w);
+    }
+
+    inline Int4 operator*(const Int4& rh) const
+    {
+        return Int4(x * rh.x, y * rh.y, z * rh.z, w * rh.w);
+    }
+};
+
+
 struct R_PUBLIC_API UByte4
 {
     union
@@ -137,9 +169,51 @@ struct R_PUBLIC_API UByte4
 
     UByte4(U8 x = 0, U8 y = 0, U8 z = 0, U8 w = 0)
         : x(x), y(y), z(z), w(w) { }
+    
+    UByte4 operator-(const UByte4& rh) const
+    {
+        return UByte4(x - rh.x, y - rh.y, z - rh.z, w - rh.w);
+    }
+
+    UByte4 operator+(const UByte4& rh) const
+    {
+        return UByte4(x + rh.x, y - rh.y, z - rh.z, w - rh.w);
+    }
+
+    UByte4 operator*(const UByte4& rh) const
+    {
+        return UByte4(x * rh.x, y * rh.y, z * rh.z, w * rh.w);
+    }
 
     inline U8& operator[](U32 idx) { return (&x)[idx]; }
     inline U8 operator[](U32 idx) const { return (&x)[idx]; }
+};
+
+
+struct R_PUBLIC_API Byte4
+{
+    union
+    {
+        struct { I8 x, y, z, w; };
+        struct { I8 s, t, r, q; };
+        struct { I8 r, g, b, a; };
+    };
+
+    Byte4(I8 x = 0, I8 y = 0, I8 z = 0, I8 w = 0)
+        : x(x), y(y), z(z), w(w) { }
+    
+    Byte4 operator-(const UByte4& rh) const
+    {
+        return Byte4(x - rh.x, y - rh.y, z - rh.z, w - rh.w);
+    }
+
+    Byte4 operator+(const Byte4& rh) const
+    {
+        return Byte4(x + rh.x, y - rh.y, z - rh.z, w - rh.w);
+    }
+
+    inline I8& operator[](U32 idx) { return (&x)[idx]; }
+    inline I8 operator[](U32 idx) const { return (&x)[idx]; }
 };
 
 
@@ -148,8 +222,17 @@ typedef UByte4 Color4;
 R_PUBLIC_API Float4 colorToFloat(const Color4& color);
 R_PUBLIC_API Color4 floatToColor(const Float4& color);
 R_PUBLIC_API F32 dot(const Float4& a, const Float4& b);
+R_PUBLIC_API U32 dot(const UByte4& a, const UByte4& b);
+R_PUBLIC_API U32 dot(const UInt4& a, const UInt4& b);
+R_PUBLIC_API U32 dot(const Int4& a, const Int4& b);
 R_PUBLIC_API F32 length(const Float4& a);
 R_PUBLIC_API F32 length2(const Float4& a);
+
+// Euclidean distance between point p0, and p1.
+R_PUBLIC_API F32 dist(const Float4& p0, const Float4& p1);
+R_PUBLIC_API I32 dist(const UInt4& p0, const UInt4& p1);
+R_PUBLIC_API I32 dist(const UByte4& p0, const UByte4& p1);
+
 // [1 x 4] * [4 x 4] = [1 x 4]
 R_PUBLIC_API Float4 operator*(const Float4& lh, const Matrix44& rh);
 // [1 x 4] * [4 x 3] = [1 x 4]

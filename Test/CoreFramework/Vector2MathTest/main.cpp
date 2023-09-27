@@ -5,6 +5,7 @@
 #include "Recluse/Messaging.hpp"
 
 #include "Recluse/Math/Vector2.hpp"
+#include "Recluse/Math/Vector4.hpp"
 #include "Recluse/Math/Matrix22.hpp"
 
 #include "Recluse/Structures/RBTree.hpp"
@@ -36,7 +37,7 @@ int main(int c, char* argv[])
 
     Log(LogType_Error, "Test") << m;
 
-    MemoryArena arena(R_MB(2));
+    MemoryArena arena(R_KB(8));
     BuddyAllocator alloc;
     alloc.initialize(arena.getBaseAddress(), arena.getTotalSizeBytes());
     RBTree<I32, CompareLess<I32>, CompareEqual<I32>, BuddyAllocator> tree(alloc);
@@ -75,6 +76,11 @@ int main(int c, char* argv[])
     tree.remove(5);
     text = tree.stringify();
     R_TRACE("Red-Black Tree", "\n%s", text.c_str());
+
+    Math::Color3 color0(255, 255, 255);
+    Math::Color3 color1(0, 255, 0);
+    U32 len = Math::dist(color0, color1);
+    R_TRACE("Colors", "distance: %d", len); 
     Log::destroyLoggingSystem();
 
     return 0;

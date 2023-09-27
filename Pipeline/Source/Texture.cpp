@@ -66,7 +66,7 @@ Texture::Texture(const std::string& name, U32 initialWidth, U32 initialHeight, U
     R_ASSERT_FORMAT(initialWidth > 0u && initialHeight > 0u && arrayLayers > 0u && mipLevels > 0u, "Parameters need to be greater than 0!");
     U32 sizeBytes   = 0u;
     U32 pixelBytes  = obtainFormatBytes(pixelFormat);
-    // Ideally it might end up needing to be used for alignment.
+    // Ideally rowPitch might end up needing to be used for alignment.
     m_rowPitch = initialWidth * pixelBytes;
     m_subresources.resize(arrayLayers);
     for (U32 layer = 0; layer < arrayLayers; ++layer)

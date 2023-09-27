@@ -332,11 +332,12 @@ void createTextureResource(GraphicsResource** textureResource)
     R_ASSERT(result == RecluseResult_Ok);
     Pipeline::Texture texture = Pipeline::Texture("Name", g_textureWidth, g_textureHeight, 16u, 4u, ResourceFormat_R8G8B8A8_Unorm);
     UPtr baseAddress = texture.getBaseAddress();
+    U32 bytesPerPixel = Pipeline::obtainFormatBytes(texture.getPixelFormat());
     for (U32 layer = 0; layer < texture.getArrayLayers(); ++layer)
     {
         for (U32 mipmap = 0; mipmap < texture.getMipCount(); ++mipmap)
         {
-            Pipeline::Subresource& subresource = texture.getSubresource(layer, mipmap);
+            const Pipeline::Subresource& subresource = texture.getSubresource(layer, mipmap);
             UPtr subresourceAddress = baseAddress + subresource.getOffsteBytes();
             U8* data = (U8*)subresourceAddress;
             for (int y = 0; y < subresource.getHeight(); y++) 
@@ -344,7 +345,7 @@ void createTextureResource(GraphicsResource** textureResource)
                 for (int x = 0; x < subresource.getWidth(); x++) 
                 {
                     U8 c = (((y & 0x8) == 0) ^ ((x & 0x8)  == 0)) * 255;
-                    Math::UByte4& output = (Math::UByte4&)data[(x*4) + texture.getRowPitch() * y];
+                    Math::UByte4& output = (Math::UByte4&)data[(x * bytesPerPixel) + texture.getRowPitch() * y];
                     output[0] = c;
                     output[1] = c;
                     output[2] = c;
@@ -610,7 +611,7 @@ int main(char* argv[], int c)
     Log::initializeLoggingSystem();
     enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
+    instance  = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 
@@ -626,7 +627,7 @@ int main(char* argv[], int c)
         appInfo.appMinor = 0;
         appInfo.appMajor = 0;
         appInfo.appPatch = 0;
-        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
+        LayerFeatureFlags flags = 0;//LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
         instance->initialize(appInfo, flags);
     }
     
@@ -714,8 +715,8 @@ int main(char* argv[], int c)
                 textureDescription.baseMipLevel = 0;
                 textureDescription.format = ResourceFormat_R8G8B8A8_Unorm;
                 textureDescription.dimension = ResourceViewDimension_2d;
-                textureDescription.layerCount = 1;
-                textureDescription.mipLevelCount = 1;
+                textureDescription.layerCount = 16;
+                textureDescription.mipLevelCount = 4;
                 textureDescription.type = ResourceViewType_ShaderResource;
                 ResourceViewId textureView = textureResource->asView(textureDescription);
                 Viewport viewport = { 0, 0, swapchain->getDesc().renderWidth, swapchain->getDesc().renderHeight, 1, 0 };

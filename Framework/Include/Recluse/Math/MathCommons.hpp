@@ -124,5 +124,22 @@ static Class divUp(Class a, Class b)
 {
 	return (a + (b - static_cast<Class>(1))) / b;
 }
+
+
+static U32 isqrt(U32 v)
+{
+	if (v <= 1)
+		return v;
+	// Use Heron's method to calculate square root of integer. This is a 
+	// special case of Newton's method.
+	U32 x0 = v / 2;
+	U32 x1 = (x0 + v / x0) / 2;
+	while (x1 < x0)
+	{
+		x0 = x1;
+		x1 = (x0 + v / x0) / 2;
+	}
+	return x0;
+}
 } // Math
 } // Recluse

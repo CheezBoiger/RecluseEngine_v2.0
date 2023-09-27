@@ -93,8 +93,15 @@ struct Int3
     Int3(const Int2& a, I32 z = 0)
         : x(a.x), y(a.y), z(z) { }
 
-    inline Int3 operator+(const Int3& rh) const;
-    inline Int3 operator-(const Int3& rh) const;
+    inline Int3 operator+(const Int3& rh) const
+    {
+        return Int3(x + rh.x, y + rh.y, z + rh.z);
+    }
+
+    inline Int3 operator-(const Int3& rh) const
+    {
+        return Int3(x - rh.x, y - rh.y, z - rh.z);
+    }
 
     inline Int3 operator-() const;
 
@@ -111,6 +118,9 @@ struct Int3
     inline friend Int3 operator-(I32 scalar, const Int3& rh);
     inline friend Int3 operator*(I32 scalar, const Int3& rh);
     inline friend Int3 operator/(I32 scalar, const Int3& rh);
+
+    inline I32& operator[](U32 i) { return (&x)[i]; }
+    inline I32 operator[](U32 i) const { return (&x)[i]; }
 };
 
 
@@ -156,15 +166,31 @@ struct R_PUBLIC_API UByte3
         struct { U8 u, v, w; };
     };
 
+    UByte3(U8 x = 0, U8 y = 0, U8 z = 0)
+        : x(x), y(y), z(z)
+    { }
+
     inline U8& operator[](U32 idx) { return (&x)[idx]; }
     inline U8 operator[](U32 idx) const { return (&x)[idx]; }
 };
 
+
+typedef UByte3 Color3;
+
 R_PUBLIC_API Float3     cross(const Float3& lh, const Float3& rh);
 R_PUBLIC_API F32        dot(const Float3& lh, const Float3& rh);
+R_PUBLIC_API U32        dot(const Int3& lh, const Int3& rh);
 R_PUBLIC_API F32        length(const Float3& v);
 R_PUBLIC_API F32        length2(const Float3& v);
 R_PUBLIC_API Float3     normalize(const Float3& v);
+
+// Euclidean distance between point p0, and p1.
+R_PUBLIC_API F32        dist(const Float3& p0, const Float3& p1);
+R_PUBLIC_API U32        dist(const UByte3& p0, const UByte3& p1);
+R_PUBLIC_API U32        dist(const UInt3& p0, const UInt3& p1);
+
+R_PUBLIC_API Color3     floatToColor(const Float3& color);
+R_PUBLIC_API Float3     colorToFloat(const Color3& color);
 
 // Obtain the reflection vector from the incidence, which is governed by the facing normal.
 R_PUBLIC_API Float3     reflect(const Float3& incidence, const Float3& normal);

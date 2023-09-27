@@ -103,7 +103,7 @@ public:
     ResourceFormat      getPixelFormat() const { return m_pixelFormat; }
     
     // Get a subresource.
-    Subresource&        getSubresource(U32 arrayLayer, U32 mip) 
+    const Subresource&  getSubresource(U32 arrayLayer, U32 mip) const
     {
         return m_subresources[arrayLayer][mip]; 
     }
@@ -140,6 +140,13 @@ enum TextureLoadFlag
 typedef U32 TextureLoadFlags;
 
 
-//Texture compress(const Texture& texture, CompressionFormat compressionFormat);
+enum CompressFlag
+{
+    CompressFlag_None = (0),
+    CompressFlag_HighQuality = (1 << 0),
+};
+typedef U32 CompressFlags;
+
+R_PUBLIC_API Texture compress(const Texture& texture, CompressionFormat compressionFormat, CompressFlags compressFlags);
 } // Pipeline
 } // Recluse
