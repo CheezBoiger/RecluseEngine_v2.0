@@ -17,6 +17,7 @@
 #define R_MAX_WRITE_INFO_COUNT (R_MAX_WRITE_BUFFER_INFO_COUNT + R_MAX_WRITE_IMAGE_INFO_COUNT)
 
 namespace Recluse {
+namespace Vulkan {
 namespace DescriptorSets {
 static VkDescriptorType getDescriptorType(ResourceViewDimension dimension, DescriptorBindType bindType)
 {
@@ -494,4 +495,5 @@ void clearDescriptorLayoutCache(VulkanDevice* pDevice)
     g_layoutMap.clear();
 }
 } // DescriptorSet
+} // Vulkan
 } // Recluse

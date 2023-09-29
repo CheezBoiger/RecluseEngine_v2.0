@@ -5,7 +5,7 @@
 #include "VulkanFrameResources.hpp"
 
 namespace Recluse {
-
+namespace Vulkan {
 
 class VulkanContext;
 class VulkanDevice;
@@ -84,4 +84,5 @@ private:
     const QueueFamily*                  m_queueFamily;
     void*                               m_windowHandle;
 };
+} // Vulkan
 } // Recluse

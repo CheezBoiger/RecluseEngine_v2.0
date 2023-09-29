@@ -9,7 +9,7 @@
 #include "Recluse/Math/MathCommons.hpp"
 
 namespace Recluse {
-
+namespace D3D12 {
 
 ResultCode D3D12PrimaryCommandList::initialize(D3D12Context* pDeviceContext, GraphicsQueueTypeFlags flags)
 {
@@ -537,4 +537,5 @@ ID3D12CommandSignature* D3D12PrimaryCommandList::obtainSignature(D3D12_INDIRECT_
     }
     return iter->second;
 }
+} // D3D12
 } // Recluse

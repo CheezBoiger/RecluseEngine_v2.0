@@ -11,6 +11,7 @@
 #include "Recluse/Math/MathCommons.hpp"
 
 namespace Recluse {
+namespace Vulkan {
 
 VkDeviceSize VulkanAllocationManager::kPerMemoryPageSizeBytes = R_MB(64);
 
@@ -402,4 +403,5 @@ void VulkanAllocationManager::clear()
         }
     }
 }
+} // Vulkan
 } // Recluse

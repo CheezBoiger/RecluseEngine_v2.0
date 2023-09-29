@@ -15,7 +15,7 @@
 #include <array>
 
 namespace Recluse {
-
+namespace D3D12 {
 
 std::map<Semantic, const char*> g_semanticMap = {
     { Semantic_Position, "POSITION" },
@@ -716,4 +716,5 @@ void checkPipelines(D3D12Device* pDevice)
         });
 }
 } // Pipelines
+} // D3D12 
 } // Recluse

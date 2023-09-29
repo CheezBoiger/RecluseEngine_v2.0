@@ -8,7 +8,7 @@
 #include "Recluse/Threading/Threading.hpp"
 
 namespace Recluse {
-
+namespace D3D12 {
 
 MutexGuard              g_resourceMutex = { };
 ResourceId              g_resourceCounter = 0;
@@ -386,4 +386,5 @@ ResultCode D3D12Resource::unmap(MapRange* pWriteRange)
     }
     return RecluseResult_Ok;
 }
+} // D3D12
 } // Recluse

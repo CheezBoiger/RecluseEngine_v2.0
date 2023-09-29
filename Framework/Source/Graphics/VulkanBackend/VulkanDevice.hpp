@@ -19,16 +19,19 @@
 #include <array>
 
 namespace Recluse {
+class Allocator;
+class MemoryPool;
+struct DeviceCreateInfo;
+} // Recluse
 
+namespace Recluse {
+namespace Vulkan {
 
 class VulkanAdapter;
 class VulkanQueue;
 class VulkanSwapchain;
 class VulkanDevice;
 class VulkanSwapchain;
-class Allocator;
-class MemoryPool;
-struct DeviceCreateInfo;
 
 
 struct QueueFamily 
@@ -410,4 +413,5 @@ private:
     std::map<VkQueueFlags, VulkanQueue> m_queues;
     Bool                                m_supportsSwapchainCreation;
 };
+} // Vulkan
 } // Recluse

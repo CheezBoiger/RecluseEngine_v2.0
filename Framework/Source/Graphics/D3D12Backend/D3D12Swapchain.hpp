@@ -7,7 +7,7 @@
 #include "D3D12ResourceView.hpp"
 
 namespace Recluse {
-
+namespace D3D12 {
 class D3D12Device;
 class D3D12Queue;
 class D3D12Context;
@@ -61,4 +61,5 @@ private:
     UINT                        m_flags;
     HWND                        m_hwnd;
 };
+} // D3D12
 } // Recluse

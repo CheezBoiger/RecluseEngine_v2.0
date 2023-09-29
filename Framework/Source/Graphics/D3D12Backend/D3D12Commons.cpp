@@ -4,6 +4,7 @@
 #include "Recluse/Messaging.hpp"
 
 namespace Recluse {
+namespace D3D12 {
 
 D3D12_RESOURCE_STATES getNativeResourceState(Recluse::ResourceState state)
 {
@@ -290,6 +291,7 @@ UINT calculateSubresource(UINT MipSlice, UINT ArraySlice, UINT PlaneSlice, UINT 
 { 
     return MipSlice + (ArraySlice * MipLevels) + (PlaneSlice * MipLevels * ArraySize); 
 }
+} // D3D12
 } // Recluse
 
 

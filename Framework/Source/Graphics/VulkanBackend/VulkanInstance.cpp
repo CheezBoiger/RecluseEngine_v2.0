@@ -7,7 +7,7 @@
 #include <vector>
 
 namespace Recluse {
-
+namespace Vulkan {
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL recluseDebugCallback
     (
@@ -418,4 +418,5 @@ ResultCode VulkanInstance::destroySurface(void* windowHandle)
     m_surfaces.erase(iter);
     return RecluseResult_Ok;
 }
+} // Vulkan
 } // Recluse

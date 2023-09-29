@@ -67,8 +67,16 @@ struct R_PUBLIC_API Int2
     I32& operator[](U32 idx) { return (&x)[idx]; }
     const I32& operator[](U32 idx) const { return (&x)[idx]; }
 
-    inline Int2 operator+(const Int2& rh) const;
-    inline Int2 operator-(const Int2& rh) const;
+    inline Int2 operator+(const Int2& rh) const
+    {
+        return Int2(x + rh.x, y + rh.y);
+    }
+
+    inline Int2 operator-(const Int2& rh) const
+    {
+        return Int2(x - rh.x, y - rh.y);
+    }
+
     inline Int2 operator-() const;
     inline Int2 operator*(const Int2& rh) const;
     inline Int2 operator/(const Int2& rh) const;
@@ -132,6 +140,17 @@ struct R_PUBLIC_API UShort2
         struct { U16 x, y; };
         struct { U16 r, g; };
         struct { U16 u, v; };
+    };
+};
+
+
+struct R_PUBLIC_API UByte2
+{
+    union
+    {
+        struct { U8 x, y; };
+        struct { U8 r, g; };
+        struct { U8 u, v; };
     };
 };
 

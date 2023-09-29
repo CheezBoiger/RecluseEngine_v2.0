@@ -11,7 +11,7 @@
 
 
 namespace Recluse {
-
+namespace Vulkan {
 
 const U32 DescriptorAllocatorInstance::kMaxSetsPerPool              = 1024;
 const F32 DescriptorAllocatorInstance::kDescriptorChunkSize         = 512.f;
@@ -277,4 +277,5 @@ void DescriptorAllocator::resize(VulkanDevice* pDevice, U32 newBufferCount)
 {
     checkAndManageInstances(pDevice, newBufferCount, m_flags);
 }
+} // Vulkan
 } // Recluse

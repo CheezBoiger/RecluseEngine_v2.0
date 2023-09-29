@@ -9,6 +9,7 @@ PFN_vkSetDebugUtilsObjectTagEXT     pfn_vkSetDebugUtilsObjectTagEXT     = nullpt
 PFN_vkCreateRayTracingPipelinesKHR  pfn_vkCreateRayTracingPipelinesKHR  = nullptr;
 #endif
 
+namespace Recluse {
 namespace Vulkan {
 
 
@@ -319,6 +320,7 @@ VkImageAspectFlags getDepthStencilAspectFlags(VkFormat format)
     return flags;
 }
 } // Vulkan
+} // Recluse
 
 #if defined(RECLUSE_RAYTRACING_HEADER)
 VKAPI_ATTR VkResult VKAPI_CALL vkCreateRayTracingPipelinesKHR(

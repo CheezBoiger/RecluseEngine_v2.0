@@ -11,6 +11,7 @@
 #include <map>
 
 namespace Recluse {
+namespace Vulkan {
 
 class VulkanDevice;
 
@@ -197,4 +198,5 @@ private:
     VkDeviceSize                                                                m_bufferImageGranularityBytes;
     CriticalSection                                                             m_allocationCs;
 };
+} // Vulkan
 } // Recluse

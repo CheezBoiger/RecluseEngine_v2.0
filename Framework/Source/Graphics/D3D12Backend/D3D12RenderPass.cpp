@@ -11,7 +11,7 @@
 #include <unordered_map>
 
 namespace Recluse {
-
+namespace D3D12 {
 
 LifetimeCache<Hash64, D3D12RenderPass> g_renderPassMap;
 std::unordered_map<Hash64, CpuDescriptorTable> g_cachedRenderPassTable;
@@ -159,4 +159,5 @@ void update()
     g_renderPassMap.updateTick();
 }
 } // RenderPasses
+} // D3D12
 } // Recluse

@@ -7,7 +7,7 @@
 #include <list>
 
 namespace Recluse {
-
+namespace Vulkan {
 
 class VulkanDevice;
 
@@ -120,4 +120,5 @@ private:
 
     std::vector<std::tuple<LayerFeatureFlag, std::vector<const char*>>> m_supportedDeviceExtensions;
 };
+} // Vulkan
 } // Recluse

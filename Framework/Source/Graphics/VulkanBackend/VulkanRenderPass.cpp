@@ -13,7 +13,7 @@
 #include <list>
 
 namespace Recluse {
-
+namespace Vulkan {
 
 struct RenderPassLiveObject
 {
@@ -522,4 +522,5 @@ void updateTick()
 #endif
 }
 } // RenderPass
+} // Vulkan
 } // Recluse

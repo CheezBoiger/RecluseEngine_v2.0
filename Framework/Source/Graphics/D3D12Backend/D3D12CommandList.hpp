@@ -5,7 +5,7 @@
 #include "Recluse/Graphics/CommandList.hpp"
 
 namespace Recluse {
-
+namespace D3D12 {
 class D3D12Device;
 class D3D12Context;
 
@@ -40,4 +40,5 @@ private:
     
     std::map<D3D12_INDIRECT_ARGUMENT_TYPE, ID3D12CommandSignature*> m_signatureMap;
 };
+} // D3D12
 } // Recluse

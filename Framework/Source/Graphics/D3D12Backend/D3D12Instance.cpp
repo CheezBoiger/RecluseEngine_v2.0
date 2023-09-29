@@ -8,7 +8,7 @@
 #include "Recluse/Threading/Threading.hpp"
 
 namespace Recluse {
-
+namespace D3D12 {
 
 R_INTERNAL
 void pfnD3D12MessageFunc(
@@ -252,4 +252,5 @@ void D3D12Instance::unregisterDebugMessageCallback(ID3D12Device* pDevice, DWORD 
     g_threadFinish.erase(cookie);
 #endif
 }
+} // D3D12
 } // Recluse

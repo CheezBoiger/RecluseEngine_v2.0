@@ -6,7 +6,7 @@
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 
 namespace Recluse {
-
+namespace Vulkan {
 class VulkanDevice;
 class VulkanResource;
 
@@ -188,4 +188,5 @@ VulkanResourceView* obtainResourceView(ResourceViewId id);
 VulkanSampler*      obtainSampler(SamplerId sampler);
 void                clearCache(VulkanDevice* pDevice);
 } // ResourceViews
+} // Vulkan
 } // Recluse

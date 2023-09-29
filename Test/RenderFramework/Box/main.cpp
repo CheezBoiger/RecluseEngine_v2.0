@@ -594,7 +594,7 @@ GraphicsSampler* createSampler(GraphicsDevice* device)
     samplerDescription.borderColor = BorderColor_OpaqueBlack;
     samplerDescription.compareOp = CompareOp_Never;
     samplerDescription.magFilter = Filter_Nearest;
-    samplerDescription.maxAnisotropy = 16.0f;
+    samplerDescription.maxAnisotropy = 0.0f;
     samplerDescription.maxLod = 16;
     samplerDescription.minLod = 0;
     samplerDescription.minFilter = Filter_Nearest;

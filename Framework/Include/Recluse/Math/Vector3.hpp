@@ -103,14 +103,36 @@ struct Int3
         return Int3(x - rh.x, y - rh.y, z - rh.z);
     }
 
-    inline Int3 operator-() const;
+    inline Int3 operator-() const
+    {
+        return Int3(-x, -y, -z);
+    }
 
-    inline Int3 operator+(I32 scalar) const;
-    inline Int3 operator-(I32 scalar) const;
-    inline Int3 operator/(I32 scalar) const;
-    inline Int3 operator*(I32 scalar) const;
+    inline Int3 operator+(I32 scalar) const
+    {
+        return Int3(x + scalar, y + scalar, z + scalar);
+    }
 
-    inline Int3 operator*(const Int3& rh) const;
+    inline Int3 operator-(I32 scalar) const
+    {
+        return Int3(x - scalar, y - scalar, z - scalar);
+    }
+
+    inline Int3 operator/(I32 scalar) const
+    {
+        return Int3(x / scalar, y / scalar, z / scalar);
+    }
+
+    inline Int3 operator*(I32 scalar) const
+    {
+        return Int3(x * scalar, y * scalar, z * scalar);
+    }
+
+    inline Int3 operator*(const Int3& rh) const
+    {
+        return Int3(x * rh.x, y * rh.y, z * rh.z);
+    }
+
     inline Int3 operator&(const Int3& rh) const;
     inline Int3 operator|(const Int3& rh) const;
 

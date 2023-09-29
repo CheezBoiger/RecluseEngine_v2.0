@@ -46,7 +46,6 @@ public:
 
     GraphicsAPI getApi() const override { return GraphicsApi_Vulkan; }
 };
-} // Recluse
 
 namespace Vulkan {
 
@@ -154,3 +153,4 @@ static VkAccessFlags getDesiredHostMemoryUsageAccess(Recluse::ResourceMemoryUsag
     return 0;
 }
 } // Vulkan
+} // Recluse

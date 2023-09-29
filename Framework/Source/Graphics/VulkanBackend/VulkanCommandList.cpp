@@ -11,7 +11,7 @@
 #include "Recluse/Messaging.hpp"
 
 namespace Recluse {
-
+namespace Vulkan {
 
 ResultCode VulkanPrimaryCommandList::initialize
                                 (
@@ -725,4 +725,5 @@ void VulkanContext::popState()
         m_contextStates.pop_back();
     }
 }
+} // Vulkan
 } // Recluse

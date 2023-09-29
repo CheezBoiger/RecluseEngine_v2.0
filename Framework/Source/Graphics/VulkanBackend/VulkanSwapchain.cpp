@@ -13,7 +13,7 @@
 
 
 namespace Recluse {
-
+namespace Vulkan {
 
 GraphicsResource* VulkanSwapchain::getFrame(U32 idx)
 {
@@ -423,4 +423,5 @@ VkPresentModeKHR VulkanSwapchain::checkAvailablePresentMode(VkSurfaceKHR surface
 
     return supportedPresentMode;
 }
+} // Vulkan
 } // Recluse

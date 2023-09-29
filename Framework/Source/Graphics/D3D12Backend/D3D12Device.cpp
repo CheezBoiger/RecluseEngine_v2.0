@@ -15,7 +15,7 @@
 #include "Recluse/Messaging.hpp"
 
 namespace Recluse {
-
+namespace D3D12 {
 
 void D3D12Context::initialize()
 {
@@ -741,4 +741,5 @@ void D3D12Device::copyBufferRegions(GraphicsResource* dst, GraphicsResource* src
 {
     getQueue(D3D12_COMMAND_LIST_TYPE_DIRECT)->copyBufferRegions(dst->castTo<D3D12Resource>(), src->castTo<D3D12Resource>(), regions, numRegions);
 }
+} // D3D12
 } // Recluse

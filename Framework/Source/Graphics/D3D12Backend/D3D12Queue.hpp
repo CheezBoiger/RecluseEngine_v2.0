@@ -5,8 +5,7 @@
 #include "Recluse/Graphics/GraphicsCommon.hpp"
 
 namespace Recluse {
-
-class D3D12Device;
+namespace D3D12 {class D3D12Device;
 class D3D12Resource;
 
 class D3D12Queue 
@@ -44,4 +43,5 @@ private:
     ID3D12Fence*                pFence;
     HANDLE                      pEvent;
 };
+} // D3D12
 } // Recluse

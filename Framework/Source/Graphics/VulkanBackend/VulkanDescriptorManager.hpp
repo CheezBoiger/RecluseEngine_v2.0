@@ -9,7 +9,7 @@
 
 
 namespace Recluse {
-
+namespace Vulkan {
 
 class VulkanDevice;
 
@@ -223,4 +223,5 @@ private:
     std::vector<DescriptorAllocatorInstance>    m_bufferedInstances;
     VkDescriptorPoolCreateFlags                 m_flags;
 };
+} // Vulkan
 } // Recluse

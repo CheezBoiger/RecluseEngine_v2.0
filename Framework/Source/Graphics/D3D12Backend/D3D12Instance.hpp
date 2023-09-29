@@ -6,7 +6,7 @@
 #include "D3D12Commons.hpp"
 
 namespace Recluse {
-
+namespace D3D12 {
 
 class D3D12Adapter;
 
@@ -33,4 +33,5 @@ private:
     IDXGIFactory2* m_pFactory;
     LayerFeatureFlags m_enabledFlags;
 };
+} // D3D12
 } // Recluse

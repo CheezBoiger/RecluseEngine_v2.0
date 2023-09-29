@@ -82,49 +82,18 @@ private:
 };
 
 
-enum SurfaceType 
-{
-    SURFACE_OPAQUE              = (1 << 0),
-    SURFACE_TRANSPARENT         = (1 << 1),
-    SURFACE_TRANSPARENT_CUTOUT  = (1 << 2),
-    SURFACE_SUBSURFACE          = (1 << 3),
-    SURFACE_FLAT                = (1 << 4),
-    SURFACE_PARTICLE            = (1 << 5),
-    SURFACE_SHADOWS             = (1 << 6),
-    SURFACE_SELF_SHADOW         = (1 << 7)
-};
-
-typedef U32 SurfaceTypeFlags;
-
-enum MaterialType 
-{
-    MATERIAL_TYPE_PBR_ROUGH_METAL,
-    MATERIAL_TYPE_PBR_GLOSS_SPEC,
-    MATERIAL_TYPE_PHONG_DIFFUSE_SPEC,
-    MATERIAL_TYPE_FLAT,
-    MATERIAL_TYPE_OTHER
-};
-
-#define R_MAT_ALBEDO        "Albedo"
-#define R_MAT_NORMAL        "Normal"
-#define R_MAT_AO            "AmbientOcclusion"
-#define R_MAT_ROUGHMETAL    "RoughMetal"
-#define R_MAT_GLOSSSPEC     "GlossSpec"
-#define R_MAT_HEIGHT        "HeightMap"
-#define R_MAT_LIGHTMAP      "LightMap"
-#define R_MAT_EMISSIVE      "Emissive"
-
+// Engine material.
 class Material 
 {
 public:
     virtual ~Material() { }
 
-    R_PUBLIC_API Material(const std::string& matName, MaterialType type) 
-        : m_matType(type)
+    R_PUBLIC_API Material(const std::string& matName)//, MaterialType type) 
+        : /* m_matType(type)
         , m_flags(0)
-        , m_matName(matName) { }
+        , */m_matName(matName) { }
 
-    R_PUBLIC_API MaterialType getMatType() const { return m_matType; }
+    //R_PUBLIC_API MaterialType getMatType() const { return m_matType; }
 
     R_PUBLIC_API B32 addTex(Texture2D* pTexture, const std::string& attrib) 
     {
@@ -157,9 +126,9 @@ public:
         return false;    
     }
 
-    R_PUBLIC_API void               setSurfaceType(SurfaceTypeFlags flags) { m_flags = flags; }
+    //R_PUBLIC_API void               setSurfaceType(SurfaceTypeFlags flags) { m_flags = flags; }
 
-    R_PUBLIC_API SurfaceTypeFlags   getSurfaceTypeFlags() { return m_flags; }
+    //R_PUBLIC_API SurfaceTypeFlags   getSurfaceTypeFlags() { return m_flags; }
 
     const std::string&              getName() const { return m_matName; }
 
@@ -174,8 +143,8 @@ public:
 
 protected:
 
-    SurfaceTypeFlags                        m_flags;
-    MaterialType                            m_matType;
+    //SurfaceTypeFlags                        m_flags;
+    //MaterialType                            m_matType;
     std::unordered_map<std::string, U32>    m_matMap;
     std::vector<Texture2D*>                 m_textures;
     std::string                             m_matName;

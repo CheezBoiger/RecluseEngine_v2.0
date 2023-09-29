@@ -6,6 +6,7 @@
 #include "D3D12DescriptorTableManager.hpp"
 
 namespace Recluse {
+namespace D3D12 {
 
 class D3D12Device;
 
@@ -86,4 +87,5 @@ ResultCode                      destroyResourceView(D3D12Device* pDevice, Resour
 ResultCode                      destroyCbv(D3D12Device* pDevice, D3D12_CPU_DESCRIPTOR_HANDLE handle);
 void                            clearAll(D3D12Device* pDevice);
 } // DescriptorViews
+} // D3D12
 } // Recluse

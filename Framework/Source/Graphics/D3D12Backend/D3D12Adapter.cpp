@@ -7,7 +7,7 @@
 #include "Recluse/Messaging.hpp"
 
 namespace Recluse {
-
+namespace D3D12 {
 
 std::vector<IDXGIAdapter*> D3D12Adapter::getAdapters(D3D12Instance* pContext)
 {
@@ -122,4 +122,5 @@ ResultCode D3D12Adapter::destroyDevice(GraphicsDevice* pDevice)
 
     return RecluseResult_Failed;
 }
+} // D3D12
 } // Recluse

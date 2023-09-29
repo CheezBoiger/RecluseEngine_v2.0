@@ -9,7 +9,7 @@
 #include <list>
 
 namespace Recluse {
-
+namespace D3D12 {
 
 class D3D12Instance;
 class D3D12Device;
@@ -43,4 +43,5 @@ private:
 
     friend class D3D12Instance;
 };
+} // D3D12
 } // Recluse

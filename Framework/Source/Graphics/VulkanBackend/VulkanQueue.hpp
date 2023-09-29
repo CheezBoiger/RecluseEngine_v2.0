@@ -6,7 +6,7 @@
 #include "VulkanInstance.hpp"
 
 namespace Recluse {
-
+namespace Vulkan {
 
 class VulkanDevice;
 class VulkanAdapter;
@@ -66,4 +66,5 @@ private:
     VkQueueFlags            m_queueFlags;
     VkCommandPool           m_tempCommandPool;
 };
+} // Vulkan
 } // Recluse

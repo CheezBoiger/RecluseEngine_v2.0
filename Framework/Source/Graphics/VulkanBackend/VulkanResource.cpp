@@ -10,6 +10,7 @@
 
 
 namespace Recluse {
+namespace Vulkan {
 namespace Resources {
 
 std::unordered_map<ResourceId, VulkanResource*> g_resourcesMap;
@@ -642,4 +643,5 @@ void VulkanImage::initializeMetadata(const GraphicsResourceDescription& descript
     m_mipLevels = description.mipLevels;
     m_format = Vulkan::getVulkanFormat(description.format);
 }
+} // Vulkan
 } // Recluse

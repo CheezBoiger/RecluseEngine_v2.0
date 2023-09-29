@@ -6,6 +6,7 @@
 #include "D3D12Allocator.hpp"
 
 namespace Recluse {
+namespace D3D12 {
 
 class D3D12Device;
 typedef U32 ResourceTransitionFlags;
@@ -90,4 +91,5 @@ private:
 
 D3D12Resource* makeResource(D3D12Device* pDevice, const GraphicsResourceDescription& description, ResourceState initialState);
 ResultCode     releaseResource(D3D12Resource* pResource, Bool immediate);
+} // D3D12
 } // Recluse

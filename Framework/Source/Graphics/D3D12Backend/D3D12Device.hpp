@@ -15,7 +15,7 @@
 #include <array>
 
 namespace Recluse {
-
+namespace D3D12 {
 class D3D12Adapter;
 class D3D12ResourcePagedAllocator;
 class D3D12ResourceAllocationManager;
@@ -256,4 +256,5 @@ private:
     DescriptorHeapAllocationManager     m_descHeapManager;
     std::map<D3D12_COMMAND_LIST_TYPE, D3D12Queue> m_queues;
 };
+} // D3D12
 } // Recluse

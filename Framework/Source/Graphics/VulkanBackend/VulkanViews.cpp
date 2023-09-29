@@ -7,6 +7,7 @@
 #include "Recluse/Messaging.hpp"
 
 namespace Recluse {
+namespace Vulkan {
 namespace ResourceViews {
 
 std::unordered_map<ResourceViewId, VulkanResourceView*>     g_resourceViewMap;
@@ -355,4 +356,5 @@ void VulkanSampler::generateDescriptionId(const SamplerDescription& description)
     obj.mipLodBias = description.mipLodBias;
     m_descId = recluseHashFast(&obj, sizeof(SamplerDescriptionUnion));
 }
+} // Vulkan
 } // Recluse

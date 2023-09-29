@@ -36,7 +36,7 @@ GraphicsInstance* GraphicsInstance::createInstance(enum GraphicsAPI api)
         case GraphicsApi_Direct3D12:
         {
             R_DEBUG("Graphics", "Creating D3D12 instance...");
-            D3D12Instance* ins = rlsMalloc<D3D12Instance>();
+            D3D12::D3D12Instance* ins = rlsMalloc<D3D12::D3D12Instance>();
             g_currentInstance = ins;
             return ins;
         } 
@@ -45,7 +45,7 @@ GraphicsInstance* GraphicsInstance::createInstance(enum GraphicsAPI api)
         case GraphicsApi_Vulkan:
         { 
             R_DEBUG("Graphics", "Creating Vulkan instance...");
-            VulkanInstance* ins = rlsMalloc<VulkanInstance>();
+            Vulkan::VulkanInstance* ins = rlsMalloc<Vulkan::VulkanInstance>();
             g_currentInstance = ins;
             return ins;
         }

@@ -8,7 +8,8 @@
 #include <vector>
 
 namespace Recluse {
-
+namespace Vulkan {
 
 class VulkanSwapchain;
+} // Vulkan
 } // Recluse

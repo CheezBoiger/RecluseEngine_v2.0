@@ -20,7 +20,7 @@
 #include "Recluse/Memory/BuddyAllocator.hpp"
 
 namespace Recluse {
-
+namespace Vulkan {
 
 R_DECLARE_GLOBAL_BOOLEAN(g_justLog, false, "Vulkan.Test");
 
@@ -1044,4 +1044,5 @@ ResultCode VulkanDevice::destroySwapchain(GraphicsSwapchain* pSwapchain)
     delete pSwapchain;
     return RecluseResult_Ok;
 }
+} // Vulkan
 } // Recluse

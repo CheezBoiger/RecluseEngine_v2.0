@@ -7,8 +7,12 @@
 #include <unordered_map>
 
 namespace Recluse {
-
 class Shader;
+} // Recluse
+
+namespace Recluse {
+namespace Vulkan {
+
 class VulkanDevice;
 
 namespace ShaderPrograms {
@@ -80,4 +84,5 @@ namespace ShaderPrograms {
     void                unloadAll(VulkanDevice* pDevice);
     ResultCode          unloadProgram(VulkanDevice* pDevice, ShaderProgramId program);
 } // ShaderPrograms
+} // Vulkan
 } // Recluse

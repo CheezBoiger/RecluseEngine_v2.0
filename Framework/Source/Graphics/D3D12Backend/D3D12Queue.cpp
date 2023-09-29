@@ -7,7 +7,7 @@
 #include "Recluse/Math/MathCommons.hpp"
 
 namespace Recluse {
-
+namespace D3D12 {
 
 ResultCode D3D12Queue::initialize(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE newType)
 {
@@ -252,4 +252,5 @@ void D3D12Queue::copyBufferRegions(D3D12Resource* dst, D3D12Resource* src, const
     endAndSubmitOneTimeCommandList(pList);
     pDevice->Release();
 }
+} // D3D12
 } // Recluse

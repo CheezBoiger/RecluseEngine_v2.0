@@ -10,7 +10,7 @@
 #include <vector>
 
 namespace Recluse {
-
+namespace D3D12 {
 class D3D12Context;
 class D3D12Device;
 class D3D12RenderPass;
@@ -108,4 +108,5 @@ void                            resetTableHeaps(D3D12Device* pDevice);
 void                            updateT(D3D12Device* pDevice);
 void                            checkPipelines(D3D12Device* pDevice);
 } // Pipelines
+} // D3D12
 } // Recluse

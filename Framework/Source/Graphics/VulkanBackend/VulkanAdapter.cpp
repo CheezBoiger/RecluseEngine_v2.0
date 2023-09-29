@@ -8,7 +8,7 @@
 #include <set>
 
 namespace Recluse {
-
+namespace Vulkan { 
 
 std::vector<VulkanAdapter> VulkanAdapter::getAvailablePhysicalDevices(VulkanInstance* ctx)
 {
@@ -475,4 +475,5 @@ Bool VulkanAdapter::checkSupportsDeviceExtension(const char* ext)
     // No supported extension found, return false.
     return false;
 }
+} // Vulkan
 } // Recluse 

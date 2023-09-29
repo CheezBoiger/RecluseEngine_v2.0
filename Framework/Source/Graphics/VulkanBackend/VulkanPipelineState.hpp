@@ -8,7 +8,7 @@
 #include "Recluse/Graphics/ShaderProgram.hpp"
 
 namespace Recluse {
-
+namespace Vulkan {
 class VulkanDevice;
 
 typedef Hash64 PipelineId;
@@ -86,4 +86,5 @@ VkPipelineLayout        makeLayout(VulkanDevice* pDevice, VkDescriptorSetLayout 
 void                    update();
 void                    clean(VulkanDevice* device);
 } // PipelineManager
+} // Vulkan
 } // Recluse

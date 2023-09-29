@@ -7,6 +7,7 @@
 
 
 namespace Recluse {
+namespace Vulkan {
 
 class VulkanInstance : public GraphicsInstance 
 {
@@ -71,4 +72,5 @@ private:
     VkDebugReportCallbackEXT m_debugReportCallback;
     std::map<UPtr, VkSurfaceKHR>  m_surfaces;
 };
+} // Vulkan
 } // Recluse

@@ -10,7 +10,7 @@
 
 
 namespace Recluse {
-
+namespace Vulkan { 
 class VulkanDevice;
 class VulkanResourceView;
 class VulkanSampler;
@@ -133,4 +133,5 @@ DescriptorSetLayoutId               obtainDescriptorLayoutKey(const Structure& s
 void                                clearDescriptorSetCache(VulkanContext* pContext, ClearCacheFlag flag = ClearCacheFlag_DescriptorPoolFastClear);
 void                                clearDescriptorLayoutCache(VulkanDevice* pContext);
 } // DescriptorSet
+} // Vulkan
 } // Recluse

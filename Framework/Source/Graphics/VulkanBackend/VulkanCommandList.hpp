@@ -9,7 +9,7 @@
 #include <vector>
 
 namespace Recluse {
-
+namespace Vulkan {
 class VulkanDevice;
 class VulkanRenderPass;
 class VulkanPipelineState;
@@ -70,4 +70,5 @@ class VulkanSecondaryCommandList : public GraphicsCommandList
 public:
 
 };
+} // Vulkan
 } // Recluse

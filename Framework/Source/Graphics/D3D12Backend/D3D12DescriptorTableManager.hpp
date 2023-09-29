@@ -14,7 +14,7 @@
 
 
 namespace Recluse {
-
+namespace D3D12 {
 
 class D3D12Device;
 
@@ -300,4 +300,5 @@ private:
     U32                                                     m_currentTableHeapIndex;
     U32                                                     m_currentHeapIndex;
 };
+} // D3D12
 } // Recluse 

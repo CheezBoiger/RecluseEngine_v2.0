@@ -23,7 +23,7 @@
 
 
 namespace Recluse {
-
+namespace D3D12 {
 
 class D3D12GraphicsObject : public IGraphicsObject
 {
@@ -67,7 +67,7 @@ extern D3D12_STENCIL_OP                     getStencilOp(Recluse::StencilOp sten
 extern D3D12_SHADER_VISIBILITY              getShaderVisibilityFlags(Recluse::ShaderStageFlags shaderStageFlags);
 extern D3D12_INDEX_BUFFER_STRIP_CUT_VALUE   getNativeStripCutValue(Recluse::IndexType indexType);
 extern UINT                                 calculateSubresource(UINT MipSlice, UINT ArraySlice, UINT PlaneSlice, UINT MipLevels, UINT ArraySize);
-
+} // D3D12
 } // Recluse
 
 

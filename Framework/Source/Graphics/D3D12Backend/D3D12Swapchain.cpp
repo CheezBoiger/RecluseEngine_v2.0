@@ -10,6 +10,7 @@
 #include "../../Win32/IO/Win32Window.hpp"
 
 namespace Recluse {
+namespace D3D12 {
 
 
 Bool shouldFullscreen(HWND handle)
@@ -362,4 +363,5 @@ U64 D3D12Swapchain::getCurrentCompletedValue()
 {
     return m_pBackbufferQueue->getFence()->GetCompletedValue(); 
 }
+} // D3D12
 } // Recluse

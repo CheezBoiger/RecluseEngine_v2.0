@@ -10,7 +10,7 @@
 #include <map>
 
 namespace Recluse {
-
+namespace D3D12 {
 
 // Allocator for D3D12 resources. This does not allocate the d3d12 memory heap itself,
 // only manages it, so be sure to handle the heap creation and destruction outside this
@@ -93,4 +93,5 @@ private:
     MemoryReserveDescription                                                            m_description;
     CriticalSection                                                                     m_allocateCs;
 };
+} // D3D12
 } // Recluse

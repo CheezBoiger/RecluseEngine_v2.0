@@ -8,7 +8,7 @@
 #include <unordered_map>
 
 namespace Recluse {
-
+namespace D3D12 {
 
 U64 D3D12GraphicsResourceView::kViewCreationCounter = 0;
 U64 D3D12Sampler::kSamplerCreationCounter = 0;
@@ -492,7 +492,11 @@ ResultCode D3D12Sampler::initialize(D3D12Device* pDevice, const SamplerDescripti
     samplerDesc.AddressW                = getAddressMode(desc.addressModeW);
     samplerDesc.BorderColor;
     samplerDesc.ComparisonFunc          = getNativeComparisonFunction(desc.compareOp);
-    samplerDesc.Filter                  = getFilterMode(desc.minFilter, desc.magFilter, desc.mipMapMode, isCompare);
+    // For some reason D3D12_FILTER_ANISOTROPIC uses linear filtering, but vulkan allows using both linear and nearest filtering...
+    // Might need to keep it consistent between the two. D3D12 literally forces you to use linear filtering, whenever you use anisotropy.
+    samplerDesc.Filter                  = (desc.maxAnisotropy > 0.f) 
+                                                ? D3D12_FILTER_ANISOTROPIC 
+                                                : getFilterMode(desc.minFilter, desc.magFilter, desc.mipMapMode, isCompare);
     samplerDesc.MaxAnisotropy           = desc.maxAnisotropy;
     samplerDesc.MinLOD                  = desc.minLod;
     samplerDesc.MaxLOD                  = desc.maxLod;
@@ -512,4 +516,5 @@ ResultCode D3D12Sampler::destroy(D3D12Device* pDevice)
     // Need to free descriptor handle!!
     return RecluseResult_NoImpl;
 }
+} // D3D12
 } // Recluse

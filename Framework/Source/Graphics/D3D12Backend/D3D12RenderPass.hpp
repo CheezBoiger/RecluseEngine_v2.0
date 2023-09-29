@@ -10,6 +10,7 @@
 #include "D3D12DescriptorTableManager.hpp"
 
 namespace Recluse {
+namespace D3D12 {
 
 class D3D12GraphicsResourceView;
 
@@ -57,4 +58,5 @@ void                clearRenderPassCache();
 void                update();
 void                sweep(D3D12Device* pDevice);
 } // Renderpasses
+} // D3D12
 } // Recluse

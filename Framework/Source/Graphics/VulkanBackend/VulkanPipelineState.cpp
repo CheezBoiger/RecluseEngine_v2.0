@@ -15,6 +15,7 @@
 #include "VulkanShaderCache.hpp"
 
 namespace Recluse {
+namespace Vulkan {
 namespace Pipelines {
 
 LifetimeCache<PipelineId, PipelineState>                                            g_pipelineMap;
@@ -1025,4 +1026,5 @@ void clean(VulkanDevice* device)
         ); 
 }
 } // Pipelines
+} // Vulkan
 } // Recluse

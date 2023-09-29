@@ -5,7 +5,7 @@
 #include "Recluse/Memory/LinearAllocator.hpp"
 
 namespace Recluse {
-
+namespace D3D12 {
 
 const D3D12_GPU_DESCRIPTOR_HANDLE DescriptorTable::invalidGpuAddress                        = { 0 };
 const D3D12_CPU_DESCRIPTOR_HANDLE DescriptorTable::invalidCpuAddress                        = { 0 };
@@ -668,4 +668,5 @@ ResultCode DescriptorHeapAllocationManager::release()
     m_currentHeapIndex = 0;
     return RecluseResult_Ok;
 }
+} // D3D12
 } // Recluse

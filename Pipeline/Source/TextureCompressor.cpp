@@ -23,6 +23,21 @@ struct BlockBC1
 };
 
 
+
+F32 normalize(UPtr address, ResourceFormat format)
+{
+    switch (format)
+    {
+        case ResourceFormat_R8G8B8A8_Unorm:
+        {
+            U8* d = reinterpret_cast<U8*>(address);
+            
+        }
+    }
+    return 0.f;
+}
+
+
 Texture compress(const Texture& texture, CompressionFormat compressionFormat, CompressFlags compressFlags)
 {
     Texture compressTexture;

@@ -8,7 +8,7 @@
 #include "Recluse/Messaging.hpp"
 
 namespace Recluse {
-
+namespace D3D12 {
 const U64 D3D12ResourceAllocationManager::kAllocationPageSizeBytes = R_MB(64);
 
 
@@ -293,4 +293,5 @@ ResultCode D3D12ResourceAllocationManager::release()
     m_pagedAllocators.clear();
     return RecluseResult_Ok;
 }
+} // D3D12
 } // Recluse

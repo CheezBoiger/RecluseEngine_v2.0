@@ -10,7 +10,7 @@
 #include "Recluse/Math/MathCommons.hpp"
 
 namespace Recluse {
-
+namespace Vulkan {
 
 VulkanQueue::~VulkanQueue()
 {
@@ -356,4 +356,5 @@ B32 VulkanQueue::isPresentSupported(VulkanAdapter* pAdapter, VkSurfaceKHR surfac
 {
     return pAdapter->checkSurfaceSupport(m_pFamilyRef->queueFamilyIndex, surface);
 }
+} // Vulkan
 } // Recluse

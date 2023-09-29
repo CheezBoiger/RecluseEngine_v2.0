@@ -11,7 +11,7 @@
 #include <unordered_map>
 
 namespace Recluse {
-
+namespace Vulkan {
 namespace ShaderPrograms {
 
 // Cache holds all system cache info.
@@ -274,4 +274,5 @@ ResultCode unloadProgram(VulkanDevice* pDevice, ShaderProgramId program)
     return RecluseResult_Ok;
 }
 } // ShaderPrograms
+} // Vulkan
 } // Recluse
