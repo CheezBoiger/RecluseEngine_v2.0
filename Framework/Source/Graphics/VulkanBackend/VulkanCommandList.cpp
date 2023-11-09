@@ -646,7 +646,7 @@ void VulkanContext::bindShaderResource(ShaderStageFlags type, U32 slot, Resource
 {
     R_ASSERT_FORMAT(currentState().m_srvs.size() > slot, "Maximum of %d shader resource views may be bound simulatenously. Request slot %d is not allowed.", currentState().m_srvs.size(), slot);
     ShaderStageFlags shaderFlags = type;
-    VulkanResourceView* pVulkanResourceView = ResourceViews::obtainResourceView(viewId);
+    VulkanResourceView* pVulkanResourceView = ResourceViews::obtainResourceView(m_pDevice->getDeviceId(), viewId);
     if (pVulkanResourceView)
         m_resourceViewShaderAccessMap[pVulkanResourceView->getId()] |= shaderFlags;
     currentState().m_srvs[slot] = pVulkanResourceView;
@@ -660,7 +660,7 @@ void VulkanContext::bindShaderResource(ShaderStageFlags type, U32 slot, Resource
 void VulkanContext::bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceViewId view)
 {
     ShaderStageFlags shaderFlags = type;
-    VulkanResourceView* pVulkanResourceView = ResourceViews::obtainResourceView(view);
+    VulkanResourceView* pVulkanResourceView = ResourceViews::obtainResourceView(m_pDevice->getDeviceId(), view);
     if (pVulkanResourceView)
         m_resourceViewShaderAccessMap[pVulkanResourceView->getId()] |= shaderFlags;
     currentState().m_uavs[slot] = pVulkanResourceView;

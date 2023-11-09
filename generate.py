@@ -28,6 +28,7 @@ def parse_arguments():
     parser.add_argument("-developer", dest="developer", action="store_true", help="Enable Developer mode for the engine.", default=False)
     parser.add_argument("-xxhash", dest="xxhash", action="store_true", help="Use XXhashing instead of the default Meow Hash.", default=False)
     parser.add_argument("-first-time", dest="ft", action="store_true", help="Run first time set up.", default=False)
+    parser.add_argument("-config", dest="config", help="Path and name of configuration file.", type=str, default=None)
     args = parser.parse_args()
     parsed_commands = args
     return
@@ -74,6 +75,9 @@ def add_additional_cmake_commands():
         cmds.append("-DRCL_DX11=True")
     else:
         cmds.append("-DRCL_DX11=False")
+        
+    if parsed_commands.config is not None:
+        print(f"You typed in: {parsed_commands.config}")
         
     return cmds
 

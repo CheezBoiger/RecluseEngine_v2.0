@@ -184,8 +184,8 @@ ResourceViewId      makeResourceView(VulkanDevice* pDevice, VulkanResource* pRes
 VulkanSampler*      makeSampler(VulkanDevice* pDevice, const SamplerDescription& desc);
 ResultCode          releaseResourceView(VulkanDevice* pDevice, ResourceViewId id);
 ResultCode          releaseSampler(VulkanDevice* pDevice, SamplerId id);
-VulkanResourceView* obtainResourceView(ResourceViewId id);
-VulkanSampler*      obtainSampler(SamplerId sampler);
+VulkanResourceView* obtainResourceView(DeviceId deviceId, ResourceViewId id);
+VulkanSampler*      obtainSampler(DeviceId deviceId, SamplerId sampler);
 void                clearCache(VulkanDevice* pDevice);
 } // ResourceViews
 } // Vulkan

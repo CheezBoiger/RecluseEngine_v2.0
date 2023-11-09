@@ -18,8 +18,8 @@ namespace Recluse {
 namespace Vulkan {
 namespace Pipelines {
 
-LifetimeCache<PipelineId, PipelineState>                                            g_pipelineMap;
-std::unordered_map<VkDescriptorSetLayout, SharedReferenceObject<VkPipelineLayout>>  g_pipelineLayoutMap;
+std::map<DeviceId, LifetimeCache<PipelineId, PipelineState>>                        g_pipelineMap;
+std::map<DeviceId, std::unordered_map<VkDescriptorSetLayout, SharedReferenceObject<VkPipelineLayout>>>  g_pipelineLayoutMap;
 R_DECLARE_GLOBAL_BOOLEAN(g_allowPipelineCaching, false, "Vulkan.EnablePipelineCache");
 R_DECLARE_GLOBAL_STRING(g_pipelineCacheDir, "VulkanCache", "Vulkan.PipelineCacheDir");
 R_DECLARE_GLOBAL_U32(g_vulkanPipelineMaxAge, 256, "Vulkan.PipelineMaxAge");
@@ -630,12 +630,13 @@ Bool unloadAll()
 VkPipelineLayout makeLayout(VulkanDevice* pDevice, VkDescriptorSetLayout descriptorLayout)
 {
     VkPipelineLayout layout = VK_NULL_HANDLE;
-    auto iter = g_pipelineLayoutMap.find(descriptorLayout);
-    if (iter == g_pipelineLayoutMap.end())
+    auto& pipelineLayoutMap = g_pipelineLayoutMap[pDevice->getDeviceId()];
+    auto iter = pipelineLayoutMap.find(descriptorLayout);
+    if (iter == pipelineLayoutMap.end())
     {
         if (layout = createPipelineLayout(pDevice, &descriptorLayout, 1))
         {
-            g_pipelineLayoutMap.insert(std::make_pair(descriptorLayout, layout));
+            pipelineLayoutMap.insert(std::make_pair(descriptorLayout, layout));
         }
     }
     else
@@ -919,7 +920,8 @@ PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure, Pi
 {
     PipelineState pipeline          = { };
     pipeline.lastUsed               = 0;
-    if (!g_pipelineMap.inCache(id))
+    auto& pipelineMap = g_pipelineMap[pDevice->getDeviceId()];
+    if (!pipelineMap.inCache(id))
     {
         ShaderPrograms::VulkanShaderProgram* program = ShaderPrograms::obtainShaderProgram(structure.state.shaderProgramId, structure.state.shaderPermutation);
         Bool pipelineCacheHit = findPipelineCache(pDevice, id, pipeline.pipelineCache);
@@ -950,13 +952,13 @@ PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure, Pi
         {
             if (!pipelineCacheHit)
                 cachePipeline(pDevice, id, pipeline.pipelineCache);
-            g_pipelineMap.insert(id, std::move(pipeline));
+            pipelineMap.insert(id, std::move(pipeline));
         }
     }
     else
     {
         // Increment the count every time we use this pipeline.
-        pipeline = *g_pipelineMap.refer(id);
+        pipeline = *pipelineMap.refer(id);
     }
     return pipeline;
 }
@@ -975,20 +977,21 @@ void destroyPipelineCache(VulkanDevice* pDevice, VkPipelineCache pipelineCache)
 
 ResultCode clearPipelineCache(VulkanDevice* pDevice)
 {
-    for (auto pipelineLayoutIt : g_pipelineLayoutMap)
+    DeviceId deviceId = pDevice->getDeviceId();
+    for (auto pipelineLayoutIt : g_pipelineLayoutMap[deviceId])
     {
         destroyPipelineLayout(pDevice, *pipelineLayoutIt.second);
     }
 
-    g_pipelineMap.forEach([pDevice] (PipelineState& state) -> void
+    g_pipelineMap[deviceId].forEach([pDevice] (PipelineState& state) -> void
         {
             R_DEBUG(R_CHANNEL_VULKAN, "Destroying pipeline.");
             destroyPipeline(pDevice, state.pipeline);
             destroyPipelineCache(pDevice, state.pipelineCache);
         });
 
-    g_pipelineLayoutMap.clear();
-    g_pipelineMap.clear();
+    g_pipelineLayoutMap[deviceId].clear();
+    g_pipelineMap[deviceId].clear();
 
     return RecluseResult_Ok;
 }
@@ -1007,15 +1010,15 @@ void Structure::nullify()
 }
 
 
-void update()
+void update(DeviceId deviceId)
 {
-    g_pipelineMap.updateTick();
+    g_pipelineMap[deviceId].updateTick();
 }
 
 
 void clean(VulkanDevice* device)
 {
-    g_pipelineMap.check
+    g_pipelineMap[device->getDeviceId()].check
         (
             g_vulkanPipelineMaxAge, [device] (PipelineState& state) -> void 
             {

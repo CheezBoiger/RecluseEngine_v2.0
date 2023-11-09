@@ -7,7 +7,7 @@
 namespace Recluse {
 namespace Math {
 
-struct Ray;
+struct Ray3d;
 struct Bounds3d;
 
 

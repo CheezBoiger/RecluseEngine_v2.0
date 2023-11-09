@@ -81,10 +81,11 @@ U32 D3D12Adapter::constantBufferOffsetAlignmentBytes() const
 
 ResultCode D3D12Adapter::createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice)
 {
+    static U32 deviceIDIncrement = 0;
     D3D12Device* pDevice    = new D3D12Device();
     ResultCode result          = RecluseResult_Ok;
     
-    result = pDevice->initialize(this, info);
+    result = pDevice->initialize(this, info, deviceIDIncrement);
     
     if (result != RecluseResult_Ok) 
     {
@@ -99,6 +100,7 @@ ResultCode D3D12Adapter::createDevice(DeviceCreateInfo& info, GraphicsDevice** p
     m_devices.push_back(pDevice);
 
     *ppDevice = pDevice;
+    deviceIDIncrement++;
 
     return result;
 }

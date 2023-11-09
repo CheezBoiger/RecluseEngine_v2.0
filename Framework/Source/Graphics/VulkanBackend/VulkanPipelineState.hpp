@@ -83,7 +83,7 @@ ResultCode              releasePipeline(VulkanDevice* pDevice, PipelineId pipeli
 
 // Creates a pipeline layout if one does not exist. Otherwise, returns an existing pipeline layout.
 VkPipelineLayout        makeLayout(VulkanDevice* pDevice, VkDescriptorSetLayout layout);
-void                    update();
+void                    update(DeviceId id);
 void                    clean(VulkanDevice* device);
 } // PipelineManager
 } // Vulkan

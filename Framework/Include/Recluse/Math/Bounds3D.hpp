@@ -5,7 +5,7 @@
 
 namespace Recluse {
 namespace Math {
-struct Ray;
+struct Ray3d;
 struct Plane;
 
 // Bounding sphere structure.
@@ -29,7 +29,7 @@ typedef Bounds3d AlignedBox3d;
 
 
 // Check if Ray intersects with bounding box.
-R_PUBLIC_API Bool    intersects(const Ray& ray, const Bounds3d& bounds, F32& t);
+R_PUBLIC_API Bool    intersects(const Ray3d& ray, const Bounds3d& bounds, F32& t);
 
 // Check if one bounding box intersects with another bounding box.
 R_PUBLIC_API Bool    intersects(const Bounds3d& a, const Bounds3d& b);

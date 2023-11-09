@@ -27,7 +27,7 @@ R_PUBLIC_API Bool contains(const Bounds2d& container, const Bounds2d& bounds);
 
 // Check if our bounding boxes intersect.
 R_PUBLIC_API Bool intersects(const Bounds2d& a, const Bounds2d& b);
-R_PUBLIC_API Bool intersects(const Bounds2d& a, const Ray& ray);
+R_PUBLIC_API Bool intersects(const Bounds2d& a, const Ray2d& ray);
 R_PUBLIC_API Bool intersects(const Bounds2d& a, const BoundsCircle& circle);
 R_PUBLIC_API Bool intersects(const BoundsCircle& a, const BoundsCircle& b);
 } // Math

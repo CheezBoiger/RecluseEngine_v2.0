@@ -305,7 +305,7 @@ ShaderVisibleDescriptorTable D3D12Context::uploadToShaderVisible(CpuDescriptorTa
 }
 
 
-ResultCode D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo& info)
+ResultCode D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo& info, U32 deviceId)
 {
     R_DEBUG(R_CHANNEL_D3D12, "Creating D3D12 device...");
 
@@ -334,6 +334,8 @@ ResultCode D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo
     {
         m_debugCookie = adapter->getInstance()->registerDebugMessageCallback(m_device);
     }
+
+    setDeviceId(deviceId);
 
     R_DEBUG(R_CHANNEL_D3D12, "Successfully created D3D12 device!");
     return RecluseResult_Ok;

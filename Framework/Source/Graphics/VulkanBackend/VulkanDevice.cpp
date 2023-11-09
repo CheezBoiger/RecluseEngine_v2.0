@@ -141,7 +141,7 @@ void VulkanContext::end()
     m_pDevice->invalidateAllMappedRanges();
 
     submitFinalCommandBuffer(m_primaryCommandList.get());
-    RenderPasses::checkLruCache(m_pDevice->get());
+    RenderPasses::checkLruCache(m_pDevice);
     Pipelines::clean(m_pDevice);
 }
 
@@ -215,7 +215,7 @@ VkPhysicalDeviceFeatures checkEnableFeatures(VulkanAdapter* adapter)
 }
 
 
-ResultCode VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info)
+ResultCode VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& info, U32 deviceId)
 {
     R_ASSERT_FORMAT(adapter != NULL, "Adapter must not be NULL! Device creation will fail!");
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos; 
@@ -317,6 +317,7 @@ ResultCode VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& in
 
     m_allocationManager = makeSmartPtr(new VulkanAllocationManager());
     ResultCode err = m_allocationManager->initialize(this);
+    setDeviceId(deviceId);
 
     if (err != RecluseResult_Ok)
     {
@@ -706,8 +707,8 @@ void VulkanContext::prepare()
     // TODO: probably want to figure out a cleaner way of doing this.
     DescriptorSets::clearDescriptorSetCache(this, DescriptorSets::ClearCacheFlag_DescriptorPoolFastClear);
     resetBinds();
-    RenderPasses::updateTick();
-    Pipelines::update();
+    RenderPasses::updateTick(m_pDevice);
+    Pipelines::update(m_pDevice->getDeviceId());
 }
 
 

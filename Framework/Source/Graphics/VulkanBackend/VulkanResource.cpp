@@ -13,19 +13,20 @@ namespace Recluse {
 namespace Vulkan {
 namespace Resources {
 
-std::unordered_map<ResourceId, VulkanResource*> g_resourcesMap;
+std::map<DeviceId, std::unordered_map<ResourceId, VulkanResource*>> g_resourcesMap;
 
 VulkanResource* makeResource(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState)
 {
     R_ASSERT_FORMAT(desc.width > 0 && desc.height > 0 && desc.depthOrArraySize > 0 && desc.mipLevels > 0, "Description width/height/arraySize/mipLevels should at least be 1 or greater!");
+    DeviceId deviceId = pDevice->getDeviceId();
     if (desc.dimension == ResourceDimension_Buffer)
     {
         VulkanBuffer* pBuffer   = new VulkanBuffer(desc);
         pBuffer->initialize(pDevice, desc, initState);
         pBuffer->generateId();
         ResourceId id           = pBuffer->getId();
-        g_resourcesMap[id]      = pBuffer;
-        return g_resourcesMap[id];
+        g_resourcesMap[deviceId][id]      = pBuffer;  
+        return g_resourcesMap[deviceId][id];
     }
     else
     {
@@ -33,8 +34,8 @@ VulkanResource* makeResource(VulkanDevice* pDevice, const GraphicsResourceDescri
         pImage->initialize(pDevice, desc, initState);
         pImage->generateId();
         ResourceId id       = pImage->getId();
-        g_resourcesMap[id]  = pImage;
-        return g_resourcesMap[id];
+        g_resourcesMap[deviceId][id]  = pImage;
+        return g_resourcesMap[deviceId][id];
     }
 
     return nullptr;
@@ -43,11 +44,12 @@ VulkanResource* makeResource(VulkanDevice* pDevice, const GraphicsResourceDescri
 
 ResultCode releaseResource(VulkanDevice* pDevice, ResourceId id, Bool immediate)
 {
-    auto& iter = g_resourcesMap.find(id);
-    if (iter != g_resourcesMap.end())
+    auto& resourcesMap = g_resourcesMap[pDevice->getDeviceId()];
+    auto& iter = resourcesMap.find(id);
+    if (iter != resourcesMap.end())
     {
         iter->second->release(immediate);
-        g_resourcesMap.erase(iter);
+        resourcesMap.erase(iter);
         return RecluseResult_Ok;
     }
 
@@ -55,10 +57,11 @@ ResultCode releaseResource(VulkanDevice* pDevice, ResourceId id, Bool immediate)
 }
 
 
-VulkanResource* obtainResource(ResourceId id)
+VulkanResource* obtainResource(DeviceId deviceId, ResourceId id)
 {
-    auto& iter = g_resourcesMap.find(id);
-    if (iter == g_resourcesMap.end())
+    auto& resourcesMap = g_resourcesMap[deviceId];
+    auto& iter = resourcesMap.find(id);
+    if (iter == resourcesMap.end())
         return nullptr;
     return iter->second;
 }

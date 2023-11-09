@@ -10,8 +10,8 @@ namespace Recluse {
 namespace Vulkan {
 namespace ResourceViews {
 
-std::unordered_map<ResourceViewId, VulkanResourceView*>     g_resourceViewMap;
-std::unordered_map<SamplerId, VulkanSampler*>               g_samplerMap;
+std::map<DeviceId, std::unordered_map<ResourceViewId, VulkanResourceView*>>     g_resourceViewMap;
+std::map<DeviceId, std::unordered_map<SamplerId, VulkanSampler*>>               g_samplerMap;
 
 
 ResourceViewId makeResourceView(VulkanDevice* pDevice, VulkanResource* pResource, const ResourceViewDescription& desc)
@@ -25,7 +25,7 @@ ResourceViewId makeResourceView(VulkanDevice* pDevice, VulkanResource* pResource
         pView = new VulkanResourceView(desc, true);
     pView->initialize(pDevice, pResource);
     pView->generateId();
-    g_resourceViewMap[pView->getId()] = pView;
+    g_resourceViewMap[pDevice->getDeviceId()][pView->getId()] = pView;
     return pView->getId();
 }
 
@@ -36,7 +36,7 @@ VulkanSampler* makeSampler(VulkanDevice* pDevice, const SamplerDescription& desc
     pSampler->initialize(pDevice, desc);
     pSampler->generateId();
 
-    g_samplerMap[pSampler->getId()] = pSampler;
+    g_samplerMap[pDevice->getDeviceId()][pSampler->getId()] = pSampler;
     
     return pSampler;
 }
@@ -44,41 +44,45 @@ VulkanSampler* makeSampler(VulkanDevice* pDevice, const SamplerDescription& desc
 
 ResultCode releaseResourceView(VulkanDevice* pDevice, ResourceViewId id)
 {
-    auto& iter = g_resourceViewMap.find(id);
-    if (iter == g_resourceViewMap.end())
+    auto& resourceViewMap = g_resourceViewMap[pDevice->getDeviceId()];
+    auto& iter = resourceViewMap.find(id);
+    if (iter == resourceViewMap.end())
         return RecluseResult_NotFound;
     iter->second->release(pDevice);
     delete iter->second;
-    g_resourceViewMap.erase(iter);
+    resourceViewMap.erase(iter);
     return RecluseResult_Ok;
 }
 
 
 ResultCode releaseSampler(VulkanDevice* pDevice, SamplerId id)
 {
-    auto& iter = g_samplerMap.find(id);
-    if (iter == g_samplerMap.end())
+    auto& samplerMap = g_samplerMap[pDevice->getDeviceId()];
+    auto& iter = samplerMap.find(id);
+    if (iter == samplerMap.end())
         return RecluseResult_NotFound;
     iter->second->release(pDevice);
     delete iter->second;
-    g_samplerMap.erase(iter);
+    samplerMap.erase(iter);
     return RecluseResult_Ok;
 }
 
 
-VulkanResourceView* obtainResourceView(ResourceViewId id)
+VulkanResourceView* obtainResourceView(DeviceId deviceId, ResourceViewId id)
 {
-    auto& iter = g_resourceViewMap.find(id);
-    if (iter == g_resourceViewMap.end())
+    auto& resourceViewMap = g_resourceViewMap[deviceId];
+    auto& iter = resourceViewMap.find(id);
+    if (iter == resourceViewMap.end())
         return nullptr;
     return iter->second;
 }
 
 
-VulkanSampler* obtainSampler(SamplerId id)
+VulkanSampler* obtainSampler(DeviceId deviceId, SamplerId id)
 {
-    auto& iter = g_samplerMap.find(id);
-    if (iter == g_samplerMap.end())
+    auto& samplerMap = g_samplerMap[deviceId];
+    auto& iter = samplerMap.find(id);
+    if (iter == samplerMap.end())
         return nullptr;
     return iter->second;
 }
@@ -86,7 +90,8 @@ VulkanSampler* obtainSampler(SamplerId id)
 
 void clearCache(VulkanDevice* pDevice)
 {
-    for (auto iter : g_resourceViewMap)
+    DeviceId deviceId = pDevice->getDeviceId();
+    for (auto iter : g_resourceViewMap[deviceId])
     {
         if (iter.second)
         {
@@ -95,7 +100,7 @@ void clearCache(VulkanDevice* pDevice)
         }
     }
 
-    for (auto iter : g_samplerMap)
+    for (auto iter : g_samplerMap[deviceId])
     {
         if (iter.second)
         {
@@ -104,7 +109,8 @@ void clearCache(VulkanDevice* pDevice)
         }
     }
 
-    g_resourceViewMap.clear();
+    g_resourceViewMap[deviceId].clear();
+    g_samplerMap[deviceId].clear();
 }
 } // ResourceViews
 

@@ -19,6 +19,8 @@
 namespace Recluse {
 namespace Vulkan {
 namespace DescriptorSets {
+
+
 static VkDescriptorType getDescriptorType(ResourceViewDimension dimension, DescriptorBindType bindType)
 {
     VkDescriptorType type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -339,6 +341,7 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
 
     return RecluseResult_Ok;
 }
+
 
 typedef Hash64 DescriptorSetId;
 typedef Hash64 DescriptorLayoutId;

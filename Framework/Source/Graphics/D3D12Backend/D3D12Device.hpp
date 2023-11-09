@@ -200,7 +200,7 @@ public:
         , m_debugCookie(0)
         , m_pAdapter(nullptr) { }
 
-    ResultCode                          initialize(D3D12Adapter* adapter, const DeviceCreateInfo& info);
+    ResultCode                          initialize(D3D12Adapter* adapter, const DeviceCreateInfo& info, U32 deviceId);
     void                                destroy();
 
     ID3D12Device*                       get() const { return m_device; }

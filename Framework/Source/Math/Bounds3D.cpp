@@ -39,7 +39,7 @@ Bool intersects(const Bounds3d& a, const Bounds3d& b)
 }
 
 
-Bool intersects(const Ray& ray, const Bounds3d& bounds, F32& t)
+Bool intersects(const Ray3d& ray, const Bounds3d& bounds, F32& t)
 {
 	const Float3 dirInv   = 1.0f / ray.dir;
 

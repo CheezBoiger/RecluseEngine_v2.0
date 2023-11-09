@@ -180,7 +180,7 @@ namespace Resources {
 
 VulkanResource*     makeResource(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState);
 ResultCode          releaseResource(VulkanDevice* pDevice, ResourceId id, Bool immediate);
-VulkanResource*     obtainResource(ResourceId id);
+VulkanResource*     obtainResource(DeviceId deviceId, ResourceId id);
 } // Resources
 } // Vulkan
 } // Recluse

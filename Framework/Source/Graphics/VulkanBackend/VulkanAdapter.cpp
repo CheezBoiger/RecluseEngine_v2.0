@@ -163,11 +163,10 @@ ResultCode VulkanAdapter::getAdapterInfo(AdapterInfo* out) const
 
 ResultCode VulkanAdapter::createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice) 
 {
-
+    static U32 deviceIDIncrement = 0;
     R_DEBUG(R_CHANNEL_VULKAN, "Creating device!");
-
     VulkanDevice* pDevice = new VulkanDevice();
-    ResultCode err = pDevice->initialize(this, info);
+    ResultCode err = pDevice->initialize(this, info, deviceIDIncrement);
     
     if (err != RecluseResult_Ok) 
     {    
@@ -179,6 +178,8 @@ ResultCode VulkanAdapter::createDevice(DeviceCreateInfo& info, GraphicsDevice** 
 
     m_devices.push_back(pDevice);
     *ppDevice = pDevice;
+
+    deviceIDIncrement++;
 
     return RecluseResult_Ok;
 }

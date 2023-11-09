@@ -311,7 +311,7 @@ public:
     { 
     }
 
-    ResultCode          initialize(VulkanAdapter* iadapter, DeviceCreateInfo& info);
+    ResultCode          initialize(VulkanAdapter* iadapter, DeviceCreateInfo& info, U32 deviceId);
     ResultCode          createQueues();
     const std::vector<QueueFamily>& getQueueFamilies() const { return m_queueFamilies; }    
 

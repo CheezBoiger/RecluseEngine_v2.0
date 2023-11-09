@@ -65,8 +65,8 @@ typedef Hash64 FrameBufferId;
 
 VulkanRenderPass        makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, ResourceViewId* ppRenderTargetViews, ResourceViewId pDepthStencil);
 void                    clearCache(VulkanDevice* pDevice);
-void                    updateTick();
-void                    checkLruCache(VkDevice device);
+void                    updateTick(VulkanDevice* pDevice);
+void                    checkLruCache(VulkanDevice* device);
 } // RenderPass
 
 

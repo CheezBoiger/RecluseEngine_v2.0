@@ -37,8 +37,8 @@ std::unordered_map<Hash64, std::list<std::unique_ptr<FramebufferObject>>::iterat
 // Tick occurs every new iteration of the engine. This needs to increment every new frame.
 U32                                                                                                         g_tick = 0;
 #else
-LifetimeCache<Hash64, std::unique_ptr<FramebufferObject>>                                                   g_fbCache;
-LifetimeCache<RenderPasses::RenderPassId, std::unique_ptr<RenderPassLiveObject>>                            g_rpCache;
+std::map<DeviceId, LifetimeCache<Hash64, std::unique_ptr<FramebufferObject>>>                               g_fbCache;
+std::map<DeviceId, LifetimeCache<RenderPasses::RenderPassId, std::unique_ptr<RenderPassLiveObject>>>        g_rpCache;
 #endif
 
 R_DECLARE_GLOBAL_U32(g_renderPassMaxAge, 12, "Vulkan.RenderPassMaxAge");
@@ -59,7 +59,7 @@ U64 serialize(const VkFramebufferCreateInfo& info)
 
 
 R_INTERNAL
-void cacheRenderPass(RenderPasses::RenderPassId renderpassId, VkRenderPass renderPass)
+void cacheRenderPass(DeviceId deviceId, RenderPasses::RenderPassId renderpassId, VkRenderPass renderPass)
 {
     std::unique_ptr<RenderPassLiveObject> obj = std::make_unique<RenderPassLiveObject>();
     obj->rp = renderPass;
@@ -69,13 +69,13 @@ void cacheRenderPass(RenderPasses::RenderPassId renderpassId, VkRenderPass rende
     g_rpList.push_front(std::move(obj));
     g_rpCache.insert(std::make_pair(renderpassId, g_rpList.begin()));
 #else
-    g_rpCache.insert(renderpassId, std::move(obj));
+    g_rpCache[deviceId].insert(renderpassId, std::move(obj));
 #endif
 }
 
 
 R_INTERNAL 
-VkRenderPass referRenderPass(RenderPasses::RenderPassId renderPassId)
+VkRenderPass referRenderPass(DeviceId deviceId, RenderPasses::RenderPassId renderPassId)
 {
 #if defined(USE_STD_LRU_IMPL)
     if (g_rpCache.find(renderPassId) != g_rpCache.end())
@@ -89,7 +89,7 @@ VkRenderPass referRenderPass(RenderPasses::RenderPassId renderPassId)
         return (*g_rpCache[renderPassId])->rp();
     }
 #else
-    std::unique_ptr<RenderPassLiveObject>* obj = g_rpCache.refer(renderPassId);
+    std::unique_ptr<RenderPassLiveObject>* obj = g_rpCache[deviceId].refer(renderPassId);
     if (obj)
         return obj->get()->rp();
 #endif
@@ -105,7 +105,7 @@ U64 serialize(const VkRenderPassCreateInfo& info)
 
 
 R_INTERNAL
-Bool inFboCache(Hash64 fboId)
+Bool inFboCache(DeviceId deviceId, Hash64 fboId)
 {
 #if defined(USE_STD_LRU_IMPL)
     auto it = g_fbCache.find(fboId);
@@ -113,13 +113,13 @@ Bool inFboCache(Hash64 fboId)
         return false;
     return true;
 #else
-    return g_fbCache.inCache(fboId);
+    return g_fbCache[deviceId].inCache(fboId);
 #endif
 }
 
 
 R_INTERNAL
-FramebufferObject* getCachedFbo(Hash64 fboId)
+FramebufferObject* getCachedFbo(DeviceId deviceId, Hash64 fboId)
 {
 #if defined(USE_STD_LRU_IMPL)
     if (g_fbCache.find(fboId) != g_fbCache.end())
@@ -132,7 +132,7 @@ FramebufferObject* getCachedFbo(Hash64 fboId)
         return g_fbCache[fboId]->get();
     }
 #else
-    std::unique_ptr<FramebufferObject>* ptr = g_fbCache.refer(fboId);
+    std::unique_ptr<FramebufferObject>* ptr = g_fbCache[deviceId].refer(fboId);
     if (ptr) return ptr->get();
 #endif
     return nullptr;
@@ -140,7 +140,7 @@ FramebufferObject* getCachedFbo(Hash64 fboId)
 
 
 R_INTERNAL
-FramebufferObject* cacheFbo(Hash64 fboId, VkFramebuffer fbo, const VkRect2D& renderArea, U32 numReferences)
+FramebufferObject* cacheFbo(DeviceId deviceId, Hash64 fboId, VkFramebuffer fbo, const VkRect2D& renderArea, U32 numReferences)
 {
     std::unique_ptr<FramebufferObject> data = std::make_unique<FramebufferObject>();
     data->framebuffer = fbo;
@@ -152,7 +152,7 @@ FramebufferObject* cacheFbo(Hash64 fboId, VkFramebuffer fbo, const VkRect2D& ren
     g_fbCache.insert(std::make_pair(fboId, g_fbList.begin()));
     return g_fbCache[fboId]->get();
 #else
-    return g_fbCache.insert(fboId, std::move(data))->get();
+    return g_fbCache[deviceId].insert(fboId, std::move(data))->get();
 #endif
 }
 
@@ -166,15 +166,16 @@ FramebufferObject* makeFrameBuffer(VulkanDevice* pDevice, VkRenderPass renderPas
     Bool hasDepthStencil = false;
     U32 totalAttachmentCount = 0;    
     U32 i = 0;
+    DeviceId deviceId = pDevice->getDeviceId();
     for (i = 0; i < desc.numRenderTargets; ++i)
     {
-        VulkanImageView* pView = ResourceViews::obtainResourceView(desc.ppRenderTargetViews[i])->castTo<VulkanImageView>();
+        VulkanImageView* pView = ResourceViews::obtainResourceView(deviceId, desc.ppRenderTargetViews[i])->castTo<VulkanImageView>();
         viewAttachments[i] = pView->get();
     }
 
     if (desc.pDepthStencil)
     {
-        VulkanImageView* pView = ResourceViews::obtainResourceView(desc.pDepthStencil)->castTo<VulkanImageView>();
+        VulkanImageView* pView = ResourceViews::obtainResourceView(deviceId, desc.pDepthStencil)->castTo<VulkanImageView>();
         viewAttachments[i] = pView->get();
         hasDepthStencil = true;
     }
@@ -191,9 +192,9 @@ FramebufferObject* makeFrameBuffer(VulkanDevice* pDevice, VkRenderPass renderPas
 
     // Find a proper framebuffer object in the cache, otherwise if miss, create a new fbo.
     Hash64 fboId = serialize(fboIf);
-    if (inFboCache(fboId))
+    if (inFboCache(deviceId, fboId))
     {
-        framebuffer = getCachedFbo(fboId);
+        framebuffer = getCachedFbo(deviceId, fboId);
     }
     else
     {
@@ -212,7 +213,7 @@ FramebufferObject* makeFrameBuffer(VulkanDevice* pDevice, VkRenderPass renderPas
             VkRect2D renderArea = { };
             renderArea.extent = { desc.width, desc.height };
             renderArea.offset = { 0, 0 };
-            framebuffer = cacheFbo(fboId, fbo, renderArea, totalAttachmentCount);
+            framebuffer = cacheFbo(deviceId, fboId, fbo, renderArea, totalAttachmentCount);
         }
     }
 
@@ -233,10 +234,11 @@ VkRenderPass createRenderPass(VulkanDevice* pDevice,  const VulkanRenderPassDesc
     VkRenderPassCreateInfo  rpIf        = { };
     VkSubpassDescription subpass        = { };
     U32 totalNumAttachments             = 0;
+    DeviceId deviceId                   = pDevice->getDeviceId();
 
     auto storeColorDescription = [&] (U32 i) -> void 
     {
-        VulkanImageView* pView           = ResourceViews::obtainResourceView(desc.ppRenderTargetViews[i])->castTo<VulkanImageView>();
+        VulkanImageView* pView           = ResourceViews::obtainResourceView(deviceId, desc.ppRenderTargetViews[i])->castTo<VulkanImageView>();
         ResourceViewDescription viewDesc    = pView->getDesc();
 
         descriptions[i].samples         = VK_SAMPLE_COUNT_1_BIT;
@@ -255,7 +257,7 @@ VkRenderPass createRenderPass(VulkanDevice* pDevice,  const VulkanRenderPassDesc
 
     auto storeDepthStencilDescription = [&] (U32 i) -> void 
     {
-        VulkanImageView* pView   = ResourceViews::obtainResourceView(desc.pDepthStencil)->castTo<VulkanImageView>();
+        VulkanImageView* pView   = ResourceViews::obtainResourceView(deviceId, desc.pDepthStencil)->castTo<VulkanImageView>();
         ResourceViewDescription viewDesc   = pView->getDesc();
 
         descriptions[i].samples         = VK_SAMPLE_COUNT_1_BIT;
@@ -334,28 +336,29 @@ VkRenderPass createRenderPass(VulkanDevice* pDevice,  const VulkanRenderPassDesc
 R_INTERNAL
 VkRenderPass internalMakeRenderPass(VulkanDevice* pDevice,  const VulkanRenderPassDesc& desc, RenderPasses::RenderPassId renderPassId)
 {
+    DeviceId deviceId = pDevice->getDeviceId();
 #if defined(USE_STD_LRU_IMPL)
     auto iter = g_rpCache.find(renderPassId);
     // Failed to find a suitable render pass, make a new one.
     if (iter == g_rpCache.end())
 #else
-    if (!g_rpCache.inCache(renderPassId))
+    if (!g_rpCache[deviceId].inCache(renderPassId))
 #endif
     {
         VkRenderPass renderPass = createRenderPass(pDevice, desc);
         U32 references = desc.numRenderTargets + ((desc.pDepthStencil != 0) ? 1 : 0);
-        cacheRenderPass(renderPassId, renderPass);
+        cacheRenderPass(deviceId, renderPassId, renderPass);
 #if defined(USE_STD_LRU_IMPL)
         (*g_rpCache[renderPassId])->rp.addReference(references);
         return (*g_rpCache[renderPassId])->rp();
 #else
-        return g_rpCache.refer(renderPassId)->get()->rp();
+        return g_rpCache[deviceId].refer(renderPassId)->get()->rp();
 #endif
     }
     else
     {
         // We have one, let's return this one.
-        return referRenderPass(renderPassId);
+        return referRenderPass(deviceId, renderPassId);
     }
 }
 
@@ -363,8 +366,9 @@ VkRenderPass internalMakeRenderPass(VulkanDevice* pDevice,  const VulkanRenderPa
 namespace RenderPasses {
 
 
-void checkLruCache(VkDevice device)
+void checkLruCache(VulkanDevice* pDevice)
 {
+    VkDevice device = pDevice->get();
 #if defined(USE_STD_LRU_IMPL)
     const U32 currentTick = g_tick;
 
@@ -399,13 +403,14 @@ void checkLruCache(VkDevice device)
         }
     }
 #else
-    g_rpCache.check(g_renderPassMaxAge,
+    DeviceId deviceId = pDevice->getDeviceId();
+    g_rpCache[deviceId].check(g_renderPassMaxAge,
                         [device] (std::unique_ptr<RenderPassLiveObject>& obj) -> void
                         {
                             R_DEBUG("Vulkan", "Cleaning up render pass");
                             vkDestroyRenderPass(device, obj->rp(), nullptr);
                         });
-    g_fbCache.check(g_frameBufferMaxAge, 
+    g_fbCache[deviceId].check(g_frameBufferMaxAge, 
                         [device] (std::unique_ptr<FramebufferObject>& obj) -> void 
                         {
                             R_DEBUG("Vulkan", "Cleaning up framebuffer."); 
@@ -427,10 +432,11 @@ VulkanRenderPass makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, Res
     U32 targetWidth     = 0;
     U32 targetHeight    = 0;
     U32 targetLayers    = 0;
+    DeviceId deviceId   = pDevice->getDeviceId();
     
     for (U32 i = 0; i < numRenderTargets; ++i)
     {
-        VulkanResourceView* pView = ResourceViews::obtainResourceView(ppRenderTargetViews[i]);
+        VulkanResourceView* pView = ResourceViews::obtainResourceView(deviceId, ppRenderTargetViews[i]);
         R_ASSERT(!pView->getResource()->isBuffer());
         VulkanImage* pImage = pView->getResource()->castTo<VulkanImage>();
         ids[count++]    = pView->getDescriptionId();
@@ -441,7 +447,7 @@ VulkanRenderPass makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, Res
 
     if (pDepthStencil)
     {
-        VulkanResourceView* pView = ResourceViews::obtainResourceView(pDepthStencil);
+        VulkanResourceView* pView = ResourceViews::obtainResourceView(deviceId, pDepthStencil);
         R_ASSERT(!pView->getResource()->isBuffer());
         VulkanImage* pImage = pView->getResource()->castTo<VulkanImage>();
         ids[count++]    = pView->getDescriptionId();
@@ -490,7 +496,8 @@ void clearCache(VulkanDevice* pDevice)
     g_rpList.clear();
     g_rpCache.clear();
 #else
-    g_rpCache.forEach
+    DeviceId deviceId = pDevice->getDeviceId();
+    g_rpCache[deviceId].forEach
         (
             [pDevice] (std::unique_ptr<RenderPassLiveObject>& obj) -> void
             {
@@ -498,7 +505,7 @@ void clearCache(VulkanDevice* pDevice)
                 vkDestroyRenderPass(pDevice->get(), obj->rp(), nullptr);
             }
         );
-    g_fbCache.forEach
+    g_fbCache[deviceId].forEach
         (
             [pDevice] (std::unique_ptr<FramebufferObject>& obj) -> void 
             { 
@@ -506,19 +513,20 @@ void clearCache(VulkanDevice* pDevice)
                 vkDestroyFramebuffer(pDevice->get(), obj->framebuffer, nullptr); 
             }
         );
-    g_rpCache.clear();
-    g_fbCache.clear();
+    g_rpCache[deviceId].clear();
+    g_fbCache[deviceId].clear();
 #endif
 }
 
 
-void updateTick()
+void updateTick(VulkanDevice* pDevice)
 {
 #if defined(USE_STD_LRU_IMPL)
     g_tick += 1;
 #else
-    g_rpCache.updateTick();
-    g_fbCache.updateTick();
+    DeviceId deviceId = pDevice->getDeviceId();
+    g_rpCache[deviceId].updateTick();
+    g_fbCache[deviceId].updateTick();
 #endif
 }
 } // RenderPass

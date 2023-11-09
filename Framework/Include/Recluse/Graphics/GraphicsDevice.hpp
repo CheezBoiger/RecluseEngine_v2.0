@@ -77,6 +77,7 @@ enum ContextFlag
 };
 
 typedef U32 ContextFlags;
+typedef U32 DeviceId;
 
 
 class R_PUBLIC_API GraphicsContext : public ICastableObject
@@ -294,12 +295,17 @@ public:
                                         )
         { }
 
+    DeviceId getDeviceId() const { return m_deviceId; }
+
 protected:
     // Implementation should set this flag in order to be queried by users. This checks if the device is capable of 
     // supporting features requested.
     void                            setSupportedFeatures(LayerFeatureFlags flags) { m_supportedFeatures = flags; }
+    void                            setDeviceId(DeviceId deviceId) { m_deviceId = deviceId; }
+
 private:
     LayerFeatureFlags               m_supportedFeatures;
+    DeviceId                        m_deviceId;
 };
 
 

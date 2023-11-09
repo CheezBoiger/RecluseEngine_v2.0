@@ -174,7 +174,6 @@ std::array<Vector4, 36> texcoords = {
   Vector4(1.0f, 1.0f, 1.0f, 1.0f),
   Vector4(0.0f, 1.0f, 0.0f, 1.0f),
   Vector4(0.0f, 0.0f, 0.0f, 0.0f),
-
   // right
   Vector4(0.0f, 0.0f, 0.0f, 0.0f),
   Vector4(1.0f, 0.0f, 1.0f, 0.0f),
@@ -182,7 +181,6 @@ std::array<Vector4, 36> texcoords = {
   Vector4(1.0f, 1.0f, 1.0f, 1.0f),
   Vector4(0.0f, 1.0f, 0.0f, 1.0f),
   Vector4(0.0f, 0.0f, 0.0f, 0.0f),
-
   // Left
   Vector4(0.0f, 0.0f, 0.0f, 0.0f),
   Vector4(1.0f, 0.0f, 1.0f, 0.0f),
@@ -615,7 +613,7 @@ int main(char* argv[], int c)
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 
-    Window* window = Window::create("Box", 0, 0, 1024, 1024, ScreenMode_Windowed);
+    Window* window = Window::create("Box", 0, 0, 1200, 800, ScreenMode_WindowBorderless);
     window->show();
     window->setToCenter();
     window->setOnWindowResize(ResizeFunction);

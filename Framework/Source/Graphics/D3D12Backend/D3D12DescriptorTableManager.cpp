@@ -17,8 +17,8 @@ const U32 DescriptorHeapAllocationManager::kMaxedReservedShaderVisibleInstances 
 // These can be found in this link reference.
 //
 // https://learn.microsoft.com/en-us/windows/win32/direct3d12/hardware-support
-
-R_DECLARE_GLOBAL_U32(g_maxShaderVisibleHeapDescriptorSize, 1000000u, "D3D12.MaxShaderVisibleHeapDescriptorSize");
+const U32 kStandardMaxVisibleDescriptorHeapSize = 1000000u;
+R_DECLARE_GLOBAL_U32(g_maxShaderVisibleHeapDescriptorSize, 50000u, "D3D12.MaxShaderVisibleHeapDescriptorSize");
 R_DECLARE_GLOBAL_U32(g_maxShaderVisibleHeapSamplerDescriptorSize, 2048u, "D3D12.MaxShaderVisibleHeapSamplerSize");
 
 
@@ -392,6 +392,12 @@ ShaderVisibleDescriptorTable ShaderVisibleDescriptorHeapInstance::upload(ID3D12D
 
 void ShaderVisibleDescriptorHeapInstance::initialize(ID3D12Device* pDevice)
 {
+    R_ASSERT_FORMAT
+        (
+            g_maxShaderVisibleHeapDescriptorSize < kStandardMaxVisibleDescriptorHeapSize, 
+            "Microsoft spec states that our maximum shader visible descriptor size be %d descriptors, but we are specifying %d!", 
+            kStandardMaxVisibleDescriptorHeapSize, g_maxShaderVisibleHeapDescriptorSize
+        );
     m_gpuHeap[GpuHeapType_CbvSrvUav].initialize(pDevice, 0, g_maxShaderVisibleHeapDescriptorSize, getNativeFromGpuHeapType(GpuHeapType_CbvSrvUav));
     m_gpuHeap[GpuHeapType_Sampler].initialize(pDevice, 0, g_maxShaderVisibleHeapSamplerDescriptorSize, getNativeFromGpuHeapType(GpuHeapType_Sampler));
 }

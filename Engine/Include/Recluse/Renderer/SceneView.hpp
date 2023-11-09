@@ -4,6 +4,7 @@
 #include "Recluse/Types.hpp"
 #include "Recluse/Math/Matrix44.hpp"
 #include "Recluse/Math/Vector4.hpp"
+#include "Recluse/Graphics/GraphicsDevice.hpp"
 
 #define RECLUSE_DECLARE_SCENE_BUFFER(structName) struct structName {
 #define RECLUSE_END_SCENE_BUFFER() }
@@ -67,6 +68,19 @@ struct StaticMorph
 {
     Float3 vPosition;
     Float3 vNormal;
+};
+
+
+class RenderGraph
+{
+public:
+
+    RecluseResult execute(GraphicsContext* context);
+
+    template<typename OnRenderFunc>
+    RecluseResult addPass();
+
+private:
 };
 } // Engine
 } // Recluse
