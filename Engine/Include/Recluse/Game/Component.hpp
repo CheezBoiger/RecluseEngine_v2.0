@@ -39,7 +39,7 @@ enum ComponentUpdateFlag
 // that will be called to allocate/dealloce and update the given components related to this!
 // _game_system is the connecting piece to the given component implementation, it is the 
 // system that will manage all of the components for this.
-#define R_COMPONENT_IMPLEMENT(_class, _game_system) \
+#define R_BIND_COMPONENT_SYSTEM(_class, _game_system) \
     Recluse::ECS::System<_class>* _class :: k ## _class ## System = nullptr; \
     _class* _class::instantiate(const Recluse::RGUID& owner) { \
         _class* pAllocatedComp = nullptr; \
@@ -53,30 +53,66 @@ enum ComponentUpdateFlag
     void _class::systemInit() { if (!k ## _class ## System) k ## _class ## System = _game_system::create(); } \
     Recluse::ECS::AbstractSystem* _class::getSystem() { return k ## _class ## System; }
 
-// Component abstraction class. This is mainly a container holding 
-// data that is to be processed or read by GameSystems. 
-class R_PUBLIC_API Component : public Serializable
+class AbstractComponent
 {
 public:
+    AbstractComponent(RGUID guid, const RGUID& ownerGuid = RGUID())
+        : m_ownerGuid(ownerGuid)
+        , m_cuuid(guid)
+    { }
+
+    virtual ~AbstractComponent() { }
+
+    void initialize() { onInitialize(); }
+    void release() { onRelease(); }
+    void cleanUp() { onCleanUp(); }
+
+    virtual ECS::ComponentUUID  getClassGUID() const { return 0; }
+
+    // Set the component owner.
+    void                        setOwner(RGUID owner) { m_ownerGuid = owner; }
+    // Check if the component has an owner.
+    Bool                        hasOwner() const { return m_ownerGuid.isValid(); }
+
+    // Get the component owner.
+    RGUID                       getOwner() const { return m_ownerGuid; }
+
+    // Get the component uuid.
+    RGUID                       getUUID() const { return m_cuuid; }
+
+    virtual void                onRelease() = 0;
+    virtual void                onCleanUp() = 0;
+    virtual void                onInitialize() = 0;
+
+
+private:
+    // Game object owner of this component.
+    RGUID                   m_ownerGuid;
+
+    // The unique id of the component.
+    RGUID                   m_cuuid;
+};
+
+// Component abstraction class. This is mainly a container holding 
+// data that is to be processed or read by GameSystems. 
+template<class FinalComponent>
+class R_PUBLIC_API Component : public AbstractComponent, public Serializable
+{
+public:
+    typedef Component<FinalComponent> Super;
     static const U64 unknownComponent = ~0u;
 
     // Default component construction.
     Component(RGUID guid, const RGUID& ownerGuid = RGUID())
-        : m_ownerGuid(ownerGuid)
+        : AbstractComponent(guid, ownerGuid)
         , m_enable(false)
-        , m_cuuid(guid) { }
+    { }
 
     virtual ~Component() { }
 
     virtual ResultCode serialize(Archive* pArchive) override { return RecluseResult_NoImpl; }
 
     virtual ResultCode deserialize(Archive* pArchive) override { return RecluseResult_NoImpl; }
-
-    // Get the component owner.
-    RGUID     getOwner() const { return m_ownerGuid; }
-
-    // Get the component uuid.
-    RGUID           getUUID() const { return m_cuuid; }
 
     // Check if the component is enabled.
     R_EDITOR_DECLARE("visible", "public", true)
@@ -87,26 +123,24 @@ public:
     void            setEnable(Bool enable) { m_enable = enable; if (enable) onEnable(); }
 
     // Initialize the component.
-    void            initialize() 
+    void            onInitialize() override
     {
         m_enable = true;
-
-        onInitialize();
     }
 
     // clean up the component. Does not release it!
-    void            cleanUp() 
+    void            onCleanUp() override
     {
         m_enable = false;
-        onCleanUp();
     }
 
     // An actual release of the component. This will require that this object be destroyed completely,
     // and freed back to the system.
-    void            release()
+    void onRelease() override
     {
         cleanUp();
-        onRelease();
+        // We call the function that links to the system, that is responsible for handling the final component of this object.
+        FinalComponent::free(static_cast<FinalComponent*>(this));
     }
 
     // Set update flags for the given component. The values are mainly specific to the system itself.
@@ -119,28 +153,9 @@ public:
     // Clear all update flags from the component.
     void                        clearUpdateFlags() { m_updateFlags = ComponentUpdateFlag_None; }
 
-    virtual ECS::ComponentUUID  getClassGUID() const { return 0; }
-
-    void                        setOwner(RGUID owner) { m_ownerGuid = owner; }
-
-    // Check if the component has an owner.
-    Bool                        hasOwner() const { return m_ownerGuid.isValid(); }
-
 private:
 
-    virtual void    onInitialize() { }
-    virtual void    onCleanUp() { }
     virtual void    onEnable() { }
-
-    // MANDATORY! We need to be able to release the component back to system memory.
-    // By default you can call Component::free()
-    virtual void    onRelease() = 0;
-
-    // Game object owner of this component.
-    RGUID                   m_ownerGuid;
-
-    // The unique id of the component.
-    RGUID                   m_cuuid;
 
     // Flag whether this component is enabled or not.
     Bool                    m_enable;

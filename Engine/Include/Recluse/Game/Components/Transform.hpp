@@ -15,14 +15,14 @@ using namespace Math;
 
 // Transform component that stores transformations
 // and positioning of a given entity.
-class Transform : public ECS::Component 
+class Transform : public ECS::Component<Transform>
 {
 public:
     R_COMPONENT_DECLARE(Transform);
 
     virtual ~Transform() { }
     Transform()
-        : ECS::Component(generateRGUID()) { }
+        : ECS::Component<Transform>(generateRGUID()) { }
 
     R_EDITOR_DECLARE("visible", "public", true)
     R_EDITOR_DECLARE("visible", "default", Float3(0.f, 0.f, 0.f))
@@ -44,7 +44,6 @@ public:
     Float3      scale;          // scale vector of the object.
 
     virtual void                onCleanUp() override;
-    virtual void                onRelease() override;
 
     Matrix44                    getLocalToWorld() const { return static_cast<Matrix44>(m_localToWorld); }
     Matrix44                    getWorldToLocal() const { return m_worldToLocal; }

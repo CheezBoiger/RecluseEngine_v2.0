@@ -26,7 +26,7 @@ class Scene;
 namespace Recluse {
 namespace ECS {
 
-class Component;
+class AbstractComponent;
 
 enum GameEntityStatus 
 {
@@ -245,7 +245,7 @@ public:
     template<typename Comp>
     Comp* getComponent() 
     { 
-        static_assert(std::is_base_of<ECS::Component, Comp>(), "getComponent: Not base component!");
+        static_assert(std::is_base_of<ECS::AbstractComponent, Comp>(), "getComponent: Not base component!");
         auto& it = m_components.find(Comp::classGUID()); 
         if (it == m_components.end())
             return nullptr;
@@ -256,11 +256,11 @@ public:
     template<typename Comp>
     Bool addComponent() 
     {
-        static_assert(std::is_base_of<ECS::Component, Comp>(), "addComponent: Not base of component!");
+        static_assert(std::is_base_of<ECS::AbstractComponent, Comp>(), "addComponent: Not base of component!");
         auto it = m_components.find(Comp::classGUID());
         if (it == m_components.end())
         {
-            m_components.insert(std::pair<ECS::ComponentUUID, ECS::Component*>(Comp::classGUID(), Comp::instantiate(getUUID())));
+            m_components.insert(std::pair<ECS::ComponentUUID, ECS::AbstractComponent*>(Comp::classGUID(), Comp::instantiate(getUUID())));
             return true;
         }
         return false;
@@ -271,7 +271,7 @@ public:
     template<typename Comp>
     Bool removeComponent()
     {
-        static_assert(std::is_base_of<ECS::Component, Comp>(), "removeComponent: Not a base of component!");
+        static_assert(std::is_base_of<ECS::AbstractComponent, Comp>(), "removeComponent: Not a base of component!");
         auto it = m_components.find(Comp::classGUID());
         if (it == m_components.end())
             return false;
@@ -292,7 +292,7 @@ private:
 
     struct GOCompCompare
     {
-        bool operator ()(const ECS::Component* lh, const ECS::Component* rh) const
+        bool operator ()(const ECS::AbstractComponent* lh, const ECS::AbstractComponent* rh) const
         {
             return lh->getClassGUID() < rh->getClassGUID();
         }
@@ -309,7 +309,7 @@ private:
     std::vector<GameEntity*>                                m_childrenNodes;
 
     // All component handles associated with this entity.
-    std::map<Recluse::ECS::ComponentUUID, ECS::Component*>  m_components;
+    std::map<Recluse::ECS::ComponentUUID, ECS::AbstractComponent*>  m_components;
 
     // Game Object uuid.
     RGUID                                                   m_guuid;

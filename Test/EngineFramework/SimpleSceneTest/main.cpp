@@ -11,6 +11,7 @@
 #include "Recluse/MessageBus.hpp"
 #include "Recluse/Game/Components/Transform.hpp"
 #include "Recluse/Game/GameSystem.hpp"
+#include "Recluse/Math/Bounds2D.hpp"
 #include <Windows.h>
 #include <vector>
 
@@ -19,64 +20,14 @@ using namespace Recluse::Engine;
 
 Recluse::MessageBus g_bus;
 
-class AssertoHandler {
-public:
-    enum AssertResult {
-        ASSERT_OK,
-        ASSERT_DEBUG,
-        ASSERT_IGNORE,
-        ASSERT_STOP
-    };
-    static int check(Bool cond, const char* functionStr, const char* msg) {
-        if (cond) {
-            return ASSERT_OK;
-        }
-        std::string mstr;
-        mstr += functionStr;
-        mstr += "\n\n";
-        mstr += msg;
-        DWORD res = MessageBox(NULL, mstr.c_str(), NULL, MB_ABORTRETRYIGNORE);
-        switch (res) {
-            case IDRETRY: return ASSERT_DEBUG;
-            default: return ASSERT_OK;
-        }
-    }
-};
-
-#define RE_ASSERT(cond, msg) {                                 \
-    int _ = AssertoHandler::check(cond, __FUNCTION__, msg);                          \
-    switch (_) { case AssertoHandler::ASSERT_DEBUG: DebugBreak(); break; default: break; } \
-    }
-
-
-enum InputEvents
-{
-    InputEvents_NOOB
-};
-
-
-const char* getEventString(EventId eventid)
-{
-    switch (eventid)
-    {
-        case InputEvents_NOOB:
-            return "Noob";
-        default:
-            return "Error";
-    }
-}
-
-class MoverComponent : public ECS::Component
+class MoverComponent : public ECS::Component<MoverComponent>
 {
 public:
     R_COMPONENT_DECLARE(MoverComponent);
-
-    MoverComponent() : ECS::Component(generateRGUID()) { }
-
-    virtual void onRelease() override
-    {
-        MoverComponent::free(this);
-    }
+    Math::Float2 direction;
+    Math::Bounds2d bounds = { Math::Float2(-1, -1), Math::Float2(1, 1) };
+    F32 damage = 0;
+    MoverComponent() : ECS::Component<MoverComponent>(generateRGUID()) { }
 };
 
 
@@ -104,7 +55,6 @@ public:
     {
         if (m_shouldUpdate)
         {
-            R_VERBOSE("SimpleUpdaterSystem", "Updating components...");
             for (auto& mover : m_movers)
             {
                 if (mover->isEnabled())
@@ -114,9 +64,9 @@ public:
                     {       
                         Transform* t                        = pEntity->getComponent<Transform>();
                         ECS::System<Transform>* pSystemT    = ECS::castToSystem<Transform>();
-                        t->position                         = t->position + Float3(1.0f, 0.f, 0.f) * tick.delta();
+                        t->position                         = t->position + Float3(mover->direction, 0.f) * tick.delta();
 
-                        R_VERBOSE("SimpleUpdaterSystem", "Moving entity=%s, Position=(%f, %f, %f)", pEntity->getName().c_str(), t->position.x, t->position.y, t->position.z);
+                        //R_VERBOSE("SimpleUpdaterSystem", "Moving entity=%s, Position=(%f, %f, %f)", pEntity->getName().c_str(), t->position.x, t->position.y, t->position.z);
                     }
                 }
             }
@@ -153,7 +103,77 @@ private:
     Bool m_shouldUpdate = true;
 };
 
-R_COMPONENT_IMPLEMENT(MoverComponent, SimpleUpdaterSystem);
+
+// Health component
+struct HealthComponent : public ECS::Component<HealthComponent>
+{
+    R_COMPONENT_DECLARE(HealthComponent);
+    F32 m_health = 100.f;
+    RGUID other;
+    HealthComponent() : ECS::Component<HealthComponent>(generateRGUID()) { }
+};
+
+
+class HealthSystem : public ECS::System<HealthComponent>
+{
+public:
+    R_DECLARE_GAME_SYSTEM(HealthSystem, HealthComponent);
+    virtual ResultCode onAllocateComponent(HealthComponent** pOut) override 
+    { 
+        *pOut = new HealthComponent();
+        m_components.push_back(*pOut);
+        m_components.back()->setEnable(true);
+        return RecluseResult_Ok; 
+    }
+
+    virtual ResultCode onAllocateComponents(HealthComponent*** pOuts, U32 count) override { return RecluseResult_NoImpl; }
+    virtual ResultCode onFreeComponent(HealthComponent** pIn) override { return RecluseResult_NoImpl; }
+    virtual ResultCode onFreeComponents(HealthComponent*** pOuts, U32 count) override { return RecluseResult_NoImpl; }
+
+    virtual ResultCode onCleanUp() override
+    {
+        for (auto it = m_components.begin(); it != m_components.end(); ++it)
+            delete (*it);
+        m_components.clear();
+        return RecluseResult_Ok;
+    }
+
+    virtual void onUpdateComponents(const RealtimeTick& tick) override 
+    {
+        for (auto& healthComponent : m_components)
+        {
+            ECS::GameEntity* entity = ECS::GameEntity::findEntity(healthComponent->getOwner());
+            ECS::GameEntity* otherEntity = ECS::GameEntity::findEntity(healthComponent->other);
+            if (otherEntity)
+            {
+                MoverComponent* mover = entity->getComponent<MoverComponent>();
+                MoverComponent* otherMover = otherEntity->getComponent<MoverComponent>();
+                Transform* transforms[] = { entity->getComponent<Transform>(), otherEntity->getComponent<Transform>() };
+                Math::Bounds2d bounds[] = { mover->bounds, otherMover->bounds };
+
+                for (U32 i = 0; i < 2; ++i)
+                {
+                    bounds[i].mmin = bounds[i].mmin + Math::Float2(transforms[i]->position.x, transforms[i]->position.y);
+                    bounds[i].mmax = bounds[i].mmax + Math::Float2(transforms[i]->position.x, transforms[i]->position.y);
+                }
+
+                if (Math::intersects(bounds[0], bounds[1]))
+                {
+                    healthComponent->m_health -= tick.delta() * otherMover->damage;
+                    healthComponent->m_health = Math::maximum(healthComponent->m_health, 0.0f);
+                    R_VERBOSE("HealthSystem", "%s is taking %f damage! Health=%f", entity->getName().c_str(), otherMover->damage, healthComponent->m_health);
+                    if (healthComponent->m_health == 0.f)
+                        R_ERROR("HealthSystem", "%s IS DEAD!!!", entity->getName().c_str());
+                }
+            }
+        }
+    }
+private:
+    std::vector<HealthComponent*> m_components;
+};
+
+R_BIND_COMPONENT_SYSTEM(MoverComponent, SimpleUpdaterSystem);
+R_BIND_COMPONENT_SYSTEM(HealthComponent, HealthSystem);
 
 
 int main(int c, char* argv[])
@@ -164,20 +184,40 @@ int main(int c, char* argv[])
 
     Transform::systemInit();
     MoverComponent::systemInit();
+    HealthComponent::systemInit();
 
     ECS::GameEntity* entity = ECS::GameEntity::instantiate(sizeof(ECS::GameEntity));
+    ECS::GameEntity* entity2 = ECS::GameEntity::instantiate(sizeof(ECS::GameEntity));
     entity->setName("Billy");
     entity->activate();
     entity->addComponent<Transform>();
     entity->addComponent<MoverComponent>();
+    entity->addComponent<HealthComponent>();
+    entity->getComponent<MoverComponent>()->direction = Math::Float2(1, 0);
+    entity->getComponent<MoverComponent>()->damage = 10.0f;
+    entity->getComponent<Transform>()->position = Math::Float3(-5, 0, 0);
+    entity->getComponent<HealthComponent>()->other = entity2->getUUID();
+
+    entity2->setName("Alice");
+    entity2->activate();
+    entity2->addComponent<Transform>();
+    entity2->addComponent<MoverComponent>();
+    entity2->addComponent<HealthComponent>();
+    entity2->getComponent<MoverComponent>()->direction = Math::Float2(-1, 0);
+    entity2->getComponent<Transform>()->position = Math::Float3(5, 0, 0);
+    entity2->getComponent<HealthComponent>()->other = entity->getUUID();
+    entity2->getComponent<MoverComponent>()->damage = 54.0f;
+
     Scene* pScene = new Scene();
     pScene->initialize();
     pScene->addEntity(entity);
+    pScene->addEntity(entity2);
     pScene->addSystemFor<Transform>();
     pScene->addSystemFor<MoverComponent>();
+    pScene->addSystemFor<HealthComponent>();
 
-    U64 counter = 0;
-    while ((counter++) < 500) {
+    F32 counter = 0;
+    while (counter < 10.0f) {
 
         RealtimeTick::updateWatch(1ull, 0);
         RealtimeTick tick = RealtimeTick::getTick(0);
@@ -185,6 +225,7 @@ int main(int c, char* argv[])
 
         g_bus.notifyAll();
         g_bus.clearQueue();
+        counter += tick.delta() * 1.0f;
     }
 
     pScene->destroy();

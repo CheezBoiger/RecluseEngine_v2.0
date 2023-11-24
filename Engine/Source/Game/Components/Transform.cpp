@@ -8,16 +8,12 @@ namespace Recluse {
 
 using namespace Math;
 
-R_COMPONENT_IMPLEMENT(Transform, TransformSystem);
+R_BIND_COMPONENT_SYSTEM(Transform, TransformSystem);
 
 
 void Transform::onCleanUp()
 {
-}
-
-void Transform::onRelease()
-{
-    Transform::free(this);
+    Super::onCleanUp();
 }
 
 ResultCode Transform::serialize(Archive* pArchive)
