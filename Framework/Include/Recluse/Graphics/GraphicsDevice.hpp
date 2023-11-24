@@ -201,6 +201,10 @@ public:
     virtual void setFrontStencilState(const StencilOpState& state) { }
     virtual void setBackStencilState(const StencilOpState& state) { }
 
+    // Hardware render pass support.
+    virtual void beginRenderPass(const RenderPassDescription& renderPassDescription) { }
+    virtual void endRenderPass() { }
+
     // Blend operations to be done on a rendertarget. Index matches the rendertarget index, and must be
     // less than the max rendertargets bindable.
     virtual void setBlendEnable(U32 rtIndex, Bool enable) { }

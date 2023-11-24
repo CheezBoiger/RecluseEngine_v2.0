@@ -294,6 +294,12 @@ struct SwapchainCreateDescription
 };
 
 
+struct RenderPassDescription
+{
+    
+};
+
+
 enum SamplerAddressMode 
 {
     SamplerAddressMode_Repeat,

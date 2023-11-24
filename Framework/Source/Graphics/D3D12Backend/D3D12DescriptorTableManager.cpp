@@ -275,55 +275,28 @@ ResultCode DescriptorHeapAllocationManager::initialize(ID3D12Device* pDevice, co
 
     // initialize a null descriptor for each cpu heap type.
     {
-        D3D12_RENDER_TARGET_VIEW_DESC desc      = { };
-        desc.ViewDimension                      = D3D12_RTV_DIMENSION_BUFFER;
-        desc.Buffer.FirstElement                = 0;
-        desc.Buffer.NumElements                 = 0;
-        desc.Format                             = DXGI_FORMAT_R32_FLOAT;
-        m_nullRtvDescriptor                     = allocateRenderTargetView(nullptr, desc);
+        D3D12_RENDER_TARGET_VIEW_DESC desc = makeNullRenderTargetViewDescriptor();
+        m_nullRtvDescriptor = allocateRenderTargetView(nullptr, desc);
     }
 
     {
-        D3D12_SHADER_RESOURCE_VIEW_DESC desc    = { };
-        desc.ViewDimension                      = D3D12_SRV_DIMENSION_BUFFER;
-        desc.Buffer.FirstElement                = 0;
-        desc.Buffer.NumElements                 = 0;
-        desc.Format                             = DXGI_FORMAT_R32_FLOAT;
-        desc.Shader4ComponentMapping            = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-        m_nullSrvDescriptor                     = allocateShaderResourceView(nullptr, desc);
+        D3D12_SHADER_RESOURCE_VIEW_DESC desc = makeNullShaderResourceViewDescriptor();
+        m_nullSrvDescriptor = allocateShaderResourceView(nullptr, desc);
     }
 
     {
-        D3D12_UNORDERED_ACCESS_VIEW_DESC desc = { };
-        desc.ViewDimension                      = D3D12_UAV_DIMENSION_BUFFER;
-        desc.Buffer.CounterOffsetInBytes        = 0;
-        desc.Buffer.FirstElement                = 0;
-        desc.Buffer.Flags                       = D3D12_BUFFER_UAV_FLAG_NONE;
-        desc.Buffer.NumElements                 = 0;
-        desc.Buffer.StructureByteStride         = 0;
-        desc.Format                             = DXGI_FORMAT_R32_FLOAT;
-        m_nullUavDescriptor                     = allocateUnorderedAccessView(nullptr, desc);
+        D3D12_UNORDERED_ACCESS_VIEW_DESC desc = makeNullUnorderedAccessViewDescriptor();
+        m_nullUavDescriptor = allocateUnorderedAccessView(nullptr, desc);
     }
 
     {
-        D3D12_CONSTANT_BUFFER_VIEW_DESC desc    = { };
-        desc.BufferLocation                     = 0;
-        desc.SizeInBytes                        = 0;
-        m_nullCbvDescriptor                     = allocateConstantBufferView(desc);
+        D3D12_CONSTANT_BUFFER_VIEW_DESC desc = makeNullConstantBufferViewDescriptor();
+        m_nullCbvDescriptor = allocateConstantBufferView(desc);
     }
 
     {
-        D3D12_SAMPLER_DESC desc                 = { };
-        desc.AddressU                           = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-        desc.AddressV                           = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-        desc.AddressW                           = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-        desc.BorderColor[0]                     = 0;
-        desc.BorderColor[1]                     = 0;
-        desc.BorderColor[2]                     = 0;
-        desc.BorderColor[3]                     = 0;
-        desc.Filter                             = D3D12_FILTER_MIN_MAG_MIP_POINT;
-        desc.ComparisonFunc                     = D3D12_COMPARISON_FUNC_ALWAYS;
-        m_nullSamplerDescriptor                 = allocateSampler(desc);
+        D3D12_SAMPLER_DESC desc = makeNullSamplerDescriptor();
+        m_nullSamplerDescriptor = allocateSampler(desc);
     }
 
     {

@@ -123,21 +123,21 @@ public:
 
     void                                transition(GraphicsResource* pResource, ResourceState newState, U16 baseMip, U16 mipCount, U16 baseLayer, U16 layerCount) override;
     GraphicsDevice*                     getDevice() override;
-    const ContextFrame&              getContextFrame(U32 idx) const { return m_contextFrames[idx]; }
+    const ContextFrame&                 getContextFrame(U32 idx) const { return m_contextFrames[idx]; }
     void                                setNewFenceValue(U32 idx, U64 value) { m_contextFrames[idx].fenceValue = value; }   
 
 private:
     typedef U32 ContextDirtyFlags;
     enum ContextDirty
     {
-        ContextDirty_Clean      = 0,
-        ContextDirty_Descriptors  = (1 << 0),
-        ContextDirty_SamplerDescriptors = (1 << 1),
-        ContextDirty_Pipeline = (1 << 2),
-        ContextDirty_StencilRef = (1 << 3),
-        ContextDirty_VertexBuffers = (1 << 4),
-        ContextDirty_IndexBuffer = (1 << 5),
-        ContextDirty_Topology = (1 << 6),
+        ContextDirty_Clean                              = 0,
+        ContextDirty_Descriptors                        = (1 << 0),
+        ContextDirty_SamplerDescriptors                 = (1 << 1),
+        ContextDirty_Pipeline                           = (1 << 2),
+        ContextDirty_StencilRef                         = (1 << 3),
+        ContextDirty_VertexBuffers                      = (1 << 4),
+        ContextDirty_IndexBuffer                        = (1 << 5),
+        ContextDirty_Topology                           = (1 << 6),
     };
 
     struct ContextState
@@ -157,9 +157,9 @@ private:
         // differrent render target views, but only care about the dxgi formats.
         D3D12RenderPass*                                m_currentRenderPass;
 
-        void setDirty(ContextDirtyFlags flags) { m_dirtyFlags |= flags; }
-        void setClean() { m_dirtyFlags = ContextDirty_Clean; }
-        Bool isDirty(ContextDirtyFlags flagsToCheck) { return (m_dirtyFlags & flagsToCheck); }
+        void                                            setDirty(ContextDirtyFlags flags) { m_dirtyFlags |= flags; }
+        void                                            setClean() { m_dirtyFlags = ContextDirty_Clean; }
+        Bool                                            isDirty(ContextDirtyFlags flagsToCheck) { return (m_dirtyFlags & flagsToCheck); }
     };
 
     void                                flushBarrierTransitions();

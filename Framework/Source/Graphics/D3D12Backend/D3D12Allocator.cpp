@@ -125,7 +125,7 @@ ResultCode D3D12ResourcePagedAllocator::free(D3D12MemoryObject* pObject)
     }
 
     pObject->pResource->Release();
-
+    R_DEBUG(R_CHANNEL_D3D12, "Freed memory object.");
     return err;
 }
 

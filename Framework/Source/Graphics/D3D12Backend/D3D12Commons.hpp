@@ -67,6 +67,11 @@ extern D3D12_STENCIL_OP                     getStencilOp(Recluse::StencilOp sten
 extern D3D12_SHADER_VISIBILITY              getShaderVisibilityFlags(Recluse::ShaderStageFlags shaderStageFlags);
 extern D3D12_INDEX_BUFFER_STRIP_CUT_VALUE   getNativeStripCutValue(Recluse::IndexType indexType);
 extern UINT                                 calculateSubresource(UINT MipSlice, UINT ArraySlice, UINT PlaneSlice, UINT MipLevels, UINT ArraySize);
+extern D3D12_RENDER_TARGET_VIEW_DESC        makeNullRenderTargetViewDescriptor();
+extern D3D12_SHADER_RESOURCE_VIEW_DESC      makeNullShaderResourceViewDescriptor();
+extern D3D12_UNORDERED_ACCESS_VIEW_DESC     makeNullUnorderedAccessViewDescriptor();
+extern D3D12_CONSTANT_BUFFER_VIEW_DESC      makeNullConstantBufferViewDescriptor();
+extern D3D12_SAMPLER_DESC                   makeNullSamplerDescriptor();
 } // D3D12
 } // Recluse
 

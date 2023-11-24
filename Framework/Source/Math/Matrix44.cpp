@@ -729,5 +729,32 @@ Matrix44 lookAtRH(const Float3& pos, const Float3& target, const Float3& up)
             -dot(x, pos),   -dot(y, pos),   -dot(z, pos),   1.f
         );
 }
+
+
+Matrix44 orthographicLH(F32 top, F32 bottom, F32 left, F32 right, F32 ne, F32 fa)
+{
+    Matrix44 ortho;
+    ortho[0]    = 2.0f / (right - left);
+    ortho[5]    = 2.0f / (top - bottom);
+    ortho[10]   = 1.0f / (fa - ne);
+    ortho[12]   = (left + right) / (left - right);
+    ortho[13]   = (top + bottom) / (bottom - top);
+    ortho[14]   = ne / (ne - fa);
+    ortho[15]   = 1.0f;
+    return ortho;
+}
+
+
+Matrix44 orthographicRH(F32 top, F32 bottom, F32 left, F32 right, F32 ne, F32 fa)
+{
+    Matrix44 ortho;
+    ortho[0]    = 2.0f / (right - left);
+    ortho[5]    = 2.0f / (top - bottom);
+    ortho[10]   = 1.0f / (ne - fa);
+    ortho[12]   = (left + right) / (left - right);
+    ortho[13]   = (top + bottom) / (bottom - top);
+    ortho[14]   = ne / (ne - fa);
+    ortho[15]   = 1.0f;
+    return ortho;}
 } // Math
 } // Recluse
