@@ -159,6 +159,11 @@ ResultCode D3D12Resource::initialize
     setCurrentResourceState(initialState);
     m_id = generateResourceId();
 
+    if (desc.name)
+    {
+        
+    }
+
     if (shouldTransition)
     {
         D3D12Queue* pQueue = m_pDevice->getQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);

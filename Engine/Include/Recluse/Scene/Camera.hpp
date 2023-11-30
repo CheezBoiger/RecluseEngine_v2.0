@@ -99,7 +99,14 @@ public:
     Math::Matrix44 getInverseProjection() const { return m_InverseProjection; }
     Math::Matrix44 getInverseViewProjection() const { return m_InverseViewProjection; }
     Math::Matrix44 getInverseView() const { return m_InverseView; }
+
+    // Projects screen coordinates to world coordinates.    
+    Math::Float3    screenToWorldPoint(U32 screenX, U32 screenY);
+
 private:
+    void clearCameraUpdateFlags() { m_updateFlags = 0; }
+    void clearPostProcessFlags() { m_postProcessFlags = 0; }
+
     enum CameraUpdateFlag
     {
         CameraUpdate_View = (1 << 0),
@@ -107,7 +114,9 @@ private:
         CameraUpdate_Frustum = (1 << 2),
         CameraUpdate_PostProcess = (1 << 3)
     };
+
     typedef U32 CameraUpdateFlags;
+
     RecluseSceneView        m_sceneView;
     Math::Frustum           m_frustum;
 

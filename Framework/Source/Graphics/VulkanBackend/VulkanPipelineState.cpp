@@ -612,6 +612,10 @@ ResultCode unloadLayout(VertexInputLayoutId id)
 
 const VulkanVertexLayout* obtain(VertexInputLayoutId inputLayoutId)
 {
+    // If we request null argument, then we are essentially clearing.
+    if (inputLayoutId == VertexInputLayout::VertexLayout_Null)
+        return nullptr;
+
     auto iter = g_vertexLayoutMap.find(inputLayoutId);
     if (iter != g_vertexLayoutMap.end())
         return &iter->second;
@@ -677,9 +681,9 @@ VkPipeline createGraphicsPipeline(VulkanDevice* pDevice, VkPipelineCache pipelin
 
     const VertexLayout::VulkanVertexLayout* pLayout = VertexLayout::obtain(structure.state.graphics.ia);
 
+    vertInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     if (pLayout)
     {
-        vertInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
         vertInputState.vertexBindingDescriptionCount = pLayout->bindings.size();
         vertInputState.vertexAttributeDescriptionCount = pLayout->descriptions.size();
         vertInputState.pVertexAttributeDescriptions = pLayout->descriptions.data();

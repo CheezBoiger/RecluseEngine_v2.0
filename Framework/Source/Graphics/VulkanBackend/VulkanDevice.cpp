@@ -990,6 +990,11 @@ void VulkanDevice::unloadAllShaderPrograms()
 
 Bool VulkanDevice::makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout)
 {
+    if (id == VertexInputLayout::VertexLayout_Null)
+    {
+        R_ERROR(R_CHANNEL_VULKAN, "Can not make vertex layouts with id of %d! This is reserved for null arguments.", VertexInputLayout::VertexLayout_Null);
+        return false;
+    }
     ResultCode result = Pipelines::VertexLayout::make(id, layout);
     return (result == RecluseResult_Ok || result == RecluseResult_AlreadyExists);
 }

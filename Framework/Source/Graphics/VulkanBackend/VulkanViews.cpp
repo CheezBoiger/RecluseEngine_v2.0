@@ -127,6 +127,7 @@ ResultCode VulkanImageView::onInitialize(VulkanDevice* pDevice, VulkanResource* 
 
     ResultCode result          = RecluseResult_Ok;
     ResourceViewDescription desc   = getDesc();
+    R_ASSERT(desc.format != ResourceFormat_Unknown, "Image View format must not be UNKNOWN prior to creation!!");
 
     VkImageViewCreateInfo info = { };
     info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -324,8 +325,25 @@ ResultCode VulkanSampler::initialize(VulkanDevice* pDevice, const SamplerDescrip
     }
 
     generateDescriptionId(desc);
+
+    const Bool supportsDebugMarking = pDevice->getAdapter()->getInstance()->supportsDebugMarking();
+    const char* debugName           = "VulkanView";
+    if (supportsDebugMarking && debugName)
+    {
+        VkDebugUtilsObjectNameInfoEXT nameInfo = { };
+        nameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+        nameInfo.objectType = VK_OBJECT_TYPE_SAMPLER;
+        nameInfo.pNext = nullptr;
+        nameInfo.objectHandle = reinterpret_cast<uint64_t>(m_sampler);
+        nameInfo.pObjectName = debugName;
+        result = pfn_vkSetDebugUtilsObjectNameEXT(pDevice->get(), &nameInfo);
+        if (result != VK_SUCCESS)
+        {
+            R_WARN(R_CHANNEL_VULKAN, "Failed to create sampler debug name object.");
+        }
+    }
     
-    return RecluseResult_Ok;
+    return result;
 }
 
 

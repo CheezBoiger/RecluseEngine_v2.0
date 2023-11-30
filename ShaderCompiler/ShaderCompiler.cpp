@@ -1,7 +1,7 @@
 //
 #include "ShaderCompiler.hpp"
 #include "Recluse/Graphics/Shader.hpp"
-#include "Recluse/Graphics/ShaderBuilder.hpp"
+#include "Recluse/Pipeline/Graphics/ShaderBuilder.hpp"
 #include "Recluse/Filesystem/Filesystem.hpp"
 #include "Recluse/Filesystem/Archive.hpp"
 #include "Recluse/Messaging.hpp"
@@ -246,20 +246,20 @@ static std::string generateShaderSceneView(ShaderLang lang)
 }
 
 
-ShaderBuilder* createBuilder(Allocator* scratch, ShaderLang lang, ShaderIntermediateCode intermediateCode)
+Pipeline::ShaderBuilder* createBuilder(Allocator* scratch, ShaderLang lang, ShaderIntermediateCode intermediateCode)
 {
-    ShaderBuilder* pBuilder = nullptr;
+    Pipeline::ShaderBuilder* pBuilder = nullptr;
     
     switch (lang)
     {
         case ShaderLang_Hlsl:
         {
-            pBuilder = createShaderBuilder("dxc", intermediateCode);
+            pBuilder = Pipeline::createShaderBuilder("dxc", intermediateCode);
             break;
         }
         case ShaderLang_Glsl:
         {
-            pBuilder = createShaderBuilder("glslang", intermediateCode);
+            pBuilder = Pipeline::createShaderBuilder("glslang", intermediateCode);
             break;
         }
         default:
@@ -286,9 +286,9 @@ ResultCode compileShaders(ShaderLang lang)
     LinearAllocator linearAllocation;
     linearAllocation.initialize(scratchPool.getBaseAddress(), scratchPool.getTotalSizeBytes());
 
-    std::map<ShaderLang, ShaderBuilder*> shaderBuilders;
+    std::map<ShaderLang, Pipeline::ShaderBuilder*> shaderBuilders;
 
-    ShaderBuilder* pBuilder = createBuilder(&linearAllocation, lang, ShaderIntermediateCode_Spirv);
+    Pipeline::ShaderBuilder* pBuilder = createBuilder(&linearAllocation, lang, ShaderIntermediateCode_Spirv);
 
     R_ASSERT(pBuilder != NULL);
 
@@ -398,7 +398,7 @@ ResultCode compileShaders(ShaderLang lang)
     }
 
     pBuilder->tearDown();
-    freeShaderBuilder(pBuilder);
+    Pipeline::freeShaderBuilder(pBuilder);
     linearAllocation.cleanUp();
 
     return RecluseResult_Ok;

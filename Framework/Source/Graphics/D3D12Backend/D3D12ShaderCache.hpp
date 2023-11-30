@@ -3,6 +3,7 @@
 
 #include "D3D12Commons.hpp"
 #include "Recluse/Graphics/ShaderProgram.hpp"
+#include "Recluse/Utility.hpp"
 
 namespace Recluse {
 
@@ -12,6 +13,15 @@ namespace D3D {
 
 namespace Cache {
 
+
+struct D3DShaderBytecode
+{
+    void*                       ptr;
+    U64                         sizeBytes;
+    Hash64                      shaderId;
+    ShaderProgramPermutation    permutation;
+};
+
 struct D3DShaderProgram
 {
     BindType bindType;
@@ -20,26 +30,26 @@ struct D3DShaderProgram
     {    
         struct
         {
-            ID3DBlob* psBytecode;
+            D3DShaderBytecode* psBytecode;
             const char* psMainEntry;
             union
             {
                 struct
                 {
-                    ID3DBlob* asBytecode;
+                    D3DShaderBytecode* asBytecode;
                     const char* asMainEntry;
-                    ID3DBlob* msBytecode;
+                    D3DShaderBytecode* msBytecode;
                     const char* msMainEntry;
                 };
                 struct
                 {
-                    ID3DBlob* vsBytecode;
+                    D3DShaderBytecode* vsBytecode;
                     const char* vsMainEntry;
-                    ID3DBlob* hsBytecode;
+                    D3DShaderBytecode* hsBytecode;
                     const char* hsMainEntry;
-                    ID3DBlob* dsBytecode;
+                    D3DShaderBytecode* dsBytecode;
                     const char* dsMainEntry;
-                    ID3DBlob* gsBytecode;
+                    D3DShaderBytecode* gsBytecode;
                     const char* gsMainEntry;
                 };
             };
@@ -47,20 +57,20 @@ struct D3DShaderProgram
         } graphics;
         struct
         {
-            ID3DBlob* csBytecode;
+            D3DShaderBytecode* csBytecode;
             const char* csMainEntry;
         } compute;
         struct
         {
-            ID3DBlob*   rayIntersect;
+            D3DShaderBytecode*   rayIntersect;
             const char* rayIntersectMainEntry;
-            ID3DBlob*   rayAny;
+            D3DShaderBytecode*   rayAny;
             const char* rayAnyMainEntry;
-            ID3DBlob*   rayGen;
+            D3DShaderBytecode*   rayGen;
             const char* rayGenEntryMainEntry;
-            ID3DBlob*   rayMiss;
+            D3DShaderBytecode*   rayMiss;
             const char* rayMissMainEntry;
-            ID3DBlob*   rayClosest;
+            D3DShaderBytecode*   rayClosest;
             const char* rayClosetEntryMainEntry;
         } raytrace;
     };

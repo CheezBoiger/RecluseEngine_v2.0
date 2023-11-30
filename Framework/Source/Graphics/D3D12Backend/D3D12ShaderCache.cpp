@@ -5,31 +5,47 @@
 #include <unordered_map>
 #include <map>
 
-#include <d3dcompiler.h>
-
 namespace Recluse {
 namespace D3D {
 namespace Cache {
 
 
 std::unordered_map<ShaderProgramId, std::unordered_map<ShaderProgramPermutation, D3DShaderProgram>> g_shaderProgramMap;
-std::map<Hash64, std::map<ShaderProgramPermutation, ID3DBlob*>> g_cachedShaderBlobs;
+std::map<Hash64, std::map<ShaderProgramPermutation, ReferenceCounter<D3DShaderBytecode*>>> g_cachedShaderBlobs;
 
 
 R_INTERNAL
-ID3DBlob* createBlob(SizeT sizeBytes)
+D3DShaderBytecode* createBlob(SizeT sizeBytes, Hash64 shaderHash, ShaderPermutationId permutation)
 {
-    ID3DBlob* pBlob = nullptr;
-    HRESULT result = D3DCreateBlob(sizeBytes, &pBlob);
-    R_ASSERT(SUCCEEDED(result));
+    D3DShaderBytecode* pBlob = new D3DShaderBytecode();
+    pBlob->ptr = nullptr;
+    pBlob->sizeBytes = sizeBytes;
+    pBlob->shaderId = shaderHash;
+    pBlob->permutation = permutation;
+    if (sizeBytes)
+    {
+        pBlob->ptr = malloc(sizeBytes);
+    }
     return pBlob;
 }
 
 
-
-ID3DBlob* makeBlob(Shader* pShader)
+R_INTERNAL
+void internalFreeBlob(D3DShaderBytecode* pBlob)
 {
-    ID3DBlob* pOutput = nullptr;
+    if (pBlob)
+    {
+        if (pBlob->ptr)
+            free(pBlob->ptr);
+        delete pBlob;
+    }
+}
+
+
+R_INTERNAL
+D3DShaderBytecode* makeBlob(Shader* pShader)
+{
+    D3DShaderBytecode* pOutput = nullptr;
     if (pShader)
     {
         Hash64 shaderHash = pShader->getShaderHashId();
@@ -40,17 +56,16 @@ ID3DBlob* makeBlob(Shader* pShader)
             auto permIter = shaderIter->second.find(permutation);
             if (permIter != shaderIter->second.end())
             {
-                permIter->second->AddRef();
-                pOutput = permIter->second;
+                permIter->second.addReference();
+                pOutput = permIter->second();
             }
         }
         else
         {
-            ID3DBlob* pBlob;
-            HRESULT hr = D3DCreateBlob(pShader->getSzBytes(), &pBlob);
-            R_ASSERT(SUCCEEDED(hr));
-            memcpy(pBlob->GetBufferPointer(), pShader->getByteCode(), pShader->getSzBytes());
+            D3DShaderBytecode* pBlob = createBlob(pShader->getSzBytes(), shaderHash, permutation);
+            memcpy(pBlob->ptr, pShader->getByteCode(), pShader->getSzBytes());
             g_cachedShaderBlobs[shaderHash][permutation] = pBlob;
+            g_cachedShaderBlobs[shaderHash][permutation].addReference();
             pOutput = pBlob;
         }
     }
@@ -59,14 +74,27 @@ ID3DBlob* makeBlob(Shader* pShader)
 
 
 R_INTERNAL
-void callReleaseBlob(ID3DBlob* pBlob)
+void callReleaseBlob(D3DShaderBytecode* pBlob)
 {
     if (pBlob)
     {
-        ULONG ref = pBlob->Release();
-        if (ref == 0)
+        auto it = g_cachedShaderBlobs.find(pBlob->shaderId);
+        if (it != g_cachedShaderBlobs.end())
         {
-            // TODO: Need to hold onto the permutation and shader hash info to find the cached shader blob!
+            auto permIt = it->second.find(pBlob->permutation);
+            if (permIt != it->second.end())
+            {
+                U32 refs = permIt->second.release();
+                if (refs == 0)
+                {
+                    // We must destroy this bytecode for real. No one else is referencing it.
+                    it->second.erase(permIt);
+                    if (it->second.empty())
+                        g_cachedShaderBlobs.erase(it);
+                    // Destroy the actual bytecode blob.
+                    internalFreeBlob(pBlob);
+                }
+            }
         }
     }
 }

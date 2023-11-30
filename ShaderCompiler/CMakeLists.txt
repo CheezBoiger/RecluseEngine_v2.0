@@ -19,8 +19,10 @@ add_executable(${RECLUSE_SC_NAME}
     ${RECLUSE_SC_FILES}
 )
 
-target_include_directories(${RECLUSE_SC_NAME} PUBLIC ${RECLUSE_FRAMEWORK_INCLUDE_DIR})
-target_link_libraries(${RECLUSE_SC_NAME} RecluseFramework )
-add_dependencies(${RECLUSE_SC_NAME} RecluseFramework )
+set ( RECLUSE_PIPE_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/Pipeline/Include)
+
+target_include_directories(${RECLUSE_SC_NAME} PUBLIC ${RECLUSE_FRAMEWORK_INCLUDE_DIR} ${RECLUSE_PIPE_INCLUDE_DIR})
+target_link_libraries(${RECLUSE_SC_NAME} RecluseFramework ReclusePipeline)
+add_dependencies(${RECLUSE_SC_NAME} RecluseFramework ReclusePipeline)
 
 set_target_properties( ${RECLUSE_SC_NAME} PROPERTIES FOLDER "RecluseShaderCompiler")

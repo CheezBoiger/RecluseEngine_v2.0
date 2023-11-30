@@ -685,6 +685,11 @@ void D3D12Device::unloadAllShaderPrograms()
 
 Bool D3D12Device::makeVertexLayout(VertexInputLayoutId id, const VertexInputLayout& layout)
 {
+    if (id == VertexInputLayout::VertexLayout_Null)
+    {
+        R_ERROR(R_CHANNEL_D3D12, "Can not make vertex layouts with id of %d! This is reserved for null arguments.", VertexInputLayout::VertexLayout_Null);
+        return false;
+    }
     ResultCode result = Pipelines::VertexInputs::make(id, layout);
     return (result == RecluseResult_Ok) || (result == RecluseResult_AlreadyExists);
 }

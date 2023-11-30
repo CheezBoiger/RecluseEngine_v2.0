@@ -279,7 +279,7 @@ void bindResourceTable(ID3D12GraphicsCommandList* pList, BindType bindType, UINT
 
 void D3D12Context::bindRootSignature(ID3D12GraphicsCommandList* pList, ContextState& state)
 {
-    if (state.isDirty(ContextDirty_Descriptors))
+    if (state.isDirty(ContextDirty_Descriptors) || state.isDirty(ContextDirty_RootSignature))
     {
         if (state.m_pipelineStateObject.pipelineType == BindType_Graphics)
         {
@@ -344,7 +344,8 @@ void D3D12Context::setShaderProgram(ShaderProgramId program, U32 permutation)
         currentState().m_pipelineStateObject.shaderProgramId = program;
         currentState().m_pipelineStateObject.permutation = permutation;
         currentState().m_pipelineStateObject.pipelineType = shaderProgram->bindType;
-        currentState().setDirty(ContextDirty_Pipeline);
+        // Descriptors might need to be updated, when we set a new shader program.
+        currentState().setDirty(ContextDirty_Pipeline | ContextDirty_RootSignature);
     }
 }
 

@@ -77,7 +77,7 @@ public:
     virtual ResultCode      deserialize(Archive* archive) override { return RecluseResult_NoImpl; }
 
     virtual const char*     getName() const { return "AbstractSystem"; }
-
+    
 private:
     // Allows initializing the system before on intialize().
     virtual ResultCode      onInitialize()                  { return RecluseResult_NoImpl; }
@@ -154,7 +154,7 @@ protected:
     // Free a bulk of components. Must be overridden.
     virtual ResultCode onFreeComponents(Comp*** pOuts, U32 count) = 0;
 
-    U32     m_numberOfComponentsAllocated;
+    U32             m_numberOfComponentsAllocated;
 };
 
 

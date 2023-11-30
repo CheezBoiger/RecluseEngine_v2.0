@@ -335,6 +335,7 @@ ResultCode D3D12GraphicsResourceView::initialize(D3D12Device* pDevice, ID3D12Res
     R_ASSERT(pDevice != NULL);
     ResourceViewDescription resourceViewDescription = getDesc();
     DescriptorHeapAllocationManager* heapManager = pDevice->getDescriptorHeapManager();
+    R_ASSERT(resourceViewDescription.format != ResourceFormat_Unknown, "Resource format must not be UNKNOWN prior to creation!!");
 
     switch (getDesc().type) 
     {   

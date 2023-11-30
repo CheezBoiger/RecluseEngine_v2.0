@@ -9,7 +9,7 @@
 #include "Recluse/Graphics/Resource.hpp"
 #include "Recluse/Graphics/ResourceView.hpp"
 #include "Recluse/Graphics/RenderPass.hpp"
-#include "Recluse/Graphics/ShaderBuilder.hpp"
+#include "Recluse/Pipeline/Graphics/ShaderBuilder.hpp"
 #include "Recluse/Graphics/ShaderProgram.hpp"
 
 #include "Recluse/Memory/MemoryCommon.hpp"

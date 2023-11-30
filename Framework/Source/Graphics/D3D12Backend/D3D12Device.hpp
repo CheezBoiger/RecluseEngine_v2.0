@@ -138,6 +138,7 @@ private:
         ContextDirty_VertexBuffers                      = (1 << 4),
         ContextDirty_IndexBuffer                        = (1 << 5),
         ContextDirty_Topology                           = (1 << 6),
+        ContextDirty_RootSignature                      = (1 << 7),
     };
 
     struct ContextState

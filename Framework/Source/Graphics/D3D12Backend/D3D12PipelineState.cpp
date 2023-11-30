@@ -127,6 +127,10 @@ Bool unloadAll()
 
 D3DVertexInput* obtain(VertexInputLayoutId layoutId)
 {
+    // If we request null argument, then we are essentially clearing.
+    if (layoutId == VertexInputLayout::VertexLayout_Null)
+        return nullptr;
+
     auto& iter = g_vertexLayouts.find(layoutId);
     if (iter != g_vertexLayouts.end())
     {
@@ -134,6 +138,7 @@ D3DVertexInput* obtain(VertexInputLayoutId layoutId)
     }
     else
     {
+        R_ASSERT_FORMAT(false, "No Vertex input found for the layoutId(%d)", layoutId);
         return nullptr;
     }
 }
@@ -202,31 +207,31 @@ ID3D12PipelineState* createGraphicsPipelineState(U32 nodeMask, ID3D12Device* pDe
 
     R_ASSERT(program->graphics.vsBytecode);
     
-    desc.VS.pShaderBytecode = program->graphics.vsBytecode->GetBufferPointer();
-    desc.VS.BytecodeLength = program->graphics.vsBytecode->GetBufferSize();
+    desc.VS.pShaderBytecode = program->graphics.vsBytecode->ptr;
+    desc.VS.BytecodeLength = program->graphics.vsBytecode->sizeBytes;
     
     if (program->graphics.psBytecode)
     {
-        desc.PS.pShaderBytecode = program->graphics.psBytecode->GetBufferPointer();
-        desc.PS.BytecodeLength = program->graphics.psBytecode->GetBufferSize();
+        desc.PS.pShaderBytecode = program->graphics.psBytecode->ptr;
+        desc.PS.BytecodeLength = program->graphics.psBytecode->sizeBytes;
     }
 
     if (program->graphics.hsBytecode)
     {
-        desc.HS.pShaderBytecode = program->graphics.hsBytecode->GetBufferPointer();
-        desc.HS.BytecodeLength = program->graphics.hsBytecode->GetBufferSize();
+        desc.HS.pShaderBytecode = program->graphics.hsBytecode->ptr;
+        desc.HS.BytecodeLength = program->graphics.hsBytecode->sizeBytes;
     }
 
     if (program->graphics.dsBytecode)
     {
-        desc.DS.pShaderBytecode = program->graphics.dsBytecode->GetBufferPointer();
-        desc.DS.BytecodeLength = program->graphics.dsBytecode->GetBufferSize();
+        desc.DS.pShaderBytecode = program->graphics.dsBytecode->ptr;
+        desc.DS.BytecodeLength = program->graphics.dsBytecode->sizeBytes;
     }
 
     if (program->graphics.gsBytecode)
     {
-        desc.GS.pShaderBytecode = program->graphics.gsBytecode->GetBufferPointer();
-        desc.GS.BytecodeLength = program->graphics.gsBytecode->GetBufferSize();
+        desc.GS.pShaderBytecode = program->graphics.gsBytecode->ptr;
+        desc.GS.BytecodeLength = program->graphics.gsBytecode->sizeBytes;
     }
 
     desc.SampleDesc.Count = 1;
@@ -309,8 +314,8 @@ ID3D12PipelineState* createMeshGraphicsPipeline(U32 nodeMask, ID3D12Device* pDev
     
     if (program->graphics.psBytecode)
     {
-        desc.PS.pShaderBytecode = program->graphics.psBytecode->GetBufferPointer();
-        desc.PS.BytecodeLength = program->graphics.psBytecode->GetBufferSize();
+        desc.PS.pShaderBytecode = program->graphics.psBytecode->ptr;
+        desc.PS.BytecodeLength = program->graphics.psBytecode->sizeBytes;
     }
 
     desc.SampleDesc.Count = 1;
@@ -378,8 +383,8 @@ ID3D12PipelineState* createComputePipelineState(U32 nodeMask, ID3D12Device* pDev
     ID3D12PipelineState* pPipelineState     = nullptr;
     D3D12_COMPUTE_PIPELINE_STATE_DESC desc  = { };
     desc.pRootSignature                     = pipelineState.rootSignature;
-    desc.CS.pShaderBytecode                 = program->compute.csBytecode->GetBufferPointer();
-    desc.CS.BytecodeLength                  = program->compute.csBytecode->GetBufferSize();
+    desc.CS.pShaderBytecode                 = program->compute.csBytecode->ptr;
+    desc.CS.BytecodeLength                  = program->compute.csBytecode->sizeBytes;
     desc.Flags                              = D3D12_PIPELINE_STATE_FLAG_NONE;
     desc.NodeMask                           = nodeMask;
     HRESULT result = pDevice->CreateComputePipelineState(&desc, __uuidof(ID3D12PipelineState), (void**)&pPipelineState);
@@ -465,94 +470,100 @@ ID3D12RootSignature* internalCreateRootSignatureWithTable(ID3D12Device* pDevice,
     ID3D12RootSignature* pRootSig = nullptr;
     const U32 totalDescriptors = layout.cbvCount + layout.samplerCount + layout.srvCount + layout.uavCount;
 
+    D3D12_ROOT_SIGNATURE_DESC desc = { };
+    // For CbvSrvUavs and Samplers.
+    D3D12_ROOT_PARAMETER tableParameters[2] = { };
+    std::array<D3D12_DESCRIPTOR_RANGE, 4> ranges = { };
+    const Bool hasSamplers = (layout.samplerCount > 0);
+    U32 cbvSrvUavRangeIdx = 0;
+    U32 offsetInDescriptors = 0;
+    if (layout.cbvCount > 0)
+    {
+        D3D12_DESCRIPTOR_RANGE& range = ranges[cbvSrvUavRangeIdx++];
+        range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+        range.NumDescriptors = layout.cbvCount;
+        range.BaseShaderRegister = 0;
+        range.RegisterSpace = 0;
+        range.OffsetInDescriptorsFromTableStart = offsetInDescriptors;
+        offsetInDescriptors += layout.cbvCount;
+    }
+    if (layout.srvCount > 0)
+    {
+        D3D12_DESCRIPTOR_RANGE& range = ranges[cbvSrvUavRangeIdx++];
+        range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        range.NumDescriptors = layout.srvCount;
+        range.BaseShaderRegister = 0;
+        range.RegisterSpace = 0;
+        range.OffsetInDescriptorsFromTableStart = offsetInDescriptors;
+        offsetInDescriptors += layout.srvCount;
+    }
+    if (layout.uavCount > 0)
+    {
+        D3D12_DESCRIPTOR_RANGE& range = ranges[cbvSrvUavRangeIdx++];
+        range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+        range.NumDescriptors = layout.uavCount;
+        range.BaseShaderRegister = 0;
+        range.RegisterSpace = 0;
+        range.OffsetInDescriptorsFromTableStart = offsetInDescriptors;
+        offsetInDescriptors += layout.uavCount;
+    }
+    if (layout.samplerCount > 0)
+    {
+        D3D12_DESCRIPTOR_RANGE& range = ranges[cbvSrvUavRangeIdx];
+        range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+        range.NumDescriptors = layout.samplerCount;
+        range.BaseShaderRegister = 0;
+        range.RegisterSpace = 0;
+        range.OffsetInDescriptorsFromTableStart = 0; // Doesn't need to have an offset, since samplers will be in their own table.
+        offsetInDescriptors += layout.samplerCount;
+    }
+
+    tableParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    tableParameters[0].DescriptorTable.NumDescriptorRanges = cbvSrvUavRangeIdx;
+    tableParameters[0].DescriptorTable.pDescriptorRanges = ranges.data();
+    tableParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+    if (hasSamplers)
+    {    
+        tableParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        tableParameters[1].DescriptorTable.NumDescriptorRanges = 1;
+        tableParameters[1].DescriptorTable.pDescriptorRanges = &ranges[Math::clamp(cbvSrvUavRangeIdx, (U32)0, (U32)ranges.size())];
+        tableParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+    }
+
+    U32 numParameters = 0;
     if (totalDescriptors)
     {
-        D3D12_ROOT_SIGNATURE_DESC desc = { };
-        // For CbvSrvUavs and Samplers.
-        D3D12_ROOT_PARAMETER tableParameters[2] = { };
-        std::array<D3D12_DESCRIPTOR_RANGE, 4> ranges = { };
-        const Bool hasSamplers = (layout.samplerCount > 0);
-        U32 cbvSrvUavRangeIdx = 0;
-        U32 offsetInDescriptors = 0;
-        if (layout.cbvCount > 0)
-        {
-            D3D12_DESCRIPTOR_RANGE& range = ranges[cbvSrvUavRangeIdx++];
-            range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-            range.NumDescriptors = layout.cbvCount;
-            range.BaseShaderRegister = 0;
-            range.RegisterSpace = 0;
-            range.OffsetInDescriptorsFromTableStart = offsetInDescriptors;
-            offsetInDescriptors += layout.cbvCount;
-        }
-        if (layout.srvCount > 0)
-        {
-            D3D12_DESCRIPTOR_RANGE& range = ranges[cbvSrvUavRangeIdx++];
-            range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-            range.NumDescriptors = layout.srvCount;
-            range.BaseShaderRegister = 0;
-            range.RegisterSpace = 0;
-            range.OffsetInDescriptorsFromTableStart = offsetInDescriptors;
-            offsetInDescriptors += layout.srvCount;
-        }
-        if (layout.uavCount > 0)
-        {
-            D3D12_DESCRIPTOR_RANGE& range = ranges[cbvSrvUavRangeIdx++];
-            range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-            range.NumDescriptors = layout.uavCount;
-            range.BaseShaderRegister = 0;
-            range.RegisterSpace = 0;
-            range.OffsetInDescriptorsFromTableStart = offsetInDescriptors;
-            offsetInDescriptors += layout.uavCount;
-        }
-        if (layout.samplerCount > 0)
-        {
-            D3D12_DESCRIPTOR_RANGE& range = ranges[cbvSrvUavRangeIdx];
-            range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
-            range.NumDescriptors = layout.samplerCount;
-            range.BaseShaderRegister = 0;
-            range.RegisterSpace = 0;
-            range.OffsetInDescriptorsFromTableStart = 0; // Doesn't need to have an offset, since samplers will be in their own table.
-            offsetInDescriptors += layout.samplerCount;
-        }
+        numParameters += 1;
+    }
+    if (hasSamplers)
+    {
+        numParameters += 1;
+    }
+    desc.NumParameters = numParameters;
+    desc.NumStaticSamplers = 0;
+    desc.pParameters = tableParameters;
+    desc.pStaticSamplers = nullptr;
+    desc.Flags = layout.flags; // TODO: None for now, but we might want to try and optimize this?
 
-        tableParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-        tableParameters[0].DescriptorTable.NumDescriptorRanges = cbvSrvUavRangeIdx;
-        tableParameters[0].DescriptorTable.pDescriptorRanges = ranges.data();
-        tableParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-        if (hasSamplers)
-        {    
-            tableParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-            tableParameters[1].DescriptorTable.NumDescriptorRanges = 1;
-            tableParameters[1].DescriptorTable.pDescriptorRanges = &ranges[Math::clamp(cbvSrvUavRangeIdx, (U32)0, (U32)ranges.size())];
-            tableParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-        }
-
-        desc.NumParameters = hasSamplers ? 2 : 1;
-        desc.NumStaticSamplers = 0;
-        desc.pParameters = tableParameters;
-        desc.pStaticSamplers = nullptr;
-        desc.Flags = layout.flags; // TODO: None for now, but we might want to try and optimize this?
-
-        ID3DBlob* pSignature = nullptr;
-        ID3DBlob* pErrorBlob = nullptr;
-        HRESULT result = D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &pSignature, &pErrorBlob);
-        if (SUCCEEDED(result))
+    ID3DBlob* pSignature = nullptr;
+    ID3DBlob* pErrorBlob = nullptr;
+    HRESULT result = D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &pSignature, &pErrorBlob);
+    if (SUCCEEDED(result))
+    {
+        result = pDevice->CreateRootSignature(0, pSignature->GetBufferPointer(), pSignature->GetBufferSize(), __uuidof(ID3D12RootSignature), (void**)&pRootSig);
+        if (FAILED(result))
         {
-            result = pDevice->CreateRootSignature(0, pSignature->GetBufferPointer(), pSignature->GetBufferSize(), __uuidof(ID3D12RootSignature), (void**)&pRootSig);
-            if (FAILED(result))
-            {
-                R_ERROR(R_CHANNEL_D3D12, "Failed to create RootSig! Error code: %x08", result);
-            }
+            R_ERROR(R_CHANNEL_D3D12, "Failed to create RootSig! Error code: %x08", result);
         }
-        else
-        {
-            R_ERROR(R_CHANNEL_D3D12, "Failed to serialize RootSig, Error: %s", (const char*)pErrorBlob->GetBufferPointer());
-        }
-        if (pSignature)
-        {
-            pSignature->Release();
-        }
+    }
+    else
+    {
+        R_ERROR(R_CHANNEL_D3D12, "Failed to serialize RootSig, Error: %s", (const char*)pErrorBlob->GetBufferPointer());
+    }
+    if (pSignature)
+    {
+        pSignature->Release();
     }
     return pRootSig;
 }

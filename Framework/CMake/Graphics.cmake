@@ -26,9 +26,6 @@ set ( RECLUSE_GRAPHICS_BUILD
     ${RECLUSE_GRAPHICS_SOURCE}/RenderPass.cpp
     ${RECLUSE_GRAPHICS_SOURCE}/RenderPassMap.cpp
 	${RECLUSE_GRAPHICS_SOURCE}/ShaderProgram.cpp
-    ${RECLUSE_GRAPHICS_INCLUDE}/ShaderBuilder.hpp
-    ${RECLUSE_GRAPHICS_SOURCE}/DXCShaderBuilder.cpp
-    ${RECLUSE_GRAPHICS_SOURCE}/GlslangShaderBuilder.cpp
 	${RECLUSE_GRAPHICS_SOURCE}/LifetimeCache.hpp
     ${RECLUSE_GRAPHICS_INCLUDE}/GraphicsCommon.hpp
 )
@@ -77,44 +74,6 @@ if ( RCL_VULKAN )
             ${RECLUSE_VULKAN_DIR}/VulkanShaderCache.hpp
             ${RECLUSE_VULKAN_DIR}/VulkanShaderCache.cpp
         )
-		if ( RCL_GLSLANG OR R_GLSLANG_LEGACY_API )
-			add_definitions ( -DRCL_GLSLANG=1 )
-			if ( R_GLSLANG_LEGACY_API )
-				add_definitions( -DR_GLSLANG_LEGACY_API=1 )
-			else()
-				add_definitions( -DR_GLSLANG_LEGACY_API=0 )
-			endif()
-			set ( VULKAN_GLSLANG_LIBRARY_RELEASE optimized $ENV{VULKAN_SDK}/Lib/glslang.lib 
-									 optimized $ENV{VULKAN_SDK}/Lib/shaderc.lib
-									 optimized $ENV{VULKAN_SDK}/Lib/shaderc_util.lib
-                                     optimized $ENV{VULKAN_SDK}/Lib/SPIRV.lib
-                                     optimized $ENV{VULKAN_SDK}/Lib/HLSL.lib
-                                     optimized $ENV{VULKAN_SDK}/Lib/OGLCompiler.lib
-                                     optimized $ENV{VULKAN_SDK}/Lib/OSDependent.lib
-                                     optimized $ENV{VULKAN_SDK}/Lib/SPIRV-Tools.lib
-                                     optimized $ENV{VULKAN_SDK}/Lib/SPIRV-Tools-link.lib
-                                     optimized $ENV{VULKAN_SDK}/Lib/SPIRV-Tools-opt.lib)
-			message ( WARNING "Windows: you will need to also Download Vulkan SDK DebugShaderLibs in order to use glslang debug libs")
-			set ( VULKAN_GLSLANG_LIBRARY_DEBUG debug $ENV{VULKAN_SDK}/Lib/glslangd.lib 
-                                     debug $ENV{VULKAN_SDK}/Lib/shadercd.lib
-									 debug $ENV{VULKAN_SDK}/Lib/shaderc_utild.lib
-									 debug $ENV{VULKAN_SDK}/Lib/GenericCodeGend.lib
-									 debug $ENV{VULKAN_SDK}/Lib/SPIRVd.lib
-                                     debug $ENV{VULKAN_SDK}/Lib/HLSLd.lib
-                                     debug $ENV{VULKAN_SDK}/Lib/OGLCompilerd.lib
-                                     debug $ENV{VULKAN_SDK}/Lib/OSDependentd.lib
-                                     debug $ENV{VULKAN_SDK}/Lib/SPIRV-Toolsd.lib
-                                     debug $ENV{VULKAN_SDK}/Lib/SPIRV-Tools-linkd.lib
-                                     debug $ENV{VULKAN_SDK}/Lib/SPIRV-Tools-optd.lib)
-			if ( NOT R_GLSLANG_LEGACY_API )
-				set ( VULKAN_GLSLANG_LIBRARY_DEBUG ${VULKAN_GLSLANG_LIBRARY_DEBUG} debug $ENV{VULKAN_SDK}/Lib/MachineIndependentd.lib)
-				set ( VULKAN_GLSLANG_LIBRARY_RELEASE ${VULKAN_GLSLANG_LIBRARY_RELEASE} 
-						optimized $ENV{VULKAN_SDK}/Lib/MachineIndependent.lib 
-						optimized $ENV{VULKAN_SDK}/Lib/GenericCodeGen.lib)
-			endif()
-			set ( VULKAN_GLSLANG_LIBRARIES ${VULKAN_GLSLANG_LIBRARY_RELEASE} ${VULKAN_GLSLANG_LIBRARY_DEBUG} )
-			set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} ${VULKAN_GLSLANG_LIBRARIES} )
-		endif()
     else()
         message(FATAL_ERROR "Failed to find Vulkan library!")
     endif(Vulkan_FOUND)
@@ -122,12 +81,6 @@ endif()
 
 if ( RCL_DX11 OR RCL_DX12 )
     set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} dxgi.lib )
-    set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} D3DCompiler.lib )
-	if ( RCL_DXC )
-		set ( RECLUSE_FRAMEWORK_LINK_BINARIES ${RECLUSE_FRAMEWORK_LINK_BINARIES} dxcompiler.lib )
-        add_definitions( -DRCL_DXC=1 )
-        message(WARNING "d3dcompiler.dll and dxil.dll needed with executable, since we are now including dxc...")
-    endif()
 endif()
 
 if ( RCL_DX11 )

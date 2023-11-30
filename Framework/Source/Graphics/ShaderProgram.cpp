@@ -1,6 +1,5 @@
 //
 #include "Recluse/Graphics/ShaderProgram.hpp"
-#include "Recluse/Graphics/ShaderBuilder.hpp"
 
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 #include "Recluse/Graphics/ShaderProgram.hpp"

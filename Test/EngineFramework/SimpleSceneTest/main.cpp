@@ -176,16 +176,8 @@ R_BIND_COMPONENT_SYSTEM(MoverComponent, SimpleUpdaterSystem);
 R_BIND_COMPONENT_SYSTEM(HealthComponent, HealthSystem);
 
 
-int main(int c, char* argv[])
+void addEntities(Scene* pScene)
 {
-    Log::initializeLoggingSystem();
-    RealtimeTick::initializeWatch(1ull, 0);
-    g_bus.initialize();
-
-    Transform::systemInit();
-    MoverComponent::systemInit();
-    HealthComponent::systemInit();
-
     ECS::GameEntity* entity = ECS::GameEntity::instantiate(sizeof(ECS::GameEntity));
     ECS::GameEntity* entity2 = ECS::GameEntity::instantiate(sizeof(ECS::GameEntity));
     entity->setName("Billy");
@@ -208,13 +200,26 @@ int main(int c, char* argv[])
     entity2->getComponent<HealthComponent>()->other = entity->getUUID();
     entity2->getComponent<MoverComponent>()->damage = 54.0f;
 
-    Scene* pScene = new Scene();
-    pScene->initialize();
     pScene->addEntity(entity);
     pScene->addEntity(entity2);
     pScene->addSystemFor<Transform>();
     pScene->addSystemFor<MoverComponent>();
     pScene->addSystemFor<HealthComponent>();
+}
+
+
+int main(int c, char* argv[])
+{
+    Log::initializeLoggingSystem();
+    RealtimeTick::initializeWatch(1ull, 0);
+    g_bus.initialize();
+
+    //Transform::systemInit();
+    //MoverComponent::systemInit();
+    //HealthComponent::systemInit();
+    Scene* pScene = new Scene();
+    pScene->initialize();
+    addEntities(pScene);
 
     F32 counter = 0;
     while (counter < 10.0f) {

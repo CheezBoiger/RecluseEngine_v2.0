@@ -283,7 +283,7 @@ std::vector<U32> createCubeIndicesInstance()
 
 enum VertexLayout
 {
-    VertexLayout_PositionNormalTexCoordColor
+    VertexLayout_PositionNormalTexCoordColor = 0
 };
 
 enum ShaderProgram

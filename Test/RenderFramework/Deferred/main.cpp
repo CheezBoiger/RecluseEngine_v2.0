@@ -36,6 +36,7 @@ GraphicsResource* albedoTexture = nullptr;
 GraphicsResource* normalTexture = nullptr;
 GraphicsResource* materialTexture = nullptr;
 GraphicsResource* depthTexture = nullptr;
+GraphicsSampler*  gbufferSampler = nullptr;
 
 GraphicsResource* lightSceneTexture = nullptr;
 
@@ -59,6 +60,15 @@ struct Vertex
     Math::Float3 normal;
     Math::Float2 texCoord0;
     Math::Float4 color;
+};
+
+
+struct MeshDraw
+{
+    GraphicsResource* vertexBuffer;
+    GraphicsResource* indexBuffer;
+    GraphicsResource* meshTransform;
+    U32 numIndices;
 };
 
 std::array<Vector4, 36> positions = {
@@ -291,7 +301,7 @@ std::vector<U32> createCubeIndicesInstance()
 
 enum VertexLayout
 {
-    VertexLayout_PositionNormalTexCoordColor
+    VertexLayout_PositionNormalTexCoordColor = 0
 };
 
 enum ShaderProgram
@@ -453,7 +463,7 @@ GraphicsSampler* createSampler(GraphicsDevice* device)
     samplerDescription.compareOp = CompareOp_Never;
     samplerDescription.magFilter = Filter_Nearest;
     samplerDescription.maxAnisotropy = 0.0f;
-    samplerDescription.maxLod = 16;
+    samplerDescription.maxLod = 1;
     samplerDescription.minLod = 0;
     samplerDescription.minFilter = Filter_Nearest;
     samplerDescription.mipLodBias = 0.f;
@@ -534,7 +544,7 @@ void ResizeFunction(U32 x, U32 y, U32 width, U32 height)
 }
 
 
-void applyGBufferRendering(GraphicsContext* context, GraphicsResource* vertexBuffer = nullptr, GraphicsResource* indexBuffer = nullptr)
+void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>& meshes)
 {
     context->transition(albedoTexture, ResourceState_RenderTarget);
     context->transition(normalTexture, ResourceState_RenderTarget);
@@ -561,7 +571,7 @@ void applyGBufferRendering(GraphicsContext* context, GraphicsResource* vertexBuf
     ResourceViewId dsv = depthTexture->asView(description);
 
     ResourceViewId rtvs[] = { albedoRtv, normalRtv };
-    
+    context->pushState();
     context->bindRenderTargets(2, rtvs, dsv);
     context->setTopology(PrimitiveTopology_TriangleList);
     context->enableDepth(true);
@@ -575,17 +585,66 @@ void applyGBufferRendering(GraphicsContext* context, GraphicsResource* vertexBuf
     F32 clearColor[4] = { 0, 0, 0, 0 };
     context->clearRenderTarget(0, clearColor, scissor);
     context->clearRenderTarget(1, clearColor, scissor);
-    context->clearDepthStencil(ClearFlag_Depth, 0.f, 0, scissor);
+    context->clearDepthStencil(ClearFlag_Depth, 1.f, 0, scissor);
 
     context->setViewports(1, &viewport);
     context->setScissors(1, &scissor);
     context->setShaderProgram(ShaderProgram_Gbuffer, 0);
-    if (vertexBuffer)
+    context->setInputVertexLayout(VertexLayout_PositionNormalTexCoordColor);
+    for (U32 i = 0; i < meshes.size(); ++i)
     {
         U64 offset[] = { 0 };
-        context->bindVertexBuffers(1, &vertexBuffer, offset);
-        context->bindIndexBuffer(indexBuffer, 0, IndexType_Unsigned32);
+        GraphicsResource* vb = meshes[i].vertexBuffer;
+        context->bindVertexBuffers(1, &vb, offset);
+        context->bindIndexBuffer(meshes[i].indexBuffer, 0, IndexType_Unsigned32);
+        context->drawIndexedInstanced(meshes[i].numIndices, 1, 0, 0, 0);
     }
+    context->popState();
+    context->clearResourceBinds();
+}
+
+
+void resolveLighting(GraphicsContext* context)
+{
+    ResourceViewDescription description = { };
+    description.baseArrayLayer = 0;
+    description.baseMipLevel = 0;
+    description.dimension = ResourceViewDimension_2d;
+    description.layerCount = 1;
+    description.mipLevelCount = 1;
+    description.format = ResourceFormat_R8G8B8A8_Unorm;
+    description.type = ResourceViewType_RenderTarget;
+    GraphicsResource* finalImage = swapchain->getFrame(swapchain->getCurrentFrameIndex());
+    ResourceViewId id = finalImage->asView(description);    
+    
+    description.type = ResourceViewType_ShaderResource;
+    ResourceViewId albedoView = albedoTexture->asView(description);
+
+    description.format = ResourceFormat_R16G16B16A16_Float;
+    ResourceViewId normalView = normalTexture->asView(description);
+
+    Viewport viewport = { 0, 0, swapchain->getDesc().renderWidth, swapchain->getDesc().renderHeight, 1, 0 };
+    Rect scissor = { 0, 0, swapchain->getDesc().renderWidth, swapchain->getDesc().renderHeight };
+    F32 clearColor[4] = { 0, 0, 0, 0 };
+
+    context->transition(finalImage, ResourceState_RenderTarget);
+    context->transition(albedoTexture, ResourceState_ShaderResource);
+    context->transition(normalTexture, ResourceState_ShaderResource);
+    context->transition(depthTexture, ResourceState_ShaderResource);
+    context->pushState();
+    context->setShaderProgram(ShaderProgram_LightResolve, 0);
+    context->bindRenderTargets(1, &id);
+    context->setTopology(PrimitiveTopology_TriangleList);
+    context->setColorWriteMask(0, Color_Rgba);
+    context->setInputVertexLayout(VertexInputLayout::VertexLayout_Null);
+    context->bindShaderResource(ShaderStage_Pixel, 0, albedoView);
+    context->bindShaderResource(ShaderStage_Pixel, 1, normalView);
+    context->bindSampler(ShaderStage_Pixel, 0, gbufferSampler);
+    context->clearRenderTarget(0, clearColor, scissor);
+    context->setViewports(1, &viewport);
+    context->setScissors(1, &scissor);
+    context->drawInstanced(3, 1, 0, 0);
+    context->popState();
 }
 
 
@@ -596,7 +655,7 @@ int main(char* argv[], int c)
     RealtimeTick::initializeWatch(1ull, 0);
     instance  = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
-    GraphicsSampler* sampler    = nullptr;
+    std::vector<MeshDraw> meshes;
 
     Window* window = Window::create("Deferred", 0, 0, 1200, 800, ScreenMode_Windowed);
     window->show();
@@ -610,7 +669,7 @@ int main(char* argv[], int c)
         appInfo.appMinor = 0;
         appInfo.appMajor = 0;
         appInfo.appPatch = 0;
-        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
+        LayerFeatureFlags flags = 0;// LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
         instance->initialize(appInfo, flags);
     }
     
@@ -636,7 +695,7 @@ int main(char* argv[], int c)
 
     GraphicsResource* textureResource = nullptr;
     createTextureResource(&textureResource);
-    sampler = createSampler(device);
+    gbufferSampler = createSampler(device);
 
     buildVertexLayouts(device);
     createShaderProgram(device);
@@ -664,7 +723,8 @@ int main(char* argv[], int c)
                 R_WARN("DeferredBox", "Fps: %f", 1.0f / total);
             }
             swapchain->prepare(context);
-            applyGBufferRendering(context);
+            applyGBufferRendering(context, meshes);
+            resolveLighting(context);
             context->transition(swapchain->getFrame(swapchain->getCurrentFrameIndex()), ResourceState_Present);
             context->end();
             if (swapchain->present(context) == RecluseResult_NeedsUpdate)
@@ -689,7 +749,7 @@ int main(char* argv[], int c)
 
     destroyGBuffer(device);
     device->destroySwapchain(swapchain);
-    device->destroySampler(sampler);
+    device->destroySampler(gbufferSampler);
     //device->destroyResource(depthBuffer);
     device->destroyResource(textureResource);
     device->releaseContext(context);

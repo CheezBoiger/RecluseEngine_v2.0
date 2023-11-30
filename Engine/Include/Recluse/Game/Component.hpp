@@ -42,16 +42,18 @@ enum ComponentUpdateFlag
 #define R_BIND_COMPONENT_SYSTEM(_class, _game_system) \
     Recluse::ECS::System<_class>* _class :: k ## _class ## System = nullptr; \
     _class* _class::instantiate(const Recluse::RGUID& owner) { \
+        _class::systemInit(); \
         _class* pAllocatedComp = nullptr; \
         ResultCode err = k ## _class ## System->allocateComponent(&pAllocatedComp, owner); \
         if (err != RecluseResult_Ok) return nullptr; \
         return pAllocatedComp; \
     } \
     ResultCode _class::free(_class* pComponent) { \
+        if (!k ## _class ## System) return RecluseResult_NullPtrExcept; \
         return k ## _class ## System->freeComponent(&pComponent); \
     } \
     void _class::systemInit() { if (!k ## _class ## System) k ## _class ## System = _game_system::create(); } \
-    Recluse::ECS::AbstractSystem* _class::getSystem() { return k ## _class ## System; }
+    Recluse::ECS::AbstractSystem* _class::getSystem() { _class::systemInit(); return k ## _class ## System; }
 
 class AbstractComponent
 {

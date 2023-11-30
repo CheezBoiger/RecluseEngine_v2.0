@@ -1,6 +1,6 @@
 //
 #include "Recluse/Pipeline/ShaderProgramBuilder.hpp"
-#include "Recluse/Graphics/ShaderBuilder.hpp"
+#include "Recluse/Pipeline/Graphics/ShaderBuilder.hpp"
 #include "Recluse/Filesystem/Filesystem.hpp"
 #include "Recluse/Messaging.hpp"
 #include <unordered_map>

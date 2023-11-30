@@ -6,7 +6,6 @@
 
 #include "Recluse/Messaging.hpp"
 
-#include "Recluse/Graphics/ShaderBuilder.hpp"
 #include "Recluse/Threading/Threading.hpp"
 
 namespace Recluse {
@@ -52,42 +51,6 @@ ResultCode Shader::load(const char* entryPoint, const char* pByteCode, U64 szByt
     m_shaderHashId = Shader::makeShaderHash(pByteCode, szBytes);
 
     return RecluseResult_Ok;
-}
-
-
-ResultCode ShaderBuilder::compile
-    (
-        Shader* pShader, 
-        const char* entryPoint,
-        const char* sourceCode, 
-        U64 sourceCodeBytes, 
-        ShaderPermutationId permutation,
-        ShaderLang lang, 
-        ShaderType shaderType,
-        const std::vector<PreprocessDefine>& defines
-    )
-{
-    ResultCode result              = RecluseResult_Ok;
-
-    std::vector<char> srcCodeString;
-    std::vector<char> byteCodeString;
-    srcCodeString.resize(sourceCodeBytes + 1);
-    
-    memcpy(srcCodeString.data(), sourceCode, sourceCodeBytes);
-    srcCodeString[sourceCodeBytes] = '\0';    
-
-    result = onCompile(srcCodeString, byteCodeString, entryPoint, lang, shaderType, defines);
-
-    if (result == RecluseResult_Ok) 
-    {
-        pShader->load(entryPoint, byteCodeString.data(), byteCodeString.size(), getIntermediateCode(), shaderType);
-        pShader->setPermutationId(permutation);
-    } 
-    else 
-    {
-        R_ERROR("Shader", "Failed to compile shader!");
-    }
-    return result;
 }
 
 
