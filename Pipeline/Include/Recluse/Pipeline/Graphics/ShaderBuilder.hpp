@@ -15,6 +15,16 @@ struct PreprocessDefine
     std::string value;
 };
 
+
+struct ShaderReflection
+{
+    U16 numCbvs;
+    U16 numSrvs;
+    U16 numUavs;
+    U8  numRtvs;
+};
+
+
 // ShaderBuilder, handles high level shading languages, and transforms them into
 // bytecode to be read to the gpu.
 class R_PUBLIC_API ShaderBuilder 
@@ -47,6 +57,9 @@ public:
     virtual ResultCode disassemble(std::vector<char>& output) { return RecluseResult_NoImpl; }
 
     ShaderIntermediateCode getIntermediateCode() const { return m_imm; }
+
+    // Shader reflection function.
+    virtual ShaderReflection reflect(const char* bytecode, U64 sizeBytes, ShaderLang lang) { return { }; }
 
 private:
 

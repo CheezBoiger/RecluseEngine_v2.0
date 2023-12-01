@@ -14,3 +14,12 @@ endif()
 add_subdirectory ( ${RECLUSE_THIRDPARTY_DIR}/wxWidgets )
 #add_subdirectory ( ${RECLUSE_THIRDPARTY_DIR}/zlib )
 add_subdirectory ( ${RECLUSE_THIRDPARTY_DIR}/googletest )
+
+# Reflection for stuff
+if ( RCL_VULKAN ) 
+	if ( RCL_GLSLANG OR R_GLSLANG_LEGACY_API )
+		set ( SPIRV_REFLECT_STATIC_LIB ON CACHE BOOL "Build the reflection project as a lib instead!" )
+		set ( SPIRV_REFLECT_EXECUTABLE OFF CACHE BOOL "Do not build as an executable." )
+		add_subdirectory( ${RECLUSE_THIRDPARTY_DIR}/SPIRV-Reflect )
+	endif()
+endif()

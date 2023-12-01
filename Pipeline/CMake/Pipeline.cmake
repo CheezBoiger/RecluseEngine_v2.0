@@ -64,7 +64,7 @@ if ( RCL_VULKAN )
 						optimized $ENV{VULKAN_SDK}/Lib/GenericCodeGen.lib)
 			endif()
 			set ( VULKAN_GLSLANG_LIBRARIES ${VULKAN_GLSLANG_LIBRARY_RELEASE} ${VULKAN_GLSLANG_LIBRARY_DEBUG} )
-			set ( RECLUSE_PIPELINE_LINK_LIBRARIES ${RECLUSE_PIPELINE_LINK_LIBRARIES} ${VULKAN_GLSLANG_LIBRARIES} )
+			set ( RECLUSE_PIPELINE_LINK_LIBRARIES ${RECLUSE_PIPELINE_LINK_LIBRARIES} ${VULKAN_GLSLANG_LIBRARIES} spirv-reflect-static )
 		endif()
 	endif()
 endif()
@@ -76,5 +76,9 @@ if ( RCL_DX11 OR RCL_DX12 )
 		set ( RECLUSE_PIPELINE_LINK_LIBRARIES ${RECLUSE_PIPELINE_LINK_LIBRARIES} dxcompiler.lib )
         add_definitions( -DRCL_DXC=1 )
         message(WARNING "d3dcompiler.dll and dxil.dll needed with executable, since we are now including dxc...")
+		set ( RECLUSE_PIPELINE_INCLUDE_FILES 
+				${RECLUSE_PIPELINE_INCLUDE_FILES} 
+				${RECLUSE_THIRDPARTY_DIR}/DirectXShaderCompiler/include 
+			)
     endif()
 endif()

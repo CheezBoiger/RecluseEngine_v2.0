@@ -9,20 +9,22 @@
 #include "Recluse/Math/Quaternion.hpp"
 #include "Recluse/RGUID.hpp"
 
+#include <vector>
+
 namespace Recluse {
 
 using namespace Math;
 
 // Transform component that stores transformations
 // and positioning of a given entity.
-class Transform : public ECS::Component<Transform>
+class Transform : public ECS::Component
 {
 public:
     R_COMPONENT_DECLARE(Transform);
 
     virtual ~Transform() { }
     Transform()
-        : ECS::Component<Transform>(generateRGUID()) { }
+        : ECS::Component(generateRGUID()) { }
 
     R_EDITOR_DECLARE("visible", "public", true)
     R_EDITOR_DECLARE("visible", "default", Float3(0.f, 0.f, 0.f))
@@ -58,5 +60,24 @@ private:
     Matrix43                    m_prevLocalToWorld;    // Previous Local To World.
 
     Matrix44                    m_worldToLocal;        // World to Local Matrix.
+};
+
+
+class R_PUBLIC_API TransformRegistry : public ECS::Registry<Transform>
+{
+public:
+    R_COMPONENT_REGISTRY_DECLARE(TransformRegistry);
+
+    virtual ResultCode     onAllocateComponent(const RGUID& owner)                override;
+    virtual ResultCode     onFreeComponent(const RGUID& owner)                     override;
+
+    virtual Transform*     getComponent(const RGUID& entityKey) override;
+    virtual Transform**    getAllComponents(U64& pOut) override;
+
+    virtual ResultCode     onInitialize()                                       override { return RecluseResult_NoImpl; }
+    virtual ResultCode     onCleanUp()                                          override;
+
+private:
+    std::vector<Transform*> m_transforms;
 };
 } // Recluse

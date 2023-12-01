@@ -97,7 +97,6 @@ public:
         , m_guuid(uuid)
         , m_status(GameEntityStatus_Unused)
         , m_pParentNode(pParent)
-        , m_pSceneRef(nullptr)
         , m_name(name)
         , m_tag(tag)
     {}
@@ -149,20 +148,11 @@ public:
 
     R_PUBLIC_API void                   destroy() 
     {
-        // Destroy our components involved here. This must be done LAST since these will end up invalid, and 
-        // we won't be able to access them anymore here.
-        for (auto& comp : m_components)
-        {
-            comp.second->release();
-        }
-
-        m_components.clear();
-
         m_status = GameEntityStatus_Destroyed;
     }
 
-    virtual R_PUBLIC_API ResultCode        serialize(Archive* pArchive) override;
-    virtual R_PUBLIC_API ResultCode        deserialize(Archive* pArchive) override;
+    virtual R_PUBLIC_API ResultCode     serialize(Archive* pArchive) override;
+    virtual R_PUBLIC_API ResultCode     deserialize(Archive* pArchive) override;
 
     // Get the game object name.
     R_PUBLIC_API const std::string&     getName() const { return m_name; }
@@ -230,10 +220,6 @@ public:
         }
     }
 
-    // Get the reference to the scene.
-    //
-    R_PUBLIC_API Engine::Scene*             getScene() const { return m_pSceneRef; }
-
     R_PUBLIC_API std::vector<GameEntity*>&  getChildren() { return m_childrenNodes; }
 
     R_PUBLIC_API B32                        isParent(GameEntity* pChild) const 
@@ -243,41 +229,17 @@ public:
     }
 
     template<typename Comp>
-    Comp* getComponent() 
-    { 
-        static_assert(std::is_base_of<ECS::AbstractComponent, Comp>(), "getComponent: Not base component!");
-        auto& it = m_components.find(Comp::classGUID()); 
-        if (it == m_components.end())
-            return nullptr;
-        return static_cast<Comp*>(it->second);
-    }
-
-    // Adds a component to the game object.
-    template<typename Comp>
-    Bool addComponent() 
+    Comp* getComponent(Engine::Scene* pScene)
     {
-        static_assert(std::is_base_of<ECS::AbstractComponent, Comp>(), "addComponent: Not base of component!");
-        auto it = m_components.find(Comp::classGUID());
-        if (it == m_components.end())
+        if (pScene)
         {
-            m_components.insert(std::pair<ECS::ComponentUUID, ECS::AbstractComponent*>(Comp::classGUID(), Comp::instantiate(getUUID())));
-            return true;
+            ECS::Registry<Comp>* registry = pScene->getRegistry<Comp>();
+            if (registry)
+            {
+                return registry->getComponent(getUUID());
+            }
         }
-        return false;
-    }
-
-    // Removes a component to the game object. Returns true if the component was successfully removed. False if the 
-    // component does not exists in the game object.
-    template<typename Comp>
-    Bool removeComponent()
-    {
-        static_assert(std::is_base_of<ECS::AbstractComponent, Comp>(), "removeComponent: Not a base of component!");
-        auto it = m_components.find(Comp::classGUID());
-        if (it == m_components.end())
-            return false;
-        it->second->release();
-        m_components.erase(it);
-        return true;
+        return nullptr;
     }
 
 protected:
@@ -308,14 +270,8 @@ private:
     // game object parent.
     std::vector<GameEntity*>                                m_childrenNodes;
 
-    // All component handles associated with this entity.
-    std::map<Recluse::ECS::ComponentUUID, ECS::AbstractComponent*>  m_components;
-
     // Game Object uuid.
     RGUID                                                   m_guuid;
-
-    // Reference to the scene.
-    Engine::Scene*                                          m_pSceneRef;
 
     // The actual game object allocation.
     GameEntityAllocation                                    m_allocation;

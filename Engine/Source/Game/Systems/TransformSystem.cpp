@@ -1,63 +1,37 @@
 //
+#include "Recluse/Scene/Scene.hpp"
 #include "Recluse/Game/Systems/TransformSystem.hpp"
+#include "Recluse/Messaging.hpp"
+#include "Recluse/Utility.hpp"
 
 namespace Recluse {
 
-ResultCode TransformSystem::onAllocateComponent(Transform** pOut)
-{
-    // TODO: We are just testing it out. We would need to hold onto this handle!
-    *pOut = new Transform();
-    m_transforms.push_back(*pOut);
-    return RecluseResult_Ok;
-}
 
+R_DECLARE_GLOBAL_BOOLEAN(g_enableTransformLogging, false, "Transform.EnableLogging");
 
-ResultCode TransformSystem::onFreeComponent(Transform** pIn)
+void TransformSystem::onUpdate(const RealtimeTick& tick)
 {
-    U32 i = 0;
-    for (auto& it = m_transforms.begin(); it != m_transforms.end(); ++it)
+    Engine::Scene* pScene = getScene();
+    if (pScene)
     {
-        if ((*pIn)->getOwner() == (*it)->getOwner())
+        U64 count = 0;
+        Transform** transforms = pScene->getRegistry<Transform>()->getAllComponents(count);
+        for (U64 i = 0; i < count; ++i)
         {
-            m_transforms.erase(it);
-            delete *pIn;
-            *pIn = nullptr;
-            return RecluseResult_Ok;
+            transforms[i]->updateMatrices();
+            if (g_enableTransformLogging)
+            {
+                ECS::GameEntity* entity = ECS::GameEntity::findEntity(transforms[i]->getOwner());
+                R_VERBOSE("Transform", "Owner: %s, Position: (%f, %f, %f)", entity->getName().c_str(), 
+                    transforms[i]->position.x, transforms[i]->position.y, transforms[i]->position.z);
+            }
         }
     }
-    return RecluseResult_Ok;
-}
-
-
-void TransformSystem::onUpdateComponents(const RealtimeTick& tick)
-{
-    for (auto& transform : m_transforms)
-    {
-        transform->updateMatrices();
-    }
-}
-
-
-Transform* TransformSystem::getComponent(const RGUID& entityKey)
-{
-    return nullptr;
-}
-
-
-Transform** TransformSystem::getAllComponents(U64& pOut)
-{
-    return m_transforms.data();
 }
 
 
 ResultCode TransformSystem::onCleanUp()
 {
-    for (auto it = m_transforms.begin(); it != m_transforms.end(); ++it)
-    {
-        (*it)->cleanUp();
-        delete *it;
-    }
-    m_transforms.clear();
     return RecluseResult_Ok;
 }
 } // Recluse

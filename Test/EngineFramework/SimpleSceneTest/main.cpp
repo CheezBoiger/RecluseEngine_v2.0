@@ -4,12 +4,13 @@
 #include "Recluse/Time.hpp"
 #include "Recluse/Logger.hpp"
 #include "Recluse/Messaging.hpp"
-
+#include "Recluse/Utility.hpp"
 #include "Recluse/Filesystem/Archive.hpp"
 #include "Recluse/Math/Vector2.hpp"
 #include "Recluse/Scene/Scene.hpp"
 #include "Recluse/MessageBus.hpp"
 #include "Recluse/Game/Components/Transform.hpp"
+#include "Recluse/Game/Systems/TransformSystem.hpp"
 #include "Recluse/Game/GameSystem.hpp"
 #include "Recluse/Math/Bounds2D.hpp"
 #include <Windows.h>
@@ -20,160 +21,88 @@ using namespace Recluse::Engine;
 
 Recluse::MessageBus g_bus;
 
-class MoverComponent : public ECS::Component<MoverComponent>
+
+class MoverComponent : public ECS::Component
 {
 public:
     R_COMPONENT_DECLARE(MoverComponent);
-    Math::Float2 direction;
-    Math::Bounds2d bounds = { Math::Float2(-1, -1), Math::Float2(1, 1) };
-    F32 damage = 0;
-    MoverComponent() : ECS::Component<MoverComponent>(generateRGUID()) { }
+    MoverComponent() : ECS::Component(generateRGUID()) { }
+    Math::Float3 direction;
 };
 
 
-enum UpdaterEvent : U64
-{
-    UpdaterEvent_Update = 1232523423
-};
-
-class SimpleUpdaterSystem : public ECS::System<MoverComponent>
+class MoverRegistry : public ECS::Registry<MoverComponent>
 {
 public:
-    R_DECLARE_GAME_SYSTEM(SimpleUpdaterSystem, MoverComponent);
-
-    virtual ResultCode onInitialize() override
+    R_COMPONENT_REGISTRY_DECLARE(MoverRegistry);
+    
+    ResultCode onAllocateComponent(const RGUID& owner) override
     {
-        g_bus.addReceiver("SimpleUpdaterSystem", [&](EventMessage* message) 
-        {
-             if (message->getEvent() == UpdaterEvent_Update)
-                m_shouldUpdate = true;
-        });
+        MoverComponent* comp = new MoverComponent();
+        comp->setOwner(owner);
+        components.push_back(comp);
         return RecluseResult_Ok;
     }
 
-    virtual void onUpdateComponents(const RealtimeTick& tick) override 
+    ResultCode onFreeComponent(const RGUID& owner) override
     {
-        if (m_shouldUpdate)
+        for (auto it = components.begin(); it != components.end(); ++it)
         {
-            for (auto& mover : m_movers)
+            if (owner == (*it)->getOwner())
             {
-                if (mover->isEnabled())
-                {
-                    ECS::GameEntity* pEntity            = ECS::GameEntity::findEntity(mover->getOwner());
-                    if (pEntity->isActive())
-                    {       
-                        Transform* t                        = pEntity->getComponent<Transform>();
-                        ECS::System<Transform>* pSystemT    = ECS::castToSystem<Transform>();
-                        t->position                         = t->position + Float3(mover->direction, 0.f) * tick.delta();
-
-                        //R_VERBOSE("SimpleUpdaterSystem", "Moving entity=%s, Position=(%f, %f, %f)", pEntity->getName().c_str(), t->position.x, t->position.y, t->position.z);
-                    }
-                }
+                delete (*it);
+                components.erase(it);
+                return RecluseResult_Ok;
             }
         }
-        m_shouldUpdate = false;
-
-        // Just testing fire events.
-        MessageBus::fireEvent(&g_bus, UpdaterEvent_Update);
+        return RecluseResult_NotFound;
     }
 
-    virtual ResultCode onAllocateComponent(MoverComponent** pOut) override 
+    MoverComponent** getAllComponents(U64& count) override
     {
-        *pOut = new MoverComponent();
-        m_movers.push_back(*pOut);
-        // Just enable automatically.
-        m_movers.back()->setEnable(true);
-        return RecluseResult_Ok;
+        count = components.size();
+        return components.data();
     }
 
-    virtual ResultCode onAllocateComponents(MoverComponent*** pOuts, U32 count) override { return RecluseResult_NoImpl; }
-    virtual ResultCode onFreeComponent(MoverComponent** pIn) override { if (*pIn) delete *pIn; return RecluseResult_Ok; }
-    virtual ResultCode onFreeComponents(MoverComponent*** pIns, U32 count) override { return RecluseResult_NoImpl; }
-
-    virtual ResultCode onCleanUp() override 
+    MoverComponent* getComponent(const RGUID& owner) override
     {
-        for (auto it = m_movers.begin(); it != m_movers.end(); ++it)
-            delete (*it);
-        m_movers.clear();
-        return RecluseResult_Ok; 
+        for (auto it = components.begin(); it != components.end(); ++it)
+        {
+            if (owner == (*it)->getOwner())
+            {
+                return (*it);
+            }
+        }
+        return nullptr;
     }
 
 private:
-    std::vector<MoverComponent*> m_movers;
-    Bool m_shouldUpdate = true;
+    std::vector<MoverComponent*> components;
 };
 
 
-// Health component
-struct HealthComponent : public ECS::Component<HealthComponent>
-{
-    R_COMPONENT_DECLARE(HealthComponent);
-    F32 m_health = 100.f;
-    RGUID other;
-    HealthComponent() : ECS::Component<HealthComponent>(generateRGUID()) { }
-};
-
-
-class HealthSystem : public ECS::System<HealthComponent>
+class MoverSystem : public ECS::System
 {
 public:
-    R_DECLARE_GAME_SYSTEM(HealthSystem, HealthComponent);
-    virtual ResultCode onAllocateComponent(HealthComponent** pOut) override 
-    { 
-        *pOut = new HealthComponent();
-        m_components.push_back(*pOut);
-        m_components.back()->setEnable(true);
-        return RecluseResult_Ok; 
-    }
+    R_DECLARE_GAME_SYSTEM(MoverSystem);
 
-    virtual ResultCode onAllocateComponents(HealthComponent*** pOuts, U32 count) override { return RecluseResult_NoImpl; }
-    virtual ResultCode onFreeComponent(HealthComponent** pIn) override { return RecluseResult_NoImpl; }
-    virtual ResultCode onFreeComponents(HealthComponent*** pOuts, U32 count) override { return RecluseResult_NoImpl; }
-
-    virtual ResultCode onCleanUp() override
+    void onUpdate(const RealtimeTick& tick) override
     {
-        for (auto it = m_components.begin(); it != m_components.end(); ++it)
-            delete (*it);
-        m_components.clear();
-        return RecluseResult_Ok;
-    }
-
-    virtual void onUpdateComponents(const RealtimeTick& tick) override 
-    {
-        for (auto& healthComponent : m_components)
+        U64 count = 0;
+        MoverComponent** movers = getScene()->getRegistry<MoverComponent>()->getAllComponents(count);
+        for (U64 i = 0; i < count; ++i)
         {
-            ECS::GameEntity* entity = ECS::GameEntity::findEntity(healthComponent->getOwner());
-            ECS::GameEntity* otherEntity = ECS::GameEntity::findEntity(healthComponent->other);
-            if (otherEntity)
-            {
-                MoverComponent* mover = entity->getComponent<MoverComponent>();
-                MoverComponent* otherMover = otherEntity->getComponent<MoverComponent>();
-                Transform* transforms[] = { entity->getComponent<Transform>(), otherEntity->getComponent<Transform>() };
-                Math::Bounds2d bounds[] = { mover->bounds, otherMover->bounds };
-
-                for (U32 i = 0; i < 2; ++i)
-                {
-                    bounds[i].mmin = bounds[i].mmin + Math::Float2(transforms[i]->position.x, transforms[i]->position.y);
-                    bounds[i].mmax = bounds[i].mmax + Math::Float2(transforms[i]->position.x, transforms[i]->position.y);
-                }
-
-                if (Math::intersects(bounds[0], bounds[1]))
-                {
-                    healthComponent->m_health -= tick.delta() * otherMover->damage;
-                    healthComponent->m_health = Math::maximum(healthComponent->m_health, 0.0f);
-                    R_VERBOSE("HealthSystem", "%s is taking %f damage! Health=%f", entity->getName().c_str(), otherMover->damage, healthComponent->m_health);
-                    if (healthComponent->m_health == 0.f)
-                        R_ERROR("HealthSystem", "%s IS DEAD!!!", entity->getName().c_str());
-                }
-            }
+            RGUID owner = movers[i]->getOwner();
+            Transform* transform = ECS::GameEntity::findEntity(owner)->getComponent<Transform>(getScene());
+            transform->position = transform->position + movers[i]->direction * tick.delta();
         }
     }
-private:
-    std::vector<HealthComponent*> m_components;
-};
 
-R_BIND_COMPONENT_SYSTEM(MoverComponent, SimpleUpdaterSystem);
-R_BIND_COMPONENT_SYSTEM(HealthComponent, HealthSystem);
+    ResultCode onCleanUp() override
+    {
+        return RecluseResult_Ok;
+    }
+};
 
 
 void addEntities(Scene* pScene)
@@ -182,43 +111,38 @@ void addEntities(Scene* pScene)
     ECS::GameEntity* entity2 = ECS::GameEntity::instantiate(sizeof(ECS::GameEntity));
     entity->setName("Billy");
     entity->activate();
-    entity->addComponent<Transform>();
-    entity->addComponent<MoverComponent>();
-    entity->addComponent<HealthComponent>();
-    entity->getComponent<MoverComponent>()->direction = Math::Float2(1, 0);
-    entity->getComponent<MoverComponent>()->damage = 10.0f;
-    entity->getComponent<Transform>()->position = Math::Float3(-5, 0, 0);
-    entity->getComponent<HealthComponent>()->other = entity2->getUUID();
 
     entity2->setName("Alice");
     entity2->activate();
-    entity2->addComponent<Transform>();
-    entity2->addComponent<MoverComponent>();
-    entity2->addComponent<HealthComponent>();
-    entity2->getComponent<MoverComponent>()->direction = Math::Float2(-1, 0);
-    entity2->getComponent<Transform>()->position = Math::Float3(5, 0, 0);
-    entity2->getComponent<HealthComponent>()->other = entity->getUUID();
-    entity2->getComponent<MoverComponent>()->damage = 54.0f;
 
     pScene->addEntity(entity);
     pScene->addEntity(entity2);
-    pScene->addSystemFor<Transform>();
-    pScene->addSystemFor<MoverComponent>();
-    pScene->addSystemFor<HealthComponent>();
+
+    pScene->addComponentForEntity<Transform>(entity->getUUID());
+    pScene->addComponentForEntity<Transform>(entity2->getUUID());
+
+    pScene->addComponentForEntity<MoverComponent>(entity->getUUID());
+    GlobalCommands::setValue("Transform.EnableLogging", true);
+
+    entity->getComponent<Transform>(pScene)->position = Math::Float3(43, 12, -2);
+    entity->getComponent<MoverComponent>(pScene)->direction = Math::normalize(Math::Float3(1, 0, 0));
 }
 
 
 int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
+    enableLogTypes(LogType_Verbose);
     RealtimeTick::initializeWatch(1ull, 0);
     g_bus.initialize();
 
-    //Transform::systemInit();
-    //MoverComponent::systemInit();
-    //HealthComponent::systemInit();
     Scene* pScene = new Scene();
     pScene->initialize();
+    pScene->addRegistry<TransformRegistry>();
+    pScene->addRegistry<MoverRegistry>();
+    pScene->addSystem<TransformSystem>();
+    pScene->addSystem<MoverSystem>();
+
     addEntities(pScene);
 
     F32 counter = 0;

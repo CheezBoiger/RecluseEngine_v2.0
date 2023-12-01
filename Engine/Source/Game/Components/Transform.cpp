@@ -8,9 +8,6 @@ namespace Recluse {
 
 using namespace Math;
 
-R_BIND_COMPONENT_SYSTEM(Transform, TransformSystem);
-
-
 void Transform::onCleanUp()
 {
     Super::onCleanUp();
@@ -51,5 +48,61 @@ void Transform::updateMatrices()
 
     m_localToWorld  = World;
     m_worldToLocal  = Math::inverse(World);
+}
+
+
+ResultCode TransformRegistry::onCleanUp()
+{
+    for (auto it = m_transforms.begin(); it != m_transforms.end(); ++it)
+    {
+        (*it)->cleanUp();
+        delete *it;
+    }
+    m_transforms.clear();
+    return RecluseResult_Ok;
+}
+
+
+Transform* TransformRegistry::getComponent(const RGUID& entityKey)
+{
+    for (auto it = m_transforms.begin(); it != m_transforms.end(); ++it)
+    {
+        if ((*it)->getOwner() == entityKey)
+            return *it;
+    }
+    return nullptr;
+}
+
+
+Transform** TransformRegistry::getAllComponents(U64& pOut)
+{
+    pOut = m_transforms.size();
+    return m_transforms.data();
+}
+
+
+ResultCode TransformRegistry::onAllocateComponent(const RGUID& owner)
+{
+    // TODO: We are just testing it out. We would need to hold onto this handle!
+    Transform* pTransform = new Transform();
+    pTransform->setOwner(owner);
+    m_transforms.push_back(pTransform);
+    return RecluseResult_Ok;
+}
+
+
+ResultCode TransformRegistry::onFreeComponent(const RGUID& owner)
+{
+    U32 i = 0;
+    for (auto& it = m_transforms.begin(); it != m_transforms.end(); ++it)
+    {
+        if (owner == (*it)->getOwner())
+        {
+            delete *it;
+            m_transforms.erase(it);
+            return RecluseResult_Ok;
+        }
+    }
+    return RecluseResult_Ok;
 }
 } // Recluse

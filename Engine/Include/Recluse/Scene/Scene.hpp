@@ -58,10 +58,62 @@ public:
     Camera*                                     getCamera(U32 index) { return m_cameras[index]; }
 
     template<typename Sys>
-    void                                        addSystemFor(U32 priority = 0u)
+    void                                        addSystem(U32 priority = 0u)
     {
-        Sys::getSystem()->setPriority(priority);
-        registerSystem(Sys::getSystem());
+        ECS::System* system = ECS::System::allocate<Sys>();
+        registerSystem(system);
+    }
+
+    template<typename TypeRegistry>
+    void addRegistry()
+    {
+        ECS::ComponentUUID uuid = TypeRegistry::componentGUID();
+        auto it = m_registries.find(uuid);
+        if (it == m_registries.end())
+        {
+            ECS::AbstractRegistry* registry = ECS::AbstractRegistry::allocate<TypeRegistry>();
+            m_registries.insert(std::make_pair(uuid, registry));
+        }
+    }
+
+    template<typename Comp>
+    ECS::Registry<Comp>* getRegistry()
+    {
+        ECS::ComponentUUID uuid = Comp::classGUID();
+        auto it = m_registries.find(uuid);
+        if (it != m_registries.end())
+        {
+            return static_cast<ECS::Registry<Comp>*>(it->second);
+        }
+        return nullptr;
+    }
+
+    template<typename Comp>
+    ResultCode addComponentForEntity(const RGUID& entityId)
+    {
+        ECS::ComponentUUID uuid = Comp::classGUID();
+        auto it = m_registries.find(uuid);
+        if (it != m_registries.end())
+        {
+            ECS::Registry<Comp>* registry = static_cast<ECS::Registry<Comp>*>(it->second);
+            registry->allocateComponent(entityId);
+            return RecluseResult_Ok;
+        }
+        return RecluseResult_Failed;
+    }
+
+    template<typename Comp>
+    ResultCode removeComponent(const RGUID& entityId)
+    {
+        ECS::ComponentUUID uuid = Comp::classGUID();
+        auto it = m_registries.find(uuid);
+        if (it != m_registries.end())
+        {
+            ECS::Registry<Comp>* registry = static_cast<ECS::Registry<Comp>*>(it->second);
+            registry->freeComponent(entityId);
+            return RecluseResult_Ok;
+        }
+        return RecluseResult_Failed;
     }
 
 protected:
@@ -85,19 +137,22 @@ protected:
 private:
 
     // Register a system into the scene.
-    R_PUBLIC_API void registerSystem(ECS::AbstractSystem* pSystem);
+    R_PUBLIC_API void registerSystem(ECS::System* pSystem);
     R_PUBLIC_API void unregisterSystems();
+    R_PUBLIC_API void clearRegistries();
 
     // Game objects in the scene.
-    std::vector<ECS::GameEntity*>       m_entities;
-    std::string                         m_name;
+    std::vector<ECS::GameEntity*>                          m_entities;
+    std::string                                            m_name;
 
     // cameras set in scene.
     // the index 0 is always the main camera.
-    std::vector<Camera*>                m_cameras;
+    std::vector<Camera*>                                   m_cameras;
 
     // Systems to update.
-    std::vector<ECS::AbstractSystem*>   m_systems;
+    std::vector<ECS::System*>                              m_systems;
+    // Registries holding components that correspond to this scene.
+    std::map<ECS::ComponentUUID, ECS::AbstractRegistry*>   m_registries;
 };
 } // Engine
 } // Recluse

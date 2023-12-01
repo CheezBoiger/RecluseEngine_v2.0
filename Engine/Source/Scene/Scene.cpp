@@ -28,6 +28,7 @@ ResultCode Scene::addEntity(ECS::GameEntity* obj)
     }
     
     // Add in the object, otherwise.
+    
     m_entities.push_back(obj);
 
     return RecluseResult_Ok;
@@ -38,7 +39,7 @@ void Scene::update(const RealtimeTick& tick)
 {
     for (auto& system : m_systems)
     {
-        system->updateComponents(tick);
+        system->update(tick);
     }
 }
 
@@ -156,10 +157,11 @@ ResultCode Scene::deserialize(Archive* pArchive)
 }
 
 
-void Scene::registerSystem(ECS::AbstractSystem* pSystem)
+void Scene::registerSystem(ECS::System* pSystem)
 {
     // Registering any system must Initialize first.
     pSystem->initialize(); 
+    pSystem->setScene(this);
     m_systems.push_back(pSystem); 
 }
 
@@ -168,11 +170,21 @@ void Scene::unregisterSystems()
 {
     for (auto& system : m_systems)
     {
-        system->clearAll();
         R_ASSERT_FORMAT(system->cleanUp() == RecluseResult_Ok, "cleanUp() failed for system %s", system->getName());
+        ECS::System::free(system);
     }
 
     m_systems.clear();
+}
+
+
+void Scene::clearRegistries()
+{
+    for (auto& registry : m_registries)
+    {
+        registry.second->cleanUp();
+        ECS::AbstractRegistry::free(registry.second);
+    }
 }
 } // Engine
 } // Recluse

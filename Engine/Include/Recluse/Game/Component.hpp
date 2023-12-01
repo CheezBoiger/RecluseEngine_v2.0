@@ -13,6 +13,7 @@ namespace ECS {
 
 typedef Hash64  ComponentUUID;
 typedef U32     ComponentUpdateFlags;
+typedef Hash64  RegistryUUID;
 
 enum ComponentUpdateFlag
 {
@@ -25,37 +26,15 @@ enum ComponentUpdateFlag
 // Call this macro when declareing a component. This will be used by the engine to determine 
 // the proper calls to be made to the GameObject.
 #define R_COMPONENT_DECLARE(_class) \
-    private: \
-    static Recluse::ECS::System<_class>* k ## _class ## System; \
     public: \
     static Recluse::ECS::ComponentUUID classGUID() { return recluseHashFast(#_class, sizeof(#_class)); } \
-    static R_PUBLIC_API _class* instantiate(const RGUID& owner); \
-    static R_PUBLIC_API ResultCode free(_class* ); \
-    virtual Recluse::ECS::ComponentUUID getClassGUID() const override { return _class::classGUID(); } \
-    static R_PUBLIC_API Recluse::ECS::AbstractSystem* getSystem(); \
-    static R_PUBLIC_API void systemInit();
+    virtual Recluse::ECS::ComponentUUID getClassGUID() const override { return _class::classGUID(); }
 
-// Call this macro to implement the declarations above! This is required to determine the right systems
-// that will be called to allocate/dealloce and update the given components related to this!
-// _game_system is the connecting piece to the given component implementation, it is the 
-// system that will manage all of the components for this.
-#define R_BIND_COMPONENT_SYSTEM(_class, _game_system) \
-    Recluse::ECS::System<_class>* _class :: k ## _class ## System = nullptr; \
-    _class* _class::instantiate(const Recluse::RGUID& owner) { \
-        _class::systemInit(); \
-        _class* pAllocatedComp = nullptr; \
-        ResultCode err = k ## _class ## System->allocateComponent(&pAllocatedComp, owner); \
-        if (err != RecluseResult_Ok) return nullptr; \
-        return pAllocatedComp; \
-    } \
-    ResultCode _class::free(_class* pComponent) { \
-        if (!k ## _class ## System) return RecluseResult_NullPtrExcept; \
-        return k ## _class ## System->freeComponent(&pComponent); \
-    } \
-    void _class::systemInit() { if (!k ## _class ## System) k ## _class ## System = _game_system::create(); } \
-    Recluse::ECS::AbstractSystem* _class::getSystem() { _class::systemInit(); return k ## _class ## System; }
+#define R_COMPONENT_REGISTRY_DECLARE(_class) \
+    public: \
+    static Recluse::ECS::RegistryUUID classGUID() { return recluseHashFast(#_class, sizeof(#_class)); }
 
-class AbstractComponent
+class AbstractComponent : public Serializable
 {
 public:
     AbstractComponent(RGUID guid, const RGUID& ownerGuid = RGUID())
@@ -97,11 +76,10 @@ private:
 
 // Component abstraction class. This is mainly a container holding 
 // data that is to be processed or read by GameSystems. 
-template<class FinalComponent>
-class R_PUBLIC_API Component : public AbstractComponent, public Serializable
+class R_PUBLIC_API Component : public AbstractComponent
 {
 public:
-    typedef Component<FinalComponent> Super;
+    typedef Component Super;
     static const U64 unknownComponent = ~0u;
 
     // Default component construction.
@@ -141,8 +119,6 @@ public:
     void onRelease() override
     {
         cleanUp();
-        // We call the function that links to the system, that is responsible for handling the final component of this object.
-        FinalComponent::free(static_cast<FinalComponent*>(this));
     }
 
     // Set update flags for the given component. The values are mainly specific to the system itself.
@@ -164,6 +140,113 @@ private:
 
     // Component update flags used by the system itself.
     ComponentUpdateFlags    m_updateFlags;
+};
+
+
+class AbstractRegistry : public Serializable
+{
+public:
+    virtual ~AbstractRegistry() { }
+
+    template<typename Registry>
+    static AbstractRegistry* allocate() 
+    {
+        return new Registry();
+    }
+
+    static RecluseResult free(AbstractRegistry* registry)
+    {
+        if (registry)
+            delete registry;
+        return RecluseResult_Ok;
+    }
+
+    // Clear all components in the registry.
+    void                    clearAll()   { onClearAll(); }
+    
+    ResultCode              initialize()
+    {
+        return onInitialize();
+    }
+
+    ResultCode              cleanUp()
+    {
+        return onCleanUp();
+    }
+
+
+    // Available functions to query from the given system.
+    U32     getTotalComponents() const { return m_numberOfComponentsAllocated; }
+
+protected:
+
+    // Allows initializing the system before on intialize().
+    virtual ResultCode      onInitialize()                  { return RecluseResult_NoImpl; }
+
+    // Allows cleaning up the system before releasing.
+    virtual ResultCode      onCleanUp()                     { return RecluseResult_NoImpl; }
+
+    // Intended to clear all components from the game world.
+    virtual void            onClearAll()                       { }
+
+    U32             m_numberOfComponentsAllocated;
+};
+
+
+// Component Registry handles the management of components. 
+// This helps let the programmer manage component allocations and access.
+template<typename TypeComponent>
+class Registry : public AbstractRegistry
+{
+public:
+    virtual ~Registry() { }
+
+    static ComponentUUID componentGUID()
+    {
+        return TypeComponent::classGUID();
+    }
+
+    // Allocates a component from the system pool.
+    // Returns R_RESULT_OK if the system successfully allocated the component instance.
+    ResultCode allocateComponent(const RGUID& owner)  
+    {
+        ResultCode err = onAllocateComponent(owner);
+        if (err == RecluseResult_Ok) 
+        {
+            m_numberOfComponentsAllocated += 1;
+        }
+        return err;
+    }
+
+    // Frees up a component from the system pool.
+    // Returns R_RESULT_OK if the system successfully freed the component instance.
+    ResultCode freeComponent(const RGUID& owner)
+    {
+        ResultCode err = onFreeComponent(owner);
+        if (err == RecluseResult_Ok) m_numberOfComponentsAllocated -= 1;
+        return err;
+    }
+
+    // Get all components handled by the system. This is optional, so be sure to check if this is 
+    // actually implemented.
+    virtual TypeComponent**  getAllComponents(U64& pOut) { return nullptr; }
+
+    // Get a component from the system. Return nullptr, if the component doesn't match the given 
+    // game entity key.
+    virtual TypeComponent*   getComponent(const RGUID& entityKey) { return nullptr; }
+
+    virtual ResultCode serialize(Archive* pArchive) override { return RecluseResult_NoImpl; }
+
+    virtual ResultCode deserialize(Archive* pArchive) override { return RecluseResult_NoImpl; }
+
+protected:
+    // Allocation calls. These must be overridden, as they will be called by external systems,
+    // when required. 
+    virtual ResultCode onAllocateComponent(const RGUID& owner) = 0;
+
+    // Free calls. These must be overridden, as they will be called by external systems when
+    // required.
+    virtual ResultCode onFreeComponent(const RGUID& owner) = 0;
 };
 } // ECS
 } // Recluse

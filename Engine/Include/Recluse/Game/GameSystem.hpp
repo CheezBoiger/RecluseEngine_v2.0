@@ -10,6 +10,12 @@
 #include "Recluse/Time.hpp"
 
 namespace Recluse {
+namespace Engine {
+class Scene;
+} // Engine
+} // Recluse
+
+namespace Recluse {
 namespace ECS {
 
 // Declaration types.
@@ -29,36 +35,42 @@ class GameEntity;
 // Required declare for the game system to be used. 
 // Use the constructor you feel is important.
 // A Default destructor is required in order to do final cleanups at the end of an application's life.
-#define R_DECLARE_GAME_SYSTEM(_system, _component) \
+#define R_DECLARE_GAME_SYSTEM(_system) \
     public: \
-    static ECS::System<_component>* create() { \
-        return new _system(); \
-    } \
     static const char* systemName() { return #_system; } \
     virtual const char* getName() const override { return systemName(); }
 
 
-//! AbstractSystem is the high level provision that oversees all
+//! System is the high level provision that oversees all
 //! game components to their respect.
 //! Systems are what hold the game logic in the world scene.
-class R_PUBLIC_API AbstractSystem : public Serializable
+//! //! System is the required definition of the given system, which is to 
+//! define how to allocate, free, and update all components the application interacts 
+//! with. Do not inherit directly from System, instead inherit from this!
+class R_PUBLIC_API System : public Serializable
 {
 public:
 
-    virtual ~AbstractSystem() { }
+    virtual ~System() { }
+
+    template<typename SpecializedSys>
+    static ECS::System* allocate()
+    {
+        return new SpecializedSys();
+    }
+
+    static ResultCode free(System* psystem) 
+    {
+         if (psystem)
+            delete psystem;
+        return RecluseResult_Ok;
+    }
 
     void                                setPriority(U32 priority) { m_priority = priority; }
     U32                                 getPriority() const { return m_priority; }
 
     // This system is required to update all components when necessary.
-    void                                updateComponents(const RealtimeTick& tick) { onUpdateComponents(tick); }
-
-    // Clear all components in the game object.
-    void                                clearAll()                      { onClearAll(); }
-
-    // Obtains the total number of allocated components in the 
-    // system.
-    virtual U32                         getTotalComponents() const      = 0;
+    void                                update(const RealtimeTick& tick) { onUpdate(tick); }
 
     ResultCode                             initialize()
     {
@@ -78,6 +90,8 @@ public:
 
     virtual const char*     getName() const { return "AbstractSystem"; }
     
+    Engine::Scene* getScene() const { return m_scene; }
+    void            setScene(Engine::Scene* scene) { m_scene = scene; }
 private:
     // Allows initializing the system before on intialize().
     virtual ResultCode      onInitialize()                  { return RecluseResult_NoImpl; }
@@ -89,79 +103,20 @@ private:
     virtual void            onClearAll()                       { }
 
     // To update all components in the world.
-    virtual void            onUpdateComponents(const RealtimeTick& tick)  { }
+    virtual void            onUpdate(const RealtimeTick& tick)  { }
 
     // Priority value of this abstract system. This will be used to determine the 
     // order of which this system will operate.
     U32                 m_priority;
-};
-
-
-//! System is the required definition of the given system, which is to 
-//! define how to allocate, free, and update all components the application interacts 
-//! with. Do not inherit directly from System, instead inherit from this!
-template<typename Comp>
-class R_PUBLIC_API System : public AbstractSystem
-{
-public:
-    virtual         ~System() { } 
-
-    // Allocates a component from the system pool.
-    // Returns R_RESULT_OK if the system successfully allocated the component instance.
-    ResultCode allocateComponent(Comp** pOut, const RGUID& pOwner)  
-    {
-        ResultCode err = onAllocateComponent(pOut);
-        if (err == RecluseResult_Ok) 
-        {
-            m_numberOfComponentsAllocated += 1;
-            (*pOut)->setOwner(pOwner);
-        }
-        return err;
-    }
-
-    // Frees up a component from the system pool.
-    // Returns R_RESULT_OK if the system successfully freed the component instance.
-    ResultCode freeComponent(Comp** pIn)
-    {
-        ResultCode err = onFreeComponent(pIn);
-        if (err == RecluseResult_Ok) m_numberOfComponentsAllocated -= 1;
-        return err;
-    }
-
-    // Available functions to query from the given system.
-    virtual U32     getTotalComponents() const override { return m_numberOfComponentsAllocated; }
-
-    // Get all components handled by the system. This is optional, so be sure to check if this is 
-    // actually implemented.
-    virtual Comp**  getAllComponents(U64& pOut) { return nullptr; }
-
-    // Get a component from the system. Return nullptr, if the component doesn't match the given 
-    // game entity key.
-    virtual Comp*   getComponent(const RGUID& entityKey) { return nullptr; }
-
-protected:
-    // Allocation calls. These must be overridden, as they will be called by external systems,
-    // when required. 
-    virtual ResultCode onAllocateComponent(Comp** pOut) = 0;
-
-    // Allocate a bulk of components. Must be overridden.
-    virtual ResultCode onAllocateComponents(Comp*** pOuts, U32 count) = 0;
-
-    // Free calls. These must be overridden, as they will be called by external systems when
-    // required.
-    virtual ResultCode onFreeComponent(Comp** pIn) = 0;
-
-    // Free a bulk of components. Must be overridden.
-    virtual ResultCode onFreeComponents(Comp*** pOuts, U32 count) = 0;
-
-    U32             m_numberOfComponentsAllocated;
+    
+    Engine::Scene*      m_scene;
 };
 
 
 class SystemComparer
 {
 public:
-    Bool operator()(const AbstractSystem& lh, const AbstractSystem& rh) const 
+    Bool operator()(const System& lh, const System& rh) const 
     {
         return lh.getPriority() < rh.getPriority();
     }
@@ -171,7 +126,7 @@ public:
 class SystemPointerComparer
 {
 public:
-    Bool operator()(const AbstractSystem* lh, const AbstractSystem* rh) const
+    Bool operator()(const System* lh, const System* rh) const
     {
         return lh->getPriority() < rh->getPriority();
     }
@@ -179,13 +134,5 @@ public:
 
 typedef void* SystemPtr;
 
-// Takes the global system for a given component, and casts it to System<>*
-// Returns null if the system of the given components are not available.
-template<typename Comp>
-static System<Comp>* castToSystem()
-{
-    // TODO: This might be slow, we should develop our own dynamic casting call.
-    return dynamic_cast<System<Comp>*>(Comp::getSystem());
-}
 } // ECS
 } // Recluse

@@ -10,6 +10,10 @@
 #if defined RCL_DXC 
 #include <atlbase.h>
 #include <dxcapi.h>
+#include <d3d12shader.h>
+#include <d3dcompiler.h>
+
+#include "dxc/DxilContainer/DxilContainer.h"
 #endif
 
 R_DECLARE_GLOBAL_STRING(g_shaderModel, "6_0", "DXC.ShaderModel");
@@ -18,6 +22,12 @@ namespace Recluse {
 namespace Pipeline {
 
 #if defined RCL_DXC
+
+#define DXBC_FOURCC(ch0, ch1, ch2, ch3)                                        \
+  ((UINT)(BYTE)(ch0) | ((UINT)(BYTE)(ch1) << 8) | ((UINT)(BYTE)(ch2) << 16) |  \
+   ((UINT)(BYTE)(ch3) << 24))
+
+R_INTERNAL UINT32 DXBC_DXIL = DXBC_FOURCC('D', 'X', 'I', 'L');          // == DFCC_DXIL
 
 std::wstring getShaderProfile(ShaderType type)
 {
@@ -63,6 +73,12 @@ public:
             return RecluseResult_Failed;
         }
 
+        hr = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&m_utils));
+        if (FAILED(hr))
+        {
+            R_ERROR("DXC", "Failed to create dxc ultilities!");
+            return RecluseResult_Failed;
+        }
         return RecluseResult_Ok;
     }
 
@@ -83,7 +99,7 @@ public:
 
         R_DEBUG("DXC", "Compiling shader...");
         
-        CComPtr<IDxcOperationResult> result;
+        CComPtr<IDxcResult> result;
         CComPtr<IDxcBlobEncoding> sourceBlob;
 
         HRESULT hr                      = S_OK;
@@ -116,14 +132,13 @@ public:
                 targetProfile.c_str(), 
                 arguments, argCount, 
                 NULL, 0, 
-                NULL, &result
+                NULL, (IDxcOperationResult**)&result
             );
 
         delete wideEntryPoint;
-
+        
         CComPtr<IDxcBlobEncoding> errorBlob;
         result->GetErrorBuffer(&errorBlob);
-
         R_DEBUG("DXC", "\n%s", (const char*)errorBlob->GetBufferPointer());
         if (FAILED(hr)) 
         {
@@ -139,9 +154,43 @@ public:
         return RecluseResult_Ok;
     }
 
+    ShaderReflection reflect(const char* bytecode, U64 sizeBytes, ShaderLang lang) override
+    {
+        ShaderReflection reflectionData;
+        CComPtr<IDxcContainerReflection> containerReflection;
+        CComPtr<ID3D12ShaderReflection> shaderReflection;
+        UINT32 shaderIndex;
+        
+        HRESULT hr = DxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(&containerReflection));
+        CComPtr<IDxcBlob> blob = nullptr;
+        if (FAILED(hr))
+        {
+            R_ERROR("DXC", "Failed to create container reflection!");
+            return reflectionData;
+        }
+        hr = D3DCreateBlob(sizeBytes, (ID3DBlob**)&blob);
+        if (FAILED(hr))
+        {
+            R_ERROR("DXC", "Failed to create d3dblob!");
+            return reflectionData;
+        }
+        hr = containerReflection->Load(blob);
+        if (FAILED(hr))
+        {
+            R_ERROR("DXC", "Failed to properly reflect shader!");
+            return reflectionData;
+        }
+        hr = containerReflection->FindFirstPartKind(hlsl::DFCC_DXIL, &shaderIndex);
+        R_ASSERT(SUCCEEDED(hr));
+        containerReflection->GetPartReflection(shaderIndex, __uuidof(ID3D12ShaderReflection), (void**)&shaderReflection);
+        R_ASSERT(SUCCEEDED(hr));
+        return reflectionData;
+    }
+
 private:
     CComPtr<IDxcCompiler> m_compiler;
     CComPtr<IDxcLibrary> m_library;
+    CComPtr<IDxcUtils> m_utils;
 };
 #endif
 

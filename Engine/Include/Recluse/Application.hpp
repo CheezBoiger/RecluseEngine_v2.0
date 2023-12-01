@@ -97,7 +97,7 @@ public:
     inline Bool isInitialized() const { return m_initialized; }
 
     // Registering systems can provide more priority for updating.
-    Bool registerSystem(ECS::AbstractSystem* pSystem)
+    Bool registerSystem(ECS::System* pSystem)
     {
         m_systems.push(pSystem);
         return true;
@@ -126,8 +126,8 @@ private:
     // Priority system queue.
     std::priority_queue
         <
-            ECS::AbstractSystem*,
-            std::vector<ECS::AbstractSystem*>,
+            ECS::System*,
+            std::vector<ECS::System*>,
             ECS::SystemPointerComparer
         >                       m_systems;
 

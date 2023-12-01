@@ -9,18 +9,10 @@
 namespace Recluse {
 
 
-class RendererSystem : public ECS::System<RendererComponent>
+class RendererSystem : public ECS::System
 {
 public:
 
     virtual         ~RendererSystem() { }
-
-    virtual ResultCode allocateComponent(RendererComponent** pOut) override;
-    virtual ResultCode freeComponent(RendererComponent** pOut)     override;
-    
-    virtual ResultCode onInitialize()                              override;
-    virtual ResultCode onCleanUp()                                 override;
-    virtual void    updateComponents(F32 deltaTime)             override;
-    virtual ResultCode clearAll()                                  override;
 };
 } // Recluse

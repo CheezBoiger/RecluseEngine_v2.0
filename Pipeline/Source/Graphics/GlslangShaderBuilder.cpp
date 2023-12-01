@@ -12,6 +12,8 @@
 #include "glslang/SPIRV/GlslangToSpv.h" 
 #include "glslang/Include/ResourceLimits.h"
 
+#include "SPIRV-Reflect/spirv_reflect.h"
+
 const TBuiltInResource DefaultTBuiltInResource = {
     /* .MaxLights = */ 32,
     /* .MaxClipPlanes = */ 6,
@@ -231,6 +233,30 @@ public:
         byteCode.resize(spirv.size() * sizeof(U32)); // Byte code is in uint32 format.
         memcpy(byteCode.data(), spirv.data(), byteCode.size());
         return RecluseResult_Ok;
+    }
+
+    ShaderReflection reflect(const char* bytecode, U64 sizeBytes, ShaderLang lang) override
+    {
+        ShaderReflection reflectionData;
+        SpvReflectShaderModule reflectModule;
+        SpvReflectResult result = spvReflectCreateShaderModule(sizeBytes, bytecode, &reflectModule);
+        if (result == SPV_REFLECT_RESULT_SUCCESS)
+        {
+            std::vector<SpvReflectInterfaceVariable*> inputVars;
+            uint32_t inputVarCount = 0;
+            result = spvReflectEnumerateInputVariables(&reflectModule, &inputVarCount, nullptr);
+            R_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS);
+            inputVars.resize(inputVarCount);
+            result = spvReflectEnumerateInputVariables(&reflectModule, &inputVarCount, inputVars.data());
+            R_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS);
+            for (U32 i = 0; i < inputVarCount; ++i)
+            {
+                SpvReflectInterfaceVariable* variable = inputVars[i];
+                variable;
+            }
+            spvReflectDestroyShaderModule(&reflectModule);
+        }
+        return reflectionData;
     }
 
 private:
