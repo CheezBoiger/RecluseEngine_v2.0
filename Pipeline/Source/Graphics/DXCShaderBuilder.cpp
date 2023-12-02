@@ -73,12 +73,12 @@ public:
             return RecluseResult_Failed;
         }
 
-        hr = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&m_utils));
-        if (FAILED(hr))
-        {
-            R_ERROR("DXC", "Failed to create dxc ultilities!");
-            return RecluseResult_Failed;
-        }
+        //hr = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&m_utils));
+        //if (FAILED(hr))
+        //{
+        //    R_ERROR("DXC", "Failed to create dxc ultilities!");
+        //    return RecluseResult_Failed;
+        //}
         return RecluseResult_Ok;
     }
 
@@ -99,7 +99,7 @@ public:
 
         R_DEBUG("DXC", "Compiling shader...");
         
-        CComPtr<IDxcResult> result;
+        CComPtr<IDxcOperationResult> result;
         CComPtr<IDxcBlobEncoding> sourceBlob;
 
         HRESULT hr                      = S_OK;
@@ -190,7 +190,7 @@ public:
 private:
     CComPtr<IDxcCompiler> m_compiler;
     CComPtr<IDxcLibrary> m_library;
-    CComPtr<IDxcUtils> m_utils;
+    //CComPtr<IDxcUtils> m_utils;
 };
 #endif
 
