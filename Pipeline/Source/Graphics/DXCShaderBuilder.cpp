@@ -21,6 +21,45 @@ R_DECLARE_GLOBAL_STRING(g_shaderModel, "6_0", "DXC.ShaderModel");
 namespace Recluse {
 namespace Pipeline {
 
+
+class DxcBlob : public IDxcBlob
+{
+public:
+    virtual ~DxcBlob() 
+    {
+        m_blob.Release(); 
+    }
+
+    DxcBlob(const void* pData, SIZE_T sizeBytes)
+    {
+        HRESULT hr = D3DCreateBlob(sizeBytes, &m_blob);
+        R_ASSERT(SUCCEEDED(hr));
+        memcpy(m_blob->GetBufferPointer(), pData, sizeBytes);
+    }
+    LPVOID STDMETHODCALLTYPE GetBufferPointer(void) override
+    {
+        return m_blob->GetBufferPointer();
+    }
+
+    SIZE_T STDMETHODCALLTYPE GetBufferSize(void) override
+    {
+        return m_blob->GetBufferSize();
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE QueryInterface( 
+        REFIID riid,
+        void** ppvObject) override
+    {
+        return 0;
+    }
+
+    virtual ULONG STDMETHODCALLTYPE AddRef( void) override { return 0; }
+
+    virtual ULONG STDMETHODCALLTYPE Release( void) override { return 0; }
+private:
+    CComPtr<ID3DBlob> m_blob;
+};
+
 #if defined RCL_DXC
 
 #define DXBC_FOURCC(ch0, ch1, ch2, ch3)                                        \
@@ -156,25 +195,26 @@ public:
 
     ShaderReflection reflect(const char* bytecode, U64 sizeBytes, ShaderLang lang) override
     {
-        ShaderReflection reflectionData;
+        ShaderReflection reflectionData = { };
         CComPtr<IDxcContainerReflection> containerReflection;
         CComPtr<ID3D12ShaderReflection> shaderReflection;
         UINT32 shaderIndex;
         
         HRESULT hr = DxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(&containerReflection));
-        CComPtr<IDxcBlob> blob = nullptr;
+        CComPtr<ID3DBlob> blob;
         if (FAILED(hr))
         {
             R_ERROR("DXC", "Failed to create container reflection!");
             return reflectionData;
         }
-        hr = D3DCreateBlob(sizeBytes, (ID3DBlob**)&blob);
+        hr = D3DCreateBlob(sizeBytes, &blob);
         if (FAILED(hr))
         {
-            R_ERROR("DXC", "Failed to create d3dblob!");
+            R_ERROR("DXC", "Failed to create blob for reflection!");
             return reflectionData;
         }
-        hr = containerReflection->Load(blob);
+        memcpy(blob->GetBufferPointer(), bytecode, sizeBytes);
+        hr = containerReflection->Load((IDxcBlob*)blob.p);
         if (FAILED(hr))
         {
             R_ERROR("DXC", "Failed to properly reflect shader!");
@@ -184,6 +224,43 @@ public:
         R_ASSERT(SUCCEEDED(hr));
         containerReflection->GetPartReflection(shaderIndex, __uuidof(ID3D12ShaderReflection), (void**)&shaderReflection);
         R_ASSERT(SUCCEEDED(hr));
+        D3D12_SHADER_DESC shaderDesc = { };
+        shaderReflection->GetDesc(&shaderDesc);
+        reflectionData.numCbvs = shaderDesc.ConstantBuffers;
+        U32 numResources = shaderDesc.BoundResources;
+        for (U32 resourceIdx = 0; resourceIdx < numResources; ++resourceIdx)
+        {
+            D3D12_SHADER_INPUT_BIND_DESC shaderInputDesc = { };
+            shaderReflection->GetResourceBindingDesc(resourceIdx, &shaderInputDesc);
+            switch (shaderInputDesc.Type)
+            {
+                case D3D_SHADER_INPUT_TYPE::D3D_SIT_CBUFFER:
+                    break;
+                case D3D_SHADER_INPUT_TYPE::D3D_SIT_STRUCTURED:
+                case D3D_SHADER_INPUT_TYPE::D3D_SIT_BYTEADDRESS:
+                case D3D_SHADER_INPUT_TYPE::D3D_SIT_TBUFFER:
+                case D3D_SHADER_INPUT_TYPE::D3D_SIT_TEXTURE:
+                {
+                    reflectionData.numSrvs += 1;
+                    break;
+                }
+                case D3D_SHADER_INPUT_TYPE::D3D_SIT_SAMPLER:
+                {
+                    reflectionData.numSamplers += 1;
+                    break;
+                }
+                case D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_APPEND_STRUCTURED:
+                case D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_CONSUME_STRUCTURED:
+                case D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_FEEDBACKTEXTURE:
+                case D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_RWBYTEADDRESS:
+                case D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER:
+                case D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_RWTYPED:
+                {
+                    reflectionData.numUavs += 1;
+                    break;
+                }
+            }
+        }
         return reflectionData;
     }
 

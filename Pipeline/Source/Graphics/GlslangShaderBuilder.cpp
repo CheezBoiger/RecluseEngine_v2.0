@@ -254,6 +254,15 @@ public:
                 SpvReflectInterfaceVariable* variable = inputVars[i];
                 variable;
             }
+            uint32_t descriptorSetCount = 0;
+            spvReflectEnumerateDescriptorSets(&reflectModule, &descriptorSetCount, nullptr);
+            std::vector<SpvReflectDescriptorSet*> descriptorSets(descriptorSetCount);
+            spvReflectEnumerateDescriptorSets(&reflectModule, &descriptorSetCount, descriptorSets.data());
+            for (U32 descriptorSetIdx = 0; descriptorSetIdx < descriptorSetCount; ++descriptorSetIdx)
+            {
+                SpvReflectDescriptorSet* set = descriptorSets[descriptorSetIdx];
+                set;
+            }
             spvReflectDestroyShaderModule(&reflectModule);
         }
         return reflectionData;

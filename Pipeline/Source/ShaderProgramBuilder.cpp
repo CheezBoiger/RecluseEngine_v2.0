@@ -185,6 +185,8 @@ R_INTERNAL Shader* compileShader
             if (error == RecluseResult_Ok)
             { 
                 error = shaderBuilder->compile(shader, entryPoint, file.data(), file.size(), permutation, language, shaderType);
+                ShaderReflection reflectionData = shaderBuilder->reflect(shader->getByteCode(), shader->getSzBytes(), language);
+                reflectionData;
                 if (error != RecluseResult_Ok)
                 {
                     Shader::destroy(shader);

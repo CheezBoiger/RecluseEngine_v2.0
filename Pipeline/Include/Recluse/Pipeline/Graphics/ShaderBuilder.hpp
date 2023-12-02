@@ -18,10 +18,12 @@ struct PreprocessDefine
 
 struct ShaderReflection
 {
-    U16 numCbvs;
-    U16 numSrvs;
-    U16 numUavs;
-    U8  numRtvs;
+    U8  numCbvs;
+    U8  numSrvs;
+    U8  numUavs;
+    U8  numSamplers;
+    U8  numInputParameters;
+    U8  numOutputParameters;
 };
 
 
