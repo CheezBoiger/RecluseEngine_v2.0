@@ -572,7 +572,7 @@ void createShaderProgram(GraphicsDevice* device)
     std::string fsSource = currDir + "/" + "pixel.hlsl";
     Pipeline::Builder::ShaderProgramDescription description;
     description.pipelineType = BindType_Graphics;
-    description.language = ShaderLang_Hlsl;
+    description.language = ShaderLanguage_Hlsl;
     description.graphics.vs = vsSource.c_str();
     description.graphics.vsName = "Main";
     description.graphics.ps = fsSource.c_str();

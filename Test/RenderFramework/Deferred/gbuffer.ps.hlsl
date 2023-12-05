@@ -28,16 +28,16 @@ struct PSOut
 
 PSOut psMain(PSIn pixIn)
 {
-	PSOut output = { };
+	PSOut Output;
 	if (useTexturing == 1)
 	{
-		output.albedo = colorTexture.Sample(colorSampler, pixIn.vTexCoord0);
+		Output.albedo = colorTexture.Sample(colorSampler, pixIn.vTexCoord0);
 	}
 	else
 	{
-		output.albedo = pixIn.color;
+		Output.albedo = pixIn.color;
 	}
-	output.normal = float4(pixIn.vNormal, 0);
-	output.material = float4(0, 0, 0, 0);
-	return output;
+	Output.normal = float4(pixIn.vNormal, 0);
+	Output.material = float4(0, 0, 0, 0);
+	return Output;
 }

@@ -83,7 +83,7 @@ struct R_PUBLIC_API ShaderProgramDescription
     };
     // Each instance in this vector holds contents that define a permutation.
     std::vector<ShaderProgramPermutationDefinitionInstance> permutationDefinitions;
-    ShaderLang language;
+    ShaderLanguage language;
     BindType pipelineType;
 
     ShaderProgramDescription() { memset(this, 0, sizeof(graphics)); }

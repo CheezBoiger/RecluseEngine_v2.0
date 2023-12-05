@@ -88,13 +88,16 @@ public:
 
     void onUpdate(const RealtimeTick& tick) override
     {
-        U64 count = 0;
-        MoverComponent** movers = getScene()->getRegistry<MoverComponent>()->getAllComponents(count);
-        for (U64 i = 0; i < count; ++i)
+        std::vector<ECS::GameEntity*> entities = getScene()->getEntities();
+        for (U64 i = 0; i < entities.size(); ++i)
         {
-            RGUID owner = movers[i]->getOwner();
-            Transform* transform = ECS::GameEntity::findEntity(owner)->getComponent<Transform>(getScene());
-            transform->position = transform->position + movers[i]->direction * tick.delta();
+            std::tuple<MoverComponent*, Transform*> tp = obtainTuple<MoverComponent, Transform>(entities[i]->getUUID());
+            MoverComponent* mover = std::get<MoverComponent*>(tp);
+            Transform* transform = std::get<Transform*>(tp);
+            if (mover && transform)
+            {
+                transform->position = transform->position + mover->direction * tick.delta();
+            }
         }
     }
 

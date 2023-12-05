@@ -32,7 +32,7 @@ void initialize(GraphicsDevice* pDevice, Engine::SceneBufferDefinitions* pBuffer
 
     //Builder::ShaderProgramDescription description = { };
     //description.pipelineType = BindType_Graphics;
-    //description.language = ShaderLang_Hlsl;
+    //description.language = ShaderLanguage_Hlsl;
     //description.graphics.vs = Engine::getBinaryShaderPath("Geometry/VertFactoryStatic").c_str();
     //description.graphics.vsName = "main";
     //Builder::buildShaderProgramDefinitions(description, ShaderProgram_PreZDepth, ShaderIntermediateCode_Spirv);

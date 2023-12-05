@@ -116,6 +116,17 @@ public:
         return RecluseResult_Failed;
     }
 
+    template<typename ComponentType>
+    ComponentType* getComponentFromEntity(const RGUID& guid)
+    {
+        ECS::GameEntity* entity = ECS::GameEntity::findEntity(guid);
+        if (entity)
+        {
+            return entity->getComponent<ComponentType>();
+        }
+        return nullptr;
+    }
+
 protected:
 
     // Serialize the given scene. This should be used for 

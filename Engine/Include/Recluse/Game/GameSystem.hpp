@@ -9,6 +9,8 @@
 #include "Recluse/RGUID.hpp"
 #include "Recluse/Time.hpp"
 
+#include <tuple>
+
 namespace Recluse {
 namespace Engine {
 class Scene;
@@ -64,6 +66,21 @@ public:
          if (psystem)
             delete psystem;
         return RecluseResult_Ok;
+    }
+
+    template<typename ComponentType>
+    ComponentType* obtainComponent(const RGUID& id)
+    {
+        ECS::GameEntity* entity = ECS::GameEntity::findEntity(id);
+        return entity->getComponent<ComponentType>(m_scene);
+    }
+
+    template<typename... Args>
+    std::tuple<Args*...> obtainTuple(const RGUID& id)
+    {
+        std::tuple<Args*...> args = { obtainComponent<Args>(id)... }; 
+        
+        return args;
     }
 
     void                                setPriority(U32 priority) { m_priority = priority; }

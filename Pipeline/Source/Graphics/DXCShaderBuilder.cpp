@@ -1,11 +1,13 @@
 //
-#include "Recluse/Pipeline/Graphics/ShaderBuilder.hpp"
-#include "Win32/Win32Common.hpp"
 #include "Recluse/Messaging.hpp"
+#include "Recluse/Pipeline/Graphics/ShaderBuilder.hpp"
 #include "Recluse/Utility.hpp"
+#include "Win32/Win32Common.hpp"
 
-#include <locale>
+#include "Recluse/Messaging.hpp"
+
 #include <codecvt>
+#include <locale>
 
 #if defined RCL_DXC 
 #include <atlbase.h>
@@ -131,7 +133,7 @@ public:
     }
 
     ResultCode onCompile(const std::vector<char>& srcCode, std::vector<char>& byteCode,  const char* entryPoint,
-        ShaderLang lang, ShaderType shaderType, const std::vector<PreprocessDefine>& defines) override 
+        ShaderLanguage lang, ShaderType shaderType, const std::vector<PreprocessDefine>& defines) override 
     {
         R_ASSERT(m_library != NULL);
         R_ASSERT(m_compiler != NULL);
@@ -145,6 +147,8 @@ public:
         std::wstring targetProfile      = getShaderProfile(shaderType);
         const wchar_t* arguments[16]    = { };
         U32 argCount                    = 0;
+
+        arguments[argCount++] = L"-Wignored-attributes";
 
         UINT32 srcSizeBytes = (UINT32)srcCode.size();
         hr = m_library->CreateBlobWithEncodingFromPinned(srcCode.data(), srcSizeBytes, CP_UTF8, &sourceBlob);
@@ -193,9 +197,8 @@ public:
         return RecluseResult_Ok;
     }
 
-    ShaderReflection reflect(const char* bytecode, U64 sizeBytes, ShaderLang lang) override
+    ResultCode reflect(ShaderReflection& reflectionOutput, const char* bytecode, U64 sizeBytes, ShaderLanguage lang) override
     {
-        ShaderReflection reflectionData = { };
         CComPtr<IDxcContainerReflection> containerReflection;
         CComPtr<ID3D12ShaderReflection> shaderReflection;
         UINT32 shaderIndex;
@@ -205,20 +208,20 @@ public:
         if (FAILED(hr))
         {
             R_ERROR("DXC", "Failed to create container reflection!");
-            return reflectionData;
+            return RecluseResult_Failed;
         }
         hr = D3DCreateBlob(sizeBytes, &blob);
         if (FAILED(hr))
         {
             R_ERROR("DXC", "Failed to create blob for reflection!");
-            return reflectionData;
+            return RecluseResult_Failed;
         }
         memcpy(blob->GetBufferPointer(), bytecode, sizeBytes);
         hr = containerReflection->Load((IDxcBlob*)blob.p);
         if (FAILED(hr))
         {
             R_ERROR("DXC", "Failed to properly reflect shader!");
-            return reflectionData;
+            return RecluseResult_Failed;
         }
         hr = containerReflection->FindFirstPartKind(hlsl::DFCC_DXIL, &shaderIndex);
         R_ASSERT(SUCCEEDED(hr));
@@ -226,7 +229,7 @@ public:
         R_ASSERT(SUCCEEDED(hr));
         D3D12_SHADER_DESC shaderDesc = { };
         shaderReflection->GetDesc(&shaderDesc);
-        reflectionData.numCbvs = shaderDesc.ConstantBuffers;
+        reflectionOutput.numCbvs = shaderDesc.ConstantBuffers;
         U32 numResources = shaderDesc.BoundResources;
         for (U32 resourceIdx = 0; resourceIdx < numResources; ++resourceIdx)
         {
@@ -241,12 +244,12 @@ public:
                 case D3D_SHADER_INPUT_TYPE::D3D_SIT_TBUFFER:
                 case D3D_SHADER_INPUT_TYPE::D3D_SIT_TEXTURE:
                 {
-                    reflectionData.numSrvs += 1;
+                    reflectionOutput.numSrvs += 1;
                     break;
                 }
                 case D3D_SHADER_INPUT_TYPE::D3D_SIT_SAMPLER:
                 {
-                    reflectionData.numSamplers += 1;
+                    reflectionOutput.numSamplers += 1;
                     break;
                 }
                 case D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_APPEND_STRUCTURED:
@@ -256,12 +259,12 @@ public:
                 case D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER:
                 case D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_RWTYPED:
                 {
-                    reflectionData.numUavs += 1;
+                    reflectionOutput.numUavs += 1;
                     break;
                 }
             }
         }
-        return reflectionData;
+        return RecluseResult_Ok;
     }
 
 private:

@@ -164,7 +164,7 @@ public:
             const std::vector<char>& srcCode, 
             std::vector<char>& byteCode, 
             const char* entryPoint,
-            ShaderLang lang, 
+            ShaderLanguage lang, 
             ShaderType shaderType, 
             const std::vector<PreprocessDefine>& defines = std::vector<PreprocessDefine>()
         ) override
@@ -194,7 +194,7 @@ public:
         const char* str                     = srcCode.data();
         EShMessages messages                = (EShMessages)((int)EShMsgSpvRules | (int)EShMsgVulkanRules);
 
-        if (lang == ShaderLang_Hlsl) 
+        if (lang == ShaderLanguage_Hlsl) 
         {
             R_DEBUG("GLSLANG", "HLSL used, compiling to SPIRV...");
 
@@ -235,9 +235,8 @@ public:
         return RecluseResult_Ok;
     }
 
-    ShaderReflection reflect(const char* bytecode, U64 sizeBytes, ShaderLang lang) override
+    ResultCode reflect(ShaderReflection& reflectionOutput, const char* bytecode, U64 sizeBytes, ShaderLanguage lang) override
     {
-        ShaderReflection reflectionData;
         SpvReflectShaderModule reflectModule;
         SpvReflectResult result = spvReflectCreateShaderModule(sizeBytes, bytecode, &reflectModule);
         if (result == SPV_REFLECT_RESULT_SUCCESS)
@@ -261,11 +260,45 @@ public:
             for (U32 descriptorSetIdx = 0; descriptorSetIdx < descriptorSetCount; ++descriptorSetIdx)
             {
                 SpvReflectDescriptorSet* set = descriptorSets[descriptorSetIdx];
-                set;
+                uint32_t bindingCount = set->binding_count;
+                for (uint32_t bindingIdx = 0; bindingIdx < bindingCount; ++bindingIdx)
+                {
+                    SpvReflectDescriptorBinding* binding = set->bindings[bindingIdx];
+                    switch (binding->descriptor_type)
+                    {
+                        case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
+                        {
+                            if (binding->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_SAMPLER)
+                                reflectionOutput.numSamplers += 1;
+                            break;
+                        }
+                        case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE:
+                        case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER:
+                        {
+                            if (binding->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_UAV)
+                                reflectionOutput.numUavs += 1;
+                            break;
+                        }
+                        case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+                        case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+                        {
+                            if (binding->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_SRV)
+                                reflectionOutput.numSrvs += 1;
+                            break;
+                        }
+                        case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+                        {
+                            if (binding->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_CBV)
+                                reflectionOutput.numCbvs += 1;
+                            break;
+                        }
+                    }
+                    
+                }
             }
             spvReflectDestroyShaderModule(&reflectModule);
         }
-        return reflectionData;
+        return RecluseResult_Ok;
     }
 
 private:

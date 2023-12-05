@@ -51,7 +51,7 @@ public:
             const char* srcCode, 
             U64 sourceCodeBytes, 
             ShaderPermutationId permutation,
-            ShaderLang lang, 
+            ShaderLanguage lang, 
             ShaderType shaderType,
             const std::vector<PreprocessDefine>& defines = std::vector<PreprocessDefine>()
         );
@@ -61,7 +61,7 @@ public:
     ShaderIntermediateCode getIntermediateCode() const { return m_imm; }
 
     // Shader reflection function.
-    virtual ShaderReflection reflect(const char* bytecode, U64 sizeBytes, ShaderLang lang) { return { }; }
+    virtual ResultCode reflect(ShaderReflection& reflectionOutput, const char* bytecode, U64 sizeBytes, ShaderLanguage lang) { return { }; }
 
 private:
 
@@ -70,11 +70,13 @@ private:
                             const std::vector<char>& srcCode,
                             std::vector<char>& byteCode, 
                             const char* entryPoint,
-                            ShaderLang lang, 
+                            ShaderLanguage lang, 
                             ShaderType shaderType,
                             const std::vector<PreprocessDefine>& defines = std::vector<PreprocessDefine>()
                         ) 
         { return RecluseResult_NoImpl; }
+
+    virtual ResultCode preprocessInputResources(ShaderLanguage lang, std::vector<char>& sourceCode);
 
     ShaderIntermediateCode m_imm;
 };

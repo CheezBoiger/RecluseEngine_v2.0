@@ -10,6 +10,7 @@
 #include "Recluse/RGUID.hpp"
 
 #include <vector>
+#include <unordered_map>
 
 namespace Recluse {
 
@@ -78,6 +79,7 @@ public:
     virtual ResultCode     onCleanUp()                                          override;
 
 private:
+    //std::unordered_map<RGUID, Transform*> m_table;
     std::vector<Transform*> m_transforms;
 };
 } // Recluse

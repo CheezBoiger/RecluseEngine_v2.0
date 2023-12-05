@@ -245,7 +245,7 @@ int main(int c, char* argv[])
         std::string shaderPath = currDir + "/" + "test.cs.hlsl";
         Pipeline::Builder::ShaderProgramDescription description = { };
         description.pipelineType = BindType_Compute;
-        description.language = ShaderLang_Hlsl;
+        description.language = ShaderLanguage_Hlsl;
         description.compute.cs = shaderPath.c_str();
         description.compute.csName = "main";
 

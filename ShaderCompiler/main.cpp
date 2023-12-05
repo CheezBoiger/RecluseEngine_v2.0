@@ -50,7 +50,7 @@ int main(int c, char* argv[])
 
     // Collect our arguments.
     Recluse::setShaderFiles(compilePath);
-    result = Recluse::compileShaders(Recluse::ShaderLang_Glsl);
+    result = Recluse::compileShaders(Recluse::ShaderLanguage_Glsl);
 
     if (result != Recluse::RecluseResult_Ok) 
     {

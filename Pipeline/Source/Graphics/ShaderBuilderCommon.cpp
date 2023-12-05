@@ -16,7 +16,7 @@ ResultCode ShaderBuilder::compile
         const char* sourceCode, 
         U64 sourceCodeBytes, 
         ShaderPermutationId permutation,
-        ShaderLang lang, 
+        ShaderLanguage lang, 
         ShaderType shaderType,
         const std::vector<PreprocessDefine>& defines
     )
@@ -28,7 +28,9 @@ ResultCode ShaderBuilder::compile
     srcCodeString.resize(sourceCodeBytes + 1);
     
     memcpy(srcCodeString.data(), sourceCode, sourceCodeBytes);
-    srcCodeString[sourceCodeBytes] = '\0';    
+    srcCodeString[sourceCodeBytes] = '\0';
+
+    result = preprocessInputResources(lang, srcCodeString);
 
     result = onCompile(srcCodeString, byteCodeString, entryPoint, lang, shaderType, defines);
 
@@ -42,6 +44,14 @@ ResultCode ShaderBuilder::compile
         R_ERROR("Shader", "Failed to compile shader!");
     }
     return result;
+}
+
+
+ResultCode ShaderBuilder::preprocessInputResources(ShaderLanguage lang, std::vector<char>& srcCodeString)
+{
+    // Common shader builder doesn't need to do anything fancy, best to leave it for 
+    // specialized shader builders.
+    return RecluseResult_Ok;
 }
 
 

@@ -391,7 +391,7 @@ void createShaderProgram(GraphicsDevice* device)
     std::string fsSource = currDir + "/" + "gbuffer.ps.hlsl";
     Pipeline::Builder::ShaderProgramDescription description;
     description.pipelineType = BindType_Graphics;
-    description.language = ShaderLang_Hlsl;
+    description.language = ShaderLanguage_Hlsl;
     description.graphics.vs = vsSource.c_str();
     description.graphics.vsName = "Main";
     description.graphics.ps = fsSource.c_str();
@@ -403,7 +403,7 @@ void createShaderProgram(GraphicsDevice* device)
     vsSource = currDir + "/" + "quad.vs.hlsl";
     fsSource = currDir + "/" + "resolve.ps.hlsl";
     description.pipelineType = BindType_Graphics;
-    description.language = ShaderLang_Hlsl;
+    description.language = ShaderLanguage_Hlsl;
     description.graphics.vs = vsSource.c_str();
     description.graphics.vsName = "Main";
     description.graphics.ps = fsSource.c_str();

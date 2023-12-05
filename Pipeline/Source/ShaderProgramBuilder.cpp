@@ -168,7 +168,7 @@ R_INTERNAL Shader* compileShader
         const char* entryPoint, 
         const std::string& shaderPath, 
         ShaderPermutationId permutation, 
-        ShaderLang language, 
+        ShaderLanguage language, 
         ShaderType shaderType, 
         ResultCode& errorOut
     )
@@ -185,8 +185,6 @@ R_INTERNAL Shader* compileShader
             if (error == RecluseResult_Ok)
             { 
                 error = shaderBuilder->compile(shader, entryPoint, file.data(), file.size(), permutation, language, shaderType);
-                ShaderReflection reflectionData = shaderBuilder->reflect(shader->getByteCode(), shader->getSzBytes(), language);
-                reflectionData;
                 if (error != RecluseResult_Ok)
                 {
                     Shader::destroy(shader);
@@ -194,7 +192,14 @@ R_INTERNAL Shader* compileShader
                 }
                 else
                 {
+                    ShaderReflection reflectionData = { };
                     shader->setName(shaderPath.c_str());
+                    ResultCode reflectError = shaderBuilder->reflect(reflectionData, shader->getByteCode(), shader->getSzBytes(), language);
+                    if (reflectError == RecluseResult_Ok)
+                    {
+                        R_DEBUG("ShaderBuilder", "ShaderName: %s \nCBVs: %d\nSRVs:%d\nUAVs:%d\nSamplers: %d", 
+                            shader->getName(), reflectionData.numCbvs, reflectionData.numSrvs, reflectionData.numUavs, reflectionData.numSamplers);
+                    }
                 }
             }
         }
@@ -214,7 +219,7 @@ ShaderProgramDefinition makeShaderProgramDefinition(ShaderProgramDatabase& db, c
     ShaderProgramDefinition definition;
     definition.pipelineType     = description.pipelineType;
     definition.intermediateCode = shaderBuilder->getIntermediateCode();
-    const ShaderLang language   = description.language;
+    const ShaderLanguage language   = description.language;
 
     switch (definition.pipelineType)
     {
@@ -232,10 +237,10 @@ ShaderProgramDefinition makeShaderProgramDefinition(ShaderProgramDatabase& db, c
         }
         else
         {
-            definition.graphics.vs              = compileShader(shaderBuilder, db, description.graphics.vsName, description.graphics.vs, permutation, language, ShaderType_Vertex, errorOut);
-            definition.graphics.gs              = description.graphics.gs ? compileShader(shaderBuilder, db, description.graphics.gsName, description.graphics.gs, permutation, language, ShaderType_Geometry, errorOut) : nullptr;
-            definition.graphics.hs              = description.graphics.hs ? compileShader(shaderBuilder, db, description.graphics.hsName, description.graphics.hs, permutation, language, ShaderType_Hull, errorOut) : nullptr;
-            definition.graphics.ds              = description.graphics.ds ? compileShader(shaderBuilder, db, description.graphics.dsName, description.graphics.ds, permutation, language, ShaderType_Domain, errorOut) : nullptr;
+            definition.graphics.vs          = compileShader(shaderBuilder, db, description.graphics.vsName, description.graphics.vs, permutation, language, ShaderType_Vertex, errorOut);
+            definition.graphics.gs          = description.graphics.gs ? compileShader(shaderBuilder, db, description.graphics.gsName, description.graphics.gs, permutation, language, ShaderType_Geometry, errorOut) : nullptr;
+            definition.graphics.hs          = description.graphics.hs ? compileShader(shaderBuilder, db, description.graphics.hsName, description.graphics.hs, permutation, language, ShaderType_Hull, errorOut) : nullptr;
+            definition.graphics.ds          = description.graphics.ds ? compileShader(shaderBuilder, db, description.graphics.dsName, description.graphics.ds, permutation, language, ShaderType_Domain, errorOut) : nullptr;
         }
         definition.graphics.ps              = description.graphics.ps ? compileShader(shaderBuilder, db, description.graphics.psName, description.graphics.ps, permutation, language, ShaderType_Pixel, errorOut) : nullptr;
         break;

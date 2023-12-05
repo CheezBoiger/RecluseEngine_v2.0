@@ -21,7 +21,7 @@ using json = nlohmann::json;
 namespace Recluse {
 
 
-ShaderLang kDefaultShaderLanguage = ShaderLang_Hlsl;
+ShaderLanguage kDefaultShaderLanguage = ShaderLanguage_Hlsl;
 
 // Serialize our enum types with the following for json configs.
 NLOHMANN_JSON_SERIALIZE_ENUM(Recluse::ShaderStage,
@@ -46,10 +46,10 @@ NLOHMANN_JSON_SERIALIZE_ENUM(Recluse::ShaderStage,
 )
 
 
-NLOHMANN_JSON_SERIALIZE_ENUM(Recluse::ShaderLang,
+NLOHMANN_JSON_SERIALIZE_ENUM(Recluse::ShaderLanguage,
     {
-        { Recluse::ShaderLang_Glsl, "glsl" },
-        { Recluse::ShaderLang_Hlsl, "hlsl" }
+        { Recluse::ShaderLanguage_Glsl, "glsl" },
+        { Recluse::ShaderLanguage_Hlsl, "hlsl" }
     }
 )
 
@@ -60,9 +60,9 @@ NLOHMANN_JSON_SERIALIZE_ENUM(Recluse::ShaderLang,
 
 #define SCENE_BUFFER_INCLUDE "RecluseSceneBuffer.h"
 
-#define MAP_SHADER_KEYWORD(keyword, glslKeyword, hlslKeyword) { keyword, { { ShaderLang_Glsl, glslKeyword }, { ShaderLang_Hlsl, hlslKeyword } } }
+#define MAP_SHADER_KEYWORD(keyword, glslKeyword, hlslKeyword) { keyword, { { ShaderLanguage_Glsl, glslKeyword }, { ShaderLanguage_Hlsl, hlslKeyword } } }
 
-static std::unordered_map<std::string, std::map<ShaderLang, std::string>> kShaderKeywordMap = 
+static std::unordered_map<std::string, std::map<ShaderLanguage, std::string>> kShaderKeywordMap = 
 {
     MAP_SHADER_KEYWORD("struct",    "struct",   "struct"),
     MAP_SHADER_KEYWORD("Matrix44",  "mat4",     "float4x4"),
@@ -91,7 +91,7 @@ struct ShaderMetaData
 struct CompilerState 
 {
     std::string name;
-    ShaderLang  language;
+    ShaderLanguage  language;
     std::string outputExt;
     std::string version;
     B32         appendExt;
@@ -125,7 +125,7 @@ void replaceLine(std::string& in, size_t currentPos, const std::string& from, co
 }
 
 
-static std::string generateShaderSceneView(ShaderLang lang)
+static std::string generateShaderSceneView(ShaderLanguage lang)
 {
     ResultCode result = RecluseResult_Ok;
     // Scene view buffer string to be passed.
@@ -246,18 +246,18 @@ static std::string generateShaderSceneView(ShaderLang lang)
 }
 
 
-Pipeline::ShaderBuilder* createBuilder(Allocator* scratch, ShaderLang lang, ShaderIntermediateCode intermediateCode)
+Pipeline::ShaderBuilder* createBuilder(Allocator* scratch, ShaderLanguage lang, ShaderIntermediateCode intermediateCode)
 {
     Pipeline::ShaderBuilder* pBuilder = nullptr;
     
     switch (lang)
     {
-        case ShaderLang_Hlsl:
+        case ShaderLanguage_Hlsl:
         {
             pBuilder = Pipeline::createShaderBuilder("dxc", intermediateCode);
             break;
         }
-        case ShaderLang_Glsl:
+        case ShaderLanguage_Glsl:
         {
             pBuilder = Pipeline::createShaderBuilder("glslang", intermediateCode);
             break;
@@ -271,7 +271,7 @@ Pipeline::ShaderBuilder* createBuilder(Allocator* scratch, ShaderLang lang, Shad
     return pBuilder;
 }
 
-ResultCode compileShaders(ShaderLang lang)
+ResultCode compileShaders(ShaderLanguage lang)
 {
     R_ASSERT(gConfigs.pCompilerState != NULL);
 
@@ -286,7 +286,7 @@ ResultCode compileShaders(ShaderLang lang)
     LinearAllocator linearAllocation;
     linearAllocation.initialize(scratchPool.getBaseAddress(), scratchPool.getTotalSizeBytes());
 
-    std::map<ShaderLang, Pipeline::ShaderBuilder*> shaderBuilders;
+    std::map<ShaderLanguage, Pipeline::ShaderBuilder*> shaderBuilders;
 
     Pipeline::ShaderBuilder* pBuilder = createBuilder(&linearAllocation, lang, ShaderIntermediateCode_Spirv);
 
@@ -453,7 +453,7 @@ ResultCode setConfigs(const std::string& configPath, U32 compilerIndex)
         {
             CompilerState compilerState = { };
             auto compiler               = compilers[i];
-            ShaderLang lang             = compiler["language"].get<ShaderLang>();
+            ShaderLanguage lang             = compiler["language"].get<ShaderLanguage>();
             std::string name            = compiler["name"].get<std::string>();
             std::string ext             = "";
             B32 appendExt               = false;
@@ -461,8 +461,8 @@ ResultCode setConfigs(const std::string& configPath, U32 compilerIndex)
             compilerState.language      = lang;
             const char* langName        = "";
 
-            if      (lang == ShaderLang_Glsl)  langName = "glsl";
-            else if (lang == ShaderLang_Hlsl)  langName = "hlsl";
+            if      (lang == ShaderLanguage_Glsl)  langName = "glsl";
+            else if (lang == ShaderLanguage_Hlsl)  langName = "hlsl";
 
             if (compiler.find("output") != compiler.end()) 
             {
@@ -591,7 +591,7 @@ ResultCode setShaderFiles(const std::string& shadersPath)
 }
 
 
-ShaderLang getDefaultShaderLanguage()
+ShaderLanguage getDefaultShaderLanguage()
 {
     return kDefaultShaderLanguage;
 }

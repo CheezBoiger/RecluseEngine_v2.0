@@ -21,11 +21,11 @@ enum ShaderIntermediateCode
 };
 
 
-enum ShaderLang 
+enum ShaderLanguage 
 {
-    ShaderLang_Glsl,
-    ShaderLang_Hlsl,
-    ShaderLang_Count
+    ShaderLanguage_Glsl,
+    ShaderLanguage_Hlsl,
+    ShaderLanguage_Count
 };
 
 
