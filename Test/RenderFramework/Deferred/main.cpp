@@ -39,6 +39,7 @@ GraphicsResource* depthTexture = nullptr;
 GraphicsSampler*  gbufferSampler = nullptr;
 
 GraphicsResource* lightSceneTexture = nullptr;
+GraphicsResource* lightBuffer = nullptr;
 
 static const U32 g_textureWidth = 64;
 static const U32 g_textureHeight = 64;
@@ -255,18 +256,10 @@ std::array<Vector4, 36> colors = {
 
 
 std::array<U32, 36> indices = {
-  0, 1, 2,
-  3, 4, 5,
-  6, 7, 8,
-  9, 10, 11,
-  12, 13, 14,
-  15, 16, 17,
-  18, 19, 20,
-  21, 22, 23,
-  24, 25, 26,
-  27, 28, 29,
-  30, 31, 32,
-  33, 34, 35
+  0, 1, 2, 3, 4, 5, 6, 7, 8,
+  9, 10, 11, 12, 13, 14, 15, 16, 17,
+  18, 19, 20, 21, 22, 23, 24, 25, 26,
+  27, 28, 29, 30, 31, 32, 33, 34, 35
 };
 
 
@@ -544,6 +537,34 @@ void ResizeFunction(U32 x, U32 y, U32 width, U32 height)
 }
 
 
+struct Light
+{
+	I32 	LightType;
+	F32 	Position;
+	F32 	Direction;
+	F32 	Attenuation;
+	Math::Float4 Color;
+};
+
+
+void createLightBuffer(GraphicsDevice* device)
+{
+    GraphicsResourceDescription description = { };
+    description.dimension = ResourceDimension_Buffer;
+    description.format = ResourceFormat_Unknown;
+    description.height = 1;
+    description.depthOrArraySize = 1;
+    description.width = sizeof(Light) * 1;
+    description.usage = ResourceUsage_ShaderResource | ResourceUsage_CopyDestination;
+    description.mipLevels = 1;
+    description.miscFlags = ResourceMiscFlag_StructuredBuffer;
+    description.memoryUsage = ResourceMemoryUsage_GpuOnly;
+
+    ResultCode result = device->createResource(&lightBuffer, description, ResourceState_Common);
+    R_ASSERT(result == RecluseResult_Ok);
+}
+
+
 void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>& meshes)
 {
     context->transition(albedoTexture, ResourceState_RenderTarget);
@@ -623,6 +644,13 @@ void resolveLighting(GraphicsContext* context)
     description.format = ResourceFormat_R16G16B16A16_Float;
     ResourceViewId normalView = normalTexture->asView(description);
 
+    description.dimension = ResourceViewDimension_Buffer;
+    description.firstElement = 0;
+    description.numElements = 1;
+    description.byteStride = sizeof(Light);
+    description.format = ResourceFormat_Unknown;
+    ResourceViewId lightBufferView = lightBuffer->asView(description);
+
     Viewport viewport = { 0, 0, swapchain->getDesc().renderWidth, swapchain->getDesc().renderHeight, 1, 0 };
     Rect scissor = { 0, 0, swapchain->getDesc().renderWidth, swapchain->getDesc().renderHeight };
     F32 clearColor[4] = { 0, 0, 0, 0 };
@@ -631,6 +659,7 @@ void resolveLighting(GraphicsContext* context)
     context->transition(albedoTexture, ResourceState_ShaderResource);
     context->transition(normalTexture, ResourceState_ShaderResource);
     context->transition(depthTexture, ResourceState_ShaderResource);
+    context->transition(lightBuffer, ResourceState_ShaderResource);
     context->pushState();
     context->setShaderProgram(ShaderProgram_LightResolve, 0);
     context->bindRenderTargets(1, &id);
@@ -639,6 +668,7 @@ void resolveLighting(GraphicsContext* context)
     context->setInputVertexLayout(VertexInputLayout::VertexLayout_Null);
     context->bindShaderResource(ShaderStage_Pixel, 0, albedoView);
     context->bindShaderResource(ShaderStage_Pixel, 1, normalView);
+    context->bindShaderResource(ShaderStage_Pixel, 4, lightBufferView);
     context->bindSampler(ShaderStage_Pixel, 0, gbufferSampler);
     context->clearRenderTarget(0, clearColor, scissor);
     context->setViewports(1, &viewport);
@@ -653,7 +683,7 @@ int main(char* argv[], int c)
     Log::initializeLoggingSystem();
     enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
+    instance  = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
     GraphicsAdapter* adapter    = nullptr;
     std::vector<MeshDraw> meshes;
 
@@ -669,7 +699,7 @@ int main(char* argv[], int c)
         appInfo.appMinor = 0;
         appInfo.appMajor = 0;
         appInfo.appPatch = 0;
-        LayerFeatureFlags flags = 0;// LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
+        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
         instance->initialize(appInfo, flags);
     }
     
@@ -701,12 +731,12 @@ int main(char* argv[], int c)
     createShaderProgram(device);
 
     createGBuffer(device, swapchain->getDesc().renderWidth, swapchain->getDesc().renderHeight);
+    createLightBuffer(device);
 
     std::array<F32, 10> lastMs;
     U32 frameCount = 0;
     while (!window->shouldClose())
     {
-
         if (!window->isMinimized())
         {   
             frameCount += 1;
@@ -739,10 +769,7 @@ int main(char* argv[], int c)
                 window->close();
             }
         }
-
-        
         pollEvents();
-        
     }
         
     context->wait();
@@ -751,6 +778,7 @@ int main(char* argv[], int c)
     device->destroySwapchain(swapchain);
     device->destroySampler(gbufferSampler);
     //device->destroyResource(depthBuffer);
+    device->destroyResource(lightBuffer);
     device->destroyResource(textureResource);
     device->releaseContext(context);
     adapter->destroyDevice(device);

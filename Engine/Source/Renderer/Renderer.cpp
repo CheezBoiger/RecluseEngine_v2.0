@@ -374,6 +374,16 @@ void Renderer::pushRenderCommand(const RenderCommand& renderCommand, RenderPassT
         m_currentCommandKeys[Render_Particles].push_back(key.value);
     }
 
+    if (renderFlags & Render_ForwardOpaque)
+    {
+        m_currentCommandKeys[Render_ForwardOpaque].push_back(key.value);
+    }
+
+    if (renderFlags & Render_ForwardTransparent)
+    {
+        m_currentCommandKeys[Render_ForwardTransparent].push_back(key.value);
+    }
+
     // Push the render command to the last, this will serve as our reference to render in
     // certain render passes.
     m_currentRenderCommands->push(renderCommand);
@@ -395,9 +405,6 @@ void Renderer::allocateSceneBuffers(const RendererConfigs& configs)
     viewDesc.baseMipLevel = 0;
     viewDesc.type = ResourceViewType_DepthStencil;
 
-    m_sceneBuffers.gbufferViews[Engine::GBuffer_Depth] = new TextureView();
-    m_sceneBuffers.gbufferViews[Engine::GBuffer_Depth]->initialize(this, m_sceneBuffers.gbuffer[Engine::GBuffer_Depth], viewDesc);
-
     m_renderCommands.resize(configs.buffering);
     m_maxBufferCount = configs.buffering;
     for (U32 i = 0; i < configs.buffering; ++i)
@@ -415,14 +422,6 @@ void Renderer::allocateSceneBuffers(const RendererConfigs& configs)
 
 void Renderer::freeSceneBuffers()
 {
-
-    if (m_sceneBuffers.gbufferViews[Engine::GBuffer_Depth]) 
-    {
-        m_sceneBuffers.gbufferViews[Engine::GBuffer_Depth]->destroy(this);
-        delete m_sceneBuffers.gbufferViews[Engine::GBuffer_Depth];
-        m_sceneBuffers.gbufferViews[Engine::GBuffer_Depth] = nullptr;
-    }
-
     if (m_sceneBuffers.gbuffer[Engine::GBuffer_Depth]) 
     {
     

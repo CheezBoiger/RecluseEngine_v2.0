@@ -7,7 +7,7 @@ import subprocess, os
 import argparse
 import sys
 
-build_systems_dir = os.path.dirname(os.path.realpath(__file__)) + "/BuildSystems"
+build_systems_dir = os.path.dirname(os.path.realpath(__file__)) + "/Systems"
 
 generate_engine_resources = build_systems_dir + "/GenerateEngineResources.py"
 

@@ -12,6 +12,7 @@
 #include <tuple>
 
 namespace Recluse {
+class MessageBus;
 namespace Engine {
 class Scene;
 } // Engine
@@ -45,10 +46,8 @@ class GameEntity;
 
 //! System is the high level provision that oversees all
 //! game components to their respect.
-//! Systems are what hold the game logic in the world scene.
-//! //! System is the required definition of the given system, which is to 
-//! define how to allocate, free, and update all components the application interacts 
-//! with. Do not inherit directly from System, instead inherit from this!
+//! Systems are what hold the game logic in the world scene, and what 
+//! will perform work on components that only it will be allowed to see.
 class R_PUBLIC_API System : public Serializable
 {
 public:
@@ -68,6 +67,7 @@ public:
         return RecluseResult_Ok;
     }
 
+    // Gets a component from entity.
     template<typename ComponentType>
     ComponentType* obtainComponent(const RGUID& id)
     {
@@ -75,6 +75,8 @@ public:
         return entity->getComponent<ComponentType>(m_scene);
     }
 
+    // Gets a tuple of components from an entity. Any components not found,
+    // will return nullptr.
     template<typename... Args>
     std::tuple<Args*...> obtainTuple(const RGUID& id)
     {
@@ -89,9 +91,9 @@ public:
     // This system is required to update all components when necessary.
     void                                update(const RealtimeTick& tick) { onUpdate(tick); }
 
-    ResultCode                             initialize()
+    ResultCode                          initialize(MessageBus* bus = nullptr)
     {
-        return onInitialize();
+        return onInitialize(bus);
     }
 
     ResultCode         cleanUp()
@@ -111,7 +113,7 @@ public:
     void            setScene(Engine::Scene* scene) { m_scene = scene; }
 private:
     // Allows initializing the system before on intialize().
-    virtual ResultCode      onInitialize()                  { return RecluseResult_NoImpl; }
+    virtual ResultCode      onInitialize(MessageBus* bus = nullptr) { return RecluseResult_NoImpl; }
 
     // Allows cleaning up the system before releasing.
     virtual ResultCode      onCleanUp()                     { return RecluseResult_NoImpl; }

@@ -17,8 +17,11 @@ public:
 
     virtual             ~TransformSystem() { onCleanUp(); }
 
-    virtual ResultCode     onInitialize()                                       override { return RecluseResult_NoImpl; }
+    virtual ResultCode     onInitialize(MessageBus* bus)                        override;
     virtual ResultCode     onCleanUp()                                          override;
     virtual void           onUpdate(const RealtimeTick& tick)                   override;
+
+private:
+    Bool m_doUpdate = false;
 };
 } // Recluse

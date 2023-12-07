@@ -6,6 +6,17 @@ struct PSIn
 };
 
 
+struct Light
+{
+	int 	LightType;
+	float 	Position;
+	float 	Direction;
+	float 	Attenuation;
+	
+	float4 Color;
+};
+
+
 [[vk::binding(0)]] cbuffer SceneCamera : register(b0)
 {
 	float4x4 ViewProjection;
@@ -14,10 +25,8 @@ struct PSIn
 
 [[vk::binding(1)]] cbuffer LightView : register(b1)
 {
-	float4 	Position;
-	float 	Radius;
-	float 	Strength;
-	float2 	Pad0;
+	uint numLights;
+	float3 pad0;
 };
 
 [[vk::binding(2)]] Texture2D<float4> AlbedoTexture 	: register(t0);
@@ -25,12 +34,19 @@ struct PSIn
 [[vk::binding(4)]] Texture2D<float4> MaterialTexture 	: register(t2);
 [[vk::binding(5)]] Texture2D<float4> DepthTexture : register(t3);
 
-[[vk::binding(6)]] SamplerState g_sampler : register(s0);
+[[vk::binding(6)]] StructuredBuffer<Light> LightBuffer : register(t4);
+
+[[vk::binding(7)]] SamplerState g_sampler : register(s0);
 
 float4 psMain(PSIn pixIn) : SV_TARGET0
 {
 	float4 color = float4(0, 0, 0, 0);
 	float2 UV = pixIn.vTexCoord;
 	color = AlbedoTexture.Sample(g_sampler, UV).rgba;
+	for (uint lightIdx = 0; lightIdx < numLights; ++lightIdx)
+	{
+		Light light = LightBuffer[lightIdx];
+		color += light.Color;
+	}
 	return color;
 }

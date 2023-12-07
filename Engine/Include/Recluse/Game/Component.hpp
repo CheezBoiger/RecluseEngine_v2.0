@@ -83,7 +83,7 @@ public:
     static const U64 unknownComponent = ~0u;
 
     // Default component construction.
-    Component(RGUID guid, const RGUID& ownerGuid = RGUID())
+    Component(RGUID guid = generateRGUID(), const RGUID& ownerGuid = RGUID())
         : AbstractComponent(guid, ownerGuid)
         , m_enable(false)
     { }
@@ -195,6 +195,9 @@ protected:
 
 // Component Registry handles the management of components. 
 // This helps let the programmer manage component allocations and access.
+//! Registry is the required definition for the given component management, which is to 
+//! define how to allocate, free, and update all components when the application interacts 
+//! with. Do not inherit directly from components, instead inherit from this!
 template<typename TypeComponent>
 class Registry : public AbstractRegistry
 {

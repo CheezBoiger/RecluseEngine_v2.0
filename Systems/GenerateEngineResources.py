@@ -7,7 +7,7 @@ common_header_generation_dir    = os.path.dirname(os.path.realpath(__file__)) + 
 
 common_preable = \
 """
-//
+// Recluse Engine 2.0 (c) All rights reserved.
 // CONTENTS HERE ARE AUTO-GENERATED. DO NOT EDIT!
 #pragma once
 #include "Recluse/Types.hpp"

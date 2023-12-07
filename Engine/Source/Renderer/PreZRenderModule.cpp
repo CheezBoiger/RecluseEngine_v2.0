@@ -26,7 +26,6 @@ void initialize(GraphicsDevice* pDevice, Engine::SceneBufferDefinitions* pBuffer
 {
     R_ASSERT(pBuffers->gbuffer[Engine::GBuffer_Depth]                   != NULL);
     R_ASSERT(pBuffers->gbuffer[Engine::GBuffer_Depth]->getResource()    != NULL);
-    R_ASSERT(pBuffers->gbufferViews[Engine::GBuffer_Depth]->getView()   != NULL);
 
     R_DEBUG("PreZ", "Initializing preZ render pass...");
 
@@ -58,6 +57,16 @@ void generate(GraphicsContext* context, Engine::RenderCommandList* pMeshCommandL
     //depthRect.width     = context->getDevice()->getSwapchain()->getDesc().renderWidth;
     //depthRect.height    = context->getDevice()->getSwapchain()->getDesc().renderHeight;
 
+    ResourceViewDescription dsvDesc = { };
+    dsvDesc.baseArrayLayer = 0;
+    dsvDesc.baseMipLevel = 0;
+    dsvDesc.dimension = ResourceViewDimension_2d;
+    dsvDesc.format = ResourceFormat_D32_Float;
+    dsvDesc.layerCount = 1;
+    dsvDesc.mipLevelCount = 1;
+    dsvDesc.type = ResourceViewType_DepthStencil;
+    ResourceViewId dsv;
+
     // Set the PreZ pass.
     context->pushState();
     context->setShaderProgram(ShaderProgram_PreZDepth);
@@ -65,6 +74,7 @@ void generate(GraphicsContext* context, Engine::RenderCommandList* pMeshCommandL
     context->setCullMode(CullMode_Back);
     context->setFrontFace(FrontFace_Clockwise);
     context->setPolygonMode(PolygonMode_Fill);
+    context->bindRenderTargets(0, nullptr, dsv);
 
     for (U64 i = 0; i < sz; ++i) 
     {

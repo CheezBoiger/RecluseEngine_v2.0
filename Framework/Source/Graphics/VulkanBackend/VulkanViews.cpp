@@ -138,6 +138,7 @@ ResultCode VulkanImageView::onInitialize(VulkanDevice* pDevice, VulkanResource* 
     info.subresourceRange.baseMipLevel          = desc.baseMipLevel;
     info.subresourceRange.levelCount            = desc.mipLevelCount;
     info.subresourceRange.layerCount            = desc.layerCount;
+    info.subresourceRange.aspectMask            = Vulkan::getAspectMask(info.format);
     info.flags                                  = 0;
     info.components.r                           = VK_COMPONENT_SWIZZLE_R;
     info.components.g                           = VK_COMPONENT_SWIZZLE_G;
@@ -155,15 +156,6 @@ ResultCode VulkanImageView::onInitialize(VulkanDevice* pDevice, VulkanResource* 
         case ResourceViewDimension_Cube:            info.viewType = VK_IMAGE_VIEW_TYPE_CUBE; break;
         case ResourceViewDimension_CubeArray:       info.viewType = VK_IMAGE_VIEW_TYPE_CUBE_ARRAY; break;
         default: break;
-    }
-
-    if (desc.type == ResourceViewType_DepthStencil) 
-    {
-        info.subresourceRange.aspectMask = Vulkan::getDepthStencilAspectFlags(info.format);
-    } 
-    else 
-    {
-        info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     }
 
     VkResult vResult = vkCreateImageView(pDevice->get(), &info, nullptr, &m_view);

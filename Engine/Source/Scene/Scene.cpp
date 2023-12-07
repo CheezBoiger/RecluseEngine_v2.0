@@ -52,6 +52,7 @@ void Scene::initialize()
 void Scene::destroy()
 {
     unregisterSystems();
+    clearRegistries();
     for (U32 i = 0; i < m_entities.size(); ++i)
     {
         ECS::GameEntity::free(m_entities[i]);
@@ -157,11 +158,11 @@ ResultCode Scene::deserialize(Archive* pArchive)
 }
 
 
-void Scene::registerSystem(ECS::System* pSystem)
+void Scene::registerSystem(ECS::System* pSystem, MessageBus* bus)
 {
     // Registering any system must Initialize first.
-    pSystem->initialize(); 
     pSystem->setScene(this);
+    pSystem->initialize(bus); 
     m_systems.push_back(pSystem); 
 }
 

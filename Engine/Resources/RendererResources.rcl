@@ -10,22 +10,24 @@ namespace Recluse {
 		RenderEvent_Initialize
 	};
 
-	enum TextureRenderId {
-		RENDER_ID_SCENE_DEPTH,
-		RENDER_ID_SCENE_NORMAL,
-		RENDER_ID_SCENE_ALBEDO,
-		RENDER_ID_SCENE_AO,
-		RENDER_ID_SCENE_RESULTS
+	enum TextureRenderId 
+	{
+		TextureRenderId_Depth,
+		TextureRenderId_Normal,
+		TextureRenderId_Albedo,
+		TextureRenderId_Ao,
+		TextureRenderId_Result
 	};
 	
-	enum BufferRenderId {
-		RENDER_ID_SHADOW_LIGHTS,
-		RENDER_ID_SHADOW_CASCADE0,
-		RENDER_ID_SHADOW_CASCADE1,
-		RENDER_ID_SHADOW_CASCADE2,
-		RENDER_ID_SHADOW_CASCADE3,
-		RENDER_ID_SHADOW_GOBOS,
-		RENDER_ID_DECAL_BUFFER,
-		RENDER_ID_PARTICLE_BUFFER
+	enum BufferRenderId 
+	{
+		BufferRenderId_Lights,
+		BufferRenderId_ShadowCascade0,
+		BufferRenderId_ShadowCascade1,
+		BufferRenderId_ShadowCascade2,
+		BufferRenderId_ShadowCascade3,
+		BufferRenderId_Gobos,
+		BufferRenderId_Decals,
+		BufferRenderId_Particles
 	};
 };

@@ -16,17 +16,23 @@
 #include <Windows.h>
 #include <vector>
 
+#include "Recluse/Generated/Game/TranformEvents.hpp"
+
 using namespace Recluse;
 using namespace Recluse::Engine;
 
 Recluse::MessageBus g_bus;
 
 
+enum MovementEventId
+{
+    MovementEventId_DoMovement = 23510342
+};
+
 class MoverComponent : public ECS::Component
 {
 public:
     R_COMPONENT_DECLARE(MoverComponent);
-    MoverComponent() : ECS::Component(generateRGUID()) { }
     Math::Float3 direction;
 };
 
@@ -86,6 +92,18 @@ class MoverSystem : public ECS::System
 public:
     R_DECLARE_GAME_SYSTEM(MoverSystem);
 
+    ResultCode onInitialize(MessageBus* bus) override
+    {
+        if (bus)
+        {
+            bus->addReceiver("MoverSystem", [] (EventMessage* msg) -> void 
+            {
+                msg->getEvent(); 
+            });
+        }
+        return RecluseResult_Ok;
+    }
+
     void onUpdate(const RealtimeTick& tick) override
     {
         std::vector<ECS::GameEntity*> entities = getScene()->getEntities();
@@ -99,6 +117,7 @@ public:
                 transform->position = transform->position + mover->direction * tick.delta();
             }
         }
+        MessageBus::fireEvent(&g_bus, TransformEvent_Update);
     }
 
     ResultCode onCleanUp() override
@@ -129,6 +148,9 @@ void addEntities(Scene* pScene)
 
     entity->getComponent<Transform>(pScene)->position = Math::Float3(43, 12, -2);
     entity->getComponent<MoverComponent>(pScene)->direction = Math::normalize(Math::Float3(1, 0, 0));
+
+    pScene->addComponentForEntity<MoverComponent>(entity2->getUUID());
+    entity2->getComponent<MoverComponent>(pScene)->direction = Math::normalize(Math::Float3(-1, 0, 0));
 }
 
 
@@ -143,8 +165,8 @@ int main(int c, char* argv[])
     pScene->initialize();
     pScene->addRegistry<TransformRegistry>();
     pScene->addRegistry<MoverRegistry>();
-    pScene->addSystem<TransformSystem>();
-    pScene->addSystem<MoverSystem>();
+    pScene->addSystem<TransformSystem>(&g_bus);
+    pScene->addSystem<MoverSystem>(&g_bus);
 
     addEntities(pScene);
 

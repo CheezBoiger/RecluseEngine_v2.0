@@ -9,10 +9,15 @@
 namespace Recluse {
 
 
-class RendererSystem : public ECS::System
+class R_PUBLIC_API RendererSystem : public ECS::System
 {
 public:
+    R_DECLARE_GAME_SYSTEM(RendererSystem);
 
     virtual         ~RendererSystem() { }
+
+    virtual ResultCode  onInitialize(MessageBus* bus) override { return RecluseResult_NoImpl; }
+    virtual ResultCode  onCleanUp()                   override;
+    virtual void        onUpdate(const RealtimeTick& tick)  override;
 };
 } // Recluse

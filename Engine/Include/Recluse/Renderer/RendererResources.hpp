@@ -127,7 +127,6 @@ enum GBuffer
 struct SceneBufferDefinitions 
 {
     Texture2D*              gbuffer[GBuffer_MaxBufferCount];
-    TextureView*            gbufferViews[GBuffer_MaxBufferCount];
 };
 
 namespace RenderDB {

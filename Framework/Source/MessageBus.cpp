@@ -53,7 +53,7 @@ void MessageBus::notifyOne(const std::string& nodeName)
 {
     if (m_receiverNodeNames.find(nodeName) == m_receiverNodeNames.end()) 
     {
-        R_ERROR(__FUNCTION__, "Unable to find the node name=%s", nodeName.c_str());
+        R_WARN(__FUNCTION__, "Unable to find the node name=%s", nodeName.c_str());
         return;
     }
 

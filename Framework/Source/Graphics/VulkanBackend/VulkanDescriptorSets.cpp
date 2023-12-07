@@ -6,6 +6,7 @@
 #include "VulkanDescriptorManager.hpp"
 #include "VulkanAdapter.hpp"
 #include "VulkanViews.hpp"
+#include "Recluse/Math/MathCommons.hpp"
 
 #include "Recluse/Messaging.hpp"
 
@@ -266,7 +267,12 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
         {
             VulkanResource* pResource   = pView->getResource()->castTo<VulkanResource>();
             VulkanBuffer* buffer        = pResource->castTo<VulkanBuffer>();
-            VkDescriptorBufferInfo info = makeDescriptorBufferInfo(buffer, 0, buffer->getBufferSizeBytes());
+            // Number of elements, times the byte stride.
+            U32 sizeBytes = description.numElements * description.byteStride;
+            U32 offsetBytes = description.firstElement * description.byteStride;
+            R_ASSERT(buffer->getBufferSizeBytes() >= sizeBytes);
+            sizeBytes = Math::clamp(sizeBytes, (U32)0, buffer->getBufferSizeBytes());
+            VkDescriptorBufferInfo info = makeDescriptorBufferInfo(buffer, offsetBytes, sizeBytes);
             bufferInfo.push_back(info);
             write.pBufferInfo = &bufferInfo.back();
         }
@@ -302,7 +308,11 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
         { 
             VulkanResource* pResource       = pView->getResource()->castTo<VulkanResource>();
             VulkanBuffer* buffer            = pResource->castTo<VulkanBuffer>();
-            VkDescriptorBufferInfo info     = makeDescriptorBufferInfo(buffer, 0, buffer->getBufferSizeBytes());
+            // Number of elements, times the byte stride.
+            U32 sizeBytes = description.numElements * description.byteStride;
+            U32 offsetBytes = description.firstElement * description.byteStride;
+            R_ASSERT(buffer->getBufferSizeBytes() >= sizeBytes);
+            VkDescriptorBufferInfo info     = makeDescriptorBufferInfo(buffer, offsetBytes, sizeBytes);
             bufferInfo.push_back(info);
             write.pBufferInfo               = &bufferInfo.back();
         }

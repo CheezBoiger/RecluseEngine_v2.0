@@ -12,6 +12,7 @@ namespace Recluse {
 
 class MemoryPool;
 class Allocator;
+class MessageBus;
 
 namespace Engine {
 
@@ -27,25 +28,25 @@ public:
     R_PUBLIC_API void initialize();
     R_PUBLIC_API void destroy();
 
-    R_PUBLIC_API ResultCode            addEntity(ECS::GameEntity* pGameObject);
-    R_PUBLIC_API ResultCode            removeEntity(U32 idx);
-    R_PUBLIC_API ResultCode            removeEntity(const RGUID& guid);
-    R_PUBLIC_API ECS::GameEntity*   findEntity(const std::string& name);
-    R_PUBLIC_API ECS::GameEntity*   findEntity(const RGUID& guid);
-    R_PUBLIC_API ECS::GameEntity*   getEntity(U32 idx);
+    R_PUBLIC_API ResultCode                     addEntity(ECS::GameEntity* pGameObject);
+    R_PUBLIC_API ResultCode                     removeEntity(U32 idx);
+    R_PUBLIC_API ResultCode                     removeEntity(const RGUID& guid);
+    R_PUBLIC_API ECS::GameEntity*               findEntity(const std::string& name);
+    R_PUBLIC_API ECS::GameEntity*               findEntity(const RGUID& guid);
+    R_PUBLIC_API ECS::GameEntity*               getEntity(U32 idx);
 
-    R_PUBLIC_API void               setName(const std::string& name);
-    const std::string&              getName() const { return m_name; }
+    R_PUBLIC_API void                           setName(const std::string& name);
+    const std::string&                          getName() const { return m_name; }
 
     // Get game objects inside this scene.
     //
     R_PUBLIC_API std::vector<ECS::GameEntity*>& getEntities() { return m_entities; }
 
     // Serialize the scene.
-    R_PUBLIC_API ResultCode                        save(Archive* pArchive);
+    R_PUBLIC_API ResultCode                     save(Archive* pArchive);
     
     // Deserialize the serialize.
-    R_PUBLIC_API ResultCode                        load(Archive* pArchive);
+    R_PUBLIC_API ResultCode                     load(Archive* pArchive);
 
     // Update the scene systems. This can also be overridden to allow multithreading purposes.
     virtual R_PUBLIC_API void                   update(const RealtimeTick& tick);
@@ -57,13 +58,19 @@ public:
     Camera*                                     getMainCamera() const { return m_cameras[0]; }
     Camera*                                     getCamera(U32 index) { return m_cameras[index]; }
 
+    // Adds a system into this scene. Systems are usually global, but in our engine, they are 
+    // only global to our respective scene. Therefore, it is essential that any new scenes must 
+    // use any old systems, if we require transitions! 
+    //
+    //! bus - MessageBus for which the system will listen to.
     template<typename Sys>
-    void                                        addSystem(U32 priority = 0u)
+    void                                        addSystem(MessageBus* bus = nullptr, U32 priority = 0u)
     {
         ECS::System* system = ECS::System::allocate<Sys>();
-        registerSystem(system);
+        registerSystem(system, bus);
     }
 
+    //! Adds a registry for a component, for managing such resources.
     template<typename TypeRegistry>
     void addRegistry()
     {
@@ -76,40 +83,41 @@ public:
         }
     }
 
-    template<typename Comp>
-    ECS::Registry<Comp>* getRegistry()
+    // Get the registry with the given component type.
+    template<typename ComponentType>
+    ECS::Registry<ComponentType>* getRegistry()
     {
-        ECS::ComponentUUID uuid = Comp::classGUID();
+        ECS::ComponentUUID uuid = ComponentType::classGUID();
         auto it = m_registries.find(uuid);
         if (it != m_registries.end())
         {
-            return static_cast<ECS::Registry<Comp>*>(it->second);
+            return static_cast<ECS::Registry<ComponentType>*>(it->second);
         }
         return nullptr;
     }
 
-    template<typename Comp>
+    template<typename ComponentType>
     ResultCode addComponentForEntity(const RGUID& entityId)
     {
-        ECS::ComponentUUID uuid = Comp::classGUID();
+        ECS::ComponentUUID uuid = ComponentType::classGUID();
         auto it = m_registries.find(uuid);
         if (it != m_registries.end())
         {
-            ECS::Registry<Comp>* registry = static_cast<ECS::Registry<Comp>*>(it->second);
+            ECS::Registry<ComponentType>* registry = static_cast<ECS::Registry<ComponentType>*>(it->second);
             registry->allocateComponent(entityId);
             return RecluseResult_Ok;
         }
         return RecluseResult_Failed;
     }
 
-    template<typename Comp>
+    template<typename ComponentType>
     ResultCode removeComponent(const RGUID& entityId)
     {
-        ECS::ComponentUUID uuid = Comp::classGUID();
+        ECS::ComponentUUID uuid = ComponentType::classGUID();
         auto it = m_registries.find(uuid);
         if (it != m_registries.end())
         {
-            ECS::Registry<Comp>* registry = static_cast<ECS::Registry<Comp>*>(it->second);
+            ECS::Registry<ComponentType>* registry = static_cast<ECS::Registry<ComponentType>*>(it->second);
             registry->freeComponent(entityId);
             return RecluseResult_Ok;
         }
@@ -148,7 +156,7 @@ protected:
 private:
 
     // Register a system into the scene.
-    R_PUBLIC_API void registerSystem(ECS::System* pSystem);
+    R_PUBLIC_API void registerSystem(ECS::System* pSystem, MessageBus* bus);
     R_PUBLIC_API void unregisterSystems();
     R_PUBLIC_API void clearRegistries();
 

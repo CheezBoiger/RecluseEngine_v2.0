@@ -10,26 +10,31 @@
 namespace Recluse {
 
 
-enum RenderUpdateFlags 
+enum RenderUpdateFlag 
 {
-    RENDER_UPDATE_FLAG_CLEAN                = (1 << 0),
-    RENDER_UPDATE_FLAG_VERTEX_BUFFER_UPDATE = (1 << 1),
-    RENDER_UPDATE_FLAG_INDEX_BUFFER_UPDATE  = (1 << 2),
-    RENDER_UPDATE_FLAG_CONST_BUFFER_UPDATE  = (1 << 3),
-    RENDER_UPDATE_FLAG_COLLECT              = (1 << 4)
+    RenderUpdateFlag_Clean          = (1 << 0),
+    RenderUpdateFlag_VertexBuffer   = (1 << 1),
+    RenderUpdateFlag_IndexBuffer    = (1 << 2),
+    RenderUpdateFlag_ConstantBuffer = (1 << 3),
+    RenderUpdateFlag_Collect        = (1 << 4)
 };
+
+
+typedef U32 RenderUpdateFlags;
 
 
 class RendererComponent : public ECS::Component
 {
 public:
+    R_COMPONENT_DECLARE(RendererComponent);
+
     virtual ~RendererComponent() { }
-
-private:
+    RendererComponent() { }
     
-    GraphicsResource*   m_gfxResourceRef;   // Reference to the graphics.
-
+    GraphicsResource*   m_gfxResourceRef;   // Reference to the graphics resource.
     U32                 m_gfxMeshId;    // Mesh index within an instance.
     U32                 m_gfxMatId;     // Material index within an instance.
+    RenderUpdateFlags   m_flags;        // Update flags.
+    Bool                m_isVisible;    // Is the mesh visible?
 };
 } // Recluse 

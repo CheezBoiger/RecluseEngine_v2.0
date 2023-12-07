@@ -24,8 +24,7 @@ public:
     R_COMPONENT_DECLARE(Transform);
 
     virtual ~Transform() { }
-    Transform()
-        : ECS::Component(generateRGUID()) { }
+    Transform() { }
 
     R_EDITOR_DECLARE("visible", "public", true)
     R_EDITOR_DECLARE("visible", "default", Float3(0.f, 0.f, 0.f))

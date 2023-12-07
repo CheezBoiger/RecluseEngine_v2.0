@@ -1,0 +1,7 @@
+namespace Recluse {
+
+	event TransformEvent
+	{
+		TransformEvent_Update
+	};
+} // Recluse

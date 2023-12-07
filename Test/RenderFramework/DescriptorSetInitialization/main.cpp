@@ -88,7 +88,7 @@ int main(int c, char* argv[])
     pWindow = Window::create(u8"DescriptorSetInitialization", 0, 0, 1024, 1024, ScreenMode_WindowBorderless);
     pWindow->setToCenter();
 
-    pInstance = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
+    pInstance = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
 
     if (!pInstance) {
 

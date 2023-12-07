@@ -3,16 +3,34 @@
 #include "Recluse/Game/Systems/TransformSystem.hpp"
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Utility.hpp"
+#include "Recluse/Application.hpp"
+#include "Recluse/Generated/Game/TranformEvents.hpp"
 
 namespace Recluse {
 
 
 R_DECLARE_GLOBAL_BOOLEAN(g_enableTransformLogging, false, "Transform.EnableLogging");
 
+
+ResultCode TransformSystem::onInitialize(MessageBus* bus)
+{
+    if (bus)
+    {
+        bus->addReceiver("TransformSystem", 
+            [&] (EventMessage* msg) -> void 
+            {
+                if (msg->getEvent() == TransformEvent_Update)
+                    m_doUpdate = true;
+            });
+    }
+    return RecluseResult_Ok;
+}
+
+
 void TransformSystem::onUpdate(const RealtimeTick& tick)
 {
     Engine::Scene* pScene = getScene();
-    if (pScene)
+    if (pScene && m_doUpdate)
     {
         std::vector<ECS::GameEntity*>& entities = pScene->getEntities();
         for (U64 i = 0; i < entities.size(); ++i)
@@ -30,6 +48,7 @@ void TransformSystem::onUpdate(const RealtimeTick& tick)
                 }
             }
         }
+        m_doUpdate = false;
     }
 }
 

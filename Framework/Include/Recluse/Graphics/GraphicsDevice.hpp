@@ -61,8 +61,9 @@ struct ResourceViewDescription
         };
         struct
         {
-            U32             offsetBytes;
-            U32             sizeBytes;  
+            U32             firstElement;
+            U32             numElements;
+            U32             byteStride;  
         };
     };
 };

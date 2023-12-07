@@ -132,8 +132,8 @@ void fillRenderTargetViewDescription(D3D12_RENDER_TARGET_VIEW_DESC& nativeDesc, 
     {
         case D3D12_RTV_DIMENSION_BUFFER:
         {
-            nativeDesc.Buffer.FirstElement = description.offsetBytes / Dxgi::getNativeFormatSize(nativeDesc.Format);
-            nativeDesc.Buffer.NumElements = description.sizeBytes / Dxgi::getNativeFormatSize(nativeDesc.Format);
+            nativeDesc.Buffer.FirstElement = description.firstElement;
+            nativeDesc.Buffer.NumElements = description.numElements;
             break;
         }
         case D3D12_RTV_DIMENSION_TEXTURE1D:
@@ -214,9 +214,10 @@ void fillShaderResourceViewDescription(D3D12_SHADER_RESOURCE_VIEW_DESC& nativeDe
         default:
         case D3D12_SRV_DIMENSION_BUFFER:
         {
-            nativeDesc.Buffer.FirstElement = description.offsetBytes / Dxgi::getNativeFormatSize(nativeDesc.Format);
-            nativeDesc.Buffer.NumElements = description.sizeBytes / Dxgi::getNativeFormatSize(nativeDesc.Format);
-            nativeDesc.Buffer.Flags;
+            nativeDesc.Buffer.FirstElement = description.firstElement;
+            nativeDesc.Buffer.NumElements = description.numElements;
+            nativeDesc.Buffer.StructureByteStride = description.byteStride;
+            nativeDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
             break;
         }
         case D3D12_SRV_DIMENSION_TEXTURE1D:
@@ -288,9 +289,10 @@ void fillUnorderedAccessViewDescription(D3D12_UNORDERED_ACCESS_VIEW_DESC& native
         default:
         case D3D12_UAV_DIMENSION_BUFFER:
         {
-            nativeDesc.Buffer.FirstElement = description.offsetBytes / Dxgi::getNativeFormatSize(nativeDesc.Format);
-            nativeDesc.Buffer.NumElements = description.sizeBytes / Dxgi::getNativeFormatSize(nativeDesc.Format);
-            nativeDesc.Buffer.StructureByteStride = 0;
+            nativeDesc.Buffer.FirstElement = description.firstElement;
+            nativeDesc.Buffer.NumElements = description.numElements;
+            nativeDesc.Buffer.StructureByteStride = description.byteStride;
+            nativeDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
             break;
         }
         case D3D12_UAV_DIMENSION_TEXTURE1D:
@@ -335,7 +337,11 @@ ResultCode D3D12GraphicsResourceView::initialize(D3D12Device* pDevice, ID3D12Res
     R_ASSERT(pDevice != NULL);
     ResourceViewDescription resourceViewDescription = getDesc();
     DescriptorHeapAllocationManager* heapManager = pDevice->getDescriptorHeapManager();
-    R_ASSERT(resourceViewDescription.format != ResourceFormat_Unknown, "Resource format must not be UNKNOWN prior to creation!!");
+
+    if (resourceViewDescription.dimension != ResourceViewDimension_Buffer)
+    {
+        R_ASSERT(resourceViewDescription.format != ResourceFormat_Unknown, "Resource format must not be UNKNOWN prior to creation!!");
+    }
 
     switch (getDesc().type) 
     {   
