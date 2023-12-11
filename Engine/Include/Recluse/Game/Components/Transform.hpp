@@ -68,14 +68,14 @@ class R_PUBLIC_API TransformRegistry : public ECS::Registry<Transform>
 public:
     R_COMPONENT_REGISTRY_DECLARE(TransformRegistry);
 
-    virtual ResultCode     onAllocateComponent(const RGUID& owner)                override;
-    virtual ResultCode     onFreeComponent(const RGUID& owner)                     override;
+    virtual ResultCode              onAllocateComponent(const RGUID& owner)     override;
+    virtual ResultCode              onFreeComponent(const RGUID& owner)         override;
 
-    virtual Transform*     getComponent(const RGUID& entityKey) override;
-    virtual Transform**    getAllComponents(U64& pOut) override;
+    virtual Transform*              getComponent(const RGUID& entityKey)        override;
+    virtual std::vector<Transform*> getAllComponents()                          override;
 
-    virtual ResultCode     onInitialize()                                       override { return RecluseResult_NoImpl; }
-    virtual ResultCode     onCleanUp()                                          override;
+    virtual ResultCode              onInitialize()                              override { return RecluseResult_NoImpl; }
+    virtual ResultCode              onCleanUp()                                 override;
 
 private:
     //std::unordered_map<RGUID, Transform*> m_table;

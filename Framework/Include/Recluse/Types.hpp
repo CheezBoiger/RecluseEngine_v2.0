@@ -87,7 +87,8 @@ enum RecluseResult
     RecluseResult_OutOfMemory,
     RecluseResult_NotFound,
     RecluseResult_AlreadyExists,
-    RecluseResult_OutOfBounds
+    RecluseResult_OutOfBounds,
+    RecluseResult_InvalidVersion
 };
 } // Recluse
 #endif // RECLUSE_TYPES_HPP

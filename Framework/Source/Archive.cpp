@@ -33,7 +33,7 @@ ResultCode Archive::close()
 }
 
 
-ResultCode Archive::write(void* ptr, U64 sz)
+ResultCode Archive::write(const void* ptr, U64 sz)
 {
     ResultCode result = RecluseResult_Ok;
 

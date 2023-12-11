@@ -24,7 +24,7 @@ public:
             close(); 
     }
 
-    ResultCode R_PUBLIC_API write(void* ptr, U64 sz);
+    ResultCode R_PUBLIC_API write(const void* ptr, U64 sz);
     ResultCode R_PUBLIC_API read(void* ptr, U64 sz);
 
     ResultCode R_PUBLIC_API close();

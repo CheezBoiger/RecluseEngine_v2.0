@@ -561,15 +561,18 @@ void updateConstBuffer(GraphicsResource* resource, U32 width, U32 height, F32 de
     resource->unmap(nullptr);
 }
 
+#define READ_DATABASE 0
+#define COMPILE_SHADER_PROGRAM 1
+#define WRITE_DATABASE 1
 
 void createShaderProgram(GraphicsDevice* device)
 {
-    if (instance->getApi() == GraphicsApi_Direct3D12)
-        GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
     ShaderProgramDatabase database          = ShaderProgramDatabase("PipelineInitialization.D3D12.Database");
+#if COMPILE_SHADER_PROGRAM
     std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
     std::string vsSource = currDir + "/" + "vertex.hlsl";
     std::string fsSource = currDir + "/" + "pixel.hlsl";
+
     Pipeline::Builder::ShaderProgramDescription description;
     description.pipelineType = BindType_Graphics;
     description.language = ShaderLanguage_Hlsl;
@@ -577,7 +580,27 @@ void createShaderProgram(GraphicsDevice* device)
     description.graphics.vsName = "Main";
     description.graphics.ps = fsSource.c_str();
     description.graphics.psName = "psMain";
+    
+    if (instance->getApi() == GraphicsApi_Direct3D12)
+        GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
+
     Pipeline::Builder::buildShaderProgramDefinitions(database, description, ShaderProgram_Box, instance->getApi() == GraphicsApi_Direct3D12 ? ShaderIntermediateCode_Dxil : ShaderIntermediateCode_Spirv);
+#if WRITE_DATABASE
+    {
+        R_VERBOSE("Database", "Writing database.");
+        ArchiveWriter writer("database.dxil.recluse");
+        database.serialize(&writer);
+    }
+#endif
+
+#endif
+#if READ_DATABASE
+    {
+        R_VERBOSE("Database", "Reading database.");
+        ArchiveReader reader("database.dxil.recluse");
+        database.deserialize(&reader);
+    }
+#endif
     Runtime::buildShaderProgram(device, database, ShaderProgram_Box);
     database.clearShaderProgramDefinitions();
 }

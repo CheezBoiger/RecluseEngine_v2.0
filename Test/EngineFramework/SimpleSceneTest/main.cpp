@@ -64,10 +64,10 @@ public:
         return RecluseResult_NotFound;
     }
 
-    MoverComponent** getAllComponents(U64& count) override
+    std::vector<MoverComponent*> getAllComponents() override
     {
-        count = components.size();
-        return components.data();
+        std::vector<MoverComponent*> components(components);
+        return components;
     }
 
     MoverComponent* getComponent(const RGUID& owner) override

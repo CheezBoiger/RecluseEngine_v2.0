@@ -8,6 +8,8 @@
 #include "Recluse/Game/GameSystem.hpp"
 #include "Recluse/RGUID.hpp"
 
+#include <vector>
+
 namespace Recluse {
 namespace ECS {
 
@@ -232,11 +234,11 @@ public:
 
     // Get all components handled by the system. This is optional, so be sure to check if this is 
     // actually implemented.
-    virtual TypeComponent**  getAllComponents(U64& pOut) { return nullptr; }
+    virtual std::vector<TypeComponent*> getAllComponents() { return { }; }
 
     // Get a component from the system. Return nullptr, if the component doesn't match the given 
     // game entity key.
-    virtual TypeComponent*   getComponent(const RGUID& entityKey) { return nullptr; }
+    virtual TypeComponent*              getComponent(const RGUID& entityKey) { return nullptr; }
 
     virtual ResultCode serialize(Archive* pArchive) override { return RecluseResult_NoImpl; }
 

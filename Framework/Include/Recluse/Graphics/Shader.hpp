@@ -157,4 +157,17 @@ private:
     std::string             m_shaderName;
     ShaderPermutationId     m_permutation;
 };
+
+
+// Shader Reflection information.
+struct ShaderReflection
+{
+    U8  numCbvs;
+    U8  numSrvs;
+    U8  numUavs;
+    U8  numSamplers;
+    U8  numInputParameters;
+    U8  numOutputParameters;
+    U16 pad0;
+};
 } // Recluse

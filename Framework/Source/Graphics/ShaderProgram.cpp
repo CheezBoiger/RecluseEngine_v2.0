@@ -7,12 +7,13 @@
 #include "Recluse/Filesystem/Archive.hpp"
 
 #include <unordered_set>
+#include <iterator>
 
 namespace Recluse {
 
 
 std::unordered_set<VertexInputLayoutId> g_vertexLayoutIds;
-
+const U32                               kCurrentShaderProgramDatabaseVersion = 0;
 
 struct ShaderProgramDatabaseHeader
 {
@@ -37,6 +38,7 @@ struct ShaderProgramPermutationHeader
     ShaderProgramPermutation    permutation;
     BindType                    bindType;
     ShaderIntermediateCode      intermediateCode;
+    U64                         reflectionInfoCount;
     union 
     {
         struct
@@ -108,6 +110,7 @@ ShaderProgramDefinition::ShaderProgramDefinition(const ShaderProgramDefinition& 
         raytrace.rmiss = def.raytrace.rmiss;
         break;
     }
+    reflectionInfo.insert(def.reflectionInfo.begin(), def.reflectionInfo.end());
 }
 
 
@@ -144,6 +147,7 @@ ShaderProgramDefinition::ShaderProgramDefinition(ShaderProgramDefinition&& def)
         raytrace.rmiss = std::move(def.raytrace.rmiss);
         break;
     }
+    reflectionInfo = std::move(def.reflectionInfo);
 }
 
 
@@ -180,6 +184,7 @@ ShaderProgramDefinition& ShaderProgramDefinition::operator=(const ShaderProgramD
         raytrace.rmiss = def.raytrace.rmiss;
         break;
     }
+    reflectionInfo.insert(def.reflectionInfo.begin(), def.reflectionInfo.end());
     return (*this);
 }
 
@@ -217,6 +222,7 @@ ShaderProgramDefinition& ShaderProgramDefinition::operator=(ShaderProgramDefinit
         raytrace.rmiss = std::move(def.raytrace.rmiss);
         break;
     }
+    reflectionInfo = std::move(def.reflectionInfo);
     return (*this);
 }
 
@@ -418,13 +424,14 @@ ResultCode ShaderProgramDatabase::serialize(Archive* pArchive)
         memcpy(shaderProgramDatabaseHeader.name, (void*)m_name.data(), m_name.size());
         shaderProgramDatabaseHeader.nameHash = m_nameHash;
         shaderProgramDatabaseHeader.nameSize = static_cast<U32>(m_name.size());
-        shaderProgramDatabaseHeader.version = 0;
+        shaderProgramDatabaseHeader.version = kCurrentShaderProgramDatabaseVersion;
         shaderProgramDatabaseHeader.numPrograms = static_cast<U32>(m_shaderProgramMetaMap.size());
         shaderProgramDatabaseHeader.numShaders = static_cast<U32>(m_shaderMap.size());
         pArchive->write(&shaderProgramDatabaseHeader, sizeof(ShaderProgramDatabaseHeader));
     }
 
-    // Write shaders before we write the metamap.
+    // Write shaders before we write the metamap. Do this first after reading the header! Then we will iterate over all 
+    // shader program definitions to write.
     for (auto& shaderIter : m_shaderMap)
     {
         shaderIter.second->serialize(pArchive);
@@ -432,6 +439,7 @@ ResultCode ShaderProgramDatabase::serialize(Archive* pArchive)
         pArchive->write(&references, sizeof(U32));
     }
 
+    // Now we store the information of each shader program definition!
     for (auto& shaderProgram : m_shaderProgramMetaMap)
     {
         ShaderProgramHeader shaderProgramHeader = { };
@@ -439,6 +447,7 @@ ResultCode ShaderProgramDatabase::serialize(Archive* pArchive)
         shaderProgramHeader.programId = shaderProgram.first;
         pArchive->write(&shaderProgramHeader, sizeof(ShaderProgramHeader));
 
+        // Store any 
         for (auto& permIter : shaderProgram.second)
         {
             ShaderProgramDefinition& definition = permIter.second;
@@ -447,6 +456,9 @@ ResultCode ShaderProgramDatabase::serialize(Archive* pArchive)
             permHeader.bindType = definition.pipelineType;
             permHeader.permutation = permutation;
             permHeader.intermediateCode = definition.intermediateCode;
+            permHeader.reflectionInfoCount = definition.reflectionInfo.size();
+
+            // Finally, store all hash shader data into the shader program.
             switch (permHeader.bindType)
             {
                 case BindType_Graphics:
@@ -482,7 +494,18 @@ ResultCode ShaderProgramDatabase::serialize(Archive* pArchive)
                     break;
                 }
             }
+
             pArchive->write(&permHeader, sizeof(ShaderProgramPermutationHeader));
+
+            // If we have any reflection data. Loop over and store after the header is stored. This will help us get the header info first, to 
+            // iterate any needed reflection data.
+            for (const auto& reflectionInfo : definition.reflectionInfo)
+            {
+                ShaderType shaderType = reflectionInfo.first;
+                const ShaderReflection* infoPtr = &reflectionInfo.second;
+                pArchive->write(&shaderType, sizeof(ShaderType));
+                pArchive->write(infoPtr, sizeof(ShaderReflection)); 
+            }
         }
     }
     
@@ -498,6 +521,11 @@ ResultCode ShaderProgramDatabase::deserialize(Archive* pArchive)
         m_name.resize(header.nameSize);
         memcpy((void*)m_name.data(), header.name, m_name.size());
         m_nameHash = header.nameHash;       
+    }
+
+    if (header.version != kCurrentShaderProgramDatabaseVersion)
+    {
+        return RecluseResult_InvalidVersion;
     }
 
     for (U32 i = 0; i < header.numShaders; ++i)
@@ -525,6 +553,8 @@ ResultCode ShaderProgramDatabase::deserialize(Archive* pArchive)
             ShaderProgramDefinition definition = { };
             definition.pipelineType = permHeader.bindType;
             definition.intermediateCode = permHeader.intermediateCode;
+
+            // Then check the core program definition and shader data.
             switch (permHeader.bindType)
             {
                 case BindType_Graphics:
@@ -560,6 +590,18 @@ ResultCode ShaderProgramDatabase::deserialize(Archive* pArchive)
                     break;
                 }
             }
+
+            // Deserialize reflection data for the shader program.
+            for (U32 i = 0; i < permHeader.reflectionInfoCount; ++i)
+            {
+                ShaderType shaderType = ShaderType_None;
+                ShaderReflection reflectionInfo = { };
+                pArchive->read(&shaderType, sizeof(ShaderType));
+                pArchive->read(&reflectionInfo, sizeof(ShaderReflection));
+                definition.reflectionInfo[shaderType] = reflectionInfo;
+            }
+
+            // Store the final result.
             m_shaderProgramMetaMap[shaderProgramHeader.programId].insert(std::make_pair(permutation, definition));
         }
     }

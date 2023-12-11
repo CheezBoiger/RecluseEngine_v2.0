@@ -15,18 +15,6 @@ struct PreprocessDefine
     std::string value;
 };
 
-
-struct ShaderReflection
-{
-    U8  numCbvs;
-    U8  numSrvs;
-    U8  numUavs;
-    U8  numSamplers;
-    U8  numInputParameters;
-    U8  numOutputParameters;
-};
-
-
 // ShaderBuilder, handles high level shading languages, and transforms them into
 // bytecode to be read to the gpu.
 class R_PUBLIC_API ShaderBuilder 

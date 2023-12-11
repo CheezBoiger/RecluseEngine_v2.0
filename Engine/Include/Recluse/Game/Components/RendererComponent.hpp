@@ -37,4 +37,20 @@ public:
     RenderUpdateFlags   m_flags;        // Update flags.
     Bool                m_isVisible;    // Is the mesh visible?
 };
+
+
+class RendererComponentRegistry : public ECS::Registry<RendererComponent>
+{
+public:
+    R_COMPONENT_REGISTRY_DECLARE(RendererComponentRegistry);
+
+    ResultCode          onAllocateComponent(const RGUID& owner) override;
+    ResultCode          onFreeComponent(const RGUID& owner) override;
+    RendererComponent*  getComponent(const RGUID& entityKey) override;
+    std::vector<RendererComponent*> getAllComponents() override;
+
+private:
+    std::map<RGUID, RendererComponent*> m_componentTable;
+    
+};
 } // Recluse 

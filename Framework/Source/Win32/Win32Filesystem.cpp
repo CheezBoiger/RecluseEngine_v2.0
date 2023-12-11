@@ -241,7 +241,7 @@ void File::close()
 }
 
 
-ResultCode File::write(void* ptr, U64 szBytes)
+ResultCode File::write(const void* ptr, U64 szBytes)
 {
     DWORD numBytesWritten   = 0;
     BOOL isWritten          = WriteFile(m_fileHandle, ptr, (DWORD)szBytes, &numBytesWritten, 0);

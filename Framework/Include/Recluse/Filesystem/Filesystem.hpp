@@ -47,7 +47,7 @@ struct R_PUBLIC_API File
     void    close();
 
     // Writes to the file handle, you must call open() in order to write!
-    ResultCode write(void* ptr, U64 szBytes);
+    ResultCode write(const void* ptr, U64 szBytes);
 
     // Reads from the file handle, you must call open() in order to write!
     ResultCode read(void* ptr, U64 szBytes);

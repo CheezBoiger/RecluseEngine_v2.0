@@ -8,7 +8,9 @@
 #include "Recluse/Graphics/Shader.hpp"
 #include "Recluse/Graphics/GraphicsCommon.hpp"
 #include "Recluse/Graphics/PipelineState.hpp"
+
 #include <unordered_map>
+#include <map>
 #include <bitset>
 
 namespace Recluse {
@@ -17,12 +19,14 @@ typedef Hash64 ShaderProgramId;
 typedef U64 ShaderProgramPermutation;
 class GraphicsDevice;
 
-
-
+// Definition of a shader program. This is one instance of a program (with any necessary permutations set.)
+// Keep in mind this is a definition struct, that holds onto the shader intermediate code of the rendering application.
 class R_PUBLIC_API ShaderProgramDefinition
 {
 public:
+    // The pipeline that must be bound to the rendering backend.
     BindType pipelineType;
+    // The intermediate code that is used by this definition.
     ShaderIntermediateCode intermediateCode;
     union 
     {
@@ -32,35 +36,38 @@ public:
             {
                 struct
                 {
-                    Shader* vs;
-                    Shader* gs;
-                    Shader* hs;
-                    Shader* ds;
+                    Shader* vs; //< Vertex Shader
+                    Shader* gs; //< Geometry Shader
+                    Shader* hs; //< Hull Shader
+                    Shader* ds; //< Domain Shader
                 };
                 struct 
                 {
-                    Shader* as;
-                    Shader* ms;
+                    Shader* as; //< Amplification Shader
+                    Shader* ms; //< Mesh Shader
                 };
             };
-            Shader* ps;
-            Bool    usesMeshShaders;
+            Shader* ps; //< Pixel Shader
+            Bool    usesMeshShaders; // If we are using either traditional pipeline, or mesh pipeline.
         } graphics;
         struct 
         {
-            Shader* cs;
+            Shader* cs; //< Compute Shader
         } compute;
         struct 
         {
-            Shader* rgen;
-            Shader* rmiss;
-            Shader* rany;
-            Shader* rclosest;
-            Shader* rintersect;
+            Shader* rgen; //< Ray Generation Shader
+            Shader* rmiss; //< Ray Miss Shader
+            Shader* rany; //< Ray Any Hit Shader
+            Shader* rclosest; //< Ray Closest Hit Shader
+            Shader* rintersect; //< Ray Intersect Shader
         } raytrace;
-    }; 
+    };
+    // Any Reflection Information that is used by each shader.
+    std::map<ShaderType, ShaderReflection> reflectionInfo;
 
-    ShaderProgramDefinition() { memset(this, 0, sizeof(ShaderProgramDefinition)); }
+    // Constructors. Any containers need to be initialized here.
+    ShaderProgramDefinition() { }
     ShaderProgramDefinition(const ShaderProgramDefinition& def);
     ShaderProgramDefinition(ShaderProgramDefinition&& def);
     

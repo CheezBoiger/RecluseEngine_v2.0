@@ -74,10 +74,9 @@ Transform* TransformRegistry::getComponent(const RGUID& entityKey)
 }
 
 
-Transform** TransformRegistry::getAllComponents(U64& pOut)
+std::vector<Transform*> TransformRegistry::getAllComponents()
 {
-    pOut = m_transforms.size();
-    return m_transforms.data();
+    return std::vector<Transform*>(m_transforms);
 }
 
 
