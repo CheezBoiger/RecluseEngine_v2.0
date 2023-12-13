@@ -1,6 +1,5 @@
 //
-
-#if !defined(R_USE_XXHASH)
+#if defined(R_USE_MEOW_HASH)
     #include "meow_hash_x64_aesni.h"
     #define USE_XXHASH 0
 #else

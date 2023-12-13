@@ -26,7 +26,7 @@ def parse_arguments():
     parser.add_argument("-dxc", dest="dxc", action="store_true", help="Enable DXC compiler use.", default=False)
     parser.add_argument("-test", dest="test", action="store_true", help="Enable tests.", default=False)
     parser.add_argument("-developer", dest="developer", action="store_true", help="Enable Developer mode for the engine.", default=False)
-    parser.add_argument("-xxhash", dest="xxhash", action="store_true", help="Use XXhashing instead of the default Meow Hash.", default=False)
+    parser.add_argument("-meowhash", dest="meowhash", action="store_true", help="Use Meow hash instead of the default XXHash.", default=False)
     parser.add_argument("-first-time", dest="ft", action="store_true", help="Run first time set up.", default=False)
     parser.add_argument("-config", dest="config", help="Path and name of configuration file.", type=str, default=None)
     args = parser.parse_args()
@@ -51,10 +51,10 @@ def add_additional_cmake_commands():
     else:
         cmds.append("-DRCL_GLSLANG=False")
 
-    if parsed_commands.xxhash == True:
-        cmds.append("-DR_USE_XXHASH=True")
+    if parsed_commands.meowhash == True:
+        cmds.append("-DR_USE_MEOW_HASH=True")
     else:
-        cmds.append("-DR_USE_XXHASH=False")
+        cmds.append("-DR_USE_MEOW_HASH=False")
      
     if parsed_commands.dxc == True:
         cmds.append("-DRCL_DXC=True")

@@ -29,8 +29,8 @@ set ( RECLUSE_CORE_SOURCE_PROFILER ${RECLUSE_CORE_SOURCE}/Profiler )
 set ( RECLUSE_CORE_SOURCE_SYSTEM )
 
 
-if (R_USE_XXHASH)
-	add_definitions(-DR_USE_XXHASH=1)
+if (R_USE_MEOW_HASH)
+	add_definitions(-DR_USE_MEOW_HASH=1)
 endif()
 
 if (WIN32)
