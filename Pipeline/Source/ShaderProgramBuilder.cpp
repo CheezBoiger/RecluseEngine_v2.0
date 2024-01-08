@@ -199,8 +199,9 @@ R_INTERNAL Shader* compileShader
                     if (reflectError == RecluseResult_Ok)
                     {
                         R_DEBUG("ShaderBuilder", "ShaderName: %s \nCBVs: %d\nSRVs:%d\nUAVs:%d\nSamplers: %d", 
-                            shader->getName(), reflectionData.numCbvs, reflectionData.numSrvs, reflectionData.numUavs, reflectionData.numSamplers);
-                        reflectionOut.insert(std::make_pair(shaderType, reflectionData));
+                            shader->getName(), reflectionData.metadata.numCbvs, reflectionData.metadata.numSrvs, 
+                            reflectionData.metadata.numUavs, reflectionData.metadata.numSamplers);
+                            reflectionOut.insert(std::make_pair(shaderType, reflectionData));
                     }
                 }
             }

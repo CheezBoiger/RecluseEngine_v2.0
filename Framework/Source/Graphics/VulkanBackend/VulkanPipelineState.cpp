@@ -538,7 +538,7 @@ void destroyPipelineLayout(VulkanDevice* pDevice, VkPipelineLayout layout)
 
 namespace VertexLayout {
 
-std::unordered_map<VertexInputLayoutId, VulkanVertexLayout> g_vertexLayoutMap;
+std::map<DeviceId, std::unordered_map<VertexInputLayoutId, VulkanVertexLayout>> g_vertexLayoutMap;
 
 static VulkanVertexLayout createVertexInput(const VertexInputLayout& vi)
 {
@@ -586,23 +586,23 @@ static VulkanVertexLayout createVertexInput(const VertexInputLayout& vi)
     return layout;
 }
 
-ResultCode make(VertexInputLayoutId id, const VertexInputLayout& vl)
+ResultCode make(DeviceId deviceId, VertexInputLayoutId id, const VertexInputLayout& vl)
 {
-    auto iter = g_vertexLayoutMap.find(id);
-    if (iter != g_vertexLayoutMap.end())
+    auto iter = g_vertexLayoutMap[deviceId].find(id);
+    if (iter != g_vertexLayoutMap[deviceId].end())
         return RecluseResult_AlreadyExists;
     VulkanVertexLayout layout = createVertexInput(vl);
-    g_vertexLayoutMap[id] = layout;
+    g_vertexLayoutMap[deviceId][id] = layout;
     return RecluseResult_Ok;
 }
 
 
-ResultCode unloadLayout(VertexInputLayoutId id)
+ResultCode unloadLayout(DeviceId deviceId, VertexInputLayoutId id)
 {
-    auto iter = g_vertexLayoutMap.find(id);
-    if (iter != g_vertexLayoutMap.end())
+    auto iter = g_vertexLayoutMap[deviceId].find(id);
+    if (iter != g_vertexLayoutMap[deviceId].end())
     {
-        g_vertexLayoutMap.erase(iter);
+        g_vertexLayoutMap[deviceId].erase(iter);
         return RecluseResult_Ok;
     }
 
@@ -610,23 +610,23 @@ ResultCode unloadLayout(VertexInputLayoutId id)
 }
 
 
-const VulkanVertexLayout* obtain(VertexInputLayoutId inputLayoutId)
+const VulkanVertexLayout* obtain(DeviceId deviceId, VertexInputLayoutId inputLayoutId)
 {
     // If we request null argument, then we are essentially clearing.
     if (inputLayoutId == VertexInputLayout::VertexLayout_Null)
         return nullptr;
 
-    auto iter = g_vertexLayoutMap.find(inputLayoutId);
-    if (iter != g_vertexLayoutMap.end())
+    auto iter = g_vertexLayoutMap[deviceId].find(inputLayoutId);
+    if (iter != g_vertexLayoutMap[deviceId].end())
         return &iter->second;
     R_ASSERT_FORMAT(false, "No Vertex Input found for the LayoutId(%d)", inputLayoutId);
     return nullptr;
 }
 
 
-Bool unloadAll()
+Bool unloadAll(DeviceId deviceId)
 {
-    g_vertexLayoutMap.clear();
+    g_vertexLayoutMap[deviceId].clear();
     return true;
 }
 } // VertexLayout
@@ -656,7 +656,8 @@ VkPipeline createGraphicsPipeline(VulkanDevice* pDevice, VkPipelineCache pipelin
     VkDevice device                                 = pDevice->get();
     VkGraphicsPipelineCreateInfo ci                 = { };
     const VkRenderPass renderPass                   = structure.state.graphics.renderPass;
-    VkResult result                                 = VK_SUCCESS;
+    VkResult result                                 = VK_SUCCESS;   
+    DeviceId deviceId                               = pDevice->getDeviceId();
     VkPipelineShaderStageCreateInfo shaderStages[16];
 
     if (!program)
@@ -679,7 +680,7 @@ VkPipeline createGraphicsPipeline(VulkanDevice* pDevice, VkPipelineCache pipelin
     VkPipelineTessellationStateCreateInfo tessState             = getTessellationStateInfo(structure.state.graphics.tess);
     VkPipelineMultisampleStateCreateInfo multisampleState       = getMultisampleStateInfo();
 
-    const VertexLayout::VulkanVertexLayout* pLayout = VertexLayout::obtain(structure.state.graphics.ia);
+    const VertexLayout::VulkanVertexLayout* pLayout = VertexLayout::obtain(deviceId, structure.state.graphics.ia);
 
     vertInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     if (pLayout)

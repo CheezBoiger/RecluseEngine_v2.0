@@ -40,7 +40,7 @@ public:
 
     // Get game objects inside this scene.
     //
-    R_PUBLIC_API std::vector<ECS::GameEntity*>& getEntities() { return m_entities; }
+    R_PUBLIC_API const std::vector<ECS::GameEntity*>& getEntities() const { return m_entities; }
 
     // Serialize the scene.
     R_PUBLIC_API ResultCode                     save(Archive* pArchive);
@@ -85,7 +85,7 @@ public:
 
     // Get the registry with the given component type.
     template<typename ComponentType>
-    ECS::Registry<ComponentType>* getRegistry()
+    ECS::Registry<ComponentType>* getRegistry() const
     {
         ECS::ComponentUUID uuid = ComponentType::classGUID();
         auto it = m_registries.find(uuid);
@@ -125,7 +125,7 @@ public:
     }
 
     template<typename ComponentType>
-    ComponentType* getComponentFromEntity(const RGUID& guid)
+    ComponentType* getComponentFromEntity(const RGUID& guid) const
     {
         ECS::GameEntity* entity = ECS::GameEntity::findEntity(guid);
         if (entity)
@@ -139,7 +139,7 @@ protected:
 
     // Serialize the given scene. This should be used for 
     // custom scenes.
-    virtual R_PUBLIC_API ResultCode                serialize(Archive* pArchive) override;
+    virtual R_PUBLIC_API ResultCode                serialize(Archive* pArchive) const override;
 
     // Deserialize the scene from the given archive.
     //

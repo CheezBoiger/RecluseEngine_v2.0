@@ -23,9 +23,9 @@ struct VulkanVertexLayout
 };
 
 
-ResultCode make(VertexInputLayoutId id, const VertexInputLayout& layout);
-ResultCode unloadLayout(VertexInputLayoutId id);
-Bool unloadAll();
+ResultCode make(DeviceId deviceId, VertexInputLayoutId id, const VertexInputLayout& layout);
+ResultCode unloadLayout(DeviceId deviceId, VertexInputLayoutId id);
+Bool unloadAll(DeviceId deviceId);
 } // VertexLayout
 
 

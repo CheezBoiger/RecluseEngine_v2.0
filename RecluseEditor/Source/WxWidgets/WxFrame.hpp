@@ -24,7 +24,7 @@ public:
     void initialize()
     {
         ResultCode result = RecluseResult_Ok;
-        pInstance = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
+        pInstance = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
         ApplicationInfo appInfo = { };
         appInfo.appName = "RecluseEditor";
         appInfo.engineName = "RecluseEngine";

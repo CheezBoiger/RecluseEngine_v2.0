@@ -50,7 +50,7 @@ public:
     Matrix44                    getLocalToWorld() const { return static_cast<Matrix44>(m_localToWorld); }
     Matrix44                    getWorldToLocal() const { return m_worldToLocal; }
 
-    virtual ResultCode          serialize(Archive* pArchive) override;
+    virtual ResultCode          serialize(Archive* pArchive) const override;
     virtual ResultCode          deserialize(Archive* pArchive) override;
 
     void                        updateMatrices();

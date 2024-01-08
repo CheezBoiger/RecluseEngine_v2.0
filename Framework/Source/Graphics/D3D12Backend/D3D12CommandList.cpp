@@ -498,7 +498,8 @@ void D3D12Context::internalBindVertexBuffersAndIndexBuffer(ID3D12GraphicsCommand
         for (U32 i = 0; i < state.m_numBoundVertexBuffers; ++i)
         {
             D3D12_VERTEX_BUFFER_VIEW& bufferView = state.m_vertexBuffers[i];
-            Pipelines::VertexInputs::D3DVertexInput* vertexLayout = Pipelines::VertexInputs::obtain(currentState().m_pipelineStateObject.graphics.inputLayoutId);
+            DeviceId deviceId = getDevice()->castTo<D3D12Device>()->getDeviceId();
+            Pipelines::VertexInputs::D3DVertexInput* vertexLayout = Pipelines::VertexInputs::obtain(deviceId, currentState().m_pipelineStateObject.graphics.inputLayoutId);
             R_ASSERT_FORMAT(vertexLayout, "Vertex Layout is required in order to know the stride of the vertex buffer!!");
             bufferView.StrideInBytes = vertexLayout->vertexByteStrides[i];
         }

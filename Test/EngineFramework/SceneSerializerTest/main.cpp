@@ -19,7 +19,7 @@ using namespace Recluse::Engine;
 
 class GameWorldScene : public Engine::Scene {
 public:
-    ResultCode serialize(Archive* pArchive) override {
+    ResultCode serialize(Archive* pArchive) const override {
         std::queue<ECS::GameEntity*> objects;
         const std::vector<ECS::GameEntity*>& gameObjects = getEntities();
         for (auto gameObject : gameObjects) {

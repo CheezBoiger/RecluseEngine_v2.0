@@ -31,7 +31,7 @@ enum ShaderLanguage
 
 enum ShaderType
 {
-    ShaderType_None,
+    ShaderType_None = -1,
     ShaderType_Vertex = 0,
     ShaderType_Hull,
     ShaderType_TessellationControl = ShaderType_Hull,
@@ -76,7 +76,7 @@ enum ShaderStage
 };
 
 typedef U32 ShaderStageFlags;
-typedef U32 ShaderId;
+typedef U64 ShaderId;
 
 // Prevents having to write the actual bit manip.
 static ShaderStageFlags shaderTypeToShaderStageFlags(ShaderType type)
@@ -93,9 +93,9 @@ class Shader final : public IReference, public Serializable
 public:
     ~Shader() { }
 
-    static R_PUBLIC_API Shader* create();
-    static R_PUBLIC_API void destroy(Shader* pShader);
-    static R_PUBLIC_API Hash64 makeShaderHash(const char* bytecode, U64 bytecodeLength);
+    static R_PUBLIC_API Shader*     create();
+    static R_PUBLIC_API void        destroy(Shader* pShader);
+    static R_PUBLIC_API Hash64      makeShaderHash(const char* bytecode, U64 bytecodeLength);
 
 private:
 
@@ -104,6 +104,7 @@ private:
         , m_shaderType(ShaderType_None)
         , m_shaderNameHash(~0u)
         , m_permutation(0)
+        , m_instanceId(0)
         , m_shaderHashId(~0)
     {
         m_shaderName[0] = '\0'; 
@@ -126,6 +127,7 @@ public:
     const char*             getByteCode() const { return m_byteCode.data(); }
     U64                     getSzBytes() const { return m_byteCode.size(); }
     ShaderId                getNameHashId() const { return m_shaderNameHash; }
+    ShaderId                getInstanceId() const { return m_instanceId; }
     
     void                    setName(const char* name) 
     {
@@ -143,7 +145,7 @@ public:
     void                    setPermutationId(ShaderPermutationId permutation) { m_permutation = permutation; }
     ShaderPermutationId     getPermutationId() const { return m_permutation; }
 
-    R_PUBLIC_API ResultCode serialize(Archive* archive) override;
+    R_PUBLIC_API ResultCode serialize(Archive* archive) const override;
     R_PUBLIC_API ResultCode deserialize(Archive* archive) override;
 
 private:
@@ -152,6 +154,7 @@ private:
     ShaderType              m_shaderType;
     std::vector<char>       m_byteCode;
     ShaderId                m_shaderNameHash;
+    ShaderId                m_instanceId;
     Hash64                  m_shaderHashId;
     std::string             m_entryPoint;
     std::string             m_shaderName;
@@ -159,15 +162,27 @@ private:
 };
 
 
+typedef U8 ReflectionBind;
+
 // Shader Reflection information.
-struct ShaderReflection
+class ShaderReflection : public Serializable
 {
-    U8  numCbvs;
-    U8  numSrvs;
-    U8  numUavs;
-    U8  numSamplers;
-    U8  numInputParameters;
-    U8  numOutputParameters;
-    U16 pad0;
+public:
+    struct 
+    {
+        U8  numCbvs;
+        U8  numSrvs;
+        U8  numUavs;
+        U8  numSamplers;
+        U8  numInputParameters;
+        U8  numOutputParameters;
+        U16 pad0;
+    } metadata;
+    std::vector<ReflectionBind> cbvs;
+    std::vector<ReflectionBind> srvs;
+    std::vector<ReflectionBind> uavs;
+    std::vector<ReflectionBind> samplers;
+    R_PUBLIC_API ResultCode serialize(Archive* archive) const override;
+    R_PUBLIC_API ResultCode deserialize(Archive* archive) override;
 };
 } // Recluse

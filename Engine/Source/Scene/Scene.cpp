@@ -146,7 +146,7 @@ void Scene::setName(const std::string& name)
 }
 
 
-ResultCode Scene::serialize(Archive* pArchive) 
+ResultCode Scene::serialize(Archive* pArchive) const
 {
     return RecluseResult_NoImpl;
 }

@@ -15,6 +15,7 @@
 #include "Recluse/Math/Bounds2D.hpp"
 #include <Windows.h>
 #include <vector>
+#include <unordered_map>
 
 #include "Recluse/Generated/Game/TranformEvents.hpp"
 
@@ -44,20 +45,39 @@ public:
     
     ResultCode onAllocateComponent(const RGUID& owner) override
     {
-        MoverComponent* comp = new MoverComponent();
-        comp->setOwner(owner);
-        components.push_back(comp);
+        auto iter = m_map.find(owner);
+        if (iter == m_map.end())
+        {
+            MoverComponent* comp = new MoverComponent();
+            comp->setOwner(owner);
+            components.push_back(comp);
+            m_map.insert(std::make_pair(owner, comp));
+        }
+        else
+        {
+            return RecluseResult_Failed;
+        }
+
         return RecluseResult_Ok;
     }
 
     ResultCode onFreeComponent(const RGUID& owner) override
     {
-        for (auto it = components.begin(); it != components.end(); ++it)
+        auto iter = m_map.find(owner);
+        if (iter != m_map.end())
         {
-            if (owner == (*it)->getOwner())
+            if (owner == iter->second->getOwner())
             {
-                delete (*it);
-                components.erase(it);
+                delete iter->second;
+                m_map.erase(iter);
+                for (auto it = components.begin(); it != components.end(); ++it)
+                {
+                    if (owner == (*it)->getOwner())
+                    {
+                        components.erase(it);
+                        break;
+                    }
+                }
                 return RecluseResult_Ok;
             }
         }
@@ -72,18 +92,17 @@ public:
 
     MoverComponent* getComponent(const RGUID& owner) override
     {
-        for (auto it = components.begin(); it != components.end(); ++it)
+        auto it = m_map.find(owner);
+        if (it != m_map.end())
         {
-            if (owner == (*it)->getOwner())
-            {
-                return (*it);
-            }
+            return it->second;
         }
         return nullptr;
     }
 
 private:
     std::vector<MoverComponent*> components;
+    std::unordered_map<RGUID, MoverComponent*, RGUID::Hash> m_map;
 };
 
 

@@ -32,7 +32,7 @@ void TransformSystem::onUpdate(const RealtimeTick& tick)
     Engine::Scene* pScene = getScene();
     if (pScene && m_doUpdate)
     {
-        std::vector<ECS::GameEntity*>& entities = pScene->getEntities();
+        const std::vector<ECS::GameEntity*>& entities = pScene->getEntities();
         for (U64 i = 0; i < entities.size(); ++i)
         {
             std::tuple<Transform*> transformTuple = obtainTuple<Transform>(entities[i]->getUUID());

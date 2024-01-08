@@ -13,7 +13,7 @@ void Transform::onCleanUp()
     Super::onCleanUp();
 }
 
-ResultCode Transform::serialize(Archive* pArchive)
+ResultCode Transform::serialize(Archive* pArchive) const
 {
     pArchive->write(&position,      sizeof(Float3));
     pArchive->write(&localPosition, sizeof(Float3));

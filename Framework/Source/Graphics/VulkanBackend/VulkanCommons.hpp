@@ -16,15 +16,21 @@
 
 #define R_CHANNEL_VULKAN "Vulkan"
 
+// VK Version header must be equal, or above, this value, as an interface for ray tracing wasn't officially
+// supported for some time. We might want to use the NVidia provided interface, but that might require some work.
 #if (VK_HEADER_VERSION >= 236)
 #define RECLUSE_RAYTRACING_HEADER
 #endif
 
+
+typedef void* VulkanMemoryPtr;
+
+// Memory pool specified for vulkan, whenever we allocate, or suballocate, a memory chunk for a resource.
 struct VulkanMemoryPool 
 {
     VkDeviceMemory  memory;
     VkDeviceSize    sizeBytes;
-    void*           basePtr;           
+    VulkanMemoryPtr basePtr;           
 };
 
 // Useful information about differences between D3D12 and Vulkan:

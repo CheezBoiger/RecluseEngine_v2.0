@@ -753,10 +753,13 @@ int main(char* argv[], int c)
                 R_WARN("DeferredBox", "Fps: %f", 1.0f / total);
             }
             swapchain->prepare(context);
+
             applyGBufferRendering(context, meshes);
             resolveLighting(context);
+
             context->transition(swapchain->getFrame(swapchain->getCurrentFrameIndex()), ResourceState_Present);
             context->end();
+
             if (swapchain->present(context) == RecluseResult_NeedsUpdate)
             {
                 context->wait();

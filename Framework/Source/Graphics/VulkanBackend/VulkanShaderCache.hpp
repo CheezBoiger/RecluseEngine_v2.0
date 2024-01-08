@@ -16,6 +16,10 @@ namespace Vulkan {
 class VulkanDevice;
 
 namespace ShaderPrograms {
+    // VulkanShaderProgram holds the shader modules as a set for a given 
+    // program pass. This struct holds onto essential information regarding 
+    // the associated shader modules for the program. Similar to OpenGL's shader program
+    // model.
     struct VulkanShaderProgram
     {
         VkPipelineBindPoint bindPoint;

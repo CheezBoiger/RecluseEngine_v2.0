@@ -263,33 +263,47 @@ public:
                 uint32_t bindingCount = set->binding_count;
                 for (uint32_t bindingIdx = 0; bindingIdx < bindingCount; ++bindingIdx)
                 {
+                    // Binds for GLSL is based on binding locations. This can vary, and is not in a table, so 
+                    // it makes it a little more of an effort to piece the inputs together.
                     SpvReflectDescriptorBinding* binding = set->bindings[bindingIdx];
                     switch (binding->descriptor_type)
                     {
                         case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
                         {
                             if (binding->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_SAMPLER)
-                                reflectionOutput.numSamplers += 1;
+                            {
+                                reflectionOutput.metadata.numSamplers += 1;
+                                reflectionOutput.samplers.push_back(static_cast<ReflectionBind>(binding->binding));
+                            }
                             break;
                         }
                         case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE:
                         case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER:
                         {
                             if (binding->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_UAV)
-                                reflectionOutput.numUavs += 1;
+                            {
+                                reflectionOutput.metadata.numUavs += 1;
+                                reflectionOutput.uavs.push_back(static_cast<ReflectionBind>(binding->binding));
+                            }
                             break;
                         }
                         case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
                         case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
                         {
                             if (binding->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_SRV)
-                                reflectionOutput.numSrvs += 1;
+                            {
+                                reflectionOutput.metadata.numSrvs += 1;
+                                reflectionOutput.srvs.push_back(static_cast<ReflectionBind>(binding->binding));
+                            }
                             break;
                         }
                         case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
                         {
                             if (binding->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_CBV)
-                                reflectionOutput.numCbvs += 1;
+                            {
+                                reflectionOutput.metadata.numCbvs += 1;
+                                reflectionOutput.cbvs.push_back(static_cast<ReflectionBind>(binding->binding));
+                            }
                             break;
                         }
                     }

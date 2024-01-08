@@ -151,7 +151,7 @@ public:
         m_status = GameEntityStatus_Destroyed;
     }
 
-    virtual R_PUBLIC_API ResultCode     serialize(Archive* pArchive) override;
+    virtual R_PUBLIC_API ResultCode     serialize(Archive* pArchive) const override;
     virtual R_PUBLIC_API ResultCode     deserialize(Archive* pArchive) override;
 
     // Get the game object name.

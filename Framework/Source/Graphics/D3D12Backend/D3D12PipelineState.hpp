@@ -28,10 +28,10 @@ struct D3DVertexInput
 };
 
 
-ResultCode make(VertexInputLayoutId id, const VertexInputLayout& layout);
-ResultCode unload(VertexInputLayoutId id);
-D3DVertexInput* obtain(VertexInputLayoutId id);
-Bool unloadAll();
+ResultCode make(DeviceId deviceId, VertexInputLayoutId id, const VertexInputLayout& layout);
+ResultCode unload(DeviceId deviceId, VertexInputLayoutId id);
+D3DVertexInput* obtain(DeviceId deviceId, VertexInputLayoutId id);
+Bool unloadAll(DeviceId deviceId);
 } // VertexInputs
 
 
@@ -102,8 +102,8 @@ ID3D12PipelineState*            makePipelineState(D3D12Context* pContext, const 
 ID3D12RootSignature*            makeRootSignature(D3D12Device* pDevice, const RootSigLayout& layout);
 CpuDescriptorTable              makeDescriptorSrvCbvUavTable(D3D12Device* pDevice, const RootSigLayout& layout, const RootSigResourceTable& resourceTable);
 CpuDescriptorTable              makeDescriptorSamplertable(D3D12Device* pDevice, const RootSigLayout& layout, const RootSigResourceTable& resourceTable);
-void                            cleanUpRootSigs();
-void                            cleanUpPipelines();
+void                            cleanUpRootSigs(DeviceId deviceId);
+void                            cleanUpPipelines(DeviceId deviceId);
 void                            resetTableHeaps(D3D12Device* pDevice);
 void                            updateT(D3D12Device* pDevice);
 void                            checkPipelines(D3D12Device* pDevice);

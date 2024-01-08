@@ -92,7 +92,7 @@ public:
 
     virtual ~Component() { }
 
-    virtual ResultCode serialize(Archive* pArchive) override { return RecluseResult_NoImpl; }
+    virtual ResultCode serialize(Archive* pArchive) const override { return RecluseResult_NoImpl; }
 
     virtual ResultCode deserialize(Archive* pArchive) override { return RecluseResult_NoImpl; }
 
@@ -240,7 +240,7 @@ public:
     // game entity key.
     virtual TypeComponent*              getComponent(const RGUID& entityKey) { return nullptr; }
 
-    virtual ResultCode serialize(Archive* pArchive) override { return RecluseResult_NoImpl; }
+    virtual ResultCode serialize(Archive* pArchive) const override { return RecluseResult_NoImpl; }
 
     virtual ResultCode deserialize(Archive* pArchive) override { return RecluseResult_NoImpl; }
 

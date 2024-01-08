@@ -368,10 +368,10 @@ void D3D12Device::destroy()
 
     m_resourceAllocationManager.release();
     RenderPasses::clearAll(this);
-    Pipelines::VertexInputs::unloadAll();
-    Pipelines::cleanUpPipelines();
+    Pipelines::VertexInputs::unloadAll(getDeviceId());
+    Pipelines::cleanUpPipelines(getDeviceId());
     unloadAllShaderPrograms();
-    Pipelines::cleanUpRootSigs();
+    Pipelines::cleanUpRootSigs(getDeviceId());
     DescriptorViews::clearAll(this);
     m_descHeapManager.release();
 
@@ -690,14 +690,14 @@ Bool D3D12Device::makeVertexLayout(VertexInputLayoutId id, const VertexInputLayo
         R_ERROR(R_CHANNEL_D3D12, "Can not make vertex layouts with id of %d! This is reserved for null arguments.", VertexInputLayout::VertexLayout_Null);
         return false;
     }
-    ResultCode result = Pipelines::VertexInputs::make(id, layout);
+    ResultCode result = Pipelines::VertexInputs::make(getDeviceId(), id, layout);
     return (result == RecluseResult_Ok) || (result == RecluseResult_AlreadyExists);
 }
 
 
 Bool D3D12Device::destroyVertexLayout(VertexInputLayoutId id)
 {
-    return Pipelines::VertexInputs::unload(id);
+    return Pipelines::VertexInputs::unload(getDeviceId(), id);
 }
 
 

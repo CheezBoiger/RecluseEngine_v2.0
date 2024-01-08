@@ -98,7 +98,7 @@ public:
     ShaderProgramDefinition*                    obtainShaderProgramDefinition(ShaderProgramId shaderProgram, ShaderProgramPermutation permutation);  
     ResultCode                                  releaseShaderProgramDefinition(ShaderProgramId program, ShaderProgramPermutation permutation);
 
-    ResultCode                                  serialize(Archive* pArchive) override;
+    ResultCode                                  serialize(Archive* pArchive) const override;
     ResultCode                                  deserialize(Archive* pArchive) override;
 
     const MetaMap&                              obtainMetaMap() const { return m_shaderProgramMetaMap; }                        

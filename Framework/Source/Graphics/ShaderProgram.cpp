@@ -417,7 +417,7 @@ void ShaderProgramDatabase::clearShaderProgramDefinitions()
 }
 
 
-ResultCode ShaderProgramDatabase::serialize(Archive* pArchive)
+ResultCode ShaderProgramDatabase::serialize(Archive* pArchive) const
 {
     {
         ShaderProgramDatabaseHeader shaderProgramDatabaseHeader = { };
@@ -448,9 +448,9 @@ ResultCode ShaderProgramDatabase::serialize(Archive* pArchive)
         pArchive->write(&shaderProgramHeader, sizeof(ShaderProgramHeader));
 
         // Store any 
-        for (auto& permIter : shaderProgram.second)
+        for (const auto& permIter : shaderProgram.second)
         {
-            ShaderProgramDefinition& definition = permIter.second;
+            const ShaderProgramDefinition& definition = permIter.second;
             ShaderProgramPermutation permutation = permIter.first;
             ShaderProgramPermutationHeader permHeader = { };
             permHeader.bindType = definition.pipelineType;
@@ -504,7 +504,7 @@ ResultCode ShaderProgramDatabase::serialize(Archive* pArchive)
                 ShaderType shaderType = reflectionInfo.first;
                 const ShaderReflection* infoPtr = &reflectionInfo.second;
                 pArchive->write(&shaderType, sizeof(ShaderType));
-                pArchive->write(infoPtr, sizeof(ShaderReflection)); 
+                infoPtr->serialize(pArchive);
             }
         }
     }
@@ -597,7 +597,7 @@ ResultCode ShaderProgramDatabase::deserialize(Archive* pArchive)
                 ShaderType shaderType = ShaderType_None;
                 ShaderReflection reflectionInfo = { };
                 pArchive->read(&shaderType, sizeof(ShaderType));
-                pArchive->read(&reflectionInfo, sizeof(ShaderReflection));
+                reflectionInfo.deserialize(pArchive);
                 definition.reflectionInfo[shaderType] = reflectionInfo;
             }
 

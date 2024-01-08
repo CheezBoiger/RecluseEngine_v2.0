@@ -28,15 +28,15 @@ std::map<Semantic, const char*> g_semanticMap = {
 };
 
 
-std::unordered_map<Hash64, CpuDescriptorTable> m_cachedCpuDescriptorTables;
-std::unordered_map<Hash64, CpuDescriptorTable> m_cachedSamplerTables;
+std::map<DeviceId,  std::unordered_map<Hash64, CpuDescriptorTable>> m_cachedCpuDescriptorTables;
+std::map<DeviceId,  std::unordered_map<Hash64, CpuDescriptorTable>> m_cachedSamplerTables;
 
 
 namespace Pipelines {
 
 
-LifetimeCache<PipelineStateId, ID3D12PipelineState*> g_pipelineStateMap;
-std::unordered_map<Hash64, ID3D12RootSignature*> m_rootSignatures;
+std::map<DeviceId, LifetimeCache<PipelineStateId, ID3D12PipelineState*>> g_pipelineStateMap;
+std::map<DeviceId, std::unordered_map<Hash64, ID3D12RootSignature*>> m_rootSignatures;
 
 
 R_DECLARE_GLOBAL_U32(g_d3d12MaxPipelineAge, 256, "D3D12.MaxPipelineAge");
@@ -45,7 +45,7 @@ R_DECLARE_GLOBAL_U32(g_d3d12MaxPipelineAge, 256, "D3D12.MaxPipelineAge");
 namespace VertexInputs {
 
 
-std::unordered_map<VertexInputLayoutId, D3DVertexInput> g_vertexLayouts;
+std::map<DeviceId, std::unordered_map<VertexInputLayoutId, D3DVertexInput>> g_vertexLayouts;
 
 
 D3D12_INPUT_CLASSIFICATION getInputClassification(InputRate inputRate)
@@ -59,11 +59,11 @@ D3D12_INPUT_CLASSIFICATION getInputClassification(InputRate inputRate)
 }
 
 
-ResultCode make(VertexInputLayoutId id, const VertexInputLayout& layout)
+ResultCode make(DeviceId deviceId, VertexInputLayoutId id, const VertexInputLayout& layout)
 {
     R_ASSERT(layout.numVertexBindings < VertexInputLayout::VertexInputLayout_BindingCount);
-    auto iter = g_vertexLayouts.find(id);
-    if (iter != g_vertexLayouts.end())
+    auto iter = g_vertexLayouts[deviceId].find(id);
+    if (iter != g_vertexLayouts[deviceId].end())
     {
         return RecluseResult_AlreadyExists;
     }
@@ -100,39 +100,39 @@ ResultCode make(VertexInputLayoutId id, const VertexInputLayout& layout)
             inputs.vertexByteStrides.push_back(vertexBinding.stride == 0 ? strideBytes : vertexBinding.stride);
         }
 
-        g_vertexLayouts.insert(std::make_pair(id, inputs));
+        g_vertexLayouts[deviceId].insert(std::make_pair(id, inputs));
     }
     return RecluseResult_Ok;
 }
 
 
-ResultCode unload(VertexInputLayoutId id)
+ResultCode unload(DeviceId deviceId, VertexInputLayoutId id)
 {
-    auto& iter = g_vertexLayouts.find(id);
-    if (iter != g_vertexLayouts.end())
+    auto& iter = g_vertexLayouts[deviceId].find(id);
+    if (iter != g_vertexLayouts[deviceId].end())
     {
-        g_vertexLayouts.erase(iter);
+        g_vertexLayouts[deviceId].erase(iter);
         return RecluseResult_Ok;
     }
     return RecluseResult_NotFound;
 }
 
 
-Bool unloadAll()
+Bool unloadAll(DeviceId deviceId)
 {
-    g_vertexLayouts.clear();
+    g_vertexLayouts[deviceId].clear();
     return true;
 }
 
 
-D3DVertexInput* obtain(VertexInputLayoutId layoutId)
+D3DVertexInput* obtain(DeviceId deviceId, VertexInputLayoutId layoutId)
 {
     // If we request null argument, then we are essentially clearing.
     if (layoutId == VertexInputLayout::VertexLayout_Null)
         return nullptr;
 
-    auto& iter = g_vertexLayouts.find(layoutId);
-    if (iter != g_vertexLayouts.end())
+    auto& iter = g_vertexLayouts[deviceId].find(layoutId);
+    if (iter != g_vertexLayouts[deviceId].end())
     {
         return &iter->second;
     }
@@ -191,7 +191,7 @@ D3D12_DEPTH_STENCILOP_DESC fillStencilState(const StencilOpState& apiState)
 
 
 R_INTERNAL 
-ID3D12PipelineState* createGraphicsPipelineState(U32 nodeMask, ID3D12Device* pDevice, const D3D::Cache::D3DShaderProgram* program, const PipelineStateObject& pipelineState)
+ID3D12PipelineState* createGraphicsPipelineState(U32 nodeMask, DeviceId deviceId, ID3D12Device* pDevice, const D3D::Cache::D3DShaderProgram* program, const PipelineStateObject& pipelineState)
 {
     D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = { };
     desc.pRootSignature = pipelineState.rootSignature;
@@ -280,7 +280,7 @@ ID3D12PipelineState* createGraphicsPipelineState(U32 nodeMask, ID3D12Device* pDe
     inputDesc.NumElements = 0;
     inputDesc.pInputElementDescs = nullptr;
     {
-        VertexInputs::D3DVertexInput* layout = VertexInputs::obtain(pipelineState.graphics.inputLayoutId);
+        VertexInputs::D3DVertexInput* layout = VertexInputs::obtain(deviceId, pipelineState.graphics.inputLayoutId);
         if (layout)
         {
             inputDesc.NumElements = static_cast<U32>(layout->elements.size());
@@ -428,7 +428,7 @@ ID3D12PipelineState* createRaytracingPipeline(U32 nodeMask, ID3D12Device* pDevic
 
 
 R_INTERNAL 
-ID3D12PipelineState* createPipelineState(U32 nodeMask, ID3D12Device* pDevice, D3D::Cache::D3DShaderProgram* program, const PipelineStateObject& pipelineState)
+ID3D12PipelineState* createPipelineState(U32 nodeMask, DeviceId deviceId, ID3D12Device* pDevice, D3D::Cache::D3DShaderProgram* program, const PipelineStateObject& pipelineState)
 {
     ID3D12PipelineState* createdPipelineState = nullptr;
     switch (pipelineState.pipelineType)
@@ -437,7 +437,7 @@ ID3D12PipelineState* createPipelineState(U32 nodeMask, ID3D12Device* pDevice, D3
             // A separate pipeline creation function is needed if we plan on creating a pipeline with mesh shaders.
             createdPipelineState = program->graphics.usesMeshShaders 
                 ? createMeshGraphicsPipeline(nodeMask, pDevice, program, pipelineState) 
-                : createGraphicsPipelineState(nodeMask, pDevice, program, pipelineState);
+                : createGraphicsPipelineState(nodeMask, deviceId, pDevice, program, pipelineState);
             break;
         case BindType_RayTrace:
             R_NO_IMPL();
@@ -581,16 +581,17 @@ ID3D12PipelineState* makePipelineState(D3D12Context* pContext, const PipelineSta
     ID3D12PipelineState* retrievedPipelineState = nullptr;
     PipelineStateId pipelineId = serializePipelineState(pipelineState);
     ID3D12Device* pDevice = pContext->getDevice()->castTo<D3D12Device>()->get();
-    if (!g_pipelineStateMap.inCache(pipelineId))
+    DeviceId deviceId = pContext->getDevice()->castTo<D3D12Device>()->getDeviceId();
+    if (!g_pipelineStateMap[deviceId].inCache(pipelineId))
     {
         // We didn't find a similar pipeline state, need to create a new one.
         D3D::Cache::D3DShaderProgram* program = D3D::Cache::obtainShaderProgram(pipelineState.shaderProgramId, pipelineState.permutation);
-        ID3D12PipelineState* pipeline = createPipelineState(0, pDevice, program, pipelineState);
-        retrievedPipelineState = *g_pipelineStateMap.insert(pipelineId, std::move(pipeline));
+        ID3D12PipelineState* pipeline = createPipelineState(0, deviceId, pDevice, program, pipelineState);
+        retrievedPipelineState = *g_pipelineStateMap[deviceId].insert(pipelineId, std::move(pipeline));
     }
     else
     {
-        retrievedPipelineState = *g_pipelineStateMap.refer(pipelineId);
+        retrievedPipelineState = *g_pipelineStateMap[deviceId].refer(pipelineId);
     }
     return retrievedPipelineState;
 }
@@ -600,11 +601,12 @@ ID3D12RootSignature* makeRootSignature(D3D12Device* pDevice, const RootSigLayout
 {
     ID3D12RootSignature* rootSignature = nullptr;
     Hash64 hash = recluseHashFast(&layout, sizeof(RootSigLayout));
-    auto iter = m_rootSignatures.find(hash);
-    if (iter == m_rootSignatures.end())
+    DeviceId deviceId = pDevice->getDeviceId();
+    auto iter = m_rootSignatures[deviceId].find(hash);
+    if (iter == m_rootSignatures[deviceId].end())
     {
         rootSignature = internalCreateRootSignatureWithTable(pDevice->get(), layout);
-        m_rootSignatures.insert(std::make_pair(hash, rootSignature));
+        m_rootSignatures[deviceId].insert(std::make_pair(hash, rootSignature));
     }
     else
     {
@@ -646,11 +648,12 @@ CpuDescriptorTable makeDescriptorSrvCbvUavTable(D3D12Device* pDevice, const Root
             handles[i++] = pManager->nullUavDescriptor();
     }
     hash = recluseHashFast(handles.data(), sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) * handles.size());
-    auto iter = m_cachedCpuDescriptorTables.find(hash);
-    if (iter == m_cachedCpuDescriptorTables.end())
+    DeviceId deviceId = pDevice->getDeviceId();
+    auto iter = m_cachedCpuDescriptorTables[deviceId].find(hash);
+    if (iter == m_cachedCpuDescriptorTables[deviceId].end())
     {
         CpuDescriptorTable table = pManager->copyDescriptorsToTable(CpuHeapType_CbvSrvUav, handles.data(), descriptorCount);
-        m_cachedCpuDescriptorTables.insert(std::make_pair(hash, table));
+        m_cachedCpuDescriptorTables[deviceId].insert(std::make_pair(hash, table));
         return table; 
     }
     else
@@ -665,11 +668,12 @@ CpuDescriptorTable              makeDescriptorSamplertable(D3D12Device* pDevice,
     DescriptorHeapAllocationManager* pManager = pDevice->getDescriptorHeapManager();
     const U32 descriptorCount = layout.samplerCount;
     Hash64 hash = recluseHashFast(resourceTable.samplers, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) * descriptorCount);
-    auto iter = m_cachedSamplerTables.find(hash);
-    if (iter == m_cachedSamplerTables.end())
+    DeviceId deviceId = pDevice->getDeviceId();
+    auto iter = m_cachedSamplerTables[deviceId].find(hash);
+    if (iter == m_cachedSamplerTables[deviceId].end())
     {
         CpuDescriptorTable table = pManager->copyDescriptorsToTable(CpuHeapType_Sampler, resourceTable.samplers, descriptorCount);
-        m_cachedSamplerTables.insert(std::make_pair(hash, table));
+        m_cachedSamplerTables[deviceId].insert(std::make_pair(hash, table));
         return table; 
     }
     else
@@ -679,14 +683,14 @@ CpuDescriptorTable              makeDescriptorSamplertable(D3D12Device* pDevice,
 }
 
 
-void cleanUpRootSigs()
+void cleanUpRootSigs(DeviceId deviceId)
 {
-    for (auto rootsig : m_rootSignatures)
+    for (auto rootsig : m_rootSignatures[deviceId])
     {
         rootsig.second->Release();
     }
 
-    m_rootSignatures.clear();
+    m_rootSignatures[deviceId].clear();
 }
 
 
@@ -694,33 +698,34 @@ void resetTableHeaps(D3D12Device* pDevice)
 {
     DescriptorHeapAllocationManager* pManager = pDevice->getDescriptorHeapManager();
     pManager->resetCpuTableHeaps();
-    m_cachedCpuDescriptorTables.clear();
-    m_cachedSamplerTables.clear();
+    DeviceId deviceId = pDevice->getDeviceId();
+    m_cachedCpuDescriptorTables[deviceId].clear();
+    m_cachedSamplerTables[deviceId].clear();
 }
 
 
 
-void cleanUpPipelines()
+void cleanUpPipelines(DeviceId deviceId)
 {
-    g_pipelineStateMap.forEach(
+    g_pipelineStateMap[deviceId].forEach(
         [] (ID3D12PipelineState* pipelineState) -> void
         {
             R_DEBUG(R_CHANNEL_D3D12, "Destroying pipeline.");
             pipelineState->Release();
         });
-    g_pipelineStateMap.clear();
+    g_pipelineStateMap[deviceId].clear();
 }
 
 
 void updateT(D3D12Device* pDevice)
 {
-    g_pipelineStateMap.updateTick();
+    g_pipelineStateMap[pDevice->getDeviceId()].updateTick();
 }
 
 
 void checkPipelines(D3D12Device* pDevice)
 {
-    g_pipelineStateMap.check(g_d3d12MaxPipelineAge, [] (ID3D12PipelineState* pipelineState) -> void
+    g_pipelineStateMap[pDevice->getDeviceId()].check(g_d3d12MaxPipelineAge, [] (ID3D12PipelineState* pipelineState) -> void
         {
             R_DEBUG(R_CHANNEL_D3D12, "Destroying pipeline.");
             pipelineState->Release();

@@ -102,7 +102,7 @@ public:
     }
 
     // Serialize the system and its components.
-    virtual ResultCode      serialize(Archive* archive) override { return RecluseResult_NoImpl; }
+    virtual ResultCode      serialize(Archive* archive) const override { return RecluseResult_NoImpl; }
 
     // Deserialize the system and its components.
     virtual ResultCode      deserialize(Archive* archive) override { return RecluseResult_NoImpl; }

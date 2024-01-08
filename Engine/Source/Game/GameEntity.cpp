@@ -84,7 +84,7 @@ GameEntity* GameEntity::findEntity(const RGUID& guid)
 }
 
 
-ResultCode GameEntity::serialize(Archive* pArchive)
+ResultCode GameEntity::serialize(Archive* pArchive) const
 {
     // TODO: Need to figure out how to obtain a proper rguid.
     //       Parent needs to also be included as well!

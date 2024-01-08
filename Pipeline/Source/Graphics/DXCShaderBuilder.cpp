@@ -229,27 +229,43 @@ public:
         R_ASSERT(SUCCEEDED(hr));
         D3D12_SHADER_DESC shaderDesc = { };
         shaderReflection->GetDesc(&shaderDesc);
-        reflectionOutput.numCbvs = shaderDesc.ConstantBuffers;
+        reflectionOutput.metadata.numCbvs = shaderDesc.ConstantBuffers;
         U32 numResources = shaderDesc.BoundResources;
         for (U32 resourceIdx = 0; resourceIdx < numResources; ++resourceIdx)
         {
             D3D12_SHADER_INPUT_BIND_DESC shaderInputDesc = { };
             shaderReflection->GetResourceBindingDesc(resourceIdx, &shaderInputDesc);
+            // For DXC, we store the register bind. (c<BindPoint>, c<BindPoint+1>, c<BindPoint+2>, c<BindPoint+3> ...)
+            // This will store all bind points from HLSL -> D3D12.
             switch (shaderInputDesc.Type)
             {
                 case D3D_SHADER_INPUT_TYPE::D3D_SIT_CBUFFER:
+                {
+                    for (UINT bind = shaderInputDesc.BindPoint; bind < shaderInputDesc.BindCount; ++bind)
+                    {
+                        reflectionOutput.cbvs.push_back(static_cast<ReflectionBind>(bind));
+                    }
                     break;
+                }
                 case D3D_SHADER_INPUT_TYPE::D3D_SIT_STRUCTURED:
                 case D3D_SHADER_INPUT_TYPE::D3D_SIT_BYTEADDRESS:
                 case D3D_SHADER_INPUT_TYPE::D3D_SIT_TBUFFER:
                 case D3D_SHADER_INPUT_TYPE::D3D_SIT_TEXTURE:
                 {
-                    reflectionOutput.numSrvs += 1;
+                    for (UINT bind = shaderInputDesc.BindPoint; bind < shaderInputDesc.BindCount; ++bind)
+                    {
+                        reflectionOutput.srvs.push_back(static_cast<ReflectionBind>(bind));                    
+                        reflectionOutput.metadata.numSrvs += 1;
+                    }
                     break;
                 }
                 case D3D_SHADER_INPUT_TYPE::D3D_SIT_SAMPLER:
                 {
-                    reflectionOutput.numSamplers += 1;
+                    for (UINT bind = shaderInputDesc.BindPoint; bind < shaderInputDesc.BindCount; ++bind)
+                    {
+                        reflectionOutput.samplers.push_back(static_cast<ReflectionBind>(bind));                    
+                        reflectionOutput.metadata.numSamplers += 1;
+                    }
                     break;
                 }
                 case D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_APPEND_STRUCTURED:
@@ -259,7 +275,11 @@ public:
                 case D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER:
                 case D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_RWTYPED:
                 {
-                    reflectionOutput.numUavs += 1;
+                    for (UINT bind = shaderInputDesc.BindPoint; bind < shaderInputDesc.BindCount; ++bind)
+                    {
+                        reflectionOutput.uavs.push_back(static_cast<ReflectionBind>(bind));                    
+                        reflectionOutput.metadata.numUavs += 1;
+                    }
                     break;
                 }
             }

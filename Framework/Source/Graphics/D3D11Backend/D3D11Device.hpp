@@ -25,6 +25,6 @@ public:
     { }
 
 private:
-    ID3D11Device* m_pDevice;    
+    ID3D11Device* m_pDevice;
 };
 } // Recluse

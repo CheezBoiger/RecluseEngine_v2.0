@@ -343,7 +343,7 @@ void VulkanDevice::release(VkInstance instance)
     ResourceViews::clearCache(this);
     RenderPasses::clearCache(this);
     ShaderPrograms::unloadAll(this);
-    Pipelines::VertexLayout::unloadAll();
+    Pipelines::VertexLayout::unloadAll(getDeviceId());
     Pipelines::clearPipelineCache(this);
 
     if (m_device != VK_NULL_HANDLE) 
@@ -995,14 +995,14 @@ Bool VulkanDevice::makeVertexLayout(VertexInputLayoutId id, const VertexInputLay
         R_ERROR(R_CHANNEL_VULKAN, "Can not make vertex layouts with id of %d! This is reserved for null arguments.", VertexInputLayout::VertexLayout_Null);
         return false;
     }
-    ResultCode result = Pipelines::VertexLayout::make(id, layout);
+    ResultCode result = Pipelines::VertexLayout::make(getDeviceId(), id, layout);
     return (result == RecluseResult_Ok || result == RecluseResult_AlreadyExists);
 }
 
 
 Bool VulkanDevice::destroyVertexLayout(VertexInputLayoutId id)
 {
-    ResultCode result = Pipelines::VertexLayout::unloadLayout(id);
+    ResultCode result = Pipelines::VertexLayout::unloadLayout(getDeviceId(), id);
     return (result == RecluseResult_Ok || result == RecluseResult_NotFound);
 }
 
