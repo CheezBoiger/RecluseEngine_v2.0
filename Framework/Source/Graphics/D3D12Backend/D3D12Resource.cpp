@@ -352,6 +352,8 @@ ResultCode releaseResource(D3D12Resource* pResource, Bool immediate)
 
 ResultCode D3D12Resource::map(void** pMappedMemory, MapRange* pReadRange)
 {
+    // Should ensure this memory is host-visible (cpu visible.)
+    R_ASSERT(m_memObj.usage == ResourceMemoryUsage_CpuOnly || m_memObj.usage == ResourceMemoryUsage_CpuToGpu);
     HRESULT result = S_OK;
     if (pReadRange)
     {

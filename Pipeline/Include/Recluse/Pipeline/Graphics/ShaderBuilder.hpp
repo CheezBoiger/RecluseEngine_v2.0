@@ -49,7 +49,7 @@ public:
     ShaderIntermediateCode getIntermediateCode() const { return m_imm; }
 
     // Shader reflection function.
-    virtual ResultCode reflect(ShaderReflection& reflectionOutput, const char* bytecode, U64 sizeBytes, ShaderLanguage lang) { return { }; }
+    virtual ResultCode reflect(ShaderReflection& reflectionOutput, const char* bytecode, U64 sizeBytes, ShaderLanguage lang) { return RecluseResult_NoImpl; }
 
 private:
 

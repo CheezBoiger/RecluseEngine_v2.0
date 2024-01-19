@@ -5,6 +5,10 @@ struct PSIn
 	float2 vTexCoord : TEXCOORD0;
 };
 
+#define LIGHT_TYPE_UNKNOWN 			0
+#define LIGHT_TYPE_POINT 			1
+#define LIGHT_TYPE_DIRECTIONAL 		2
+#define LIGHT_TYPE_SPOT 			3
 
 struct Light
 {

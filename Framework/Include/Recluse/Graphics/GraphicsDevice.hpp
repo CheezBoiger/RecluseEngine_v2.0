@@ -77,6 +77,32 @@ enum ContextFlag
     ContextFlag_InheritPipelineState = (1 << 0)
 };
 
+
+class IShaderProgramBinder
+{
+public:
+    virtual ~IShaderProgramBinder() { }
+    IShaderProgramBinder(ShaderProgramId programId, ShaderPermutationId permutationId)
+        : m_programId(programId), m_permutation(permutationId) { }
+
+    virtual IShaderProgramBinder& bindShaderResource(ShaderStageFlags type, U32 slot, ResourceViewId view) { return (*this); }
+    virtual IShaderProgramBinder& bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceViewId view) { return (*this); }
+
+    // Bind a constant buffer that links to certain shaders in the program. Define the slot in the shader program as well.
+    // The pResource is the constant buffer resource to be bound, the offsetBytes is the offset in the pResource, along with the 
+    // sizeBytes (the size of the data to read.) The data is optional (must be nullptr,) but programmer may specify local data that 
+    // they wish to host-device copy to the pResource (pResource must be host copyable.)
+    virtual IShaderProgramBinder& bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data = nullptr) { return (*this); }
+    virtual IShaderProgramBinder& bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* ppSampler) { return (*this); }
+
+    ShaderProgramId getProgramId() const { return m_programId; }
+    ShaderPermutationId getPermutationId() const { return m_permutation; }
+
+protected:
+    ShaderPermutationId m_permutation;
+    ShaderProgramId     m_programId;
+};
+
 typedef U32 ContextFlags;
 typedef U32 DeviceId;
 
@@ -180,15 +206,14 @@ public:
     virtual void setLineWidth(F32 width) { }
     virtual void setDepthCompareOp(CompareOp compareOp) { }
     virtual void setPolygonMode(PolygonMode polygonMode) { }
-    virtual void bindShaderResource(ShaderStageFlags type, U32 slot, ResourceViewId view) { }
-    virtual void bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceViewId view) { }
-    virtual void bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes) { }
-    virtual void bindRenderTargets(U32 count, ResourceViewId* ppResources, ResourceViewId pDepthStencil = 0) { }
-    virtual void bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* ppSampler) { }
     virtual void bindBlendState(const BlendState& state) { }
     virtual void releaseBindingResources() { }
     virtual void setTopology(PrimitiveTopology topology) { }
-    virtual void setShaderProgram(ShaderProgramId program, U32 permutation = 0u) { }
+
+    // Sets the shader program, and provides the program binder to bind the necessary resources.
+    virtual IShaderProgramBinder& bindShaderProgram(ShaderProgramId program, U32 permutation = 0u) = 0;    
+    virtual void bindRenderTargets(U32 count, ResourceViewId* ppResources, ResourceViewId pDepthStencil = 0) { }
+
     virtual void enableDepth(Bool enable) { }
     virtual void enableDepthWrite(Bool enable) { }
     virtual void enableStencil(Bool enable) { }

@@ -22,6 +22,11 @@
 
 #include <array>
 
+#define READ_DATABASE 0
+#define COMPILE_SHADER_PROGRAM 1
+#define WRITE_DATABASE 1
+#define MANUAL_PROGRAMING_UPDATE 0
+
 using namespace Recluse;
 
 GraphicsDevice* device = nullptr;
@@ -525,21 +530,20 @@ GraphicsResource* buildConstantBuffer(GraphicsDevice* device)
 }
 
 
-void updateConstBuffer(GraphicsResource* resource, U32 width, U32 height, F32 delta)
+void updateConstBuffer(IShaderProgramBinder& binder, GraphicsResource* resource, U32 width, U32 height, F32 delta)
 {
     static F32 t = 0;
     static Bool isTexturing = false;
     static Bool keyAlreadyDown = false;
     t += 20.0f * delta;
     t = fmod(t, 360.0f);
-    void* dat = nullptr;
-    resource->map(&dat, nullptr);
     Math::Matrix44 T = Math::translate(Math::Matrix44::identity(), Math::Float3(0, 0, 6));
     Math::Matrix44 R = Math::rotate(Math::Matrix44::identity(), Math::Float3(0.0f, 1.0f, 0.0f), Math::deg2Rad(45.0f));
     Math::Matrix44 R2 = Math::rotate(Math::Matrix44::identity(), Math::Float3(1.0f, 0.0f, 1.0f), Math::deg2Rad(t));
     Math::Matrix44 model = R2 * R * T;
     Math::Matrix44 view = Math::translate(Math::Matrix44::identity(), Math::Float3(0, 0, 0));
     Math::Matrix44 proj = Math::perspectiveLH_Aspect(Math::deg2Rad(45.0f), (F32)width / (F32)height, 0.001f, 1000.0f);
+
     if (instance->getApi() == GraphicsApi_Vulkan)
         proj[5] *= -1;
     Math::Matrix44 mvp = model * view * proj;
@@ -557,13 +561,18 @@ void updateConstBuffer(GraphicsResource* resource, U32 width, U32 height, F32 de
         keyAlreadyDown = false;
     }
     buf.useTexturing = isTexturing;
+
+
+#if MANUAL_PROGRAMING_UPDATE 
+    void* dat = nullptr;
+    resource->map(&dat, nullptr);
     memcpy(dat, &buf, sizeof(ConstBuffer));
     resource->unmap(nullptr);
+    binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, resource, 0, sizeof(ConstBuffer));
+#else
+    binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, resource, 0, sizeof(ConstBuffer), &buf);
+#endif
 }
-
-#define READ_DATABASE 0
-#define COMPILE_SHADER_PROGRAM 1
-#define WRITE_DATABASE 1
 
 void createShaderProgram(GraphicsDevice* device)
 {
@@ -632,7 +641,7 @@ int main(char* argv[], int c)
     Log::initializeLoggingSystem();
     enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
+    instance  = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 
@@ -706,7 +715,6 @@ int main(char* argv[], int c)
                 R_WARN("Box", "Fps: %f", 1.0f / total);
             }
             swapchain->prepare(context);
-                updateConstBuffer(constantBuffer, window->getWidth(), window->getHeight(), tick.delta());
                 GraphicsResource* swapchainImage = swapchain->getFrame(swapchain->getCurrentFrameIndex());
                 context->transition(swapchainImage, ResourceState_RenderTarget);
                 context->transition(vertexbuffer, ResourceState_VertexBuffer);
@@ -749,15 +757,16 @@ int main(char* argv[], int c)
                 context->clearRenderTarget(0, &clearColor.x, scissor);
                 context->setInputVertexLayout(VertexLayout_PositionNormalTexCoordColor);
                 context->setColorWriteMask(0, Color_Rgba);
-                context->setShaderProgram(ShaderProgram_Box);
+                IShaderProgramBinder& binder = context->bindShaderProgram(ShaderProgram_Box);
+                binder.bindShaderResource(ShaderStage_Pixel, 0, textureView);
+                binder.bindSampler(ShaderStage_Pixel, 0, sampler);
+                updateConstBuffer(binder, constantBuffer, window->getWidth(), window->getHeight(), tick.delta());
+                //context->bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, constantBuffer, 0, sizeof(ConstBuffer));
                 context->enableDepth(true);
                 context->enableDepthWrite(true);
                 context->bindVertexBuffers(1, &vertexbuffer, offset);
                 context->bindIndexBuffer(indexBuffer, 0, IndexType_Unsigned32);
                 context->setDepthCompareOp(CompareOp_GreaterOrEqual);
-                context->bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, constantBuffer, 0, sizeof(ConstBuffer));
-                context->bindShaderResource(ShaderStage_Pixel, 0, textureView);
-                context->bindSampler(ShaderStage_Pixel, 0, sampler);
                 context->setTopology(PrimitiveTopology_TriangleList);
                 context->setViewports(1, &viewport);
                 context->setScissors(1, &scissor);

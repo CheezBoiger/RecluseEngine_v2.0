@@ -18,9 +18,8 @@ void copyArray(Data* pDataDst, U64 begin, U64 end, Data* pDataSrc)
 
 
 template<typename Data, typename Compare = CompareLess<Data>>
-void bottomUpMerge(Data* pDataA, U64 right, U64 left, U64 end, Data* aux)
+void bottomUpMerge(Data* pDataA, U64 right, U64 left, U64 end, Data* aux, const Compare& comp)
 {
-    Compare comp = { };
     U64 i = left;
     U64 j = right;
 
@@ -41,14 +40,17 @@ void bottomUpMerge(Data* pDataA, U64 right, U64 left, U64 end, Data* aux)
 }
 
 template<typename Data, typename Compare = CompareLess<Data>>
-void mergeHelper(Data* pDataA, U64 start, U64 end, Data* aux)
+void mergeHelper(Data* pDataA, U64 start, U64 end, Data* aux, const Compare& comp = Compare())
 {
-
+    if (start >= end) return;
+    U64 middle = (end - start) / 2;
+    mergeHelper(pDataA, start, middle, aux, comp);
+    mergeHelper(pDataA, middle, end, aux, comp);
 }
 } // MergeSortInternal
 
 template<typename Data, typename Compare = CompareLess<Data>>
-Data* mergeSort(Data* pDataArr, U64 count, Data* aux = nullptr)
+Data* mergeSort(Data* pDataArr, U64 count, Data* aux = nullptr, Compare comp = Compare())
 {
     Bool isInternalMalloc = false;
     
@@ -59,7 +61,7 @@ Data* mergeSort(Data* pDataArr, U64 count, Data* aux = nullptr)
     }
 
     MergeSortInternal::copyArray(pDataArr, 0, count, aux);
-    MergeSortInternal::mergeHelper(pDataArr, 0, count, aux);
+    MergeSortInternal::mergeHelper(pDataArr, 0, count, aux, comp);
 
     if (isInternalMalloc)
     {

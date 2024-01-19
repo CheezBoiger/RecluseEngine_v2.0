@@ -35,6 +35,23 @@ struct ContextFrame
 
 class D3D12Context : public GraphicsContext
 {
+private:
+    struct ContextState;
+    class D3D12ShaderProgramBinder : public IShaderProgramBinder
+    {
+    public:
+        D3D12ShaderProgramBinder(D3D12Context* context = nullptr, ShaderProgramId programId = ~0, ShaderPermutationId permutationId = ~0)
+            : IShaderProgramBinder(programId, permutationId)
+            , m_pContext(context)
+        { }
+        IShaderProgramBinder& bindShaderResource(ShaderStageFlags type, U32 slot, ResourceViewId view) override;
+        IShaderProgramBinder& bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceViewId view) override;
+        IShaderProgramBinder& bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data = nullptr) override;
+        IShaderProgramBinder& bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* pSampler) override;
+        ContextState& currentState();
+    private:
+        D3D12Context* m_pContext;
+    };
 public:
     D3D12Context(D3D12Device* pDevice, U32 bufferCount, D3D12Queue* pQueue)
         : m_pDevice(pDevice)
@@ -85,17 +102,15 @@ public:
     const std::vector<ContextFrame>&    getContextFrames() const { return m_contextFrames; }
     void                                resetCurrentResources();
    
-    void                                bindRenderTargets(U32 count, ResourceViewId* ppResources, ResourceViewId pDepthStencil = 0) override;
+
     void                                clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) override;
     void                                clearDepthStencil(ClearFlags clearFlags, F32 clearDepth, U8 clearStencil, const Rect& rect) override;
     void                                setScissors(U32 numScissors, Rect* pRects) override;
     void                                setViewports(U32 numViewports, Viewport* pViewports) override;
 
-    void                                setShaderProgram(ShaderProgramId program, U32 permutation) override;
-    void                                bindShaderResource(ShaderStageFlags type, U32 slot, ResourceViewId view) override;
-    void                                bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceViewId view) override;
-    void                                bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes) override;
-    void                                bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* pSampler) override;
+    IShaderProgramBinder&               bindShaderProgram(ShaderProgramId program, U32 permutation) override;
+    void                                bindRenderTargets(U32 count, ResourceViewId* ppResources, ResourceViewId pDepthStencil = 0) override;
+
     void                                drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstVertex, U32 firstInstance) override;
     void                                drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 firstIndex, U32 vertexOffset, U32 firstInstance) override;
     void                                bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBytes, IndexType type) override;
@@ -125,6 +140,7 @@ public:
     GraphicsDevice*                     getDevice() override;
     const ContextFrame&                 getContextFrame(U32 idx) const { return m_contextFrames[idx]; }
     void                                setNewFenceValue(U32 idx, U64 value) { m_contextFrames[idx].fenceValue = value; }   
+    D3D12Device*                        getNativeDevice() const { return m_pDevice; }
 
 private:
     typedef U32 ContextDirtyFlags;
@@ -191,6 +207,7 @@ private:
     std::vector<ContextState>           m_contextStates;
     std::vector<D3D12_RESOURCE_BARRIER> m_barrierTransitions;
     D3D12Queue*                         m_queue;
+    D3D12ShaderProgramBinder            m_shaderProgramBinder;
 };
 
 class D3D12Device : public GraphicsDevice 

@@ -75,8 +75,8 @@ public:
         return entity->getComponent<ComponentType>(m_scene);
     }
 
-    // Gets a tuple of components from an entity. Any components not found,
-    // will return nullptr.
+    // Returns a tuple of components from an entity. Any components not found,
+    // will return nullptr for each component not found.
     template<typename... Args>
     std::tuple<Args*...> obtainTuple(const RGUID& id)
     {

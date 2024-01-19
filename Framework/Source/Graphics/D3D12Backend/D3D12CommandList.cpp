@@ -177,9 +177,16 @@ void D3D12Context::dispatch(U32 x, U32 y, U32 z)
 }
 
 
-void D3D12Context::bindShaderResource(ShaderStageFlags type, U32 slot, ResourceViewId view)
+D3D12Context::ContextState& D3D12Context::D3D12ShaderProgramBinder::currentState()
 {
-    DescriptorHeapAllocationManager* manager = m_pDevice->getDescriptorHeapManager();
+    return m_pContext->currentState();
+}
+
+
+IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindShaderResource(ShaderStageFlags type, U32 slot, ResourceViewId view)
+{
+    D3D12Context* context = m_pContext;
+    DescriptorHeapAllocationManager* manager = context->getNativeDevice()->getDescriptorHeapManager();
     ContextState& current = currentState();
     D3D12GraphicsResourceView* pView = DescriptorViews::findResourceView(view);
     D3D12_CPU_DESCRIPTOR_HANDLE handle = manager->nullSrvDescriptor();
@@ -189,29 +196,49 @@ void D3D12Context::bindShaderResource(ShaderStageFlags type, U32 slot, ResourceV
     current.m_rootSigLayout.srvCount = Math::maximum(current.m_rootSigLayout.srvCount, static_cast<U16>(slot+1));
     current.m_resourceTable.srvs = current.m_srvs.data();
     current.setDirty(ContextDirty_Descriptors);
+    return (*this);
 }
 
 
-void D3D12Context::bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes)
+IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data)
 {
-    DescriptorHeapAllocationManager* manager = m_pDevice->getDescriptorHeapManager();
+    D3D12Context* context = m_pContext;
+    DescriptorHeapAllocationManager* manager = context->getNativeDevice()->getDescriptorHeapManager();
     ContextState& current = currentState();
     D3D12_CPU_DESCRIPTOR_HANDLE cbv = manager->nullCbvDescriptor();
     if (pResource)
     {
         D3D12Resource* pNativeResource = pResource->castTo<D3D12Resource>();
         cbv = pNativeResource->asCbv(offsetBytes, sizeBytes);
+
+        // Copy any data we may want to have in this constant buffer bind. It is actually similar to the vulkan version, so we might
+        // want to make this agnostic.
+        if (data)
+        {
+            void* pData = nullptr;
+            MapRange readRange;
+            readRange.offsetBytes = offsetBytes;
+            readRange.sizeBytes = sizeBytes;
+            ResultCode result = pNativeResource->map(&pData, &readRange);
+            if (result == RecluseResult_Ok)
+            {
+                memcpy(pData, data, sizeBytes);
+                pNativeResource->unmap(&readRange);
+            }
+        }
     }
     current.m_cbvs[slot] = cbv;
     current.m_rootSigLayout.cbvCount = Math::maximum(current.m_rootSigLayout.cbvCount, static_cast<U16>(slot+1));
     current.m_resourceTable.cbvs = current.m_cbvs.data();
     current.setDirty(ContextDirty_Descriptors);
+    return (*this);
 }
 
 
-void D3D12Context::bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceViewId view)
+IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceViewId view)
 {
-    DescriptorHeapAllocationManager* manager = m_pDevice->getDescriptorHeapManager();
+    D3D12Context* context = m_pContext;
+    DescriptorHeapAllocationManager* manager = context->getNativeDevice()->getDescriptorHeapManager();
     ContextState& current = currentState();
     D3D12GraphicsResourceView* pView = DescriptorViews::findResourceView(view);
     D3D12_CPU_DESCRIPTOR_HANDLE handle = manager->nullUavDescriptor(); 
@@ -220,12 +247,14 @@ void D3D12Context::bindUnorderedAccessView(ShaderStageFlags type, U32 slot, Reso
     current.m_rootSigLayout.uavCount = Math::maximum(current.m_rootSigLayout.uavCount, static_cast<U16>(slot+1));
     current.m_resourceTable.uavs = current.m_uavs.data();
     current.setDirty(ContextDirty_Descriptors);
+    return (*this);
 }
 
 
-void D3D12Context::bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* sampler)
+IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* sampler)
 {
-    DescriptorHeapAllocationManager* manager = m_pDevice->getDescriptorHeapManager();
+    D3D12Context* context = m_pContext;
+    DescriptorHeapAllocationManager* manager = context->getNativeDevice()->getDescriptorHeapManager();
     ContextState& current = currentState();
     D3D12Sampler* pSampler = nullptr;
     D3D12_CPU_DESCRIPTOR_HANDLE handle = manager->nullSamplerDescriptor();
@@ -238,6 +267,7 @@ void D3D12Context::bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler*
     current.m_rootSigLayout.samplerCount = Math::maximum(current.m_rootSigLayout.samplerCount, static_cast<U16>(slot+1));
     current.m_resourceTable.samplers = current.m_samplers.data();
     current.setDirty(ContextDirty_SamplerDescriptors);
+    return (*this);
 }
 
 
@@ -335,7 +365,7 @@ void D3D12Context::bindCurrentResources()
 }
 
 
-void D3D12Context::setShaderProgram(ShaderProgramId program, U32 permutation)
+IShaderProgramBinder& D3D12Context::bindShaderProgram(ShaderProgramId program, U32 permutation)
 {
     D3D::Cache::D3DShaderProgram* shaderProgram = D3D::Cache::obtainShaderProgram(program, permutation);
     R_ASSERT_FORMAT(shaderProgram, "No shader program found by the given id=%d, and permutation=%d", program, permutation);
@@ -346,7 +376,9 @@ void D3D12Context::setShaderProgram(ShaderProgramId program, U32 permutation)
         currentState().m_pipelineStateObject.pipelineType = shaderProgram->bindType;
         // Descriptors might need to be updated, when we set a new shader program.
         currentState().setDirty(ContextDirty_Pipeline | ContextDirty_RootSignature);
+        m_shaderProgramBinder = D3D12ShaderProgramBinder(this, program, permutation);
     }
+    return m_shaderProgramBinder;
 }
 
 

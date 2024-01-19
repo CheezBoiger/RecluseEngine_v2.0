@@ -239,6 +239,7 @@ public:
     {
         SpvReflectShaderModule reflectModule;
         SpvReflectResult result = spvReflectCreateShaderModule(sizeBytes, bytecode, &reflectModule);
+        ResultCode outResult = RecluseResult_Ok;
         if (result == SPV_REFLECT_RESULT_SUCCESS)
         {
             std::vector<SpvReflectInterfaceVariable*> inputVars;
@@ -311,8 +312,13 @@ public:
                 }
             }
             spvReflectDestroyShaderModule(&reflectModule);
+            outResult = RecluseResult_Ok;
         }
-        return RecluseResult_Ok;
+        else
+        {
+            outResult = RecluseResult_Failed;
+        }
+        return outResult;
     }
 
 private:

@@ -53,6 +53,24 @@ struct VulkanContextFrame
 
 class VulkanContext : public GraphicsContext
 {
+private:
+    struct ContextState;
+    class VulkanShaderProgramBinder : public IShaderProgramBinder
+    {
+    public:
+        VulkanShaderProgramBinder(VulkanContext* context = nullptr, ShaderProgramId programId = ~0, ShaderPermutationId permutationId = ~0)
+            : IShaderProgramBinder(programId, permutationId)
+            , m_pContext(context) 
+        { }
+        IShaderProgramBinder& bindShaderResource(ShaderStageFlags type, U32 slot, ResourceViewId view) override;
+        IShaderProgramBinder& bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceViewId view) override;
+        IShaderProgramBinder& bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data = nullptr) override;
+        IShaderProgramBinder& bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* ppSampler) override;
+        ContextState&           currentState();
+    private:
+        VulkanContext* m_pContext;
+    };
+
 public:
     VulkanContext(VulkanDevice* pDevice, VulkanQueue* queue)
         : m_bufferCount(0)
@@ -112,11 +130,6 @@ public:
 
     void transition(GraphicsResource* pResource, ResourceState dstState, U16 baseMip, U16 mipCount, U16 baseLayer, U16 layerCount) override;
 
-    void bindShaderResource(ShaderStageFlags type, U32 slot, ResourceViewId view) override;
-    void bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceViewId view) override;
-    void bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes) override;
-    void bindRenderTargets(U32 count, ResourceViewId* ppResources, ResourceViewId pDepthStencil) override;
-    void bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* ppSampler) override;
     void bindBlendState(const BlendState& state) override { currentState().m_pipelineStructure.state.graphics.blendState = state; currentState().markPipelineDirty(); }
     void setTopology(PrimitiveTopology topology) override { currentState().m_pipelineStructure.state.graphics.primitiveTopology = topology; currentState().markPipelineDirty(); }
     void setPolygonMode(PolygonMode polygonMode) override { currentState().m_pipelineStructure.state.graphics.raster.polygonMode = polygonMode; currentState().markPipelineDirty(); }
@@ -134,6 +147,7 @@ public:
     void setStencilReadMask(U8 mask) override { currentState().m_pipelineStructure.state.graphics.depthStencil.stencilReadMask = mask; currentState().markPipelineDirty(); }
     void setStencilWriteMask(U8 mask) override { currentState().m_pipelineStructure.state.graphics.depthStencil.stencilWriteMask = mask; currentState().markPipelineDirty(); }
     void clearResourceBinds() override;
+    void bindRenderTargets(U32 count, ResourceViewId* ppResources, ResourceViewId pDepthStencil) override;
     
     void setBlendConstants(F32 blendConstants[4]) override 
     { 
@@ -169,11 +183,16 @@ public:
         currentState().markPipelineDirty();
     }
     
-    void setShaderProgram(ShaderProgramId program, U32 permutation) override 
+    IShaderProgramBinder& bindShaderProgram(ShaderProgramId program, U32 permutation) override 
     { 
         currentState().m_pipelineStructure.state.shaderProgramId = program; 
         currentState().m_pipelineStructure.state.shaderPermutation = permutation; 
         currentState().markPipelineDirty();
+
+        // Binds and asserts any possible missing slots, if there is reflection data. Otherwise,
+        // will act as a normal binder without knowledge of the program.
+        m_shaderProgramBinder = VulkanShaderProgramBinder(this, program, permutation);
+        return m_shaderProgramBinder;
     }
 
     void setInputVertexLayout(VertexInputLayoutId inputLayoutId) override 
@@ -296,6 +315,7 @@ private:
     VkDescriptorSet                                                     m_boundDescriptorSet;
     U32                                                                 m_currentStateIdx;
     VulkanQueue*                                                        m_queue;
+    VulkanShaderProgramBinder                                           m_shaderProgramBinder;
 };
 
 

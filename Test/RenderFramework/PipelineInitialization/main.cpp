@@ -112,7 +112,7 @@ int main(int c, char* argv[])
     RealtimeTick::initializeWatch(1ull, 0);
     enableLogTypes(LogType_Debug);
     disableLogTypes(LogType_Warn);
-    GraphicsInstance* pInstance             = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
+    GraphicsInstance* pInstance             = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
     GraphicsAdapter* pAdapter               = nullptr;
     GraphicsResource* pData                 = nullptr;
     GraphicsResource* pData2                = nullptr;
@@ -347,7 +347,7 @@ int main(int c, char* argv[])
                 context->setViewports(1, &viewport);
                 context->setScissors(1, &scissor);
                 context->setInputVertexLayout(VertexLayoutKey_PositionOnly);
-                context->setShaderProgram(ShaderKey_SimpleColor);
+                IShaderProgramBinder& binder = context->bindShaderProgram(ShaderKey_SimpleColor);
             
                 ResourceViewDescription rtvDesc = { };
                 rtvDesc.type                    = ResourceViewType_RenderTarget;
@@ -370,12 +370,12 @@ int main(int c, char* argv[])
 
                 if (pMouse->getButtonState(1) == InputState_Down)
                 {
-                    context->bindConstantBuffer(ShaderStage_Fragment | ShaderStage_Vertex, 0, pData, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentFrameIndex(), sizeof(ConstData));                 
+                    binder.bindConstantBuffer(ShaderStage_Fragment | ShaderStage_Vertex, 0, pData, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentFrameIndex(), sizeof(ConstData));                 
                     context->drawInstanced(3, 1, 0, 0);
                 }
                 if (pMouse->getButtonState(0) == InputState_Down)
                 {
-                    context->bindConstantBuffer(ShaderStage_Fragment | ShaderStage_Vertex, 0, pData2, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentFrameIndex(), sizeof(ConstData));
+                    binder.bindConstantBuffer(ShaderStage_Fragment | ShaderStage_Vertex, 0, pData2, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentFrameIndex(), sizeof(ConstData));
                     context->drawInstanced(3, 1, 0, 0);
                 }
 

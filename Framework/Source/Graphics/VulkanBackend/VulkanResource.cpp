@@ -436,7 +436,9 @@ ResultCode VulkanImage::onBind(VulkanDevice* pDevice, const GraphicsResourceDesc
 
 ResultCode VulkanResource::map(void** ptr, MapRange* pReadRange)
 {
-    ResultCode result              = RecluseResult_Ok;
+    // Should ensure this resource is host-visible (cpu visible.)
+    R_ASSERT(getMemoryUsage() == ResourceMemoryUsage_CpuOnly || getMemoryUsage() == ResourceMemoryUsage_CpuToGpu);
+    ResultCode result           = RecluseResult_Ok;
     VkResult vr                 = VK_SUCCESS;
 
     VkDeviceSize offsetBytes    = m_memory.offsetBytes;
@@ -462,7 +464,7 @@ ResultCode VulkanResource::map(void** ptr, MapRange* pReadRange)
 ResultCode VulkanResource::unmap(MapRange* pWriteRange)
 {
     VkMappedMemoryRange mappedRange         = { };
-    ResultCode result                          = RecluseResult_Ok;
+    ResultCode result                       = RecluseResult_Ok;
     VkResult vr                             = VK_SUCCESS;
 
     VkDeviceMemory deviceMemory             = m_memory.deviceMemory;

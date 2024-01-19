@@ -125,7 +125,7 @@ int main(int c, char* argv[])
     //enableLogTypes(LogType_Debug);
     RealtimeTick::initializeWatch(1ull, 0);
     enableLogTypes(LogType_Notify);
-    GraphicsInstance* pInstance     = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
+    GraphicsInstance* pInstance     = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
     GraphicsAdapter* pAdapter       = nullptr;
     GraphicsResource* pData         = nullptr;
     PipelineState* pPipeline        = nullptr;
@@ -285,9 +285,11 @@ int main(int c, char* argv[])
                 GraphicsResource* frame = pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex());
                 ResourceViewId uavView = output->asView(desc);
                 context->transition(output, ResourceState_UnorderedAccess);
-                context->bindConstantBuffer(ShaderStage_Compute, 1, pData, 0, sizeof(ConstData));
-                context->bindUnorderedAccessView(ShaderStage_Compute, 0, uavView);
-                context->setShaderProgram(ProgramId_Mandelbrot);
+
+                context->bindShaderProgram(ProgramId_Mandelbrot)
+                    .bindConstantBuffer(ShaderStage_Compute, 1, pData, 0, sizeof(ConstData))
+                    .bindUnorderedAccessView(ShaderStage_Compute, 0, uavView);
+
                 context->dispatch(Math::divUp(pWindow->getWidth(), 8u), Math::divUp(pWindow->getHeight(), 8u), 1);
 
                 context->transition(frame, ResourceState_CopyDestination);

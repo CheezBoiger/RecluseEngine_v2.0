@@ -41,6 +41,8 @@ GraphicsSampler*  gbufferSampler = nullptr;
 GraphicsResource* lightSceneTexture = nullptr;
 GraphicsResource* lightBuffer = nullptr;
 
+GraphicsResource* sceneBuffer = nullptr;
+
 static const U32 g_textureWidth = 64;
 static const U32 g_textureHeight = 64;
 typedef Math::Float4 Vector4;
@@ -567,6 +569,7 @@ void createLightBuffer(GraphicsDevice* device)
 
 void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>& meshes)
 {
+    R_ASSERT("Pass", "GBuffer");
     context->transition(albedoTexture, ResourceState_RenderTarget);
     context->transition(normalTexture, ResourceState_RenderTarget);
     context->transition(depthTexture, ResourceState_DepthStencilWrite);
@@ -610,7 +613,7 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
 
     context->setViewports(1, &viewport);
     context->setScissors(1, &scissor);
-    context->setShaderProgram(ShaderProgram_Gbuffer, 0);
+    context->bindShaderProgram(ShaderProgram_Gbuffer, 0);
     context->setInputVertexLayout(VertexLayout_PositionNormalTexCoordColor);
     for (U32 i = 0; i < meshes.size(); ++i)
     {
@@ -627,6 +630,7 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
 
 void resolveLighting(GraphicsContext* context)
 {
+    R_DEBUG("Pass", "Light Resolve");
     ResourceViewDescription description = { };
     description.baseArrayLayer = 0;
     description.baseMipLevel = 0;
@@ -655,25 +659,42 @@ void resolveLighting(GraphicsContext* context)
     Rect scissor = { 0, 0, swapchain->getDesc().renderWidth, swapchain->getDesc().renderHeight };
     F32 clearColor[4] = { 0, 0, 0, 0 };
 
+    struct SceneBuffer
+    {
+        Math::Matrix44 viewProjection;
+        Math::Matrix44 view;
+    };
+
+    struct LightView
+    {
+        U32 numLights;
+        Math::Int3 pad0;
+    };
+
     context->transition(finalImage, ResourceState_RenderTarget);
+    context->transition(sceneBuffer, ResourceState_ConstantBuffer);
+    context->transition(lightBuffer, ResourceState_ShaderResource);
     context->transition(albedoTexture, ResourceState_ShaderResource);
     context->transition(normalTexture, ResourceState_ShaderResource);
     context->transition(depthTexture, ResourceState_ShaderResource);
     context->transition(lightBuffer, ResourceState_ShaderResource);
     context->pushState();
-    context->setShaderProgram(ShaderProgram_LightResolve, 0);
-    context->bindRenderTargets(1, &id);
-    context->setTopology(PrimitiveTopology_TriangleList);
-    context->setColorWriteMask(0, Color_Rgba);
-    context->setInputVertexLayout(VertexInputLayout::VertexLayout_Null);
-    context->bindShaderResource(ShaderStage_Pixel, 0, albedoView);
-    context->bindShaderResource(ShaderStage_Pixel, 1, normalView);
-    context->bindShaderResource(ShaderStage_Pixel, 4, lightBufferView);
-    context->bindSampler(ShaderStage_Pixel, 0, gbufferSampler);
-    context->clearRenderTarget(0, clearColor, scissor);
-    context->setViewports(1, &viewport);
-    context->setScissors(1, &scissor);
-    context->drawInstanced(3, 1, 0, 0);
+        context->bindShaderProgram(ShaderProgram_LightResolve, 0)
+            .bindShaderResource(ShaderStage_Pixel, 0, albedoView)
+            .bindShaderResource(ShaderStage_Pixel, 1, normalView)
+            .bindShaderResource(ShaderStage_Pixel, 4, lightBufferView)
+            .bindConstantBuffer(ShaderStage_Pixel, 0, sceneBuffer, 0, sizeof(SceneBuffer))
+            .bindConstantBuffer(ShaderStage_Pixel, 1, lightBuffer, 0, sizeof(LightView))
+            .bindSampler(ShaderStage_Pixel, 0, gbufferSampler);
+
+        context->bindRenderTargets(1, &id);
+        context->setTopology(PrimitiveTopology_TriangleList);
+        context->setColorWriteMask(0, Color_Rgba);
+        context->setInputVertexLayout(VertexInputLayout::VertexLayout_Null);
+        context->clearRenderTarget(0, clearColor, scissor);
+        context->setViewports(1, &viewport);
+        context->setScissors(1, &scissor);
+        context->drawInstanced(3, 1, 0, 0);
     context->popState();
 }
 
@@ -683,7 +704,7 @@ int main(char* argv[], int c)
     Log::initializeLoggingSystem();
     enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
+    instance  = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
     std::vector<MeshDraw> meshes;
 
