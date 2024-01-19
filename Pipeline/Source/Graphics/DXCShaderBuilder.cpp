@@ -148,7 +148,8 @@ public:
         const wchar_t* arguments[16]    = { };
         U32 argCount                    = 0;
 
-        arguments[argCount++] = L"-Wignored-attributes";
+        // NOTE(): This doesn't work on older dxc compiler versions.
+        //arguments[argCount++] = L"-Wignored-attributes";
 
         UINT32 srcSizeBytes = (UINT32)srcCode.size();
         hr = m_library->CreateBlobWithEncodingFromPinned(srcCode.data(), srcSizeBytes, CP_UTF8, &sourceBlob);
