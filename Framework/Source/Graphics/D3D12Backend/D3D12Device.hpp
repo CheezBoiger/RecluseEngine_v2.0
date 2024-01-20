@@ -51,6 +51,7 @@ private:
         IShaderProgramBinder& bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data = nullptr) override;
         IShaderProgramBinder& bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* pSampler) override;
         ContextState& currentState();
+        ShaderProgramReflection* getReflection() const { return cachedReflection; }
     private:
         void obtainShaderProgramFromCache();
         D3D12Context* m_pContext;
