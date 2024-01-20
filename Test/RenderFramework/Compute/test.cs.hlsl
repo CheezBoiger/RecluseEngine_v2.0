@@ -18,8 +18,8 @@ struct TestData {
 // as all resources (uav), (srv), (cbv), contain a base binding starting at 0,
 // which can potentially overlap with other resources. Currently, using this decorator will 
 // suffice.
-[[vk::binding(1)]] RWTexture2D<float4> ResultImg : register(u0);
-[[vk::binding(0)]] ConstantBuffer<TestData> Test : register(b1);
+[[vk::binding(0)]] RWTexture2D<float4> ResultImg : register(u0);
+[[vk::binding(1)]] ConstantBuffer<TestData> Test : register(b0);
 
 static const float3 Palette[8] = {  float3( 0.0, 0.0, 0.0 ),
                                 float3( 0.5, 0.5, 0.5 ),

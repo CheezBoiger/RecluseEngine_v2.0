@@ -162,7 +162,7 @@ private:
 };
 
 
-typedef U8 ReflectionBind;
+typedef U8 ShaderBind;
 
 // Shader Reflection information.
 class ShaderReflection : public Serializable
@@ -178,10 +178,10 @@ public:
         U8  numOutputParameters;
         U16 pad0;
     } metadata;
-    std::vector<ReflectionBind> cbvs;
-    std::vector<ReflectionBind> srvs;
-    std::vector<ReflectionBind> uavs;
-    std::vector<ReflectionBind> samplers;
+    std::vector<ShaderBind> cbvs;
+    std::vector<ShaderBind> srvs;
+    std::vector<ShaderBind> uavs;
+    std::vector<ShaderBind> samplers;
     R_PUBLIC_API ResultCode serialize(Archive* archive) const override;
     R_PUBLIC_API ResultCode deserialize(Archive* archive) override;
 };

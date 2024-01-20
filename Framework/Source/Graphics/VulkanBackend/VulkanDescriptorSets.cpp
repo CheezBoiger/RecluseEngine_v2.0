@@ -74,7 +74,7 @@ VkDescriptorSetLayout createDescriptorSetLayout(VulkanContext* pContext, const D
         if (!pBuffer)
             continue;
 
-        bindings[binding].binding               = binding;
+        bindings[binding].binding               = structure.ppConstantBuffers[i].binding;
         bindings[binding].descriptorCount       = 1;
         bindings[binding].descriptorType        = getDescriptorType(ResourceViewDimension_Buffer, DescriptorBindType_ConstantBuffer);
         bindings[binding].stageFlags            = Vulkan::getShaderStages(pContext->obtainConstantBufferShaderFlags(pBuffer->getId()));
@@ -84,14 +84,15 @@ VkDescriptorSetLayout createDescriptorSetLayout(VulkanContext* pContext, const D
     
     for (U32 i = 0; i < structure.key.value.srvs; ++i) 
     {
-        VulkanResourceView* pView                   = structure.ppShaderResources[i];
+        ShaderResourceBind<VulkanResourceView>& resBind = structure.ppShaderResources[i];
+        VulkanResourceView* pView                       = resBind.pResourceView;
 
         if (!pView)
             continue;
 
         const ResourceViewDescription& description  = pView->getDesc();
 
-        bindings[binding].binding             = binding;
+        bindings[binding].binding             = resBind.binding;
         bindings[binding].descriptorCount     = 1;
         bindings[binding].descriptorType      = getDescriptorType(description.dimension, DescriptorBindType_ShaderResource);
         bindings[binding].stageFlags          = Vulkan::getShaderStages(pContext->obtainResourceViewShaderFlags(pView->getId()));
@@ -101,14 +102,15 @@ VkDescriptorSetLayout createDescriptorSetLayout(VulkanContext* pContext, const D
 
     for (U32 i = 0; i < structure.key.value.uavs; ++i)
     {
-        VulkanResourceView* pView = structure.ppUnorderedAccesses[i];
+        ShaderResourceBind<VulkanResourceView>& resBind = structure.ppUnorderedAccesses[i];
+        VulkanResourceView* pView = resBind.pResourceView;
 
         if (!pView)
             continue;
 
         const ResourceViewDescription& description = pView->getDesc();
 
-        bindings[binding].binding             = binding;
+        bindings[binding].binding             = resBind.binding;
         bindings[binding].descriptorCount     = 1;
         bindings[binding].descriptorType      = getDescriptorType(description.dimension, DescriptorBindType_UnorderedAccess);
         bindings[binding].stageFlags          = Vulkan::getShaderStages(pContext->obtainResourceViewShaderFlags(pView->getId()));
@@ -118,8 +120,9 @@ VkDescriptorSetLayout createDescriptorSetLayout(VulkanContext* pContext, const D
 
     for (U32 i = 0; i < structure.key.value.samplers; ++i)
     {
-        VulkanSampler* pSampler = structure.ppSamplers[i];
-        bindings[binding].binding           = binding;
+        ShaderResourceBind<VulkanSampler>& resBind = structure.ppSamplers[i];
+        VulkanSampler* pSampler = resBind.pResourceView;
+        bindings[binding].binding           = resBind.binding;
         bindings[binding].descriptorCount   = 1;
         bindings[binding].descriptorType    = VK_DESCRIPTOR_TYPE_SAMPLER;
         bindings[binding].stageFlags        = Vulkan::getShaderStages(pContext->obtainSamplerShaderFlags(pSampler->getId()));
@@ -239,7 +242,7 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
         write.sType             = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         write.descriptorType    = getDescriptorType(ResourceViewDimension_Buffer, DescriptorBindType_ConstantBuffer);
         write.descriptorCount   = 1;
-        write.dstBinding        = binding++;
+        write.dstBinding        = structure.ppConstantBuffers[i].binding;//binding++;
         write.dstSet            = set;
         write.pBufferInfo       = &bufferInfo.back();
         writeSet.push_back(write);
@@ -248,7 +251,8 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
     for (U32 i = 0; i < structure.key.value.srvs; ++i)
     {
         VkWriteDescriptorSet write = { };
-        VulkanResourceView* pView = structure.ppShaderResources[i];
+        ShaderResourceBind<VulkanResourceView>& resBind = structure.ppShaderResources[i];
+        VulkanResourceView* pView = resBind.pResourceView;
 
         // null view means not occupied!
         if (!pView)
@@ -261,7 +265,7 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
         write.descriptorCount   = 1;
         write.dstSet            = set;
         write.descriptorType    = getDescriptorType(description.dimension, DescriptorBindType_ShaderResource);
-        write.dstBinding        = binding++;
+        write.dstBinding        = resBind.binding;//binding++;
 
         if (pView->isBufferView())
         {
@@ -290,7 +294,8 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
     for (U32 i = 0; i < structure.key.value.uavs; ++i)
     {
         VkWriteDescriptorSet write                  = { };
-        VulkanResourceView* pView                   = structure.ppUnorderedAccesses[i];
+        ShaderResourceBind<VulkanResourceView>& resBind = structure.ppUnorderedAccesses[i];
+        VulkanResourceView* pView                   = resBind.pResourceView;
 
         if (!pView)
             continue;
@@ -302,7 +307,7 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
         write.descriptorCount                       = 1;
         write.dstSet                                = set;
         write.descriptorType                        = getDescriptorType(description.dimension, DescriptorBindType_UnorderedAccess);
-        write.dstBinding                            = binding++;
+        write.dstBinding                            = resBind.binding;//binding++;
 
         if (pView->isBufferView())
         { 
@@ -330,7 +335,8 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
     for (U32 i = 0; i < structure.key.value.samplers; ++i)
     {
         VkWriteDescriptorSet write = { };
-        VulkanSampler* pSampler = structure.ppSamplers[i];
+        ShaderResourceBind<VulkanSampler>& resBind = structure.ppSamplers[i];
+        VulkanSampler* pSampler = resBind.pResourceView;
         VkDescriptorImageInfo info  = { };
         info.imageLayout            = VK_IMAGE_LAYOUT_UNDEFINED;
         info.imageView              = nullptr;
@@ -341,7 +347,7 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
         write.descriptorType    = getDescriptorType(ResourceViewDimension_None, DescriptorBindType_Sampler);
         write.descriptorCount   = 1;
         write.dstSet            = set;
-        write.dstBinding        = binding++;
+        write.dstBinding        = resBind.binding; //binding++;
         write.pImageInfo        = &imageInfo.back();
         writeSet.push_back(write);
     }

@@ -158,10 +158,10 @@ ResultCode ShaderReflection::serialize(Archive* archive) const
 {
     R_ASSERT(archive);
     archive->write(&metadata, sizeof(metadata));
-    archive->write(cbvs.data(), sizeof(ReflectionBind) * metadata.numCbvs);
-    archive->write(srvs.data(), sizeof(ReflectionBind) * metadata.numSrvs);
-    archive->write(uavs.data(), sizeof(ReflectionBind) * metadata.numUavs);
-    archive->write(samplers.data(), sizeof(ReflectionBind) * metadata.numSamplers);
+    archive->write(cbvs.data(), sizeof(ShaderBind) * metadata.numCbvs);
+    archive->write(srvs.data(), sizeof(ShaderBind) * metadata.numSrvs);
+    archive->write(uavs.data(), sizeof(ShaderBind) * metadata.numUavs);
+    archive->write(samplers.data(), sizeof(ShaderBind) * metadata.numSamplers);
     return RecluseResult_Ok;
 }
 
@@ -176,10 +176,10 @@ ResultCode ShaderReflection::deserialize(Archive* archive)
     uavs.resize(metadata.numUavs);
     samplers.resize(metadata.numSamplers);
 
-    archive->read(cbvs.data(), sizeof(ReflectionBind) * metadata.numCbvs);
-    archive->read(srvs.data(), sizeof(ReflectionBind) * metadata.numSrvs);
-    archive->read(uavs.data(), sizeof(ReflectionBind) * metadata.numUavs);
-    archive->read(samplers.data(), sizeof(ReflectionBind) * metadata.numSamplers);
+    archive->read(cbvs.data(), sizeof(ShaderBind) * metadata.numCbvs);
+    archive->read(srvs.data(), sizeof(ShaderBind) * metadata.numSrvs);
+    archive->read(uavs.data(), sizeof(ShaderBind) * metadata.numUavs);
+    archive->read(samplers.data(), sizeof(ShaderBind) * metadata.numSamplers);
     
     return RecluseResult_Ok;
 }

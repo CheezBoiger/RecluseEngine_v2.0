@@ -571,5 +571,11 @@ ID3D12CommandSignature* D3D12PrimaryCommandList::obtainSignature(D3D12_INDIRECT_
     }
     return iter->second;
 }
+
+
+void D3D12Context::D3D12ShaderProgramBinder::obtainShaderProgramFromCache()
+{
+    cachedProgram = D3D::Cache::obtainShaderProgram(getProgramId(), getPermutationId());
+}
 } // D3D12
 } // Recluse

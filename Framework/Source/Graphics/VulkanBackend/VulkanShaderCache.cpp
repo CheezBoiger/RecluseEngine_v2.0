@@ -9,14 +9,16 @@
 #include "Recluse/Types.hpp"
 
 #include <unordered_map>
+#include <set>
 
 namespace Recluse {
 namespace Vulkan {
 namespace ShaderPrograms {
 
 // Cache holds all system cache info.
-std::unordered_map<ShaderId, std::unordered_map<ShaderPermutationId, VkShaderModule>>                       shaderCache;
-::std::unordered_map<ShaderProgramId, std::unordered_map<ShaderProgramPermutation, VulkanShaderProgram>>    cache;
+std::unordered_map<ShaderId, std::unordered_map<ShaderPermutationId, VkShaderModule>>                               shaderCache;
+::std::unordered_map<ShaderProgramId, std::unordered_map<ShaderProgramPermutation, VulkanShaderProgram>>            cache;
+std::unordered_map<ShaderProgramId, std::unordered_map<ShaderProgramPermutation, ShaderProgramReflection>>          reflectCache;
 
 static VkResult createShaderModule(VkDevice device, Shader* pShader, VkShaderModule* pModule)
 {
@@ -187,6 +189,14 @@ ResultCode loadNativeShaderProgramPermutation(VulkanDevice* pDevice, ShaderProgr
     VulkanShaderProgram program = createShaderProgram(pDevice->get(), definition);
     cache[shaderProgram][permutation] = program;
 
+    // Check if we have reflection information for this shader program. If not, we ignore.
+    auto& table = reflectCache[shaderProgram];
+
+    auto it2 = table.find(permutation);
+    if (it2 == table.end())
+    {
+       reflectCache[shaderProgram][permutation] = definition.programReflection;
+    }
     return RecluseResult_Ok;
 }
 
@@ -272,6 +282,21 @@ ResultCode unloadProgram(VulkanDevice* pDevice, ShaderProgramId program)
     }
     cache.erase(it);
     return RecluseResult_Ok;
+}
+
+
+ShaderProgramReflection* obtainProgramReflection(ShaderProgramId programId, ShaderProgramPermutation permutation)
+{
+    auto shaderProgramTableIt = reflectCache.find(programId);
+    if (shaderProgramTableIt != reflectCache.end())
+    {
+        auto permutationTableIt = shaderProgramTableIt->second.find(permutation);
+        if (permutationTableIt != shaderProgramTableIt->second.end())
+        {
+            return &permutationTableIt->second;
+        }
+    }
+    return nullptr;
 }
 } // ShaderPrograms
 } // Vulkan

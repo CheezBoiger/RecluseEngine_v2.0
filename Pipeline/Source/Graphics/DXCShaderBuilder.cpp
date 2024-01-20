@@ -244,7 +244,7 @@ public:
                 {
                     for (UINT bind = shaderInputDesc.BindPoint; bind < shaderInputDesc.BindCount; ++bind)
                     {
-                        reflectionOutput.cbvs.push_back(static_cast<ReflectionBind>(bind));
+                        reflectionOutput.cbvs.push_back(static_cast<ShaderBind>(bind));
                     }
                     break;
                 }
@@ -255,7 +255,7 @@ public:
                 {
                     for (UINT bind = shaderInputDesc.BindPoint; bind < shaderInputDesc.BindCount; ++bind)
                     {
-                        reflectionOutput.srvs.push_back(static_cast<ReflectionBind>(bind));                    
+                        reflectionOutput.srvs.push_back(static_cast<ShaderBind>(bind));                    
                         reflectionOutput.metadata.numSrvs += 1;
                     }
                     break;
@@ -264,7 +264,7 @@ public:
                 {
                     for (UINT bind = shaderInputDesc.BindPoint; bind < shaderInputDesc.BindCount; ++bind)
                     {
-                        reflectionOutput.samplers.push_back(static_cast<ReflectionBind>(bind));                    
+                        reflectionOutput.samplers.push_back(static_cast<ShaderBind>(bind));                    
                         reflectionOutput.metadata.numSamplers += 1;
                     }
                     break;
@@ -278,7 +278,7 @@ public:
                 {
                     for (UINT bind = shaderInputDesc.BindPoint; bind < shaderInputDesc.BindCount; ++bind)
                     {
-                        reflectionOutput.uavs.push_back(static_cast<ReflectionBind>(bind));                    
+                        reflectionOutput.uavs.push_back(static_cast<ShaderBind>(bind));                    
                         reflectionOutput.metadata.numUavs += 1;
                     }
                     break;

@@ -1050,5 +1050,22 @@ ResultCode VulkanDevice::destroySwapchain(GraphicsSwapchain* pSwapchain)
     delete pSwapchain;
     return RecluseResult_Ok;
 }
+
+
+void VulkanContext::VulkanShaderProgramBinder::obtainShaderProgramFromCache()
+{
+    cachedProgram = ShaderPrograms::obtainShaderProgram(getProgramId(), getPermutationId());
+    if (cachedProgram)
+    {
+        reflectionCache = ShaderPrograms::obtainProgramReflection(getProgramId(), getPermutationId());
+        if (!reflectionCache)
+        {
+            // We don't have shader reflection! We need to assume an order!
+            // CBV0 ...
+            // SRV0 ...
+            // UAV0 ...
+        }
+    }
+}
 } // Vulkan
 } // Recluse

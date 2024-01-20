@@ -13,7 +13,7 @@ namespace Recluse {
 
 
 std::unordered_set<VertexInputLayoutId> g_vertexLayoutIds;
-const U32                               kCurrentShaderProgramDatabaseVersion = 0;
+const U32                               kCurrentShaderProgramDatabaseVersion = 1;
 
 struct ShaderProgramDatabaseHeader
 {
@@ -38,7 +38,7 @@ struct ShaderProgramPermutationHeader
     ShaderProgramPermutation    permutation;
     BindType                    bindType;
     ShaderIntermediateCode      intermediateCode;
-    U64                         reflectionInfoCount;
+    U64                         shaderReflectionInfoCount;
     union 
     {
         struct
@@ -110,7 +110,8 @@ ShaderProgramDefinition::ShaderProgramDefinition(const ShaderProgramDefinition& 
         raytrace.rmiss = def.raytrace.rmiss;
         break;
     }
-    reflectionInfo.insert(def.reflectionInfo.begin(), def.reflectionInfo.end());
+    shaderReflectionInfo.insert(def.shaderReflectionInfo.begin(), def.shaderReflectionInfo.end());
+    programReflection = def.programReflection;
 }
 
 
@@ -147,7 +148,8 @@ ShaderProgramDefinition::ShaderProgramDefinition(ShaderProgramDefinition&& def)
         raytrace.rmiss = std::move(def.raytrace.rmiss);
         break;
     }
-    reflectionInfo = std::move(def.reflectionInfo);
+    shaderReflectionInfo = std::move(def.shaderReflectionInfo);
+    programReflection = std::move(def.programReflection);
 }
 
 
@@ -184,7 +186,8 @@ ShaderProgramDefinition& ShaderProgramDefinition::operator=(const ShaderProgramD
         raytrace.rmiss = def.raytrace.rmiss;
         break;
     }
-    reflectionInfo.insert(def.reflectionInfo.begin(), def.reflectionInfo.end());
+    shaderReflectionInfo.insert(def.shaderReflectionInfo.begin(), def.shaderReflectionInfo.end());
+    programReflection = def.programReflection;
     return (*this);
 }
 
@@ -222,7 +225,8 @@ ShaderProgramDefinition& ShaderProgramDefinition::operator=(ShaderProgramDefinit
         raytrace.rmiss = std::move(def.raytrace.rmiss);
         break;
     }
-    reflectionInfo = std::move(def.reflectionInfo);
+    shaderReflectionInfo = std::move(def.shaderReflectionInfo);
+    programReflection = std::move(def.programReflection);
     return (*this);
 }
 
@@ -456,7 +460,7 @@ ResultCode ShaderProgramDatabase::serialize(Archive* pArchive) const
             permHeader.bindType = definition.pipelineType;
             permHeader.permutation = permutation;
             permHeader.intermediateCode = definition.intermediateCode;
-            permHeader.reflectionInfoCount = definition.reflectionInfo.size();
+            permHeader.shaderReflectionInfoCount = definition.shaderReflectionInfo.size();
 
             // Finally, store all hash shader data into the shader program.
             switch (permHeader.bindType)
@@ -499,13 +503,16 @@ ResultCode ShaderProgramDatabase::serialize(Archive* pArchive) const
 
             // If we have any reflection data. Loop over and store after the header is stored. This will help us get the header info first, to 
             // iterate any needed reflection data.
-            for (const auto& reflectionInfo : definition.reflectionInfo)
+            for (const auto& reflectionInfo : definition.shaderReflectionInfo)
             {
                 ShaderType shaderType = reflectionInfo.first;
                 const ShaderReflection* infoPtr = &reflectionInfo.second;
                 pArchive->write(&shaderType, sizeof(ShaderType));
                 infoPtr->serialize(pArchive);
             }
+
+            // Serialize program reflection if we have.
+            definition.programReflection.serialize(pArchive);
         }
     }
     
@@ -592,14 +599,17 @@ ResultCode ShaderProgramDatabase::deserialize(Archive* pArchive)
             }
 
             // Deserialize reflection data for the shader program.
-            for (U32 i = 0; i < permHeader.reflectionInfoCount; ++i)
+            for (U32 i = 0; i < permHeader.shaderReflectionInfoCount; ++i)
             {
                 ShaderType shaderType = ShaderType_None;
                 ShaderReflection reflectionInfo = { };
                 pArchive->read(&shaderType, sizeof(ShaderType));
                 reflectionInfo.deserialize(pArchive);
-                definition.reflectionInfo[shaderType] = reflectionInfo;
+                definition.shaderReflectionInfo[shaderType] = reflectionInfo;
             }
+
+            // Deserialize program reflection data if we have.
+            definition.programReflection.deserialize(pArchive);
 
             // Store the final result.
             m_shaderProgramMetaMap[shaderProgramHeader.programId].insert(std::make_pair(permutation, definition));
@@ -608,6 +618,27 @@ ResultCode ShaderProgramDatabase::deserialize(Archive* pArchive)
 
     return RecluseResult_Ok;
 }
+
+
+ResultCode ShaderProgramReflection::serialize(Archive* archive) const
+{
+    archive->write(cbvs.data(), sizeof(ShaderBind) * cbvs.size());
+    archive->write(srvs.data(), sizeof(ShaderBind) * srvs.size());
+    archive->write(uavs.data(), sizeof(ShaderBind) * uavs.size());
+    archive->write(samplers.data(), sizeof(ShaderBind) * samplers.size());
+    return RecluseResult_Ok;
+}
+
+
+ResultCode ShaderProgramReflection::deserialize(Archive* archive) 
+{
+    archive->read(cbvs.data(), sizeof(ShaderBind) * cbvs.size());
+    archive->read(srvs.data(), sizeof(ShaderBind) * srvs.size());
+    archive->read(uavs.data(), sizeof(ShaderBind) * uavs.size());
+    archive->read(samplers.data(), sizeof(ShaderBind) * samplers.size());
+    return RecluseResult_Ok;
+}
+
 
 namespace Runtime {
 

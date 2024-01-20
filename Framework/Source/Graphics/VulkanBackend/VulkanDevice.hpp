@@ -61,14 +61,19 @@ private:
         VulkanShaderProgramBinder(VulkanContext* context = nullptr, ShaderProgramId programId = ~0, ShaderPermutationId permutationId = ~0)
             : IShaderProgramBinder(programId, permutationId)
             , m_pContext(context) 
-        { }
-        IShaderProgramBinder& bindShaderResource(ShaderStageFlags type, U32 slot, ResourceViewId view) override;
-        IShaderProgramBinder& bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceViewId view) override;
-        IShaderProgramBinder& bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data = nullptr) override;
-        IShaderProgramBinder& bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* ppSampler) override;
+            , cachedProgram(nullptr)
+            , reflectionCache(nullptr)
+        { obtainShaderProgramFromCache(); }
+        IShaderProgramBinder&   bindShaderResource(ShaderStageFlags type, U32 slot, ResourceViewId view) override;
+        IShaderProgramBinder&   bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceViewId view) override;
+        IShaderProgramBinder&   bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data = nullptr) override;
+        IShaderProgramBinder&   bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* ppSampler) override;
         ContextState&           currentState();
     private:
+        void                    obtainShaderProgramFromCache();
         VulkanContext* m_pContext;
+        ShaderPrograms::VulkanShaderProgram*    cachedProgram;
+        ShaderProgramReflection*                reflectionCache;
     };
 
 public:
@@ -244,19 +249,19 @@ private:
 
     struct ContextState
     {
-        Pipelines::Structure                                            m_pipelineStructure;
-        DescriptorSets::Structure                                       m_boundDescriptorSetStructure;
-        std::array<VulkanResourceView*, 128>                            m_srvs;
-        std::array<VulkanResourceView*, 32>                             m_uavs;
-        std::array<DescriptorSets::BufferView, 16>                      m_cbvs;
-        std::array<VulkanSampler*, 16>                                  m_samplers;
-        std::array<VkBuffer, 8>                                         m_vertexBuffers;
-        std::array<U64, 8>                                              m_vbOffsets;
-        VkBuffer                                                        m_indexBuffer;
-        ContextDirtyFlags                                               m_dirtyFlags;
-        U8                                                              m_numBoundVBs;
-        VkIndexType                                                     m_ibType;
-        VkDeviceSize                                                    m_ibOffsetBytes;
+        Pipelines::Structure                                                    m_pipelineStructure;
+        DescriptorSets::Structure                                               m_boundDescriptorSetStructure;
+        std::array<DescriptorSets::ShaderResourceBind<VulkanResourceView>,  64> m_srvs;
+        std::array<DescriptorSets::ShaderResourceBind<VulkanResourceView>,  8>  m_uavs;
+        std::array<DescriptorSets::BufferView,                              16> m_cbvs;
+        std::array<DescriptorSets::ShaderResourceBind<VulkanSampler>,       16> m_samplers;
+        std::array<VkBuffer, 16>                                                m_vertexBuffers;
+        std::array<U64, 16>                                                     m_vbOffsets;
+        VkBuffer                                                                m_indexBuffer;
+        ContextDirtyFlags                                                       m_dirtyFlags;
+        U8                                                                      m_numBoundVBs;
+        VkIndexType                                                             m_ibType;
+        VkDeviceSize                                                            m_ibOffsetBytes;
 
         void setDirty(ContextDirtyFlags flags) { m_dirtyFlags |= flags; }
         void markPipelineDirty() { m_dirtyFlags |= ContextDirtyFlag_Pipeline; }

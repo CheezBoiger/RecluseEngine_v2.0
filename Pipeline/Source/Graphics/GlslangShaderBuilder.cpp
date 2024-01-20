@@ -274,7 +274,7 @@ public:
                             if (binding->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_SAMPLER)
                             {
                                 reflectionOutput.metadata.numSamplers += 1;
-                                reflectionOutput.samplers.push_back(static_cast<ReflectionBind>(binding->binding));
+                                reflectionOutput.samplers.push_back(static_cast<ShaderBind>(binding->binding));
                             }
                             break;
                         }
@@ -284,7 +284,7 @@ public:
                             if (binding->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_UAV)
                             {
                                 reflectionOutput.metadata.numUavs += 1;
-                                reflectionOutput.uavs.push_back(static_cast<ReflectionBind>(binding->binding));
+                                reflectionOutput.uavs.push_back(static_cast<ShaderBind>(binding->binding));
                             }
                             break;
                         }
@@ -294,7 +294,7 @@ public:
                             if (binding->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_SRV)
                             {
                                 reflectionOutput.metadata.numSrvs += 1;
-                                reflectionOutput.srvs.push_back(static_cast<ReflectionBind>(binding->binding));
+                                reflectionOutput.srvs.push_back(static_cast<ShaderBind>(binding->binding));
                             }
                             break;
                         }
@@ -303,7 +303,7 @@ public:
                             if (binding->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_CBV)
                             {
                                 reflectionOutput.metadata.numCbvs += 1;
-                                reflectionOutput.cbvs.push_back(static_cast<ReflectionBind>(binding->binding));
+                                reflectionOutput.cbvs.push_back(static_cast<ShaderBind>(binding->binding));
                             }
                             break;
                         }

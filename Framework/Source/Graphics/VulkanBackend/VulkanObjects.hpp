@@ -78,15 +78,25 @@ struct BufferView
     VulkanBuffer* buffer;
     U32 offset;
     U32 sizeBytes;
+    // The actual binding in the shader program.
+    U32 binding;
+};
+
+
+template<typename ResourceView>
+struct ShaderResourceBind
+{
+    ResourceView*   pResourceView;
+    U32 binding;
 };
 
 
 struct Structure
 {
-    VulkanResourceView**    ppShaderResources;
-    VulkanResourceView**    ppUnorderedAccesses;
-    BufferView*             ppConstantBuffers;
-    VulkanSampler**         ppSamplers;
+    ShaderResourceBind<VulkanResourceView>* ppShaderResources;
+    ShaderResourceBind<VulkanResourceView>* ppUnorderedAccesses;
+    BufferView*                             ppConstantBuffers;
+    ShaderResourceBind<VulkanSampler>*      ppSamplers;
     union
     {
         struct

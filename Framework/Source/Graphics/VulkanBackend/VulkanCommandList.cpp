@@ -632,7 +632,14 @@ IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindConstantBuff
     VulkanContext* context = m_pContext;
     R_ASSERT_FORMAT(currentState().m_cbvs.size() > slot, "Maximum of %d constant buffers may be bound simultaneously. Request slot %d is not allowed.", currentState().m_cbvs.size(), slot);
     ShaderStageFlags shaderFlags = type;
-    DescriptorSets::BufferView bufferView = { nullptr, offsetBytes, sizeBytes };
+    U32 binding = slot;
+    if (reflectionCache) 
+    {
+        R_ASSERT(slot < reflectionCache->cbvs.size());
+        binding = reflectionCache->cbvs[slot];
+    }
+
+    DescriptorSets::BufferView bufferView = { nullptr, offsetBytes, sizeBytes, binding };
     if (pResource)
     {
         VulkanResource* pVulkanResource                     = pResource->castTo<VulkanResource>();
@@ -673,7 +680,13 @@ IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindShaderResour
     VulkanResourceView* pVulkanResourceView = ResourceViews::obtainResourceView(context->getNativeDevice()->getDeviceId(), viewId);
     if (pVulkanResourceView)
         context->m_resourceViewShaderAccessMap[pVulkanResourceView->getId()] |= shaderFlags;
-    currentState().m_srvs[slot] = pVulkanResourceView;
+    U32 binding = slot;
+    if (reflectionCache)
+    {
+        R_ASSERT(slot < reflectionCache->srvs.size());
+        binding = reflectionCache->srvs[slot];
+    }
+    currentState().m_srvs[slot] = { pVulkanResourceView, binding };
     currentState().m_boundDescriptorSetStructure.key.value.shaderTypeFlags     |= shaderFlags;
     currentState().m_boundDescriptorSetStructure.ppShaderResources             = currentState().m_srvs.data();
     currentState().m_boundDescriptorSetStructure.key.value.srvs                = Math::maximum(currentState().m_boundDescriptorSetStructure.key.value.srvs, static_cast<U16>(slot+1));
@@ -689,7 +702,13 @@ IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindUnorderedAcc
     VulkanResourceView* pVulkanResourceView = ResourceViews::obtainResourceView(context->getNativeDevice()->getDeviceId(), view);
     if (pVulkanResourceView)
         context->m_resourceViewShaderAccessMap[pVulkanResourceView->getId()] |= shaderFlags;
-    currentState().m_uavs[slot] = pVulkanResourceView;
+    U32 binding = slot;
+    if (reflectionCache)
+    {
+        R_ASSERT(slot < reflectionCache->uavs.size());
+        binding = reflectionCache->uavs[slot];
+    }
+    currentState().m_uavs[slot] = { pVulkanResourceView, binding };
     currentState().m_boundDescriptorSetStructure.key.value.shaderTypeFlags     |= shaderFlags;
     currentState().m_boundDescriptorSetStructure.ppUnorderedAccesses           = currentState().m_uavs.data();
     currentState().m_boundDescriptorSetStructure.key.value.uavs                = Math::maximum(currentState().m_boundDescriptorSetStructure.key.value.uavs, static_cast<U16>(slot+1));
@@ -708,7 +727,13 @@ IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindSampler(Shad
         pVulkanSampler = ppSamplers->castTo<VulkanSampler>();
         context->m_samplerShaderAccessMap[pVulkanSampler->getId()] |= shaderFlags;
     }
-    currentState().m_samplers[slot] = pVulkanSampler;
+    U32 binding = slot;
+    if (reflectionCache)
+    {
+        R_ASSERT(slot < reflectionCache->samplers.size());
+        binding = reflectionCache->samplers[slot];
+    }
+    currentState().m_samplers[slot] = { pVulkanSampler, binding };
     currentState().m_boundDescriptorSetStructure.key.value.shaderTypeFlags |= shaderFlags;
     currentState().m_boundDescriptorSetStructure.ppSamplers                = currentState().m_samplers.data();
     currentState().m_boundDescriptorSetStructure.key.value.samplers        = Math::maximum(currentState().m_boundDescriptorSetStructure.key.value.samplers, static_cast<U16>(slot+1));

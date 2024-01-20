@@ -43,6 +43,7 @@ private:
         D3D12ShaderProgramBinder(D3D12Context* context = nullptr, ShaderProgramId programId = ~0, ShaderPermutationId permutationId = ~0)
             : IShaderProgramBinder(programId, permutationId)
             , m_pContext(context)
+            , cachedProgram(nullptr)
         { }
         IShaderProgramBinder& bindShaderResource(ShaderStageFlags type, U32 slot, ResourceViewId view) override;
         IShaderProgramBinder& bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceViewId view) override;
@@ -50,7 +51,9 @@ private:
         IShaderProgramBinder& bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* pSampler) override;
         ContextState& currentState();
     private:
+        void obtainShaderProgramFromCache();
         D3D12Context* m_pContext;
+        D3D::Cache::D3DShaderProgram* cachedProgram;
     };
 public:
     D3D12Context(D3D12Device* pDevice, U32 bufferCount, D3D12Queue* pQueue)
@@ -162,11 +165,11 @@ private:
         Pipelines::PipelineStateObject                  m_pipelineStateObject;
         Pipelines::RootSigLayout                        m_rootSigLayout;
         Pipelines::RootSigResourceTable                 m_resourceTable;
-        std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 128>    m_srvs;
+        std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 64>     m_srvs;
         std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 8>      m_uavs;
         std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 16>     m_cbvs;
         std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 16>     m_samplers;
-        std::array<D3D12_VERTEX_BUFFER_VIEW, 16>        m_vertexBuffers;
+        std::array<D3D12_VERTEX_BUFFER_VIEW,    16>     m_vertexBuffers;
         PrimitiveTopology                               m_primitiveTopology;
         ContextDirtyFlags                               m_dirtyFlags;
         U32                                             m_numBoundVertexBuffers;

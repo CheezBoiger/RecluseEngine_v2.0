@@ -12,12 +12,34 @@
 #include <unordered_map>
 #include <map>
 #include <bitset>
+#include <array>
 
 namespace Recluse {
 
 typedef Hash64 ShaderProgramId;
 typedef U64 ShaderProgramPermutation;
 class GraphicsDevice;
+
+
+struct R_PUBLIC_API ShaderProgramReflection : public Serializable
+{
+    std::array<ShaderBind, 16>  cbvs;
+    std::array<ShaderBind, 64>  srvs;
+    std::array<ShaderBind, 8>   uavs;
+    std::array<ShaderBind, 16>  samplers;
+
+    ShaderProgramReflection()
+    {
+        memset(cbvs.data(), (ShaderBind)-1, sizeof(ShaderBind) * cbvs.size());
+        memset(srvs.data(), (ShaderBind)-1, sizeof(ShaderBind) * srvs.size());
+        memset(uavs.data(), (ShaderBind)-1, sizeof(ShaderBind) * uavs.size());
+        memset(samplers.data(), (ShaderBind)-1, sizeof(ShaderBind) * samplers.size());
+    }
+
+    ResultCode serialize(Archive* archive) const override;
+    ResultCode deserialize(Archive* archive) override;
+};
+
 
 // Definition of a shader program. This is one instance of a program (with any necessary permutations set.)
 // Keep in mind this is a definition struct, that holds onto the shader intermediate code of the rendering application.
@@ -64,7 +86,8 @@ public:
         } raytrace;
     };
     // Any Reflection Information that is used by each shader.
-    std::map<ShaderType, ShaderReflection> reflectionInfo;
+    std::map<ShaderType, ShaderReflection>  shaderReflectionInfo;
+    ShaderProgramReflection                 programReflection;
 
     // Constructors. Any containers need to be initialized here.
     ShaderProgramDefinition() { }

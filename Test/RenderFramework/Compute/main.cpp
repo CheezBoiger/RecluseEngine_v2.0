@@ -146,7 +146,7 @@ int main(int c, char* argv[])
         app.engineName = "Cat";
         app.appName = "Compute";
 
-        LayerFeatureFlags flags = 0;//LayerFeatureFlag_DebugValidation | LayerFeatureFlag_Raytracing | LayerFeatureFlag_MeshShading /*| LayerFeatureFlag_DebugMarking*/;
+        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation | LayerFeatureFlag_Raytracing | LayerFeatureFlag_MeshShading /*| LayerFeatureFlag_DebugMarking*/;
 
         result = pInstance->initialize(app, flags);
     }
@@ -287,7 +287,7 @@ int main(int c, char* argv[])
                 context->transition(output, ResourceState_UnorderedAccess);
 
                 context->bindShaderProgram(ProgramId_Mandelbrot)
-                    .bindConstantBuffer(ShaderStage_Compute, 1, pData, 0, sizeof(ConstData))
+                    .bindConstantBuffer(ShaderStage_Compute, 0, pData, 0, sizeof(ConstData))
                     .bindUnorderedAccessView(ShaderStage_Compute, 0, uavView);
 
                 context->dispatch(Math::divUp(pWindow->getWidth(), 8u), Math::divUp(pWindow->getHeight(), 8u), 1);
