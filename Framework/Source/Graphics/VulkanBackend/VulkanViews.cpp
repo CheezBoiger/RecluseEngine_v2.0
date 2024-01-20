@@ -158,6 +158,17 @@ ResultCode VulkanImageView::onInitialize(VulkanDevice* pDevice, VulkanResource* 
         default: break;
     }
 
+    VkFormat originalFormat = static_cast<VulkanImage*>(pResource)->getFormat();
+    if (originalFormat != info.format)
+    {
+        // We might not have the same format. This might cause a validation error, so let's check if we can indeed use it.
+        // We could indeed use VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT on creation of VkImage objects, but perhaps we can try and 
+        // solve the problem in the application side, without depending on the GPU to figure it out for us.
+        R_WARN(R_CHANNEL_VULKAN, "Image View does not match the format that our image was created with! This could cause slower than usual access, so we will stick to the original format.");
+        info.format = originalFormat;
+        info.subresourceRange.aspectMask = Vulkan::getAspectMask(info.format);
+    }
+
     VkResult vResult = vkCreateImageView(pDevice->get(), &info, nullptr, &m_view);
 
     switch (desc.type) 

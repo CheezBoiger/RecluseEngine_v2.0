@@ -40,6 +40,7 @@ GraphicsSampler*  gbufferSampler = nullptr;
 
 GraphicsResource* lightSceneTexture = nullptr;
 GraphicsResource* lightBuffer = nullptr;
+GraphicsResource* lightViewBuffer = nullptr;
 
 GraphicsResource* sceneBuffer = nullptr;
 
@@ -563,13 +564,24 @@ void createLightBuffer(GraphicsDevice* device)
     description.memoryUsage = ResourceMemoryUsage_GpuOnly;
 
     ResultCode result = device->createResource(&lightBuffer, description, ResourceState_Common);
+
+    struct LightView
+    {
+        U32 numLights;
+        Math::Int3 pad0;
+    };
+
+    description.usage = ResourceUsage_ConstantBuffer;
+    description.width = sizeof(LightView);
+    description.miscFlags = 0;
+    description.memoryUsage = ResourceMemoryUsage_CpuToGpu;
+    result = device->createResource(&lightViewBuffer, description, ResourceState_ConstantBuffer);
     R_ASSERT(result == RecluseResult_Ok);
 }
 
 
 void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>& meshes)
 {
-    R_ASSERT("Pass", "GBuffer");
     context->transition(albedoTexture, ResourceState_RenderTarget);
     context->transition(normalTexture, ResourceState_RenderTarget);
     context->transition(depthTexture, ResourceState_DepthStencilWrite);
@@ -606,19 +618,22 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
 
     Viewport viewport = { 0, 0, swapchain->getDesc().renderWidth, swapchain->getDesc().renderHeight, 1, 0 };
     Rect scissor = { 0, 0, swapchain->getDesc().renderWidth, swapchain->getDesc().renderHeight };
-    F32 clearColor[4] = { 0, 0, 0, 0 };
+    F32 clearColor[4] = { 0, 1, 0, 0 };
     context->clearRenderTarget(0, clearColor, scissor);
     context->clearRenderTarget(1, clearColor, scissor);
     context->clearDepthStencil(ClearFlag_Depth, 1.f, 0, scissor);
 
     context->setViewports(1, &viewport);
     context->setScissors(1, &scissor);
-    context->bindShaderProgram(ShaderProgram_Gbuffer, 0);
     context->setInputVertexLayout(VertexLayout_PositionNormalTexCoordColor);
+    IShaderProgramBinder& binder = context->bindShaderProgram(ShaderProgram_Gbuffer, 0);
     for (U32 i = 0; i < meshes.size(); ++i)
     {
         U64 offset[] = { 0 };
         GraphicsResource* vb = meshes[i].vertexBuffer;
+        binder.bindConstantBuffer(ShaderStage_Pixel | ShaderStage_Vertex, 0, meshes[i].meshTransform, 0, sizeof(ConstBuffer))
+                .bindShaderResource(ShaderStage_Pixel, 0, ~0)
+                .bindSampler(ShaderStage_Pixel, 0, nullptr);
         context->bindVertexBuffers(1, &vb, offset);
         context->bindIndexBuffer(meshes[i].indexBuffer, 0, IndexType_Unsigned32);
         context->drawIndexedInstanced(meshes[i].numIndices, 1, 0, 0, 0);
@@ -628,9 +643,32 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
 }
 
 
+void createSceneBuffer(GraphicsDevice* device)
+{
+    struct SceneBuffer
+    {
+        Math::Matrix44 viewProjection;
+        Math::Matrix44 view;
+    };
+
+    GraphicsResourceDescription description = { };
+    description.dimension = ResourceDimension_Buffer;
+    description.format = ResourceFormat_Unknown;
+    description.height = 1;
+    description.depthOrArraySize = 1;
+    description.width = sizeof(SceneBuffer);
+    description.usage = ResourceUsage_ConstantBuffer;
+    description.mipLevels = 1;
+    description.miscFlags = ResourceMiscFlag_StructuredBuffer;
+    description.memoryUsage = ResourceMemoryUsage_CpuToGpu;
+
+    ResultCode result = device->createResource(&sceneBuffer, description, ResourceState_ConstantBuffer);
+    R_ASSERT(result == RecluseResult_Ok);
+}
+
+
 void resolveLighting(GraphicsContext* context)
 {
-    R_DEBUG("Pass", "Light Resolve");
     ResourceViewDescription description = { };
     description.baseArrayLayer = 0;
     description.baseMipLevel = 0;
@@ -647,6 +685,9 @@ void resolveLighting(GraphicsContext* context)
 
     description.format = ResourceFormat_R16G16B16A16_Float;
     ResourceViewId normalView = normalTexture->asView(description);
+
+    description.format = ResourceFormat_R32_Float;
+    ResourceViewId depthView = depthTexture->asView(description);
 
     description.dimension = ResourceViewDimension_Buffer;
     description.firstElement = 0;
@@ -673,7 +714,7 @@ void resolveLighting(GraphicsContext* context)
 
     context->transition(finalImage, ResourceState_RenderTarget);
     context->transition(sceneBuffer, ResourceState_ConstantBuffer);
-    context->transition(lightBuffer, ResourceState_ShaderResource);
+    context->transition(lightViewBuffer, ResourceState_ConstantBuffer);
     context->transition(albedoTexture, ResourceState_ShaderResource);
     context->transition(normalTexture, ResourceState_ShaderResource);
     context->transition(depthTexture, ResourceState_ShaderResource);
@@ -683,8 +724,9 @@ void resolveLighting(GraphicsContext* context)
             .bindShaderResource(ShaderStage_Pixel, 0, albedoView)
             .bindShaderResource(ShaderStage_Pixel, 1, normalView)
             .bindShaderResource(ShaderStage_Pixel, 4, lightBufferView)
+            .bindShaderResource(ShaderStage_Pixel, 3, depthView)
             .bindConstantBuffer(ShaderStage_Pixel, 0, sceneBuffer, 0, sizeof(SceneBuffer))
-            .bindConstantBuffer(ShaderStage_Pixel, 1, lightBuffer, 0, sizeof(LightView))
+            .bindConstantBuffer(ShaderStage_Pixel, 1, lightViewBuffer, 0, sizeof(LightView))
             .bindSampler(ShaderStage_Pixel, 0, gbufferSampler);
 
         context->bindRenderTargets(1, &id);
@@ -704,7 +746,7 @@ int main(char* argv[], int c)
     Log::initializeLoggingSystem();
     enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
+    instance  = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
     std::vector<MeshDraw> meshes;
 
@@ -753,6 +795,7 @@ int main(char* argv[], int c)
 
     createGBuffer(device, swapchain->getDesc().renderWidth, swapchain->getDesc().renderHeight);
     createLightBuffer(device);
+    createSceneBuffer(device);
 
     std::array<F32, 10> lastMs;
     U32 frameCount = 0;
@@ -803,6 +846,8 @@ int main(char* argv[], int c)
     device->destroySampler(gbufferSampler);
     //device->destroyResource(depthBuffer);
     device->destroyResource(lightBuffer);
+    device->destroyResource(lightViewBuffer);
+    device->destroyResource(sceneBuffer);
     device->destroyResource(textureResource);
     device->releaseContext(context);
     adapter->destroyDevice(device);

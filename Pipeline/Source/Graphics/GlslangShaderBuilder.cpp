@@ -281,10 +281,17 @@ public:
                         case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE:
                         case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER:
                         {
+                            // Storage buffers or images, they can either be treated as SRVs, or UAVs depending on 
+                            // their access in shader code.
                             if (binding->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_UAV)
                             {
                                 reflectionOutput.metadata.numUavs += 1;
                                 reflectionOutput.uavs.push_back(static_cast<ShaderBind>(binding->binding));
+                            }
+                            if (binding->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_SRV)
+                            {
+                                reflectionOutput.metadata.numSrvs += 1;
+                                reflectionOutput.srvs.push_back(static_cast<ShaderBind>(binding->binding));
                             }
                             break;
                         }
