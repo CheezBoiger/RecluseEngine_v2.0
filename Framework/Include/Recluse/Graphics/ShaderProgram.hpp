@@ -27,13 +27,24 @@ struct R_PUBLIC_API ShaderProgramReflection : public Serializable
     std::array<ShaderBind, 64>  srvs;
     std::array<ShaderBind, 8>   uavs;
     std::array<ShaderBind, 16>  samplers;
-
+    union
+    {
+        struct
+        {
+            U8 numCbvs;
+            U8 numSrvs;
+            U8 numUavs;
+            U8 numSamplers;
+        };
+        U32 packed32;
+    };
     ShaderProgramReflection()
     {
         memset(cbvs.data(), (ShaderBind)-1, sizeof(ShaderBind) * cbvs.size());
         memset(srvs.data(), (ShaderBind)-1, sizeof(ShaderBind) * srvs.size());
         memset(uavs.data(), (ShaderBind)-1, sizeof(ShaderBind) * uavs.size());
         memset(samplers.data(), (ShaderBind)-1, sizeof(ShaderBind) * samplers.size());
+        numCbvs = numUavs = numSrvs = numSamplers = 0;
     }
 
     ResultCode serialize(Archive* archive) const override;

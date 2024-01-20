@@ -1058,12 +1058,12 @@ void VulkanContext::VulkanShaderProgramBinder::obtainShaderProgramFromCache()
     if (cachedProgram)
     {
         reflectionCache = ShaderPrograms::obtainProgramReflection(getProgramId(), getPermutationId());
-        if (!reflectionCache)
+        if (reflectionCache)
         {
-            // We don't have shader reflection! We need to assume an order!
-            // CBV0 ...
-            // SRV0 ...
-            // UAV0 ...
+            currentState().m_boundDescriptorSetStructure.key.value.constantBuffers = (U16)reflectionCache->numCbvs;
+            currentState().m_boundDescriptorSetStructure.key.value.srvs = (U16)reflectionCache->numSrvs;
+            currentState().m_boundDescriptorSetStructure.key.value.uavs = (U16)reflectionCache->numUavs;
+            currentState().m_boundDescriptorSetStructure.key.value.samplers = (U16)reflectionCache->numSamplers;
         }
     }
 }

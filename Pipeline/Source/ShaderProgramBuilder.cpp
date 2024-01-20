@@ -302,6 +302,10 @@ ShaderProgramDefinition makeShaderProgramDefinition(ShaderProgramDatabase& db, c
                     programReflection.samplers[index] = sampler;
             }
         }
+        programReflection.numCbvs = cbvSet.size();
+        programReflection.numSrvs = srvSet.size();
+        programReflection.numUavs = uavSet.size();
+        programReflection.numSamplers = samplerSet.size();
     }
 
     return definition;

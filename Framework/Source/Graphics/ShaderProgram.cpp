@@ -626,6 +626,7 @@ ResultCode ShaderProgramReflection::serialize(Archive* archive) const
     archive->write(srvs.data(), sizeof(ShaderBind) * srvs.size());
     archive->write(uavs.data(), sizeof(ShaderBind) * uavs.size());
     archive->write(samplers.data(), sizeof(ShaderBind) * samplers.size());
+    archive->write(&packed32, sizeof(U32));
     return RecluseResult_Ok;
 }
 
@@ -636,6 +637,7 @@ ResultCode ShaderProgramReflection::deserialize(Archive* archive)
     archive->read(srvs.data(), sizeof(ShaderBind) * srvs.size());
     archive->read(uavs.data(), sizeof(ShaderBind) * uavs.size());
     archive->read(samplers.data(), sizeof(ShaderBind) * samplers.size());
+    archive->read(&packed32, sizeof(U32));
     return RecluseResult_Ok;
 }
 

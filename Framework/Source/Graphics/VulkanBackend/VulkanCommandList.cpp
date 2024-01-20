@@ -638,6 +638,10 @@ IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindConstantBuff
         R_ASSERT(slot < reflectionCache->cbvs.size());
         binding = reflectionCache->cbvs[slot];
     }
+    else
+    {
+        currentState().m_boundDescriptorSetStructure.key.value.constantBuffers = Math::maximum(currentState().m_boundDescriptorSetStructure.key.value.constantBuffers, static_cast<U16>(slot+1));
+    }
 
     DescriptorSets::BufferView bufferView = { nullptr, offsetBytes, sizeBytes, binding };
     if (pResource)
@@ -666,7 +670,6 @@ IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindConstantBuff
     currentState().m_cbvs[slot] = bufferView;
     currentState().m_boundDescriptorSetStructure.key.value.shaderTypeFlags |= shaderFlags;
     currentState().m_boundDescriptorSetStructure.ppConstantBuffers         = currentState().m_cbvs.data();
-    currentState().m_boundDescriptorSetStructure.key.value.constantBuffers = Math::maximum(currentState().m_boundDescriptorSetStructure.key.value.constantBuffers, static_cast<U16>(slot+1));
     currentState().markResourcesDirty();
     return (*this);
 }
@@ -686,10 +689,13 @@ IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindShaderResour
         R_ASSERT(slot < reflectionCache->srvs.size());
         binding = reflectionCache->srvs[slot];
     }
+    else
+    {
+        currentState().m_boundDescriptorSetStructure.key.value.srvs                = Math::maximum(currentState().m_boundDescriptorSetStructure.key.value.srvs, static_cast<U16>(slot+1));
+    }
     currentState().m_srvs[slot] = { pVulkanResourceView, binding };
     currentState().m_boundDescriptorSetStructure.key.value.shaderTypeFlags     |= shaderFlags;
     currentState().m_boundDescriptorSetStructure.ppShaderResources             = currentState().m_srvs.data();
-    currentState().m_boundDescriptorSetStructure.key.value.srvs                = Math::maximum(currentState().m_boundDescriptorSetStructure.key.value.srvs, static_cast<U16>(slot+1));
     currentState().markResourcesDirty();
     return (*this);
 }
@@ -708,10 +714,13 @@ IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindUnorderedAcc
         R_ASSERT(slot < reflectionCache->uavs.size());
         binding = reflectionCache->uavs[slot];
     }
+    else
+    {
+        currentState().m_boundDescriptorSetStructure.key.value.uavs                = Math::maximum(currentState().m_boundDescriptorSetStructure.key.value.uavs, static_cast<U16>(slot+1));
+    }
     currentState().m_uavs[slot] = { pVulkanResourceView, binding };
     currentState().m_boundDescriptorSetStructure.key.value.shaderTypeFlags     |= shaderFlags;
     currentState().m_boundDescriptorSetStructure.ppUnorderedAccesses           = currentState().m_uavs.data();
-    currentState().m_boundDescriptorSetStructure.key.value.uavs                = Math::maximum(currentState().m_boundDescriptorSetStructure.key.value.uavs, static_cast<U16>(slot+1));
     currentState().markResourcesDirty();
     return (*this);
 }
@@ -733,10 +742,13 @@ IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindSampler(Shad
         R_ASSERT(slot < reflectionCache->samplers.size());
         binding = reflectionCache->samplers[slot];
     }
+    else
+    {
+        currentState().m_boundDescriptorSetStructure.key.value.samplers        = Math::maximum(currentState().m_boundDescriptorSetStructure.key.value.samplers, static_cast<U16>(slot+1));
+    }
     currentState().m_samplers[slot] = { pVulkanSampler, binding };
     currentState().m_boundDescriptorSetStructure.key.value.shaderTypeFlags |= shaderFlags;
     currentState().m_boundDescriptorSetStructure.ppSamplers                = currentState().m_samplers.data();
-    currentState().m_boundDescriptorSetStructure.key.value.samplers        = Math::maximum(currentState().m_boundDescriptorSetStructure.key.value.samplers, static_cast<U16>(slot+1));
     currentState().markResourcesDirty();
     return (*this);
 }
@@ -749,10 +761,14 @@ void VulkanContext::clearResourceBinds()
     memset(currentState().m_uavs.data(), 0, currentState().m_uavs.size() * sizeof(VulkanResourceView*)); // Same, just weak references.
     memset(currentState().m_samplers.data(), 0, currentState().m_samplers.size() * sizeof(VulkanSampler*));
 
-    currentState().m_boundDescriptorSetStructure.key.value.constantBuffers  = 0;
-    currentState().m_boundDescriptorSetStructure.key.value.srvs             = 0;
-    currentState().m_boundDescriptorSetStructure.key.value.uavs             = 0;
-    currentState().m_boundDescriptorSetStructure.key.value.samplers         = 0;
+    // If we do indeed have reflection, no point in resetting the bound descriptor set structure.
+    if (!m_shaderProgramBinder.getReflection())
+    {
+        currentState().m_boundDescriptorSetStructure.key.value.constantBuffers  = 0;
+        currentState().m_boundDescriptorSetStructure.key.value.srvs             = 0;
+        currentState().m_boundDescriptorSetStructure.key.value.uavs             = 0;
+        currentState().m_boundDescriptorSetStructure.key.value.samplers         = 0;
+    }
 }
 
 
