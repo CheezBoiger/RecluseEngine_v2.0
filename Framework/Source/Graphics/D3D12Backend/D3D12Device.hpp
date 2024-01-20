@@ -44,7 +44,8 @@ private:
             : IShaderProgramBinder(programId, permutationId)
             , m_pContext(context)
             , cachedProgram(nullptr)
-        { }
+            , cachedReflection(nullptr)
+        { obtainShaderProgramFromCache(); }
         IShaderProgramBinder& bindShaderResource(ShaderStageFlags type, U32 slot, ResourceViewId view) override;
         IShaderProgramBinder& bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceViewId view) override;
         IShaderProgramBinder& bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data = nullptr) override;
@@ -54,6 +55,7 @@ private:
         void obtainShaderProgramFromCache();
         D3D12Context* m_pContext;
         D3D::Cache::D3DShaderProgram* cachedProgram;
+        ShaderProgramReflection* cachedReflection;
     };
 public:
     D3D12Context(D3D12Device* pDevice, U32 bufferCount, D3D12Queue* pQueue)

@@ -11,6 +11,7 @@ namespace Cache {
 
 
 std::unordered_map<ShaderProgramId, std::unordered_map<ShaderProgramPermutation, D3DShaderProgram>> g_shaderProgramMap;
+std::unordered_map<ShaderProgramId, std::unordered_map<ShaderProgramPermutation, ShaderProgramReflection>> g_shaderProgramReflectionMap;
 std::map<Hash64, std::map<ShaderProgramPermutation, ReferenceCounter<D3DShaderBytecode*>>> g_cachedShaderBlobs;
 
 
@@ -261,7 +262,30 @@ ResultCode loadNativeShaderProgramPermutation(ShaderProgramId shaderProgram, Sha
         return RecluseResult_AlreadyExists;
     }
     Bool result = internalMakeShaderProgram(shaderProgram, permutation, definition);
+
+    if (result == RecluseResult_Ok)
+    {
+        auto& table = g_shaderProgramReflectionMap[shaderProgram];
+        auto it = table.find(permutation);
+        if (it == table.end())
+        {
+            table[permutation] = definition.programReflection;
+        }
+    }
+
     return result ? RecluseResult_Ok : RecluseResult_Failed;
+}
+
+
+ShaderProgramReflection* obtainShaderProgramReflection(ShaderProgramId programId, ShaderProgramPermutation permutation)
+{
+    auto& table = g_shaderProgramReflectionMap[programId];
+    auto it = table.find(permutation);
+    if (it != table.end())
+    {
+        return &it->second;
+    }
+    return nullptr;
 }
 
 

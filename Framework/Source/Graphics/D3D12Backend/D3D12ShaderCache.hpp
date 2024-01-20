@@ -77,15 +77,16 @@ struct D3DShaderProgram
 };
 
 
-Bool                isProgramCached(ShaderProgramId shaderProgram, ShaderProgramPermutation permutation);
-Bool                isProgramCached(ShaderProgramId shaderProgram);
+Bool                        isProgramCached(ShaderProgramId shaderProgram, ShaderProgramPermutation permutation);
+Bool                        isProgramCached(ShaderProgramId shaderProgram);
 
 // Returns a native shader program to the caller. If no native shader program is found, will return a nullptr.
-D3DShaderProgram*   obtainShaderProgram(ShaderProgramId shaderProgram, ShaderProgramPermutation permutation);
+D3DShaderProgram*           obtainShaderProgram(ShaderProgramId shaderProgram, ShaderProgramPermutation permutation);
+ShaderProgramReflection*    obtainShaderProgramReflection(ShaderProgramId shaderProgram, ShaderProgramPermutation permutation);
 
-ResultCode          loadNativeShaderProgramPermutation(ShaderProgramId shaderProgram, ShaderProgramPermutation permutation, const ShaderProgramDefinition& definition);
-ResultCode          unloadAll();
-ResultCode          unloadPrograms(ShaderProgramId shaderProgram);
+ResultCode                  loadNativeShaderProgramPermutation(ShaderProgramId shaderProgram, ShaderProgramPermutation permutation, const ShaderProgramDefinition& definition);
+ResultCode                  unloadAll();
+ResultCode                  unloadPrograms(ShaderProgramId shaderProgram);
 } // Cache
 } // D3D12 
 } // Recluse
