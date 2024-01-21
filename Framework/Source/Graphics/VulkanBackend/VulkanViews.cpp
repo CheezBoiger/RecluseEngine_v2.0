@@ -120,25 +120,44 @@ SamplerId VulkanSampler::kSamplerCreationCounter                = 0;
 MutexGuard VulkanResourceView::kResourceViewCreationMutex    = MutexGuard("VulkanResourceViewCreationMutex");
 MutexGuard VulkanSampler::kSamplerCreationMutex              = MutexGuard("VulkanSamplerCreationMutex");
 
+
+VkImageAspectFlags resolveAspectMaskFromFormat(VkFormat originalFormat, ResourceFormat requestedFormat)
+{
+    VkImageAspectFlags aspect = Vulkan::getAspectMask(originalFormat);
+    switch (requestedFormat)
+    {
+        case Recluse::ResourceFormat_R24_Unorm_X8_Typeless:
+            aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
+            break;
+        case Recluse::ResourceFormat_X24_Typeless_S8_Uint:
+            aspect = VK_IMAGE_ASPECT_STENCIL_BIT;
+            break;
+    }
+    return aspect;
+}
+
+
 ResultCode VulkanImageView::onInitialize(VulkanDevice* pDevice, VulkanResource* pResource)
 {
     R_ASSERT(pResource != NULL);
     R_ASSERT_FORMAT(!pResource->isBuffer(), "Image resources can not be used as buffer views!");
 
-    ResultCode result          = RecluseResult_Ok;
-    ResourceViewDescription desc   = getDesc();
+    ResultCode result               = RecluseResult_Ok;
+    ResourceViewDescription desc    = getDesc();
     R_ASSERT(desc.format != ResourceFormat_Unknown, "Image View format must not be UNKNOWN prior to creation!!");
 
-    VkImageViewCreateInfo info = { };
-    info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    VulkanImage* image                          = static_cast<VulkanImage*>(pResource);
+    VkImageViewCreateInfo info                  = { };
+
+    info.sType                                  = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     info.format                                 = Vulkan::getVulkanFormat(desc.format);
-    info.image                                  = static_cast<VulkanImage*>(pResource)->get();
+    info.image                                  = image->get();
     info.viewType                               = VK_IMAGE_VIEW_TYPE_1D;
     info.subresourceRange.baseArrayLayer        = desc.baseArrayLayer;
     info.subresourceRange.baseMipLevel          = desc.baseMipLevel;
     info.subresourceRange.levelCount            = desc.mipLevelCount;
     info.subresourceRange.layerCount            = desc.layerCount;
-    info.subresourceRange.aspectMask            = Vulkan::getAspectMask(info.format);
+    info.subresourceRange.aspectMask            = resolveAspectMaskFromFormat(image->getFormat(), desc.format);
     info.flags                                  = 0;
     info.components.r                           = VK_COMPONENT_SWIZZLE_R;
     info.components.g                           = VK_COMPONENT_SWIZZLE_G;
@@ -166,7 +185,7 @@ ResultCode VulkanImageView::onInitialize(VulkanDevice* pDevice, VulkanResource* 
         // solve the problem in the application side, without depending on the GPU to figure it out for us.
         R_WARN(R_CHANNEL_VULKAN, "Image View does not match the format that our image was created with! This could cause slower than usual access, so we will stick to the original format.");
         info.format = originalFormat;
-        info.subresourceRange.aspectMask = Vulkan::getAspectMask(info.format);
+        //info.subresourceRange.aspectMask = Vulkan::getAspectMask(info.format);
     }
 
     VkResult vResult = vkCreateImageView(pDevice->get(), &info, nullptr, &m_view);

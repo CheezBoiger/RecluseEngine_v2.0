@@ -618,10 +618,10 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
 
     Viewport viewport = { 0, 0, swapchain->getDesc().renderWidth, swapchain->getDesc().renderHeight, 1, 0 };
     Rect scissor = { 0, 0, swapchain->getDesc().renderWidth, swapchain->getDesc().renderHeight };
-    F32 clearColor[4] = { 0, 1, 0, 0 };
+    F32 clearColor[4] = { 0, 0, 0, 0 };
     context->clearRenderTarget(0, clearColor, scissor);
     context->clearRenderTarget(1, clearColor, scissor);
-    context->clearDepthStencil(ClearFlag_Depth, 1.f, 0, scissor);
+    context->clearDepthStencil(ClearFlag_Depth, 0.f, 0, scissor);
 
     context->setViewports(1, &viewport);
     context->setScissors(1, &scissor);
@@ -675,11 +675,13 @@ void resolveLighting(GraphicsContext* context)
     description.dimension = ResourceViewDimension_2d;
     description.layerCount = 1;
     description.mipLevelCount = 1;
-    description.format = ResourceFormat_R8G8B8A8_Unorm;
     description.type = ResourceViewType_RenderTarget;
     GraphicsResource* finalImage = swapchain->getFrame(swapchain->getCurrentFrameIndex());
+
+    description.format = swapchain->getDesc().format;
     ResourceViewId id = finalImage->asView(description);    
     
+    description.format = ResourceFormat_R8G8B8A8_Unorm;
     description.type = ResourceViewType_ShaderResource;
     ResourceViewId albedoView = albedoTexture->asView(description);
 

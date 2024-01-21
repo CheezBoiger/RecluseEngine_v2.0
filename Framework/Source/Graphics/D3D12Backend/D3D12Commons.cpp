@@ -410,6 +410,12 @@ DXGI_FORMAT getNativeFormat(Recluse::ResourceFormat format)
             return DXGI_FORMAT_BC5_UNORM;
         case Recluse::ResourceFormat_BC7_Unorm:
             return DXGI_FORMAT_BC7_UNORM;
+        case Recluse::ResourceFormat_R24_Unorm_X8_Typeless:
+            return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+        case Recluse::ResourceFormat_X24_Typeless_S8_Uint:
+            return DXGI_FORMAT_X24_TYPELESS_G8_UINT;
+        case Recluse::ResourceFormat_D16_Unorm:
+            return DXGI_FORMAT_D16_UNORM;
         default:
             break;
     }

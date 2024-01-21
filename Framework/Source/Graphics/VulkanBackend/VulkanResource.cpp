@@ -544,7 +544,7 @@ VkImageSubresourceRange VulkanImage::makeSubresourceRange(ResourceState dstState
     range.baseArrayLayer                = baseArrayLayer;
     range.baseMipLevel                  = baseMipLevel;
     range.layerCount                    = arrayLayerCount;
-    range.levelCount                    = mipLevelCount;
+    range.levelCount                    = mipLevelCount; 
     range.aspectMask                    = Vulkan::getAspectMask(m_format);
     return range;
 }

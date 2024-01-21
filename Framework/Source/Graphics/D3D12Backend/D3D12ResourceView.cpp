@@ -370,8 +370,25 @@ ResultCode D3D12GraphicsResourceView::initialize(D3D12Device* pDevice, ID3D12Res
             D3D12_SHADER_RESOURCE_VIEW_DESC srvDescription;
             srvDescription.ViewDimension = getSrvDimension(resourceViewDescription.dimension);
             srvDescription.Format = Dxgi::getNativeFormat(resourceViewDescription.format);
+            switch (srvDescription.Format)
+            {
+                // Depth formats must be converted to rgba color formats, in order to be used for shader resource view.
+                case DXGI_FORMAT_D32_FLOAT:
+                    R_WARN(R_CHANNEL_D3D12, "SRV format for D32_FLOAT is not allowed. Using R32_FLOAT.");
+                    srvDescription.Format = DXGI_FORMAT_R32_FLOAT;
+                    break;
+                case DXGI_FORMAT_D24_UNORM_S8_UINT:
+                    R_WARN(R_CHANNEL_D3D12, "SRV format for D24_UNORM_S8_UINT is not allowed. Using R24_UNORM_X8_TYPELESS.");
+                    srvDescription.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+                    break;
+                case DXGI_FORMAT_D16_UNORM:
+                    R_WARN(R_CHANNEL_D3D12, "SRV format for D16_UNORM is not allowed. Using R16_UNORM.");
+                    srvDescription.Format = DXGI_FORMAT_R16_UNORM;
+                    break;
+            }
             fillShaderResourceViewDescription(srvDescription, resourceViewDescription);
             m_handle = heapManager->allocateShaderResourceView(pResource, srvDescription);
+            
             break;
         }
 

@@ -98,6 +98,7 @@ uint32_t getFormatSizeBytes(VkFormat format)
         
             return 3u;
 
+        case VK_FORMAT_D16_UNORM:
         case VK_FORMAT_R16_SFLOAT:
         case VK_FORMAT_R16_SINT:
         case VK_FORMAT_R16_SNORM:
@@ -229,6 +230,12 @@ VkFormat getVulkanFormat(Recluse::ResourceFormat format)
             return VK_FORMAT_BC5_UNORM_BLOCK;
         case Recluse::ResourceFormat_BC7_Unorm:
             return VK_FORMAT_BC7_UNORM_BLOCK;
+        case Recluse::ResourceFormat_R24_Unorm_X8_Typeless:
+            return VK_FORMAT_D24_UNORM_S8_UINT;
+        case Recluse::ResourceFormat_X24_Typeless_S8_Uint:
+            return VK_FORMAT_D24_UNORM_S8_UINT;
+        case Recluse::ResourceFormat_D16_Unorm:
+            return VK_FORMAT_D16_UNORM;
         default:
             return VK_FORMAT_UNDEFINED;
     }
@@ -279,6 +286,8 @@ Recluse::ResourceFormat getResourceFormat(VkFormat format)
         return Recluse::ResourceFormat_R32_Uint;
     case VK_FORMAT_R32_SINT:
         return Recluse::ResourceFormat_R32_Int;
+    case VK_FORMAT_D16_UNORM:
+        return Recluse::ResourceFormat_D16_Unorm;
     case VK_FORMAT_BC1_RGBA_UNORM_BLOCK:
         return Recluse::ResourceFormat_BC1_Unorm;
     case VK_FORMAT_BC2_UNORM_BLOCK:
