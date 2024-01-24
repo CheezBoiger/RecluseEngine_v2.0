@@ -78,6 +78,9 @@ enum ContextFlag
 };
 
 
+// Shader program binder stores the current bound shader program that will be used for the upcoming drawcalls.
+// It will also check any new binds, and create/manage any descriptor sets accordingly. Usually called when 
+// user binds a ShaderProgram during graphics recording.
 class IShaderProgramBinder
 {
 public:
@@ -85,28 +88,57 @@ public:
     IShaderProgramBinder(ShaderProgramId programId, ShaderPermutationId permutationId)
         : m_programId(programId), m_permutation(permutationId) { }
 
+    // Binds a shader resource to the currently bound shader program. Shader Resource must be a view type.
+    // \param type The Shader types that this view will be bound to.
+    // \param slot The slot that this shader resource will be bound to. This is dependent on the register value for DirectX, or the 
+    //             order written in the shader for Vulkan (independent of the binding value.)
+    // \param view The actual View of the shader resource to bind to the shader program.
+    // \return The same ShaderProgramBinder instance.
     virtual IShaderProgramBinder& bindShaderResource(ShaderStageFlags type, U32 slot, ResourceViewId view) { return (*this); }
+
+    // Binds an unordered access resource to the currently bound shader program. The Unordered Access must be a view type.
+    // \param type The Shader types that this view will be bound to.
+    // \param slot The slot that this shader resource will be bound to. This is dependent on the register value for DirectX, or the 
+    //             order written in the shader for Vulkan (independent of the binding value.)
+    // \param view The actual view of the unordered access resoruce to bind to the shader program.
+    // \return The same ShaderProgramBinder instance.
     virtual IShaderProgramBinder& bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceViewId view) { return (*this); }
 
     // Bind a constant buffer that links to certain shaders in the program. Define the slot in the shader program as well.
     // The pResource is the constant buffer resource to be bound, the offsetBytes is the offset in the pResource, along with the 
     // sizeBytes (the size of the data to read.) The data is optional (must be nullptr,) but programmer may specify local data that 
     // they wish to host-device copy to the pResource (pResource must be host copyable.)
+    // \return The same ShaderProgramBinder instance.
     virtual IShaderProgramBinder& bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data = nullptr) { return (*this); }
-    virtual IShaderProgramBinder& bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* ppSampler) { return (*this); }
+    
+    // Binds a sampler resource to the currently bound shader program. Sampler must be a handle.
+    // \param type The Shader types that this sampler will be bound to.
+    // \param slot The slot that this sampler will be bound to. This is dependent on the register value for DirectX, or the 
+    //             order written in the shader for Vulkan (independent of the binding value.)
+    // \param pSampler The actual sampler handle used to bind to the shader program.
+    // \return The same ShaderProgramBinder instance.
+    virtual IShaderProgramBinder& bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* pSampler) { return (*this); }
 
-    ShaderProgramId getProgramId() const { return m_programId; }
-    ShaderPermutationId getPermutationId() const { return m_permutation; }
+    // Return the currently bound program id.
+    ShaderProgramId               getProgramId() const { return m_programId; }
+
+    // Returns the currently bound permutation id.
+    ShaderPermutationId           getPermutationId() const { return m_permutation; }
 
 protected:
-    ShaderPermutationId m_permutation;
-    ShaderProgramId     m_programId;
+    // The currently bound permutation id.
+    ShaderPermutationId           m_permutation;
+
+    // The currently bound program id.
+    ShaderProgramId               m_programId;
 };
 
 typedef U32 ContextFlags;
 typedef U32 DeviceId;
 
 
+// The context of the rendering api, this will describe the rendering frame work to be sent to the GPU.
+// This consists of drawcalls, dispatches, copies, and other gpu related activities.
 class R_PUBLIC_API GraphicsContext : public ICastableObject
 {
 public:
@@ -114,11 +146,11 @@ public:
 
     // Begin the rendering context recording. This must be called before you conduct drawcalls.
     // Once finished, be sure to call end().
-    virtual void begin() { }
+    virtual void            begin() { }
 
     // End the rendering context recording. This must be called after you call begin(). 
     // Must also be called before present can be made.
-    virtual void end() { }
+    virtual void            end() { }
 
     // Get the current device associated with this context.
     virtual GraphicsDevice* getDevice() { return nullptr; }
@@ -133,29 +165,35 @@ public:
     //       resources, while the gpu is waiting for the next batch. More context frames require more memory, but will lower the possibility of 
     //       gpu stalls due to cpu usage. Keep in mind you can not have more context frames than there are swapchain frames! You need a sweet spot, which is usually
     //       around 2-3 context frames. 
-    virtual ResultCode  setFrames(U32 newBufferCount) { return RecluseResult_NoImpl; }
+    virtual ResultCode      setFrames(U32 newBufferCount) { return RecluseResult_NoImpl; }
 
     // Obtain the current number of frames for this context.
-    virtual U32         obtainFrameCount() const { return 0; }
+    virtual U32             obtainFrameCount() const { return 0; }
 
     // Obtain the current context frame index from this context.
-    virtual U32         obtainCurrentFrameIndex() const { return 0; }
+    virtual U32             obtainCurrentFrameIndex() const { return 0; }
 
-    // Not recommended, but submits a copy to this queue.
-    virtual void copyResource(GraphicsResource* dst, GraphicsResource* src) 
+    // Submits a copy to this queue.
+    // \param dst Destination resource to copy into.
+    // \param src The source resource to copy from.
+    virtual void            copyResource(GraphicsResource* dst, GraphicsResource* src) 
         { }
 
     // Submits copy of regions from src resource to dst resource. Source may be a texture.
-    virtual void  copyBufferRegions
-                        (
-                            GraphicsResource* dst, 
-                            GraphicsResource* src, 
-                            const CopyBufferRegion* pRegions, 
-                            U32 numRegions
-                        )
+    virtual void            copyBufferRegions
+                                (
+                                    GraphicsResource* dst, 
+                                    GraphicsResource* src, 
+                                    const CopyBufferRegion* pRegions, 
+                                    U32 numRegions
+                                )
         { }
 
     // Copies texture regions to the destination texture resource. Source may be a buffer.
+    // \param dst The destination texture to copy to.
+    // \param src The source resource to copy from. This can be either a texture, or a buffer.
+    // \param pRegions An array of regions to specify where to copy into the destination texture.
+    // \param numRegions The number of regions specified in pRegions.
     virtual void copyTextureRegions(GraphicsResource* dst, GraphicsResource* src, const CopyTextureRegion* pRegions, U32 numRegions) { }
 
     // Requests a host-side wait on the device. This is useful if there is mutual exclusivity of resources that the device is 
@@ -176,10 +214,16 @@ public:
     virtual void setScissors(U32 numScissors, Rect* pRects) { }
     virtual void setViewports(U32 numViewports, Viewport* pViewports) { }
 
-    // Compute shader siaptch.
+    // Dispatch call to run a bound compute shader.
+    // \param x The number of workgroups to dispatch in the x direction.
+    // \param y The number of workgroups to dispatch in the y diretion.
+    // \param z The number of workgroups to dispatch in the z direction.
     virtual void dispatch(U32 x, U32 y, U32 z) { }
 
     // Dispatch rays for Ray tracing pipelines. Only use if Ray Tracing is supported!
+    // \param x The number of ray workgroups to dispatch in the x direction.
+    // \param y The number of ray workgroups to dispatch in the y direction.
+    // \param z The number of ray workgroups to dispatch in the z direction.
     virtual void dispatchRays(U32 x, U32 y, U32 z) { }
 
     // Mesh shader dispatch, only used if mesh shaders are supported!

@@ -33,12 +33,12 @@ struct Light
 	float3 pad0;
 };
 
-[[vk::binding(2)]] Texture2D<float4> AlbedoTexture 	: register(t0);
-[[vk::binding(3)]] Texture2D<float4> NormalTexture 	: register(t1);
+[[vk::binding(2)]] Texture2D<float4> AlbedoTexture 		: register(t0);
+[[vk::binding(3)]] Texture2D<float4> NormalTexture 		: register(t1);
 [[vk::binding(4)]] Texture2D<float4> MaterialTexture 	: register(t2);
-[[vk::binding(5)]] Texture2D<float4> DepthTexture : register(t3);
+[[vk::binding(5)]] Texture2D<float4> DepthTexture  		: register(t3);
 
-[[vk::binding(6)]] StructuredBuffer<Light> LightBuffer : register(t4);
+[[vk::binding(6)]] StructuredBuffer<Light> LightBuffer 	: register(t4);
 
 [[vk::binding(7)]] SamplerState g_sampler : register(s0);
 

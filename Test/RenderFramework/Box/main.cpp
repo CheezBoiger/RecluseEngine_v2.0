@@ -743,7 +743,7 @@ int main(char* argv[], int c)
                 textureDescription.baseArrayLayer = 0;
                 textureDescription.baseMipLevel = 0;
                 textureDescription.format = ResourceFormat_R8G8B8A8_Unorm;
-                textureDescription.dimension = ResourceViewDimension_2d;
+                textureDescription.dimension = ResourceViewDimension_2dArray;
                 textureDescription.layerCount = 16;
                 textureDescription.mipLevelCount = 4;
                 textureDescription.type = ResourceViewType_ShaderResource;

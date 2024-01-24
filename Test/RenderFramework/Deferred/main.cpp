@@ -72,6 +72,8 @@ struct MeshDraw
     GraphicsResource* vertexBuffer;
     GraphicsResource* indexBuffer;
     GraphicsResource* meshTransform;
+    GraphicsResource* albedoTexture;
+    ResourceViewId albedoView;
     U32 numIndices;
 };
 
@@ -317,7 +319,7 @@ void createTextureResource(GraphicsResource** textureResource)
     textureDesc.format = ResourceFormat_R8G8B8A8_Unorm;
     textureDesc.width = g_textureWidth;
     textureDesc.height = g_textureHeight;
-    textureDesc.depthOrArraySize = 16;
+    textureDesc.depthOrArraySize = 1;
     textureDesc.memoryUsage = ResourceMemoryUsage_GpuOnly;
     textureDesc.mipLevels = 4;
     textureDesc.miscFlags = 0;
@@ -631,9 +633,10 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
     {
         U64 offset[] = { 0 };
         GraphicsResource* vb = meshes[i].vertexBuffer;
+        context->transition(meshes[i].albedoTexture, ResourceState_ShaderResource);
         binder.bindConstantBuffer(ShaderStage_Pixel | ShaderStage_Vertex, 0, meshes[i].meshTransform, 0, sizeof(ConstBuffer))
-                .bindShaderResource(ShaderStage_Pixel, 0, ~0)
-                .bindSampler(ShaderStage_Pixel, 0, nullptr);
+                .bindShaderResource(ShaderStage_Pixel, 0, meshes[i].albedoView)
+                .bindSampler(ShaderStage_Pixel, 0, gbufferSampler);
         context->bindVertexBuffers(1, &vb, offset);
         context->bindIndexBuffer(meshes[i].indexBuffer, 0, IndexType_Unsigned32);
         context->drawIndexedInstanced(meshes[i].numIndices, 1, 0, 0, 0);
@@ -743,6 +746,133 @@ void resolveLighting(GraphicsContext* context)
 }
 
 
+void createCubes(GraphicsDevice* device, std::vector<MeshDraw>& meshes, U32 width, U32 height)
+{
+    meshes.resize(1);
+    std::vector<Vertex> vertices = createCubeInstance(1.0f);
+    std::vector<U32> indices = createCubeIndicesInstance();
+
+    Math::Matrix44 view = Math::translate(Math::Matrix44::identity(), Math::Float3(0, 0, 0));
+    Math::Matrix44 proj = Math::perspectiveLH_Aspect(Math::deg2Rad(45.0f), (F32)width / (F32)height, 0.001f, 1000.0f);
+    for (auto& it : meshes)
+    {
+        GraphicsResourceDescription description = { };
+        description.depthOrArraySize = 1;
+        description.memoryUsage = ResourceMemoryUsage_GpuOnly;
+        description.mipLevels = 1;
+        description.height = 1;
+        description.width = sizeof(Vertex) * vertices.size();
+        description.samples = 1;
+        description.usage = ResourceUsage_VertexBuffer | ResourceUsage_CopyDestination;
+        description.dimension = ResourceDimension_Buffer;
+        description.format = ResourceFormat_Unknown;
+        device->createResource(&it.vertexBuffer, description, ResourceState_CopyDestination);
+        
+        description.usage =  ResourceUsage_IndexBuffer | ResourceUsage_CopyDestination;
+        description.width = sizeof(U32) * indices.size();
+        device->createResource(&it.indexBuffer, description, ResourceState_CopyDestination);
+
+        description.usage = ResourceUsage_ConstantBuffer;
+        description.memoryUsage = ResourceMemoryUsage_CpuToGpu;
+        description.width = sizeof(ConstBuffer);
+        device->createResource(&it.meshTransform, description, ResourceState_ConstantBuffer);
+
+        {
+            GraphicsResource* buf = nullptr;
+            GraphicsResourceDescription bufDesc = { };
+            bufDesc.depthOrArraySize = 1;
+            bufDesc.dimension = ResourceDimension_Buffer;
+            bufDesc.format = ResourceFormat_Unknown;
+            bufDesc.height = 1;
+            bufDesc.mipLevels = 1;
+            bufDesc.width = sizeof(Vertex) * vertices.size();
+            bufDesc.memoryUsage = ResourceMemoryUsage_CpuToGpu;
+            bufDesc.usage = ResourceUsage_CopySource;
+            device->createResource(&buf, bufDesc, ResourceState_CopySource);
+            void* dat = nullptr;
+            buf->map(&dat, nullptr);
+            memcpy(dat, vertices.data(), sizeof(Vertex) * vertices.size());
+            buf->unmap(nullptr);
+
+            CopyBufferRegion region = { };
+            region.szBytes = sizeof(Vertex) * vertices.size();
+            region.dstOffsetBytes = 0;
+            region.srcOffsetBytes = 0;
+            device->copyBufferRegions(it.vertexBuffer, buf, &region, 1);
+            device->destroyResource(buf);
+        }
+
+        {
+            GraphicsResource* buf = nullptr;
+            GraphicsResourceDescription bufDesc = { };
+            bufDesc.depthOrArraySize = 1;
+            bufDesc.dimension = ResourceDimension_Buffer;
+            bufDesc.format = ResourceFormat_Unknown;
+            bufDesc.height = 1;
+            bufDesc.mipLevels = 1;
+            bufDesc.width = sizeof(U32) * indices.size();
+            bufDesc.memoryUsage = ResourceMemoryUsage_CpuToGpu;
+            bufDesc.usage = ResourceUsage_CopySource;
+            device->createResource(&buf, bufDesc, ResourceState_CopySource);
+            void* dat = nullptr;
+            buf->map(&dat, nullptr);
+            memcpy(dat, indices.data(), sizeof(U32) * vertices.size());
+            buf->unmap(nullptr);
+
+            CopyBufferRegion region = { };
+            region.szBytes = sizeof(U32) * vertices.size();
+            region.dstOffsetBytes = 0;
+            region.srcOffsetBytes = 0;
+            device->copyBufferRegions(it.indexBuffer, buf, &region, 1);
+            device->destroyResource(buf);
+        }
+
+        ConstBuffer* buffer = nullptr;
+        it.meshTransform->map((void**)&buffer, nullptr);
+        F32 t = 20.0f * 0;
+        t = fmod(t, 360.0f);
+        Math::Matrix44 T = Math::translate(Math::Matrix44::identity(), Math::Float3(0, 0, 6));
+        Math::Matrix44 R = Math::rotate(Math::Matrix44::identity(), Math::Float3(0.0f, 1.0f, 0.0f), Math::deg2Rad(45.0f));
+        Math::Matrix44 R2 = Math::rotate(Math::Matrix44::identity(), Math::Float3(1.0f, 0.0f, 1.0f), Math::deg2Rad(t));
+        Math::Matrix44 model = R2 * R * T;
+        buffer->modelViewProjection = model * view * proj;
+        it.meshTransform->unmap(nullptr);
+        
+        it.numIndices = (U32)indices.size();
+        createTextureResource(&it.albedoTexture);
+
+        ResourceViewDescription textureDescription = { };
+        textureDescription.baseArrayLayer = 0;
+        textureDescription.baseMipLevel = 0;
+        textureDescription.format = ResourceFormat_R8G8B8A8_Unorm;
+        textureDescription.dimension = ResourceViewDimension_2d;
+        textureDescription.layerCount = 1;
+        textureDescription.mipLevelCount = 4;
+        textureDescription.type = ResourceViewType_ShaderResource;
+        it.albedoView = it.albedoTexture->asView(textureDescription);
+    }
+}
+
+
+void destroyCubes(GraphicsDevice* device, std::vector<MeshDraw>& meshes)
+{
+    for (auto& it : meshes)
+    {
+        if (it.indexBuffer)
+            device->destroyResource(it.indexBuffer);
+        if (it.vertexBuffer)
+            device->destroyResource(it.vertexBuffer);
+        if (it.meshTransform)
+            device->destroyResource(it.meshTransform);
+        if (it.albedoTexture)
+            device->destroyResource(it.albedoTexture);
+        it.indexBuffer = nullptr;
+        it.vertexBuffer = nullptr;
+        it.meshTransform = nullptr;
+    }
+}
+
+
 int main(char* argv[], int c)
 {
     Log::initializeLoggingSystem();
@@ -798,6 +928,7 @@ int main(char* argv[], int c)
     createGBuffer(device, swapchain->getDesc().renderWidth, swapchain->getDesc().renderHeight);
     createLightBuffer(device);
     createSceneBuffer(device);
+    createCubes(device, meshes, window->getWidth(), window->getHeight());
 
     std::array<F32, 10> lastMs;
     U32 frameCount = 0;
@@ -844,6 +975,7 @@ int main(char* argv[], int c)
     context->wait();
 
     destroyGBuffer(device);
+    destroyCubes(device, meshes);
     device->destroySwapchain(swapchain);
     device->destroySampler(gbufferSampler);
     //device->destroyResource(depthBuffer);
