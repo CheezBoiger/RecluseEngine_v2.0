@@ -1,6 +1,8 @@
 //
 #include "D3D12Resource.hpp"
 #include "D3D12Device.hpp"
+#include "D3D12Instance.hpp"
+#include "D3D12Adapter.hpp"
 #include "D3D12Allocator.hpp"
 #include "D3D12ResourceView.hpp"
 #include "Recluse/Messaging.hpp"
@@ -159,9 +161,15 @@ ResultCode D3D12Resource::initialize
     setCurrentResourceState(initialState);
     m_id = generateResourceId();
 
-    if (desc.name)
+    // Check for debug marking feature if we need to name these resources.
+    D3D12Instance* instance = pDevice->getAdapter()->getInstance();
+    R_ASSERT(instance);
+    if (desc.name && instance->isLayerFeatureEnabled(LayerFeatureFlag_DebugMarking))
     {
-        
+        std::vector<WCHAR> name;
+        name.resize(strlen(desc.name) + 1);
+        mbstowcs(name.data(), desc.name, name.size());
+        m_memObj.pResource->SetName(name.data());
     }
 
     if (shouldTransition)
