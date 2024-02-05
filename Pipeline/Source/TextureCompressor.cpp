@@ -36,13 +36,5 @@ F32 normalize(UPtr address, ResourceFormat format)
     }
     return 0.f;
 }
-
-
-Texture compress(const Texture& texture, CompressionFormat compressionFormat, CompressFlags compressFlags)
-{
-    Texture compressTexture;
-    
-    return compressTexture;
-}
 } // Pipeline
 } // Recluse

@@ -1,7 +1,7 @@
 cmake_minimum_required( VERSION 3.0 )
-project("Box")
+project("Permutation")
 
-set(APP_NAME "Box")
+set(APP_NAME "Permutation")
 
 set( APP_FILES 
     main.cpp

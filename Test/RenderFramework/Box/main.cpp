@@ -8,8 +8,7 @@
 #include "Recluse/Graphics/Resource.hpp"
 #include "Recluse/Messaging.hpp"
 
-#include "Recluse/Pipeline/ShaderProgramBuilder.hpp"
-#include "Recluse/Pipeline/Texture.hpp"
+#include "Recluse/Renderer/Texture.hpp"
 #include "Recluse/Filesystem/Filesystem.hpp"
 #include "Recluse/System/KeyboardInput.hpp"
 #include "Recluse/Filesystem/Archive.hpp"
@@ -22,10 +21,14 @@
 
 #include <array>
 
-#define READ_DATABASE 0
-#define COMPILE_SHADER_PROGRAM 1
+#define READ_DATABASE 1
+#define COMPILE_SHADER_PROGRAM 0
 #define WRITE_DATABASE 1
 #define MANUAL_PROGRAMING_UPDATE 0
+
+#if WRITE_DATABASE
+#include "Recluse/Pipeline/ShaderProgramBuilder.hpp"
+#endif
 
 using namespace Recluse;
 
@@ -333,14 +336,14 @@ void createTextureResource(GraphicsResource** textureResource)
     result = device->createResource(textureResource, textureDesc, ResourceState_CopyDestination);
 
     R_ASSERT(result == RecluseResult_Ok);
-    Pipeline::Texture texture = Pipeline::Texture("Name", g_textureWidth, g_textureHeight, 16u, 4u, ResourceFormat_R8G8B8A8_Unorm);
+    Engine::Texture texture = Engine::Texture("Name", g_textureWidth, g_textureHeight, 16u, 4u, ResourceFormat_R8G8B8A8_Unorm);
     UPtr baseAddress = texture.getBaseAddress();
-    U32 bytesPerPixel = Pipeline::obtainFormatBytes(texture.getPixelFormat());
+    U32 bytesPerPixel = Engine::obtainFormatBytes(texture.getPixelFormat());
     for (U32 layer = 0; layer < texture.getArrayLayers(); ++layer)
     {
         for (U32 mipmap = 0; mipmap < texture.getMipCount(); ++mipmap)
         {
-            const Pipeline::Subresource& subresource = texture.getSubresource(layer, mipmap);
+            const Engine::Subresource& subresource = texture.getSubresource(layer, mipmap);
             UPtr subresourceAddress = baseAddress + subresource.getOffsteBytes();
             U8* data = (U8*)subresourceAddress;
             for (int y = 0; y < subresource.getHeight(); y++) 
