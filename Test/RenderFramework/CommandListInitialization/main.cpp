@@ -60,6 +60,8 @@ int main(int c, char* argv[])
 
     }
 
+    pContext = pDevice->createContext();
+    pContext->setFrames(2);
     GraphicsContext* context = nullptr;
     
     if (result != RecluseResult_Ok) {
@@ -71,12 +73,12 @@ int main(int c, char* argv[])
         R_TRACE("Graphics", "Successfully created command list!");
         context = pContext;
         context->begin();
-        context->begin();
-        context->end();
         context->end();
 
     }
 
+    context->wait();
+    pDevice->releaseContext(pContext);
     adapters[0]->destroyDevice(pDevice);
 
     GraphicsInstance::destroyInstance(pInstance);

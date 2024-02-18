@@ -58,7 +58,7 @@ public:
         LifetimeNode* current = m_root;
         while (current)
         {
-            func(current->data);
+            func(current->key, current->data);
             current = current->next;
         }
     }
@@ -108,7 +108,7 @@ public:
                 }
                 // Delete the data, destroy the isolated node,
                 // and decrement the number of nodes in the linked list.
-                deleteFunc(tail->data);
+                deleteFunc(tail->key, tail->data);
                 // Don't forget to erase the mapped portion too.
                 m_cacheMap.erase(tail->key);
                 delete tail;

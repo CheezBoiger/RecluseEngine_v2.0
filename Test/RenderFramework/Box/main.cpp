@@ -21,8 +21,8 @@
 
 #include <array>
 
-#define READ_DATABASE 1
-#define COMPILE_SHADER_PROGRAM 0
+#define READ_DATABASE 0
+#define COMPILE_SHADER_PROGRAM 1
 #define WRITE_DATABASE 1
 #define MANUAL_PROGRAMING_UPDATE 0
 
@@ -644,11 +644,11 @@ int main(char* argv[], int c)
     Log::initializeLoggingSystem();
     enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
+    instance  = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 
-    Window* window = Window::create("Box", 0, 0, 1200, 800, ScreenMode_WindowBorderless);
+    Window* window = Window::create("Box", 0, 0, 1200, 800, ScreenMode_Windowed);
     window->show();
     window->setToCenter();
     window->setOnWindowResize(ResizeFunction);
@@ -660,7 +660,7 @@ int main(char* argv[], int c)
         appInfo.appMinor = 0;
         appInfo.appMajor = 0;
         appInfo.appPatch = 0;
-        LayerFeatureFlags flags = 0;//LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
+        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
         instance->initialize(appInfo, flags);
     }
     
@@ -746,8 +746,8 @@ int main(char* argv[], int c)
                 textureDescription.baseArrayLayer = 0;
                 textureDescription.baseMipLevel = 0;
                 textureDescription.format = ResourceFormat_R8G8B8A8_Unorm;
-                textureDescription.dimension = ResourceViewDimension_2dArray;
-                textureDescription.layerCount = 16;
+                textureDescription.dimension = ResourceViewDimension_2d;
+                textureDescription.layerCount = 1;
                 textureDescription.mipLevelCount = 4;
                 textureDescription.type = ResourceViewType_ShaderResource;
                 ResourceViewId textureView = textureResource->asView(textureDescription);
@@ -789,6 +789,17 @@ int main(char* argv[], int c)
             if (listener.isKeyDown(KeyCode_Escape))
             {
                 window->close();
+            }
+            if (listener.isKeyDown(KeyCode_F))
+            {
+                if (window->getScreenMode() != ScreenMode_Fullscreen)
+                    window->setScreenMode(ScreenMode_Fullscreen);
+                else
+                {
+                    window->setScreenMode(ScreenMode_Windowed);
+                    window->setScreenSize(800, 600);
+                }
+                window->update();
             }
         }
 

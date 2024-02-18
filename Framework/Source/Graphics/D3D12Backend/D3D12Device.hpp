@@ -61,7 +61,7 @@ private:
 public:
     D3D12Context(D3D12Device* pDevice, U32 bufferCount, D3D12Queue* pQueue)
         : m_pDevice(pDevice)
-        , m_currentBufferIndex(0)
+        , m_currentContextFrameIndex(0)
         , m_pPrimaryCommandList(nullptr)
         , m_bufferCount(bufferCount)
         , m_queue(pQueue)
@@ -76,14 +76,14 @@ public:
     ResultCode                          setFrames(U32 bufferCount) override;
     ResultCode                          wait() override;
 
-    inline void                         incrementBufferIndex() 
+    inline void                         incrementContextFrameIndex() 
     { 
-        m_currentBufferIndex = (m_currentBufferIndex + 1) % m_bufferCount; 
+        m_currentContextFrameIndex = (m_currentContextFrameIndex + 1) % m_bufferCount; 
     }
 
     U32                                 currentBufferIndex() const 
     { 
-        return m_currentBufferIndex; 
+        return m_currentContextFrameIndex; 
     }
 
     // Not recommended, but submits a copy to this queue, and waits until the command has 
@@ -100,8 +100,8 @@ public:
                                                 U32 numRegions
                                             ) override;
 
-    ContextFrame*                       getCurrentContextFrame() { return &m_contextFrames[m_currentBufferIndex]; }
-    U32                                 getCurrentFrameIndex() const { return m_currentBufferIndex; }
+    ContextFrame*                       getCurrentContextFrame() { return &m_contextFrames[m_currentContextFrameIndex]; }
+    U32                                 getCurrentFrameIndex() const { return m_currentContextFrameIndex; }
     U32                                 obtainCurrentFrameIndex() const override { return getCurrentFrameIndex(); }
     U32                                 obtainFrameCount() const override { return m_bufferCount; }
 
@@ -206,7 +206,7 @@ private:
 
     D3D12Device*                        m_pDevice;
     std::vector<ContextFrame>           m_contextFrames;
-    U32                                 m_currentBufferIndex;
+    U32                                 m_currentContextFrameIndex;
     U32                                 m_bufferCount;
     ContextDirtyFlags                   m_dirtyFlags;    
     D3D12PrimaryCommandList*            m_pPrimaryCommandList;

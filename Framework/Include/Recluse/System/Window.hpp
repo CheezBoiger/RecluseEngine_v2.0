@@ -90,7 +90,7 @@ public:
     // Set the title of the window.
     void                        setTitle(const std::string& title);
     // Programmatically resize the window.
-    void                        setScreenSize(U32 width, U32 height);
+    R_OS_CALL R_PUBLIC_API void setScreenSize(U32 width, U32 height);
     // Set the window to the center of your screen.
     R_OS_CALL R_PUBLIC_API void setToCenter();
     // Set the window to a location on your screen.
@@ -131,19 +131,20 @@ public:
     void                        setOnWindowResize(OnWindowResizeFunction func) { m_onWindowResizeCallback = func; }
 
     // Set the screen mode.
-    R_PUBLIC_API void setScreenMode(ScreenMode mode);
+    R_PUBLIC_API void           setScreenMode(ScreenMode mode);
     
     void                        overridePosition(U32 x, U32 y) { m_xPos = x; m_yPos = y; }
     void                        overrideMinimized(Bool isMinimized) { m_status.mustMinimize = isMinimized; }
     void                        overrideRestored(Bool isRestored) { m_status.mustRestore = true; }
 
-    void update();
+    R_PUBLIC_API void           update();
 
 private:
 
     B32 mustChangeScreen() const { return m_status.mustChangeScreen; }
     B32 mustResize() const { return m_status.mustResize; }
     void screenChanged() { m_status.mustChangeScreen = false; }
+    void screenShouldChange() { m_status.mustChangeScreen = true; }
     void resized() { m_status.mustResize = false; }
 
     // The window width
@@ -169,11 +170,11 @@ private:
 
     struct 
     {
-        B32     mustChangeScreen : 1;
-        B32     mustResize : 1;
-        B32     mustMinimize : 1;
-        B32     mustMaximize : 1;
-        B32     mustRestore : 1;
+        B32                     mustChangeScreen : 1;
+        B32                     mustResize : 1;
+        B32                     mustMinimize : 1;
+        B32                     mustMaximize : 1;
+        B32                     mustRestore : 1;
     } m_status;
 
     // Title of the window.

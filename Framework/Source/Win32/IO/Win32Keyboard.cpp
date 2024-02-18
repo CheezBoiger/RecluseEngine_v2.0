@@ -1,11 +1,12 @@
 //
 #include "Win32/IO/Win32Keyboard.hpp"
+#include "Graphics/LifetimeCache.hpp"
 
 #include <unordered_map>
 
 namespace Recluse {
 
-
+static LifetimeCache<KeyCode, KeyStatus*> kStatus; 
 static KeyStatus kWin32InputKeyCodes[KeyCode_MaxBufferCount];
 
 #define R_WIN_KEY(dword, keycode) std::pair<DWORD, KeyCode>(dword, keycode)
@@ -103,6 +104,19 @@ void registerKeyCall(DWORD keyCode, DWORD status)
         resolved = KeyStatus_StillDown;
 
     kWin32InputKeyCodes[kWin32KeyMap[keyCode]] = resolved;
+}
+
+
+void keySweepCheck()
+{
+    kStatus.updateTick();
+    // Check if the key code is still down.
+    kStatus.check(15, 
+        [] (KeyCode code, KeyStatus* status) -> void 
+        {
+            if (*status == KeyStatus_Down)
+                kWin32InputKeyCodes[code] = KeyStatus_StillDown;
+        });
 }
 } // Win32
 

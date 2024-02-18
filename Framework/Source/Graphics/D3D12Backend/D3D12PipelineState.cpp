@@ -708,7 +708,7 @@ void resetTableHeaps(D3D12Device* pDevice)
 void cleanUpPipelines(DeviceId deviceId)
 {
     g_pipelineStateMap[deviceId].forEach(
-        [] (ID3D12PipelineState* pipelineState) -> void
+        [] (PipelineStateId, ID3D12PipelineState* pipelineState) -> void
         {
             R_DEBUG(R_CHANNEL_D3D12, "Destroying pipeline.");
             pipelineState->Release();
@@ -725,7 +725,7 @@ void updateT(D3D12Device* pDevice)
 
 void checkPipelines(D3D12Device* pDevice)
 {
-    g_pipelineStateMap[pDevice->getDeviceId()].check(g_d3d12MaxPipelineAge, [] (ID3D12PipelineState* pipelineState) -> void
+    g_pipelineStateMap[pDevice->getDeviceId()].check(g_d3d12MaxPipelineAge, [] (PipelineStateId, ID3D12PipelineState* pipelineState) -> void
         {
             R_DEBUG(R_CHANNEL_D3D12, "Destroying pipeline.");
             pipelineState->Release();

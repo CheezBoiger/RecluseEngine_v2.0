@@ -80,7 +80,7 @@ private:
 public:
     VulkanContext(VulkanDevice* pDevice, VulkanQueue* queue)
         : m_bufferCount(0)
-        , m_currentBufferIndex(0)
+        , m_currentContextFrameIndex(0)
         , m_boundRenderPass(nullptr)
         , m_pDevice(pDevice) 
         , m_queue(queue)
@@ -94,8 +94,8 @@ public:
     void                            end() override;
 
     inline U32                      getFrameCount() const { return m_bufferCount; }
-    inline U32                      getCurrentFrameIndex() const { return m_currentBufferIndex; }
-    inline VkFence                  getCurrentFence() const { return m_frameResources[m_currentBufferIndex].fence; }
+    inline U32                      getCurrentFrameIndex() const { return m_currentContextFrameIndex; }
+    inline VkFence                  getCurrentFence() const { return m_frameResources[m_currentContextFrameIndex].fence; }
     ResultCode                      createPrimaryCommandList(VkQueueFlags flags);
     ResultCode                      destroyPrimaryCommandList();
     ResultCode                      setFrames(U32 newBufferCount) override;
@@ -289,9 +289,9 @@ private:
     // dangerous!
     ResultCode                  submitFinalCommandBuffer(VkCommandBuffer commandBuffer);
     
-    inline void incrementBufferIndex() 
+    inline void incrementContextFrameIndex() 
     { 
-        m_currentBufferIndex = (m_currentBufferIndex + 1) % m_bufferCount; 
+        m_currentContextFrameIndex = (m_currentContextFrameIndex + 1) % m_bufferCount; 
     }
 
     // The current context state, that is pushed to this context.
@@ -303,7 +303,7 @@ private:
 
     // buffer count 
     U32                                                                 m_bufferCount;
-    U32                                                                 m_currentBufferIndex;
+    U32                                                                 m_currentContextFrameIndex;
     ::std::vector<VulkanContextFrame>                                   m_frameResources;
     VulkanDevice*                                                       m_pDevice;
     ::std::vector<VkBufferMemoryBarrier>                                m_bufferMemoryBarriers;
@@ -393,7 +393,7 @@ public:
     // Invalidate resources when reading back from GPU.
     void                            pushInvalidateMemoryRange(const VkMappedMemoryRange& mappedRange);
 
-    // Flush the resource memory range when writing from CPU to GPU.
+    // Flush the resource memory range when writing from CPU to GPU. 
     void                            pushFlushMemoryRange(const VkMappedMemoryRange& mappedRange);
 
     void                            flushAllMappedRanges();

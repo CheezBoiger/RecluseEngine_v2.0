@@ -988,7 +988,7 @@ ResultCode clearPipelineCache(VulkanDevice* pDevice)
         destroyPipelineLayout(pDevice, *pipelineLayoutIt.second);
     }
 
-    g_pipelineMap[deviceId].forEach([pDevice] (PipelineState& state) -> void
+    g_pipelineMap[deviceId].forEach([pDevice] (PipelineId id, PipelineState& state) -> void
         {
             R_DEBUG(R_CHANNEL_VULKAN, "Destroying pipeline.");
             destroyPipeline(pDevice, state.pipeline);
@@ -1025,7 +1025,7 @@ void clean(VulkanDevice* device)
 {
     g_pipelineMap[device->getDeviceId()].check
         (
-            g_vulkanPipelineMaxAge, [device] (PipelineState& state) -> void 
+            g_vulkanPipelineMaxAge, [device] (PipelineId id, PipelineState& state) -> void 
             {
                 R_DEBUG(R_CHANNEL_VULKAN, "Destroying pipeline.");
                 destroyPipeline(device, state.pipeline);

@@ -127,7 +127,7 @@ D3D12RenderPass* makeRenderPass(D3D12Device* pDevice, U32 numRtvs, ResourceViewI
 
 void clearAll(D3D12Device* pDevice)
 {
-    g_renderPassMap.forEach([pDevice] (D3D12RenderPass& renderPass) -> void
+    g_renderPassMap.forEach([pDevice] (Hash64, D3D12RenderPass& renderPass) -> void
         {
             R_DEBUG(R_CHANNEL_D3D12, "Cleaning up renderpass.");
             renderPass.release(pDevice);
@@ -146,7 +146,7 @@ void clearRenderPassCache()
 void sweep(D3D12Device* pDevice)
 {
     // Perform a check to sweep up any old render pass.
-    g_renderPassMap.check(g_d3d12RenderPassMaxAge, [pDevice] (D3D12RenderPass& renderPass) -> void 
+    g_renderPassMap.check(g_d3d12RenderPassMaxAge, [pDevice] (Hash64, D3D12RenderPass& renderPass) -> void 
         {
             R_DEBUG(R_CHANNEL_D3D12, "Cleaning up renderpass.");
             renderPass.release(pDevice);

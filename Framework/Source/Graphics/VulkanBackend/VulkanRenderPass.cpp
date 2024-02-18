@@ -405,13 +405,13 @@ void checkLruCache(VulkanDevice* pDevice)
 #else
     DeviceId deviceId = pDevice->getDeviceId();
     g_rpCache[deviceId].check(g_renderPassMaxAge,
-                        [device] (std::unique_ptr<RenderPassLiveObject>& obj) -> void
+                        [device] (RenderPasses::RenderPassId, std::unique_ptr<RenderPassLiveObject>& obj) -> void
                         {
                             R_DEBUG("Vulkan", "Cleaning up render pass");
                             vkDestroyRenderPass(device, obj->rp(), nullptr);
                         });
     g_fbCache[deviceId].check(g_frameBufferMaxAge, 
-                        [device] (std::unique_ptr<FramebufferObject>& obj) -> void 
+                        [device] (Hash64, std::unique_ptr<FramebufferObject>& obj) -> void 
                         {
                             R_DEBUG("Vulkan", "Cleaning up framebuffer."); 
                             vkDestroyFramebuffer(device, obj->framebuffer, nullptr); 
@@ -499,7 +499,7 @@ void clearCache(VulkanDevice* pDevice)
     DeviceId deviceId = pDevice->getDeviceId();
     g_rpCache[deviceId].forEach
         (
-            [pDevice] (std::unique_ptr<RenderPassLiveObject>& obj) -> void
+            [pDevice] (RenderPasses::RenderPassId hash, std::unique_ptr<RenderPassLiveObject>& obj) -> void
             {
                 R_DEBUG(R_CHANNEL_VULKAN, "Destorying RenderPass");
                 vkDestroyRenderPass(pDevice->get(), obj->rp(), nullptr);
@@ -507,7 +507,7 @@ void clearCache(VulkanDevice* pDevice)
         );
     g_fbCache[deviceId].forEach
         (
-            [pDevice] (std::unique_ptr<FramebufferObject>& obj) -> void 
+            [pDevice] (Hash64 hash, std::unique_ptr<FramebufferObject>& obj) -> void 
             { 
                 R_DEBUG(R_CHANNEL_VULKAN, "Destroying framebuffer");
                 vkDestroyFramebuffer(pDevice->get(), obj->framebuffer, nullptr); 

@@ -119,7 +119,7 @@ Window* Window::create(const std::string& title, U32 x, U32 y, U32 width, U32 he
                         NULL,
                         R_WIN32_WINDOW_NAME,
                         ltitle, 
-                        (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_BORDER | WS_SIZEBOX), 
+                        getWindowStyle(screenMode), 
                         x, y, 
                         width, height, 
                         NULL, 
@@ -138,6 +138,7 @@ Window* Window::create(const std::string& title, U32 x, U32 y, U32 width, U32 he
     }
 
     pWindow                 = new Window();
+    pWindow->m_screenMode   = screenMode;
     pWindow->m_xPos         = x;
     pWindow->m_yPos         = y;
     pWindow->m_width        = width;
@@ -155,8 +156,7 @@ Window* Window::create(const std::string& title, U32 x, U32 y, U32 width, U32 he
     pWindow->update();
     setRawInputDevices(hwnd);
 
-    UpdateWindow(hwnd);
-
+    //UpdateWindow(hwnd);
     g_hwndToWindowMap.insert(std::make_pair(hwnd, pWindow));
 
     R_DEBUG(R_CHANNEL_WIN32, "Successfully created window!");
@@ -247,7 +247,7 @@ void Window::show()
 {
     HWND hwnd = (HWND)getNativeHandle();
     ShowWindow(hwnd, SW_SHOW);
-    //SetForegroundWindow(hwnd);
+    SetForegroundWindow(hwnd);
     UpdateWindow(hwnd);
     m_isShowing = true;
     // It is no longer minimized.
@@ -259,8 +259,37 @@ void Window::setScreenMode(ScreenMode mode)
 {
     if (m_screenMode != mode)
     {
-        HWND hwnd = (HWND)getNativeHandle();
         m_screenMode = mode;
+        screenShouldChange();
+    }
+}
+
+
+void Window::minimize()
+{
+    HWND hwnd = (HWND)m_handle;
+    ShowWindow(hwnd, SW_SHOWMINNOACTIVE);
+    m_status.mustMinimize = true;
+}
+
+
+void Window::restore()
+{
+    HWND hwnd = (HWND)m_handle;
+    ShowWindow(hwnd, SW_RESTORE);
+    m_status.mustRestore = true;
+}
+
+
+void Window::update()
+{
+    // Everytime update() is called, ensure that you first clean the boolean that was flagged first, before 
+    // calling any win32 window functions. This is because whenever they are called, the win32 proc will get called 
+    // and update() is already being used there too (will end up in a recursive loop!!)
+    if (mustChangeScreen())
+    {
+        screenChanged();
+        HWND hwnd = (HWND)getNativeHandle();
         if (m_screenMode == ScreenMode_Windowed)
         {
             m_isBorderless = false;
@@ -268,16 +297,22 @@ void Window::setScreenMode(ScreenMode mode)
             // Adjust window size due to possible menu.
             RECT windowRect = { (LONG)m_xPos, (LONG)m_yPos, (LONG)m_width, (LONG)m_height };
 
-            AdjustWindowRect(&windowRect, WS_CAPTION, GetMenu(hwnd) != NULL);
-
+            SetWindowLongW(hwnd, GWL_EXSTYLE, 0);
+            SetWindowLongW(hwnd, GWL_STYLE, getWindowStyle(m_screenMode));
+            AdjustWindowRect(&windowRect, WS_CAPTION, true/*GetMenu(hwnd) != NULL */);
+            LONG windowWidth = windowRect.right - windowRect.left;
+            LONG windowHeight = windowRect.bottom - windowRect.top;
             MoveWindow
                 (
                     hwnd, 
-                    0, 0,
-                    windowRect.right - windowRect.left, 
-                    windowRect.bottom - windowRect.top, 
+                    m_xPos, m_yPos,
+                    windowWidth, 
+                    windowHeight, 
                     FALSE
                 );
+            SetWindowPos(hwnd, HWND_TOP, m_xPos, m_yPos, windowWidth, windowHeight, (SWP_NOSIZE | SWP_NOACTIVATE | SWP_DRAWFRAME));
+            SetFocus(hwnd);
+            SetActiveWindow(hwnd);
             UpdateWindow(hwnd);
         }
         
@@ -288,6 +323,7 @@ void Window::setScreenMode(ScreenMode mode)
             SetWindowLongW(hwnd, GWL_EXSTYLE, 0);
             SetWindowLongW(hwnd, GWL_STYLE, (WS_POPUP));
             SetWindowPos(hwnd, HWND_NOTOPMOST, m_xPos, m_yPos, m_width, m_height, (SWP_FRAMECHANGED));
+            UpdateWindow(hwnd);
         }
 
         if (m_screenMode == ScreenMode_FullscreenBorderless)
@@ -324,40 +360,25 @@ void Window::setScreenMode(ScreenMode mode)
             m_xPos = rect.left;
             m_yPos = rect.top;
         }
+        if (isShowing())
+        {
+            show();
+        }
     }
-}
 
-
-void Window::minimize()
-{
-    HWND hwnd = (HWND)m_handle;
-    ShowWindow(hwnd, SW_SHOWMINNOACTIVE);
-    m_status.mustMinimize = true;
-}
-
-
-void Window::restore()
-{
-    HWND hwnd = (HWND)m_handle;
-    ShowWindow(hwnd, SW_RESTORE);
-    m_status.mustRestore = true;
-}
-
-
-void Window::update()
-{
-    HWND hwnd = (HWND)m_handle;
     if (mustResize())
     {
         resized();
         onWindowResize(m_xPos, m_yPos, m_width, m_height);
     }
+
     if (m_status.mustMinimize)
     {
         m_status.mustMinimize = false;
         m_isShowing = false; 
         m_isMinimized = true;
     }
+
     if (m_status.mustRestore)
     {
         m_isShowing = true;

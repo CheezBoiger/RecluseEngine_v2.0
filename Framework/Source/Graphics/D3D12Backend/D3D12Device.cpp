@@ -57,7 +57,7 @@ ResultCode D3D12Context::setFrames(U32 bufferCount)
     m_bufferCount = bufferCount;
     initialize();
     m_pDevice->getDescriptorHeapManager()->resizeShaderVisibleHeapInstances(m_bufferCount);
-    m_currentBufferIndex = 0;
+    m_currentContextFrameIndex = 0;
     return RecluseResult_Ok;
 }
 
@@ -76,7 +76,7 @@ void D3D12Context::begin()
     HANDLE e = m_queue->getEvent();
     const U64 previousFenceValue = getContextFrame(getCurrentFrameIndex()).fenceValue;
 
-    incrementBufferIndex();
+    incrementContextFrameIndex();
 
     const U64 currentFrameValue = getContextFrame(getCurrentFrameIndex()).fenceValue;
     m_queue->get()->Signal(fence, previousFenceValue);
@@ -448,7 +448,7 @@ ResultCode D3D12Device::reserveMemory(const MemoryReserveDescription& desc)
 void D3D12Context::resetCurrentResources()
 {
     HRESULT result = S_OK;
-    ContextFrame& buffer = m_contextFrames[m_currentBufferIndex];
+    ContextFrame& buffer = m_contextFrames[m_currentContextFrameIndex];
         
     result = buffer.pAllocator->Reset();
 
@@ -488,7 +488,7 @@ void D3D12Context::initializeBufferResources(U32 buffering)
         R_ASSERT(result == S_OK);
         m_contextFrames[i].fenceValue = m_queue->getFence()->GetCompletedValue();
     }
-    m_contextFrames[m_currentBufferIndex].fenceValue = m_queue->waitForGpu(m_contextFrames[m_currentBufferIndex].fenceValue);
+    m_contextFrames[m_currentContextFrameIndex].fenceValue = m_queue->waitForGpu(m_contextFrames[m_currentContextFrameIndex].fenceValue);
 }
 
 

@@ -54,7 +54,7 @@ void VulkanContext::initialize(U32 bufferCount)
     VulkanAllocationManager::UpdateConfig config = { };
     config.flags = VulkanAllocationManager::Flag_GarbageResize | VulkanAllocationManager::Flag_SetFrameIndex;
     config.garbageBufferCount = bufferCount;
-    config.frameIndex = m_currentBufferIndex;
+    config.frameIndex = m_currentContextFrameIndex;
     allocManager->update(config);
 }
 
@@ -74,7 +74,7 @@ void VulkanContext::release()
     destroyContextFrames();
     // Ensure we no longer have any buffers.
     m_bufferCount = 0;
-    m_currentBufferIndex = 0;
+    m_currentContextFrameIndex = 0;
 }
 
 
@@ -93,7 +93,7 @@ DescriptorAllocatorInstance* VulkanContext::currentDescriptorAllocator()
 void VulkanContext::begin()
 {    
     R_ASSERT(getFrameCount() > 0);
-    incrementBufferIndex();
+    incrementContextFrameIndex();
     VulkanContextFrame& contextFrame    = getContextFrame(getCurrentFrameIndex());
     VkFence frameFence                  = contextFrame.fence;
 
