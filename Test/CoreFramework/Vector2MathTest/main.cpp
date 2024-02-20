@@ -8,6 +8,7 @@
 #include "Recluse/Math/Vector4.hpp"
 #include "Recluse/Math/Matrix22.hpp"
 
+#include "Recluse/Algorithms/Mergesort.hpp"
 #include "Recluse/Structures/RBTree.hpp"
 #include "Recluse/Memory/BuddyAllocator.hpp"
 #include "Recluse/Memory/MemoryPool.hpp"
@@ -81,6 +82,9 @@ int main(int c, char* argv[])
     Math::Color3 color1(0, 255, 0);
     U32 len = Math::dist(color0, color1);
     R_TRACE("Colors", "distance: %d", len); 
+
+    int items[10] = { 0, 5, 3, 2, 9, 2, -2, 6, 8, 54 };
+    mergeSort<int, CompareGreater<int>>(items, 10, nullptr, CompareGreater<int>());
     Log::destroyLoggingSystem();
 
     return 0;

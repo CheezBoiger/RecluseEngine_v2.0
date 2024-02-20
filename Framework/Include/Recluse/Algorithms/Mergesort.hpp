@@ -18,39 +18,47 @@ void copyArray(Data* pDataDst, U64 begin, U64 end, Data* pDataSrc)
 
 
 template<typename Data, typename Compare = CompareLess<Data>>
-void bottomUpMerge(Data* pDataA, U64 right, U64 left, U64 end, Data* aux, const Compare& comp)
+void merge(Data* B, I64 begin, I64 middle, I64 end, Data* A, const Compare& comp)
 {
-    U64 i = left;
-    U64 j = right;
+    I64 i = begin;
+    I64 j = middle;
 
     // Do the actual merging.
-    for (U64 k = left; k < end; ++k)
+    for (I64 k = begin; k < end; ++k)
     {
-        if (i < right && (j >= end || comp(pDataA[i], pDataA[j])))
+        if (i < middle && (j >= end || comp(A[i], A[j])))
         {
-            aux[k] = pDataA[i];
+            B[k] = A[i];
             i = i + 1;
         }
         else
         {
-            aux[k] = pDataA[j];
+            B[k] = A[j];
             j = j + 1;
         }
     }
 }
 
+
 template<typename Data, typename Compare = CompareLess<Data>>
-void mergeHelper(Data* pDataA, U64 start, U64 end, Data* aux, const Compare& comp = Compare())
+void mergeHelper(Data* B, I64 start, I64 end, Data* A, const Compare& comp = Compare())
 {
-    if (start >= end) return;
-    U64 middle = (end - start) / 2;
-    mergeHelper(pDataA, start, middle, aux, comp);
-    mergeHelper(pDataA, middle, end, aux, comp);
+    if (end - start <= 1) return;
+    U64 middle = (end + start) / 2;
+    mergeHelper(A, start, middle, B, comp);
+    mergeHelper(A, middle, end, B, comp);
+    merge(B, start, middle, end, A, comp); 
 }
 } // MergeSortInternal
 
+
+// Performs an O(n log (n)) merge sort of the following array data structure. This does not 
+// handle linked list type data structures. 
+// 
+// Keep in mind that the space required is O(n), meaning it may require the same amount of 
+// space as the unsorted array itself.
 template<typename Data, typename Compare = CompareLess<Data>>
-Data* mergeSort(Data* pDataArr, U64 count, Data* aux = nullptr, Compare comp = Compare())
+Data* mergeSort(Data* pDataArr, I64 count, Data* aux = nullptr, Compare comp = Compare())
 {
     Bool isInternalMalloc = false;
     
@@ -60,12 +68,13 @@ Data* mergeSort(Data* pDataArr, U64 count, Data* aux = nullptr, Compare comp = C
         isInternalMalloc = true;
     }
 
-    MergeSortInternal::copyArray(pDataArr, 0, count, aux);
+    MergeSortInternal::copyArray(aux, 0, count, pDataArr);
     MergeSortInternal::mergeHelper(pDataArr, 0, count, aux, comp);
 
     if (isInternalMalloc)
     {
         delete aux;
     }
+    return pDataArr;
 }
 } // Recluse
