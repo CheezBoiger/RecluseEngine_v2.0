@@ -43,7 +43,9 @@ public:
 
         RendererConfigs config = { };
         config.api = GraphicsApi_Vulkan;
+        config.enableGpuValidation = false;
         config.buffering = 3;
+        config.maxFrameRate = 0.0f;
         config.windowHandle = getWindow()->getNativeHandle();
         config.renderWidth = getWindow()->getWidth();
         config.renderHeight = getWindow()->getHeight();
@@ -57,7 +59,7 @@ public:
     virtual ResultCode onCleanUp() override
     {
         MessageBus::fireEvent(getMessageBus(), RenderEvent_Shutdown);
-        Renderer::cleanUpModule(this);
+        //Renderer::cleanUpModule(this);
         Log::destroyLoggingSystem();     
         return RecluseResult_Ok;
     }

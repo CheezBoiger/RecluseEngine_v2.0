@@ -35,7 +35,7 @@ int main()
         seconds            += tick.delta();
 
         //R_VERBOSE("TIMING", "Current Time: %f, Delta Time: %f Seconds: %f", tick.getCurrentTimeS(), tick.delta(), seconds);
-        //R_VERBOSE("Window", "Window x: %d, y: %d, width: %d, height: %d", window->getPosX(), window->getPosY(), window->getWidth(), window->getHeight());
+        R_VERBOSE("Window", "Window x: %d, y: %d, width: %d, height: %d", window->getPosX(), window->getPosY(), window->getWidth(), window->getHeight());
 
         KeyboardListener listener;
         if (listener.isKeyDownOnce(KeyCode_F))

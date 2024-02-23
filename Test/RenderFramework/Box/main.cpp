@@ -644,7 +644,7 @@ int main(char* argv[], int c)
     Log::initializeLoggingSystem();
     enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
+    instance  = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 
@@ -790,8 +790,7 @@ int main(char* argv[], int c)
             {
                 window->close();
             }
-            static bool keyPressed = false;
-            if (!keyPressed && listener.isKeyDown(KeyCode_F))
+            if (listener.isKeyDownOnce(KeyCode_F))
             {
                 if (window->getScreenMode() != ScreenMode_FullscreenBorderless)
                     window->setScreenMode(ScreenMode_FullscreenBorderless);
@@ -802,10 +801,7 @@ int main(char* argv[], int c)
                 }
                 window->update();
                 window->setToCenter();
-                keyPressed = true;
             }
-            if (listener.isKeyUp(KeyCode_F))
-                keyPressed = false;
         }
 
         

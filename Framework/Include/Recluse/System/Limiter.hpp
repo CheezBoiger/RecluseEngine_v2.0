@@ -3,6 +3,7 @@
 
 #include "Recluse/Types.hpp"
 #include "Recluse/Time.hpp"
+#include <cmath>
 
 
 namespace Recluse {
@@ -20,7 +21,7 @@ public:
         F32 counterMs = 0.f;
 
         // If we request 0 or less, we just return the current delta.
-        if (desiredMs <= 0.f)
+        if (desiredMs <= 0.f || isinf(desiredMs))
         {
             return RealtimeTick::getTick(watchType).delta();
         }

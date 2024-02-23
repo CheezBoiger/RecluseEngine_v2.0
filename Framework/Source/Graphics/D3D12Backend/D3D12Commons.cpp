@@ -380,6 +380,8 @@ DXGI_FORMAT getNativeFormat(Recluse::ResourceFormat format)
             return DXGI_FORMAT_D24_UNORM_S8_UINT;
         case Recluse::ResourceFormat_D32_Float:
             return DXGI_FORMAT_D32_FLOAT;
+        case Recluse::ResourceFormat_D32_Float_S8_Uint:
+            return DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
         case Recluse::ResourceFormat_R16G16_Float:
             return DXGI_FORMAT_R16G16_FLOAT;
         case Recluse::ResourceFormat_R11G11B10_Float:
@@ -459,6 +461,8 @@ SIZE_T getNativeFormatSize(DXGI_FORMAT format)
         case DXGI_FORMAT_R8G8B8A8_TYPELESS:
         case DXGI_FORMAT_R8G8B8A8_UINT:
         case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+        case DXGI_FORMAT_D32_FLOAT:
+        case DXGI_FORMAT_D24_UNORM_S8_UINT:
 
             return 4ull;
 
@@ -473,6 +477,7 @@ SIZE_T getNativeFormatSize(DXGI_FORMAT format)
         case DXGI_FORMAT_R32G32_UINT:
         case DXGI_FORMAT_R32G32_TYPELESS:
         case DXGI_FORMAT_R32G8X24_TYPELESS:
+        case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
 
             return 8ull;
 

@@ -27,6 +27,7 @@ public:
     Bool            enableScreenSpaceShadows;
     Bool            enableSubsurfaceScattering;
     Bool            enableParticleMotion;
+	Bool 			enableGpuValidation;
 	//[Description("Quality of Shadows.")]
 	QualitySetting  shadowQuality;
 	QualitySetting 	lightingQuality;

@@ -33,6 +33,8 @@ void MessageBus::initialize(SizeT eventCacheSzBytes)
 
 void MessageBus::cleanUp()
 {
+    // Make sure to finish all notifications before we clean up.
+    notifyAll();
     if (m_pMessageAllocator) 
     {
         m_pMessageAllocator->cleanUp();

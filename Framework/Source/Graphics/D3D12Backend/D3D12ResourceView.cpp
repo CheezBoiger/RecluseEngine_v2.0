@@ -385,6 +385,10 @@ ResultCode D3D12GraphicsResourceView::initialize(D3D12Device* pDevice, ID3D12Res
                     R_WARN(R_CHANNEL_D3D12, "SRV format for D16_UNORM is not allowed. Using R16_UNORM.");
                     srvDescription.Format = DXGI_FORMAT_R16_UNORM;
                     break;
+                case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+                    R_WARN(R_CHANNEL_D3D12, "SRV Format for D32_FLOAT_S8X24_UINT is not allowed, using R32G32_FLOAT");
+                    srvDescription.Format = DXGI_FORMAT_R32G32_FLOAT;
+                    break;
             }
             fillShaderResourceViewDescription(srvDescription, resourceViewDescription);
             m_handle = heapManager->allocateShaderResourceView(pResource, srvDescription);

@@ -4,6 +4,7 @@
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 #include "Recluse/Graphics/GraphicsInstance.hpp"
 #include "Recluse/Graphics/GraphicsAdapter.hpp"
+#include "Recluse/Graphics/Format.hpp"
 #include "Recluse/Memory/MemoryCommon.hpp"
 #include "Recluse/System/Window.hpp"
 #include "Recluse/System/Limiter.hpp"
@@ -44,8 +45,9 @@ void Renderer::initialize()
     // Immediately initialize the render configs to the current.
     m_currentRendererConfigs = m_newRendererConfigs;
 
-    LayerFeatureFlags flags  = 0;
+    LayerFeatureFlags flags  = m_currentRendererConfigs.enableGpuValidation ? (LayerFeatureFlag_GpuDebugValidation | LayerFeatureFlag_DebugValidation) : 0;
     ApplicationInfo info    = { };
+    SwapchainCreateDescription swapchainDescription = { };
     ResultCode result          = RecluseResult_Ok;
     m_windowHandle          = m_currentRendererConfigs.windowHandle;
 
@@ -57,6 +59,7 @@ void Renderer::initialize()
 
         return;
     }
+   
 
     info.engineName     = RECLUSE_ENGINE_NAME_STRING;
     info.engineMajor    = RECLUSE_ENGINE_VERSION_MAJOR;
@@ -71,13 +74,20 @@ void Renderer::initialize()
         R_ERROR("Renderer", "Failed to initialize instance!");        
     }
 
+    swapchainDescription.buffering = FrameBuffering_Double;
+    swapchainDescription.desiredFrames = 8;
+    swapchainDescription.renderWidth = m_currentRendererConfigs.renderWidth;
+    swapchainDescription.renderHeight = m_currentRendererConfigs.renderHeight;
+    swapchainDescription.format = ResourceFormat_R8G8B8A8_Unorm;
+
     std::vector<GraphicsAdapter*> adapters = m_pInstance->getGraphicsAdapters();
     
     determineAdapter(adapters);
 
     createDevice(m_currentRendererConfigs);
     m_pContext = m_pDevice->createContext();
-    //m_pSwapchain = m_pDevice->getSwapchain();
+    m_pContext->setFrames(m_currentRendererConfigs.buffering);
+    m_pSwapchain = m_pDevice->createSwapchain(swapchainDescription, m_currentRendererConfigs.windowHandle);
 
     {
         MemoryReserveDescription reserveDesc = { };
@@ -104,6 +114,7 @@ void Renderer::initialize()
 
 void Renderer::cleanUp()
 {
+    m_pContext->wait();
     freeSceneBuffers();
 
     // Clean up all modules, as well as resources handled by them...
