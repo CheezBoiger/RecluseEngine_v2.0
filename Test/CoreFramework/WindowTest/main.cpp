@@ -35,11 +35,10 @@ int main()
         seconds            += tick.delta();
 
         //R_VERBOSE("TIMING", "Current Time: %f, Delta Time: %f Seconds: %f", tick.getCurrentTimeS(), tick.delta(), seconds);
-        R_VERBOSE("Window", "Window x: %d, y: %d, width: %d, height: %d", window->getPosX(), window->getPosY(), window->getWidth(), window->getHeight());
+        //R_VERBOSE("Window", "Window x: %d, y: %d, width: %d, height: %d", window->getPosX(), window->getPosY(), window->getWidth(), window->getHeight());
 
         KeyboardListener listener;
-        
-        if (listener.isKeyDown(KeyCode_F))
+        if (listener.isKeyDownOnce(KeyCode_F))
         {
             if (window->getScreenMode() != ScreenMode_Fullscreen)
                 window->setScreenMode(ScreenMode_Fullscreen);
@@ -51,7 +50,22 @@ int main()
             window->update();
         }
 
-        if (listener.isKeyDown(KeyCode_Escape))
+        if (listener.isKeyDownOnce(KeyCode_B))
+        {
+            if (window->getScreenMode() != ScreenMode_WindowBorderless)
+            {
+                window->setScreenMode(ScreenMode_WindowBorderless);
+                window->setScreenSize(800, 600);
+            }
+            else
+            {
+                window->setScreenSize(800, 600);
+                window->setScreenMode(ScreenMode_Windowed);
+            }
+            window->update();
+        }
+
+        if (listener.isKeyDownOnce(KeyCode_Escape))
             window->close();
 
         pollEvents();

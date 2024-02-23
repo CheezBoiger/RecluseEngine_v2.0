@@ -219,24 +219,45 @@ struct R_PUBLIC_API Byte4
 
 typedef UByte4 Color4;
 
+// Converts color vector to unit float4.
 R_PUBLIC_API Float4 colorToFloat(const Color4& color);
+
+// Converts unit float4 to color vector.
 R_PUBLIC_API Color4 floatToColor(const Float4& color);
+
+// Dot product of a . b
 R_PUBLIC_API F32 dot(const Float4& a, const Float4& b);
+
+// Dot product of a . b
 R_PUBLIC_API U32 dot(const UByte4& a, const UByte4& b);
+
+// Dot product of a . b
 R_PUBLIC_API U32 dot(const UInt4& a, const UInt4& b);
+
+// Dot product of a . b
 R_PUBLIC_API U32 dot(const Int4& a, const Int4& b);
+
+// The Euclidean length of float4 vector.
 R_PUBLIC_API F32 length(const Float4& a);
+
+// The Eucidean length of float4 vector, but not squared to obtain the actual length of the magnitude.
 R_PUBLIC_API F32 length2(const Float4& a);
 
 // Euclidean distance between point p0, and p1.
 R_PUBLIC_API F32 dist(const Float4& p0, const Float4& p1);
+
+// Euclidean distance between point p0, and p1.
 R_PUBLIC_API I32 dist(const UInt4& p0, const UInt4& p1);
+
+// Euclidean distance between point p0, and p1.
 R_PUBLIC_API I32 dist(const UByte4& p0, const UByte4& p1);
 
 // [1 x 4] * [4 x 4] = [1 x 4]
 R_PUBLIC_API Float4 operator*(const Float4& lh, const Matrix44& rh);
 // [1 x 4] * [4 x 3] = [1 x 4]
 R_PUBLIC_API Float4 operator*(const Float4& lh, const Matrix43& rh);
+
+// Normalizes the float4 variable, which become a unit vector [0, 1].
 R_PUBLIC_API Float4 normalize(const Float4& lh);
 
 // See if any component in the vector is a nonzero number.

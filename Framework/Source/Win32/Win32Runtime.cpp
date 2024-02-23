@@ -468,7 +468,6 @@ void pollEvents()
             R_WARN(R_CHANNEL_WIN32, "We are connected to a controller!");
         }
     }
-    Win32::keySweepCheck();
 }
 
 

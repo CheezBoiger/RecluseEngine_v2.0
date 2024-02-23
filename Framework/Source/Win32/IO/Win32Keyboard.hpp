@@ -10,7 +10,5 @@ namespace Recluse {
 namespace Win32 {
 
 void registerKeyCall(DWORD keycode, DWORD status);
-
-void keySweepCheck();
 } // Win32
 } // Recluse
