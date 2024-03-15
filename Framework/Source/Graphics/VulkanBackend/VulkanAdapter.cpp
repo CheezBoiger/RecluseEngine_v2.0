@@ -456,8 +456,12 @@ std::vector<VkPresentModeKHR> VulkanAdapter::getSupportedPresentModes(VkSurfaceK
 
 VkSurfaceCapabilitiesKHR VulkanAdapter::getSurfaceCapabilities(VkSurfaceKHR surface) const
 {
-    VkSurfaceCapabilitiesKHR capabilities;
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_phyDevice, surface, &capabilities);
+    VkSurfaceCapabilitiesKHR capabilities = { };
+    VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_phyDevice, surface, &capabilities);
+    if ( result != VK_SUCCESS )
+    {
+        R_WARN(R_CHANNEL_VULKAN, "Unable to query surface capabilities! Surface window might either be minimized, or destroyed.");
+    }
     return capabilities;
 }
 

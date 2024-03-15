@@ -37,8 +37,7 @@ public:
             Shader* pShader,
             const char* entryPoint,
             const char* srcCode, 
-            U64 sourceCodeBytes, 
-            ShaderPermutationId permutation,
+            U64 sourceCodeBytes,
             ShaderLanguage lang, 
             ShaderType shaderType,
             const std::vector<PreprocessDefine>& defines = std::vector<PreprocessDefine>()

@@ -74,7 +74,7 @@ void Renderer::initialize()
         R_ERROR("Renderer", "Failed to initialize instance!");        
     }
 
-    swapchainDescription.buffering = FrameBuffering_Double;
+    swapchainDescription.buffering = m_currentRendererConfigs.enableVerticalSyncronization ? FrameBuffering_Double : FrameBuffering_Triple;
     swapchainDescription.desiredFrames = 8;
     swapchainDescription.renderWidth = m_currentRendererConfigs.renderWidth;
     swapchainDescription.renderHeight = m_currentRendererConfigs.renderHeight;
@@ -129,12 +129,13 @@ void Renderer::cleanUp()
 
 void Renderer::present(Bool delayPresent)
 {
-//    ResultCode result = m_pSwapchain->present(delayPresent ? GraphicsSwapchain::PresentConfig_SkipPresent : GraphicsSwapchain::PresentConfig_Present);
-//
-//    if (result != RecluseResult_Ok) 
-//    {
-//        R_WARN("Renderer", "Swapchain present returns with err code: %d", result);
-//    }
+    // Present.
+    ResultCode result = m_pSwapchain->present(m_pContext);
+    if (result == RecluseResult_NeedsUpdate)
+    {
+        m_pContext->wait();
+        m_pSwapchain->rebuild(m_pSwapchain->getDesc());
+    }
 }
 
 
@@ -143,7 +144,7 @@ void Renderer::render()
     sortCommandKeys();
     GraphicsContext* context = getContext();
 
-    context->begin();
+    m_pSwapchain->prepare(context);
 #if (!R_NULLIFY_RENDER)
         // TODO: Would make more sense to manually transition the resource itself, 
         //       and not the resource view...
@@ -195,10 +196,8 @@ void Renderer::render()
                             m_currentCommandKeys[RENDER_FORWARD_OPAQUE].size()
                         );
 #endif
+    context->transition(m_pSwapchain->getFrame(m_pSwapchain->getCurrentFrameIndex()), ResourceState_Present);
     context->end();
-    // Present.
-   // m_pSwapchain->present();
-    
     resetCommandKeys();
 }
 
@@ -486,25 +485,25 @@ static ResultCode kRendererJob(void* pData)
     F32 counterFrameMs                      = 0.f;
 
         // Initialize the renderer watch.
-    RealtimeTick::initializeWatch(threadId, JOB_TYPE_RENDERER);
+    RealtimeTick::initializeWatch(threadId, JobType_Renderer);
 
     // Initialize module here.
     while (pRenderer->isActive()) 
     {
         ScopedLock lck(renderMutex);
-        RealtimeTick::updateWatch(threadId, JOB_TYPE_RENDERER);
+        RealtimeTick::updateWatch(threadId, JobType_Renderer);
 
-        RealtimeTick tick = RealtimeTick::getTick(JOB_TYPE_RENDERER);
+        RealtimeTick tick = RealtimeTick::getTick(JobType_Renderer);
 
         // Render interpolation is required.
         if (pRenderer->isRunning()) 
         {
+
             const RendererConfigs& renderConfigs    = pRenderer->getCurrentConfigs();
+            const F32 desiredFrameRateMs = 1.0f / renderConfigs.maxFrameRate;
+            Limiter::limit(desiredFrameRateMs, threadId, JobType_Renderer);
             pRenderer->update(tick.getCurrentTimeS(), tick.delta());
             pRenderer->render();
-
-            const F32 desiredFrameRateMs = 1.0f / renderConfigs.maxFrameRate;
-            Limiter::limit(desiredFrameRateMs, threadId, JOB_TYPE_RENDERER);
             pRenderer->present();
         }
     }
@@ -564,7 +563,7 @@ ResultCode Renderer::onInitializeModule(Application* pApp)
                }
         );
 
-    return pApp->loadJobThread(JOB_TYPE_RENDERER, kRendererJob);
+    return pApp->loadJobThread(JobType_Renderer, kRendererJob);
 }
 
 

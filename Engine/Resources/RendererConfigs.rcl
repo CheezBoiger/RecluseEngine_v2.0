@@ -28,6 +28,7 @@ public:
     Bool            enableSubsurfaceScattering;
     Bool            enableParticleMotion;
 	Bool 			enableGpuValidation;
+	Bool 			enableVerticalSyncronization;
 	//[Description("Quality of Shadows.")]
 	QualitySetting  shadowQuality;
 	QualitySetting 	lightingQuality;

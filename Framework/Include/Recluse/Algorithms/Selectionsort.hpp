@@ -4,13 +4,15 @@
 #include "Recluse/Types.hpp"
 #include "Recluse/Algorithms/Common.hpp"
 
+#include <algorithm>
+
 namespace Recluse {
 
-template<typename T, 
-         class Compare = CompareLess<T>>
-static void selectionSort(T* pArr, U64 start, U64 sz)
+template<typename Data, 
+         template<typename T> typename Compare>
+static void selectionSort(Data* pArr, U64 start, U64 sz)
 {
-    Compare compare = { };
+    Compare<Data> compare = { };
 
     for (U64 i = 0; i < (sz - 1); ++i) 
     {
@@ -26,7 +28,7 @@ static void selectionSort(T* pArr, U64 start, U64 sz)
 
         if (desired != i) 
         {
-            swap(pArr[i], pArr[desired]);
+            std::swap(pArr[i], pArr[desired]);
         }
     }
 }

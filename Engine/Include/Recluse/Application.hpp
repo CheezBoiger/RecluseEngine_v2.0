@@ -33,14 +33,14 @@ class Application;
 
 enum JobType 
 {
-    JOB_TYPE_MAIN = 0,      //< Main will always be 0
-    JOB_TYPE_SIMULATION,
-    JOB_TYPE_RENDERER,
-    JOB_TYPE_PHYSICS,
-    JOB_TYPE_AUDIO,
-    JOB_TYPE_ANIMATION,
-    JOB_TYPE_AI,
-    JOB_TYPE_NETWORK
+    JobType_Main = 0,      //< Main will always be 0
+    JobType_Simulation,
+    JobType_Renderer,
+    JobType_Physics,
+    JobType_Audio,
+    JobType_Animation,
+    JobType_AI,
+    JobType_Network
 };
 
 

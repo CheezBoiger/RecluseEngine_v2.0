@@ -1,4 +1,5 @@
 // Recluse Render Test
+
 struct PSIn
 {
 	float4 vPosition 	: SV_POSITION;
@@ -29,14 +30,11 @@ struct PSOut
 PSOut psMain(PSIn pixIn)
 {
 	PSOut Output;
-	if (useTexturing == 1)
-	{
+#if USE_TEXTURE
 		Output.albedo = colorTexture.Sample(colorSampler, pixIn.vTexCoord0);
-	}
-	else
-	{
+#else
 		Output.albedo = pixIn.color;
-	}
+#endif
 	Output.normal = float4(pixIn.vNormal, 0);
 	Output.material = float4(0, 0, 0, 0);
 	return Output;

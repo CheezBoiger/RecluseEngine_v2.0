@@ -115,7 +115,7 @@ public:
 class R_PUBLIC_API ShaderProgramDatabase : public Serializable
 {
 public:
-    static Hash64                               makeShaderHash(const char* bytecode, U32 lengthBytes, ShaderProgramPermutation permutation);
+    static Hash64                               makeShaderHash(const char* bytecode, U32 lengthBytes);
     typedef std::unordered_map<ShaderProgramPermutation, ShaderProgramDefinition> PermutationMap;
     typedef std::unordered_map<ShaderProgramId, PermutationMap> MetaMap;
 

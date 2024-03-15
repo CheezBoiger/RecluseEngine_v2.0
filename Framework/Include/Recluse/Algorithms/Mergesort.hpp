@@ -57,11 +57,11 @@ void mergeHelper(Data* B, I64 start, I64 end, Data* A, const Compare& comp = Com
 // 
 // Keep in mind that the space required is O(n), meaning it may require the same amount of 
 // space as the unsorted array itself.
-template<typename Data, typename Compare = CompareLess<Data>>
-Data* mergeSort(Data* pDataArr, I64 count, Data* aux = nullptr, Compare comp = Compare())
+template<typename Data, template <typename T> typename Compare>
+void mergeSort(Data* pDataArr, I64 count, Data* aux = nullptr)
 {
     Bool isInternalMalloc = false;
-    
+    Compare<Data> comp = { };
     if (!aux)
     {
         aux = new Data[count];
@@ -75,6 +75,5 @@ Data* mergeSort(Data* pDataArr, I64 count, Data* aux = nullptr, Compare comp = C
     {
         delete aux;
     }
-    return pDataArr;
 }
 } // Recluse

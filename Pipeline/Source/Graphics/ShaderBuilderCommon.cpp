@@ -1,4 +1,5 @@
 //
+#include "Recluse/Serialization/Hasher.hpp"
 #include "Recluse/Pipeline/Graphics/ShaderBuilder.hpp"
 #include "Graphics/ShaderBuilderCommon.hpp"
 #include "Recluse/Messaging.hpp"
@@ -14,8 +15,7 @@ ResultCode ShaderBuilder::compile
         Shader* pShader, 
         const char* entryPoint,
         const char* sourceCode, 
-        U64 sourceCodeBytes, 
-        ShaderPermutationId permutation,
+        U64 sourceCodeBytes,
         ShaderLanguage lang, 
         ShaderType shaderType,
         const std::vector<PreprocessDefine>& defines
@@ -37,7 +37,8 @@ ResultCode ShaderBuilder::compile
     if (result == RecluseResult_Ok) 
     {
         pShader->load(entryPoint, byteCodeString.data(), byteCodeString.size(), getIntermediateCode(), shaderType);
-        pShader->setPermutationId(permutation);
+        Hash64 permutationId = recluseHashFast(byteCodeString.data(), byteCodeString.size());
+        pShader->setPermutationId(permutationId);
     } 
     else 
     {

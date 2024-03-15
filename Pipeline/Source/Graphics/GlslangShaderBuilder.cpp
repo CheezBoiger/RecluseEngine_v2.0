@@ -173,6 +173,29 @@ public:
         R_ASSERT(m_isInitialized == true);
 
         EShLanguage stage       = EShLangVertex;
+        std::vector<std::vector<char>> nativeDefines;
+        std::vector<const char*> strings;
+
+        if (!defines.empty())
+        {
+            strings.resize(defines.size() + 1);
+            nativeDefines.resize(defines.size());
+            std::string defineDirective = "#define";
+            for (U32 i = 0; i < nativeDefines.size(); ++i)
+            {
+                //+9 for directive +1 for space, +2 for \n\0
+                nativeDefines[i].resize(defineDirective.size() + 1 + defines[i].variable.size() + 1 + defines[i].value.size() + 2);
+                std::string merge = defineDirective + " " + defines[i].variable + " " + defines[i].value + "\n\0";
+                memcpy(nativeDefines[i].data(), merge.data(), merge.size());
+                strings[i] = nativeDefines[i].data();
+            }
+        }
+        else
+        {
+            strings.resize(1);
+        }
+
+        strings.back() = srcCode.data();
 
         switch (shaderType) 
         {
@@ -191,7 +214,6 @@ public:
         std::string compileLog;
         glslang::EShClient client           = glslang::EShClientVulkan;
         I32 clientVersion                   = 100;
-        const char* str                     = srcCode.data();
         EShMessages messages                = (EShMessages)((int)EShMsgSpvRules | (int)EShMsgVulkanRules);
 
         if (lang == ShaderLanguage_Hlsl) 
@@ -210,7 +232,7 @@ public:
         }
 
         shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_3);
-        shader.setStrings(&str, 1);
+        shader.setStrings(strings.data(), strings.size());
         shader.setEntryPoint(entryPoint);
     
         if (!shader.parse(&DefaultTBuiltInResource, 450, false, messages)) 

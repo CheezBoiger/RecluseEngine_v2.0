@@ -9,7 +9,7 @@ namespace Builder {
 
 struct R_PUBLIC_API ShaderProgramPermutationDefinition
 {
-    ShaderProgramPermutationDefinition(const char* name, U32 offset, U32 size, U32 value)
+    ShaderProgramPermutationDefinition(const char* name = nullptr, U32 offset = 0, U32 size = 0, U32 value = 0)
         : name(name), offset(offset), size(size), value(value) { }
     const char* name;
     U32 offset;

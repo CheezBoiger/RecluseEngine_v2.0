@@ -251,7 +251,7 @@ void ShaderProgramDatabase::removeShader(Shader* pShader)
 {
     if (pShader)
     {
-        Hash64 shaderHash = makeShaderHash(pShader->getByteCode(), pShader->getSzBytes(), pShader->getPermutationId());
+        Hash64 shaderHash = makeShaderHash(pShader->getByteCode(), pShader->getSzBytes());
         auto& iter = m_shaderMap.find(shaderHash);
         if (iter != m_shaderMap.end())
         {
@@ -330,7 +330,7 @@ void ShaderProgramDatabase::storeShader(Shader* pShader)
 {
     if (!pShader)
         return;
-    Hash64 hash = makeShaderHash(pShader->getByteCode(), pShader->getSzBytes(), pShader->getPermutationId());
+    Hash64 hash = makeShaderHash(pShader->getByteCode(), pShader->getSzBytes());
     auto& iter = m_shaderMap.find(hash);
     if (iter != m_shaderMap.end())
     {
@@ -394,12 +394,11 @@ Shader* ShaderProgramDatabase::obtainShader(Hash64 id) const
 }
 
 
-Hash64 ShaderProgramDatabase::makeShaderHash(const char* bytecode, U32 lengthBytes, ShaderProgramPermutation permutation)
+Hash64 ShaderProgramDatabase::makeShaderHash(const char* bytecode, U32 lengthBytes)
 {
     if (bytecode && (lengthBytes > 0))
     {
         Hash64 shaderHash = Shader::makeShaderHash(bytecode, lengthBytes);
-        shaderHash ^= permutation;
         return shaderHash;
     }
     return 0;
@@ -470,31 +469,31 @@ ResultCode ShaderProgramDatabase::serialize(Archive* pArchive) const
                     permHeader.graphics.usesMeshShaders = definition.graphics.usesMeshShaders;
                     if (permHeader.graphics.usesMeshShaders)
                     {
-                        permHeader.graphics.as = definition.graphics.as ? ShaderProgramDatabase::makeShaderHash(definition.graphics.as->getByteCode(), definition.graphics.as->getSzBytes(), permutation) : 0;
-                        permHeader.graphics.ms = definition.graphics.ms ? ShaderProgramDatabase::makeShaderHash(definition.graphics.ms->getByteCode(), definition.graphics.ms->getSzBytes(), permutation) : 0;
+                        permHeader.graphics.as = definition.graphics.as ? ShaderProgramDatabase::makeShaderHash(definition.graphics.as->getByteCode(), definition.graphics.as->getSzBytes()) : 0;
+                        permHeader.graphics.ms = definition.graphics.ms ? ShaderProgramDatabase::makeShaderHash(definition.graphics.ms->getByteCode(), definition.graphics.ms->getSzBytes()) : 0;
                     }
                     else
                     {
-                        permHeader.graphics.vs = definition.graphics.vs ? ShaderProgramDatabase::makeShaderHash(definition.graphics.vs->getByteCode(), definition.graphics.vs->getSzBytes(), permutation) : 0;
-                        permHeader.graphics.gs = definition.graphics.gs ? ShaderProgramDatabase::makeShaderHash(definition.graphics.gs->getByteCode(), definition.graphics.gs->getSzBytes(), permutation) : 0;
-                        permHeader.graphics.ds = definition.graphics.ds ? ShaderProgramDatabase::makeShaderHash(definition.graphics.ds->getByteCode(), definition.graphics.ds->getSzBytes(), permutation) : 0;
-                        permHeader.graphics.hs = definition.graphics.hs ? ShaderProgramDatabase::makeShaderHash(definition.graphics.hs->getByteCode(), definition.graphics.hs->getSzBytes(), permutation) : 0;
+                        permHeader.graphics.vs = definition.graphics.vs ? ShaderProgramDatabase::makeShaderHash(definition.graphics.vs->getByteCode(), definition.graphics.vs->getSzBytes()) : 0;
+                        permHeader.graphics.gs = definition.graphics.gs ? ShaderProgramDatabase::makeShaderHash(definition.graphics.gs->getByteCode(), definition.graphics.gs->getSzBytes()) : 0;
+                        permHeader.graphics.ds = definition.graphics.ds ? ShaderProgramDatabase::makeShaderHash(definition.graphics.ds->getByteCode(), definition.graphics.ds->getSzBytes()) : 0;
+                        permHeader.graphics.hs = definition.graphics.hs ? ShaderProgramDatabase::makeShaderHash(definition.graphics.hs->getByteCode(), definition.graphics.hs->getSzBytes()) : 0;
                     }
-                    permHeader.graphics.ps = definition.graphics.ps ? ShaderProgramDatabase::makeShaderHash(definition.graphics.ps->getByteCode(), definition.graphics.ps->getSzBytes(), permutation) : 0;
+                    permHeader.graphics.ps = definition.graphics.ps ? ShaderProgramDatabase::makeShaderHash(definition.graphics.ps->getByteCode(), definition.graphics.ps->getSzBytes()) : 0;
                     break;
                 }
                 case BindType_Compute:
                 {
-                    permHeader.compute.cs = definition.compute.cs ? ShaderProgramDatabase::makeShaderHash(definition.compute.cs->getByteCode(), definition.compute.cs->getSzBytes(), permutation) : 0;
+                    permHeader.compute.cs = definition.compute.cs ? ShaderProgramDatabase::makeShaderHash(definition.compute.cs->getByteCode(), definition.compute.cs->getSzBytes()) : 0;
                     break;
                 }
                 case BindType_RayTrace:
                 {
-                    permHeader.raytrace.rany = definition.raytrace.rany ? ShaderProgramDatabase::makeShaderHash(definition.raytrace.rany->getByteCode(), definition.raytrace.rany->getSzBytes(), permutation) : 0;
-                    permHeader.raytrace.rclosest = definition.raytrace.rclosest ? ShaderProgramDatabase::makeShaderHash(definition.raytrace.rclosest->getByteCode(), definition.raytrace.rclosest->getSzBytes(), permutation) : 0;
-                    permHeader.raytrace.rgen = definition.raytrace.rgen ? ShaderProgramDatabase::makeShaderHash(definition.raytrace.rgen->getByteCode(), definition.raytrace.rgen->getSzBytes(), permutation) : 0;
-                    permHeader.raytrace.rintersect = definition.raytrace.rintersect ? ShaderProgramDatabase::makeShaderHash(definition.raytrace.rintersect->getByteCode(), definition.raytrace.rintersect->getSzBytes(), permutation) : 0;
-                    permHeader.raytrace.rmiss = definition.raytrace.rmiss ? ShaderProgramDatabase::makeShaderHash(definition.raytrace.rmiss->getByteCode(), definition.raytrace.rmiss->getSzBytes(), permutation) : 0;
+                    permHeader.raytrace.rany = definition.raytrace.rany ? ShaderProgramDatabase::makeShaderHash(definition.raytrace.rany->getByteCode(), definition.raytrace.rany->getSzBytes()) : 0;
+                    permHeader.raytrace.rclosest = definition.raytrace.rclosest ? ShaderProgramDatabase::makeShaderHash(definition.raytrace.rclosest->getByteCode(), definition.raytrace.rclosest->getSzBytes()) : 0;
+                    permHeader.raytrace.rgen = definition.raytrace.rgen ? ShaderProgramDatabase::makeShaderHash(definition.raytrace.rgen->getByteCode(), definition.raytrace.rgen->getSzBytes()) : 0;
+                    permHeader.raytrace.rintersect = definition.raytrace.rintersect ? ShaderProgramDatabase::makeShaderHash(definition.raytrace.rintersect->getByteCode(), definition.raytrace.rintersect->getSzBytes()) : 0;
+                    permHeader.raytrace.rmiss = definition.raytrace.rmiss ? ShaderProgramDatabase::makeShaderHash(definition.raytrace.rmiss->getByteCode(), definition.raytrace.rmiss->getSzBytes()) : 0;
                     break;
                 }
             }
@@ -542,7 +541,7 @@ ResultCode ShaderProgramDatabase::deserialize(Archive* pArchive)
         U32 references = 0;
         pArchive->read(&references, sizeof(U32));
         shader->addReference(references-1);
-        Hash64 shaderHash = ShaderProgramDatabase::makeShaderHash(shader->getByteCode(), shader->getSzBytes(), shader->getPermutationId());
+        Hash64 shaderHash = ShaderProgramDatabase::makeShaderHash(shader->getByteCode(), shader->getSzBytes());
         m_shaderMap.insert(std::make_pair(shaderHash, shader));
     }
 

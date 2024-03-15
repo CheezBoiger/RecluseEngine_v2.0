@@ -26,12 +26,12 @@ ResultCode Application::loadJobThread(JobTypeFlags flags, ThreadFunction func)
     {
         m_threads.push_back(pThread);
 
-        LOAD_JOB_THREAD(JOB_TYPE_RENDERER,      flags, &m_threads.back(), m_jobThreads);
-        LOAD_JOB_THREAD(JOB_TYPE_SIMULATION,    flags, &m_threads.back(), m_jobThreads);
-        LOAD_JOB_THREAD(JOB_TYPE_AI,            flags, &m_threads.back(), m_jobThreads);
-        LOAD_JOB_THREAD(JOB_TYPE_ANIMATION,     flags, &m_threads.back(), m_jobThreads);
-        LOAD_JOB_THREAD(JOB_TYPE_PHYSICS,       flags, &m_threads.back(), m_jobThreads);
-        LOAD_JOB_THREAD(JOB_TYPE_AUDIO,         flags, &m_threads.back(), m_jobThreads);
+        LOAD_JOB_THREAD(JobType_Renderer,      flags, &m_threads.back(), m_jobThreads);
+        LOAD_JOB_THREAD(JobType_Simulation,    flags, &m_threads.back(), m_jobThreads);
+        LOAD_JOB_THREAD(JobType_AI,            flags, &m_threads.back(), m_jobThreads);
+        LOAD_JOB_THREAD(JobType_Animation,     flags, &m_threads.back(), m_jobThreads);
+        LOAD_JOB_THREAD(JobType_Physics,       flags, &m_threads.back(), m_jobThreads);
+        LOAD_JOB_THREAD(JobType_Audio,         flags, &m_threads.back(), m_jobThreads);
     }
 
     return result;
@@ -98,7 +98,7 @@ ResultCode initialize()
     k_mainLoopInitialized = true;
 
     // initialize the main watch.
-    RealtimeTick::initializeWatch(getMainThreadId(), JOB_TYPE_MAIN);    
+    RealtimeTick::initializeWatch(getMainThreadId(), JobType_Main);    
 
     return RecluseResult_Ok;
 }
@@ -112,8 +112,8 @@ ResultCode MainThreadLoop::run()
 
     while (!k_pWindow->shouldClose()) 
     {
-        RealtimeTick::updateWatch(getCurrentThreadId(), JOB_TYPE_MAIN);
-        RealtimeTick tick = RealtimeTick::getTick(JOB_TYPE_MAIN);
+        RealtimeTick::updateWatch(getCurrentThreadId(), JobType_Main);
+        RealtimeTick tick = RealtimeTick::getTick(JobType_Main);
         pollEvents();
         if (k_pApp) 
         {

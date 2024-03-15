@@ -372,8 +372,7 @@ ResultCode compileShaders(ShaderLanguage lang)
                                             pShader, 
                                             shaderMetadata->entryPoint,
                                             str.c_str(), 
-                                            str.size(), 
-                                            0,
+                                            str.size(),
                                             lang, 
                                             shaderMetadata->shaderType
                                         );

@@ -9,6 +9,8 @@
 #include "Recluse/Math/Matrix22.hpp"
 
 #include "Recluse/Algorithms/Mergesort.hpp"
+#include "Recluse/Algorithms/QSort.hpp"
+#include "Recluse/Algorithms/Selectionsort.hpp"
 #include "Recluse/Structures/RBTree.hpp"
 #include "Recluse/Memory/BuddyAllocator.hpp"
 #include "Recluse/Memory/MemoryPool.hpp"
@@ -84,7 +86,9 @@ int main(int c, char* argv[])
     R_TRACE("Colors", "distance: %d", len); 
 
     int items[10] = { 0, 5, 3, 2, 9, 2, -2, 6, 8, 54 };
-    mergeSort<int, CompareGreater<int>>(items, 10, nullptr, CompareGreater<int>());
+    mergeSort<int, CompareLess>(items, 10, nullptr);
+    quickSort<int, CompareLess>(items, 0, 9);
+    selectionSort<int, CompareLess>(items, 0, 10);
     Log::destroyLoggingSystem();
 
     return 0;

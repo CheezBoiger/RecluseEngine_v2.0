@@ -32,8 +32,8 @@ public:
         rcmd.numSubMeshes = 0;
         //pRenderer->pushRenderCommand(rcmd, RENDER_PREZ);
 
-        R_VERBOSE("GameLoop", "time=%f fps", 1.f / tick.delta());
-        R_VERBOSE("GameLoop", "renderTime=%f fps", 1.f / RealtimeTick::getTick(JOB_TYPE_RENDERER).delta());
+        //R_VERBOSE("GameLoop", "time=%f fps", 1.f / tick.delta());
+        R_VERBOSE("GameLoop", "renderTime=%f fps", 1.f / RealtimeTick::getTick(JobType_Renderer).delta());
     }
 
     virtual ResultCode onInit() override
@@ -42,10 +42,10 @@ public:
         Renderer::initializeModule(this);
 
         RendererConfigs config = { };
-        config.api = GraphicsApi_Vulkan;
+        config.api = GraphicsApi_Direct3D12;
         config.enableGpuValidation = false;
         config.buffering = 3;
-        config.maxFrameRate = 0.0f;
+        config.maxFrameRate = 60.0f;
         config.windowHandle = getWindow()->getNativeHandle();
         config.renderWidth = getWindow()->getWidth();
         config.renderHeight = getWindow()->getHeight();

@@ -132,16 +132,46 @@ public:
         return RecluseResult_Ok;
     }
 
-    ResultCode onCompile(const std::vector<char>& srcCode, std::vector<char>& byteCode,  const char* entryPoint,
-        ShaderLanguage lang, ShaderType shaderType, const std::vector<PreprocessDefine>& defines) override 
+    ResultCode onCompile
+        (
+            const std::vector<char>& srcCode, 
+            std::vector<char>& byteCode,  
+            const char* entryPoint,
+            ShaderLanguage lang, 
+            ShaderType shaderType, 
+            const std::vector<PreprocessDefine>& defines
+        ) override 
     {
         R_ASSERT(m_library != NULL);
         R_ASSERT(m_compiler != NULL);
 
         R_DEBUG("DXC", "Compiling shader...");
         
+        struct NativeDefine
+        {
+            WCHAR* Name;
+            WCHAR* Value;
+        };        
+
         CComPtr<IDxcOperationResult> result;
         CComPtr<IDxcBlobEncoding> sourceBlob;
+        std::vector<DxcDefine> dxcDefines;
+        std::vector<NativeDefine> nativeDefines;
+        nativeDefines.resize(defines.size());
+        dxcDefines.resize(defines.size());
+        for (U32 i = 0; i < nativeDefines.size(); ++i)
+        {
+            int count = MultiByteToWideChar(CP_UTF8, 0, defines[i].variable.c_str(), defines[i].variable.size(), nullptr, 0);
+            nativeDefines[i].Name = new WCHAR[count + 1];
+            MultiByteToWideChar(CP_UTF8, 0, defines[i].variable.c_str(), defines[i].variable.size(), const_cast<LPWSTR>(nativeDefines[i].Name), count);
+            nativeDefines[i].Name[count] = L'\0';
+            count = MultiByteToWideChar(CP_UTF8, 0, defines[i].value.c_str(), defines[i].value.size(), nullptr, 0);
+            nativeDefines[i].Value = new WCHAR[count + 1];
+            MultiByteToWideChar(CP_UTF8, 0, defines[i].value.c_str(), defines[i].value.size(), const_cast<LPWSTR>(nativeDefines[i].Value), count);
+            nativeDefines[i].Value[count] = L'\0';
+            dxcDefines[i].Name = nativeDefines[i].Name;
+            dxcDefines[i].Value = nativeDefines[i].Value;
+        }
 
         HRESULT hr                      = S_OK;
         std::wstring targetProfile      = getShaderProfile(shaderType);
@@ -167,7 +197,7 @@ public:
         int count = MultiByteToWideChar(CP_UTF8, 0, entryPoint, sizeof(entryPoint), nullptr, 0);
         WCHAR* wideEntryPoint = new WCHAR[count];
         MultiByteToWideChar(CP_UTF8, 0, entryPoint, sizeof(entryPoint), wideEntryPoint, count);
-        
+
         hr = m_compiler->Compile
             (
                 sourceBlob, 
@@ -175,7 +205,7 @@ public:
                 wideEntryPoint, 
                 targetProfile.c_str(), 
                 arguments, argCount, 
-                NULL, 0, 
+                dxcDefines.empty() ? NULL : dxcDefines.data(), (UINT32)dxcDefines.size(), 
                 NULL, (IDxcOperationResult**)&result
             );
 
@@ -194,6 +224,12 @@ public:
 
         byteCode.resize(code->GetBufferSize());
         memcpy(byteCode.data(), code->GetBufferPointer(), code->GetBufferSize());
+
+        for (U32 i = 0; i < nativeDefines.size(); ++i)
+        {
+            delete nativeDefines[i].Name;
+            delete nativeDefines[i].Value;
+        }
 
         return RecluseResult_Ok;
     }

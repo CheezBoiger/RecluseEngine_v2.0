@@ -31,6 +31,7 @@ static struct
 {
     // NOTE(): We don't really need a hash table or a map for this, 
     // since we are only storing a few keys/watches. Simple arrays will do.
+    CriticalSectionGuard csTick[MAX_WATCH_TYPE_INDICES] = { };
     Win32RuntimeTick    ticks[MAX_WATCH_TYPE_INDICES]   = { };
     U64                 watchId[MAX_WATCH_TYPE_INDICES] = { };
 
@@ -168,6 +169,7 @@ void RealtimeTick::updateWatch(U64 id, U32 watchType)
     }
 
     // Otherwise, lets just update.
+    ScopedCriticalSection _(gWin32Runtime.csTick[watchType]);
 
     Win32RuntimeTick& nativeTick    = gWin32Runtime.ticks[watchType];
     
@@ -191,6 +193,7 @@ RealtimeTick::RealtimeTick(U32 watchType)
         return;
     }
     
+    ScopedCriticalSection _(gWin32Runtime.csTick[watchType]);
     const Win32RuntimeTick& nativeTick = gWin32Runtime.ticks[watchType];
     
     m_currentTimeS  = nativeTick.getCurrentTime();

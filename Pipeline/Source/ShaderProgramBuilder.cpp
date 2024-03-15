@@ -169,9 +169,10 @@ R_INTERNAL Shader* compileShader
         std::map<ShaderType, ShaderReflection>& reflectionOut,
         const char* entryPoint, 
         const std::string& shaderPath, 
-        ShaderPermutationId permutation, 
+        ShaderPermutationId permutation,
         ShaderLanguage language, 
-        ShaderType shaderType, 
+        ShaderType shaderType,
+        const std::vector<PreprocessDefine>& defines,
         ResultCode& errorOut
     )
 {
@@ -180,13 +181,13 @@ R_INTERNAL Shader* compileShader
     {
         FileBufferData file = { };
         ResultCode error = File::readFrom(&file, shaderPath);
-        Hash64 shaderHash = db.makeShaderHash(file.data(), sizeof(char) * file.size(), permutation);
+        Hash64 shaderHash = db.makeShaderHash(file.data(), sizeof(char) * file.size());
         if (!db.hasShader(shaderHash))
         {
             shader = Shader::create();
             if (error == RecluseResult_Ok)
             { 
-                error = shaderBuilder->compile(shader, entryPoint, file.data(), file.size(), permutation, language, shaderType);
+                error = shaderBuilder->compile(shader, entryPoint, file.data(), file.size(), language, shaderType, defines);
                 if (error != RecluseResult_Ok)
                 {
                     Shader::destroy(shader);
@@ -218,42 +219,50 @@ R_INTERNAL Shader* compileShader
 
 
 R_INTERNAL 
-ShaderProgramDefinition makeShaderProgramDefinition(ShaderProgramDatabase& db, const ShaderProgramDescription& description, ShaderPermutationId permutation, ShaderBuilder* shaderBuilder, ResultCode& errorOut)
+ShaderProgramDefinition makeShaderProgramDefinition(ShaderProgramDatabase& db, const ShaderProgramDescription& description, const ShaderProgramPermutationDefinitionInstance& permutationDefinition, ShaderPermutationId permutation, ShaderBuilder* shaderBuilder, ResultCode& errorOut)
 {
     ShaderProgramDefinition definition;
     definition.pipelineType     = description.pipelineType;
     definition.intermediateCode = shaderBuilder->getIntermediateCode();
     const ShaderLanguage language   = description.language;
 
+    std::vector<PreprocessDefine> preprocessDefines = { };
+    preprocessDefines.resize(permutationDefinition.size());
+    for (U32 i = 0; i < preprocessDefines.size(); ++i)
+    {
+        preprocessDefines[i].variable = permutationDefinition[i].name;
+        preprocessDefines[i].value = std::to_string(makeBitset32(permutationDefinition[i].offset, permutationDefinition[i].size, permutationDefinition[i].value));
+    }
+
     switch (definition.pipelineType)
     {
     case BindType_Compute:
         R_ASSERT_FORMAT(description.compute.cs, "Must have a valid compute shader, in order to build a ShaderProgram!");
-        definition.compute.cs               = compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.compute.csName, description.compute.cs, permutation, language, ShaderType_Compute, errorOut);
+        definition.compute.cs               = compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.compute.csName, description.compute.cs, permutation, language, ShaderType_Compute, preprocessDefines, errorOut);
         break;
     case BindType_Graphics:
         R_ASSERT_FORMAT(description.graphics.vs, "Must have at least a valid vertex shader, in order to build a ShaderProgram!");
         definition.graphics.usesMeshShaders = description.graphics.usesMeshShaders;
         if (description.graphics.usesMeshShaders)
         {
-            definition.graphics.as          = description.graphics.as ? compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.graphics.asName, description.graphics.as, permutation, language, ShaderType_Amplification, errorOut) : nullptr;
-            definition.graphics.ms          = compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.graphics.msName, description.graphics.ms, permutation, language, ShaderType_Mesh, errorOut);
+            definition.graphics.as          = description.graphics.as ? compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.graphics.asName, description.graphics.as, permutation, language, ShaderType_Amplification, preprocessDefines, errorOut) : nullptr;
+            definition.graphics.ms          = compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.graphics.msName, description.graphics.ms, permutation, language, ShaderType_Mesh, preprocessDefines, errorOut);
         }
         else
         {
-            definition.graphics.vs          = compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.graphics.vsName, description.graphics.vs, permutation, language, ShaderType_Vertex, errorOut);
-            definition.graphics.gs          = description.graphics.gs ? compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.graphics.gsName, description.graphics.gs, permutation, language, ShaderType_Geometry, errorOut) : nullptr;
-            definition.graphics.hs          = description.graphics.hs ? compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.graphics.hsName, description.graphics.hs, permutation, language, ShaderType_Hull, errorOut) : nullptr;
-            definition.graphics.ds          = description.graphics.ds ? compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.graphics.dsName, description.graphics.ds, permutation, language, ShaderType_Domain, errorOut) : nullptr;
+            definition.graphics.vs          = compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.graphics.vsName, description.graphics.vs, permutation, language, ShaderType_Vertex, preprocessDefines, errorOut);
+            definition.graphics.gs          = description.graphics.gs ? compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.graphics.gsName, description.graphics.gs, permutation, language, ShaderType_Geometry, preprocessDefines, errorOut) : nullptr;
+            definition.graphics.hs          = description.graphics.hs ? compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.graphics.hsName, description.graphics.hs, permutation, language, ShaderType_Hull, preprocessDefines, errorOut) : nullptr;
+            definition.graphics.ds          = description.graphics.ds ? compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.graphics.dsName, description.graphics.ds, permutation, language, ShaderType_Domain, preprocessDefines, errorOut) : nullptr;
         }
-        definition.graphics.ps              = description.graphics.ps ? compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.graphics.psName, description.graphics.ps, permutation, language, ShaderType_Pixel, errorOut) : nullptr;
+        definition.graphics.ps              = description.graphics.ps ? compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.graphics.psName, description.graphics.ps, permutation, language, ShaderType_Pixel, preprocessDefines, errorOut) : nullptr;
         break;
     case BindType_RayTrace:
-        definition.raytrace.rany            = description.raytrace.rany ? compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.raytrace.ranyName, description.raytrace.rany, permutation, language, ShaderType_RayAnyHit, errorOut) : nullptr;
-        definition.raytrace.rclosest        = description.raytrace.rclosest ? compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.raytrace.rclosestName, description.raytrace.rclosest, permutation, language, ShaderType_RayClosestHit, errorOut) : nullptr;
-        definition.raytrace.rgen            = description.raytrace.rgen ? compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.raytrace.rgenName, description.raytrace.rgen, permutation, language, ShaderType_RayGeneration, errorOut) : nullptr;
-        definition.raytrace.rintersect      = description.raytrace.rintersect ? compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.raytrace.rintersectName, description.raytrace.rintersect, permutation, language, ShaderType_RayIntersect, errorOut) : nullptr;
-        definition.raytrace.rmiss           = description.raytrace.rmiss ? compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.raytrace.rmissName, description.raytrace.rmiss, permutation, language, ShaderType_RayMiss, errorOut) : nullptr;
+        definition.raytrace.rany            = description.raytrace.rany ? compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.raytrace.ranyName, description.raytrace.rany, permutation, language, ShaderType_RayAnyHit, preprocessDefines, errorOut) : nullptr;
+        definition.raytrace.rclosest        = description.raytrace.rclosest ? compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.raytrace.rclosestName, description.raytrace.rclosest, permutation, language, ShaderType_RayClosestHit, preprocessDefines, errorOut) : nullptr;
+        definition.raytrace.rgen            = description.raytrace.rgen ? compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.raytrace.rgenName, description.raytrace.rgen, permutation, language, ShaderType_RayGeneration, preprocessDefines, errorOut) : nullptr;
+        definition.raytrace.rintersect      = description.raytrace.rintersect ? compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.raytrace.rintersectName, description.raytrace.rintersect, permutation, language, ShaderType_RayIntersect, preprocessDefines, errorOut) : nullptr;
+        definition.raytrace.rmiss           = description.raytrace.rmiss ? compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.raytrace.rmissName, description.raytrace.rmiss, permutation, language, ShaderType_RayMiss, preprocessDefines, errorOut) : nullptr;
         break;
     }
 
@@ -324,10 +333,10 @@ ResultCode buildShaderProgramDefinitions(ShaderProgramDatabase& db, const Shader
     ShaderBuilder* shaderBuilder    = g_shaderBuilderMap[imm];
     R_ASSERT(shaderBuilder != NULL);
 
-    auto makeInstanceFunc = [&description, shaderBuilder, outId, &db] (ShaderProgramPermutation permutation) -> ResultCode
+    auto makeInstanceFunc = [&description, shaderBuilder, outId, &db] (const ShaderProgramPermutationDefinitionInstance& permutationDefinition, ShaderProgramPermutation permutation) -> ResultCode
     {
         ResultCode result = RecluseResult_Ok;
-        ShaderProgramDefinition definition = makeShaderProgramDefinition(db, description, permutation, shaderBuilder, result);
+        ShaderProgramDefinition definition = makeShaderProgramDefinition(db, description, permutationDefinition, permutation, shaderBuilder, result);
         if (result != RecluseResult_Ok)
         {
             destroyShaderProgramDefinition(db, definition);
@@ -343,8 +352,9 @@ ResultCode buildShaderProgramDefinitions(ShaderProgramDatabase& db, const Shader
  
     if (!db.hasShaderProgramDefinitions(outId))
     { 
-        // Our first creation is the zeroth permutation.
-        result = makeInstanceFunc(0);
+        // Our first creation has no permutation. So we pass in an empty permutation.
+        // 
+        result = makeInstanceFunc(ShaderProgramPermutationDefinitionInstance(), 0);
 
         if (result == RecluseResult_Ok)
         {
@@ -359,7 +369,7 @@ ResultCode buildShaderProgramDefinitions(ShaderProgramDatabase& db, const Shader
                     permutation |= makeBitset64(permDef.offset, permDef.size, permDef.value);
                 }
 
-                result = makeInstanceFunc(permutation);
+                result = makeInstanceFunc(permutationDefinition, permutation);
                 if (result != RecluseResult_Ok)
                 {
                     break;

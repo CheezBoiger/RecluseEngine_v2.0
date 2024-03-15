@@ -381,9 +381,11 @@ void createTextureResource(GraphicsResource** textureResource)
 
 void createShaderProgram(GraphicsDevice* device)
 {
+
+    ShaderProgramDatabase database          = ShaderProgramDatabase("PipelineInitialization.D3D12.Database");
+#if 1
     if (instance->getApi() == GraphicsApi_Direct3D12)
         GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
-    ShaderProgramDatabase database          = ShaderProgramDatabase("PipelineInitialization.D3D12.Database");
     std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
     std::string vsSource = currDir + "/" + "gbuffer.vs.hlsl";
     std::string fsSource = currDir + "/" + "gbuffer.ps.hlsl";
@@ -394,9 +396,21 @@ void createShaderProgram(GraphicsDevice* device)
     description.graphics.vsName = "Main";
     description.graphics.ps = fsSource.c_str();
     description.graphics.psName = "psMain";
+
+    for (U32 i = 0; i < 2; ++i)
+    {
+        Pipeline::Builder::ShaderProgramPermutationDefinitionInstance permutation;
+        Pipeline::Builder::ShaderProgramPermutationDefinition definition;
+        definition.name = "USE_TEXTURE";
+        definition.offset = 0;
+        definition.size = 1;
+        definition.value = i;
+        permutation.push_back(definition);
+        description.permutationDefinitions.push_back(permutation);
+    }
+
     Pipeline::Builder::buildShaderProgramDefinitions(database, description, ShaderProgram_Gbuffer, instance->getApi() == GraphicsApi_Direct3D12 ? ShaderIntermediateCode_Dxil : ShaderIntermediateCode_Spirv);
     Runtime::buildShaderProgram(device, database, ShaderProgram_Gbuffer);
-
 
     vsSource = currDir + "/" + "quad.vs.hlsl";
     fsSource = currDir + "/" + "resolve.ps.hlsl";
@@ -406,9 +420,23 @@ void createShaderProgram(GraphicsDevice* device)
     description.graphics.vsName = "Main";
     description.graphics.ps = fsSource.c_str();
     description.graphics.psName = "psMain";
+
     Pipeline::Builder::buildShaderProgramDefinitions(database, description, ShaderProgram_LightResolve, instance->getApi() == GraphicsApi_Direct3D12 ? ShaderIntermediateCode_Dxil : ShaderIntermediateCode_Spirv);
     Runtime::buildShaderProgram(device, database, ShaderProgram_LightResolve);
+    {
+        ArchiveWriter writer("dxil.database");
+        database.serialize(&writer);
+    }
+#else
+    {
+        ArchiveReader reader("dxil.database");
+        database.deserialize(&reader);
+        Runtime::buildShaderProgram(device, database, ShaderProgram_LightResolve);
+        Runtime::buildShaderProgram(device, database, ShaderProgram_Gbuffer);
+    }
+#endif
     database.clearShaderProgramDefinitions();
+
 }
 
 
@@ -628,7 +656,14 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
     context->setViewports(1, &viewport);
     context->setScissors(1, &scissor);
     context->setInputVertexLayout(VertexLayout_PositionNormalTexCoordColor);
-    IShaderProgramBinder& binder = context->bindShaderProgram(ShaderProgram_Gbuffer, 0);
+    U32 permutation = 0;
+    KeyboardListener listener;
+    if (listener.isKeyDown(KeyCode_A))
+    {
+        permutation = makeBitset32(0, 1, 1);
+    }
+    IShaderProgramBinder& binder = context->bindShaderProgram(ShaderProgram_Gbuffer, permutation);
+
     for (U32 i = 0; i < meshes.size(); ++i)
     {
         U64 offset[] = { 0 };
@@ -894,7 +929,7 @@ int main(char* argv[], int c)
         appInfo.appMinor = 0;
         appInfo.appMajor = 0;
         appInfo.appPatch = 0;
-        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
+        LayerFeatureFlags flags = 0;//LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
         instance->initialize(appInfo, flags);
     }
     
