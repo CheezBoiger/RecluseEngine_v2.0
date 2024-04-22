@@ -537,7 +537,6 @@ void updateConstBuffer(IShaderProgramBinder& binder, GraphicsResource* resource,
 {
     static F32 t = 0;
     static Bool isTexturing = false;
-    static Bool keyAlreadyDown = false;
     t += 20.0f * delta;
     t = fmod(t, 360.0f);
     Math::Matrix44 T = Math::translate(Math::Matrix44::identity(), Math::Float3(0, 0, 6));
@@ -554,14 +553,9 @@ void updateConstBuffer(IShaderProgramBinder& binder, GraphicsResource* resource,
     buf.modelViewProjection = mvp;
     buf.normal = Math::Matrix44::identity();
     KeyboardListener listener;
-    if (listener.isKeyDown(KeyCode_A) && !keyAlreadyDown)
+    if (listener.isKeyDownOnce(KeyCode_A))
     {
         isTexturing = isTexturing ? false : true;
-        keyAlreadyDown = true;
-    }
-    if (listener.isKeyUp(KeyCode_A))
-    {
-        keyAlreadyDown = false;
     }
     buf.useTexturing = isTexturing;
 

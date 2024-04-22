@@ -35,15 +35,17 @@ void TransformSystem::onUpdate(const RealtimeTick& tick)
         const std::vector<ECS::GameEntity*>& entities = pScene->getEntities();
         for (U64 i = 0; i < entities.size(); ++i)
         {
-            std::tuple<Transform*> transformTuple = obtainTuple<Transform>(entities[i]->getUUID());
+            ECS::GameEntity* entity = entities[i];
+            std::tuple<Transform*> transformTuple = obtainTuple<Transform>(entity->getUUID());
             Transform* transform = std::get<Transform*>(transformTuple);
             if (transform)
             {
-                transform->updateMatrices();
+                Transform* parentTransform = std::get<Transform*>(obtainTuple<Transform>(entity->getParent()));
+                transform->updateMatrices(parentTransform);
                 if (g_enableTransformLogging)
                 {
-                    ECS::GameEntity* entity = ECS::GameEntity::findEntity(transform->getOwner());
-                    R_VERBOSE("Transform", "Owner: %s, Position: (%f, %f, %f)", entity->getName().c_str(), 
+                    ECS::GameEntity* tentity = ECS::GameEntity::findEntity(transform->getOwner());
+                    R_VERBOSE("Transform", "Owner: %s, Position: (%f, %f, %f)", tentity->getName().c_str(), 
                         transform->position.x, transform->position.y, transform->position.z);
                 }
             }

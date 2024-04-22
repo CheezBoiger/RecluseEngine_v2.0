@@ -72,7 +72,7 @@ public:
     ComponentType* obtainComponent(const RGUID& id)
     {
         ECS::GameEntity* entity = ECS::GameEntity::findEntity(id);
-        return entity->getComponent<ComponentType>(m_scene);
+        return (entity ? entity->getComponent<ComponentType>(m_scene) : nullptr);
     }
 
     // Returns a tuple of components from an entity. Any components not found,
@@ -81,7 +81,6 @@ public:
     std::tuple<Args*...> obtainTuple(const RGUID& id)
     {
         std::tuple<Args*...> args = { obtainComponent<Args>(id)... }; 
-        
         return args;
     }
 

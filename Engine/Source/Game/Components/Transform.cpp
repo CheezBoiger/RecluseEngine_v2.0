@@ -39,12 +39,17 @@ ResultCode Transform::deserialize(Archive* pArchive)
     return RecluseResult_NoImpl;
 }
 
-void Transform::updateMatrices()
+void Transform::updateMatrices(const Transform* parentTransform)
 {
     Matrix44 t      = Math::translate(Matrix44::identity(), position);
     Matrix44 s      = Math::scale(t, scale);
     Matrix44 r      = Math::quatToMat44(rotation);
     Matrix44 World  = s * r * t;
+
+    if (parentTransform)
+    {
+        
+    }
 
     m_localToWorld  = World;
     m_worldToLocal  = Math::inverse(World);

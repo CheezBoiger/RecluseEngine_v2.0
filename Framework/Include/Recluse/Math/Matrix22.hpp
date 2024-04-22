@@ -51,5 +51,9 @@ R_PUBLIC_API Matrix22 translate(const Matrix22& base, const Float2& t);
 R_PUBLIC_API Matrix22 transpose(const Matrix22& m);
 R_PUBLIC_API F32      determinant(const Matrix22& m);
 R_PUBLIC_API Matrix22 inverse(const Matrix22& m);
+
+
+typedef Matrix22 Mat22;
+typedef Matrix22 Mat2;
 } // Math
 } // Recluse

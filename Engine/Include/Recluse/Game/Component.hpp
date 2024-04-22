@@ -23,7 +23,8 @@ enum ComponentUpdateFlag
 };
 
 // Declaration semantics used for editor.
-#define R_EDITOR_DECLARE(varType, varName, varValue)
+#define REDITOR(attribute, ...)
+#define RATTRIBUTE(varName, varValue)
 
 // Call this macro when declareing a component. This will be used by the engine to determine 
 // the proper calls to be made to the GameObject.
@@ -97,11 +98,11 @@ public:
     virtual ResultCode deserialize(Archive* pArchive) override { return RecluseResult_NoImpl; }
 
     // Check if the component is enabled.
-    R_EDITOR_DECLARE("visible", "public", true)
+    REDITOR(RATTRIBUTE("visible", "public"))
     Bool            isEnabled() const { return m_enable; }
 
     // Enable the component.
-    R_EDITOR_DECLARE("visible", "public", true)
+    REDITOR(RATTRIBUTE("visible", "public"))
     void            setEnable(Bool enable) { m_enable = enable; if (enable) onEnable(); }
 
     // Initialize the component.

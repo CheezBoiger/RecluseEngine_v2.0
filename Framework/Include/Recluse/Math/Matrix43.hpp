@@ -39,5 +39,8 @@ public:
     F32 operator()(U32 row, U32 col) const { return get(row, col); }
     F32& operator()(U32 row, U32 col) { return get(row, col); }
 };
+
+
+typedef Matrix43 Mat43;
 } // Math
 } // Recluse

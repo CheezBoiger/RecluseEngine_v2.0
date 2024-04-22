@@ -26,22 +26,23 @@ public:
     virtual ~Transform() { }
     Transform() { }
 
-    R_EDITOR_DECLARE("visible", "public", true)
-    R_EDITOR_DECLARE("visible", "default", Float3(0.f, 0.f, 0.f))
+    REDITOR(RATTRIBUTE("visible", "public"),
+             RATTRIBUTE("default", Float3(0.f, 0.f, 0.f)),
+             RATTRIBUTE("description", "World position of the transform"))
     Float3      position;       // The World position of the transform.
-    R_EDITOR_DECLARE("visible", "public", true)
+    REDITOR(RATTRIBUTE("visible", "public"))
     Float3      localPosition;  // The local position, relative to the parent.
-    R_EDITOR_DECLARE("visible", "public", true)
+    REDITOR(RATTRIBUTE("visible", "public"))
     Quaternion  rotation;       // Rotation of the transform in world.
-    R_EDITOR_DECLARE("visible", "public", true)
+    REDITOR(RATTRIBUTE("visible", "public"))
     Quaternion  localRotation;  // local rotation relative to the parent.
-    R_EDITOR_DECLARE("visible", "public", true)
+    REDITOR(RATTRIBUTE("visible", "public"))
     Float3      eulerAngles;    // rotation represented in euler angles (roll, pitch, yaw.)
-    R_EDITOR_DECLARE("visible", "public", true)
+    REDITOR(RATTRIBUTE("visible", "public"))
     Float3      forward;        // forward facing vector of the object.
-    R_EDITOR_DECLARE("visible", "public", true)
+    REDITOR(RATTRIBUTE("visible", "public"))
     Float3      right;          // right facing vector of the object.
-    R_EDITOR_DECLARE("visible", "public", true)
+    REDITOR(RATTRIBUTE("visible", "public"))
     Float3      up;             // up facing vector of the object.
     Float3      scale;          // scale vector of the object.
 
@@ -53,7 +54,7 @@ public:
     virtual ResultCode          serialize(Archive* pArchive) const override;
     virtual ResultCode          deserialize(Archive* pArchive) override;
 
-    void                        updateMatrices();
+    void                        updateMatrices(const Transform* parentTransform = nullptr);
 
 private:
     Matrix43                    m_localToWorld;        // Local to World Matrix.

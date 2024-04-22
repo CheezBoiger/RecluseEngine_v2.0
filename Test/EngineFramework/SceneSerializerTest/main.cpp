@@ -31,7 +31,7 @@ public:
             objects.pop();
             
             RGUID rguid                                 = pObject->getUUID();
-            const std::vector<ECS::GameEntity*>& children    = pObject->getChildren();
+            const std::vector<RGUID>& children          = pObject->getChildren();
             U32 numChildren                                     = (U32)children.size();
             const char* name                                    = "cats";
             U32 nameSz                                          = strlen(name);

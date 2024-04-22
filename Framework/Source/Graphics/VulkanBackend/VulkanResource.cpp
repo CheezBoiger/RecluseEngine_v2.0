@@ -8,34 +8,37 @@
 #include "VulkanQueue.hpp"
 #include "Recluse/Messaging.hpp"
 
+#include <memory>
+
 
 namespace Recluse {
 namespace Vulkan {
 namespace Resources {
 
-std::map<DeviceId, std::unordered_map<ResourceId, VulkanResource*>> g_resourcesMap;
+std::map<DeviceId, std::unordered_map<ResourceId, std::unique_ptr<VulkanResource>>> g_resourcesMap;
 
 VulkanResource* makeResource(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState)
 {
     R_ASSERT_FORMAT(desc.width > 0 && desc.height > 0 && desc.depthOrArraySize > 0 && desc.mipLevels > 0, "Description width/height/arraySize/mipLevels should at least be 1 or greater!");
     DeviceId deviceId = pDevice->getDeviceId();
+    std::unique_ptr<VulkanResource> ptr;
+
     if (desc.dimension == ResourceDimension_Buffer)
     {
-        VulkanBuffer* pBuffer   = new VulkanBuffer(desc);
-        pBuffer->initialize(pDevice, desc, initState);
-        pBuffer->generateId();
-        ResourceId id           = pBuffer->getId();
-        g_resourcesMap[deviceId][id]      = pBuffer;  
-        return g_resourcesMap[deviceId][id];
+        ptr = std::make_unique<VulkanBuffer>(desc);
     }
     else
     {
-        VulkanImage* pImage = new VulkanImage();
-        pImage->initialize(pDevice, desc, initState);
-        pImage->generateId();
-        ResourceId id       = pImage->getId();
-        g_resourcesMap[deviceId][id]  = pImage;
-        return g_resourcesMap[deviceId][id];
+        ptr = std::make_unique<VulkanImage>();
+    }
+
+    if (ptr)
+    {
+        ptr->initialize(pDevice, desc, initState);
+        ptr->generateId();
+        ResourceId id = ptr->getId();
+        g_resourcesMap[deviceId][id] = std::move(ptr);
+        return g_resourcesMap[deviceId][id].get();
     }
 
     return nullptr;
@@ -63,7 +66,7 @@ VulkanResource* obtainResource(DeviceId deviceId, ResourceId id)
     auto& iter = resourcesMap.find(id);
     if (iter == resourcesMap.end())
         return nullptr;
-    return iter->second;
+    return iter->second.get();
 }
 } // Resources
 

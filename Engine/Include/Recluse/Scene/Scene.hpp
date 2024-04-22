@@ -135,6 +135,14 @@ public:
         return nullptr;
     }
 
+    // Move an existing component to this scene. The other component associated with another scene can be moved over here, instead of 
+    // re-created and copied over. Ensure the given component is not being used while performing this function call!
+    template<typename ComponentType>
+    ResultCode moveComponentToThis(const RGUID& entityGuid, Scene* pFromScene)
+    {
+        return RecluseResult_Ok;
+    }
+
 protected:
 
     // Serialize the given scene. This should be used for 

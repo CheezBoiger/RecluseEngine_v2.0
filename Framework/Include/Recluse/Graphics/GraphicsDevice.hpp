@@ -137,6 +137,17 @@ typedef U32 ContextFlags;
 typedef U32 DeviceId;
 
 
+struct ResourceTransitionDescription
+{
+    GraphicsResource*   resource;
+    ResourceState       newState;
+    U16                 baseMip; 
+    U16                 mipCount; 
+    U16                 baseLayer; 
+    U16                 layerCount;
+};
+
+
 // The context of the rendering api, this will describe the rendering frame work to be sent to the GPU.
 // This consists of drawcalls, dispatches, copies, and other gpu related activities.
 class R_PUBLIC_API GraphicsContext : public ICastableObject
@@ -237,7 +248,7 @@ public:
     // API anyways, in order to ensure newer APIs will still conform!
     // If subresource == subresourceCount, then will transition all subresources of the resource.
     virtual void                    transition(GraphicsResource* pResource, ResourceState newState, U16 baseMip = 0, U16 mipCount = 0, U16 baseLayer = 0, U16 layerCount = 0) { }
-    virtual void                    transitionResources(GraphicsResource** resources, ResourceState* states, U32 resourceCount) { }
+    virtual void                    transitionResources(const ResourceTransitionDescription* transitions, U32 resourceCount) { }
 
     virtual Bool                    supportsAsyncCompute() { return false; }
 

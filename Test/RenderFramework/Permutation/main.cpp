@@ -50,8 +50,8 @@ typedef Math::Float4 Vector4;
 
 struct ConstBuffer
 {
-    Math::Matrix44 modelViewProjection;
-    Math::Matrix44 normal;
+    Math::Mat44 modelViewProjection;
+    Math::Mat44 normal;
     U32             useTexturing;
     U32             pad0[3];
      
@@ -685,8 +685,8 @@ void createSceneBuffer(GraphicsDevice* device)
 {
     struct SceneBuffer
     {
-        Math::Matrix44 viewProjection;
-        Math::Matrix44 view;
+        Math::Mat44 viewProjection;
+        Math::Mat44 view;
     };
 
     GraphicsResourceDescription description = { };
@@ -742,8 +742,8 @@ void resolveLighting(GraphicsContext* context)
 
     struct SceneBuffer
     {
-        Math::Matrix44 viewProjection;
-        Math::Matrix44 view;
+        Math::Mat44 viewProjection;
+        Math::Mat44 view;
     };
 
     struct LightView
@@ -866,11 +866,15 @@ void createCubes(GraphicsDevice* device, std::vector<MeshDraw>& meshes, U32 widt
         it.meshTransform->map((void**)&buffer, nullptr);
         F32 t = 20.0f * 0;
         t = fmod(t, 360.0f);
-        Math::Matrix44 T = Math::translate(Math::Matrix44::identity(), Math::Float3(0, 0, 6));
-        Math::Matrix44 R = Math::rotate(Math::Matrix44::identity(), Math::Float3(0.0f, 1.0f, 0.0f), Math::deg2Rad(45.0f));
-        Math::Matrix44 R2 = Math::rotate(Math::Matrix44::identity(), Math::Float3(1.0f, 0.0f, 1.0f), Math::deg2Rad(t));
-        Math::Matrix44 model = R2 * R * T;
+        Math::Mat44 T = Math::translate(Math::Mat44::identity(), Math::Float3(0, 0, 6));
+        Math::Mat44 R = Math::rotate(Math::Mat44::identity(), Math::Float3(0.0f, 1.0f, 0.0f), Math::deg2Rad(45.0f));
+        Math::Mat44 R2 = Math::rotate(Math::Mat44::identity(), Math::Float3(1.0f, 0.0f, 1.0f), Math::deg2Rad(t));
+        Math::Mat44 model = R2 * R * T;
         buffer->modelViewProjection = model * view * proj;
+        model(3, 0) = 0.f;
+        model(3, 1) = 0.f;
+        model(3, 2) = 0.f;
+        buffer->normal = Math::transpose(Math::inverse(model));
         it.meshTransform->unmap(nullptr);
         
         it.numIndices = (U32)indices.size();
@@ -929,7 +933,7 @@ int main(char* argv[], int c)
         appInfo.appMinor = 0;
         appInfo.appMajor = 0;
         appInfo.appPatch = 0;
-        LayerFeatureFlags flags = 0;//LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
+        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
         instance->initialize(appInfo, flags);
     }
     

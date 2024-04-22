@@ -32,7 +32,8 @@ VSOut Main(VSIn inVerts)
 	VSOut Out;
 	float4 localPos = float4(inVerts.vPosition.xyz, 1);
 	Out.vPosition = mul(mModelViewProjection, localPos);
-	Out.vNormal = mul(float4(inVerts.vNormal.xyz, 1.0), mNormal);
+	Out.vNormal = mul(mNormal, float4(inVerts.vNormal.xyz, 1.0));
+	Out.vNormal = Out.vNormal * 0.5 + 0.5;
 	Out.color = inVerts.color;
 	Out.vTexCoord0 = inVerts.vTexCoord;
 	return Out;

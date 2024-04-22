@@ -91,12 +91,12 @@ public:
                 const RGUID& uuid,
                 const std::string& tag = std::string(), 
                 const std::string& name = std::string(), 
-                GameEntity* pParent = nullptr
+                RGUID parent = RGUID::kInvalidValue
             )
         : m_allocation(allocation)
         , m_guuid(uuid)
         , m_status(GameEntityStatus_Unused)
-        , m_pParentNode(pParent)
+        , m_parent(parent)
         , m_name(name)
         , m_tag(tag)
     {}
@@ -167,7 +167,7 @@ public:
     R_PUBLIC_API Bool                   isReady() const { return (m_status == GameEntityStatus_Initialized) || (m_status == GameEntityStatus_Active); }
 
     // Get the game object parent.
-    R_PUBLIC_API GameEntity*            getParent() const { return m_pParentNode; }
+    R_PUBLIC_API RGUID                  getParent() const { return m_parent; }
 
     R_PUBLIC_API RGUID                  getUUID() const { return m_guuid; }
 
@@ -180,54 +180,65 @@ public:
     // Add a node to this game object. This game object becomes the 
     // parent of pNode. Any game objects that are similar to this one,
     // will not be added as a child.
-    R_PUBLIC_API void                   addChild(GameEntity* pNode) 
+    R_PUBLIC_API void                   addChild(RGUID node) 
     { 
         // No need to do anything if this node already exists in this game object.
-        if (pNode->getParent() == this) return;
+        GameEntity* entity = GameEntity::findEntity(node);
+        if (!entity) return;
+        if (entity->getParent() == m_guuid) return;
 
         // Check if there is not already a parent node. If so, we will
         // remove it from it's original parent, and replace with this.
-        if (pNode->m_pParentNode) 
+        if (entity->getParent() != RGUID::kInvalidValue) 
         {
-            pNode->getParent()->removeChild(pNode);
+            GameEntity::findEntity(entity->getParent())->removeChild(node);
         }
  
-        pNode->m_pParentNode = this;
+        entity->m_parent = m_guuid;
     
-        auto iter = std::find(m_childrenNodes.begin(), m_childrenNodes.end(), pNode);
+        auto iter = std::find(m_children.begin(), m_children.end(), node);
 
-        if (iter == m_childrenNodes.end()) 
+        if (iter == m_children.end()) 
         {
-            m_childrenNodes.push_back(pNode);
+            m_children.push_back(node);
         }
     }
 
     // Removes a child from this game object.
-    R_PUBLIC_API void removeChild(GameEntity* pNode) 
+    R_PUBLIC_API void removeChild(RGUID node) 
     {
-        if (pNode->m_pParentNode != this) 
+        GameEntity* entity = GameEntity::findEntity(node);
+        if (!entity) return;
+
+        if (entity->getParent() != m_guuid) 
         {
             // Can not remove this node if it doesn't belong to 
             // this game object.
             return;
         }
 
-        auto iter = std::find(m_childrenNodes.begin(), m_childrenNodes.end(), pNode);
-        if (iter != m_childrenNodes.end()) 
+        auto iter = std::find(m_children.begin(), m_children.end(), node);
+        if (iter != m_children.end()) 
         {
-            m_childrenNodes.erase(iter);
-            pNode->m_pParentNode = nullptr;
+            m_children.erase(iter);
+            entity->m_parent = RGUID::kInvalidValue;
         }
     }
 
-    R_PUBLIC_API std::vector<GameEntity*>&  getChildren() { return m_childrenNodes; }
+    R_PUBLIC_API std::vector<RGUID>&  getChildren() { return m_children; }
 
-    R_PUBLIC_API B32                        isParent(GameEntity* pChild) const 
+    R_PUBLIC_API B32                        isParent(RGUID child) const 
     {
-        auto iter = std::find(m_childrenNodes.begin(), m_childrenNodes.end(), pChild);
-        return (iter != m_childrenNodes.end());
+        auto iter = std::find(m_children.begin(), m_children.end(), child);
+        return (iter != m_children.end());
     }
 
+    // Get the component that is associated with this entity, from the given scene.
+    // Many scenes may hold components of the same entity, but may actually be from another scene.
+    // Therefore, components of the same type will end up having different possible values from other scenes.
+    // To transition components to other scenes, you will have to pull them from one scene and copy them to another.
+    // Otherwise, to save memory, you can opt to call Scene::moveComponentToThis, which will detach the component from one scene, and 
+    // Attach to another.
     template<typename Comp>
     Comp* getComponent(Engine::Scene* pScene)
     {
@@ -263,12 +274,12 @@ private:
     GameEntityStatus                                        m_status;
 
     // The Parent node that this game object may be associated to.
-    GameEntity*                                             m_pParentNode;
+    RGUID                                                   m_parent;
 
     // All children game object nodes associated with this game object.
     // Keep in mind that any object children must also inherit the world transform from the 
     // game object parent.
-    std::vector<GameEntity*>                                m_childrenNodes;
+    std::vector<RGUID>                                      m_children;
 
     // Game Object uuid.
     RGUID                                                   m_guuid;

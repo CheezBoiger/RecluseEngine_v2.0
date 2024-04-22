@@ -10,6 +10,14 @@ namespace Recluse {
 namespace Pipeline {
 
 
+// Shader Builder Functions.
+std::unordered_map<std::string, ShaderBuilderFunc> g_shaderBuilderFuncs = 
+{ 
+    { "glslang",    createGlslangShaderBuilder },
+    { "dxc",        createDxcShaderBuilder }
+};
+
+
 ResultCode ShaderBuilder::compile
     (
         Shader* pShader, 
@@ -54,13 +62,6 @@ ResultCode ShaderBuilder::preprocessInputResources(ShaderLanguage lang, std::vec
     // specialized shader builders.
     return RecluseResult_Ok;
 }
-
-
-std::unordered_map<std::string, ShaderBuilderFunc> g_shaderBuilderFuncs = 
-{ 
-    { "glslang",    createGlslangShaderBuilder },
-    { "dxc",        createDxcShaderBuilder }
-};
 
 
 ShaderBuilder* createShaderBuilder(const std::string& nameID, ShaderIntermediateCode intermediateCode)

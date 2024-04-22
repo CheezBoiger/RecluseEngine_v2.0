@@ -49,6 +49,10 @@ static void defaultFree(GameEntity* pEntity)
 
 static GameEntity* defaultGetEntity(const RGUID& rguid)
 {
+    // Invalid guid, will return nullptr.
+    if (rguid == RGUID::kInvalidValue)
+        return nullptr;
+
     // Get the rguid hash.
     SizeT address = U64(rguid.ss.hash0) | (U64(rguid.ss.hash1) << 32);
     GameEntity* pEntity = reinterpret_cast<GameEntity*>(address);

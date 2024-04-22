@@ -8,13 +8,14 @@
 #include "Recluse/Messaging.hpp"
 
 #include "Recluse/Threading/Threading.hpp"
+#include <memory>
 
 namespace Recluse {
 namespace D3D12 {
 
 MutexGuard              g_resourceMutex = { };
 ResourceId              g_resourceCounter = 0;
-std::unordered_map<ResourceId, D3D12Resource*> m_resourceMap;
+std::unordered_map<ResourceId, std::unique_ptr<D3D12Resource>> m_resourceMap;
 
 
 R_INTERNAL
@@ -322,18 +323,19 @@ void D3D12Resource::generateId()
 D3D12Resource* makeResource(D3D12Device* pDevice, const GraphicsResourceDescription& description, ResourceState initialState)
 {
     R_ASSERT_FORMAT(description.width > 0 && description.height > 0 && description.depthOrArraySize > 0 && description.mipLevels > 0, "Description width/height/arraySize/mipLevels should at least be 1 or greater!");
-    D3D12Resource* pResource = new D3D12Resource();
+    std::unique_ptr<D3D12Resource> pResource = std::make_unique<D3D12Resource>();
     ResultCode result = pResource->initialize(pDevice, description, initialState);
     if (result != RecluseResult_Ok)
     {
-        delete pResource;
-        pResource = nullptr;
+        pResource.reset();
     }
     else
     {
-        m_resourceMap[pResource->getId()] = pResource;
+        ResourceId id = pResource->getId();
+        m_resourceMap[id] = std::move(pResource);
+        return m_resourceMap[id].get();
     }
-    return pResource;
+    return nullptr;
 }
 
 
@@ -351,7 +353,6 @@ ResultCode releaseResource(D3D12Resource* pResource, Bool immediate)
     ResultCode result = pResource->destroy(immediate);
     if (result == RecluseResult_Ok)
     {
-        delete pResource;
         m_resourceMap.erase(iter);
     }
     return RecluseResult_Ok;
