@@ -12,8 +12,10 @@
 #include "Recluse/Structures/HashMap.hpp"
 
 #include "Recluse/Generated/RendererConfigs.hpp"
+#include "Recluse/Generated/RendererPrograms.hpp"
 
 #include <vector>
+#include <functional>
 #include <unordered_map>
 
 #define RECLUSE_ENGINE_NAME_STRING "Recluse Engine"
@@ -38,6 +40,7 @@ class Mesh;
 class Primitive;
 struct RenderCommand;
 class RenderCommandList;
+class DebugRenderer;
 
 
 enum RenderPassType : U32 
@@ -74,8 +77,15 @@ typedef MapContainer<U32, std::vector<U64>> CommandKeyContainer;
 class R_PUBLIC_API Renderer final : public EngineModule<Renderer> 
 {
 public:
+
+    typedef std::function<ResultCode(DebugRenderer*)> DebugDrawFunction;
+    typedef std::function<ResultCode(Renderer*)> DebugInitFunction;
+
     Renderer();
     ~Renderer();
+
+    // Initializes the debug plugin for DebugRenderer use.
+    ResultCode                  initializeDebugPlugin(DebugInitFunction pluginFunc);
 
     void                        initialize();
     void                        cleanUp();
@@ -85,6 +95,7 @@ public:
 
     // Push the render command to the rendering engine. This will store the command for the drawing frame.
     void                        pushRenderCommand(const RenderCommand& renderCommand, RenderPassTypeFlags renderFlags);
+    void                        pushDebugDraw(DebugDrawFunction debugDrawFunction);
 
     void                        render();
     void                        present(Bool delayPresent = false);
@@ -106,6 +117,9 @@ public:
     IndexBuffer*                createIndexBuffer(IndexType indexType, U64 totalIndices);
     Texture2D*                  createTexture2D(U32 width, U32 height, U32 mips, U32 layers, ResourceFormat format);
 
+    // Creation of temporary resource, to be used only on the current frame. Will be destroyed on re-draw.
+    ResultCode                  createTempResource(const GraphicsResourceDescription& desc);
+
     ResultCode                  destroyTexture2D(Texture2D* pTexture);
     ResultCode                  destroyGPUBuffer(GPUBuffer* pBuffer);
 
@@ -121,6 +135,8 @@ private:
     void                        cleanUpModules();
     void                        createDevice(const RendererConfigs& configs);
     void                        allocateSceneBuffers(const RendererConfigs& configs);
+    
+    void                        clear();
 
     void                        interpolateTime();
 
@@ -180,6 +196,19 @@ private:
     std::vector<std::unordered_map<U32, std::vector<U64>>>  m_commandKeys;
     RenderCommandList*                                      m_currentRenderCommands;
     CommandKeyContainer                                     m_currentCommandKeys;
+    std::vector<DebugDrawFunction>                          m_debugDrawFunctions;
+
+    // Gpu Resources used as temporary for the current frame. This will be refreshed every new frame.
+    std::vector<GraphicsResource*>                          m_tempResourcesPerFrame;
+    std::vector<Allocator*>                                 m_tempResourceAllocatorPerFrame;
+};
+
+
+class ImGuiRenderer : public ModulePlugin<Renderer>
+{
+public:
+    DEFINE_MODULE_PLUGIN(ImGuiRenderer, Renderer, RendererPluginID_DebugRenderer);
+    ImGuiRenderer() { }
 };
 
 

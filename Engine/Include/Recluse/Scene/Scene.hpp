@@ -17,6 +17,7 @@ class MessageBus;
 namespace Engine {
 
 class Camera;
+class DebugRenderer;
 
 class Scene : public Serializable 
 {
@@ -57,6 +58,8 @@ public:
     // Get the main camera in the scene.
     Camera*                                     getMainCamera() const { return m_cameras[0]; }
     Camera*                                     getCamera(U32 index) { return m_cameras[index]; }
+
+    void                                        drawDebug(DebugRenderer* debugRenderer);
 
     // Adds a system into this scene. Systems are usually global, but in our engine, they are 
     // only global to our respective scene. Therefore, it is essential that any new scenes must 

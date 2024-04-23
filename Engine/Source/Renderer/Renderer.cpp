@@ -8,6 +8,7 @@
 #include "Recluse/Memory/MemoryCommon.hpp"
 #include "Recluse/System/Window.hpp"
 #include "Recluse/System/Limiter.hpp"
+#include "Recluse/Renderer/Debug/DebugRenderer.hpp"
 
 #include "Recluse/Messaging.hpp"
 
@@ -196,9 +197,25 @@ void Renderer::render()
                             m_currentCommandKeys[RENDER_FORWARD_OPAQUE].size()
                         );
 #endif
+    // Check if any debug draw functions exist.
+    if (!m_debugDrawFunctions.empty())
+    {
+        DebugRenderer debugRenderer(this);
+        for (auto func : m_debugDrawFunctions)
+        {
+            func(&debugRenderer);
+        }
+    }
     context->transition(m_pSwapchain->getFrame(m_pSwapchain->getCurrentFrameIndex()), ResourceState_Present);
     context->end();
     resetCommandKeys();
+    clear();
+}
+
+
+void Renderer::pushDebugDraw(DebugDrawFunction f)
+{
+    m_debugDrawFunctions.push_back(f);
 }
 
 
@@ -261,12 +278,27 @@ void Renderer::setUpModules()
                                     );
 
     //PreZ::initialize(m_pDevice, &m_sceneBuffers);
+
+    // DebugRenderer Module.
+    Plugin* debugPlugin = getPlugin(RendererPluginID_DebugRenderer);
+    if (debugPlugin)
+    {
+        R_DEBUG("Renderer", "Initializing Debug Renderer Plugin");
+        debugPlugin->initialize(this);
+    }
 }
 
 
 void Renderer::cleanUpModules()
 {
     //PreZ::destroy(m_pDevice);
+
+    Plugin* debugPlugin = getPlugin(RendererPluginID_DebugRenderer);
+    if (debugPlugin)
+    {
+        R_DEBUG("Renderer", "Cleaning up Debug Renderer Plugin.");
+        debugPlugin->cleanUp(this);
+    }
 }
 
 
@@ -624,6 +656,18 @@ void Renderer::recreate()
     ScopedLock lck(m_configLock);
 
     R_NO_IMPL();
+}
+
+
+void Renderer::clear()
+{
+    m_debugDrawFunctions.clear();
+}
+
+
+ResultCode Renderer::createTempResource(const GraphicsResourceDescription& description)
+{
+    return 0;
 }
 } // Engine
 } // Recluse

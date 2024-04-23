@@ -15,6 +15,8 @@ namespace Recluse {
 class MessageBus;
 namespace Engine {
 class Scene;
+class Renderer;
+class DebugRenderer;
 } // Engine
 } // Recluse
 
@@ -108,8 +110,11 @@ public:
 
     virtual const char*     getName() const { return "AbstractSystem"; }
     
-    Engine::Scene* getScene() const { return m_scene; }
-    void            setScene(Engine::Scene* scene) { m_scene = scene; }
+    Engine::Scene*          getScene() const { return m_scene; }
+    void                    setScene(Engine::Scene* scene) { m_scene = scene; }
+
+    void                    drawDebug(Engine::DebugRenderer* renderer) { onDrawDebug(renderer); }
+
 private:
     // Allows initializing the system before on intialize().
     virtual ResultCode      onInitialize(MessageBus* bus = nullptr) { return RecluseResult_NoImpl; }
@@ -123,6 +128,7 @@ private:
     // To update all components in the world.
     virtual void            onUpdate(const RealtimeTick& tick)  { }
 
+    virtual void            onDrawDebug(Engine::DebugRenderer* context) { }
     // Priority value of this abstract system. This will be used to determine the 
     // order of which this system will operate.
     U32                 m_priority;

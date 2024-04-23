@@ -1,6 +1,12 @@
 // Rendering shader programs.
 namespace Recluse {
 
+
+event RendererPluginID
+{
+	RendererPluginID_DebugRenderer
+};
+
 event ShaderProgram
 {
 	ShaderProgram_PreZDepth,

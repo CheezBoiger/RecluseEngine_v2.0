@@ -24,6 +24,8 @@ enum ComponentUpdateFlag
 
 // Declaration semantics used for editor.
 #define REDITOR(attribute, ...)
+
+// Attribute semantics for the editor.
 #define RATTRIBUTE(varName, varValue)
 
 // Call this macro when declareing a component. This will be used by the engine to determine 

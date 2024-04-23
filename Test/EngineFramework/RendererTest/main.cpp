@@ -38,8 +38,9 @@ public:
 
     virtual ResultCode onInit() override
     {
-        Log::initializeLoggingSystem();
         Renderer::initializeModule(this);
+        enableLogTypes(LogType_Debug);
+        setLogChannel("Renderer", true);
 
         RendererConfigs config = { };
         config.api = GraphicsApi_Direct3D12;
@@ -50,6 +51,7 @@ public:
         config.renderWidth = getWindow()->getWidth();
         config.renderHeight = getWindow()->getHeight();
         Renderer::getMain()->setNewConfigurations(config);
+        Renderer::getMain()->addPlugin<ImGuiRenderer>();
 
         MessageBus::fireEvent(getMessageBus(), RenderEvent_Initialize);
         MessageBus::fireEvent(getMessageBus(), RenderEvent_Resume);
@@ -60,17 +62,18 @@ public:
     {
         MessageBus::fireEvent(getMessageBus(), RenderEvent_Shutdown);
         //Renderer::cleanUpModule(this);
-        Log::destroyLoggingSystem();     
         return RecluseResult_Ok;
     }
 };
 
 int main(int c, char* argv[])
 {
+    Log::initializeLoggingSystem();
     TestApplication testApp = {};
     MainThreadLoop::initialize();
     MainThreadLoop::loadApp(&testApp);
     MainThreadLoop::run();
-    MainThreadLoop::cleanUp();
+    MainThreadLoop::cleanUp();        
+    Log::destroyLoggingSystem();     
     return 0;
 }

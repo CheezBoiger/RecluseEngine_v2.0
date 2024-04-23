@@ -1,6 +1,7 @@
 //
 #include "Recluse/Scene/Scene.hpp"
 #include "Recluse/Messaging.hpp"
+#include "Recluse/Renderer/Renderer.hpp"
 
 #include "Recluse/Filesystem/Archive.hpp"
 #include "Recluse/Memory/LinearAllocator.hpp"
