@@ -9,7 +9,7 @@ int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
 
-    GraphicsInstance* pInstance = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
+    GraphicsInstance* pInstance = GraphicsInstance::create(GraphicsApi_Vulkan);
 
     if (!pInstance) {
         goto Exit;

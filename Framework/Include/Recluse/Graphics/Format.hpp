@@ -41,7 +41,7 @@ enum ResourceFormat
 };
 
 
-extern const char* getResourceFormatString(ResourceFormat format);
+R_PUBLIC_API const char* getResourceFormatString(ResourceFormat format);
 
 typedef Hash64 GraphicsId;
 } // Recluse

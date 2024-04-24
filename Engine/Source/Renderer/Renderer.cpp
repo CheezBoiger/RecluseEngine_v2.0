@@ -52,7 +52,7 @@ void Renderer::initialize()
     ResultCode result          = RecluseResult_Ok;
     m_windowHandle          = m_currentRendererConfigs.windowHandle;
 
-    m_pInstance = GraphicsInstance::createInstance(m_currentRendererConfigs.api);
+    m_pInstance = GraphicsInstance::create(m_currentRendererConfigs.api);
     
     if (!m_pInstance) 
     {

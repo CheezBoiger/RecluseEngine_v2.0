@@ -11,6 +11,7 @@
 #include "Recluse/Messaging.hpp"
 #include "Recluse/System/Window.hpp"
 #include "Recluse/System/Mouse.hpp"
+#include "Recluse/System/DLLLoader.hpp"
 
 // Number of watch types available to the engine. This can vary, so be sure to update the cost needed.
 #define MAX_WATCH_TYPE_INDICES      (16)
@@ -514,5 +515,63 @@ RealtimeStopWatch RealtimeStopWatch::operator-(const RealtimeStopWatch& rh)
     RealtimeStopWatch watch;
     watch.m_currentTimeU64 = m_currentTimeU64 - rh.m_currentTimeU64;
     return watch;
+}
+
+
+DllLoader::DllLoader(const std::string& dllName)
+    : library(nullptr)
+{
+    if (!dllName.empty())
+    {
+        load(dllName);
+    }
+}
+
+
+DllLoader::~DllLoader()
+{
+    if (isLoaded())
+    {
+        unload();
+    }
+}
+
+
+Bool DllLoader::isLoaded()
+{
+    return (library != nullptr);
+}
+
+
+Bool DllLoader::load(const std::string& dllName)
+{
+    HMODULE hm = LoadLibrary(dllName.c_str());
+    if (hm)
+    {
+        library = hm;
+        name = dllName;
+        return true;
+    }
+    return false;
+}
+
+
+Bool DllLoader::unload()
+{
+    if (isLoaded())
+    {
+        HMODULE hm = (HMODULE)library;
+        FreeLibrary(hm);
+        library = nullptr;
+        name = "";
+        return true;
+    }
+    return false;
+}
+
+
+void* DllLoader::procAddress(const std::string& name)
+{
+    return GetProcAddress((HMODULE)library, name.c_str());
 }
 } // Recluse

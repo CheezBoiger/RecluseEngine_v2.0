@@ -18,7 +18,7 @@ int main(int c, char* argv[])
     GraphicsSwapchain* pSwapchain   = nullptr;
     GraphicsDevice* pDevice         = nullptr;
     GraphicsContext* pContext       = nullptr;
-    GraphicsInstance* pInstance      = GraphicsInstance::createInstance(GraphicsApi_Vulkan);
+    GraphicsInstance* pInstance      = GraphicsInstance::create(GraphicsApi_Vulkan);
 
     Window* pWindow = Window::create(u8"CommandListSubmit", 0, 0, 128, 128);
 

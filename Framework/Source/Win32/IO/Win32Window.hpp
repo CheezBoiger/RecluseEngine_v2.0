@@ -12,7 +12,6 @@ namespace Recluse {
 
 extern CriticalSection windowCs;
 
-
-
-Window* getWindowAssociatedWithHwnd(HWND hwnd);
+// Exposed for d3d12 only.
+R_PUBLIC_API Window* getWindowAssociatedWithHwnd(HWND hwnd);
 } // Recluse

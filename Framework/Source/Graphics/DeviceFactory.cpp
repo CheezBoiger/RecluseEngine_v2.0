@@ -2,28 +2,20 @@
 #include "Recluse/Graphics/GraphicsInstance.hpp"
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Memory/MemoryPool.hpp"
-
-// Only one is supported.
-#if defined RCL_VULKAN
-#include "VulkanBackend/VulkanInstance.hpp"
-#endif
-
-#if defined RCL_DX12
-#include "D3D12Backend/D3D12Instance.hpp"
-#endif
-
-#if defined RCL_DX11
-#include "D3D11Backend/D3D11Instance.hpp"
-#endif
+#include "Recluse/System/DLLLoader.hpp"
 
 namespace Recluse {
 
+typedef Recluse::GraphicsInstance*(*CreateInstanceFunc)();
+typedef Recluse::ResultCode(*FreeInstanceFunc)(Recluse::GraphicsInstance*);
 
 R_INTERNAL
 GraphicsInstance* g_currentInstance = nullptr;
+DllLoader           graphicsLibrary = { };
+CreateInstanceFunc CreateInstance = nullptr;
+FreeInstanceFunc FreeInstance = nullptr;
 
-
-GraphicsInstance* GraphicsInstance::createInstance(enum GraphicsAPI api)
+GraphicsInstance* GraphicsInstance::create(enum GraphicsAPI api)
 {
     if (g_currentInstance)
     {
@@ -32,32 +24,24 @@ GraphicsInstance* GraphicsInstance::createInstance(enum GraphicsAPI api)
     }
     switch (api) 
     {
-#if defined RCL_DX12
         case GraphicsApi_Direct3D12:
         {
             R_DEBUG("Graphics", "Creating D3D12 instance...");
-            D3D12::D3D12Instance* ins = rlsMalloc<D3D12::D3D12Instance>();
-            g_currentInstance = ins;
-            return ins;
+            graphicsLibrary.load("RecluseD3D12.dll");
+            break;
         } 
-#endif
-#if defined RCL_VULKAN
         case GraphicsApi_Vulkan:
         { 
             R_DEBUG("Graphics", "Creating Vulkan instance...");
-            Vulkan::VulkanInstance* ins = rlsMalloc<Vulkan::VulkanInstance>();
-            g_currentInstance = ins;
-            return ins;
+            graphicsLibrary.load("RecluseVulkan.dll");
+            break;
         }
-#endif
-#if defined RCL_DX11
         case GraphicsApi_Direct3D11:
         {
             R_NO_IMPL();
             R_ERROR("Graphics", "D3D11 is not fully supported yet!");
-            return nullptr;
+            break;
         }
-#endif
         case GraphicsApi_OpenGL:
         case GraphicsApi_SoftwareRasterizer:
         case GraphicsApi_SoftwareRaytracer:
@@ -65,7 +49,16 @@ GraphicsInstance* GraphicsInstance::createInstance(enum GraphicsAPI api)
             R_ERROR("Graphics", "Unsupported graphics api. Can not create instance!");
 
     }
-    return nullptr;
+
+    if (graphicsLibrary.isLoaded())
+    {
+        CreateInstance = (CreateInstanceFunc)graphicsLibrary.procAddress("createInstance");
+        FreeInstance = (FreeInstanceFunc)graphicsLibrary.procAddress("destroyInstance");
+
+        g_currentInstance = CreateInstance();
+    }
+
+    return g_currentInstance;
 }
 
 
@@ -84,7 +77,16 @@ ResultCode GraphicsInstance::destroyInstance(GraphicsInstance* pInstance)
     }
 
     pInstance->destroy();
-    rlsFree<GraphicsInstance>(pInstance);
+
+    if (graphicsLibrary.isLoaded())
+    {
+        ResultCode result = FreeInstance(pInstance);
+        if (result != RecluseResult_Ok)
+        {
+            R_ERROR("Graphics", "Failed to destroy instance!");
+        }
+        graphicsLibrary.unload();
+    }
 
     return RecluseResult_Ok;
 }

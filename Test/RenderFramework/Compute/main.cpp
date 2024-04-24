@@ -125,7 +125,7 @@ int main(int c, char* argv[])
     //enableLogTypes(LogType_Debug);
     RealtimeTick::initializeWatch(1ull, 0);
     enableLogTypes(LogType_Notify);
-    GraphicsInstance* pInstance     = GraphicsInstance::createInstance(GraphicsApi_Direct3D12);
+    GraphicsInstance* pInstance     = GraphicsInstance::create(GraphicsApi_Vulkan);
     GraphicsAdapter* pAdapter       = nullptr;
     GraphicsResource* pData         = nullptr;
     PipelineState* pPipeline        = nullptr;

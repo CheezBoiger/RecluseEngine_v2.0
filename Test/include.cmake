@@ -11,6 +11,12 @@ set ( RECLUSE_PIPELINE_INCLUDE ${CMAKE_SOURCE_DIR}/../Pipeline/Include )
 set( RECLUSE_PIPELINE_DEBUG_LIB ${CMAKE_SOURCE_DIR}/../Recluse/Lib/ReclusePipeline.lib )
 set( RECLUSE_PIPELINE_RELEASE_LIB ${CMAKE_SOURCE_DIR}/../Recluse/Lib/ReclusePipeline.lib )
 
+set ( RECLUSE_VULKAN_DEBUG_LIB ${CMAKE_SOURCE_DIR}/../Recluse/Lib/RecluseVulkan.lib )
+set ( RECLUSE_VULKAN_RELEASE_LIB ${CMAKE_SOURCE_DIR}/../Recluse/Lib/RecluseVulkan.lib )
+
+set ( RECLUSE_D3D12_DEBUG_LIB ${CMAKE_SOURCE_DIR}/../Recluse/Lib/RecluseD3D12.lib )
+set ( RECLUSE_D3D12_RELEASE_LIB ${CMAKE_SOURCE_DIR}/../Recluse/Lib/RecluseD3D12.lib )
+
 
 set ( RECLUSE_THIRDPARTY_DIR ${CMAKE_SOURCE_DIR}/Thirdparty )
 
@@ -76,5 +82,19 @@ macro(post_build_pipeline_dll TARGET_NAME)
 add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/../Recluse/Bin/ReclusePipeline.dll
+        $<TARGET_FILE_DIR:${TARGET_NAME}>)
+endmacro()
+
+macro(post_vulkan_dll TARGET_NAME)
+add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/../Recluse/Bin/RecluseVulkan.dll
+        $<TARGET_FILE_DIR:${TARGET_NAME}>)
+endmacro()
+
+macro(post_d3d12_dll TARGET_NAME)
+add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/../Recluse/Bin/RecluseD3D12.dll
         $<TARGET_FILE_DIR:${TARGET_NAME}>)
 endmacro()
