@@ -20,15 +20,15 @@ public:
         {
             struct 
             {
-                U32 dim         : 4,
-                    viewType    : 2,
-                    pad0        : 2,
-                    baseLayer   : 4,
-                    baseMip     : 4,
-                    layerCount  : 4,
-                    mipCount    : 4,
-                    pad1        : 8;
-                U32 format;
+                U32 dim         : 4,    // 16
+                    viewType    : 2,    // 4
+                    pad0        : 2,    // 4
+                    baseLayer   : 10,   // 1024
+                    baseMip     : 8,    // 256
+                    layerCount  : 10,   // 1024
+                    mipCount    : 8,    // 256
+                    pad1        : 4;
+                U16 format;
             };
             DescriptionId hash0;
         };

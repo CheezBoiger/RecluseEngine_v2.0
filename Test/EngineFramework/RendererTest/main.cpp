@@ -33,7 +33,7 @@ public:
         //pRenderer->pushRenderCommand(rcmd, RENDER_PREZ);
 
         //R_VERBOSE("GameLoop", "time=%f fps", 1.f / tick.delta());
-        R_VERBOSE("GameLoop", "renderTime=%f fps", 1.f / RealtimeTick::getTick(JobType_Renderer).delta());
+        //R_VERBOSE("GameLoop", "renderTime=%f fps", 1.f / RealtimeTick::getTick(JobType_Renderer).delta());
     }
 
     virtual ResultCode onInit() override

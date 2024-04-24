@@ -134,6 +134,7 @@ public:
         auto it = m_plugins.find(Plugin::obtainId());
         if (it == m_plugins.end())
         {
+            // Don't initialize here, only initialize where the module itself can.
             ModulePlugin<ModuleImpl>* plugin = Plugin::create();
             m_plugins.insert(std::make_pair(Plugin::obtainId(), std::move(plugin)));
             return RecluseResult_Ok;

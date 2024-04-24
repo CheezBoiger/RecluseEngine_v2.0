@@ -200,6 +200,7 @@ void Renderer::render()
     // Check if any debug draw functions exist.
     if (!m_debugDrawFunctions.empty())
     {
+        // By this state, the debug pass should render on top of the final render target.
         DebugRenderer debugRenderer(this);
         for (auto func : m_debugDrawFunctions)
         {
