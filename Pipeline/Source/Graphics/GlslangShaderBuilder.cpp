@@ -361,7 +361,7 @@ ShaderBuilder* createGlslangShaderBuilder(ShaderIntermediateCode imm)
 #if defined RCL_GLSLANG
     return new GlslangShaderBuilder(imm);
 #else
-    R_ERR("GLSLANG", "Glslang not enabled for compilation!");
+    R_ERROR("GLSLANG", "Glslang not enabled for compilation!");
     return nullptr;
 #endif
 }
