@@ -17,6 +17,8 @@
 #define R_MAX_WRITE_IMAGE_INFO_COUNT 64
 #define R_MAX_WRITE_INFO_COUNT (R_MAX_WRITE_BUFFER_INFO_COUNT + R_MAX_WRITE_IMAGE_INFO_COUNT)
 
+#define R_MAX_EXPECTED_ACCELERATION_STRUCTURE_COUNT 8
+
 namespace Recluse {
 namespace Vulkan {
 namespace DescriptorSets {
@@ -37,12 +39,20 @@ static VkDescriptorType getDescriptorType(ResourceViewDimension dimension, Descr
         case DescriptorBindType_ShaderResource:
             if (dimension == ResourceViewDimension_Buffer)
                 type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+#if defined(RECLUSE_RAYTRACING_HEADER)
+            else if (dimension == ResourceViewDimension_RayTraceAccelerationStructure)
+                type = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+#endif
             else
                 type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE; 
             break;
         case DescriptorBindType_UnorderedAccess:        
             if (dimension == ResourceViewDimension_Buffer)
                 type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+#if defined(RECLUSE_RAYTRACING_HEADER)
+            else if (dimension == ResourceViewDimension_RayTraceAccelerationStructure)
+                type = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+#endif
             else
                 type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
             break;
@@ -201,6 +211,106 @@ static VkDescriptorImageInfo makeDescriptorImageInfo(VulkanImageView* pView)
 }
 
 
+template<U32 BufferExpectedCount, U32 ImageExpectedCount, U32 AccelerationStructureExpected = 0u>
+class VulkanDescriptorWriter
+{
+public:
+    VulkanDescriptorWriter()
+        : bufferCount(0)
+        , imageCount(0)
+        , asCount(0)
+    { }
+
+    VkWriteDescriptorSet writeView(VulkanResourceView* pView, DescriptorBindType bindType, VkDescriptorSet set, U32 binding)
+    {
+        const ResourceViewDescription& description  = pView->getDesc();
+        VkWriteDescriptorSet writeSet = { };
+        writeSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writeSet.descriptorType = getDescriptorType(description.dimension, bindType);
+        writeSet.descriptorCount = 1;
+        writeSet.dstBinding = binding;
+        writeSet.dstSet = set;
+        
+        if (description.dimension != ResourceViewDimension_RayTraceAccelerationStructure)
+        {
+            if (pView->isBufferView())
+            {
+                VulkanResource* pResource   = pView->getResource()->castTo<VulkanResource>();
+                VulkanBuffer* buffer        = pResource->castTo<VulkanBuffer>();
+                // Number of elements, times the byte stride.
+                U32 sizeBytes = description.numElements * description.byteStride;
+                U32 offsetBytes = description.firstElement * description.byteStride;
+                R_ASSERT(buffer->getBufferSizeBytes() >= sizeBytes);
+                sizeBytes = Math::clamp(sizeBytes, (U32)0, buffer->getBufferSizeBytes());
+                VkDescriptorBufferInfo info = makeDescriptorBufferInfo(buffer, offsetBytes, sizeBytes);
+                bufferInfo[bufferCount] = info;
+                writeSet.pBufferInfo = &bufferInfo[bufferCount++];
+            }
+            else
+            {
+                VulkanImageView* pImageView = pView->castTo<VulkanImageView>();
+                VkDescriptorImageInfo info = makeDescriptorImageInfo(pImageView);
+                imageInfo[imageCount] = info;
+                writeSet.pImageInfo = &imageInfo[imageCount++];
+            }
+        }
+        else
+        {
+            VkWriteDescriptorSetAccelerationStructureKHR asWrite = { };
+            asWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+            // TODO: Still need to create the acceleration structure!
+
+            asInfo[asCount] = asWrite;
+            writeSet.pNext = &asInfo[asCount++];
+        }
+        return writeSet;
+    }
+
+    VkWriteDescriptorSet writeConstantBuffer(VulkanBuffer* buffer, U32 offsetBytes, U32 sizeBytes, VkDescriptorSet set, U32 binding)    
+    {
+        VkWriteDescriptorSet writeSet = { };
+        writeSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writeSet.descriptorType = getDescriptorType(ResourceViewDimension_Buffer, DescriptorBindType_ConstantBuffer);
+        writeSet.descriptorCount = 1;
+        writeSet.dstSet = set;
+        writeSet.dstBinding = binding;
+        
+        VkDescriptorBufferInfo info = makeDescriptorBufferInfo(buffer, offsetBytes, sizeBytes);
+        bufferInfo[bufferCount] = info;
+        writeSet.pBufferInfo = &bufferInfo[bufferCount++];
+        return writeSet;
+    }
+
+    VkWriteDescriptorSet writeSampler(VulkanSampler* sampler, VkDescriptorSet set, U32 binding)
+    {
+        VkWriteDescriptorSet writeSet = { };
+        writeSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writeSet.descriptorType = getDescriptorType(ResourceViewDimension_None, DescriptorBindType_Sampler);
+        writeSet.dstSet = set;
+        writeSet.dstBinding = binding;
+        writeSet.descriptorCount = 1;
+
+        VkDescriptorImageInfo info  = { };
+        info.imageLayout            = VK_IMAGE_LAYOUT_UNDEFINED;
+        info.imageView              = nullptr;
+        info.sampler                = sampler->get();
+
+        imageInfo[imageCount] = info;
+        writeSet.pImageInfo = &imageInfo[imageCount++];
+        return writeSet;
+    }
+
+private:
+    std::array<VkDescriptorBufferInfo, BufferExpectedCount> bufferInfo;
+    std::array<VkDescriptorImageInfo, ImageExpectedCount> imageInfo;
+    std::array<VkWriteDescriptorSetAccelerationStructureKHR, AccelerationStructureExpected> asInfo;
+
+    U32 bufferCount;
+    U32 imageCount;
+    U32 asCount;
+};
+
+
 // Call only needs to really be done once, but if there is a need to update, this can be called again.
 static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet set, const Structure& structure)
 {
@@ -212,12 +322,8 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
 
     U32 binding = 0;
     std::vector<VkWriteDescriptorSet> writeSet;
-    std::vector<VkDescriptorBufferInfo> bufferInfo;
-    std::vector<VkDescriptorImageInfo> imageInfo;
 
-    bufferInfo.reserve(R_MAX_WRITE_BUFFER_INFO_COUNT);
-    imageInfo.reserve(R_MAX_WRITE_IMAGE_INFO_COUNT);
-    writeSet.reserve(R_MAX_WRITE_INFO_COUNT);
+    VulkanDescriptorWriter<R_MAX_WRITE_BUFFER_INFO_COUNT, R_MAX_WRITE_IMAGE_INFO_COUNT, R_MAX_EXPECTED_ACCELERATION_STRUCTURE_COUNT> writer;
 
     // NOTE(): This algorithm needs to be aligned with the makeDescriptorSetLayout function!
     //         Since most descriptor sets will likely need to be created with the same format.
@@ -235,16 +341,7 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
 
         VkDeviceSize minUBOAlignOffsetBytes = VulkanAdapter::obtainMinUniformBufferOffsetAlignment(pContext->getDevice()->castTo<VulkanDevice>());
         VkDeviceSize alignedMemoryOffset    = align(structure.ppConstantBuffers[i].offset, minUBOAlignOffsetBytes);
-        VkDescriptorBufferInfo info         = makeDescriptorBufferInfo(pBuffer, alignedMemoryOffset, structure.ppConstantBuffers[i].sizeBytes);
-
-        bufferInfo.push_back(info);
-
-        write.sType             = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write.descriptorType    = getDescriptorType(ResourceViewDimension_Buffer, DescriptorBindType_ConstantBuffer);
-        write.descriptorCount   = 1;
-        write.dstBinding        = structure.ppConstantBuffers[i].binding;//binding++;
-        write.dstSet            = set;
-        write.pBufferInfo       = &bufferInfo.back();
+        write = writer.writeConstantBuffer(pBuffer, alignedMemoryOffset, structure.ppConstantBuffers[i].sizeBytes, set, structure.ppConstantBuffers[i].binding);
         writeSet.push_back(write);
     }
 
@@ -259,34 +356,7 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
             continue;
         R_ASSERT_FORMAT(pView->getResource()->isInResourceState(ResourceState_ShaderResource), "Resource must be in shader resoure state!");
 
-        const ResourceViewDescription& description  = pView->getDesc();
-        
-        write.sType             = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write.descriptorCount   = 1;
-        write.dstSet            = set;
-        write.descriptorType    = getDescriptorType(description.dimension, DescriptorBindType_ShaderResource);
-        write.dstBinding        = resBind.binding;//binding++;
-
-        if (pView->isBufferView())
-        {
-            VulkanResource* pResource   = pView->getResource()->castTo<VulkanResource>();
-            VulkanBuffer* buffer        = pResource->castTo<VulkanBuffer>();
-            // Number of elements, times the byte stride.
-            U32 sizeBytes = description.numElements * description.byteStride;
-            U32 offsetBytes = description.firstElement * description.byteStride;
-            R_ASSERT(buffer->getBufferSizeBytes() >= sizeBytes);
-            sizeBytes = Math::clamp(sizeBytes, (U32)0, buffer->getBufferSizeBytes());
-            VkDescriptorBufferInfo info = makeDescriptorBufferInfo(buffer, offsetBytes, sizeBytes);
-            bufferInfo.push_back(info);
-            write.pBufferInfo = &bufferInfo.back();
-        }
-        else
-        {
-            VulkanImageView* pImageView = pView->castTo<VulkanImageView>();
-            VkDescriptorImageInfo info = makeDescriptorImageInfo(pImageView);
-            imageInfo.push_back(info);
-            write.pImageInfo = &imageInfo.back();
-        }
+        write = writer.writeView(pView, DescriptorBindType_ShaderResource, set, resBind.binding);
 
         writeSet.push_back(write);
     }
@@ -301,33 +371,7 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
             continue;
         R_ASSERT_FORMAT(pView->getResource()->isInResourceState(ResourceState_UnorderedAccess), "Resource must be in unordered access state!");
 
-        const ResourceViewDescription& description  = pView->getDesc();
-
-        write.sType                                 = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write.descriptorCount                       = 1;
-        write.dstSet                                = set;
-        write.descriptorType                        = getDescriptorType(description.dimension, DescriptorBindType_UnorderedAccess);
-        write.dstBinding                            = resBind.binding;//binding++;
-
-        if (pView->isBufferView())
-        { 
-            VulkanResource* pResource       = pView->getResource()->castTo<VulkanResource>();
-            VulkanBuffer* buffer            = pResource->castTo<VulkanBuffer>();
-            // Number of elements, times the byte stride.
-            U32 sizeBytes = description.numElements * description.byteStride;
-            U32 offsetBytes = description.firstElement * description.byteStride;
-            R_ASSERT(buffer->getBufferSizeBytes() >= sizeBytes);
-            VkDescriptorBufferInfo info     = makeDescriptorBufferInfo(buffer, offsetBytes, sizeBytes);
-            bufferInfo.push_back(info);
-            write.pBufferInfo               = &bufferInfo.back();
-        }
-        else
-        {
-            VulkanImageView* pImageView     = pView->castTo<VulkanImageView>();
-            VkDescriptorImageInfo info      = makeDescriptorImageInfo(pImageView);
-            imageInfo.push_back(info);
-            write.pImageInfo                = &imageInfo.back();
-        }
+        write = writer.writeView(pView, DescriptorBindType_UnorderedAccess, set, resBind.binding);
 
         writeSet.push_back(write);
     }
@@ -337,18 +381,7 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
         VkWriteDescriptorSet write = { };
         ShaderResourceBind<VulkanSampler>& resBind = structure.ppSamplers[i];
         VulkanSampler* pSampler = resBind.pResourceView;
-        VkDescriptorImageInfo info  = { };
-        info.imageLayout            = VK_IMAGE_LAYOUT_UNDEFINED;
-        info.imageView              = nullptr;
-        info.sampler                = pSampler->get();
-        imageInfo.push_back(info);
-
-        write.sType             = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write.descriptorType    = getDescriptorType(ResourceViewDimension_None, DescriptorBindType_Sampler);
-        write.descriptorCount   = 1;
-        write.dstSet            = set;
-        write.dstBinding        = resBind.binding; //binding++;
-        write.pImageInfo        = &imageInfo.back();
+        write = writer.writeSampler(pSampler, set, resBind.binding);
         writeSet.push_back(write);
     }
 
