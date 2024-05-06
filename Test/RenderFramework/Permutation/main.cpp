@@ -19,6 +19,7 @@
 #include "Recluse/Math/Vector3.hpp"
 #include "Recluse/Math/Vector4.hpp"
 #include "Recluse/Time.hpp"
+#include "../Shared/Geometry.hpp"
 
 #include <array>
 
@@ -77,223 +78,38 @@ struct MeshDraw
     U32 numIndices;
 };
 
-std::array<Vector4, 36> positions = {
-  // front
-  Vector4(-1.0f, -1.0f, 1.0f, 1.0f),
-  Vector4( 1.0f, -1.0f, 1.0f, 1.0f),
-  Vector4( 1.0f,  1.0f, 1.0f, 1.0f),
-  Vector4( 1.0f,  1.0f, 1.0f, 1.0f),
-  Vector4(-1.0f,  1.0f, 1.0f, 1.0f),
-  Vector4(-1.0f, -1.0f, 1.0f, 1.0f),
-  // Back
-  Vector4(-1.0f, -1.0f, -1.0f, 1.0f),
-  Vector4(-1.0f,  1.0f, -1.0f, 1.0f),
-  Vector4( 1.0f,  1.0f, -1.0f, 1.0f),
-  Vector4( 1.0f,  1.0f, -1.0f, 1.0f),
-  Vector4( 1.0f, -1.0f, -1.0f, 1.0f),
-  Vector4(-1.0f, -1.0f, -1.0f, 1.0f),
-  // up
-  Vector4( 1.0f,  1.0f,  1.0f, 1.0f),
-  Vector4( 1.0f,  1.0f, -1.0f, 1.0f),
-  Vector4(-1.0f,  1.0f, -1.0f, 1.0f),
-  Vector4(-1.0f,  1.0f, -1.0f, 1.0f),
-  Vector4(-1.0f,  1.0f,  1.0f, 1.0f),
-  Vector4( 1.0f,  1.0f,  1.0f, 1.0f),
-  // Down
-  Vector4( 1.0f, -1.0f,  1.0f, 1.0f),
-  Vector4(-1.0f, -1.0f,  1.0f, 1.0f),
-  Vector4(-1.0f, -1.0f, -1.0f, 1.0f),
-  Vector4(-1.0f, -1.0f, -1.0f, 1.0f),
-  Vector4( 1.0f, -1.0f, -1.0f, 1.0f),
-  Vector4( 1.0f, -1.0f,  1.0f, 1.0f),
-  // right
-  Vector4( 1.0f, -1.0f,  1.0f, 1.0f),
-  Vector4( 1.0f, -1.0f, -1.0f, 1.0f),
-  Vector4( 1.0f,  1.0f, -1.0f, 1.0f),
-  Vector4( 1.0f,  1.0f, -1.0f, 1.0f),
-  Vector4( 1.0f,  1.0f,  1.0f, 1.0f),
-  Vector4( 1.0f, -1.0f,  1.0f, 1.0f),
-  // Left
-  Vector4(-1.0f, -1.0f,  1.0f, 1.0f),
-  Vector4(-1.0f,  1.0f,  1.0f, 1.0f),
-  Vector4(-1.0f,  1.0f, -1.0f, 1.0f),
-  Vector4(-1.0f,  1.0f, -1.0f, 1.0f),
-  Vector4(-1.0f, -1.0f, -1.0f, 1.0f),
-  Vector4(-1.0f, -1.0f,  1.0f, 1.0f),
-};
-
-
-std::array<Vector4, 36> normals = {
-  // front 
-  Vector4(0.0f, 0.0f, 1.0f, 0.0f),
-  Vector4(0.0f, 0.0f, 1.0f, 0.0f),
-  Vector4(0.0f, 0.0f, 1.0f, 0.0f),
-  Vector4(0.0f, 0.0f, 1.0f, 0.0f),
-  Vector4(0.0f, 0.0f, 1.0f, 0.0f),
-  Vector4(0.0f, 0.0f, 1.0f, 0.0f),
-  // Back
-  Vector4(0.0f, 0.0f, -1.0f, 0.0f),
-  Vector4(0.0f, 0.0f, -1.0f, 0.0f),
-  Vector4(0.0f, 0.0f, -1.0f, 0.0f),
-  Vector4(0.0f, 0.0f, -1.0f, 0.0f),
-  Vector4(0.0f, 0.0f, -1.0f, 0.0f),
-  Vector4(0.0f, 0.0f, -1.0f, 0.0f),
-  // up
-  Vector4(0.0f, 1.0f, 0.0f, 0.0f),
-  Vector4(0.0f, 1.0f, 0.0f, 0.0f),
-  Vector4(0.0f, 1.0f, 0.0f, 0.0f),
-  Vector4(0.0f, 1.0f, 0.0f, 0.0f),
-  Vector4(0.0f, 1.0f, 0.0f, 0.0f),
-  Vector4(0.0f, 1.0f, 0.0f, 0.0f),
-  // Down
-  Vector4(0.0f, -1.0f, 0.0f, 0.0f),
-  Vector4(0.0f, -1.0f, 0.0f, 0.0f),
-  Vector4(0.0f, -1.0f, 0.0f, 0.0f),
-  Vector4(0.0f, -1.0f, 0.0f, 0.0f),
-  Vector4(0.0f, -1.0f, 0.0f, 0.0f),
-  Vector4(0.0f, -1.0f, 0.0f, 0.0f),
-  // right
-  Vector4(1.0f, 0.0f, 0.0f, 0.0f),
-  Vector4(1.0f, 0.0f, 0.0f, 0.0f),
-  Vector4(1.0f, 0.0f, 0.0f, 0.0f),
-  Vector4(1.0f, 0.0f, 0.0f, 0.0f),
-  Vector4(1.0f, 0.0f, 0.0f, 0.0f),
-  Vector4(1.0f, 0.0f, 0.0f, 0.0f),
-  // Left
-  Vector4(-1.0f, 0.0f, 0.0f, 0.0f),
-  Vector4(-1.0f, 0.0f, 0.0f, 0.0f),
-  Vector4(-1.0f, 0.0f, 0.0f, 0.0f),
-  Vector4(-1.0f, 0.0f, 0.0f, 0.0f),
-  Vector4(-1.0f, 0.0f, 0.0f, 0.0f),
-  Vector4(-1.0f, 0.0f, 0.0f, 0.0f)
-};
-
-
-std::array<Vector4, 36> texcoords = {
-  // front
-  Vector4(0.0f, 0.0f, 0.0f, 0.0f),
-  Vector4(1.0f, 0.0f, 1.0f, 0.0f),
-  Vector4(1.0f, 1.0f, 1.0f, 1.0f),
-  Vector4(1.0f, 1.0f, 1.0f, 1.0f),
-  Vector4(0.0f, 1.0f, 0.0f, 1.0f),
-  Vector4(0.0f, 0.0f, 0.0f, 0.0f),
-
-  Vector4(0.0f, 0.0f, 0.0f, 0.0f),
-  Vector4(1.0f, 0.0f, 1.0f, 0.0f),
-  Vector4(1.0f, 1.0f, 1.0f, 1.0f),
-  Vector4(1.0f, 1.0f, 1.0f, 1.0f),
-  Vector4(0.0f, 1.0f, 0.0f, 1.0f),
-  Vector4(0.0f, 0.0f, 0.0f, 0.0f),
-
-  Vector4(0.0f, 0.0f, 0.0f, 0.0f),
-  Vector4(1.0f, 0.0f, 1.0f, 0.0f),
-  Vector4(1.0f, 1.0f, 1.0f, 1.0f),
-  Vector4(1.0f, 1.0f, 1.0f, 1.0f),
-  Vector4(0.0f, 1.0f, 0.0f, 1.0f),
-  Vector4(0.0f, 0.0f, 0.0f, 0.0f),
-
-  Vector4(0.0f, 0.0f, 0.0f, 0.0f),
-  Vector4(1.0f, 0.0f, 1.0f, 0.0f),
-  Vector4(1.0f, 1.0f, 1.0f, 1.0f),
-  Vector4(1.0f, 1.0f, 1.0f, 1.0f),
-  Vector4(0.0f, 1.0f, 0.0f, 1.0f),
-  Vector4(0.0f, 0.0f, 0.0f, 0.0f),
-  // right
-  Vector4(0.0f, 0.0f, 0.0f, 0.0f),
-  Vector4(1.0f, 0.0f, 1.0f, 0.0f),
-  Vector4(1.0f, 1.0f, 1.0f, 1.0f),
-  Vector4(1.0f, 1.0f, 1.0f, 1.0f),
-  Vector4(0.0f, 1.0f, 0.0f, 1.0f),
-  Vector4(0.0f, 0.0f, 0.0f, 0.0f),
-  // Left
-  Vector4(0.0f, 0.0f, 0.0f, 0.0f),
-  Vector4(1.0f, 0.0f, 1.0f, 0.0f),
-  Vector4(1.0f, 1.0f, 1.0f, 1.0f),
-  Vector4(1.0f, 1.0f, 1.0f, 1.0f),
-  Vector4(0.0f, 1.0f, 0.0f, 1.0f),
-  Vector4(0.0f, 0.0f, 0.0f, 0.0f),
-};
-
-
-std::array<Vector4, 36> colors = {
-  Vector4(0.0f, 1.0f, 1.0f, 1.0f),
-  Vector4(0.0f, 1.0f, 1.0f, 1.0f),
-  Vector4(0.0f, 1.0f, 1.0f, 1.0f),
-  Vector4(0.0f, 1.0f, 1.0f, 1.0f),
-  Vector4(0.0f, 1.0f, 1.0f, 1.0f),
-  Vector4(0.0f, 1.0f, 1.0f, 1.0f),
-
-  Vector4(1.0f, 0.0f, 1.0f, 1.0f),
-  Vector4(1.0f, 0.0f, 1.0f, 1.0f),
-  Vector4(1.0f, 0.0f, 1.0f, 1.0f),
-  Vector4(1.0f, 0.0f, 1.0f, 1.0f),
-  Vector4(1.0f, 0.0f, 1.0f, 1.0f),
-  Vector4(1.0f, 0.0f, 1.0f, 1.0f),
-
-  Vector4(1.0f, 1.0f, 0.0f, 1.0f),
-  Vector4(1.0f, 1.0f, 0.0f, 1.0f),
-  Vector4(1.0f, 1.0f, 0.0f, 1.0f),
-  Vector4(1.0f, 1.0f, 0.0f, 1.0f),
-  Vector4(1.0f, 1.0f, 0.0f, 1.0f),
-  Vector4(1.0f, 1.0f, 0.0f, 1.0f),
-
-  Vector4(1.0f, 0.0f, 0.0f, 1.0f),
-  Vector4(1.0f, 0.0f, 0.0f, 1.0f),
-  Vector4(1.0f, 0.0f, 0.0f, 1.0f),
-  Vector4(1.0f, 0.0f, 0.0f, 1.0f),
-  Vector4(1.0f, 0.0f, 0.0f, 1.0f),
-  Vector4(1.0f, 0.0f, 0.0f, 1.0f),
-
-  Vector4(0.0f, 1.0f, 0.0f, 1.0f),
-  Vector4(0.0f, 1.0f, 0.0f, 1.0f),
-  Vector4(0.0f, 1.0f, 0.0f, 1.0f),
-  Vector4(0.0f, 1.0f, 0.0f, 1.0f),
-  Vector4(0.0f, 1.0f, 0.0f, 1.0f),
-  Vector4(0.0f, 1.0f, 0.0f, 1.0f),
-
-  Vector4(0.0f, 0.0f, 1.0f, 1.0f),
-  Vector4(0.0f, 0.0f, 1.0f, 1.0f),
-  Vector4(0.0f, 0.0f, 1.0f, 1.0f),
-  Vector4(0.0f, 0.0f, 1.0f, 1.0f),
-  Vector4(0.0f, 0.0f, 1.0f, 1.0f),
-  Vector4(0.0f, 0.0f, 1.0f, 1.0f),
-};
-
-
-std::array<U32, 36> indices = {
-  0, 1, 2, 3, 4, 5, 6, 7, 8,
-  9, 10, 11, 12, 13, 14, 15, 16, 17,
-  18, 19, 20, 21, 22, 23, 24, 25, 26,
-  27, 28, 29, 30, 31, 32, 33, 34, 35
-};
-
-
 std::vector<Vertex> createCubeInstance(F32 scale)
 {
-  std::vector<Vertex> cube(36);
-  for (size_t i = 0; i < cube.size(); ++i) {
-    Math::Float4 scaledPos = positions[i] * scale;
-    cube[i].position = Math::Float3(scaledPos.x, scaledPos.y, scaledPos.z);
-    cube[i].normal = Math::Float3(normals[i].x, normals[i].y, normals[i].z);
-    cube[i].texCoord0 = Math::Float2(texcoords[i].x, texcoords[i].y);
-    cube[i].color = colors[i];
+    std::vector<Vertex> cube(36);
+    std::array<Math::Float3, 36> positions = Shared::Box::GetPositions();
+    std::array<Math::Float3, 36> normals = Shared::Box::GetNormals();
+    std::array<Math::Float4, 36> texcoords = Shared::Box::GetTexCoords();
+    std::array<Math::Float4, 36> colors = Shared::Box::GetColors(); 
+    for (size_t i = 0; i < cube.size(); ++i) 
+    {
+        Math::Float4 scaledPos = positions[i] * scale;
+        cube[i].position = Math::Float3(scaledPos.x, scaledPos.y, scaledPos.z);
+        cube[i].normal = Math::Float3(normals[i].x, normals[i].y, normals[i].z);
+        cube[i].texCoord0 = Math::Float2(texcoords[i].x, texcoords[i].y);
+        cube[i].color = colors[i];
     //null_bones(cube[i]);
 
     //cube[i].position.y *= -1.0f;
     //cube[i].normal.y *= -1.0f;
-  }
+    }
   return cube;
 }
 
 
 std::vector<U32> createCubeIndicesInstance()
 {
-  std::vector<U32> cubeIs(36);
-  for (size_t i = 0; i < indices.size(); ++i) {
-    cubeIs[i] = indices[i];
-  }
-
-  return cubeIs;
+    std::vector<U32> cubeIs(36);
+    std::array<U32, 36> indices = Shared::Box::GetIndices();
+    for (size_t i = 0; i < indices.size(); ++i) 
+    {
+        cubeIs[i] = indices[i];
+    }
+    return cubeIs;
 }
 
 
