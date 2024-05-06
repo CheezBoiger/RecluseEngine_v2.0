@@ -733,7 +733,7 @@ int main(char* argv[], int c)
     Log::initializeLoggingSystem();
     enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
+    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
     GraphicsAdapter* adapter    = nullptr;
     std::vector<MeshDraw> meshes;
 

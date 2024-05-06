@@ -211,6 +211,7 @@ static VkDescriptorImageInfo makeDescriptorImageInfo(VulkanImageView* pView)
 }
 
 
+// Vulkan descriptor writer, handles holding onto the record of resource views, buffers, and samplers.
 template<U32 BufferExpectedCount, U32 ImageExpectedCount, U32 AccelerationStructureExpected = 0u>
 class VulkanDescriptorWriter
 {
@@ -221,7 +222,8 @@ public:
         , asCount(0)
     { }
 
-    VkWriteDescriptorSet writeView(VulkanResourceView* pView, DescriptorBindType bindType, VkDescriptorSet set, U32 binding)
+    // Record the vulkan view. 
+    void recordView(VulkanResourceView* pView, DescriptorBindType bindType, VkDescriptorSet set, U32 binding)
     {
         const ResourceViewDescription& description  = pView->getDesc();
         VkWriteDescriptorSet writeSet = { };
@@ -263,10 +265,11 @@ public:
             asInfo[asCount] = asWrite;
             writeSet.pNext = &asInfo[asCount++];
         }
-        return writeSet;
+        writeSets.push_back(writeSet);
     }
 
-    VkWriteDescriptorSet writeConstantBuffer(VulkanBuffer* buffer, U32 offsetBytes, U32 sizeBytes, VkDescriptorSet set, U32 binding)    
+    // Record the constant buffer.
+    void recordConstantBuffer(VulkanBuffer* buffer, U32 offsetBytes, U32 sizeBytes, VkDescriptorSet set, U32 binding)    
     {
         VkWriteDescriptorSet writeSet = { };
         writeSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -278,10 +281,11 @@ public:
         VkDescriptorBufferInfo info = makeDescriptorBufferInfo(buffer, offsetBytes, sizeBytes);
         bufferInfo[bufferCount] = info;
         writeSet.pBufferInfo = &bufferInfo[bufferCount++];
-        return writeSet;
+        writeSets.push_back(writeSet);
     }
 
-    VkWriteDescriptorSet writeSampler(VulkanSampler* sampler, VkDescriptorSet set, U32 binding)
+    // Record the sampler.
+    void recordSampler(VulkanSampler* sampler, VkDescriptorSet set, U32 binding)
     {
         VkWriteDescriptorSet writeSet = { };
         writeSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -297,13 +301,23 @@ public:
 
         imageInfo[imageCount] = info;
         writeSet.pImageInfo = &imageInfo[imageCount++];
-        return writeSet;
+        writeSets.push_back(writeSet);
+    }
+
+    // Do the write. Requires the device that is responsible for owning the write operation.
+    RecluseResult write(VkDevice device)
+    {
+        const U32 sz = static_cast<U32>(writeSets.size());
+        vkUpdateDescriptorSets(device, sz, writeSets.data(), 0, nullptr);
+        return RecluseResult_Ok;
     }
 
 private:
     std::array<VkDescriptorBufferInfo, BufferExpectedCount> bufferInfo;
     std::array<VkDescriptorImageInfo, ImageExpectedCount> imageInfo;
     std::array<VkWriteDescriptorSetAccelerationStructureKHR, AccelerationStructureExpected> asInfo;
+
+    std::vector<VkWriteDescriptorSet> writeSets;
 
     U32 bufferCount;
     U32 imageCount;
@@ -331,7 +345,6 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
     // TODO: This needs to support multiple descriptor Counts!!
     for (U32 i = 0; i < structure.key.value.constantBuffers; ++i)
     {
-        VkWriteDescriptorSet write      = { };
         VulkanBuffer* pBuffer           = structure.ppConstantBuffers[i].buffer;
 
         // No constant buffer means the slot is unoccupied.
@@ -341,13 +354,11 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
 
         VkDeviceSize minUBOAlignOffsetBytes = VulkanAdapter::obtainMinUniformBufferOffsetAlignment(pContext->getDevice()->castTo<VulkanDevice>());
         VkDeviceSize alignedMemoryOffset    = align(structure.ppConstantBuffers[i].offset, minUBOAlignOffsetBytes);
-        write = writer.writeConstantBuffer(pBuffer, alignedMemoryOffset, structure.ppConstantBuffers[i].sizeBytes, set, structure.ppConstantBuffers[i].binding);
-        writeSet.push_back(write);
+        writer.recordConstantBuffer(pBuffer, alignedMemoryOffset, structure.ppConstantBuffers[i].sizeBytes, set, structure.ppConstantBuffers[i].binding);
     }
 
     for (U32 i = 0; i < structure.key.value.srvs; ++i)
     {
-        VkWriteDescriptorSet write = { };
         ShaderResourceBind<VulkanResourceView>& resBind = structure.ppShaderResources[i];
         VulkanResourceView* pView = resBind.pResourceView;
 
@@ -356,9 +367,7 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
             continue;
         R_ASSERT_FORMAT(pView->getResource()->isInResourceState(ResourceState_ShaderResource), "Resource must be in shader resoure state!");
 
-        write = writer.writeView(pView, DescriptorBindType_ShaderResource, set, resBind.binding);
-
-        writeSet.push_back(write);
+        writer.recordView(pView, DescriptorBindType_ShaderResource, set, resBind.binding);
     }
 
     for (U32 i = 0; i < structure.key.value.uavs; ++i)
@@ -371,9 +380,7 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
             continue;
         R_ASSERT_FORMAT(pView->getResource()->isInResourceState(ResourceState_UnorderedAccess), "Resource must be in unordered access state!");
 
-        write = writer.writeView(pView, DescriptorBindType_UnorderedAccess, set, resBind.binding);
-
-        writeSet.push_back(write);
+        writer.recordView(pView, DescriptorBindType_UnorderedAccess, set, resBind.binding);
     }
 
     for (U32 i = 0; i < structure.key.value.samplers; ++i)
@@ -381,14 +388,10 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
         VkWriteDescriptorSet write = { };
         ShaderResourceBind<VulkanSampler>& resBind = structure.ppSamplers[i];
         VulkanSampler* pSampler = resBind.pResourceView;
-        write = writer.writeSampler(pSampler, set, resBind.binding);
-        writeSet.push_back(write);
+        writer.recordSampler(pSampler, set, resBind.binding);
     }
 
-    const U32 sz = static_cast<U32>(writeSet.size());
-    vkUpdateDescriptorSets(device, sz, writeSet.data(), 0, nullptr);
-
-    return RecluseResult_Ok;
+    return writer.write(device);
 }
 
 
