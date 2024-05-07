@@ -257,6 +257,7 @@ public:
             }
         }
         else
+#if defined(RECLUSE_RAYTRACING_HEADER)
         {
             VkWriteDescriptorSetAccelerationStructureKHR asWrite = { };
             asWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
@@ -265,6 +266,11 @@ public:
             asInfo[asCount] = asWrite;
             writeSet.pNext = &asInfo[asCount++];
         }
+#else
+        {
+            R_ASSERT_FORMAT(description.dimension != ResourceViewDimension_RayTraceAccelerationStructure, "Hardware raytracing is not enabled!");
+        }
+#endif
         writeSets.push_back(writeSet);
     }
 
