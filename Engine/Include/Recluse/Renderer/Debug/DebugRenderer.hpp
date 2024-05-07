@@ -29,7 +29,7 @@ public:
     ResultCode          createTempResource(const GraphicsResourceDescription& description);
     GraphicsContext*    getContext();
 
-    void                drawText(U32 x, U32 y, U32 fontSize, const Math::Color4& color);
+    void                drawText(U32 x, U32 y, F32 scale, const char* text, const Math::Color4& color);
     void                drawLabel();
 private:
     Renderer* renderer;

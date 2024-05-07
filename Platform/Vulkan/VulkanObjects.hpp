@@ -106,7 +106,7 @@ struct Structure
             ShaderStageFlags shaderTypeFlags; // 64
             U16             samplers;           
             U16             constantBuffers;
-            U32             pad0;
+            U32             sets;   // 32 number of sets present in this structure.
         } value;
         struct
         {

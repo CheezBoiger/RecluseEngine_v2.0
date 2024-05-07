@@ -161,8 +161,7 @@ private:
     ShaderPermutationId     m_permutation;
 };
 
-
-typedef U8 ShaderBind;
+typedef U32 ShaderBind;
 
 // Shader Reflection information.
 class ShaderReflection : public Serializable

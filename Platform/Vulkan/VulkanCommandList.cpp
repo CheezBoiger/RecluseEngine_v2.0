@@ -636,7 +636,7 @@ IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindConstantBuff
     if (reflectionCache) 
     {
         R_ASSERT(slot < reflectionCache->cbvs.size());
-        binding = reflectionCache->cbvs[slot];
+        binding = unpackVulkanBinding(reflectionCache->cbvs[slot]);
     }
     else
     {
@@ -687,7 +687,7 @@ IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindShaderResour
     if (reflectionCache)
     {
         R_ASSERT(slot < reflectionCache->srvs.size());
-        binding = reflectionCache->srvs[slot];
+        binding = unpackVulkanBinding(reflectionCache->srvs[slot]);
     }
     else
     {
@@ -712,7 +712,7 @@ IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindUnorderedAcc
     if (reflectionCache)
     {
         R_ASSERT(slot < reflectionCache->uavs.size());
-        binding = reflectionCache->uavs[slot];
+        binding = unpackVulkanBinding(reflectionCache->uavs[slot]);
     }
     else
     {
@@ -740,7 +740,7 @@ IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindSampler(Shad
     if (reflectionCache)
     {
         R_ASSERT(slot < reflectionCache->samplers.size());
-        binding = reflectionCache->samplers[slot];
+        binding = unpackVulkanBinding(reflectionCache->samplers[slot]);
     }
     else
     {

@@ -158,5 +158,24 @@ static VkAccessFlags getDesiredHostMemoryUsageAccess(Recluse::ResourceMemoryUsag
 
     return 0;
 }
+
+
+static U32 unpackVulkanBinding(ShaderBind setBinding)
+{
+    return (setBinding & 0x0000ffff);
+}
+
+
+static U32 unpackVulkanSet(ShaderBind setBinding)
+{
+    return (setBinding & 0xffff0000);
+}
+
+
+static void unpackVulkanShaderSetBinding(ShaderBind setBinding, U32& set, U32& binding)
+{
+    set     = unpackVulkanSet(setBinding);
+    binding = unpackVulkanBinding(binding);
+}
 } // Vulkan
 } // Recluse

@@ -288,15 +288,25 @@ public:
                 {
                     // Binds for GLSL is based on binding locations. This can vary, and is not in a table, so 
                     // it makes it a little more of an effort to piece the inputs together.
-                    SpvReflectDescriptorBinding* binding = set->bindings[bindingIdx];
-                    switch (binding->descriptor_type)
+                    SpvReflectDescriptorBinding* descriptorBind = set->bindings[bindingIdx];
+                    const U16 dstBinding = descriptorBind->binding;
+                    const U16 dstSet = descriptorBind->set;
+
+                    // We want to ensure they fit in an unsigned short.
+                    R_ASSERT_FORMAT(dstBinding < 65535 && dstSet < 65535, "The shader destination set or binding exceeds the expected registers to be properly reflected!");
+
+                    // TODO(): This packing is specific to SPIRV GLSL, so we will need to have some way to properly make this universal to the framework, and
+                    // Vulkan.
+                    const ShaderBind shaderBind = (U32)dstBinding | ((U32)dstSet << 16);
+
+                    switch (descriptorBind->descriptor_type)
                     {
                         case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
                         {
-                            if (binding->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_SAMPLER)
+                            if (descriptorBind->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_SAMPLER)
                             {
                                 reflectionOutput.metadata.numSamplers += 1;
-                                reflectionOutput.samplers.push_back(static_cast<ShaderBind>(binding->binding));
+                                reflectionOutput.samplers.push_back(shaderBind);
                             }
                             break;
                         }
@@ -305,34 +315,34 @@ public:
                         {
                             // Storage buffers or images, they can either be treated as SRVs, or UAVs depending on 
                             // their access in shader code.
-                            if (binding->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_UAV)
+                            if (descriptorBind->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_UAV)
                             {
                                 reflectionOutput.metadata.numUavs += 1;
-                                reflectionOutput.uavs.push_back(static_cast<ShaderBind>(binding->binding));
+                                reflectionOutput.uavs.push_back(shaderBind);
                             }
-                            if (binding->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_SRV)
+                            if (descriptorBind->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_SRV)
                             {
                                 reflectionOutput.metadata.numSrvs += 1;
-                                reflectionOutput.srvs.push_back(static_cast<ShaderBind>(binding->binding));
+                                reflectionOutput.srvs.push_back(shaderBind);
                             }
                             break;
                         }
                         case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
                         case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
                         {
-                            if (binding->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_SRV)
+                            if (descriptorBind->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_SRV)
                             {
                                 reflectionOutput.metadata.numSrvs += 1;
-                                reflectionOutput.srvs.push_back(static_cast<ShaderBind>(binding->binding));
+                                reflectionOutput.srvs.push_back(shaderBind);
                             }
                             break;
                         }
                         case SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
                         {
-                            if (binding->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_CBV)
+                            if (descriptorBind->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_CBV)
                             {
                                 reflectionOutput.metadata.numCbvs += 1;
-                                reflectionOutput.cbvs.push_back(static_cast<ShaderBind>(binding->binding));
+                                reflectionOutput.cbvs.push_back(shaderBind);
                             }
                             break;
                         }

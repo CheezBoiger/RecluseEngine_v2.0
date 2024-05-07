@@ -10,9 +10,12 @@
 #include "Recluse/Application.hpp"
 
 #include "Recluse/Structures/HashMap.hpp"
+#include "Recluse/Math/Vector4.hpp"
 
 #include "Recluse/Generated/RendererConfigs.hpp"
 #include "Recluse/Generated/RendererPrograms.hpp"
+
+#include "Recluse/System/DLLLoader.hpp"
 
 #include <vector>
 #include <functional>
@@ -71,6 +74,11 @@ struct MaterialDescription
 typedef MapContainer<U32, std::vector<U64>> CommandKeyContainer;
 
 
+struct DebugDrawCallbacks
+{
+    void (*drawTextFn)(GraphicsContext*, U32, U32, F32, const char*, const Math::Color4&);
+};
+
 // Top level rendering engine. Implements Render Hardware Interface, and 
 // manages all resources and states created in game graphics. This will usually
 // implement any render passes and stages of the graphics pipeline.
@@ -124,6 +132,7 @@ public:
     ResultCode                  destroyGPUBuffer(GPUBuffer* pBuffer);
 
     void                        update(F32 currentTime, F32 deltaTime);
+    DebugDrawCallbacks*         getDebugCallbacks() { return &m_debugDrawCallbacks; }
 
 private:
 
@@ -201,14 +210,38 @@ private:
     // Gpu Resources used as temporary for the current frame. This will be refreshed every new frame.
     std::vector<GraphicsResource*>                          m_tempResourcesPerFrame;
     std::vector<Allocator*>                                 m_tempResourceAllocatorPerFrame;
+    DebugDrawCallbacks                                      m_debugDrawCallbacks;
 };
 
 
+// ImGui renderer plugin implementation.
 class ImGuiRenderer : public ModulePlugin<Renderer>
 {
 public:
-    DEFINE_MODULE_PLUGIN(ImGuiRenderer, Renderer, RendererPluginID_DebugRenderer);
+    DEFINE_MODULE_PLUGIN(ImGuiRenderer, Renderer, RendererPluginID_DebugRenderer, false, ImGuiDebug);
     ImGuiRenderer() { }
+
+    // Need to somehow also allow inplace callbacks with member functions as well..
+    void cat(GraphicsContext*, U32, U32, F32, const char*, const Math::Color4&)
+    {
+    }
+
+    ResultCode initialize(Renderer* renderer) override 
+    {
+        if (IsLibrary())
+        {
+            DllLoader loader(GetLibraryName());
+            if (loader.isLoaded())
+            {
+                DebugDrawCallbacks* callbacks = renderer->getDebugCallbacks();
+                callbacks->drawTextFn = ((void(*)(GraphicsContext*, U32, U32, F32, const char*, const Math::Color4&))loader.procAddress("imgui_draw_text"));
+            }
+        }
+        return RecluseResult_Failed;
+    }
+
+private:
+    
 };
 
 

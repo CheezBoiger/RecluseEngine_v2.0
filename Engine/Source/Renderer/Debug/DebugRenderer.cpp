@@ -22,9 +22,10 @@ GraphicsContext* DebugRenderer::getContext()
 }
 
 
-void DebugRenderer::drawText(U32 x, U32 y, U32 fontSize, const Math::Color4& color)
+void DebugRenderer::drawText(U32 x, U32 y, F32 scale, const char* text, const Math::Color4& color)
 {
-    
+    DebugDrawCallbacks* callbacks = renderer->getDebugCallbacks();
+    callbacks->drawTextFn(getContext(), x, y, scale, text, color);
 }
 } // Engine
 } // Recluse

@@ -27,13 +27,15 @@ typedef Hash64 EnginePluginId;
 
 // TODO(Garcia): Need to use unique ptrs, but they are being so annoying right now.
 //               Instead, using raw new/delete for plugins.
-#define DEFINE_MODULE_PLUGIN(PluginImpl, ModuleImpl, PluginId) \
+#define DEFINE_MODULE_PLUGIN(PluginImpl, ModuleImpl, PluginId, UsesLibrary, PluginLibraryName) \
     public: \
     static EnginePluginId obtainId() { return PluginId; } \
     static ModulePlugin<ModuleImpl>* create() \
     { \
          return new PluginImpl(); \
-    }
+    } \
+    static char* GetLibraryName() { return #PluginLibraryName; } \
+    static bool IsLibrary() { return UsesLibrary; }
 
 template<typename ModuleImpl>
 class ModulePlugin
