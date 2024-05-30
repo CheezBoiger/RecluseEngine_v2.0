@@ -12,6 +12,8 @@ namespace Vulkan {
 class VulkanDevice;
 
 
+// Vulkan Graphics Adapter, which defines the actual physical device that we query for Vulkan. This is the device that 
+// does the actual rendering, and has supported features and limits that we query for.
 class VulkanAdapter : public GraphicsAdapter 
 {
 public:
@@ -51,6 +53,7 @@ public:
         , m_id(id) 
     { }
 
+    // Obtains all available physical devices that we queried from the vulkan instance.
     static std::vector<VulkanAdapter>       getAvailablePhysicalDevices(VulkanInstance* ctx);
     static VkDeviceSize                     obtainMinUniformBufferOffsetAlignment(VulkanDevice* pDevice);
     static VkDeviceSize                     obtainMinStorageBufferOffsetAlignment(VulkanDevice* pDevice);
@@ -60,14 +63,20 @@ public:
     ResultCode                              createDevice(DeviceCreateInfo& info, GraphicsDevice** ppDevice) override;
     ResultCode                              destroyDevice(GraphicsDevice* pDevice) override;
 
+    // Find the memory type that supports the given usages. This essentially looks for supported memory types that this adapter
+    // will be able to support.
     U32                                     findMemoryType(U32 filter, ResourceMemoryUsage usage) const;
+
+    // Obtains the offset alignment for UBOs (Uniform Buffer objects.) Essential to use, if we have UBOs that hold 
+    // more than one instance of data.
     U32                                     constantBufferOffsetAlignmentBytes() const;
 
     VkPhysicalDevice                        operator()() const { return m_phyDevice; }
-
     VkPhysicalDevice                        get() const { return m_phyDevice; }
 
+    // Get the vulkan physical device properties.
     const VkPhysicalDeviceProperties&       getProperties() const;
+    // Get the physical device memory properties.
     const VkPhysicalDeviceMemoryProperties& getMemoryProperties() const;
     VkPhysicalDeviceMemoryProperties2       getMemoryProperties2() const;
     const VkPhysicalDeviceFeatures&         getFeatures() const;
@@ -78,6 +87,7 @@ public:
     std::vector<VkPresentModeKHR>           getSupportedPresentModes(VkSurfaceKHR surface) const;
     VkSurfaceCapabilitiesKHR                getSurfaceCapabilities(VkSurfaceKHR surface) const;
 
+    // Check if the given surface is supported by the family queue, providing the index that the queue belongs to.
     B32                                     checkSurfaceSupport(U32 familyQueueIndex, VkSurfaceKHR surface) const;
     U32                                     getId() const { return m_id; }
     

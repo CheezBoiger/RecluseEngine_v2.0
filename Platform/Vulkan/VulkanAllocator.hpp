@@ -17,11 +17,17 @@ class VulkanDevice;
 
 struct VulkanMemory 
 {
-    U32                     allocatorIndex;
-    U32                     memoryTypeIndex;
+    U32                     allocatorIndex;     // The allocator index id that this memory object was allocated from.
+    U32                     memoryTypeIndex;    // The memory type index that associates this memory object.
+    // The device memory that this memory comes from. 
+    // THIS IS NOT THE STARTING ADDRESS for this object, it is instead the address of 
+    // the heap it came from.
     VkDeviceMemory          deviceMemory;
+    // The offset bytes, which provides the starting address of this memory object.       
     VkDeviceSize            offsetBytes;
+    // The actual size of this memory object that was allocated.
     VkDeviceSize            sizeBytes;
+    // The base address representation of this memory block.
     void*                   baseAddr;
 };
 
@@ -37,15 +43,13 @@ public:
 
     ~VulkanPagedAllocator() { }
 
-    ResultCode initialize
-                (
-                    VkDevice device,
-                    Allocator* pAllocator,
-                    U32 memoryTypeIndex,
-                    VkDeviceSize memorySizeBytes,
-                    ResourceMemoryUsage usage,
-                    U32 allocationId
-                ) 
+    // Initializes the allocator, which will handle one-time heap allocation. 
+    ResultCode initialize(VkDevice device,
+                          Allocator* pAllocator,
+                          U32 memoryTypeIndex,
+                          VkDeviceSize memorySizeBytes,
+                          ResourceMemoryUsage usage,
+                          U32 allocationId) 
     {
         m_allocator             = pAllocator;
         m_pool.sizeBytes        = memorySizeBytes;
@@ -93,13 +97,10 @@ public:
     // 
     // @return ErrType The result of the allocation, whether successful or not. If successful, returns pOut with filled data about the allocation. A failure
     //                 will give out the reason for the failure, along with no data fill in pOut.
-    ResultCode   allocate
-                    (
-                        VulkanMemory* pOut, 
-                        const VkMemoryRequirements& requirements, 
-                        VkDeviceSize granularityBytes, 
-                        VkImageTiling tiling = VK_IMAGE_TILING_LINEAR
-                    );
+    ResultCode   allocate(VulkanMemory* pOut, 
+                          const VkMemoryRequirements& requirements, 
+                          VkDeviceSize granularityBytes, 
+                          VkImageTiling tiling = VK_IMAGE_TILING_LINEAR);
 
     // Free up memory, handles throwing memory into the garbage.
     // Immediate free can be done if we know we are in the same frame index.
@@ -137,6 +138,7 @@ public:
     static VkDeviceSize kPerMemoryPageSizeBytes;
     typedef U32 MemoryTypeIndex;
 
+    // The given config flags to be used to control the behavior update for this manager.
     enum Flag
     {
         Flag_None                  = 0,
@@ -149,6 +151,7 @@ public:
 
     typedef U32 Flags;
 
+    // Provides update information and configuration to the update() call of this manager.
     struct UpdateConfig
     {
         Flags flags;
@@ -165,17 +168,25 @@ public:
     {
     } 
 
+    // Initializes the manager with the given vulkan logical device. Be sure to call this first!
     ResultCode              initialize(VulkanDevice* pDevice);
     void                    clear();
+    // Properly frees and releases all handles associated with this manager. Should be called after all resources are used, and no frames are inflight!
     ResultCode              release();
 
+    // Allocates a requested buffer object.
     ResultCode              allocateBuffer(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements);
+    // Allocates a requested image object.
     ResultCode              allocateImage(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements, VkImageTiling tiling);
+    // Frees the allocated vulkan memory. Unless immediate=true, this won't immediately free the vulkan object. Instead, it will be queued and freed the 
+    // next time that same context frame it was called at, returns. This is to prevent conflicts with the freed memory object, should it be inflight, we ensure 
+    // that the object can be safely freed from then. If this is not a concern, then give immediate=true to quickly free that object.
     ResultCode              free(VulkanMemory* pOut, Bool immediate = false);
-
+    // Must be called, updates the manager for the given context frame. config allows controlling how to manage the update.
+    // \param config The provided config that controls the update behavior for this manager.
     void                    update(const UpdateConfig& config);
-    void                    setTotalMemory(const MemoryReserveDescription& desc) { }
 
+    void                    setTotalMemory(const MemoryReserveDescription& desc) { }
     U64                     getTotalAllocationSizeBytes() const { return m_totalAllocationSizeBytes; }    
 
 private:
@@ -185,7 +196,11 @@ private:
     VulkanPagedAllocator*   getAllocator(ResourceMemoryUsage usage, MemoryTypeIndex memoryTypeIndex, VkDeviceSize sizeBytes, VkDeviceSize alignment);
     // Allocate a page of memory if required.
     VulkanPagedAllocator*   allocateMemoryPage(MemoryTypeIndex memoryTypeIndex, ResourceMemoryUsage usage, VkDeviceSize pageSizeBytes);
-    ResultCode              allocate(VulkanMemory* pOut, ResourceMemoryUsage usage, const VkMemoryRequirements& requirements, VkImageTiling tiling = VK_IMAGE_TILING_LINEAR);
+    // Performs allocation of a resources with the provided requirements.
+    ResultCode              allocate(VulkanMemory* pOut, 
+                                     ResourceMemoryUsage usage,
+                                     const VkMemoryRequirements& requirements,
+                                     VkImageTiling tiling = VK_IMAGE_TILING_LINEAR);
 
     std::map<MemoryTypeIndex, std::vector<SmartPtr<VulkanPagedAllocator>>>      m_resourceAllocators;
     std::map<MemoryTypeIndex, U64>                                              m_pagedMemoryTotalSizeBytes;

@@ -39,6 +39,9 @@ void pfnD3D12MessageFunc(
 }
 
 #if !defined(__ID3D12InfoQueue1_FWD_DEFINED__)
+// Older DX runtime libraries might not have RegisterMessageCallback/UnregisterMessageCallback functionality to rely debugging info from InfoQueue,
+// since it was encapsulated by the device. In order to maintain the same functionality, we create a separate thread that runs a loop, collecting 
+// any messages coming from the device, and prompting our callback.
 struct ThreadInfo
 {
     U32 cookie;
@@ -216,6 +219,7 @@ Bool D3D12Instance::hasTearingSupport() const
 
 DWORD D3D12Instance::registerDebugMessageCallback(ID3D12Device* pDevice)
 {
+    // I honestly don't know what this is for...
     DWORD cookie = 0u;
 #if defined(__ID3D12InfoQueue1_FWD_DEFINED__)
     ID3D12InfoQueue1* infoQueue = nullptr;
@@ -223,6 +227,7 @@ DWORD D3D12Instance::registerDebugMessageCallback(ID3D12Device* pDevice)
     infoQueue->RegisterMessageCallback(pfnD3D12MessageFunc, D3D12_MESSAGE_CALLBACK_FLAG_NONE, nullptr, &cookie);
     infoQueue->Release();
 #else
+    // I honestly don't know what this is for...
     static DWORD cookei = 0;
     cookie = ++cookei;
     ScopedLock _(finishMutex);
