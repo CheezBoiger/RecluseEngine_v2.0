@@ -266,7 +266,7 @@ U32 VulkanAdapter::findMemoryType(U32 memoryTypeBitsRequirement, ResourceMemoryU
 
     switch (usage) 
     {
-        case ResourceMemoryUsage_CpuOnly:
+        case ResourceMemoryUsage_CpuVisible:
         {
             required |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
             preferred |= VK_MEMORY_PROPERTY_HOST_CACHED_BIT;

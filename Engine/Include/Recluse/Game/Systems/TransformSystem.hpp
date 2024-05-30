@@ -19,7 +19,7 @@ public:
 
     virtual ResultCode     onInitialize(MessageBus* bus)                        override;
     virtual ResultCode     onCleanUp()                                          override;
-    virtual void           onUpdate(const RealtimeTick& tick)                   override;
+    virtual void           onUpdate(Engine::Scene* scene, const RealtimeTick& tick)                   override;
 
 private:
     Bool m_doUpdate = false;

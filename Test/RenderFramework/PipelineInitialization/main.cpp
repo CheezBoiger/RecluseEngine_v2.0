@@ -166,7 +166,7 @@ int main(int c, char* argv[])
 
     {
         MemoryReserveDescription desc = { };
-        desc.bufferPools[ResourceMemoryUsage_CpuOnly] = 1 * R_1MB;
+        desc.bufferPools[ResourceMemoryUsage_CpuVisible] = 1 * R_1MB;
         desc.bufferPools[ResourceMemoryUsage_CpuToGpu] = 1 * R_1MB;
         desc.bufferPools[ResourceMemoryUsage_GpuOnly] = 1 * R_1MB;
         desc.bufferPools[ResourceMemoryUsage_GpuToCpu] = 1 * R_1MB;
@@ -248,7 +248,7 @@ int main(int c, char* argv[])
         desc.mipLevels = 1;
         pDevice->createResource(&pVertexBuffer, desc, ResourceState_CopyDestination);
     
-        desc.memoryUsage = ResourceMemoryUsage_CpuOnly;
+        desc.memoryUsage = ResourceMemoryUsage_CpuVisible;
         desc.usage = ResourceUsage_TransferSource;
         pDevice->createResource(&pTemp, desc, ResourceState_CopySource);
 

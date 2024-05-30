@@ -182,7 +182,7 @@ int main(int c, char* argv[])
 
     {
         MemoryReserveDescription desc = { };
-        desc.bufferPools[ResourceMemoryUsage_CpuOnly] = 1 * R_1MB;
+        desc.bufferPools[ResourceMemoryUsage_CpuVisible] = 1 * R_1MB;
         desc.bufferPools[ResourceMemoryUsage_CpuToGpu] = 1 * R_1MB;
         desc.bufferPools[ResourceMemoryUsage_GpuOnly] = 1 * R_1MB;
         desc.bufferPools[ResourceMemoryUsage_GpuToCpu] = 1 * R_1MB;

@@ -40,7 +40,7 @@ void Scene::update(const RealtimeTick& tick)
 {
     for (auto& system : m_systems)
     {
-        system->update(tick);
+        system->update(this, tick);
     }
 }
 
@@ -162,7 +162,6 @@ ResultCode Scene::deserialize(Archive* pArchive)
 void Scene::registerSystem(ECS::System* pSystem, MessageBus* bus)
 {
     // Registering any system must Initialize first.
-    pSystem->setScene(this);
     pSystem->initialize(bus); 
     m_systems.push_back(pSystem); 
 }
@@ -186,6 +185,15 @@ void Scene::clearRegistries()
     {
         registry.second->cleanUp();
         ECS::AbstractRegistry::free(registry.second);
+    }
+}
+
+
+void Scene::drawDebug(DebugRenderer* debugRenderer)
+{
+    for (auto& system : m_systems)
+    {
+        system->drawDebug(this, debugRenderer);   
     }
 }
 } // Engine

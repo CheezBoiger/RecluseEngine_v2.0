@@ -77,8 +77,8 @@ public:
 
     RecluseResult execute(GraphicsContext* context);
 
-    template<typename OnRenderFunc>
-    RecluseResult addPass();
+    template<typename OnRenderSetupFunc, typename OnRenderFunc>
+    RecluseResult addPass(OnRenderSetupFunc setup, OnRenderFunc renderFunc);
 
 private:
 };

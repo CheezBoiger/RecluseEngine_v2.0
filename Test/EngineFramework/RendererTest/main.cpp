@@ -51,7 +51,6 @@ public:
         config.renderWidth = getWindow()->getWidth();
         config.renderHeight = getWindow()->getHeight();
         Renderer::getMain()->setNewConfigurations(config);
-        Renderer::getMain()->addPlugin<ImGuiRenderer>();
 
         MessageBus::fireEvent(getMessageBus(), RenderEvent_Initialize);
         MessageBus::fireEvent(getMessageBus(), RenderEvent_Resume);

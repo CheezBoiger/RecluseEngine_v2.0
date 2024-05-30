@@ -150,7 +150,7 @@ static VkAccessFlags getDesiredHostMemoryUsageAccess(Recluse::ResourceMemoryUsag
 {
     switch (usage)
     {
-        case Recluse::ResourceMemoryUsage_CpuOnly:      return VK_ACCESS_HOST_WRITE_BIT|VK_ACCESS_HOST_READ_BIT;
+        case Recluse::ResourceMemoryUsage_CpuVisible:      return VK_ACCESS_HOST_WRITE_BIT|VK_ACCESS_HOST_READ_BIT;
         case Recluse::ResourceMemoryUsage_CpuToGpu:     return VK_ACCESS_HOST_WRITE_BIT;
         case Recluse::ResourceMemoryUsage_GpuOnly:      return 0;
         case Recluse::ResourceMemoryUsage_GpuToCpu:     return VK_ACCESS_HOST_READ_BIT;

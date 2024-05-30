@@ -135,7 +135,7 @@ int main(int c, char* argv[])
 
     {
         MemoryReserveDescription mem = { };
-        mem.bufferPools[ResourceMemoryUsage_CpuOnly] = 1 * R_1MB;
+        mem.bufferPools[ResourceMemoryUsage_CpuVisible] = 1 * R_1MB;
         mem.bufferPools[ResourceMemoryUsage_GpuOnly] = 1 * R_1MB;
         mem.bufferPools[ResourceMemoryUsage_CpuToGpu] = 1 * R_1KB;
         mem.bufferPools[ResourceMemoryUsage_GpuToCpu] = 1 * R_1KB;
@@ -157,7 +157,7 @@ int main(int c, char* argv[])
         desc.depthOrArraySize = 1;
         desc.height = 1;
         desc.mipLevels = 1;
-        desc.memoryUsage = ResourceMemoryUsage_CpuOnly;
+        desc.memoryUsage = ResourceMemoryUsage_CpuVisible;
         desc.samples = 1;
         //result = pDevice->createResource(&pData, desc, ResourceState_ConstantBuffer);
     }

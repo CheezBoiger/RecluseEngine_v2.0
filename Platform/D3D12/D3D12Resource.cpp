@@ -97,7 +97,7 @@ ResultCode D3D12Resource::initialize
     }
 
     Bool shouldTransition = false;
-    if (desc.memoryUsage == ResourceMemoryUsage_CpuToGpu || desc.memoryUsage == ResourceMemoryUsage_CpuOnly)
+    if (desc.memoryUsage == ResourceMemoryUsage_CpuToGpu || desc.memoryUsage == ResourceMemoryUsage_CpuVisible)
     {
         // If the memoryUsage is CpuToGpu or CpuOnly, then d3d12 requires that we are in GENERIC_READ as initial state.
         shouldTransition = !(D3D12_RESOURCE_STATE_GENERIC_READ & state);
@@ -362,7 +362,7 @@ ResultCode releaseResource(D3D12Resource* pResource, Bool immediate)
 ResultCode D3D12Resource::map(void** pMappedMemory, MapRange* pReadRange)
 {
     // Should ensure this memory is host-visible (cpu visible.)
-    R_ASSERT(m_memObj.usage == ResourceMemoryUsage_CpuOnly || m_memObj.usage == ResourceMemoryUsage_CpuToGpu);
+    R_ASSERT(m_memObj.usage == ResourceMemoryUsage_CpuVisible || m_memObj.usage == ResourceMemoryUsage_CpuToGpu);
     HRESULT result = S_OK;
     if (pReadRange)
     {

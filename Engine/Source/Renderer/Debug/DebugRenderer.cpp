@@ -2,17 +2,16 @@
 #pragma once
 #include "Recluse/Renderer/Debug/DebugRenderer.hpp"
 #include "Recluse/Renderer/Renderer.hpp"
-
-#include "imgui/imgui.h"
+#include "Recluse/Messaging.hpp"
 
 namespace Recluse {
 namespace Engine {
 
 
 
-ResultCode DebugRenderer::createTempResource(const GraphicsResourceDescription& description)
+TemporaryBuffer DebugRenderer::createTempBuffer(const TemporaryBufferDescription& description)
 {
-    return renderer->createTempResource(description);
+    return renderer->createTemporaryBuffer(description);
 }
 
 
@@ -22,10 +21,13 @@ GraphicsContext* DebugRenderer::getContext()
 }
 
 
-void DebugRenderer::drawText(U32 x, U32 y, F32 scale, const char* text, const Math::Color4& color)
+DebugRenderer* DebugRenderer::get()
 {
-    DebugDrawCallbacks* callbacks = renderer->getDebugCallbacks();
-    callbacks->drawTextFn(getContext(), x, y, scale, text, color);
+    Renderer* renderer = Renderer::getMain();
+    R_ASSERT_FORMAT(renderer != nullptr, "Main renderer does not exist, unable to obtain debug renderer!");
+
+    ModulePlugin<Renderer>* plugin = Renderer::getMain()->getPlugin(RendererPluginID_DebugRenderer);
+    return dynamic_cast<DebugRenderer*>(plugin);
 }
 } // Engine
 } // Recluse

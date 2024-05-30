@@ -29,7 +29,7 @@ ResultCode D3D12ResourcePagedAllocator::initialize(ID3D12Device* pDevice, Alloca
 
     switch (usage)
     {
-    case ResourceMemoryUsage_CpuOnly:
+    case ResourceMemoryUsage_CpuVisible:
         heapType        = D3D12_HEAP_TYPE_UPLOAD;
         cpuPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
         break;

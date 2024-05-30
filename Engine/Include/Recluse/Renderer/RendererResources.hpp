@@ -34,7 +34,7 @@ static std::string getBinaryShaderPath(const std::string& relativePath)
 }
 
 
-class GpuToCpuBuffer
+class CpuToGpuBuffer
 {
     float* dataPtr;
 };
@@ -48,18 +48,18 @@ public:
         , m_pDevice(nullptr)
         , m_totalSzBytes(0) { }
 
-    virtual ~GPUBuffer() { }
+    ~GPUBuffer() { }
     
-    ResultCode             initialize(GraphicsDevice* pDevice, U64 totalSzBytes, ResourceUsageFlags usage);
+    ResultCode             initialize(GraphicsDevice* device, U64 totalSzBytes, ResourceUsageFlags usage);
     ResultCode             destroy();
 
     // Stream a staging resource back to the gpu.
-    ResultCode             stream(GraphicsContext* pContext, void* ptr, U64 offsetBytes, U64 szBytes);
+    ResultCode             stage(GraphicsContext* context, void* ptr, U64 offsetBytes, U64 szBytes);
 
-    // Obtain a staging buffer based on the offset of this gpu resource, and the total size bytes to work with.
-    GpuToCpuBuffer      stage(U64 offsetBytes, U64 szBytes);
+    // Obtain a buffer based on the offset of this gpu resource, and the total size bytes to work with, the.
+    CpuToGpuBuffer          stream(GraphicsContext* context, U64 offsetBytes, U64 szBytes);
 
-    GraphicsResource*   get() const { return m_pResource; }
+    GraphicsResource*       get() const { return m_pResource; }
 private:
     SharedReferenceObject<U32>  m_stagingCount;
     GraphicsResource*   m_pResource;

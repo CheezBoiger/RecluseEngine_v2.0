@@ -454,7 +454,7 @@ ResultCode VulkanDevice::reserveMemory(const MemoryReserveDescription& desc)
             R_CHANNEL_VULKAN, 
             "Reserving memory for:\n\tHost Buffer Memory (Bytes): \t%llu\n"
             "\n\tDevice Buffer Memory (Bytes): \t%llu\n\tDevice Texture Memory (Bytes): \t%llu", 
-            desc.bufferPools[ResourceMemoryUsage_CpuOnly], 
+            desc.bufferPools[ResourceMemoryUsage_CpuVisible], 
             desc.bufferPools[ResourceMemoryUsage_GpuOnly], 
             desc.texturePoolGPUOnly
         );
@@ -464,7 +464,7 @@ ResultCode VulkanDevice::reserveMemory(const MemoryReserveDescription& desc)
             R_CHANNEL_VULKAN, 
             "Total available memory (GB):\n\tDevice: %f\n\tHost: %f", 
             F32(desc.bufferPools[ResourceMemoryUsage_GpuOnly] + desc.texturePoolGPUOnly) / R_1GB,
-            F32(desc.bufferPools[ResourceMemoryUsage_CpuOnly]) / R_1GB
+            F32(desc.bufferPools[ResourceMemoryUsage_CpuVisible]) / R_1GB
         );
     m_allocationManager->setTotalMemory(desc);
     return RecluseResult_Ok;

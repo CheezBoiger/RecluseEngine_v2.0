@@ -62,7 +62,7 @@ enum ResourceViewDimension
 enum ResourceMemoryUsage 
 {
     // Cpu/host usage mainly. Host write access is fastest, but device read access will be slower. Best for write-once on cpu, read-once on gpu.
-    ResourceMemoryUsage_CpuOnly,
+    ResourceMemoryUsage_CpuVisible,
     // Gpu/Device only memory usage. Gpu read/writes are fastest, but cpu does not have read/write access. Best if resources are not needing to be updated by host.
     ResourceMemoryUsage_GpuOnly,
     // Cpu to Gpu memory usage. Optimized for dynamic writes into buffers and textures from cpu to gpu.
@@ -129,6 +129,7 @@ enum Semantic
 
 enum ResourceState 
 {
+    // Common/General state. This state has no deliberate reason for now.
     ResourceState_Common,
     // Render Target resource state.
     ResourceState_RenderTarget,
@@ -170,9 +171,9 @@ enum FrameBuffering
 enum R_PUBLIC_API LayerFeatureFlag 
 {
     LayerFeatureFlag_None               = 0,
-    // Checks if gpu has dedicated raytracing.
+    // Checks if gpu has dedicated/hardware raytracing.
     LayerFeatureFlag_Raytracing         = (1 << 0),
-    // Checks if gpu has dedicated mesh shading.
+    // Checks if gpu has supported mesh shading pipeline.
     LayerFeatureFlag_MeshShading        = (1 << 1),
     // Enables cpu related validation, validation messages and errors.
     // This will slow down performance, in order to debug cpu to gpu related issues.
@@ -312,15 +313,20 @@ enum SamplerAddressMode
 
 enum Filter 
 {
+    // Defines linear filtering
     Filter_Linear,
+    // Defines nearest neighbor filtering.
     Filter_Nearest,
+    // Defines cubic filtering.
     Filter_Cubic
 };
 
 
 enum SamplerMipMapMode 
 {
+    // Nearest neighbor interpolation for mip maps.
     SamplerMipMapMode_Nearest,
+    // Linear interpolation for mip maps.
     SamplerMipMapMode_Linear
 };
 
@@ -371,6 +377,14 @@ struct MemoryReserveDescription
     U64 texturePoolGPUOnly;
 };
 
+struct TemporaryBufferDescription
+{
+    ResourceUsage usage;
+    ResourceMemoryUsage memoryUsage;
+    U32 sizeRequest;
+};
+
+typedef void* TemporaryBuffer;
 
 enum GraphicsQueueType 
 {

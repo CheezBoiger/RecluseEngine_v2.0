@@ -120,8 +120,8 @@ F32 dot(const Quaternion& a, const Quaternion& b)
 
 Quaternion slerp(const Quaternion& a, const Quaternion& b, F32 t)
 {
-    F32 d                   = dot(a, b);
-    const F32 kThreshold    = 0.9995f;
+    static const F32 kThreshold = 0.9995f;
+    F32 d                       = dot(a, b);
     Quaternion q;
     Quaternion q1;
 

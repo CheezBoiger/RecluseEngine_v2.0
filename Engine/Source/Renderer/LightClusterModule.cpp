@@ -20,11 +20,11 @@ GraphicsResource* pLightGrid            = nullptr;
 GraphicsResource* pLightIndices         = nullptr;
 
 
-void cullLights(GraphicsCommandList* pList)
+void cullLights(GraphicsContext* context)
 {
-    R_ASSERT(pList != NULL);
+    R_ASSERT(context != NULL);
 
-    if (pList->supportsAsyncCompute()) 
+    if (context->supportsAsyncCompute()) 
     {
         
     } 
@@ -35,12 +35,12 @@ void cullLights(GraphicsCommandList* pList)
 }
 
 
-void combineForward(GraphicsCommandList* pList, U64* keys, U64 sz)
+void combineForward(GraphicsContext* context, U64* keys, U64 sz)
 {
 }
 
 
-void combineDeferred(GraphicsCommandList* pList)
+void combineDeferred(GraphicsContext* context)
 {
 }
 } // LightCluster

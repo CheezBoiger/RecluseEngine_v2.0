@@ -14,7 +14,6 @@ int main(int c, char* argv[])
     Recluse::RealtimeTick::initializeWatch(0, 0);
 
     Recluse::ResultCode result = Recluse::Editor::GUIFactory::createContext(Recluse::Editor::GUIFactory::Context_WxWidgets);
-
     if (result == Recluse::RecluseResult_Ok)
     {
         Recluse::Editor::IGUIContext* guiCtx = Recluse::Editor::GUIContext::get();

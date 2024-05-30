@@ -1,0 +1,43 @@
+//
+#include "Recluse/Math/Vector3.hpp"
+
+namespace Recluse {
+
+enum LightType
+{
+    LightType_None,
+    LightType_Directional,
+    LightType_Point,
+    LightType_Spot,
+    LightType_Area
+};
+
+
+struct LightDescription
+{
+    LightType       lightType;
+    union 
+    {
+        struct 
+        { 
+            Math::Float3    position;
+            F32             radius;
+        } point;
+        struct
+        {
+            Math::Float3    direction;
+        } directional;
+        struct
+        {
+            Math::Float3    position;
+			Math::Float3 	direction;
+            F32             innerCone;
+            F32             outerCone;
+        } spot;
+    };
+    Math::Float3    color;
+    F32             attenuation;
+    Bool            enable          : 1;
+    Bool            shadowed        : 1;
+};
+}

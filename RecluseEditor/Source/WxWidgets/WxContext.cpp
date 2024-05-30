@@ -17,12 +17,17 @@ public:
 
     enum Id 
     {
-        ID_HELLO
+        Id_Hello,
+        Id_Save,
+        Id_Load,
     };
 
     RecluseEditorFrame();
 
-    void onHello(wxCommandEvent& ev) { }
+    void onHello(wxCommandEvent& ev) 
+    {
+         
+    }
     void onExit(wxCommandEvent& ev)
     {
         m_panel->Close(true);
@@ -39,6 +44,7 @@ public:
     void onIdle(wxIdleEvent& event)
     {
         m_panel->onDraw();
+        event.RequestMore();
     }
     
 private:
@@ -49,10 +55,11 @@ private:
 };
 
 RecluseEditorFrame::RecluseEditorFrame()
-    : wxFrame(NULL, wxID_ANY, "Hello World")
+    : wxFrame(NULL, wxID_ANY, "Recluse Editor")
 {
     m_menu = new wxMenu;
-    m_menu->Append(ID_HELLO, "HELLO...\tCNTRL-H", "Help string stuff...");
+    m_menu->Append(Id_Save, "Save", "Save current scene.");
+    m_menu->Append(Id_Load, "Load", "Load a current scene.");
     m_menu->AppendSeparator();
     m_menu->Append(wxID_EXIT);
 
@@ -72,9 +79,9 @@ RecluseEditorFrame::RecluseEditorFrame()
     
     CreateStatusBar();
 
-    SetStatusText("Welcome to wxWidgets!");
+    SetStatusText("Welcome to the Editor!");
     
-    Bind(wxEVT_MENU, &RecluseEditorFrame::onHello, this, ID_HELLO);
+    Bind(wxEVT_MENU, &RecluseEditorFrame::onHello, this, Id_Hello);
     Bind(wxEVT_MENU, &RecluseEditorFrame::onExit, this, wxID_EXIT);
     wxColour color(50, 50, 50, 255);
     SetBackgroundColour(color);

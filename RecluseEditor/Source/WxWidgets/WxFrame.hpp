@@ -30,11 +30,6 @@ public:
         appInfo.engineName = "RecluseEngine";
         result = pInstance->initialize(appInfo, LayerFeatureFlag_DebugValidation);
 
-        if (result != RecluseResult_Ok)
-        {
-            
-        }
-
         pAdapter = pInstance->getGraphicsAdapters()[0];
         DeviceCreateInfo info = { };
         result = pAdapter->createDevice(info, &pDevice);

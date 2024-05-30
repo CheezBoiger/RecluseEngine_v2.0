@@ -6,6 +6,9 @@
 #include "Recluse/Application.hpp"
 #include "Recluse/Generated/Game/TranformEvents.hpp"
 
+#include "Recluse/Game/Components/Camera.hpp"
+#include <vector>
+
 namespace Recluse {
 
 
@@ -27,27 +30,29 @@ ResultCode TransformSystem::onInitialize(MessageBus* bus)
 }
 
 
-void TransformSystem::onUpdate(const RealtimeTick& tick)
+void TransformSystem::onUpdate(Engine::Scene* scene, const RealtimeTick& tick)
 {
-    Engine::Scene* pScene = getScene();
-    if (pScene && m_doUpdate)
+    if (m_doUpdate)
     {
-        const std::vector<ECS::GameEntity*>& entities = pScene->getEntities();
-        for (U64 i = 0; i < entities.size(); ++i)
+        ECS::Registry<Transform>* transformRegistry = scene->getRegistry<Transform>();
+        std::vector<Transform*> transforms = transformRegistry->getAllComponents();
+        for (U64 i = 0; i < transforms.size(); ++i)
         {
-            ECS::GameEntity* entity = entities[i];
-            std::tuple<Transform*> transformTuple = obtainTuple<Transform>(entity->getUUID());
-            Transform* transform = std::get<Transform*>(transformTuple);
-            if (transform)
+            Transform* transform = transforms[i];
+
+            // Check if the transform is disabled.
+            if (!transform->isEnabled())
+                continue;
+
+            ECS::GameEntity* entity = ECS::GameEntity::findEntity(transform->getOwner());
+            // Get the parent transform and transform locally on it.
+            Transform* parentTransform = std::get<Transform*>(obtainTuple<Transform>(scene, entity->getParent()));
+            transform->updateMatrices(parentTransform);
+            if (g_enableTransformLogging)
             {
-                Transform* parentTransform = std::get<Transform*>(obtainTuple<Transform>(entity->getParent()));
-                transform->updateMatrices(parentTransform);
-                if (g_enableTransformLogging)
-                {
-                    ECS::GameEntity* tentity = ECS::GameEntity::findEntity(transform->getOwner());
-                    R_VERBOSE("Transform", "Owner: %s, Position: (%f, %f, %f)", tentity->getName().c_str(), 
-                        transform->position.x, transform->position.y, transform->position.z);
-                }
+                ECS::GameEntity* tentity = ECS::GameEntity::findEntity(transform->getOwner());
+                R_VERBOSE("Transform", "Owner: %s, Position: (%f, %f, %f)", tentity->getName().c_str(), 
+                    transform->position.x, transform->position.y, transform->position.z);
             }
         }
         m_doUpdate = false;

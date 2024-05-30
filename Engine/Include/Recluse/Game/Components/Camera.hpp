@@ -1,6 +1,7 @@
 //
 #pragma once
 
+#include "Recluse/Game/Component.hpp"
 #include "Recluse/Math/Bounds3D.hpp"
 #include "Recluse/Math/Matrix44.hpp"
 
@@ -8,6 +9,9 @@
 
 #include "Recluse/Renderer/SceneView.hpp"
 #include "Recluse/Game/Components/Transform.hpp"
+
+#include <map>
+#include <vector>
 
 namespace Recluse {
 namespace Engine {
@@ -43,11 +47,10 @@ typedef U32 CameraPostProcessFlags;
 
 // Camera is the abstract transformation that is used to view the scene.
 // It also serves to perform visibility culling.
-class R_PUBLIC_API Camera
+class R_PUBLIC_API Camera : public ECS::Component
 {
 public:
-    // Get the main view camera.
-    static Camera* getMain();
+    R_COMPONENT_DECLARE(Camera);
 
     // Update the camera transformations. Usually the camera will
     // just need the transform in order to apply it's works.
@@ -139,5 +142,34 @@ private:
     F32                     m_far;
 };
 
+
+class CameraRegistry : public ECS::Registry<Camera>
+{
+public:
+    R_COMPONENT_REGISTRY_DECLARE(CameraRegistry);
+
+    // Get the main view camera.
+    Camera*             getMain() { return mainCamera; }
+
+    // Set the main view camera.
+    void                setMain(Camera* main) { mainCamera = main; }
+
+    // Allocation calls. These must be overridden, as they will be called by external systems,
+    // when required. 
+    virtual ResultCode  onAllocateComponent(const RGUID& owner) override;
+
+    // Free calls. These must be overridden, as they will be called by external systems when
+    // required.
+    virtual ResultCode  onFreeComponent(const RGUID& owner) override;
+    virtual Camera*     getComponent(const RGUID& entityKey) override;
+
+    virtual std::vector<Camera*> getAllComponents() override { return std::vector<Camera*>(activeCameras); }
+
+private:
+    Camera* mainCamera;
+    
+    std::map<RGUID, U32, RGUID::Less>   cameraMap;
+    std::vector<Camera*>                activeCameras;
+};
 } // Engine
 } // Recluse

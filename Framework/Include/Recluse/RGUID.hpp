@@ -59,6 +59,26 @@ struct RGUID
                     ^ std::hash<U64>()(rguid.version.minor);
         }
     };
+
+    struct Less
+    {
+    public:
+        bool operator()(const RGUID& a, const RGUID& b) const 
+        {
+            return (a.version.major == b.version.major) ? 
+                (a.version.minor < b.version.minor) :  (a.version.major < b.version.major);
+        }
+    };
+
+    struct Greater
+    {
+    public:
+        bool operator()(const RGUID& a, const RGUID& b) const
+        {
+            return (a.version.major == b.version.major) ? 
+                (a.version.minor > b.version.minor) :  (a.version.major > b.version.major);
+        }
+    };
 };
 
 //

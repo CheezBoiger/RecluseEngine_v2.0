@@ -37,7 +37,7 @@ enum ComponentUpdateFlag
 
 #define R_COMPONENT_REGISTRY_DECLARE(_class) \
     public: \
-    static Recluse::ECS::RegistryUUID classGUID() { return recluseHashFast(#_class, sizeof(#_class)); }
+    static Recluse::ECS::RegistryUUID classGUID() { return recluseHashFast(#_class, sizeof(#_class)); } 
 
 class AbstractComponent : public Serializable
 {
@@ -235,8 +235,8 @@ public:
         return err;
     }
 
-    // Get all components handled by the system. This is optional, so be sure to check if this is 
-    // actually implemented.
+    // Get all components handled by the system. This is required, as systems must use this to 
+    // iterate for all of their components.
     virtual std::vector<TypeComponent*> getAllComponents() { return { }; }
 
     // Get a component from the system. Return nullptr, if the component doesn't match the given 

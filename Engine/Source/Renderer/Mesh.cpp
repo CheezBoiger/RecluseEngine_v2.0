@@ -29,7 +29,7 @@ ResultCode GPUBuffer::initialize(GraphicsDevice* pDevice, U64 totalSzBytes, Reso
 }
 
 
-ResultCode GPUBuffer::stream(GraphicsContext* pContext, void* ptr, U64 offsetBytes, U64 szBytes)
+ResultCode GPUBuffer::stage(GraphicsContext* pContext, void* ptr, U64 offsetBytes, U64 szBytes)
 {
     ResultCode result = RecluseResult_Ok;
     GraphicsResource* pStaging = nullptr;
@@ -55,9 +55,8 @@ ResultCode GPUBuffer::stream(GraphicsContext* pContext, void* ptr, U64 offsetByt
     region.srcOffsetBytes   = 0;
     region.szBytes          = szBytes;
 
-    pContext->transition(m_pResource, ResourceState_CopyDestination);
-    pContext->copyBufferRegions(m_pResource, pStaging, &region, 1);
-
+    GraphicsDevice* device = pContext->getDevice();
+    device->copyBufferRegions(m_pResource, pStaging, &region, 1);
     m_pDevice->destroyResource(pStaging);
 
     return result;

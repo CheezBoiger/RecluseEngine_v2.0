@@ -175,7 +175,7 @@ void createTextureResource(GraphicsResource** textureResource)
     staging.width = texture.getTotalSizeBytes();
     staging.height = 1;
     staging.depthOrArraySize = 1;
-    staging.memoryUsage = ResourceMemoryUsage_CpuOnly;
+    staging.memoryUsage = ResourceMemoryUsage_CpuVisible;
     staging.mipLevels = 1;
     staging.miscFlags = 0;
     staging.samples = 1;

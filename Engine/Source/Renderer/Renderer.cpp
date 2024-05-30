@@ -22,7 +22,7 @@
 
 #include <algorithm>
 
-#define R_NULLIFY_RENDER 1
+#define R_NULLIFY_RENDER 0
 
 namespace Recluse {
 namespace Engine {
@@ -92,7 +92,7 @@ void Renderer::initialize()
 
     {
         MemoryReserveDescription reserveDesc = { };
-        reserveDesc.bufferPools[ResourceMemoryUsage_CpuOnly]     = R_1MB * 32ull;
+        reserveDesc.bufferPools[ResourceMemoryUsage_CpuVisible]     = R_1MB * 32ull;
         reserveDesc.bufferPools[ResourceMemoryUsage_CpuToGpu]   = R_1MB * 16ull;
         reserveDesc.bufferPools[ResourceMemoryUsage_GpuToCpu]   = R_1MB * 16ull;
         reserveDesc.bufferPools[ResourceMemoryUsage_GpuOnly]     = R_1MB * 512ull;
@@ -149,62 +149,55 @@ void Renderer::render()
 #if (!R_NULLIFY_RENDER)
         // TODO: Would make more sense to manually transition the resource itself, 
         //       and not the resource view...
-        GraphicsResource* pSceneDepth = m_sceneBuffers.pSceneDepth->getResource();
+        GraphicsResource* pSceneDepth = m_sceneBuffers.gbuffer[GBuffer_Depth]->getResource();
         //GraphicsResource* pSceneAlbedo = m_sceneBuffers.pSceneAlbedo->getResource();
         
-        if (pSceneDepth->getCurrentResourceState() != RESOURCE_STATE_DEPTH_STENCIL_WRITE) 
-        {
-            // Transition the resource.
-            ResourceTransition trans        = MAKE_RESOURCE_TRANSITION(pSceneDepth, RESOURCE_STATE_DEPTH_STENCIL_WRITE, 0, 1, 0, 1);
-            //ResourceTransition albedoTrans  = MAKE_RESOURCE_TRANSITION(pSceneAlbedo, RESOURCE_STATE_RENDER_TARGET, 0, 1, 0, 1);
-            m_commandList->transition(&trans, 1);            
-        }
+        context->transition(pSceneDepth, ResourceState_DepthStencilWrite);
 
         PreZ::generate
                 (
-                    m_commandList, 
+                    context, 
                     m_currentRenderCommands, 
-                    m_currentCommandKeys[RENDER_PREZ].data(), 
-                    m_currentCommandKeys[RENDER_PREZ].size()
+                    m_currentCommandKeys[Render_PreZ].data(), 
+                    m_currentCommandKeys[Render_PreZ].size()
                 );
 
-        // Re-transition back to read only.
-        if (pSceneDepth->getCurrentResourceState() != RESOURCE_STATE_DEPTH_STENCIL_READONLY) 
-        {
-            ResourceTransition trans = MAKE_RESOURCE_TRANSITION(pSceneDepth, RESOURCE_STATE_DEPTH_STENCIL_READONLY, 0, 1, 0, 1);
-            m_commandList->transition(&trans, 1);
-        }
+        context->transition(pSceneDepth, ResourceState_DepthStencilReadOnly);
 
         // Asyncronous Queue -> Do Light culling here.
-        LightCluster::cullLights(m_commandList);
+        LightCluster::cullLights(context);
 
         AOV::generate
                 (
-                    m_commandList, 
+                    context, 
                     m_currentRenderCommands,
-                    m_currentCommandKeys[RENDER_GBUFFER].data(), 
-                    m_currentCommandKeys[RENDER_GBUFFER].size()
+                    m_currentCommandKeys[Render_Gbuffer].data(), 
+                    m_currentCommandKeys[Render_Gbuffer].size()
                 );
 
         // Deferred rendering combine.
-        LightCluster::combineDeferred(m_commandList);
+        LightCluster::combineDeferred(context);
 
         // Forward pass combine.
         LightCluster::combineForward
                         (
-                            m_commandList, 
-                            m_currentCommandKeys[RENDER_FORWARD_OPAQUE].data(), 
-                            m_currentCommandKeys[RENDER_FORWARD_OPAQUE].size()
+                            context, 
+                            m_currentCommandKeys[Render_ForwardOpaque].data(), 
+                            m_currentCommandKeys[Render_ForwardOpaque].size()
                         );
 #endif
     // Check if any debug draw functions exist.
     if (!m_debugDrawFunctions.empty())
     {
         // By this state, the debug pass should render on top of the final render target.
-        DebugRenderer debugRenderer(this);
-        for (auto func : m_debugDrawFunctions)
+        ModulePlugin<Renderer>* plugin = getPlugin(RendererPluginID_DebugRenderer);
+        if (plugin)
         {
-            func(&debugRenderer);
+            DebugRenderer* debugRenderer = dynamic_cast<DebugRenderer*>(plugin);
+            for (auto func : m_debugDrawFunctions)
+            {
+                func(debugRenderer);
+            }
         }
     }
     context->transition(m_pSwapchain->getFrame(m_pSwapchain->getCurrentFrameIndex()), ResourceState_Present);
@@ -666,9 +659,71 @@ void Renderer::clear()
 }
 
 
-ResultCode Renderer::createTempResource(const GraphicsResourceDescription& description)
+TemporaryBuffer Renderer::createTemporaryBuffer(const TemporaryBufferDescription& description)
 {
-    return 0;
+    ScopedCriticalSection _(m_tempCs);
+    return (void*)0;
+}
+
+
+ResultCode Renderer::createTemporaryResourcePool(U32 bufferCount)
+{
+    // Scoped section to ensure we aren't recreating the buffers that are already being called by another thread.
+    ScopedCriticalSection _(m_tempCs);
+
+    // First free the temporary resources.
+    freeTemporaryResources();
+
+    m_tempResourceAllocatorPerFrameGpuOnly.resize(bufferCount);
+    m_tempResourcesPerFrameGpuOnly.resize(bufferCount);
+
+    m_tempResourceAllocatorPerFrameCpuVisible.resize(bufferCount);
+    m_tempResourcesPerFrameCpuVisible.resize(bufferCount);
+
+    R_ASSERT(m_pDevice);
+
+    for (U32 i = 0; i < m_tempResourcesPerFrameGpuOnly.size(); ++i)
+    {
+        GraphicsResource* tempResourcePool = nullptr;
+        GraphicsResourceDescription desc = { };
+        desc.samples = 1;
+        desc.memoryUsage = ResourceMemoryUsage_GpuOnly;
+        desc.dimension = ResourceDimension_Buffer;
+        desc.depthOrArraySize = 1;
+        desc.height = 1;
+        desc.width = R_MB(64);
+        desc.usage = ResourceUsage_ConstantBuffer 
+            | ResourceUsage_IndexBuffer 
+            | ResourceUsage_VertexBuffer 
+            | ResourceUsage_UnorderedAccess 
+            | ResourceUsage_CopyDestination
+            | ResourceUsage_IndirectBuffer;
+        ResultCode result = m_pDevice->createResource(&tempResourcePool, desc, ResourceState_Common);
+        R_ASSERT_FORMAT(result == RecluseResult_Ok, "Temp resource creation failed with the error: %d", result);
+        m_tempResourcesPerFrameGpuOnly[i] = tempResourcePool;
+        m_tempResourceAllocatorPerFrameGpuOnly[i]->initialize(0, desc.width);
+    }
+
+    for (U32 i = 0; i < m_tempResourcesPerFrameCpuVisible.size(); ++i)
+    {
+        GraphicsResource* tempResourcePool = nullptr;
+        GraphicsResourceDescription desc = { };
+        desc.dimension = ResourceDimension_Buffer;
+        desc.format = ResourceFormat_Unknown;
+        desc.memoryUsage = ResourceMemoryUsage_CpuToGpu;
+        ResultCode result = m_pDevice->createResource(&tempResourcePool, desc, ResourceState_Common);
+        R_ASSERT_FORMAT(result == RecluseResult_Ok, "Temp resource creation failed with the error: %d", result);
+        m_tempResourcesPerFrameCpuVisible[i] = tempResourcePool;
+        m_tempResourceAllocatorPerFrameCpuVisible[i]->initialize(0, desc.width);
+    }
+
+    return RecluseResult_Ok;
+}
+
+
+ResultCode Renderer::freeTemporaryResources()
+{
+    return RecluseResult_Ok;
 }
 } // Engine
 } // Recluse

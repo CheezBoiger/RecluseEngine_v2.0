@@ -13,6 +13,8 @@
 #include "Recluse/Game/Systems/TransformSystem.hpp"
 #include "Recluse/Game/GameSystem.hpp"
 #include "Recluse/Math/Bounds2D.hpp"
+#include "Recluse/System/KeyboardInput.hpp"
+#include "Recluse/System/Input.hpp"
 #include <Windows.h>
 #include <vector>
 #include <unordered_map>
@@ -123,12 +125,12 @@ public:
         return RecluseResult_Ok;
     }
 
-    void onUpdate(const RealtimeTick& tick) override
+    void onUpdate(Engine::Scene* scene, const RealtimeTick& tick) override
     {
-        std::vector<ECS::GameEntity*> entities = getScene()->getEntities();
+        std::vector<ECS::GameEntity*> entities = scene->getEntities();
         for (U64 i = 0; i < entities.size(); ++i)
         {
-            std::tuple<MoverComponent*, Transform*> tp = obtainTuple<MoverComponent, Transform>(entities[i]->getUUID());
+            std::tuple<MoverComponent*, Transform*> tp = obtainTuple<MoverComponent, Transform>(scene, entities[i]->getUUID());
             MoverComponent* mover = std::get<MoverComponent*>(tp);
             Transform* transform = std::get<Transform*>(tp);
             if (mover && transform)
@@ -159,16 +161,16 @@ void addEntities(Scene* pScene)
     pScene->addEntity(entity);
     pScene->addEntity(entity2);
 
-    pScene->addComponentForEntity<Transform>(entity->getUUID());
-    pScene->addComponentForEntity<Transform>(entity2->getUUID());
+    pScene->addComponentForEntity<Transform>(entity->getUUID(), true);
+    pScene->addComponentForEntity<Transform>(entity2->getUUID(), true);
 
-    pScene->addComponentForEntity<MoverComponent>(entity->getUUID());
+    pScene->addComponentForEntity<MoverComponent>(entity->getUUID(), true);
     GlobalCommands::setValue("Transform.EnableLogging", true);
 
     entity->getComponent<Transform>(pScene)->position = Math::Float3(43, 12, -2);
     entity->getComponent<MoverComponent>(pScene)->direction = Math::normalize(Math::Float3(1, 0, 0));
 
-    pScene->addComponentForEntity<MoverComponent>(entity2->getUUID());
+    pScene->addComponentForEntity<MoverComponent>(entity2->getUUID(), true);
     entity2->getComponent<MoverComponent>(pScene)->direction = Math::normalize(Math::Float3(-1, 0, 0));
 }
 
@@ -199,6 +201,7 @@ int main(int c, char* argv[])
         g_bus.notifyAll();
         g_bus.clearQueue();
         counter += tick.delta() * 1.0f;
+        pollEvents();
     }
 
     pScene->destroy();

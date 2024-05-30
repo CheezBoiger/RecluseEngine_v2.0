@@ -14,8 +14,10 @@
 
 #include "Recluse/Generated/RendererConfigs.hpp"
 #include "Recluse/Generated/RendererPrograms.hpp"
+#include "Recluse/Generated/Common/Common.hpp"
 
 #include "Recluse/System/DLLLoader.hpp"
+#include "Recluse/Threading/Threading.hpp"
 
 #include <vector>
 #include <functional>
@@ -48,14 +50,32 @@ class DebugRenderer;
 
 enum RenderPassType : U32 
 {
+    // Pre-rendered depth
     Render_PreZ = 0x0001,
+
+    // If the object is shadowed.
     Render_Shadow = 0x0002,
+
+    // If the object is a particle.
     Render_Particles = 0x0004,
+
+    // Should the object be rendered in the gbuffer.
     Render_Gbuffer = 0x0008,
+
+    // Material based rendering.
     Render_Material = 0x0010,
+
+    // Should the object be rendered directly (will not render in gbuffer.)
     Render_ForwardOpaque = 0x0020,
+
+    // Is the object transparent.
     Render_ForwardTransparent = 0x0040,
-    Render_Haze = 0x0080
+
+    // If the object meant to represent a haze volume.
+    Render_Haze = 0x0080,
+
+    // If the object should be rendered for velocity motion blur.
+    Render_ObjectMotionBlur = (0x0100)
 };
 
 typedef U32 RenderPassTypeFlags;
@@ -72,12 +92,6 @@ struct MaterialDescription
 
 
 typedef MapContainer<U32, std::vector<U64>> CommandKeyContainer;
-
-
-struct DebugDrawCallbacks
-{
-    void (*drawTextFn)(GraphicsContext*, U32, U32, F32, const char*, const Math::Color4&);
-};
 
 // Top level rendering engine. Implements Render Hardware Interface, and 
 // manages all resources and states created in game graphics. This will usually
@@ -105,10 +119,19 @@ public:
     void                        pushRenderCommand(const RenderCommand& renderCommand, RenderPassTypeFlags renderFlags);
     void                        pushDebugDraw(DebugDrawFunction debugDrawFunction);
 
+    // Push a light to the renderer. Used throughout renderer.
+    void                        pushLight(const LightDescription& lightDescription) { m_lightDescriptions.push_back(lightDescription); }
+
+    // Start submitting rendering to draw onto the screen.
     void                        render();
+
+    // Present to the screen.
     void                        present(Bool delayPresent = false);
 
+    // Reads the current configs back to the caller. This must not be modified.
     const RendererConfigs&      getCurrentConfigs() const { return m_currentRendererConfigs; }
+
+    // Grabs the rendering api context. This is the current context that is initialized to this renderer instance.
     GraphicsContext*            getContext() { return m_pContext; }
 
     // Set the new configurations for the renderer. This won't be used until we call recreate().
@@ -119,20 +142,25 @@ public:
         m_newRendererConfigs = newConfigs; 
     }
 
+    // Grabs the device that is performing the actual rendering. 
     GraphicsDevice*             getDevice() const { return m_pDevice; }
 
+    // Creates a vertex buffer that represents a given mesh.
     VertexBuffer*               createVertexBuffer(U64 perVertexSzBytes, U64 totalVertices);
+
+    // Creates an index buffer that represents each triangle index.
     IndexBuffer*                createIndexBuffer(IndexType indexType, U64 totalIndices);
+
+    // Creates a 2d texture that is used to texture a mesh.
     Texture2D*                  createTexture2D(U32 width, U32 height, U32 mips, U32 layers, ResourceFormat format);
 
     // Creation of temporary resource, to be used only on the current frame. Will be destroyed on re-draw.
-    ResultCode                  createTempResource(const GraphicsResourceDescription& desc);
+    TemporaryBuffer             createTemporaryBuffer(const TemporaryBufferDescription& desc);
 
     ResultCode                  destroyTexture2D(Texture2D* pTexture);
     ResultCode                  destroyGPUBuffer(GPUBuffer* pBuffer);
 
     void                        update(F32 currentTime, F32 deltaTime);
-    DebugDrawCallbacks*         getDebugCallbacks() { return &m_debugDrawCallbacks; }
 
 private:
 
@@ -154,6 +182,9 @@ private:
 
     void                        resetCommandKeys();
     void                        sortCommandKeys();
+
+    ResultCode                  createTemporaryResourcePool(U32 bufferCount);
+    ResultCode                  freeTemporaryResources();
 
     // Graphics context and information.
     GraphicsInstance*                   m_pInstance;
@@ -206,42 +237,17 @@ private:
     RenderCommandList*                                      m_currentRenderCommands;
     CommandKeyContainer                                     m_currentCommandKeys;
     std::vector<DebugDrawFunction>                          m_debugDrawFunctions;
+    // Lights in the scene.
+    std::vector<LightDescription>                           m_lightDescriptions;
 
     // Gpu Resources used as temporary for the current frame. This will be refreshed every new frame.
-    std::vector<GraphicsResource*>                          m_tempResourcesPerFrame;
-    std::vector<Allocator*>                                 m_tempResourceAllocatorPerFrame;
-    DebugDrawCallbacks                                      m_debugDrawCallbacks;
-};
+    CriticalSection                                         m_tempCs;
+    std::vector<GraphicsResource*>                          m_tempResourcesPerFrameGpuOnly;
+    std::vector<Allocator*>                                 m_tempResourceAllocatorPerFrameGpuOnly;
 
-
-// ImGui renderer plugin implementation.
-class ImGuiRenderer : public ModulePlugin<Renderer>
-{
-public:
-    DEFINE_MODULE_PLUGIN(ImGuiRenderer, Renderer, RendererPluginID_DebugRenderer, false, ImGuiDebug);
-    ImGuiRenderer() { }
-
-    // Need to somehow also allow inplace callbacks with member functions as well..
-    void cat(GraphicsContext*, U32, U32, F32, const char*, const Math::Color4&)
-    {
-    }
-
-    ResultCode initialize(Renderer* renderer) override 
-    {
-        if (IsLibrary())
-        {
-            DllLoader loader(GetLibraryName());
-            if (loader.isLoaded())
-            {
-                DebugDrawCallbacks* callbacks = renderer->getDebugCallbacks();
-                callbacks->drawTextFn = ((void(*)(GraphicsContext*, U32, U32, F32, const char*, const Math::Color4&))loader.procAddress("imgui_draw_text"));
-            }
-        }
-        return RecluseResult_Failed;
-    }
-
-private:
-    
+    // Cpu visible resources that can be used as temporary for the current frame. This will be refresed every new frame.
+    std::vector<GraphicsResource*>                          m_tempResourcesPerFrameCpuVisible;
+    std::vector<Allocator*>                                 m_tempResourceAllocatorPerFrameCpuVisible;
 };
 
 

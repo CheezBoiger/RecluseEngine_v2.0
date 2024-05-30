@@ -13,6 +13,7 @@
 #include "Recluse/System/KeyboardInput.hpp"
 #include "Recluse/Filesystem/Archive.hpp"
 
+#include "Recluse/Math/Quaternion.hpp"
 #include "Recluse/Math/Matrix33.hpp"
 #include "Recluse/Math/Matrix44.hpp"
 #include "Recluse/Math/Vector3.hpp"
@@ -176,7 +177,7 @@ void createTextureResource(GraphicsResource** textureResource)
     staging.width = texture.getTotalSizeBytes();
     staging.height = 1;
     staging.depthOrArraySize = 1;
-    staging.memoryUsage = ResourceMemoryUsage_CpuOnly;
+    staging.memoryUsage = ResourceMemoryUsage_CpuVisible;
     staging.mipLevels = 1;
     staging.miscFlags = 0;
     staging.samples = 1;
@@ -348,9 +349,11 @@ void updateConstBuffer(IShaderProgramBinder& binder, GraphicsResource* resource,
     static Bool isTexturing = false;
     t += 20.0f * delta;
     t = fmod(t, 360.0f);
+    Math::Quaternion q = Math::angleAxis(Math::normalize(Math::Float3(1.0f, 0.0f, 1.0f)), Math::deg2Rad(t));
     Math::Matrix44 T = Math::translate(Math::Matrix44::identity(), Math::Float3(0, 0, 6));
     Math::Matrix44 R = Math::rotate(Math::Matrix44::identity(), Math::Float3(0.0f, 1.0f, 0.0f), Math::deg2Rad(45.0f));
-    Math::Matrix44 R2 = Math::rotate(Math::Matrix44::identity(), Math::Float3(1.0f, 0.0f, 1.0f), Math::deg2Rad(t));
+    //Math::Matrix44 R2 = Math::rotate(Math::Matrix44::identity(), Math::Float3(1.0f, 0.0f, 1.0f), Math::deg2Rad(t));
+    Math::Matrix44 R2 = Math::quatToMat44(q);
     Math::Matrix44 model = R2 * R * T;
     Math::Matrix44 view = Math::translate(Math::Matrix44::identity(), Math::Float3(0, 0, 0));
     Math::Matrix44 proj = Math::perspectiveLH_Aspect(Math::deg2Rad(45.0f), (F32)width / (F32)height, 0.001f, 1000.0f);

@@ -100,7 +100,7 @@ public:
     }
 
     template<typename ComponentType>
-    ResultCode addComponentForEntity(const RGUID& entityId)
+    ResultCode addComponentForEntity(const RGUID& entityId, Bool enableByDefault = false)
     {
         ECS::ComponentUUID uuid = ComponentType::classGUID();
         auto it = m_registries.find(uuid);
@@ -108,6 +108,8 @@ public:
         {
             ECS::Registry<ComponentType>* registry = static_cast<ECS::Registry<ComponentType>*>(it->second);
             registry->allocateComponent(entityId);
+            // Get the component and set the default for it.
+            registry->getComponent(entityId)->setEnable(enableByDefault);
             return RecluseResult_Ok;
         }
         return RecluseResult_Failed;

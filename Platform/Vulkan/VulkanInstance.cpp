@@ -279,12 +279,12 @@ void VulkanInstance::onDestroy()
 
     if (m_instance) 
     {
-        R_DEBUG(R_CHANNEL_VULKAN, "Destroying context...");
+        R_DEBUG(R_CHANNEL_VULKAN, "Destroying instance...");
 
         vkDestroyInstance(m_instance, nullptr);
         nullify();
 
-        R_DEBUG(R_CHANNEL_VULKAN, "Successfully destroyed context!");
+        R_DEBUG(R_CHANNEL_VULKAN, "Successfully destroyed instance!");
     }
 }
 

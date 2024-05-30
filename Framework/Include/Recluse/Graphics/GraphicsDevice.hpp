@@ -364,13 +364,16 @@ public:
     // Unload all shader programs, as well as their permutations.
     virtual void                    unloadAllShaderPrograms() { return; }
 
+    // Check for supported features on this device.
     Bool                            hasFeaturesSupport(LayerFeatureFlags features) { return (m_supportedFeatures & features); }
 
-    // Not recommended, but submits a copy to this queue.
+    // Not recommended, but submits a copy to this queue. This is a blocking call, so be sure to call this function if 
+    // you need to wait for the gpu to finish this operation!
     virtual void                    copyResource(GraphicsResource* dst, GraphicsResource* src) 
         { }
 
-    // Submits copy of regions from src resource to dst resource.
+    // Submits copy of regions from src resource to dst resource. This is a blocking call, so be sure to 
+    // call this function if you need to wait for the gpu to finish this operation!
     virtual void                    copyBufferRegions
                                         (
                                             GraphicsResource* dst, 

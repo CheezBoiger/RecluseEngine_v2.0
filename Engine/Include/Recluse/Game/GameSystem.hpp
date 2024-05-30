@@ -71,18 +71,18 @@ public:
 
     // Gets a component from entity.
     template<typename ComponentType>
-    ComponentType* obtainComponent(const RGUID& id)
+    ComponentType* obtainComponent(Engine::Scene* scene, const RGUID& id)
     {
         ECS::GameEntity* entity = ECS::GameEntity::findEntity(id);
-        return (entity ? entity->getComponent<ComponentType>(m_scene) : nullptr);
+        return (entity ? entity->getComponent<ComponentType>(scene) : nullptr);
     }
 
     // Returns a tuple of components from an entity. Any components not found,
     // will return nullptr for each component not found.
     template<typename... Args>
-    std::tuple<Args*...> obtainTuple(const RGUID& id)
+    std::tuple<Args*...> obtainTuple(Engine::Scene* scene, const RGUID& id)
     {
-        std::tuple<Args*...> args = { obtainComponent<Args>(id)... }; 
+        std::tuple<Args*...> args = { obtainComponent<Args>(scene, id)... }; 
         return args;
     }
 
@@ -90,7 +90,7 @@ public:
     U32                                 getPriority() const { return m_priority; }
 
     // This system is required to update all components when necessary.
-    void                                update(const RealtimeTick& tick) { onUpdate(tick); }
+    void                                update(Engine::Scene* scene, const RealtimeTick& tick) { onUpdate(scene, tick); }
 
     ResultCode                          initialize(MessageBus* bus = nullptr)
     {
@@ -109,11 +109,8 @@ public:
     virtual ResultCode      deserialize(Archive* archive) override { return RecluseResult_NoImpl; }
 
     virtual const char*     getName() const { return "AbstractSystem"; }
-    
-    Engine::Scene*          getScene() const { return m_scene; }
-    void                    setScene(Engine::Scene* scene) { m_scene = scene; }
 
-    void                    drawDebug(Engine::DebugRenderer* renderer) { onDrawDebug(renderer); }
+    void                    drawDebug(Engine::Scene* scene, Engine::DebugRenderer* renderer) { onDrawDebug(scene, renderer); }
 
 private:
     // Allows initializing the system before on intialize().
@@ -125,15 +122,17 @@ private:
     // Intended to clear all components from the game world.
     virtual void            onClearAll()                       { }
 
-    // To update all components in the world.
-    virtual void            onUpdate(const RealtimeTick& tick)  { }
+    // To update all components in the world. 
+    // \param scene The scene instance that we are updating on.
+    virtual void            onUpdate(Engine::Scene* scene, const RealtimeTick& tick)  { }
 
-    virtual void            onDrawDebug(Engine::DebugRenderer* context) { }
+    // Updates all component in the world after onUpdate() calls have been made.
+    virtual void            onPostUpdate(Engine::Scene* scene, const RealtimeTick& tick) { }
+
+    virtual void            onDrawDebug(Engine::Scene* scene, Engine::DebugRenderer* context) { }
     // Priority value of this abstract system. This will be used to determine the 
     // order of which this system will operate.
     U32                 m_priority;
-    
-    Engine::Scene*      m_scene;
 };
 
 
