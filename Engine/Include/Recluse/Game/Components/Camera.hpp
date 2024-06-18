@@ -143,7 +143,7 @@ private:
 };
 
 
-class CameraRegistry : public ECS::Registry<Camera>
+class CameraRegistry : public ECS::ComponentRegistry<Camera>
 {
 public:
     R_COMPONENT_REGISTRY_DECLARE(CameraRegistry);

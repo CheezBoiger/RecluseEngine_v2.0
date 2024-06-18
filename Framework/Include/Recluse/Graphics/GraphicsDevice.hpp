@@ -191,13 +191,11 @@ public:
         { }
 
     // Submits copy of regions from src resource to dst resource. Source may be a texture.
-    virtual void                    copyBufferRegions
-                                        (
-                                            GraphicsResource* dst, 
-                                            GraphicsResource* src, 
-                                            const CopyBufferRegion* pRegions, 
-                                            U32 numRegions
-                                        )
+    virtual void                    copyBufferRegions(
+                                        GraphicsResource* dst, 
+                                        GraphicsResource* src, 
+                                        const CopyBufferRegion* pRegions, 
+                                        U32 numRegions)
         { }
 
     // Copies texture regions to the destination texture resource. Source may be a buffer.
@@ -213,7 +211,12 @@ public:
     // Other instances can include minimizing the window, or when the window is out of focus...
     virtual ResultCode              wait() { return RecluseResult_NoImpl; }
 
+    // Binds a certain number of vertex buffers for the given context.
+    // 
     virtual void                    bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* pOffsets) { }
+
+    // Binds an index buffer to the given context.
+    //
     virtual void                    bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBytes, IndexType type) { }
 
     virtual void                    drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 firstIndex, U32 vertexOffset, U32 firstInstance) { }
@@ -272,7 +275,11 @@ public:
     virtual void                    enableDepth(Bool enable) { }
     virtual void                    enableDepthWrite(Bool enable) { }
     virtual void                    enableStencil(Bool enable) { }
+
+    // Sets the vertex layout, this is essential when telling the pipeline how to read your vertex buffers!
+    // \param inputLayout The input layout id that maps to the given information about how to read the bound vertex buffers.
     virtual void                    setInputVertexLayout(VertexInputLayoutId inputLayout) { }
+
     virtual void                    setDepthClampEnable(Bool enable) { }
     virtual void                    setDepthBiasEnable(Bool enable) { }
     virtual void                    setDepthBiasClamp(F32 value) { }
@@ -317,6 +324,16 @@ public:
     // when end() is called. This indicates that the next batch of bundles will be reset to be used for the next
     // frame.
     virtual void                    submitBundles(GraphicsContext** ppBundles, U32 count) { }
+
+    // Begins queries, with the specified type.
+    // Be sure to call endQuery() once satisfied on what to capture.
+    virtual void                    beginQueries(GraphicsQuery** queries, U32 numQueries, GraphicsQueryType queryType) { }
+
+    // Ends a query capture. Should be called after every beginQuery() call.
+    virtual void                    endQueries(GraphicsQuery** queries, U32 numQueries) { }
+
+    // Resolves queries to their respective resource buffers.
+    virtual void                    resolveQueries(GraphicsQuery** queries, U32 numQueries, GraphicsResource** resources, U32 numResources) { }
 };
 
 
@@ -374,13 +391,11 @@ public:
 
     // Submits copy of regions from src resource to dst resource. This is a blocking call, so be sure to 
     // call this function if you need to wait for the gpu to finish this operation!
-    virtual void                    copyBufferRegions
-                                        (
+    virtual void                    copyBufferRegions(
                                             GraphicsResource* dst, 
                                             GraphicsResource* src, 
                                             const CopyBufferRegion* pRegions, 
-                                            U32 numRegions
-                                        )
+                                            U32 numRegions)
         { }
 
     DeviceId                        getDeviceId() const { return m_deviceId; }

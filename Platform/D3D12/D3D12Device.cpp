@@ -21,7 +21,6 @@ void D3D12Context::initialize()
 {
     initializeBufferResources(m_bufferCount);
     createCommandList(&m_pPrimaryCommandList, QUEUE_TYPE_PRESENT | QUEUE_TYPE_GRAPHICS);
-    
     D3D12ResourceAllocationManager* manager = m_pDevice->resourceAllocationManager();
     D3D12ResourceAllocationManager::Update update = { };
     update.flags = D3D12ResourceAllocationManager::UpdateFlag_SetFrameIndex | D3D12ResourceAllocationManager::UpdateFlag_ResizeGarbage;
@@ -162,11 +161,12 @@ void D3D12Context::transition(GraphicsResource* pResource, ResourceState newStat
             U32 maxLayers = resourceDesc.DepthOrArraySize;
             if (mipCount == 0) mipCount = mipLevels;
             if (layerCount == 0) layerCount = maxLayers;
-
             for (U32 mip = baseMip; mip < mipCount; ++mip)
             {
                 for (U32 layer = baseLayer; layer < layerCount; ++layer)
                 {
+                    // TODO: This needs to be properly handled, I added a 0 to unsupport layers. 
+                    //       We will need to support layers in the future.
                     U32 subresource = mip + (layer * mipLevels) + (0 * mipLevels * maxLayers);
                     D3D12_RESOURCE_BARRIER barrier = d3d12Resource->transition(subresource, newState);
                     m_barrierTransitions.push_back(barrier);
@@ -478,13 +478,10 @@ void D3D12Context::initializeBufferResources(U32 buffering)
     R_DEBUG(R_CHANNEL_D3D12, "Initializing buffer resources.");
     for (U32 i = 0; i < m_contextFrames.size(); ++i) 
     {    
-        result = m_pDevice->get()->CreateCommandAllocator
-                                (
+        result = m_pDevice->get()->CreateCommandAllocator(
                                     D3D12_COMMAND_LIST_TYPE_DIRECT, 
                                     __uuidof(ID3D12CommandAllocator), 
-                                    (void**)&m_contextFrames[i].pAllocator
-                                );
-
+                                    (void**)&m_contextFrames[i].pAllocator);
         R_ASSERT(result == S_OK);
         m_contextFrames[i].fenceValue = m_queue->getFence()->GetCompletedValue();
     }
@@ -592,13 +589,11 @@ void D3D12Context::copyResource(GraphicsResource* dst, GraphicsResource* src)
 
 // Submits copy of regions from src resource to dst resource. Generally the caller thread will
 // be blocked until this function returns, so be sure to use when needed.
-void D3D12Context::copyBufferRegions
-    (
-        GraphicsResource* dst, 
-        GraphicsResource* src, 
-        const CopyBufferRegion* pRegions, 
-        U32 numRegions
-    )
+void D3D12Context::copyBufferRegions(
+    GraphicsResource* dst, 
+    GraphicsResource* src, 
+    const CopyBufferRegion* pRegions, 
+    U32 numRegions)
 {  
     ID3D12GraphicsCommandList* pList = m_pPrimaryCommandList->get();
     ID3D12Resource* dstRes = dst->castTo<D3D12Resource>()->get();
@@ -637,18 +632,9 @@ D3D12_FEATURE_DATA_FORMAT_SUPPORT D3D12Device::checkFormatSupport(ResourceFormat
 
     formatSupport.Format = Dxgi::getNativeFormat(format);
 
-    if 
-        (
-            FAILED
-                (
-                    m_device->CheckFeatureSupport
-                                    (
-                                        D3D12_FEATURE_FORMAT_SUPPORT, 
-                                        &formatSupport, 
-                                        sizeof(formatSupport)
-                                    )
-                )
-        )
+    if (FAILED(m_device->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, 
+            &formatSupport, 
+            sizeof(formatSupport))))
     {
         R_ERROR(R_CHANNEL_D3D12, "Failed to query for proper format support on device!");
     }

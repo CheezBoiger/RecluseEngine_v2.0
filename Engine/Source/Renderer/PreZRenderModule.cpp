@@ -19,24 +19,12 @@ namespace PreZ {
 
 GraphicsResource* pSceneDepth = nullptr;
 
-std::unordered_map<Engine::VertexAttribFlags, PipelineState*> pipelines;
-RenderPass* pPreZPass = nullptr;
-
 void initialize(GraphicsDevice* pDevice, Engine::SceneBufferDefinitions* pBuffers)
 {
     R_ASSERT(pBuffers->gbuffer[Engine::GBuffer_Depth]                   != NULL);
     R_ASSERT(pBuffers->gbuffer[Engine::GBuffer_Depth]->getResource()    != NULL);
 
     R_DEBUG("PreZ", "Initializing preZ render pass...");
-
-    //Builder::ShaderProgramDescription description = { };
-    //description.pipelineType = BindType_Graphics;
-    //description.language = ShaderLanguage_Hlsl;
-    //description.graphics.vs = Engine::getBinaryShaderPath("Geometry/VertFactoryStatic").c_str();
-    //description.graphics.vsName = "main";
-    //Builder::buildShaderProgramDefinitions(description, ShaderProgram_PreZDepth, ShaderIntermediateCode_Spirv);
-    //Builder::Runtime::buildShaderProgram(pDevice, ShaderProgram_PreZDepth);
-    //Builder::releaseShaderProgramDefinition(ShaderProgram_PreZDepth);
 
     VertexInputLayout layout = { };
     Runtime::buildVertexInputLayout(pDevice, layout, VertexLayout_PositionOnly);
@@ -53,6 +41,9 @@ void generate(GraphicsContext* context, Engine::RenderCommandList* pMeshCommandL
     Engine::RenderCommand** pRenderCommands     = pMeshCommandList->getRenderCommands();
     Rect depthRect                              = { };
     depthRect.x         = depthRect.y           = 0.f;
+
+    // We have nothing to do.
+    if (sz == 0) return;
 
     //depthRect.width     = context->getDevice()->getSwapchain()->getDesc().renderWidth;
     //depthRect.height    = context->getDevice()->getSwapchain()->getDesc().renderHeight;
@@ -94,7 +85,6 @@ void generate(GraphicsContext* context, Engine::RenderCommandList* pMeshCommandL
 
         meshCmd                         = static_cast<Engine::DrawableRenderCommand*>(pRCmd);
         Engine::VertexAttribFlags flags = meshCmd->vertexTypeFlags;
-        pipeline                        = pipelines[flags];
 
         R_ASSERT_FORMAT(pipeline != NULL, "No pipeline exists for this mesh!");
 

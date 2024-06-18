@@ -649,6 +649,10 @@ CpuDescriptorTable makeDescriptorSrvCbvUavTable(D3D12Device* pDevice, const Root
     }
     hash = recluseHashFast(handles.data(), sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) * handles.size());
     DeviceId deviceId = pDevice->getDeviceId();
+    
+    // We are essentially searching if there are already the same batched descriptor tables. We don't want to create duplicates,
+    // so we refer to already allocated tables if the current bind is the same. Otherwise, we copy a new descriptors table and store for 
+    // the current frame. These get cleared out every frame.
     auto iter = m_cachedCpuDescriptorTables[deviceId].find(hash);
     if (iter == m_cachedCpuDescriptorTables[deviceId].end())
     {

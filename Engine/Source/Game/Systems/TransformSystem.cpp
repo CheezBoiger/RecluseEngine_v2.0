@@ -30,12 +30,11 @@ ResultCode TransformSystem::onInitialize(MessageBus* bus)
 }
 
 
-void TransformSystem::onUpdate(Engine::Scene* scene, const RealtimeTick& tick)
+void TransformSystem::onUpdate(ECS::Registry* registry, const RealtimeTick& tick)
 {
     if (m_doUpdate)
     {
-        ECS::Registry<Transform>* transformRegistry = scene->getRegistry<Transform>();
-        std::vector<Transform*> transforms = transformRegistry->getAllComponents();
+        std::vector<Transform*> transforms = obtainComponents(registry);
         for (U64 i = 0; i < transforms.size(); ++i)
         {
             Transform* transform = transforms[i];
@@ -46,7 +45,7 @@ void TransformSystem::onUpdate(Engine::Scene* scene, const RealtimeTick& tick)
 
             ECS::GameEntity* entity = ECS::GameEntity::findEntity(transform->getOwner());
             // Get the parent transform and transform locally on it.
-            Transform* parentTransform = std::get<Transform*>(obtainTuple<Transform>(scene, entity->getParent()));
+            Transform* parentTransform = std::get<Transform*>(obtainTuple<Transform>(registry, entity->getParent()));
             transform->updateMatrices(parentTransform);
             if (g_enableTransformLogging)
             {

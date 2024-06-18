@@ -8,11 +8,11 @@ namespace Recluse {
 
 enum ScreenMode 
 {
-    ScreenMode_Windowed,
-    ScreenMode_Fullscreen,
-    ScreenMode_WindowBorderless,
-    ScreenMode_FullscreenBorderless,
-    ScreenMode_NumScreenModes
+    ScreenMode_Windowed,                // Windowed-bordered mode
+    ScreenMode_Fullscreen,              // Exclusive Fullscreen mode.
+    ScreenMode_WindowBorderless,        // Windowed-Borderless mode.
+    ScreenMode_FullscreenBorderless,    // Fullscreen-Borderless mode.
+    ScreenMode_NumScreenModes           
 };
 
 class Mouse;
@@ -26,11 +26,15 @@ typedef void(*OnWindowRelocateFunction)();
 // the operating system.
 struct MonitorDesc
 {
+    // The Native width of the monitor (in px.)
     U32 nativeWidth;
+    // The native height of the monitor (in px.)
     U32 nativeHeight;
+    // Refresh rate, in Hz.
     F32 refreshRate;
     // Native handle to the monitor, should only read if necessary!
     void* handle;
+    // If the monitor is the primary one.
     Bool isPrimary;
 };
 
@@ -95,8 +99,11 @@ public:
     R_OS_CALL R_PUBLIC_API void setToCenter();
     // Set the window to a location on your screen.
     R_OS_CALL R_PUBLIC_API void setToPosition(U32 x, U32 y);
+    // Restores the window back to display.
     R_OS_CALL R_PUBLIC_API void restore();
+    // Minimize the window.
     R_OS_CALL R_PUBLIC_API void minimize();
+    // Maximize the window to the max window size.
     void                        maximize();
     B32                         isMinimized() const { return m_isMinimized; }
     B32                         isFullscreen() const { return m_isFullscreen; }

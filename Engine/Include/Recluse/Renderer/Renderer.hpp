@@ -232,6 +232,13 @@ private:
         F32     endTick;
     }                                   m_renderState;
 
+    struct TemporaryPool
+    {
+        CriticalSection Cs;
+        std::vector<GraphicsResource*> PerFramePool;
+        std::vector<Allocator*> PerFrameAllocator;
+    };
+
     // command keys identify the index within the render command, to begin rendering for.
     std::vector<std::unordered_map<U32, std::vector<U64>>>  m_commandKeys;
     RenderCommandList*                                      m_currentRenderCommands;
@@ -241,13 +248,7 @@ private:
     std::vector<LightDescription>                           m_lightDescriptions;
 
     // Gpu Resources used as temporary for the current frame. This will be refreshed every new frame.
-    CriticalSection                                         m_tempCs;
-    std::vector<GraphicsResource*>                          m_tempResourcesPerFrameGpuOnly;
-    std::vector<Allocator*>                                 m_tempResourceAllocatorPerFrameGpuOnly;
-
-    // Cpu visible resources that can be used as temporary for the current frame. This will be refresed every new frame.
-    std::vector<GraphicsResource*>                          m_tempResourcesPerFrameCpuVisible;
-    std::vector<Allocator*>                                 m_tempResourceAllocatorPerFrameCpuVisible;
+    TemporaryPool   m_temporaryPools[2];
 };
 
 

@@ -10,7 +10,7 @@
 #include "Recluse/RGUID.hpp"
 
 #include <vector>
-#include <unordered_map>
+#include <map>
 
 namespace Recluse {
 
@@ -18,7 +18,7 @@ using namespace Math;
 
 // Transform component that stores transformations
 // and positioning of a given entity.
-class Transform : public ECS::Component
+class R_PUBLIC_API Transform : public ECS::Component
 {
 public:
     R_COMPONENT_DECLARE(Transform);
@@ -64,7 +64,7 @@ private:
 };
 
 
-class R_PUBLIC_API TransformRegistry : public ECS::Registry<Transform>
+class R_PUBLIC_API TransformRegistry : public ECS::ComponentRegistry<Transform>
 {
 public:
     R_COMPONENT_REGISTRY_DECLARE(TransformRegistry);
@@ -79,7 +79,6 @@ public:
     virtual ResultCode              onCleanUp()                                 override;
 
 private:
-    //std::unordered_map<RGUID, Transform*> m_table;
-    std::vector<Transform*> m_transforms;
+    std::map<RGUID, Transform, RGUID::Less> m_table;
 };
 } // Recluse

@@ -9,7 +9,7 @@
 namespace Recluse {
 
 
-class R_PUBLIC_API RendererSystem : public ECS::System
+class R_PUBLIC_API RendererSystem : public ECS::System<RendererComponent>
 {
 public:
     R_DECLARE_GAME_SYSTEM(RendererSystem);
@@ -18,6 +18,6 @@ public:
 
     virtual ResultCode  onInitialize(MessageBus* bus) override { return RecluseResult_NoImpl; }
     virtual ResultCode  onCleanUp()                   override;
-    virtual void        onUpdate(const RealtimeTick& tick)  override;
+    virtual void        onUpdate(ECS::Registry* registry, const RealtimeTick& tick)  override;
 };
 } // Recluse

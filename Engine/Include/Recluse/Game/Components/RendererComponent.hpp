@@ -39,7 +39,7 @@ public:
 };
 
 
-class RendererComponentRegistry : public ECS::Registry<RendererComponent>
+class RendererComponentRegistry : public ECS::ComponentRegistry<RendererComponent>
 {
 public:
     R_COMPONENT_REGISTRY_DECLARE(RendererComponentRegistry);

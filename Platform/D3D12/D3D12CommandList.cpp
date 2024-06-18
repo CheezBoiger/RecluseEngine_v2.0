@@ -120,13 +120,15 @@ void D3D12PrimaryCommandList::use(U32 bufferIdx)
 
 void D3D12PrimaryCommandList::bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* offsets)
 {
-    ID3D12GraphicsCommandList* pList = get();
+    // TO BE DEPRECATED.
+    R_NO_IMPL();
 }
 
 
 void D3D12PrimaryCommandList::bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBytes, IndexType type)
 {
-
+    // TO BE DEPRECATED.
+    R_NO_IMPL();
 }
 
 
@@ -400,13 +402,15 @@ void D3D12Context::bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetByt
     {
         currentState().setDirty(ContextDirty_Pipeline);
     }
+    // We might want to set this in the internalBindVertexBuffersAndIndexBuffer() call instead, since the binding vertex buffers calls are already made there instead.
     ID3D12Resource* pResource = pIndexBuffer->castTo<D3D12Resource>()->get();
     D3D12_INDEX_BUFFER_VIEW view = { };
     D3D12_RESOURCE_DESC desc = pResource->GetDesc();
     view.BufferLocation = pResource->GetGPUVirtualAddress() + offsetBytes;
     view.SizeInBytes = desc.Width;
     view.Format = type == IndexType_Unsigned16 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
-    m_pPrimaryCommandList->get()->IASetIndexBuffer(&view);
+    currentState().m_indexBufferView = view;
+    currentState().setDirty(ContextDirty_IndexBuffer);
 }
 
 
@@ -549,7 +553,8 @@ void D3D12Context::internalBindVertexBuffersAndIndexBuffer(ID3D12GraphicsCommand
     }
     if (state.isDirty(ContextDirty_IndexBuffer))
     {
-        // TODO: need to implement.
+        // TODO: Was already set when we called bindIndexBuffer(). We might want to IASetIndexBuffer() here instead.
+        list->IASetIndexBuffer(&state.m_indexBufferView);
     }
 }
 

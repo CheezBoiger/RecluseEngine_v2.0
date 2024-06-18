@@ -234,20 +234,20 @@ public:
     }
 
     // Get the component that is associated with this entity, from the given scene.
-    // Many scenes may hold components of the same entity, but may actually be from another scene.
-    // Therefore, components of the same type will end up having different possible values from other scenes.
-    // To transition components to other scenes, you will have to pull them from one scene and copy them to another.
-    // Otherwise, to save memory, you can opt to call Scene::moveComponentToThis, which will detach the component from one scene, and 
+    // Many registries may hold components of the same entity, but may actually be from another registry.
+    // Therefore, components of the same type will end up having different possible values from other registries.
+    // To transition components to other registires, you will have to pull them from one scene and copy them to another.
+    // Otherwise, to save memory, you can opt to call Scene::moveComponentToThis, which will detach the component from one registry, and 
     // Attach to another.
     template<typename Comp>
-    Comp* getComponent(Engine::Scene* pScene)
+    Comp* getComponent(ECS::Registry* registry)
     {
-        if (pScene)
+        if (registry)
         {
-            ECS::Registry<Comp>* registry = pScene->getRegistry<Comp>();
-            if (registry)
+            ECS::ComponentRegistry<Comp>* componentRegistry = registry->getComponentRegistry<Comp>();
+            if (componentRegistry)
             {
-                return registry->getComponent(getUUID());
+                return componentRegistry->getComponent(getUUID());
             }
         }
         return nullptr;

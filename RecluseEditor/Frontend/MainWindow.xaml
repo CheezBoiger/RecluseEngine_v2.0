@@ -1,0 +1,42 @@
+<Window x:Class="RecluseEditor.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:RecluseEditor"
+        mc:Ignorable="d"
+        Title="{Binding TitleName}" Height="450" Width="800">
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="New">
+                    <MenuItem Header="Scene" ToolTip="Create a new scene."/>
+                    <MenuItem Header="GameEntity" ToolTip="Create a new game entity in the current scene."/>
+                    <MenuItem Header="Resource" ToolTip="Create a new resource."></MenuItem>
+                    <MenuItem Header="Script" ToolTip="Create a new script, attachable to an entity."></MenuItem>
+                </MenuItem>
+                <MenuItem Header="_Open"></MenuItem>
+                <MenuItem Header="_Save"></MenuItem>
+                <MenuItem Header="Add ..."></MenuItem>
+                <MenuItem Header="_Exit" Click="OnExit"></MenuItem>
+            </MenuItem>
+            <MenuItem Header="_Tools" Name="MainMenu">
+                <MenuItem Header="Performance Debugger" ToolTip="Opens up window to see performance stats when running the current instance."/>
+                <MenuItem Header="Blueprint Visualizer" ToolTip="Opens up the blueprint view window for the current instance."/>
+                <MenuItem Header="Animation Tool" ToolTip="Opens up animation tool."/>
+            </MenuItem>
+            <MenuItem Header="Debug">
+                <MenuItem Header="Run ...">
+                    <MenuItem Header="Game (Live)" ToolTip="Run game without Editor Mode, unable to debug with editor."/>
+                    <MenuItem Header="Game (Debug Mode)" ToolTip="Run game with debug mode on, no editor debugging attached, but can load a code debugger."/>
+                    <MenuItem Header="Game (Debug and Editor View Mode)" ToolTip="Run game with editor debugging attached, may also load a code debugger too."/>
+                </MenuItem>
+            </MenuItem>
+            <MenuItem Header="_Options"></MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="Getting Started"/>
+                <MenuItem Header="About"/>
+            </MenuItem>
+        </Menu>
+    </DockPanel>
+</Window>

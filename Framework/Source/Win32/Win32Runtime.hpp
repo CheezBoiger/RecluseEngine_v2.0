@@ -24,6 +24,8 @@ public:
 
     void updateLastTimeS(U64 newLastTimeS, F32 deltaTime);
 
+    static void overrideRuntimeTick(U32 threadId, U32 clockId, F32 newDelta);
+
 private:
     U64 m_time;
     F32 m_currentTimeS;

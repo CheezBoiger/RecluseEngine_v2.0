@@ -9,6 +9,7 @@
 #include "Recluse/RGUID.hpp"
 
 #include <vector>
+#include <map>
 
 namespace Recluse {
 namespace ECS {
@@ -204,10 +205,10 @@ protected:
 //! define how to allocate, free, and update all components when the application interacts 
 //! with. Do not inherit directly from components, instead inherit from this!
 template<typename TypeComponent>
-class Registry : public AbstractRegistry
+class ComponentRegistry : public AbstractRegistry
 {
 public:
-    virtual ~Registry() { }
+    virtual ~ComponentRegistry() { }
 
     static ComponentUUID componentGUID()
     {
@@ -255,6 +256,95 @@ protected:
     // Free calls. These must be overridden, as they will be called by external systems when
     // required.
     virtual ResultCode onFreeComponent(const RGUID& owner) = 0;
+};
+
+
+// Global registry that holds all given component registries.
+class Registry
+{
+public:
+    template<typename ComponentType>
+    ComponentRegistry<ComponentType>* getComponentRegistry() const
+    {
+        ECS::ComponentUUID uuid = ComponentType::classGUID();
+        auto it = m_records.find(uuid);
+        if (it != m_records.end())
+        {
+            return static_cast<ECS::ComponentRegistry<ComponentType>*>(it->second);
+        }
+        return nullptr;
+    }
+
+    template<typename RegistryType>
+    ResultCode addComponentRegistry()
+    {
+        ECS::ComponentUUID uuid = RegistryType::componentGUID();
+        auto it = m_records.find(uuid);
+        if (it == m_records.end())
+        {
+            ECS::AbstractRegistry* registry = ECS::AbstractRegistry::allocate<RegistryType>();
+            m_records.insert(std::make_pair(uuid, registry));
+            return RecluseResult_Ok;
+        }
+        return RecluseResult_Failed;
+    }
+
+    template<typename ComponentType>
+    ResultCode makeComponent(const RGUID& entityId, Bool enableByDefault = false)
+    {
+        ECS::ComponentUUID uuid = ComponentType::classGUID();
+        auto it = m_records.find(uuid);
+        if (it != m_records.end())
+        {
+            ECS::ComponentRegistry<ComponentType>* registry = static_cast<ECS::ComponentRegistry<ComponentType>*>(it->second);
+            registry->allocateComponent(entityId);
+            // Get the component and set the default for it.
+            ComponentType* component = registry->getComponent(entityId);
+            component->setEnable(enableByDefault);
+            return RecluseResult_Ok;
+        }
+        return RecluseResult_Failed;
+    }
+
+    template<typename ComponentType>
+    ResultCode removeComponent(const RGUID& entityId)
+    {
+        ECS::ComponentUUID uuid = ComponentType::classGUID();
+        auto it = m_records.find(uuid);
+        if (it != m_records.end())
+        {
+            ECS::ComponentRegistry<ComponentType>* registry = static_cast<ECS::ComponentRegistry<ComponentType>*>(it->second);
+            registry->freeComponent(entityId);
+            return RecluseResult_Ok;
+        }
+        return RecluseResult_Failed;
+    }
+
+    template<typename ComponentType>
+    ComponentType* getComponent(const RGUID& guid) const
+    {
+        ECS::ComponentUUID uuid = ComponentType::classGUID();
+        auto it = m_records.find(uuid);
+        if (it != m_records.end())
+        {
+            ECS::ComponentRegistry<ComponentType>* registry = static_cast<ECS::ComponentRegistry<ComponentType>*>(it->second);
+            return registry->getComponent(guid);
+        }
+        return nullptr;
+    }
+
+    void cleanUp()
+    {
+        for (auto registry : m_records)
+        {
+            registry.second->cleanUp();
+            ECS::AbstractRegistry::free(registry.second);
+        }
+        m_records.clear();
+    }
+private:
+    // Records kept, that hold Component registries.
+    std::map<ComponentUUID, ECS::AbstractRegistry*> m_records;
 };
 } // ECS
 } // Recluse

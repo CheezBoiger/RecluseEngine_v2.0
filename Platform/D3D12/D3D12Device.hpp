@@ -32,6 +32,7 @@ struct ContextFrame
 };
 
 
+// Direct3D12 context.
 class D3D12Context : public GraphicsContext
 {
 private:
@@ -172,6 +173,7 @@ private:
         std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 16>     m_cbvs;
         std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 16>     m_samplers;
         std::array<D3D12_VERTEX_BUFFER_VIEW,    16>     m_vertexBuffers;
+        D3D12_INDEX_BUFFER_VIEW                         m_indexBufferView;
         PrimitiveTopology                               m_primitiveTopology;
         ContextDirtyFlags                               m_dirtyFlags;
         U32                                             m_numBoundVertexBuffers;
@@ -215,6 +217,7 @@ private:
     D3D12ShaderProgramBinder            m_shaderProgramBinder;
 };
 
+// Direct3D12 Device.
 class D3D12Device : public GraphicsDevice 
 {
 public:
@@ -252,12 +255,9 @@ public:
     D3D12_FEATURE_DATA_FORMAT_SUPPORT   checkFormatSupport(ResourceFormat format);
     DescriptorHeapAllocationManager*    getDescriptorHeapManager() { return &m_descHeapManager; }
 
-    ResultCode                          loadShaderProgram
-                                            (
-                                                ShaderProgramId program, 
-                                                ShaderProgramPermutation permutation, 
-                                                const ShaderProgramDefinition& definition
-                                            ) override;
+    ResultCode                          loadShaderProgram(ShaderProgramId program,
+                                                          ShaderProgramPermutation permutation,
+                                                          const ShaderProgramDefinition& definition) override;
 
     ResultCode                          unloadShaderProgram(ShaderProgramId program) override;
     void                                unloadAllShaderPrograms() override;

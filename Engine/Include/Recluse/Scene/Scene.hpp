@@ -50,7 +50,7 @@ public:
     R_PUBLIC_API ResultCode                     load(Archive* pArchive);
 
     // Update the scene systems. This can also be overridden to allow multithreading purposes.
-    virtual R_PUBLIC_API void                   update(const RealtimeTick& tick);
+    virtual R_PUBLIC_API void                   update(ECS::Registry* registry, const RealtimeTick& tick);
 
     // add a camera to the scene.
     void                                        addCamera(Camera* camera) { m_cameras.emplace_back(camera); }
@@ -59,7 +59,7 @@ public:
     Camera*                                     getMainCamera() const { return m_cameras[0]; }
     Camera*                                     getCamera(U32 index) { return m_cameras[index]; }
 
-    void                                        drawDebug(DebugRenderer* debugRenderer);
+    void                                        drawDebug(ECS::Registry* registry, DebugRenderer* debugRenderer);
 
     // Adds a system into this scene. Systems are usually global, but in our engine, they are 
     // only global to our respective scene. Therefore, it is essential that any new scenes must 
@@ -69,83 +69,8 @@ public:
     template<typename Sys>
     void                                        addSystem(MessageBus* bus = nullptr, U32 priority = 0u)
     {
-        ECS::System* system = ECS::System::allocate<Sys>();
+        ECS::AbstractSystem* system = ECS::AbstractSystem::allocate<Sys>();
         registerSystem(system, bus);
-    }
-
-    //! Adds a registry for a component, for managing such resources.
-    template<typename TypeRegistry>
-    void addRegistry()
-    {
-        ECS::ComponentUUID uuid = TypeRegistry::componentGUID();
-        auto it = m_registries.find(uuid);
-        if (it == m_registries.end())
-        {
-            ECS::AbstractRegistry* registry = ECS::AbstractRegistry::allocate<TypeRegistry>();
-            m_registries.insert(std::make_pair(uuid, registry));
-        }
-    }
-
-    // Get the registry with the given component type.
-    template<typename ComponentType>
-    ECS::Registry<ComponentType>* getRegistry() const
-    {
-        ECS::ComponentUUID uuid = ComponentType::classGUID();
-        auto it = m_registries.find(uuid);
-        if (it != m_registries.end())
-        {
-            return static_cast<ECS::Registry<ComponentType>*>(it->second);
-        }
-        return nullptr;
-    }
-
-    template<typename ComponentType>
-    ResultCode addComponentForEntity(const RGUID& entityId, Bool enableByDefault = false)
-    {
-        ECS::ComponentUUID uuid = ComponentType::classGUID();
-        auto it = m_registries.find(uuid);
-        if (it != m_registries.end())
-        {
-            ECS::Registry<ComponentType>* registry = static_cast<ECS::Registry<ComponentType>*>(it->second);
-            registry->allocateComponent(entityId);
-            // Get the component and set the default for it.
-            registry->getComponent(entityId)->setEnable(enableByDefault);
-            return RecluseResult_Ok;
-        }
-        return RecluseResult_Failed;
-    }
-
-    template<typename ComponentType>
-    ResultCode removeComponent(const RGUID& entityId)
-    {
-        ECS::ComponentUUID uuid = ComponentType::classGUID();
-        auto it = m_registries.find(uuid);
-        if (it != m_registries.end())
-        {
-            ECS::Registry<ComponentType>* registry = static_cast<ECS::Registry<ComponentType>*>(it->second);
-            registry->freeComponent(entityId);
-            return RecluseResult_Ok;
-        }
-        return RecluseResult_Failed;
-    }
-
-    template<typename ComponentType>
-    ComponentType* getComponentFromEntity(const RGUID& guid) const
-    {
-        ECS::GameEntity* entity = ECS::GameEntity::findEntity(guid);
-        if (entity)
-        {
-            return entity->getComponent<ComponentType>();
-        }
-        return nullptr;
-    }
-
-    // Move an existing component to this scene. The other component associated with another scene can be moved over here, instead of 
-    // re-created and copied over. Ensure the given component is not being used while performing this function call!
-    template<typename ComponentType>
-    ResultCode moveComponentToThis(const RGUID& entityGuid, Scene* pFromScene)
-    {
-        return RecluseResult_Ok;
     }
 
 protected:
@@ -169,22 +94,19 @@ protected:
 private:
 
     // Register a system into the scene.
-    R_PUBLIC_API void registerSystem(ECS::System* pSystem, MessageBus* bus);
+    R_PUBLIC_API void registerSystem(ECS::AbstractSystem* pSystem, MessageBus* bus);
     R_PUBLIC_API void unregisterSystems();
-    R_PUBLIC_API void clearRegistries();
 
     // Game objects in the scene.
-    std::vector<ECS::GameEntity*>                          m_entities;
-    std::string                                            m_name;
+    std::vector<ECS::GameEntity*>       m_entities;
+    std::string                         m_name;
 
     // cameras set in scene.
     // the index 0 is always the main camera.
-    std::vector<Camera*>                                   m_cameras;
+    std::vector<Camera*>                m_cameras;
 
     // Systems to update.
-    std::vector<ECS::System*>                              m_systems;
-    // Registries holding components that correspond to this scene.
-    std::map<ECS::ComponentUUID, ECS::AbstractRegistry*>   m_registries;
+    std::vector<ECS::AbstractSystem*>   m_systems;
 };
 } // Engine
 } // Recluse

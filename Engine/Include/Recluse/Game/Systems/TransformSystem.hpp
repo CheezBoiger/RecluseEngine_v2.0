@@ -10,7 +10,7 @@ namespace Recluse {
 
 // Transform system handles updating all transform components in the 
 // world.
-class R_PUBLIC_API TransformSystem : public ECS::System
+class R_PUBLIC_API TransformSystem : public ECS::System<Transform>
 {
 public:
     R_DECLARE_GAME_SYSTEM(TransformSystem);
@@ -19,7 +19,7 @@ public:
 
     virtual ResultCode     onInitialize(MessageBus* bus)                        override;
     virtual ResultCode     onCleanUp()                                          override;
-    virtual void           onUpdate(Engine::Scene* scene, const RealtimeTick& tick)                   override;
+    virtual void           onUpdate(ECS::Registry* registry, const RealtimeTick& tick)                   override;
 
 private:
     Bool m_doUpdate = false;

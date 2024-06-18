@@ -41,14 +41,20 @@ ResultCode Transform::deserialize(Archive* pArchive)
 
 void Transform::updateMatrices(const Transform* parentTransform)
 {
-    Matrix44 t      = Math::translate(Matrix44::identity(), position);
-    Matrix44 s      = Math::scale(t, scale);
-    Matrix44 r      = Math::quatToMat44(rotation);
-    Matrix44 World  = s * r * t;
+    Matrix44 World = Matrix44::identity();
+    Matrix44 s = Math::scale(Matrix44::identity(), scale);
 
     if (parentTransform)
     {
-        
+        Matrix44 t = Math::translate(Matrix44::identity(), localPosition);
+        Matrix44 r = Math::quatToMat44(localRotation);
+        World = s * r * t;
+    }
+    else
+    {
+        Matrix44 t      = Math::translate(Matrix44::identity(), position);
+        Matrix44 r      = Math::quatToMat44(rotation);
+        World  = s * r * t;
     }
 
     m_localToWorld  = World;
@@ -58,54 +64,57 @@ void Transform::updateMatrices(const Transform* parentTransform)
 
 ResultCode TransformRegistry::onCleanUp()
 {
-    for (auto it = m_transforms.begin(); it != m_transforms.end(); ++it)
+    for (auto it : m_table)
     {
-        (*it)->cleanUp();
-        delete *it;
+        it.second.cleanUp();
     }
-    m_transforms.clear();
+    m_table.clear();
     return RecluseResult_Ok;
 }
 
 
 Transform* TransformRegistry::getComponent(const RGUID& entityKey)
 {
-    for (auto it = m_transforms.begin(); it != m_transforms.end(); ++it)
-    {
-        if ((*it)->getOwner() == entityKey)
-            return *it;
-    }
+    auto it = m_table.find(entityKey);
+    if (it != m_table.end())
+        return &it->second;
     return nullptr;
 }
 
 
 std::vector<Transform*> TransformRegistry::getAllComponents()
 {
-    return std::vector<Transform*>(m_transforms);
+    std::vector<Transform*> transforms(m_table.size());
+    U32 i = 0;
+    for (std::map<RGUID, Transform, RGUID::Less>::iterator it = m_table.begin(); it != m_table.end(); ++it)
+    {
+        transforms[i++] = &it->second;
+    }
+    return transforms;
 }
 
 
 ResultCode TransformRegistry::onAllocateComponent(const RGUID& owner)
 {
     // TODO: We are just testing it out. We would need to hold onto this handle!
-    Transform* pTransform = new Transform();
-    pTransform->setOwner(owner);
-    m_transforms.push_back(pTransform);
-    return RecluseResult_Ok;
+    auto it = m_table.find(owner);
+    if (it == m_table.end())
+    {
+        m_table[owner] = Transform();
+        m_table[owner].setOwner(owner);
+        return RecluseResult_Ok;
+    }
+    return RecluseResult_AlreadyExists;
 }
 
 
 ResultCode TransformRegistry::onFreeComponent(const RGUID& owner)
 {
-    U32 i = 0;
-    for (auto& it = m_transforms.begin(); it != m_transforms.end(); ++it)
+    auto it = m_table.find(owner);
+    if (it != m_table.end())
     {
-        if (owner == (*it)->getOwner())
-        {
-            delete *it;
-            m_transforms.erase(it);
-            return RecluseResult_Ok;
-        }
+        it->second.cleanUp();
+        m_table.erase(it);
     }
     return RecluseResult_Ok;
 }

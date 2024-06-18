@@ -33,7 +33,7 @@ public:
         //pRenderer->pushRenderCommand(rcmd, RENDER_PREZ);
 
         //R_VERBOSE("GameLoop", "time=%f fps", 1.f / tick.delta());
-        //R_VERBOSE("GameLoop", "renderTime=%f fps", 1.f / RealtimeTick::getTick(JobType_Renderer).delta());
+        R_VERBOSE("GameLoop", "renderTime=%f fps", RealtimeTick::getTick(JobType_Renderer).delta());
     }
 
     virtual ResultCode onInit() override
@@ -43,7 +43,7 @@ public:
         setLogChannel("Renderer", true);
 
         RendererConfigs config = { };
-        config.api = GraphicsApi_Direct3D12;
+        config.api = GraphicsApi_Vulkan;
         config.enableGpuValidation = false;
         config.buffering = 3;
         config.maxFrameRate = 60.0f;
@@ -60,7 +60,6 @@ public:
     virtual ResultCode onCleanUp() override
     {
         MessageBus::fireEvent(getMessageBus(), RenderEvent_Shutdown);
-        //Renderer::cleanUpModule(this);
         return RecluseResult_Ok;
     }
 };

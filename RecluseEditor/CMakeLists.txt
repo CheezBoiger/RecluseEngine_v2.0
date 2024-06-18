@@ -1,7 +1,7 @@
 cmake_minimum_required( VERSION 3.16 )
-project("RecluseEditor")
+project("RecluseEditorBase")
 
-set ( RECLUSE_EDITOR_NAME "RecluseEditor" )
+set ( RECLUSE_EDITOR_NAME "RecluseEditorBase" )
 set ( RECLUSE_EDITOR_VERSION_MINOR 0)
 set ( RECLUSE_EDITOR_VERSION_MAJOR 1)
 set ( RECLUSE_EDITOR_VERSION_PATCH 0)
@@ -29,6 +29,8 @@ target_link_libraries( ${RECLUSE_EDITOR_NAME}
 	RecluseFramework RecluseEngine ${RECLUSE_EDITOR_LINK_BINARIES} wx::net wx::core wx::base)
 	
 add_dependencies(${RECLUSE_EDITOR_NAME} RecluseFramework RecluseEngine)
+
+add_subdirectory(FrontEnd)
 
 # Doing some stuff for organization.
 if (MSVC)

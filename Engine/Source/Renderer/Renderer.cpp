@@ -9,6 +9,7 @@
 #include "Recluse/System/Window.hpp"
 #include "Recluse/System/Limiter.hpp"
 #include "Recluse/Renderer/Debug/DebugRenderer.hpp"
+#include "Recluse/Memory/LinearAllocator.hpp"
 
 #include "Recluse/Messaging.hpp"
 
@@ -92,11 +93,11 @@ void Renderer::initialize()
 
     {
         MemoryReserveDescription reserveDesc = { };
-        reserveDesc.bufferPools[ResourceMemoryUsage_CpuVisible]     = R_1MB * 32ull;
+        reserveDesc.bufferPools[ResourceMemoryUsage_CpuVisible] = R_1MB * 32ull;
         reserveDesc.bufferPools[ResourceMemoryUsage_CpuToGpu]   = R_1MB * 16ull;
         reserveDesc.bufferPools[ResourceMemoryUsage_GpuToCpu]   = R_1MB * 16ull;
-        reserveDesc.bufferPools[ResourceMemoryUsage_GpuOnly]     = R_1MB * 512ull;
-        reserveDesc.texturePoolGPUOnly                              = R_1GB * 1ull;
+        reserveDesc.bufferPools[ResourceMemoryUsage_GpuOnly]    = R_1MB * 512ull;
+        reserveDesc.texturePoolGPUOnly                          = R_1GB * 1ull;
 
         // Memory reserves for engine.
         result = m_pDevice->reserveMemory(reserveDesc);
@@ -524,7 +525,6 @@ static ResultCode kRendererJob(void* pData)
         // Render interpolation is required.
         if (pRenderer->isRunning()) 
         {
-
             const RendererConfigs& renderConfigs    = pRenderer->getCurrentConfigs();
             const F32 desiredFrameRateMs = 1.0f / renderConfigs.maxFrameRate;
             Limiter::limit(desiredFrameRateMs, threadId, JobType_Renderer);
@@ -542,52 +542,50 @@ ResultCode Renderer::onInitializeModule(Application* pApp)
 {
     m_configLock = createMutex();
 
-    MainThreadLoop::getMessageBus()->addReceiver
-        (
-            "Renderer", [=] (EventMessage* pMsg) -> void 
-                { 
-                    EventId ev = pMsg->getEvent();
-                    R_DEBUG("Renderer", "Received message!");
-                    if (isActive()) 
+    MainThreadLoop::getMessageBus()->addReceiver(
+        "Renderer", [=] (EventMessage* pMsg) -> void 
+            { 
+                EventId ev = pMsg->getEvent();
+                R_DEBUG("Renderer", "Received message!");
+                if (isActive()) 
+                {
+                    // Handle the message.
+                    switch (ev) 
                     {
-                        // Handle the message.
-                        switch (ev) 
+                        case RenderEvent_Resume:
+                            enableRunning(true);
+                            break;
+
+                        case RenderEvent_Pause:
+                            enableRunning(false);
+                            break;
+
+                        case RenderEvent_Shutdown: 
                         {
-                            case RenderEvent_Resume:
-                                enableRunning(true);
-                                break;
-
-                            case RenderEvent_Pause:
-                                enableRunning(false);
-                                break;
-
-                            case RenderEvent_Shutdown: 
-                            {
-                                enableRunning(false);
-                                cleanUpModule(MainThreadLoop::getApp());
-                                break;
-                            }
-
-                            case RenderEvent_ConfigureRenderer:
-                            {
-                                recreate();
-                                break;
-                            }
-
-                            case RenderEvent_SceneUpdate:
-                                break;
-
-                            case RenderEvent_Initialize:
-                            {
-                                initialize();
-                            }
-
-                            default:
-                                break;
+                            enableRunning(false);
+                            cleanUpModule(MainThreadLoop::getApp());
+                            break;
                         }
+
+                        case RenderEvent_ConfigureRenderer:
+                        {
+                            recreate();
+                            break;
+                        }
+
+                        case RenderEvent_SceneUpdate:
+                            break;
+
+                        case RenderEvent_Initialize:
+                        {
+                            initialize();
+                        }
+
+                        default:
+                            break;
                     }
-               }
-        );
+                }
+            });
 
     return pApp->loadJobThread(JobType_Renderer, kRendererJob);
 }
@@ -661,28 +659,27 @@ void Renderer::clear()
 
 TemporaryBuffer Renderer::createTemporaryBuffer(const TemporaryBufferDescription& description)
 {
-    ScopedCriticalSection _(m_tempCs);
+    TemporaryBuffer temp = { };
     return (void*)0;
 }
 
 
 ResultCode Renderer::createTemporaryResourcePool(U32 bufferCount)
 {
-    // Scoped section to ensure we aren't recreating the buffers that are already being called by another thread.
-    ScopedCriticalSection _(m_tempCs);
-
     // First free the temporary resources.
     freeTemporaryResources();
 
-    m_tempResourceAllocatorPerFrameGpuOnly.resize(bufferCount);
-    m_tempResourcesPerFrameGpuOnly.resize(bufferCount);
-
-    m_tempResourceAllocatorPerFrameCpuVisible.resize(bufferCount);
-    m_tempResourcesPerFrameCpuVisible.resize(bufferCount);
+    for (U32 i = 0; i < 2; ++i)
+    {
+        m_temporaryPools[i].Cs.initialize();
+        m_temporaryPools[i].PerFrameAllocator.resize(bufferCount);
+        m_temporaryPools[i].PerFramePool.resize(bufferCount);
+    }
 
     R_ASSERT(m_pDevice);
 
-    for (U32 i = 0; i < m_tempResourcesPerFrameGpuOnly.size(); ++i)
+    TemporaryPool& pool = m_temporaryPools[ResourceMemoryUsage_CpuVisible];
+    for (U32 i = 0; i < pool.PerFramePool.size(); ++i)
     {
         GraphicsResource* tempResourcePool = nullptr;
         GraphicsResourceDescription desc = { };
@@ -700,11 +697,13 @@ ResultCode Renderer::createTemporaryResourcePool(U32 bufferCount)
             | ResourceUsage_IndirectBuffer;
         ResultCode result = m_pDevice->createResource(&tempResourcePool, desc, ResourceState_Common);
         R_ASSERT_FORMAT(result == RecluseResult_Ok, "Temp resource creation failed with the error: %d", result);
-        m_tempResourcesPerFrameGpuOnly[i] = tempResourcePool;
-        m_tempResourceAllocatorPerFrameGpuOnly[i]->initialize(0, desc.width);
+        pool.PerFramePool[i] = tempResourcePool;
+        pool.PerFrameAllocator[i] = new LinearAllocator();
+        pool.PerFrameAllocator[i]->initialize(0, desc.width);
     }
 
-    for (U32 i = 0; i < m_tempResourcesPerFrameCpuVisible.size(); ++i)
+    pool = m_temporaryPools[ResourceMemoryUsage_GpuOnly];
+    for (U32 i = 0; i < pool.PerFramePool.size(); ++i)
     {
         GraphicsResource* tempResourcePool = nullptr;
         GraphicsResourceDescription desc = { };
@@ -713,8 +712,9 @@ ResultCode Renderer::createTemporaryResourcePool(U32 bufferCount)
         desc.memoryUsage = ResourceMemoryUsage_CpuToGpu;
         ResultCode result = m_pDevice->createResource(&tempResourcePool, desc, ResourceState_Common);
         R_ASSERT_FORMAT(result == RecluseResult_Ok, "Temp resource creation failed with the error: %d", result);
-        m_tempResourcesPerFrameCpuVisible[i] = tempResourcePool;
-        m_tempResourceAllocatorPerFrameCpuVisible[i]->initialize(0, desc.width);
+        pool.PerFramePool[i] = tempResourcePool;
+        pool.PerFrameAllocator[i] = new LinearAllocator();
+        pool.PerFrameAllocator[i]->initialize(0, desc.width);
     }
 
     return RecluseResult_Ok;
@@ -723,6 +723,30 @@ ResultCode Renderer::createTemporaryResourcePool(U32 bufferCount)
 
 ResultCode Renderer::freeTemporaryResources()
 {
+    for (U32 i = 0; i < 2; ++i)
+    {
+        TemporaryPool& pool = m_temporaryPools[i];
+        for (U32 i = 0; i < pool.PerFrameAllocator.size(); ++i)
+        {
+            if (pool.PerFrameAllocator[i])
+            {
+                pool.PerFrameAllocator[i]->cleanUp();
+                delete pool.PerFrameAllocator[i];
+            }
+            pool.PerFrameAllocator[i] = nullptr;
+        }
+
+        for (U32 i = 0; i < pool.PerFramePool.size(); ++i)
+        {
+            if (pool.PerFramePool[i])
+            {
+                m_pDevice->destroyResource(pool.PerFramePool[i]);
+            }
+            pool.PerFramePool[i] = nullptr;
+        }
+
+        pool.Cs.release();
+    }
     return RecluseResult_Ok;
 }
 } // Engine

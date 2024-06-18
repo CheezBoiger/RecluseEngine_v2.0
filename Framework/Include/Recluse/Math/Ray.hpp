@@ -6,6 +6,7 @@
 namespace Recluse {
 namespace Math { 
 
+// 2D ray math.
 struct R_PUBLIC_API Ray2d
 {
     Float2 o;
@@ -16,6 +17,7 @@ struct R_PUBLIC_API Ray2d
     { }
 };
 
+// 3D ray math.
 struct R_PUBLIC_API Ray3d 
 {
     Float3 o;

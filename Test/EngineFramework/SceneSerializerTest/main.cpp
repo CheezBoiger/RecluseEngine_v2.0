@@ -80,10 +80,11 @@ int main(int c, char* argv[])
     pScene->initialize();
 
     U64 counter = 0;
+    ECS::Registry registry;
     while ((counter++) < 500) {
         RealtimeTick::updateWatch(1ull, 0);
         RealtimeTick tick = RealtimeTick::getTick(0);
-        pScene->update(tick);
+        pScene->update(&registry, tick);
     }
 
     ArchiveWriter archiveWriter("Test.archive");

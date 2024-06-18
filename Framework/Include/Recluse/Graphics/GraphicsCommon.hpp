@@ -423,4 +423,22 @@ public:
 
     virtual void setDebugName(const char* name) { }
 };
+
+
+class GraphicsQuery : public IGraphicsObject
+{
+public:
+    void* ptr;
+};
+
+
+enum GraphicsQueryType
+{
+    // Query occlusions results, number of samples that pass depth/stencil tests.
+    GraphicsQueryType_Occlusion,
+    // High performance timing capture.
+    GraphicsQueryType_Timestamp,
+    // Captures abstract pipelining data for graphics and compute passes.
+    GraphicsQueryType_PipelineStatistics,
+};
 } // Recluse

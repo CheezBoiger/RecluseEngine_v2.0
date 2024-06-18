@@ -36,11 +36,11 @@ ResultCode Scene::addEntity(ECS::GameEntity* obj)
 }
 
 
-void Scene::update(const RealtimeTick& tick)
+void Scene::update(ECS::Registry* registry, const RealtimeTick& tick)
 {
     for (auto& system : m_systems)
     {
-        system->update(this, tick);
+        system->update(registry, tick);
     }
 }
 
@@ -53,7 +53,6 @@ void Scene::initialize()
 void Scene::destroy()
 {
     unregisterSystems();
-    clearRegistries();
     for (U32 i = 0; i < m_entities.size(); ++i)
     {
         ECS::GameEntity::free(m_entities[i]);
@@ -159,7 +158,7 @@ ResultCode Scene::deserialize(Archive* pArchive)
 }
 
 
-void Scene::registerSystem(ECS::System* pSystem, MessageBus* bus)
+void Scene::registerSystem(ECS::AbstractSystem* pSystem, MessageBus* bus)
 {
     // Registering any system must Initialize first.
     pSystem->initialize(bus); 
@@ -172,28 +171,18 @@ void Scene::unregisterSystems()
     for (auto& system : m_systems)
     {
         R_ASSERT_FORMAT(system->cleanUp() == RecluseResult_Ok, "cleanUp() failed for system %s", system->getName());
-        ECS::System::free(system);
+        ECS::AbstractSystem::free(system);
     }
 
     m_systems.clear();
 }
 
 
-void Scene::clearRegistries()
-{
-    for (auto& registry : m_registries)
-    {
-        registry.second->cleanUp();
-        ECS::AbstractRegistry::free(registry.second);
-    }
-}
-
-
-void Scene::drawDebug(DebugRenderer* debugRenderer)
+void Scene::drawDebug(ECS::Registry* registry, DebugRenderer* debugRenderer)
 {
     for (auto& system : m_systems)
     {
-        system->drawDebug(this, debugRenderer);   
+        system->drawDebug(registry, debugRenderer);   
     }
 }
 } // Engine

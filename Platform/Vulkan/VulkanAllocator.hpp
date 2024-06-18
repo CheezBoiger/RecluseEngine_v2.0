@@ -185,7 +185,7 @@ public:
     // Must be called, updates the manager for the given context frame. config allows controlling how to manage the update.
     // \param config The provided config that controls the update behavior for this manager.
     void                    update(const UpdateConfig& config);
-
+    // Sets the total memory usage for this manager.
     void                    setTotalMemory(const MemoryReserveDescription& desc) { }
     U64                     getTotalAllocationSizeBytes() const { return m_totalAllocationSizeBytes; }    
 
@@ -197,6 +197,12 @@ private:
     // Allocate a page of memory if required.
     VulkanPagedAllocator*   allocateMemoryPage(MemoryTypeIndex memoryTypeIndex, ResourceMemoryUsage usage, VkDeviceSize pageSizeBytes);
     // Performs allocation of a resources with the provided requirements.
+    // \param pOut output result of vulkan.
+    // \param usage The memory usage that is requested.
+    // \param requirements 
+    // \param tiling Image tiling format.
+    // 
+    // \return The result of the allocation. RecluseResult_Ok if the allocation is a success. Any other result is a failure.
     ResultCode              allocate(VulkanMemory* pOut, 
                                      ResourceMemoryUsage usage,
                                      const VkMemoryRequirements& requirements,
