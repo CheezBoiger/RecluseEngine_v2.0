@@ -37,4 +37,5 @@ set_property(TARGET ${RECLUSE_EDITOR_FRONTEND} PROPERTY VS_DOTNET_REFERENCES
 	"System.Xml"
 	"System.Xml.Linq"
 	"WindowsBase"
-	"System.Windows")
+	"System.Windows"
+	"${CMAKE_SOURCE_DIR}/Recluse/bin/RecluseCSharpGraphics.dll")
