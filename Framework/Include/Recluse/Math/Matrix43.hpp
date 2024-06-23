@@ -42,5 +42,6 @@ public:
 
 
 typedef Matrix43 Mat43;
+typedef Matrix43 M43;
 } // Math
 } // Recluse

@@ -33,11 +33,17 @@
                     <MenuItem Header="Game (Debug and Editor View Mode)" ToolTip="Run game with editor debugging attached, may also load a code debugger too."/>
                 </MenuItem>
             </MenuItem>
-            <MenuItem Header="_Options"></MenuItem>
+            <MenuItem Header="_Options">
+                <MenuItem Header="Settings" ToolTip="Settings for Scene."/>
+                <MenuItem Header="Configuration" ToolTip="Configuration of the editor itself."/>
+            </MenuItem>
             <MenuItem Header="_Help">
                 <MenuItem Header="Getting Started"/>
                 <MenuItem Header="About"/>
             </MenuItem>
         </Menu>
+        <Grid Name="TheGrid" Height="300" Width="525">
+            <Border BorderThickness="1" Name="ThatBorder"/>
+        </Grid>
     </DockPanel>
 </Window>

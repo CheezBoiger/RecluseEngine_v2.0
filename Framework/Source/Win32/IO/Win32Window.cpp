@@ -82,7 +82,7 @@ DWORD getWindowStyle(ScreenMode screenMode)
 }
 
 
-Window* Window::create(const std::string& title, U32 x, U32 y, U32 width, U32 height, ScreenMode screenMode)
+Window* Window::create(const std::string& title, U32 x, U32 y, U32 width, U32 height, ScreenMode screenMode, void* parentWindowHandle)
 {
     R_DEBUG
         (
@@ -122,7 +122,7 @@ Window* Window::create(const std::string& title, U32 x, U32 y, U32 width, U32 he
                         getWindowStyle(screenMode), 
                         x, y, 
                         width, height, 
-                        NULL, 
+                        (HWND)parentWindowHandle,
                         NULL, 
                         GetModuleHandle(NULL), NULL
                     );
@@ -149,12 +149,19 @@ Window* Window::create(const std::string& title, U32 x, U32 y, U32 width, U32 he
     pWindow->m_isFullscreen = (screenMode == ScreenMode_Fullscreen || screenMode == ScreenMode_FullscreenBorderless);
     pWindow->m_isMinimized  = false;
     pWindow->m_isShowing    = false;
+    pWindow->m_hasParent    = (parentWindowHandle ? true : false);
 
     SetPropW(hwnd, R_WIN32_PROP_NAME, pWindow);
 
     pWindow->setScreenMode(screenMode);
     pWindow->update();
     setRawInputDevices(hwnd);
+
+    if (parentWindowHandle)
+    {
+        SetWindowLong(hwnd, GWL_STYLE, WS_CHILD);
+        SetParent(hwnd, (HWND)parentWindowHandle);
+    }
 
     //UpdateWindow(hwnd);
     g_hwndToWindowMap.insert(std::make_pair(hwnd, pWindow));
@@ -289,6 +296,8 @@ void Window::update()
     if (mustChangeScreen())
     {
         screenChanged();
+
+        const LONG BorderlessStyle = m_hasParent ? WS_CHILD : WS_POPUP;
         HWND hwnd = (HWND)getNativeHandle();
         if (m_screenMode == ScreenMode_Windowed)
         {
@@ -321,7 +330,7 @@ void Window::update()
             m_isBorderless = true;
             m_isFullscreen = false;
             SetWindowLongW(hwnd, GWL_EXSTYLE, 0);
-            SetWindowLongW(hwnd, GWL_STYLE, (WS_POPUP));
+            SetWindowLongW(hwnd, GWL_STYLE, (BorderlessStyle));
             SetWindowPos(hwnd, HWND_NOTOPMOST, m_xPos, m_yPos, m_width, m_height, (SWP_FRAMECHANGED));
             UpdateWindow(hwnd);
         }
@@ -335,7 +344,7 @@ void Window::update()
             GetMonitorInfoW(MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST), &monitorInfo);
             const RECT rect = monitorInfo.rcMonitor;
             SetWindowLongW(hwnd, GWL_EXSTYLE, 0);
-            SetWindowLongW(hwnd, GWL_STYLE, (WS_POPUP));
+            SetWindowLongW(hwnd, GWL_STYLE, (BorderlessStyle));
             SetWindowPos(hwnd, NULL, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, (SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED));
             UpdateWindow(hwnd);
             m_xPos = rect.left;
@@ -351,7 +360,7 @@ void Window::update()
             DWORD exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
             MONITORINFO monitorInfo = { };
             monitorInfo.cbSize = sizeof(MONITORINFO);
-            SetWindowLongW(hwnd, GWL_STYLE, dwStyle & ~(WS_CAPTION | WS_THICKFRAME) & (WS_POPUP | WS_VISIBLE));
+            SetWindowLongW(hwnd, GWL_STYLE, dwStyle & ~(WS_CAPTION | WS_THICKFRAME) & (BorderlessStyle | WS_VISIBLE));
             SetWindowLongW(hwnd, GWL_EXSTYLE, exStyle & ~(WS_EX_DLGMODALFRAME | WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE) & (WS_EX_TOPMOST)); 
             GetMonitorInfoW(MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST), &monitorInfo);
             const RECT rect = monitorInfo.rcMonitor;

@@ -1,15 +1,26 @@
 //
 #include "Recluse/Graphics/GraphicsInstance.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
+#include "Recluse/System/Window.hpp"
 #include <memory>
+#include <vector>
 #include <vcclr.h>
+#using <WindowsBase.dll>
+#using <PresentationCore.dll>
+#using <PresentationFramework.dll>
 #using <mscorlib.dll>
 
+#pragma managed
 
 namespace Recluse {
 namespace CSharp {
-#pragma managed
 
+using namespace System;
+using namespace System::Windows;
+using namespace System::Windows::Interop;
+using namespace System::Windows::Input;
+using namespace System::Windows::Media;
+using namespace System::Runtime::InteropServices;
 
 public enum class GraphicsApi : System::Int32
 {
@@ -44,11 +55,82 @@ public enum class ResourceState : System::Int32
 };
 
 
-public ref class IResource
+// Should follow the ResourceFormat in Recluse Graphics Framework.
+public enum class ResourceFormat : System::Int32
 {
-public:
-private:
-    GraphicsResource* resource;
+    Unknown,
+    R8G8B8A8_Unorm,
+    R16G16B16A16_Float,
+    R11G11B10_Float,
+    D32_Float,
+    R32_Float,
+    D16_Unorm,
+    D24_Unorm_S8_Uint,
+    D32_Float_S8_Uint,
+    R24_Unorm_X8_Typeless,
+    X24_Typeless_S8_Uint,
+    R16G16_Float,
+    B8G8R8A8_Srgb,
+    R32G32B32A32_Float,
+    R32G32B32A32_Uint,
+    R8_Uint,
+    R32G32_Float,
+    R32G32_Uint,
+    R16_Uint,
+    R16_Float,
+    B8G8R8A8_Unorm,
+    R32G32B32_Float,
+    R32_Uint,
+    R32_Int,
+    BC1_Unorm,
+    BC2_Unorm,
+    BC3_Unorm,
+    BC4_Unorm,
+    BC5_Unorm,
+    BC7_Unorm,
+};
+
+
+public enum class ResourceViewType : System::Int32
+{
+    RenderTarget,
+    ShaderResource,
+    UnorderedAccess,
+    DepthStencil
+};
+
+
+public enum class ResourceViewDimension : System::Int32
+{
+    None,
+    Buffer,
+    Dim1d,
+    Dim1dArray,
+    Dim2d,
+    Dim2dMultisample,
+    Dim2dMultisampleArray,
+    Dim2dArray,
+    Dim3d,
+    Cube,
+    CubeArray,
+    RayTraceAccelerationStructure
+};
+
+
+public value struct ResourceCreateInformation
+{
+    System::UInt32 Width;
+    System::UInt32 Height;
+    System::UInt32 DepthOrArraySize;
+};
+
+
+public value struct Rect
+{
+    System::Single X;
+    System::Single Y;
+    System::Single Width;
+    System::Single Height;
 };
 
 // Graphics device.
@@ -62,11 +144,29 @@ public:
 
 
     GraphicsDevice* GetNative() { return m_device; }
+    GraphicsDevice* operator()() { return GetNative(); }
 
 private:
     GraphicsInstance* m_instance;
     GraphicsAdapter* m_adapter;
     GraphicsDevice* m_device;
+};
+
+
+// Resource object.
+public ref class IResource
+{
+public:
+    IResource(IGraphicsDevice^ Device, const ResourceCreateInformation^ CreateInfo);
+    IResource(GraphicsResource* Resource);
+
+    System::UIntPtr Map(System::UInt64 ReadOffsetBytes, System::UInt64 ReadSizeBytes);
+    System::UInt32 Unmap(System::UIntPtr Ptr, System::UInt64 WriteOffsetBytes, System::UInt64 WriteSizeBytes);
+    System::UIntPtr AsView(CSharp::ResourceViewType ViewType, CSharp::ResourceViewDimension Dim, CSharp::ResourceFormat Format, System::UInt16 BaseLayer, System::UInt16 BaseMip, System::UInt16 Layers, System::UInt16 Mips);
+
+    GraphicsResource* operator ()() { return Resource; }
+private:
+    GraphicsResource* Resource;
 };
 
 
@@ -76,21 +176,52 @@ private:
 public ref class IGraphicsContext 
 {
 public:
-    IGraphicsContext(IGraphicsDevice^ device, System::IntPtr windowHandle, System::Int32 width, System::Int32 height, FrameBuffering frameBuffering);
+    IGraphicsContext(IGraphicsDevice^ device, System::IntPtr windowHandle, ResourceFormat format, System::Int32 width, System::Int32 height, FrameBuffering frameBuffering);
     ~IGraphicsContext();
 
     void SetContextFrame(System::Int32 frames);
     void Begin();
-    void Transition(CSharp::ResourceState toState);
+    void BindRenderTargets(array<System::UIntPtr>^ RenderTargetViews, System::UIntPtr DepthStencil);
+    void ClearRenderTarget(System::UInt32 RenderTargetIndex, array<System::Single>^ Color, Rect^ RectArea);
+    void Transition(IResource^ resource, CSharp::ResourceState toState);
     void End();
     void Present();
     
     IResource^ GetCurrentFrame();
 
 private:
-    GraphicsContext* context;
-    GraphicsSwapchain* swapchain;
-    GraphicsDevice* deviceRef;
+
+    void CreateSwapchain(GraphicsDevice* DeviceRef, void* WindowPtr, const SwapchainCreateDescription& Description);
+    
+    GraphicsContext* Context;
+    GraphicsSwapchain* Swapchain;
+    GraphicsDevice* DeviceRef;
+
+    // Array of managed swapchain frames. These only hold onto the managed allocated frames. Native frames are destroyed
+    // when swapchain is destroyed.
+    System::Collections::ArrayList^ SwapchainFrames; 
+};
+
+
+// Graphics host creates 
+public ref class GraphicsHost : public System::Windows::Interop::HwndHost
+{
+public:
+    virtual HandleRef BuildWindowCore(HandleRef HwndParent) override
+    {
+        
+        w = Window::create("GraphicsHost", 0, 0, 300, 200, ScreenMode_WindowBorderless, HwndParent.Handle.ToPointer());
+        HWND HostHandle = (HWND)w->getNativeHandle();
+        return HandleRef(this, (IntPtr)HostHandle);
+    }
+
+    virtual void DestroyWindowCore(HandleRef Hwnd) override
+    {
+        Window::destroy(w);
+    }
+
+private:
+    Window* w;
 };
 } // CSharp
 } // Recluse

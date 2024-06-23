@@ -9,7 +9,9 @@ namespace Math {
 
 // A plane consists of the equation:
 // Ax + By + Cz + d = 0
-// 
+// Where:
+//          N = <A, B, C>
+//          d = distance from origin.
 struct Plane
 {
     Float3 N;

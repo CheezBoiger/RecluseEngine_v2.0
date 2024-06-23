@@ -62,5 +62,6 @@ R_PUBLIC_API Matrix33 transpose(const Matrix33& mat33);
 
 typedef Matrix33 Mat33;
 typedef Matrix33 Mat3;
+typedef Matrix33 M33;
 } // Math
 } // Recluse

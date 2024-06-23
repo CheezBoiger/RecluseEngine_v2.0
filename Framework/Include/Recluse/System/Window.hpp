@@ -80,7 +80,7 @@ public:
     }
 
     // Create the window.
-    static R_OS_CALL R_PUBLIC_API Window*       create(const std::string& title, U32 x, U32 y, U32 width, U32 height, ScreenMode screenMode = ScreenMode_Windowed);
+    static R_OS_CALL R_PUBLIC_API Window*       create(const std::string& title, U32 x, U32 y, U32 width, U32 height, ScreenMode screenMode = ScreenMode_Windowed, void* parentWindowHandle = nullptr);
     // Destroy the window.
     static R_OS_CALL R_PUBLIC_API ResultCode    destroy(Window* pWindow);
     static R_OS_CALL R_PUBLIC_API Window*       getActiveFocusedWindow();
@@ -174,6 +174,9 @@ private:
     B32                         m_isFullscreen : 1;
     // Is the window borderless?
     B32                         m_isBorderless : 1;
+
+    // Has parent, this might be a child window.
+    B32                         m_hasParent : 1;
 
     struct 
     {

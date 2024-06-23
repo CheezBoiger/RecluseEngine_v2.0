@@ -107,5 +107,6 @@ R_PUBLIC_API Float4 operator*(const Matrix44& lh, const Float4& rh);
 
 typedef Matrix44 Mat44;
 typedef Matrix44 Mat4;
+typedef Matrix44 M44;
 } // Math
 } // Recluse

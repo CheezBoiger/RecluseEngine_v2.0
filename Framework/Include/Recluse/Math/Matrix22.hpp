@@ -55,5 +55,6 @@ R_PUBLIC_API Matrix22 inverse(const Matrix22& m);
 
 typedef Matrix22 Mat22;
 typedef Matrix22 Mat2;
+typedef Matrix22 M22;
 } // Math
 } // Recluse
