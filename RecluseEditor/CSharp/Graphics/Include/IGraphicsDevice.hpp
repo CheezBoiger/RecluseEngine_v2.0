@@ -131,6 +131,8 @@ public value struct Rect
     System::Single Y;
     System::Single Width;
     System::Single Height;
+
+    Rect(System::Single X, System::Single Y, System::Single Width, System::Single Height);
 };
 
 // Graphics device.

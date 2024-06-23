@@ -369,5 +369,14 @@ void IGraphicsContext::CreateSwapchain(GraphicsDevice* DeviceRef, void* WindowPt
         SwapchainFrames->Add(SwapchainResource);
     }
 }
+
+
+Rect::Rect(System::Single X, System::Single Y, System::Single Width, System::Single Height)
+    : X(X)
+    , Y(Y)
+    , Width(Width)
+    , Height(Height)
+{
+}
 } // CSharp
 } // Recluse

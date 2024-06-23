@@ -16,10 +16,10 @@
                     <MenuItem Header="Resource" ToolTip="Create a new resource."></MenuItem>
                     <MenuItem Header="Script" ToolTip="Create a new script, attachable to an entity."></MenuItem>
                 </MenuItem>
-                <MenuItem Header="_Open"></MenuItem>
-                <MenuItem Header="_Save"></MenuItem>
-                <MenuItem Header="Add ..."></MenuItem>
-                <MenuItem Header="_Exit" Click="OnExit"></MenuItem>
+                <MenuItem Header="Open..."></MenuItem>
+                <MenuItem Header="Save"></MenuItem>
+                <MenuItem Header="Add..."></MenuItem>
+                <MenuItem Header="Exit" Click="OnExit"></MenuItem>
             </MenuItem>
             <MenuItem Header="_Tools" Name="MainMenu">
                 <MenuItem Header="Performance Debugger" ToolTip="Opens up window to see performance stats when running the current instance."/>
@@ -38,12 +38,19 @@
                 <MenuItem Header="Configuration" ToolTip="Configuration of the editor itself."/>
             </MenuItem>
             <MenuItem Header="_Help">
-                <MenuItem Header="Getting Started"/>
+                <MenuItem Header="Getting Started" ToolTip="Learn about RecluseEngine and Howtos!"/>
                 <MenuItem Header="About"/>
             </MenuItem>
         </Menu>
-        <Grid Name="TheGrid" Height="300" Width="525">
-            <Border BorderThickness="1" Name="ThatBorder"/>
+        <Grid Name="TheGrid" Height="378" Width="794">
+            <TabControl>
+                <TabItem Header="Edit View">
+                </TabItem>
+                <TabItem Header="Game View">
+                    <Border BorderThickness="1" Name="GameViewBorder">
+                    </Border>
+                </TabItem>
+            </TabControl>
         </Grid>
     </DockPanel>
 </Window>
