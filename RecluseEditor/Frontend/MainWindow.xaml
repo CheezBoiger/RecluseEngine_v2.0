@@ -6,15 +6,20 @@
         xmlns:local="clr-namespace:RecluseEditor"
         mc:Ignorable="d"
         Loaded="OnLoaded"
-        Title="{Binding TitleName}" Height="450" Width="800">
+        SizeChanged="OnResizedView"
+        WindowStartupLocation="CenterScreen"
+        Title="{Binding TitleName}" Height="800" Width="1200">
     <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
                 <MenuItem Header="New">
+                    <MenuItem Header="Project" ToolTip="Create a new project."/>
                     <MenuItem Header="Scene" ToolTip="Create a new scene."/>
                     <MenuItem Header="GameEntity" ToolTip="Create a new game entity in the current scene."/>
                     <MenuItem Header="Resource" ToolTip="Create a new resource."></MenuItem>
                     <MenuItem Header="Script" ToolTip="Create a new script, attachable to an entity."></MenuItem>
+                    <MenuItem Header="Shader" ToolTip="Create a new shader."></MenuItem>
+                    <MenuItem Header="Material" ToolTip="Create a new material."></MenuItem>
                 </MenuItem>
                 <MenuItem Header="Open..."></MenuItem>
                 <MenuItem Header="Save"></MenuItem>
@@ -26,6 +31,7 @@
                 <MenuItem Header="Blueprint Visualizer" ToolTip="Opens up the blueprint view window for the current instance."/>
                 <MenuItem Header="Animation Tool" ToolTip="Opens up animation tool."/>
             </MenuItem>
+            <MenuItem Header="Project"/>
             <MenuItem Header="Debug">
                 <MenuItem Header="Run ...">
                     <MenuItem Header="Game (Live)" ToolTip="Run game without Editor Mode, unable to debug with editor."/>
@@ -34,7 +40,7 @@
                 </MenuItem>
             </MenuItem>
             <MenuItem Header="_Options">
-                <MenuItem Header="Settings" ToolTip="Settings for Scene."/>
+                <MenuItem Header="Settings" ToolTip="Settings for Scene." Click="Settings_OnClick"/>
                 <MenuItem Header="Configuration" ToolTip="Configuration of the editor itself."/>
             </MenuItem>
             <MenuItem Header="_Help">
@@ -42,14 +48,56 @@
                 <MenuItem Header="About"/>
             </MenuItem>
         </Menu>
-        <Grid Name="TheGrid" Height="378" Width="794">
-            <TabControl>
+        <Grid Name="OverallGrid">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="250"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="220"/>
+            </Grid.RowDefinitions>
+            <TabControl Grid.Column="0">
+                <TabItem Header="Explorer" FontSize="10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="250"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Name="SearchBar" VerticalAlignment="Top" HorizontalAlignment="Stretch" FontSize="13" Grid.Column="0" Width="Auto"></TextBox>
+                        <GridSplitter HorizontalAlignment="Stretch" Grid.Column="1" ResizeBehavior="PreviousAndNext"/>
+                        <Button Name="Button" Width="40" Height="20" FontSize="8" Content="Search" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0, 0, 0, 0" Grid.Column="2"></Button>
+                    </Grid>
+                </TabItem>
+                <TabItem Header="Scene" FontSize="10"></TabItem>
+                <TabItem Header="Systems" FontSize="10"></TabItem>
+                <TabItem Header="Lighting" FontSize="10">
+                </TabItem>
+            </TabControl>
+            <GridSplitter HorizontalAlignment="Right" Width="2" VerticalAlignment="Stretch" Grid.Column="1" ResizeBehavior="PreviousAndNext"/>
+            <TabControl Margin="0,0,0,0" Grid.Column="2">
                 <TabItem Header="Edit View">
+                    <Border BorderThickness="1" Name="EditViewBorder" Margin="0,0,0,0">
+                    </Border>
                 </TabItem>
                 <TabItem Header="Game View">
                     <Border BorderThickness="1" Name="GameViewBorder">
                     </Border>
                 </TabItem>
+            </TabControl>
+            <GridSplitter VerticalAlignment="Bottom" Width="2" Grid.Row="0" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext"/>
+            <TabControl VerticalAlignment="Bottom">
+                <TabItem Header="Directory"/>
+            </TabControl>
+            <GridSplitter HorizontalAlignment="Stretch" Width="1" Grid.Column="3"/>
+            <TabControl HorizontalAlignment="Stretch" Grid.Column="4">
+                <TabItem Header="Properties"/>
+                <TabItem Header="Configuration"/>
             </TabControl>
         </Grid>
     </DockPanel>

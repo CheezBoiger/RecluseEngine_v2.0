@@ -9,6 +9,7 @@
 #using <PresentationCore.dll>
 #using <PresentationFramework.dll>
 #using <mscorlib.dll>
+#using <System.Runtime.dll>
 
 #pragma managed
 
@@ -164,6 +165,7 @@ public:
 
     System::UIntPtr Map(System::UInt64 ReadOffsetBytes, System::UInt64 ReadSizeBytes);
     System::UInt32 Unmap(System::UIntPtr Ptr, System::UInt64 WriteOffsetBytes, System::UInt64 WriteSizeBytes);
+    void CopyFrom(array<System::Byte>^ Memory);
     System::UIntPtr AsView(CSharp::ResourceViewType ViewType, CSharp::ResourceViewDimension Dim, CSharp::ResourceFormat Format, System::UInt16 BaseLayer, System::UInt16 BaseMip, System::UInt16 Layers, System::UInt16 Mips);
 
     GraphicsResource* operator ()() { return Resource; }
@@ -178,7 +180,7 @@ private:
 public ref class IGraphicsContext 
 {
 public:
-    IGraphicsContext(IGraphicsDevice^ device, System::IntPtr windowHandle, ResourceFormat format, System::Int32 width, System::Int32 height, FrameBuffering frameBuffering);
+    IGraphicsContext(IGraphicsDevice^ device, System::IntPtr windowHandle, ResourceFormat format, System::Int32 width, System::Int32 height, System::UInt32 numFrames, FrameBuffering frameBuffering);
     ~IGraphicsContext();
 
     void SetContextFrame(System::Int32 frames);
@@ -188,12 +190,14 @@ public:
     void Transition(IResource^ resource, CSharp::ResourceState toState);
     void End();
     void Present();
+    void ResizeSwapchain(System::Int32 Width, System::Int32 Height);
     
     IResource^ GetCurrentFrame();
 
 private:
 
     void CreateSwapchain(GraphicsDevice* DeviceRef, void* WindowPtr, const SwapchainCreateDescription& Description);
+    void QuerySwapchainFrames();
     
     GraphicsContext* Context;
     GraphicsSwapchain* Swapchain;
@@ -205,13 +209,15 @@ private:
 };
 
 
-// Graphics host creates 
+// Handle host creates a window for the graphics system. To be used for 
+// this graphics device.
 public ref class GraphicsHost : public System::Windows::Interop::HwndHost
 {
 public:
+    GraphicsHost(const String^ HostName);
+
     virtual HandleRef BuildWindowCore(HandleRef HwndParent) override
-    {
-        
+    {    
         w = Window::create("GraphicsHost", 0, 0, 300, 200, ScreenMode_WindowBorderless, HwndParent.Handle.ToPointer());
         HWND HostHandle = (HWND)w->getNativeHandle();
         return HandleRef(this, (IntPtr)HostHandle);
@@ -224,6 +230,9 @@ public:
 
 private:
     Window* w;
+    U32 RenderWidth;
+    U32 RenderHeight;
+    const String^ HostName;
 };
 } // CSharp
 } // Recluse

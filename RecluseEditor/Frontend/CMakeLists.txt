@@ -11,13 +11,32 @@ add_executable(${RECLUSE_EDITOR_FRONTEND}
 	MainWindow.xaml
 	MainWindow.xaml.cs
 	Main.xaml
-	Main.xaml.cs)
+	Main.xaml.cs
+	SettingsWindow.xaml
+	SettingsWindow.xaml.cs
+	NodeGraphWindow.xaml
+	NodeGraphWindow.xaml.cs
+	ShaderGraphWindow.xaml
+	ShaderGraphWindow.xaml.cs
+	
+	Content/Probe.cs)
 	
 csharp_set_xaml_cs_properties(
 	MainWindow.xaml
 	MainWindow.xaml.cs
+	
 	Main.xaml
-	Main.xaml.cs)
+	Main.xaml.cs
+	
+	SettingsWindow.xaml
+	SettingsWindow.xaml.cs
+	
+	NodeGraphWindow.xaml
+	NodeGraphWindow.xaml.cs
+	
+	ShaderGraphWindow.xaml
+	ShaderGraphWindow.xaml.cs
+	)
 	
 set_property(SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/Main.xaml PROPERTY VS_XAML_TYPE "ApplicationDefinition")
 	

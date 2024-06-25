@@ -157,12 +157,24 @@ IResource::IResource(IGraphicsDevice^ Device, const ResourceCreateInformation^ C
 
 System::UIntPtr IResource::Map(System::UInt64 ReadOffsetBytes, System::UInt64 ReadSizeBytes)
 {
+    if (ReadSizeBytes == 0 && ReadOffsetBytes == 0)
+    {
+        void* ptr = nullptr;
+        Resource->map(&ptr, nullptr);
+        return (System::UIntPtr)ptr;
+    }
     return (System::UIntPtr)0ull;
 }
 
 
 System::UInt32 IResource::Unmap(System::UIntPtr Ptr, System::UInt64 WriteOffsetBytes, System::UInt64 WriteSizeBytes)
 {
+    void* ptr = (void*)Ptr;
+    MapRange range = { };
+    if (WriteOffsetBytes == 0 && WriteSizeBytes == 0)
+    {
+        Resource->unmap(nullptr);
+    }
     return (System::UInt32)0;
 }
 
@@ -229,7 +241,7 @@ System::String^ IGraphicsDevice::GetString()
 }
 
 
-IGraphicsContext::IGraphicsContext(IGraphicsDevice^ device, System::IntPtr windowHandle, ResourceFormat format, System::Int32 width, System::Int32 height, FrameBuffering framebuffering)
+IGraphicsContext::IGraphicsContext(IGraphicsDevice^ device, System::IntPtr windowHandle, ResourceFormat format, System::Int32 width, System::Int32 height, System::UInt32 numFrames, FrameBuffering framebuffering)
     : Context(nullptr)
     , Swapchain(nullptr)
     , DeviceRef(nullptr)
@@ -242,7 +254,7 @@ IGraphicsContext::IGraphicsContext(IGraphicsDevice^ device, System::IntPtr windo
     // Create the context.
     Context = DeviceRef->createContext();
     SwapchainCreateDescription swapchainDescription = { };
-    swapchainDescription.desiredFrames = 2;
+    swapchainDescription.desiredFrames = static_cast<U32>(numFrames);
     swapchainDescription.format = CSharpToNativeFormat(format);
     swapchainDescription.renderWidth = width;
     swapchainDescription.renderHeight = height;
@@ -299,7 +311,13 @@ void IGraphicsContext::End()
 void IGraphicsContext::Present()
 {
     R_ASSERT(Swapchain != nullptr);
-    Swapchain->present(Context);
+    ResultCode result = Swapchain->present(Context);
+    if (result == RecluseResult_NeedsUpdate)
+    {
+        Context->wait();
+        Swapchain->rebuild(Swapchain->getDesc());
+        QuerySwapchainFrames();
+    }
 }
 
 
@@ -340,6 +358,19 @@ void IGraphicsContext::BindRenderTargets(array<System::UIntPtr>^ RenderTargetVie
 }
 
 
+void IGraphicsContext::QuerySwapchainFrames()
+{
+    SwapchainFrames = gcnew System::Collections::ArrayList();
+    const SwapchainCreateDescription& actualDesc = Swapchain->getDesc();
+    for (U32 i = 0; i < actualDesc.desiredFrames; ++i)
+    {
+        GraphicsResource* NativeSwapchainResource = Swapchain->getFrame(i);
+        IResource^ SwapchainResource = gcnew IResource(NativeSwapchainResource);
+        SwapchainFrames->Add(SwapchainResource);
+    }
+}
+
+
 void IGraphicsContext::ClearRenderTarget(System::UInt32 RenderTargetIndex, array<System::Single>^ Color, Rect^ RectArea)
 {
     float colors[4];
@@ -360,14 +391,7 @@ void IGraphicsContext::CreateSwapchain(GraphicsDevice* DeviceRef, void* WindowPt
 {
     Swapchain = DeviceRef->createSwapchain(Description, WindowPtr);
     R_ASSERT(Swapchain);
-    SwapchainFrames = gcnew System::Collections::ArrayList();
-    const SwapchainCreateDescription& actualDesc = Swapchain->getDesc();
-    for (U32 i = 0; i < actualDesc.desiredFrames; ++i)
-    {
-        GraphicsResource* NativeSwapchainResource = Swapchain->getFrame(i);
-        IResource^ SwapchainResource = gcnew IResource(NativeSwapchainResource);
-        SwapchainFrames->Add(SwapchainResource);
-    }
+    QuerySwapchainFrames();
 }
 
 
@@ -377,6 +401,34 @@ Rect::Rect(System::Single X, System::Single Y, System::Single Width, System::Sin
     , Width(Width)
     , Height(Height)
 {
+}
+
+
+GraphicsHost::GraphicsHost(const String^ HostName)
+    : HostName(HostName)
+{
+}
+
+
+void IGraphicsContext::ResizeSwapchain(System::Int32 Width, System::Int32 Height)
+{
+    Context->wait();
+    SwapchainCreateDescription newDescription = Swapchain->getDesc();
+    newDescription.renderWidth = static_cast<U32>(Width);
+    newDescription.renderHeight = static_cast<U32>(Height);
+    Swapchain->rebuild(newDescription);
+    QuerySwapchainFrames();
+}
+
+
+void IResource::CopyFrom(array<System::Byte>^ Memory)
+{
+    System::UIntPtr BufferMemPtr = Map(0, 0);
+    for (System::Int32 I = 0; I < Memory->Length; ++I)
+    {
+        
+    }
+    Unmap(BufferMemPtr, 0, 0);
 }
 } // CSharp
 } // Recluse
