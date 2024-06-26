@@ -118,11 +118,54 @@ public enum class ResourceViewDimension : System::Int32
 };
 
 
+public enum class ResourceUsage : System::Int32
+{
+    VertexBuffer    = (1 << 0),
+    IndexBuffer     = (1 << 1),
+    RenderTarget    = (1 << 2),
+    ShaderResource  = (1 << 3),
+    ConstantBuffer  = (1 << 4),
+    TransferDst     = (1 << 5),
+    CopyDst         = TransferDst,
+    TransferSrc     = (1 << 6),
+    CopySrc         = TransferSrc,
+    IndirectBuffer  = (1 << 7),
+    DepthStencil    = (1 << 8),
+    UnorderedAccess = (1 << 9),
+    AccelerationStructure = (1 << 10)
+};
+
+
+public enum class ResourceMemoryUsage : System::Int32
+{
+    CpuVisible,
+    GpuOnly,
+    CpuToGpu,
+    GpuToCpu
+};
+
+
+public enum class ResourceDimension : System::Int32
+{
+    Buffer,
+    Dim1d,
+    Dim2d,
+    Dim3d
+};
+
+
 public value struct ResourceCreateInformation
 {
     System::UInt32 Width;
     System::UInt32 Height;
     System::UInt32 DepthOrArraySize;
+    System::UInt32 MipLevels;
+    System::UInt32 Samples;
+    ResourceFormat Format;
+    ResourceUsage Usage;
+    ResourceMemoryUsage MemoryUsage;
+    ResourceDimension Dimension;
+    System::String^ Name;
 };
 
 
@@ -160,7 +203,7 @@ private:
 public ref class IResource
 {
 public:
-    IResource(IGraphicsDevice^ Device, const ResourceCreateInformation^ CreateInfo);
+    IResource(IGraphicsDevice^ Device, const ResourceCreateInformation^ CreateInfo, ResourceState InitialState);
     IResource(GraphicsResource* Resource);
 
     System::UIntPtr Map(System::UInt64 ReadOffsetBytes, System::UInt64 ReadSizeBytes);

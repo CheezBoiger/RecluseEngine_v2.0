@@ -44,10 +44,10 @@ namespace RecluseEditor
             Context.ClearRenderTarget(0, 
                 new float[4] { (float)Math.Sin((float)t), 1, 0, 0 }, 
                 new Recluse.CSharp.Rect(0, 0, (float)GameGraphicsHost.ActualWidth, (float)GameGraphicsHost.ActualHeight));
-
             Context.Transition(SwapchainResource, ResourceState.Present);
             Context.End();
             Context.Present();
+
         }
 
         void UpdateEditRender(object obj, EventArgs e)

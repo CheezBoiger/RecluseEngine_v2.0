@@ -144,14 +144,64 @@ Recluse::ResourceState CSharpToNativeState(CSharp::ResourceState state)
 }
 
 
+Recluse::ResourceMemoryUsage CSharpToNativeMemoryUsage(CSharp::ResourceMemoryUsage Usage)
+{
+    switch (Usage)
+    {
+        case ResourceMemoryUsage::CpuVisible:
+            return ResourceMemoryUsage_CpuVisible;
+        case ResourceMemoryUsage::CpuToGpu:
+            return ResourceMemoryUsage_CpuToGpu;
+        case ResourceMemoryUsage::GpuToCpu:
+            return ResourceMemoryUsage_GpuToCpu;
+        case ResourceMemoryUsage::GpuOnly:
+        default:
+            return ResourceMemoryUsage_GpuOnly;
+    }
+}
+
+
+Recluse::ResourceDimension CSharpToNativeResourceDimension(CSharp::ResourceDimension Dim)
+{
+    switch (Dim)
+    {
+        case ResourceDimension::Dim1d:
+            return ResourceDimension_1d;
+        case ResourceDimension::Dim2d:
+            return ResourceDimension_2d;
+        case ResourceDimension::Dim3d:
+            return ResourceDimension_3d;
+        case ResourceDimension::Buffer:
+        default:
+            return ResourceDimension_Buffer;
+    }
+}
+
+
 IResource::IResource(GraphicsResource* Resource)
     : Resource(Resource)
 {
 }
 
 
-IResource::IResource(IGraphicsDevice^ Device, const ResourceCreateInformation^ CreateInfo)
+IResource::IResource(IGraphicsDevice^ Device, const ResourceCreateInformation^ CreateInfo, ResourceState InitialState)
 {
+    Recluse::GraphicsResourceDescription description = { };
+    description.width = CreateInfo->Width;
+    description.height = CreateInfo->Height;
+    description.depthOrArraySize = CreateInfo->DepthOrArraySize;
+    description.format = CSharpToNativeFormat(CreateInfo->Format);
+    description.usage = (U32)CreateInfo->Usage;
+    description.memoryUsage = CSharpToNativeMemoryUsage(CreateInfo->MemoryUsage);
+    description.dimension = CSharpToNativeResourceDimension(CreateInfo->Dimension);
+    description.mipLevels = (U32)CreateInfo->MipLevels;
+    description.samples = (U32)CreateInfo->Samples;
+    description.name;
+
+    GraphicsDevice* pDevice = Device->GetNative();
+    GraphicsResource* res = nullptr;
+    ResultCode result = pDevice->createResource(&res, description, CSharpToNativeState(InitialState));
+    Resource = res;
 }
 
 
@@ -231,6 +281,8 @@ IGraphicsDevice::~IGraphicsDevice()
     R_ASSERT(m_instance);
     R_ASSERT(m_adapter);
     R_ASSERT(m_device);
+    m_adapter->destroyDevice(m_device);
+    GraphicsInstance::destroyInstance(m_instance);
 }
 
 
