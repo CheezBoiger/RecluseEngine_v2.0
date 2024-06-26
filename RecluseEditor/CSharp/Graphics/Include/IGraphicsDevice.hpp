@@ -9,7 +9,6 @@
 #using <PresentationCore.dll>
 #using <PresentationFramework.dll>
 #using <mscorlib.dll>
-#using <System.Runtime.dll>
 
 #pragma managed
 
