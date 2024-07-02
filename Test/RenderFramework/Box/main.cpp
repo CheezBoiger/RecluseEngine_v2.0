@@ -38,7 +38,6 @@ using namespace Recluse;
 GraphicsDevice* device = nullptr;
 GraphicsContext* context = nullptr;
 GraphicsSwapchain* swapchain = nullptr;
-GraphicsSwapchain* swapchain2 = nullptr;
 GraphicsInstance* instance = nullptr;
 static const U32 g_textureWidth = 64;
 static const U32 g_textureHeight = 64;
@@ -456,13 +455,9 @@ int main(char* argv[], int c)
     GraphicsSampler* sampler    = nullptr;
 
     Window* window = Window::create("Box", 0, 0, 1200, 800, ScreenMode_WindowBorderless);
-    Window* window2 = Window::create("Box2", 0, 0, 1200, 800, ScreenMode_Windowed);
     window->show();
     window->setToCenter();
     window->setOnWindowResize(ResizeFunction);
-
-    window2->show();
-    window2->setOnWindowResize(ResizeFunction);
 
     {
         ApplicationInfo appInfo = { };
@@ -494,9 +489,6 @@ int main(char* argv[], int c)
     swapchainDescription.renderWidth    = window->getWidth();
     swapchainDescription.renderHeight   = window->getHeight();
     swapchain = device->createSwapchain(swapchainDescription, window->getNativeHandle());
-    swapchainDescription.renderWidth    = window2->getWidth();
-    swapchainDescription.renderHeight   = window2->getHeight();
-    swapchain2 = device->createSwapchain(swapchainDescription, window2->getNativeHandle());
 
     GraphicsResource* textureResource = nullptr;
     createTextureResource(&textureResource);
@@ -617,13 +609,6 @@ int main(char* argv[], int c)
                 window->update();
                 window->setToCenter();
             }
-            if (listener.isKeyDownOnce(KeyCode_1))
-            {
-                if (pSc == swapchain)
-                    pSc = swapchain2;
-                else
-                    pSc = swapchain;
-            }
         }
 
         pollEvents();
@@ -631,7 +616,6 @@ int main(char* argv[], int c)
         
     context->wait();
 
-    device->destroySwapchain(swapchain2);
     device->destroySwapchain(swapchain);
     device->destroySampler(sampler);
     device->destroyResource(constantBuffer);

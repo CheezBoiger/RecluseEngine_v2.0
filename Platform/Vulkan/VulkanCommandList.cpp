@@ -231,6 +231,7 @@ void VulkanContext::bindPipelineState(const VulkanDescriptorAllocation& set)
 
     if (!currentState().isPipelineDirty())
     {
+        // Lets also check if we unbound a currently using pipeline state.
         return;
     }
 
@@ -306,7 +307,7 @@ void VulkanContext::bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVerte
 void VulkanContext::drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstVertex, U32 firstInstance)
 {
     flushBarrierTransitions(m_primaryCommandList.get());
-    
+    setRenderPass(m_newRenderPass);
     if (currentState().areResourcesDirty() || currentState().isPipelineDirty())
     {
         const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure);
@@ -429,6 +430,7 @@ void VulkanContext::bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBy
 void VulkanContext::drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 firstIndex, U32 vertexOffset, U32 firstInstance)
 {
     flushBarrierTransitions(m_primaryCommandList.get());
+    setRenderPass(m_newRenderPass);
     if (currentState().areResourcesDirty() || currentState().isPipelineDirty())
     {
         const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure);
@@ -481,6 +483,7 @@ void VulkanContext::drawIndexedInstancedIndirect(GraphicsResource* pParams, U32 
     R_ASSERT(pParams != NULL);
     R_ASSERT(pParams->getApi() == GraphicsApi_Vulkan);
     flushBarrierTransitions(m_primaryCommandList.get());
+    setRenderPass(m_newRenderPass);
     if (currentState().areResourcesDirty() || currentState().isPipelineDirty())
     {
         const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure);
@@ -510,6 +513,7 @@ void VulkanContext::drawInstancedIndirect(GraphicsResource* pParams, U32 offset,
 {
     R_ASSERT(pParams != NULL);
     flushBarrierTransitions(m_primaryCommandList.get());
+    setRenderPass(m_newRenderPass);
     if (currentState().areResourcesDirty() || currentState().isPipelineDirty())
     {
         const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure); 

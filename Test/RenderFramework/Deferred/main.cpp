@@ -564,12 +564,13 @@ void resolveLighting(GraphicsContext* context)
 
 void createCubes(GraphicsDevice* device, std::vector<MeshDraw>& meshes, U32 width, U32 height)
 {
-    meshes.resize(1);
+    meshes.resize(3);
     std::vector<Vertex> vertices = createCubeInstance(1.0f);
     std::vector<U32> indices = createCubeIndicesInstance();
 
     Math::Matrix44 view = Math::translate(Math::Matrix44::identity(), Math::Float3(0, 0, 0));
     Math::Matrix44 proj = Math::perspectiveLH_Aspect(Math::deg2Rad(45.0f), (F32)width / (F32)height, 0.001f, 1000.0f);
+    U32 i = 0;
     for (auto& it : meshes)
     {
         GraphicsResourceDescription description = { };
@@ -647,9 +648,10 @@ void createCubes(GraphicsDevice* device, std::vector<MeshDraw>& meshes, U32 widt
         it.meshTransform->map((void**)&buffer, nullptr);
         F32 t = 20.0f * 0;
         t = fmod(t, 360.0f);
-        Math::Matrix44 T = Math::translate(Math::Matrix44::identity(), Math::Float3(0, 0, 6));
+        Math::Matrix44 T = Math::translate(Math::Matrix44::identity(), Math::Float3(i, i, 6));
         Math::Matrix44 R = Math::rotate(Math::Matrix44::identity(), Math::Float3(0.0f, 1.0f, 0.0f), Math::deg2Rad(45.0f));
         Math::Matrix44 R2 = Math::rotate(Math::Matrix44::identity(), Math::Float3(1.0f, 0.0f, 1.0f), Math::deg2Rad(t));
+        i += 1;
         Math::Matrix44 model = R2 * R * T;
         buffer->modelViewProjection = model * view * proj;
         it.meshTransform->unmap(nullptr);
