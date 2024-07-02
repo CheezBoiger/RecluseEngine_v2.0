@@ -6,8 +6,9 @@
         xmlns:local="clr-namespace:RecluseEditor"
         mc:Ignorable="d"
         Loaded="OnLoaded"
+        WindowState="Maximized"
         WindowStartupLocation="CenterScreen"
-        Title="{Binding TitleName}" Height="800" Width="1200">
+        Title="{Binding TitleName}" Width="1200" Height="800">
     <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">

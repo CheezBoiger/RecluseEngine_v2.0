@@ -22,5 +22,18 @@ namespace RecluseEditor
             LoadMainWindow();
             Close();
         }
+
+        public void OnLoaded(object sender, RoutedEventArgs e)
+        {
+            if (VersionTitle.IsLoaded)
+            {
+                VersionTitle.Text = "Version " + RecluseEditor.MainApp.VersionString;
+            }
+
+            if (LicenseTitle.IsLoaded)
+            {
+                LicenseTitle.Text = "Recluse Engine (c) Do what you want with it!";
+            }
+        }
     }
 }

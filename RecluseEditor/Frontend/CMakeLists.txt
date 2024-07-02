@@ -8,6 +8,7 @@ project(${RECLUSE_EDITOR_FRONTEND} VERSION 0.1.0 LANGUAGES CSharp)
 include(CSharpUtilities)
 
 add_executable(${RECLUSE_EDITOR_FRONTEND}
+	AssemblyInfo.cs
 	Content/MainWindow.xaml
 	Backend/MainWindow.cs
 	Content/Main.xaml
@@ -21,9 +22,21 @@ add_executable(${RECLUSE_EDITOR_FRONTEND}
 	Content/SplashWindow.xaml
 	Backend/SplashWindow.cs
 	
+	Content/Properties/SplashResources.Designer.cs
+	Content/Properties/SplashResources.resx
+	
+	Content/Resources/Logo.jpg
+	
 	Core/Probe.cs
 	Core/Geometry.cs
 	Core/Renderer.cs)
+	
+csharp_set_designer_cs_properties(
+	Content/Properties/SplashResources.Designer.cs
+	Content/Properties/SplashResources.resx
+	
+	AssemblyInfo.cs
+)
 	
 csharp_set_xaml_cs_properties(
 	Content/SplashWindow.xaml
@@ -46,6 +59,7 @@ csharp_set_xaml_cs_properties(
 	)
 	
 set_property(SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/Content/Main.xaml PROPERTY VS_XAML_TYPE "ApplicationDefinition")
+set_property(SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/Content/Resources/Logo.jpg PROPERTY VS_TOOL_OVERRIDE "Resource")
 	
 set_property(TARGET ${RECLUSE_EDITOR_FRONTEND} PROPERTY VS_DOTNET_TARGET_FRAMEWORK_VERSION "v4.8")
 set_property(TARGET ${RECLUSE_EDITOR_FRONTEND} PROPERTY WIN32_EXECUTABLE TRUE)
