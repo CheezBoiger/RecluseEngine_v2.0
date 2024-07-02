@@ -19,7 +19,9 @@ add_executable(${RECLUSE_EDITOR_FRONTEND}
 	ShaderGraphWindow.xaml
 	ShaderGraphWindow.xaml.cs
 	
-	Content/Probe.cs)
+	Content/Probe.cs
+	Content/Geometry.cs
+	Content/Renderer.cs)
 	
 csharp_set_xaml_cs_properties(
 	MainWindow.xaml

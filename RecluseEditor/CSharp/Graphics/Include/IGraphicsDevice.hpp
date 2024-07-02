@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 #include <vcclr.h>
+#include <msclr/marshal.h>
 #using <WindowsBase.dll>
 #using <PresentationCore.dll>
 #using <PresentationFramework.dll>

@@ -65,7 +65,7 @@ namespace RecluseEditor
             Context.BindRenderTargets(arr, (UIntPtr)0);
 
             Context.ClearRenderTarget(0, 
-                new float[4] { (float)Math.Sin((float)t), 1, 0, 0 }, 
+                new float[4] { (float)Math.Abs(Math.Sin((float)t)), 1, 0, 0 }, 
                 new Recluse.CSharp.Rect(0, 0, (float)GameGraphicsHost.ActualWidth, (float)GameGraphicsHost.ActualHeight));
             Context.Transition(SwapchainResource, ResourceState.Present);
             Context.End();
@@ -108,7 +108,8 @@ namespace RecluseEditor
         {
             if (GameGraphicsHost.IsLoaded)
             {
-                GameSwapchain = new ISwapchain(Device, GameGraphicsHost.Handle, ResourceFormat.R8G8B8A8_Unorm, (int)GameGraphicsHost.ActualWidth, (int)GameGraphicsHost.ActualHeight, 3, FrameBuffering.Double);
+                GameSwapchain = new ISwapchain(Device, GameGraphicsHost.Handle, 
+                    ResourceFormat.R8G8B8A8_Unorm, (int)GameGraphicsHost.ActualWidth, (int)GameGraphicsHost.ActualHeight, 3, FrameBuffering.Triple);
                 CompositionTarget.Rendering -= InitializeGameRenderer;
             }
         }
@@ -117,7 +118,8 @@ namespace RecluseEditor
         {
             if (EditGraphicsHost.IsLoaded)
             {
-                EditSwapchain = new ISwapchain(Device, EditGraphicsHost.Handle, ResourceFormat.R8G8B8A8_Unorm, (int)EditGraphicsHost.ActualWidth, (int)EditGraphicsHost.ActualHeight, 3, FrameBuffering.Double);
+                EditSwapchain = new ISwapchain(Device, EditGraphicsHost.Handle, 
+                    ResourceFormat.R8G8B8A8_Unorm, (int)EditGraphicsHost.ActualWidth, (int)EditGraphicsHost.ActualHeight, 3, FrameBuffering.Triple);
                 CompositionTarget.Rendering -= InitializeEditRenderer;
             }
         }
@@ -127,7 +129,7 @@ namespace RecluseEditor
 
             Device = new Recluse.CSharp.IGraphicsDevice(Recluse.CSharp.GraphicsApi.Direct3D12, "", "");
             Context = new Recluse.CSharp.IGraphicsContext(Device);      
-            Context.SetContextFrame(2);
+            Context.SetContextFrame(3);
             //WindowInteropHelper helper = new WindowInteropHelper(this);
             GameGraphicsHost = new Recluse.CSharp.GraphicsHost("GameView");
             EditGraphicsHost = new Recluse.CSharp.GraphicsHost("EditView");
@@ -142,8 +144,6 @@ namespace RecluseEditor
                 EditViewBorder.Child = EditGraphicsHost;
                 CompositionTarget.Rendering += InitializeEditRenderer;
             }
-            System.Windows.Media.Animation.Timeline.DesiredFrameRateProperty.OverrideMetadata(typeof(System.Windows.Media.Animation.Timeline), 
-                new FrameworkPropertyMetadata { DefaultValue = 30 });
         }
 
         /// <summary>
@@ -211,6 +211,7 @@ namespace RecluseEditor
                 MessageOutput += Text;
             }
             ConsoleTextOutput.Text = MessageOutput;
+            ConsoleOutputScrollViewer.ScrollToEnd();
         }
 
         public void WriteToEditorOutput(string text)
@@ -221,7 +222,6 @@ namespace RecluseEditor
                 string stuff;
                 ConsoleQueue.TryDequeue(out stuff);
             }
-            ConsoleQueue.Enqueue(text);
             ConsoleTextOutput.Dispatcher.Invoke(new UpdateMessageDelegate(this.UpdateEditorOutput), new object[] { text });
         }
     }
