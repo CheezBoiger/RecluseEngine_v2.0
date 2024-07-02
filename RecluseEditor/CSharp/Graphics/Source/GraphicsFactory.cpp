@@ -293,9 +293,8 @@ System::String^ IGraphicsDevice::GetString()
 }
 
 
-IGraphicsContext::IGraphicsContext(IGraphicsDevice^ device, System::IntPtr windowHandle, ResourceFormat format, System::Int32 width, System::Int32 height, System::UInt32 numFrames, FrameBuffering framebuffering)
+IGraphicsContext::IGraphicsContext(IGraphicsDevice^ device)
     : Context(nullptr)
-    , Swapchain(nullptr)
     , DeviceRef(nullptr)
 {
     if (device != nullptr)
@@ -305,6 +304,13 @@ IGraphicsContext::IGraphicsContext(IGraphicsDevice^ device, System::IntPtr windo
     
     // Create the context.
     Context = DeviceRef->createContext();
+}
+
+ISwapchain::ISwapchain(IGraphicsDevice^ Device, System::IntPtr WindowHandle,  ResourceFormat format, System::Int32 width, System::Int32 height, System::UInt32 numFrames, FrameBuffering frameBuffering)
+    : DeviceRef(nullptr)
+    , Swapchain(nullptr)
+{
+    DeviceRef = Device->GetNative();
     SwapchainCreateDescription swapchainDescription = { };
     swapchainDescription.desiredFrames = static_cast<U32>(numFrames);
     swapchainDescription.format = CSharpToNativeFormat(format);
@@ -312,7 +318,7 @@ IGraphicsContext::IGraphicsContext(IGraphicsDevice^ device, System::IntPtr windo
     swapchainDescription.renderHeight = height;
     Recluse::FrameBuffering nativeFrameBuffering = Recluse::FrameBuffering_Single;
 
-    switch (framebuffering)
+    switch (frameBuffering)
     {
         case CSharp::FrameBuffering::Double:
             swapchainDescription.buffering = FrameBuffering_Double;
@@ -326,9 +332,18 @@ IGraphicsContext::IGraphicsContext(IGraphicsDevice^ device, System::IntPtr windo
             break;
     }
 
-    void* windowPtr = (void*)windowHandle;
+    void* windowPtr = (void*)WindowHandle;
     CreateSwapchain(DeviceRef, windowPtr, swapchainDescription);
     R_ASSERT(Swapchain);
+}
+
+
+ISwapchain::~ISwapchain()
+{
+    if (Swapchain)
+    {
+        DeviceRef->destroySwapchain(Swapchain);
+    }
 }
 
 
@@ -338,18 +353,12 @@ IGraphicsContext::~IGraphicsContext()
     {
         DeviceRef->releaseContext(Context);
     }
-
-    if (Swapchain)
-    {
-        DeviceRef->destroySwapchain(Swapchain);
-    }
 }
 
 
 void IGraphicsContext::Begin()
 {
-    R_ASSERT(Context != nullptr);
-    Swapchain->prepare(Context);
+    Context->begin();
 }
 
 
@@ -360,13 +369,21 @@ void IGraphicsContext::End()
 }
 
 
-void IGraphicsContext::Present()
+void ISwapchain::Prepare(IGraphicsContext^ Context)
+{
+    R_ASSERT(Context != nullptr);
+    Swapchain->prepare(Context->GetContextHandle());
+}
+
+
+void ISwapchain::Present(IGraphicsContext^ Context)
 {
     R_ASSERT(Swapchain != nullptr);
-    ResultCode result = Swapchain->present(Context);
+    GraphicsContext* NativeContext = Context->GetContextHandle();
+    ResultCode result = Swapchain->present(NativeContext);
     if (result == RecluseResult_NeedsUpdate)
     {
-        Context->wait();
+        NativeContext->wait();
         Swapchain->rebuild(Swapchain->getDesc());
         QuerySwapchainFrames();
     }
@@ -380,7 +397,7 @@ void IGraphicsContext::SetContextFrame(System::Int32 frames)
 }
 
 
-IResource^ IGraphicsContext::GetCurrentFrame()
+IResource^ ISwapchain::GetCurrentFrame()
 {
     U32 currFrameIndex = Swapchain->getCurrentFrameIndex();
     System::Object^ SwapchainFrame = SwapchainFrames[currFrameIndex];
@@ -410,7 +427,7 @@ void IGraphicsContext::BindRenderTargets(array<System::UIntPtr>^ RenderTargetVie
 }
 
 
-void IGraphicsContext::QuerySwapchainFrames()
+void ISwapchain::QuerySwapchainFrames()
 {
     SwapchainFrames = gcnew System::Collections::ArrayList();
     const SwapchainCreateDescription& actualDesc = Swapchain->getDesc();
@@ -425,21 +442,21 @@ void IGraphicsContext::QuerySwapchainFrames()
 
 void IGraphicsContext::ClearRenderTarget(System::UInt32 RenderTargetIndex, array<System::Single>^ Color, Rect^ RectArea)
 {
-    float colors[4];
-    colors[0] = static_cast<float>(Color[0]);
-    colors[1] = static_cast<float>(Color[1]);
-    colors[2] = static_cast<float>(Color[2]);
-    colors[3] = static_cast<float>(Color[3]);
+    F32 colors[4];
     Recluse::Rect rect = { };
-    rect.x = static_cast<float>(RectArea->X);
-    rect.y = static_cast<float>(RectArea->Y);
-    rect.width = static_cast<float>(RectArea->Width);
-    rect.height = static_cast<float>(RectArea->Height);
+    colors[0]   = static_cast<F32>(Color[0]);
+    colors[1]   = static_cast<F32>(Color[1]);
+    colors[2]   = static_cast<F32>(Color[2]);
+    colors[3]   = static_cast<F32>(Color[3]);
+    rect.x      = static_cast<F32>(RectArea->X);
+    rect.y      = static_cast<F32>(RectArea->Y);
+    rect.width  = static_cast<F32>(RectArea->Width);
+    rect.height = static_cast<F32>(RectArea->Height);
     Context->clearRenderTarget((U32)RenderTargetIndex, colors, rect);
 }
 
 
-void IGraphicsContext::CreateSwapchain(GraphicsDevice* DeviceRef, void* WindowPtr, const SwapchainCreateDescription& Description)
+void ISwapchain::CreateSwapchain(GraphicsDevice* DeviceRef, void* WindowPtr, const SwapchainCreateDescription& Description)
 {
     Swapchain = DeviceRef->createSwapchain(Description, WindowPtr);
     R_ASSERT(Swapchain);
@@ -462,9 +479,8 @@ GraphicsHost::GraphicsHost(const String^ HostName)
 }
 
 
-void IGraphicsContext::ResizeSwapchain(System::Int32 Width, System::Int32 Height)
+void ISwapchain::ResizeSwapchain(System::Int32 Width, System::Int32 Height)
 {
-    Context->wait();
     SwapchainCreateDescription newDescription = Swapchain->getDesc();
     newDescription.renderWidth = static_cast<U32>(Width);
     newDescription.renderHeight = static_cast<U32>(Height);
@@ -473,14 +489,69 @@ void IGraphicsContext::ResizeSwapchain(System::Int32 Width, System::Int32 Height
 }
 
 
+void IGraphicsContext::ClearDepthStencil(CSharp::ClearFlags Flags, System::Single ClearDepth, System::Byte ClearStencil, Rect^ RectArea)
+{
+    Recluse::ClearFlags flags = Recluse::ClearFlags(Flags);
+    Recluse::Rect rect = { };
+    rect.x = static_cast<F32>(RectArea->X);
+    rect.y = static_cast<F32>(RectArea->Y);
+    rect.width = static_cast<F32>(RectArea->Width);
+    rect.height = static_cast<F32>(RectArea->Height);
+    Context->clearDepthStencil(flags, (F32)ClearDepth, (U8)ClearStencil, rect);
+}
+
+
+void IGraphicsContext::Wait()
+{
+    Context->wait();
+}
+
+
 void IResource::CopyFrom(array<System::Byte>^ Memory)
 {
-    System::UIntPtr BufferMemPtr = Map(0, 0);
-    for (System::Int32 I = 0; I < Memory->Length; ++I)
-    {
-        
-    }
+    UIntPtr BufferMemPtr = Map(0, 0);
+    Marshal::Copy(Memory, 0, (IntPtr)BufferMemPtr.ToPointer(), Memory->Length);
     Unmap(BufferMemPtr, 0, 0);
+}
+
+
+void IGraphicsContext::CopyResource(IResource^ Dst, IResource^ Src)
+{
+    Context->copyResource(Dst(), Src());
+}
+
+
+void IGraphicsContext::CopyBufferRegions(IResource^ Dst, IResource^ Src, array<CSharp::CopyBufferRegion^>^ Regions)
+{
+    std::vector<Recluse::CopyBufferRegion> regions(Regions->Length);
+    for (U32 i = 0; i < regions.size(); ++i)
+    {
+        CSharp::CopyBufferRegion^ Region = Regions[i];
+        regions[i].dstOffsetBytes = Region->DstOffsetBytes;
+        regions[i].srcOffsetBytes = Region->SrcOffsetBytes;
+        regions[i].szBytes = Region->SizeBytes;
+    }
+    Context->copyBufferRegions(Dst(), Src(), regions.data(), regions.size());
+}
+
+
+void IGraphicsDevice::CopyResource(IResource^ Dst, IResource^ Src)
+{
+    m_device->copyResource(Dst(), Src());
+}
+
+
+void IGraphicsDevice::CopyBufferRegions(IResource^ Dst, IResource^ Src, array<CSharp::CopyBufferRegion^>^ Regions)
+{
+    std::vector<Recluse::CopyBufferRegion> regions(Regions->Length);
+    for (U32 i = 0; i < regions.size(); ++i)
+    {
+        CSharp::CopyBufferRegion^ Region = Regions[i];
+        regions[i].dstOffsetBytes = Region->DstOffsetBytes;
+        regions[i].srcOffsetBytes = Region->SrcOffsetBytes;
+        regions[i].szBytes = Region->SizeBytes;
+    }
+    m_device->copyBufferRegions(Dst(), Src(), regions.data(), regions.size());
 }
 } // CSharp
 } // Recluse

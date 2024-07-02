@@ -6,7 +6,6 @@
         xmlns:local="clr-namespace:RecluseEditor"
         mc:Ignorable="d"
         Loaded="OnLoaded"
-        SizeChanged="OnResizedView"
         WindowStartupLocation="CenterScreen"
         Title="{Binding TitleName}" Height="800" Width="1200">
     <DockPanel>
@@ -57,11 +56,23 @@
                 <ColumnDefinition Width="250"/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
+                <RowDefinition Height="50"/>
                 <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="220"/>
             </Grid.RowDefinitions>
-            <TabControl Grid.Column="0">
+            <Grid Name="OverlayButtons" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="30"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="40"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="20"/>
+                    <RowDefinition Height="20"/>
+                </Grid.RowDefinitions>
+                <Button Content="Button" Grid.Column="1" Grid.Row="1"></Button>
+            </Grid>
+            <TabControl Grid.Column="0" Grid.Row="1">
                 <TabItem Header="Explorer" FontSize="10">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -79,23 +90,29 @@
                 <TabItem Header="Lighting" FontSize="10">
                 </TabItem>
             </TabControl>
-            <GridSplitter HorizontalAlignment="Right" Width="2" VerticalAlignment="Stretch" Grid.Column="1" ResizeBehavior="PreviousAndNext"/>
-            <TabControl Margin="0,0,0,0" Grid.Column="2">
+            <GridSplitter HorizontalAlignment="Center" Width="2" VerticalAlignment="Stretch" Grid.Column="1" Grid.Row="2" ResizeBehavior="PreviousAndNext"/>
+            <TabControl Margin="0,0,0,0" Grid.Column="2" Grid.Row="1">
                 <TabItem Header="Edit View">
-                    <Border BorderThickness="1" Name="EditViewBorder" Margin="0,0,0,0">
+                    <Border BorderThickness="1" Name="EditViewBorder" Margin="0,0,0,0" SizeChanged="OnEditResized">
                     </Border>
                 </TabItem>
                 <TabItem Header="Game View">
-                    <Border BorderThickness="1" Name="GameViewBorder">
+                    <Border BorderThickness="1" Name="GameViewBorder" SizeChanged="OnGameResized">
                     </Border>
                 </TabItem>
             </TabControl>
-            <GridSplitter VerticalAlignment="Bottom" Width="2" Grid.Row="0" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext"/>
-            <TabControl VerticalAlignment="Bottom">
-                <TabItem Header="Directory"/>
-            </TabControl>
+            <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="5" >
+                <TabControl VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                    <TabItem Header="Directory"/>
+                    <TabItem Header="Console">
+                        <ScrollViewer Name="ConsoleOutputScrollViewer">
+                            <TextBox Name="ConsoleTextOutput" IsReadOnly="True" MaxLength="1024"/>
+                        </ScrollViewer>
+                    </TabItem>
+                </TabControl>
+            </Grid>
             <GridSplitter HorizontalAlignment="Stretch" Width="1" Grid.Column="3"/>
-            <TabControl HorizontalAlignment="Stretch" Grid.Column="4">
+            <TabControl HorizontalAlignment="Stretch" Grid.Column="4" Grid.Row="1">
                 <TabItem Header="Properties"/>
                 <TabItem Header="Configuration"/>
             </TabControl>

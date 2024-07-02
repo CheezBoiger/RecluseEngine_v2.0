@@ -153,6 +153,15 @@ public enum class ResourceDimension : System::Int32
 };
 
 
+public enum class ClearFlags : System::Int32
+{
+    None,
+    Color = (1 << 0),
+    Depth = (1 << 1),
+    Stencil = (1 << 2)
+};
+
+
 public value struct ResourceCreateInformation
 {
     System::UInt32 Width;
@@ -178,6 +187,17 @@ public value struct Rect
     Rect(System::Single X, System::Single Y, System::Single Width, System::Single Height);
 };
 
+
+public value struct CopyBufferRegion
+{
+    System::UInt32 DstOffsetBytes;
+    System::UInt32 SrcOffsetBytes;
+    System::UInt32 SizeBytes;
+};
+
+
+ref class IResource;
+
 // Graphics device.
 public ref class IGraphicsDevice
 {
@@ -186,7 +206,8 @@ public:
     ~IGraphicsDevice();
       
     System::String^ GetString();
-
+    void CopyResource(IResource^ Dst, IResource^ Src);
+    void CopyBufferRegions(IResource^ Dst, IResource^ Src, array<CSharp::CopyBufferRegion^>^ Regions);
 
     GraphicsDevice* GetNative() { return m_device; }
     GraphicsDevice* operator()() { return GetNative(); }
@@ -222,32 +243,48 @@ private:
 public ref class IGraphicsContext 
 {
 public:
-    IGraphicsContext(IGraphicsDevice^ device, System::IntPtr windowHandle, ResourceFormat format, System::Int32 width, System::Int32 height, System::UInt32 numFrames, FrameBuffering frameBuffering);
+    IGraphicsContext(IGraphicsDevice^ device);
     ~IGraphicsContext();
 
     void SetContextFrame(System::Int32 frames);
     void Begin();
     void BindRenderTargets(array<System::UIntPtr>^ RenderTargetViews, System::UIntPtr DepthStencil);
     void ClearRenderTarget(System::UInt32 RenderTargetIndex, array<System::Single>^ Color, Rect^ RectArea);
+    void ClearDepthStencil(ClearFlags Flags, System::Single ClearDepth, System::Byte ClearStencil, Rect^ RectArea);
     void Transition(IResource^ resource, CSharp::ResourceState toState);
+    void CopyResource(IResource^ Dst, IResource^ Src);
+    void CopyBufferRegions(IResource^ Dst, IResource^ Src, array<CSharp::CopyBufferRegion^>^ Regions);
     void End();
-    void Present();
-    void ResizeSwapchain(System::Int32 Width, System::Int32 Height);
+    void Wait();
     
-    IResource^ GetCurrentFrame();
+    GraphicsContext* GetContextHandle() { return Context; }
 
 private:
-
-    void CreateSwapchain(GraphicsDevice* DeviceRef, void* WindowPtr, const SwapchainCreateDescription& Description);
-    void QuerySwapchainFrames();
     
     GraphicsContext* Context;
-    GraphicsSwapchain* Swapchain;
     GraphicsDevice* DeviceRef;
+};
 
-    // Array of managed swapchain frames. These only hold onto the managed allocated frames. Native frames are destroyed
-    // when swapchain is destroyed.
-    System::Collections::ArrayList^ SwapchainFrames; 
+
+public ref class ISwapchain
+{
+public:
+    ISwapchain(IGraphicsDevice^ Device, System::IntPtr WindowHandle,  ResourceFormat format, System::Int32 width, System::Int32 height, System::UInt32 numFrames, FrameBuffering frameBuffering);
+    ~ISwapchain();
+
+    void ResizeSwapchain(System::Int32 Width, System::Int32 Height);
+
+    void Prepare(IGraphicsContext^ Context);
+    void Present(IGraphicsContext^ Context);
+
+    IResource^ GetCurrentFrame();
+private:
+    void CreateSwapchain(GraphicsDevice* DeviceRef, void* WindowPtr, const SwapchainCreateDescription& Description);
+    void QuerySwapchainFrames();
+
+    System::Collections::ArrayList^ SwapchainFrames;
+    GraphicsDevice* DeviceRef;
+    GraphicsSwapchain* Swapchain;
 };
 
 

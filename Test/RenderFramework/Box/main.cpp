@@ -38,6 +38,7 @@ using namespace Recluse;
 GraphicsDevice* device = nullptr;
 GraphicsContext* context = nullptr;
 GraphicsSwapchain* swapchain = nullptr;
+GraphicsSwapchain* swapchain2 = nullptr;
 GraphicsInstance* instance = nullptr;
 static const U32 g_textureWidth = 64;
 static const U32 g_textureHeight = 64;
@@ -455,9 +456,13 @@ int main(char* argv[], int c)
     GraphicsSampler* sampler    = nullptr;
 
     Window* window = Window::create("Box", 0, 0, 1200, 800, ScreenMode_WindowBorderless);
+    Window* window2 = Window::create("Box2", 0, 0, 1200, 800, ScreenMode_Windowed);
     window->show();
     window->setToCenter();
     window->setOnWindowResize(ResizeFunction);
+
+    window2->show();
+    window2->setOnWindowResize(ResizeFunction);
 
     {
         ApplicationInfo appInfo = { };
@@ -466,7 +471,7 @@ int main(char* argv[], int c)
         appInfo.appMinor = 0;
         appInfo.appMajor = 0;
         appInfo.appPatch = 0;
-        LayerFeatureFlags flags = 0;//LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
+        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
         instance->initialize(appInfo, flags);
     }
     
@@ -488,7 +493,10 @@ int main(char* argv[], int c)
     swapchainDescription.format         = ResourceFormat_R8G8B8A8_Unorm;
     swapchainDescription.renderWidth    = window->getWidth();
     swapchainDescription.renderHeight   = window->getHeight();
-    swapchain = device->createSwapchain(swapchainDescription, window->getNativeHandle()); 
+    swapchain = device->createSwapchain(swapchainDescription, window->getNativeHandle());
+    swapchainDescription.renderWidth    = window2->getWidth();
+    swapchainDescription.renderHeight   = window2->getHeight();
+    swapchain2 = device->createSwapchain(swapchainDescription, window2->getNativeHandle());
 
     GraphicsResource* textureResource = nullptr;
     createTextureResource(&textureResource);
@@ -505,6 +513,7 @@ int main(char* argv[], int c)
 
     std::array<F32, 10> lastMs;
     U32 frameCount = 0;
+    GraphicsSwapchain* pSc = swapchain;
     while (!window->shouldClose())
     {
 
@@ -523,8 +532,8 @@ int main(char* argv[], int c)
                 total /= static_cast<F32>(lastMs.size());
                 R_WARN("Box", "Fps: %f", 1.0f / total);
             }
-            swapchain->prepare(context);
-                GraphicsResource* swapchainImage = swapchain->getFrame(swapchain->getCurrentFrameIndex());
+            pSc->prepare(context);
+                GraphicsResource* swapchainImage = pSc->getFrame(pSc->getCurrentFrameIndex());
                 context->transition(swapchainImage, ResourceState_RenderTarget);
                 context->transition(vertexbuffer, ResourceState_VertexBuffer);
                 context->transition(indexBuffer, ResourceState_IndexBuffer);
@@ -532,7 +541,7 @@ int main(char* argv[], int c)
                 context->transition(textureResource, ResourceState_ShaderResource);
                 ResourceViewDescription viewDescription = { };
                 viewDescription.type = ResourceViewType_RenderTarget;
-                viewDescription.format = swapchain->getDesc().format;
+                viewDescription.format = pSc->getDesc().format;
                 viewDescription.dimension = ResourceViewDimension_2d;
                 viewDescription.baseMipLevel = 0;
                 viewDescription.baseArrayLayer = 0;
@@ -557,8 +566,8 @@ int main(char* argv[], int c)
                 textureDescription.mipLevelCount = 4;
                 textureDescription.type = ResourceViewType_ShaderResource;
                 ResourceViewId textureView = textureResource->asView(textureDescription);
-                Viewport viewport = { 0, 0, swapchain->getDesc().renderWidth, swapchain->getDesc().renderHeight, 1, 0 };
-                Rect scissor = { 0, 0, swapchain->getDesc().renderWidth, swapchain->getDesc().renderHeight };
+                Viewport viewport = { 0, 0, pSc->getDesc().renderWidth, pSc->getDesc().renderHeight, 1, 0 };
+                Rect scissor = { 0, 0, pSc->getDesc().renderWidth, pSc->getDesc().renderHeight };
                 Math::Float4 clearColor = { 0, 0, 0, 1.0f };
                 U64 offset[] = { 0 };
                 context->bindRenderTargets(1, &viewId, depthId);
@@ -583,12 +592,12 @@ int main(char* argv[], int c)
                 context->transition(textureResource, ResourceState_CopySource);
                 context->transition(swapchainImage, ResourceState_CopyDestination);
                 context->copyResource(swapchainImage, textureResource);
-                context->transition(swapchain->getFrame(swapchain->getCurrentFrameIndex()), ResourceState_Present);
+                context->transition(pSc->getFrame(pSc->getCurrentFrameIndex()), ResourceState_Present);
             context->end();
-            if (swapchain->present(context) == RecluseResult_NeedsUpdate)
+            if (pSc->present(context) == RecluseResult_NeedsUpdate)
             {
                 context->wait();
-                swapchain->rebuild(swapchain->getDesc());
+                pSc->rebuild(pSc->getDesc());
             }
 
             KeyboardListener listener;
@@ -608,15 +617,21 @@ int main(char* argv[], int c)
                 window->update();
                 window->setToCenter();
             }
+            if (listener.isKeyDownOnce(KeyCode_1))
+            {
+                if (pSc == swapchain)
+                    pSc = swapchain2;
+                else
+                    pSc = swapchain;
+            }
         }
 
-        
         pollEvents();
-        
     }
         
     context->wait();
 
+    device->destroySwapchain(swapchain2);
     device->destroySwapchain(swapchain);
     device->destroySampler(sampler);
     device->destroyResource(constantBuffer);

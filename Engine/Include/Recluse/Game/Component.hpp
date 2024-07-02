@@ -71,7 +71,6 @@ public:
     virtual void                onCleanUp() = 0;
     virtual void                onInitialize() = 0;
 
-
 private:
     // Game object owner of this component.
     RGUID                   m_ownerGuid;
@@ -139,6 +138,7 @@ public:
 
 private:
 
+    // Check on when this component is enabled.
     virtual void    onEnable() { }
 
     // Flag whether this component is enabled or not.
