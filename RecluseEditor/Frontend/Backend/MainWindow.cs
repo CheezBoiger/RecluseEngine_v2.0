@@ -57,7 +57,7 @@ namespace RecluseEditor
             {
                 return;
             }
-            t += 1.0f * 0.05f;
+            t += 1.0f * 0.008f;
             // Cats are good.
             GameSwapchain.Prepare(Context);
             IResource SwapchainResource = GameSwapchain.GetCurrentFrame();
@@ -200,6 +200,10 @@ namespace RecluseEditor
 
         public delegate void UpdateMessageDelegate(string message);
 
+        /// <summary>
+        /// Updater.
+        /// </summary>
+        /// <param name="text"></param>
         public void UpdateEditorOutput(string text)
         {
             if (ConsoleQueue.Count >= 128)

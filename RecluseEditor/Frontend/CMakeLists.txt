@@ -8,39 +8,44 @@ project(${RECLUSE_EDITOR_FRONTEND} VERSION 0.1.0 LANGUAGES CSharp)
 include(CSharpUtilities)
 
 add_executable(${RECLUSE_EDITOR_FRONTEND}
-	MainWindow.xaml
-	MainWindow.xaml.cs
-	Main.xaml
-	Main.xaml.cs
-	SettingsWindow.xaml
-	SettingsWindow.xaml.cs
-	NodeGraphWindow.xaml
-	NodeGraphWindow.xaml.cs
-	ShaderGraphWindow.xaml
-	ShaderGraphWindow.xaml.cs
+	Content/MainWindow.xaml
+	Backend/MainWindow.cs
+	Content/Main.xaml
+	Backend/Main.cs
+	Content/SettingsWindow.xaml
+	Backend/SettingsWindow.cs
+	Content/NodeGraphWindow.xaml
+	Backend/NodeGraphWindow.cs
+	Content/ShaderGraphWindow.xaml
+	Backend/ShaderGraphWindow.cs
+	Content/SplashWindow.xaml
+	Backend/SplashWindow.cs
 	
-	Content/Probe.cs
-	Content/Geometry.cs
-	Content/Renderer.cs)
+	Core/Probe.cs
+	Core/Geometry.cs
+	Core/Renderer.cs)
 	
 csharp_set_xaml_cs_properties(
-	MainWindow.xaml
-	MainWindow.xaml.cs
+	Content/SplashWindow.xaml
+	Backend/SplashWindow.cs
+
+	Content/MainWindow.xaml
+	Backend/MainWindow.cs
 	
-	Main.xaml
-	Main.xaml.cs
+	Content/Main.xaml
+	Backend/Main.cs
 	
-	SettingsWindow.xaml
-	SettingsWindow.xaml.cs
+	Content/SettingsWindow.xaml
+	Backend/SettingsWindow.cs
 	
-	NodeGraphWindow.xaml
-	NodeGraphWindow.xaml.cs
+	Content/NodeGraphWindow.xaml
+	Backend/NodeGraphWindow.cs
 	
-	ShaderGraphWindow.xaml
-	ShaderGraphWindow.xaml.cs
+	Content/ShaderGraphWindow.xaml
+	Backend/ShaderGraphWindow.cs
 	)
 	
-set_property(SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/Main.xaml PROPERTY VS_XAML_TYPE "ApplicationDefinition")
+set_property(SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/Content/Main.xaml PROPERTY VS_XAML_TYPE "ApplicationDefinition")
 	
 set_property(TARGET ${RECLUSE_EDITOR_FRONTEND} PROPERTY VS_DOTNET_TARGET_FRAMEWORK_VERSION "v4.8")
 set_property(TARGET ${RECLUSE_EDITOR_FRONTEND} PROPERTY WIN32_EXECUTABLE TRUE)

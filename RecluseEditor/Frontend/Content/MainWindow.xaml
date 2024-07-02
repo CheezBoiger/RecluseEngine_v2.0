@@ -82,7 +82,7 @@
                         </Grid.ColumnDefinitions>
                         <TextBox Name="SearchBar" VerticalAlignment="Top" HorizontalAlignment="Stretch" FontSize="13" Grid.Column="0" Width="Auto"></TextBox>
                         <GridSplitter HorizontalAlignment="Stretch" Grid.Column="1" ResizeBehavior="PreviousAndNext"/>
-                        <Button Name="Button" Width="40" Height="20" FontSize="8" Content="Search" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0, 0, 0, 0" Grid.Column="2"></Button>
+                        <Button Name="Button" Width="40" Height="20" FontSize="8" Content="Search" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0, 0, 0, 0" Grid.Column="2"></Button>
                     </Grid>
                 </TabItem>
                 <TabItem Header="Scene" FontSize="10"></TabItem>
@@ -90,7 +90,7 @@
                 <TabItem Header="Lighting" FontSize="10">
                 </TabItem>
             </TabControl>
-            <GridSplitter HorizontalAlignment="Center" Width="2" VerticalAlignment="Stretch" Grid.Column="1" Grid.Row="2" ResizeBehavior="PreviousAndNext"/>
+            <GridSplitter HorizontalAlignment="Center" Width="3" VerticalAlignment="Stretch" Grid.Column="1" Grid.Row="2" ResizeBehavior="PreviousAndNext"/>
             <TabControl Margin="0,0,0,0" Grid.Column="2" Grid.Row="1">
                 <TabItem Header="Edit View">
                     <Border BorderThickness="1" Name="EditViewBorder" Margin="0,0,0,0" SizeChanged="OnEditResized">
