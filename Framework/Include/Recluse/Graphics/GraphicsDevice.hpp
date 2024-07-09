@@ -445,7 +445,7 @@ public:
     // Present the current image.
     R_PUBLIC_API virtual ResultCode         present(GraphicsContext* context) { return RecluseResult_NoImpl; }
 
-    // Get the current frame index, updates after every present call.
+    // Get the current frame index, updates after every present call. Make sure to call this after prepare() !!
     R_PUBLIC_API virtual U32                getCurrentFrameIndex() { return RecluseResult_NoImpl; }
 
     virtual GraphicsResource*               getFrame(U32 idx) = 0;

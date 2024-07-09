@@ -15,7 +15,7 @@ namespace RecluseEditor
         private static ISwapchain GameViewSwapchain = null;
 
 
-        public delegate void MainRenderDelegate(ref IGraphicsContext Context, ref IResource SwapchainResource, object sender, EventArgs e);
+        public delegate void MainRenderDelegate(IGraphicsContext Context, IResource SwapchainResource, object sender, EventArgs e);
 
         public enum RenderView
         {
@@ -105,14 +105,12 @@ namespace RecluseEditor
                     break;
             }
 
-            IResource SwapchainResource = Swapchain.GetCurrentFrame();
-
             Swapchain.Prepare(Context);
+            IResource SwapchainResource = Swapchain.GetCurrentFrame();
             if (MainRender != null)
             {
-                //MainRender(ref Context, ref SwapchainResource, Sender, Args);
+                MainRender(Context, SwapchainResource, Sender, Args);
             }
-            Context.Transition(SwapchainResource, ResourceState.RenderTarget);
             Context.Transition(SwapchainResource, ResourceState.Present);
             Context.End();
             Swapchain.Present(Context);

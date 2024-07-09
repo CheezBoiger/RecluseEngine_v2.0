@@ -16,19 +16,10 @@ namespace RecluseEditor
     {
         public string TitleName { get; set; }
 
-        public Recluse.CSharp.IGraphicsDevice Device { get; set; }
-        public Recluse.CSharp.IGraphicsContext Context { get; set; }
-
         public Recluse.CSharp.GraphicsHost GameGraphicsHost { get; set; }
         public Recluse.CSharp.GraphicsHost EditGraphicsHost { get; set; }
-        public Recluse.CSharp.ISwapchain GameSwapchain { get; set; }
 
         public long PrevRenderingTick = 0;
-
-        /// <summary>
-        /// Swapchain.
-        /// </summary>
-        public Recluse.CSharp.ISwapchain EditSwapchain { get; set; }
 
         public float t = 0.0f;
         
@@ -57,20 +48,18 @@ namespace RecluseEditor
             {
                 return;
             }
-            t += 1.0f * 0.008f;
-            // Cats are good.
-            GameSwapchain.Prepare(Context);
-            IResource SwapchainResource = GameSwapchain.GetCurrentFrame();
-            Context.Transition(SwapchainResource, ResourceState.RenderTarget);
-            UIntPtr[] arr = new UIntPtr[1] { SwapchainResource.AsView(ResourceViewType.RenderTarget, ResourceViewDimension.Dim2d, ResourceFormat.R8G8B8A8_Unorm, 0, 0, 1, 1) };
-            Context.BindRenderTargets(arr, (UIntPtr)0);
 
-            Context.ClearRenderTarget(0, 
-                new float[4] { (float)Math.Abs(Math.Sin((float)t)), 1, 0, 0 }, 
-                new Recluse.CSharp.Rect(0, 0, (float)GameGraphicsHost.ActualWidth, (float)GameGraphicsHost.ActualHeight));
-            Context.Transition(SwapchainResource, ResourceState.Present);
-            Context.End();
-            GameSwapchain.Present(Context);
+            Renderer.Render(Renderer.RenderView.GameMode, obj, e, (IGraphicsContext Context, IResource SwapchainResource, object Sender, EventArgs E) => 
+                {
+                    t += 1.0f * 0.008f;
+                    Context.Transition(SwapchainResource, ResourceState.RenderTarget);
+                    UIntPtr[] arr = new UIntPtr[1] { SwapchainResource.AsView(ResourceViewType.RenderTarget, ResourceViewDimension.Dim2d, ResourceFormat.R8G8B8A8_Unorm, 0, 0, 1, 1) };
+                    Context.BindRenderTargets(arr, (UIntPtr)0);
+
+                    Context.ClearRenderTarget(0,
+                        new float[4] { (float)Math.Abs(Math.Sin((float)t)), 1, 0, 0 },
+                        new Recluse.CSharp.Rect(0, 0, (float)GameGraphicsHost.ActualWidth, (float)GameGraphicsHost.ActualHeight));
+                });
         }
         
         void UpdateEditRender(object obj, EventArgs e)
@@ -79,30 +68,27 @@ namespace RecluseEditor
             {
                 return;
             }
-            RenderingEventArgs args = (RenderingEventArgs)e;
-            
-            long RenderTick = args.RenderingTime.Ticks;
-            long framerate = RenderTick - PrevRenderingTick;
-            PrevRenderingTick = RenderTick;
-            float framesPerMillisecond = (float)framerate / 10000.0f; // Windows measurement unit of 1 cpu tick.
-            float FrameDelta = (framesPerMillisecond / 1000.0f);
-            float FramesPerSecond = 1.0f / FrameDelta;
-            t += 1.0f * FrameDelta;
 
-            EditSwapchain.Prepare(Context);
-            IResource SwapchainResource = EditSwapchain.GetCurrentFrame();
-            Context.Transition(SwapchainResource, ResourceState.RenderTarget);
-            UIntPtr[] arr = new UIntPtr[1] { SwapchainResource.AsView(ResourceViewType.RenderTarget, ResourceViewDimension.Dim2d, ResourceFormat.R8G8B8A8_Unorm, 0, 0, 1, 1) };
-            Context.BindRenderTargets(arr, (UIntPtr)0);
+            Renderer.Render(Renderer.RenderView.EditMode, obj, e, (IGraphicsContext Context, IResource SwapchainResource, object Sender, EventArgs E) =>
+                {
+                    RenderingEventArgs args = (RenderingEventArgs)e;
 
-            Context.ClearRenderTarget(0,
-                new float[4] { 1, (float)Math.Abs(Math.Sin((float)t)), 0, 0 },
-                new Recluse.CSharp.Rect(0, 0, (float)EditGraphicsHost.ActualWidth, (float)EditGraphicsHost.ActualHeight));
+                    long RenderTick = args.RenderingTime.Ticks;
+                    long framerate = RenderTick - PrevRenderingTick;
+                    PrevRenderingTick = RenderTick;
+                    float framesPerMillisecond = (float)framerate / 10000.0f; // Windows measurement unit of 1 cpu tick.
+                    float FrameDelta = (framesPerMillisecond / 1000.0f);
+                    float FramesPerSecond = 1.0f / FrameDelta;
+                    t += 1.0f * FrameDelta;
+                    Context.Transition(SwapchainResource, ResourceState.RenderTarget);
+                    UIntPtr[] arr = new UIntPtr[1] { SwapchainResource.AsView(ResourceViewType.RenderTarget, ResourceViewDimension.Dim2d, ResourceFormat.R8G8B8A8_Unorm, 0, 0, 1, 1) };
+                    Context.BindRenderTargets(arr, (UIntPtr)0);
 
-            Context.Transition(SwapchainResource, ResourceState.Present);
-            Context.End();
-            EditSwapchain.Present(Context);
-            WriteToEditorOutput("Rendering Time: " + FramesPerSecond + " Fps");
+                    Context.ClearRenderTarget(0,
+                        new float[4] { 1, (float)Math.Abs(Math.Sin((float)t)), 0, 0 },
+                        new Recluse.CSharp.Rect(0, 0, (float)EditGraphicsHost.ActualWidth, (float)EditGraphicsHost.ActualHeight));
+                    WriteToEditorOutput("Rendering Time: " + FramesPerSecond + " Fps");
+                });
         }
 
 
@@ -110,8 +96,7 @@ namespace RecluseEditor
         {
             if (GameGraphicsHost.IsLoaded)
             {
-                GameSwapchain = new ISwapchain(Device, GameGraphicsHost.Handle, 
-                    ResourceFormat.R8G8B8A8_Unorm, (int)GameGraphicsHost.ActualWidth, (int)GameGraphicsHost.ActualHeight, 3, FrameBuffering.Triple);
+                Renderer.InitializeSwapchain(Renderer.RenderView.GameMode, GameGraphicsHost);
                 CompositionTarget.Rendering -= InitializeGameRenderer;
             }
         }
@@ -120,19 +105,14 @@ namespace RecluseEditor
         {
             if (EditGraphicsHost.IsLoaded)
             {
-                EditSwapchain = new ISwapchain(Device, EditGraphicsHost.Handle, 
-                    ResourceFormat.R8G8B8A8_Unorm, (int)EditGraphicsHost.ActualWidth, (int)EditGraphicsHost.ActualHeight, 3, FrameBuffering.Triple);
+                Renderer.InitializeSwapchain(Renderer.RenderView.EditMode, EditGraphicsHost);
                 CompositionTarget.Rendering -= InitializeEditRenderer;
             }
         }
 
         public void OnLoaded(object sender, RoutedEventArgs e)
         {
-
-            Device = new Recluse.CSharp.IGraphicsDevice(Recluse.CSharp.GraphicsApi.Direct3D12, "", "", true);
-            Context = new Recluse.CSharp.IGraphicsContext(Device);      
-            Context.SetContextFrame(3);
-            //WindowInteropHelper helper = new WindowInteropHelper(this);
+            Renderer.Initialize(GraphicsApi.Direct3D12, "", "");
             GameGraphicsHost = new Recluse.CSharp.GraphicsHost("GameView");
             EditGraphicsHost = new Recluse.CSharp.GraphicsHost("EditView");
 
@@ -168,10 +148,9 @@ namespace RecluseEditor
 
         public void ResizeGameRender(object sender, EventArgs e)
         {
-            if (GameSwapchain != null)
+            if (Renderer.IsSwapchainActive(Renderer.RenderView.GameMode))
             { 
-                Context.Wait();
-                GameSwapchain.ResizeSwapchain((int)GameGraphicsHost.ActualWidth, (int)GameGraphicsHost.ActualHeight);
+                Renderer.ResizeSwapchain(Renderer.RenderView.GameMode, GameGraphicsHost);
                 CompositionTarget.Rendering -= ResizeGameRender;
                 CompositionTarget.Rendering += UpdateGameRender;
             }
@@ -179,10 +158,9 @@ namespace RecluseEditor
 
         public void ResizeEditRender(object sender, EventArgs e)
         {
-            if (EditSwapchain != null)
+            if (Renderer.IsSwapchainActive(Renderer.RenderView.EditMode))
             { 
-                Context.Wait();
-                EditSwapchain.ResizeSwapchain((int)EditGraphicsHost.ActualWidth, (int)EditGraphicsHost.ActualHeight);
+                Renderer.ResizeSwapchain(Renderer.RenderView.EditMode, EditGraphicsHost);
                 CompositionTarget.Rendering -= ResizeEditRender;
                 CompositionTarget.Rendering += UpdateEditRender;
             }
