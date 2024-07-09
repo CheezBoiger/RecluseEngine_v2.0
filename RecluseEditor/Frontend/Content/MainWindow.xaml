@@ -31,7 +31,9 @@
                 <MenuItem Header="Blueprint Visualizer" ToolTip="Opens up the blueprint view window for the current instance."/>
                 <MenuItem Header="Animation Tool" ToolTip="Opens up animation tool."/>
             </MenuItem>
-            <MenuItem Header="Project"/>
+            <MenuItem Header="Project">
+                <MenuItem Header="Configuration"/>
+            </MenuItem>
             <MenuItem Header="Debug">
                 <MenuItem Header="Run ...">
                     <MenuItem Header="Game (Live)" ToolTip="Run game without Editor Mode, unable to debug with editor."/>

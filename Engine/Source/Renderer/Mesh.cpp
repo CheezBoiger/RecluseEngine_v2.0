@@ -79,5 +79,17 @@ ResultCode Mesh::initialize(VertexBuffer* pVertexBuffer, IndexBuffer* pIndexBuff
 {
     return RecluseResult_Ok;
 }
+
+
+ResultCode Mesh::serialize(Archive* archive) const
+{
+    return RecluseResult_NoImpl;
+}
+
+
+ResultCode Mesh::deserialize(Archive* archive) 
+{
+    return RecluseResult_NoImpl;
+}
 } // Engine
 } // Recluse

@@ -1,0 +1,8 @@
+
+
+set ( RECLUSE_CSHARP_PIPELINE 
+	${RECLUSE_CSHARP_PIPELINE}
+	${RECLUSE_CSHARP_INCLUDE_DIR}/ShaderProgramBuilderInterop.hpp
+	${RECLUSE_CSHARP_SOURCE_DIR}/ShaderProgramBuilderInterop.cpp
+	
+)

@@ -15,6 +15,10 @@ add_subdirectory ( ${RECLUSE_THIRDPARTY_DIR}/wxWidgets )
 #add_subdirectory ( ${RECLUSE_THIRDPARTY_DIR}/zlib )
 add_subdirectory ( ${RECLUSE_THIRDPARTY_DIR}/googletest )
 
+# Enable Shared libs on meshoptimizer.
+set(MESHOPT_BUILD_SHARED_LIBS ON)
+add_subdirectory( ${RECLUSE_THIRDPARTY_DIR}/meshoptimizer )
+
 # Reflection for stuff
 if ( RCL_VULKAN ) 
 	if ( RCL_GLSLANG OR R_GLSLANG_LEGACY_API )

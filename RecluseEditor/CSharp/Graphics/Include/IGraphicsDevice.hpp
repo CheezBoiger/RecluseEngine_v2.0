@@ -163,6 +163,81 @@ public enum class ClearFlags : System::Int32
 };
 
 
+public enum class ShaderStage : System::Int32
+{
+    None                    = (ShaderType_None),
+    Vertex                  = (1<<ShaderType_Vertex),
+    Hull                    = (1<<ShaderType_Hull),
+    TessellationControl     = Hull,
+    Domain                  = (1<<ShaderType_Domain),
+    TessellationEvaluation  = Domain,
+    Geometry                = (1<<ShaderType_Geometry),
+    Pixel                   = (1<<ShaderType_Pixel),
+    Fragment                = Pixel,
+    RayGeneration           = (1<<ShaderType_RayGeneration),
+    RayClosestHit           = (1<<ShaderType_RayClosestHit),
+    RayAnyHit               = (1<<ShaderType_RayAnyHit),
+    RayIntersect            = (1<<ShaderType_RayIntersect),
+    RayMiss                 = (1<<ShaderType_RayMiss),
+    Amplification           = (1<<ShaderType_Amplification),
+    Task                    = Amplification,
+    Mesh                    = (1<<ShaderType_Mesh),
+    Compute                 = (1<<ShaderType_Compute),
+    All                     = ShaderStage_All
+};
+
+
+public enum class SamplerAddressMode : System::Int32
+{
+    Repeat,
+    MirroredRepeat,
+    ClampToEdge,
+    ClampToBorder,
+    MirrorClampToEdge
+};
+
+
+public enum class Filter : System::Int32
+{
+    // Defines linear filtering
+    Linear,
+    // Defines nearest neighbor filtering.
+    Nearest,
+    // Defines cubic filtering.
+    Cubic
+};
+
+
+public enum class SamplerMipMapMode : System::Int32
+{
+    // Nearest neighbor interpolation for mip maps.
+    Nearest,
+    // Linear interpolation for mip maps.
+    Linear
+};
+
+
+public enum class CompareOp : System::Int32
+{
+    Never,
+    Less,
+    Equal,
+    LessOrEqual,
+    Greater,
+    NotEqual,
+    GreaterOrEqual,
+    Always
+};
+
+
+public enum class BorderColor : System::Int32
+{
+    TransparentBlack,
+    OpaqueBlack,
+    OpaqueWhite
+};
+
+
 public value struct ResourceCreateInformation
 {
     System::UInt32 Width;
@@ -189,6 +264,27 @@ public value struct Rect
 };
 
 
+public value struct Viewport
+{
+    System::Single X;
+    System::Single Y;
+    System::Single Width;
+    System::Single Height;
+    System::Single MinDepth;
+    System::Single MaxDepth;
+
+    Viewport(System::Single X, System::Single Y, System::Single Width, System::Single Height, System::Single MinD, System::Single MaxD)
+        : X(X)
+        , Y(Y)
+        , Width(Width)
+        , Height(Height)
+        , MinDepth(MinD)
+        , MaxDepth(MaxD)
+    {
+    }
+};
+
+
 public value struct CopyBufferRegion
 {
     System::UInt32 DstOffsetBytes;
@@ -198,17 +294,24 @@ public value struct CopyBufferRegion
 
 
 ref class IResource;
+ref class IShaderProgramDefinition;
+ref class IVertexInputLayout;
 
 // Graphics device.
 public ref class IGraphicsDevice
 {
 public:
-    IGraphicsDevice(CSharp::GraphicsApi graphicsApi, System::String^ appName, System::String^ engineName);
+    IGraphicsDevice(CSharp::GraphicsApi graphicsApi, System::String^ appName, System::String^ engineName, bool EnableDebugLayer);
     ~IGraphicsDevice();
-      
-    System::String^ GetString();
+
     void CopyResource(IResource^ Dst, IResource^ Src);
     void CopyBufferRegions(IResource^ Dst, IResource^ Src, array<CSharp::CopyBufferRegion^>^ Regions);
+
+    void LoadShaderProgram(System::UInt64 ProgramId, System::UInt64 Permutation, IShaderProgramDefinition^ Definition);
+    void MakeVertexLayout(System::UInt64 VertexLayoutId, IVertexInputLayout^ VertexLayout);
+
+    void UnloadShaderProgram(System::UInt64 ProgramId);
+    void DestroyVertexLayout(System::UInt64 VertexLayoutId);
 
     GraphicsDevice* GetNative() { return m_device; }
     GraphicsDevice* operator()() { return GetNative(); }
@@ -227,6 +330,8 @@ public:
     IResource(IGraphicsDevice^ Device, const ResourceCreateInformation^ CreateInfo, ResourceState InitialState);
     IResource(GraphicsResource* Resource);
 
+    virtual ~IResource();
+
     System::UIntPtr Map(System::UInt64 ReadOffsetBytes, System::UInt64 ReadSizeBytes);
     System::UInt32 Unmap(System::UIntPtr Ptr, System::UInt64 WriteOffsetBytes, System::UInt64 WriteSizeBytes);
     void CopyFrom(array<System::Byte>^ Memory);
@@ -235,6 +340,53 @@ public:
     GraphicsResource* operator ()() { return Resource; }
 private:
     GraphicsResource* Resource;
+    GraphicsDevice* DeviceRef;
+};
+
+
+public enum class IndexType : System::UInt32
+{
+    Unsigned16,
+    Unsigned32
+};
+
+
+public ref class ISampler
+{
+public:
+    ISampler(IGraphicsDevice^ Device, 
+        CSharp::SamplerAddressMode AddressModeU, 
+        CSharp::SamplerAddressMode AddressModeV, 
+        CSharp::SamplerAddressMode AddressModeW,
+        System::Single MinLod,
+        System::Single MaxLod,
+        CSharp::Filter MagFilter,
+        CSharp::Filter MinFilter,
+        CSharp::CompareOp CompareOperation,
+        CSharp::SamplerMipMapMode MipMapMode,
+        CSharp::Single MaxAnisotropy,
+        CSharp::Single MipLodBias,
+        CSharp::BorderColor BorderColour);
+    ~ISampler();
+
+    GraphicsSampler* operator()() { return Sampler; }
+private:
+    GraphicsSampler* Sampler;
+    GraphicsDevice* DeviceRef;
+};
+
+
+public ref class ShaderProgramBinder
+{
+public:
+    ShaderProgramBinder(IShaderProgramBinder& binder);
+
+    ShaderProgramBinder^ BindShaderResource(CSharp::ShaderStage Stage, System::UInt32 Slot, System::UIntPtr View);
+    ShaderProgramBinder^ BindUnorderedAccessView(CSharp::ShaderStage Stage, System::UInt32 Slot, System::UIntPtr View);
+    ShaderProgramBinder^ BindConstantBuffer(CSharp::ShaderStage Stage, System::UInt32 Slot, IResource^ Resource, System::UInt32 OffsetBytes, System::UInt32 SizeBytes, array<System::Byte>^ Data);
+    ShaderProgramBinder^ BindSampler(CSharp::ShaderStage Stage, System::UInt32 Slot, ISampler^ Sampler);
+private:
+    IShaderProgramBinder& ShaderProgram;
 };
 
 
@@ -255,6 +407,16 @@ public:
     void Transition(IResource^ resource, CSharp::ResourceState toState);
     void CopyResource(IResource^ Dst, IResource^ Src);
     void CopyBufferRegions(IResource^ Dst, IResource^ Src, array<CSharp::CopyBufferRegion^>^ Regions);
+    void BindVertexBuffers(array<IResource^>^ VertexBuffers, array<System::UInt64>^ Offsets);
+    void BindIndexBuffer(IResource^ IndexBuffer, System::UInt64 OffsetBytes, CSharp::IndexType Type);
+    void EnableDepth(System::Boolean Enable);
+    void EnableDepthWrite(System::Boolean Enable);
+    void EnableStencil(System::Boolean Enable);
+    void SetInputVertexLayout(System::UInt64 InputLayout);
+    ShaderProgramBinder^ BindShaderProgram(System::UInt64 ProgramId, System::UInt32 Permutation);
+
+    void SetScissors(array<CSharp::Rect^>^ Rects);
+    void SetViewports(array<CSharp::Viewport^>^ Viewports);
     void End();
     void Wait();
     

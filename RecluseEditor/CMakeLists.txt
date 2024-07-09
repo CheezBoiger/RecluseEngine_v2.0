@@ -31,6 +31,7 @@ target_link_libraries( ${RECLUSE_EDITOR_NAME}
 add_dependencies(${RECLUSE_EDITOR_NAME} RecluseFramework RecluseEngine)
 
 add_subdirectory(CSharp/Graphics)
+add_subdirectory(CSharp/Pipeline)
 add_subdirectory(FrontEnd)
 
 # Doing some stuff for organization.

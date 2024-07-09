@@ -8,7 +8,7 @@ namespace Recluse {
 namespace CSharp {
 
 
-Recluse::ResourceViewDimension CSharpToDimension(CSharp::ResourceViewDimension Dim)
+R_INTERNAL Recluse::ResourceViewDimension CSharpToDimension(CSharp::ResourceViewDimension Dim)
 {
     switch (Dim)
     {
@@ -39,7 +39,7 @@ Recluse::ResourceViewDimension CSharpToDimension(CSharp::ResourceViewDimension D
 }
 
 
-Recluse::ResourceViewType CSharpToViewType(CSharp::ResourceViewType Type)
+R_INTERNAL Recluse::ResourceViewType CSharpToViewType(CSharp::ResourceViewType Type)
 {
     switch (Type)
     {
@@ -56,7 +56,7 @@ Recluse::ResourceViewType CSharpToViewType(CSharp::ResourceViewType Type)
 }
 
 
-Recluse::ResourceFormat CSharpToNativeFormat(CSharp::ResourceFormat format)
+R_INTERNAL Recluse::ResourceFormat CSharpToNativeFormat(CSharp::ResourceFormat format)
 {
     switch (format)
     {
@@ -111,7 +111,7 @@ Recluse::ResourceFormat CSharpToNativeFormat(CSharp::ResourceFormat format)
 };
 
 
-Recluse::ResourceState CSharpToNativeState(CSharp::ResourceState state)
+R_INTERNAL Recluse::ResourceState CSharpToNativeState(CSharp::ResourceState state)
 {
     switch (state)
     {
@@ -144,7 +144,7 @@ Recluse::ResourceState CSharpToNativeState(CSharp::ResourceState state)
 }
 
 
-Recluse::ResourceMemoryUsage CSharpToNativeMemoryUsage(CSharp::ResourceMemoryUsage Usage)
+R_INTERNAL Recluse::ResourceMemoryUsage CSharpToNativeMemoryUsage(CSharp::ResourceMemoryUsage Usage)
 {
     switch (Usage)
     {
@@ -161,7 +161,7 @@ Recluse::ResourceMemoryUsage CSharpToNativeMemoryUsage(CSharp::ResourceMemoryUsa
 }
 
 
-Recluse::ResourceDimension CSharpToNativeResourceDimension(CSharp::ResourceDimension Dim)
+R_INTERNAL Recluse::ResourceDimension CSharpToNativeResourceDimension(CSharp::ResourceDimension Dim)
 {
     switch (Dim)
     {
@@ -180,6 +180,7 @@ Recluse::ResourceDimension CSharpToNativeResourceDimension(CSharp::ResourceDimen
 
 IResource::IResource(GraphicsResource* Resource)
     : Resource(Resource)
+    , DeviceRef(nullptr)
 {
 }
 
@@ -202,6 +203,16 @@ IResource::IResource(IGraphicsDevice^ Device, const ResourceCreateInformation^ C
     GraphicsResource* res = nullptr;
     ResultCode result = pDevice->createResource(&res, description, CSharpToNativeState(InitialState));
     Resource = res;
+    DeviceRef = pDevice;
+}
+
+
+IResource::~IResource()
+{
+    if (DeviceRef)
+    {
+        DeviceRef->destroyResource(Resource);
+    }
 }
 
 
@@ -245,7 +256,7 @@ System::UIntPtr IResource::AsView(CSharp::ResourceViewType ViewType, CSharp::Res
 
     
 
-IGraphicsDevice::IGraphicsDevice(GraphicsApi graphicsApi, System::String^ appName, System::String^ engineName)
+IGraphicsDevice::IGraphicsDevice(GraphicsApi graphicsApi, System::String^ appName, System::String^ engineName, bool EnableDebugLayer)
     : m_instance(nullptr)
     , m_device(nullptr)
     , m_adapter(nullptr)
@@ -264,7 +275,12 @@ IGraphicsDevice::IGraphicsDevice(GraphicsApi graphicsApi, System::String^ appNam
     ApplicationInfo appInfo = { };
     appInfo.engineName = "";
     appInfo.appName = "";
-    ResultCode result = m_instance->initialize(appInfo, 0);
+    LayerFeatureFlags layerFlags = 0;
+    if (EnableDebugLayer)
+    {
+        layerFlags = LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
+    }
+    ResultCode result = m_instance->initialize(appInfo, layerFlags);
     std::vector<GraphicsAdapter*>& adapters = m_instance->getGraphicsAdapters();
     R_ASSERT(!adapters.empty());
     m_adapter = adapters[0];
@@ -283,13 +299,6 @@ IGraphicsDevice::~IGraphicsDevice()
     R_ASSERT(m_device);
     m_adapter->destroyDevice(m_device);
     GraphicsInstance::destroyInstance(m_instance);
-}
-
-
-
-System::String^ IGraphicsDevice::GetString()
-{
-    return "I am a graphics device. Don't mind me. I'm managed!";
 }
 
 
@@ -552,6 +561,285 @@ void IGraphicsDevice::CopyBufferRegions(IResource^ Dst, IResource^ Src, array<CS
         regions[i].szBytes = Region->SizeBytes;
     }
     m_device->copyBufferRegions(Dst(), Src(), regions.data(), regions.size());
+}
+
+
+void IGraphicsContext::BindIndexBuffer(IResource^ IndexBuffer, System::UInt64 OffsetBytes, CSharp::IndexType Type)
+{
+    Context->bindIndexBuffer(IndexBuffer(), (U64)OffsetBytes, (Recluse::IndexType)Type);
+}
+
+
+void IGraphicsContext::BindVertexBuffers(array<IResource^>^ VertexBuffers, array<System::UInt64>^ Offsets)
+{
+    std::vector<GraphicsResource*> Verts(VertexBuffers->Length);
+    std::vector<U64> OffsetBytes(Offsets->Length);
+    for (U32 i = 0; i < Verts.size(); ++i)
+    {
+        IResource^ VB = VertexBuffers[0];
+        Verts[i] = VB();
+    }
+    for (U32 i = 0; i < OffsetBytes.size(); ++i)
+    {
+        OffsetBytes[i] = (U64)Offsets[i];
+    }
+    Context->bindVertexBuffers(Verts.size(), Verts.data(), OffsetBytes.data());
+}
+
+
+void IGraphicsContext::SetScissors(array<CSharp::Rect^>^ Rects)
+{
+    std::vector<Recluse::Rect> rects(Rects->Length);
+
+    for (U32 i = 0; i < rects.size(); ++i)
+    {
+        CSharp::Rect^ RectArea = Rects[i];
+        rects[i].x      = static_cast<F32>(RectArea->X);
+        rects[i].y      = static_cast<F32>(RectArea->Y);
+        rects[i].width  = static_cast<F32>(RectArea->Width);
+        rects[i].height = static_cast<F32>(RectArea->Height);
+    }
+    Context->setScissors(rects.size(), rects.data());
+}
+
+
+void IGraphicsContext::SetViewports(array<CSharp::Viewport^>^ Viewports)
+{
+    std::vector<Recluse::Viewport> viewports(Viewports->Length);
+    for (U32 i = 0; i < viewports.size(); ++i)
+    {
+        CSharp::Viewport^ Viewport = Viewports[i];
+        viewports[i].x          = static_cast<F32>(Viewport->X);
+        viewports[i].y          = static_cast<F32>(Viewport->Y);
+        viewports[i].width      = static_cast<F32>(Viewport->Width);
+        viewports[i].height     = static_cast<F32>(Viewport->Height);
+        viewports[i].minDepth   = static_cast<F32>(Viewport->MinDepth);
+        viewports[i].maxDepth   = static_cast<F32>(Viewport->MaxDepth);
+    }
+    Context->setViewports(viewports.size(), viewports.data());
+}
+
+
+void IGraphicsContext::EnableDepth(System::Boolean Enable)
+{
+    Context->enableDepth((Bool)Enable);
+}
+
+
+void IGraphicsContext::EnableDepthWrite(System::Boolean Enable)
+{
+    Context->enableDepthWrite((Bool)Enable);
+}
+
+
+void IGraphicsContext::EnableStencil(System::Boolean Enable)
+{
+    Context->enableStencil((Bool)Enable);
+}
+
+
+void IGraphicsContext::SetInputVertexLayout(System::UInt64 InputLayout)
+{
+    Context->setInputVertexLayout((VertexInputLayoutId)InputLayout);
+}
+
+
+ShaderProgramBinder^ IGraphicsContext::BindShaderProgram(System::UInt64 ProgramId, System::UInt32 Permutation)
+{
+    IShaderProgramBinder& binder = Context->bindShaderProgram((ShaderProgramId)ProgramId, (U32)Permutation);
+    ShaderProgramBinder^ ProgramBinder = gcnew ShaderProgramBinder(binder);
+    return ProgramBinder;
+}
+
+
+ShaderProgramBinder::ShaderProgramBinder(IShaderProgramBinder& binder)
+    : ShaderProgram(binder)
+{
+}
+
+
+ShaderProgramBinder^ ShaderProgramBinder::BindShaderResource(CSharp::ShaderStage Stage, System::UInt32 Slot, System::UIntPtr View)
+{
+    ShaderProgram.bindShaderResource((Recluse::ShaderStageFlags)Stage, (U32)Slot, (ResourceViewId)View);
+    return this;
+}
+
+
+ShaderProgramBinder^ ShaderProgramBinder::BindUnorderedAccessView(CSharp::ShaderStage Stage, System::UInt32 Slot, System::UIntPtr View)
+{
+    ShaderProgram.bindUnorderedAccessView((Recluse::ShaderStageFlags)Stage, (U32)Slot, (ResourceViewId)View);
+    return this;
+}
+
+ShaderProgramBinder^ ShaderProgramBinder::BindConstantBuffer(CSharp::ShaderStage Stage, System::UInt32 Slot, IResource^ Resource, System::UInt32 OffsetBytes, System::UInt32 SizeBytes, array<System::Byte>^ Data)
+{
+    std::vector<U8> nativeData;
+    void* ptr = nullptr;
+    if (Data != nullptr)
+    {
+        nativeData.resize(Data->Length);
+        Marshal::Copy(Data, 0, (IntPtr)nativeData.data(), Data->Length);
+        ptr = nativeData.data();
+    }
+    ShaderProgram.bindConstantBuffer((Recluse::ShaderStageFlags)Stage, (U32)Slot, Resource(), (U32)OffsetBytes, (U32)SizeBytes, ptr);
+    return this;
+}
+
+
+ShaderProgramBinder^ ShaderProgramBinder::BindSampler(CSharp::ShaderStage Stage, System::UInt32 Slot, ISampler^ Sampler)
+{
+    ShaderProgram.bindSampler((ShaderStageFlags)Stage, (U32)Slot, Sampler());
+    return this;
+}
+
+
+R_INTERNAL Recluse::SamplerAddressMode getSamplerAddressMode(CSharp::SamplerAddressMode samplerAddress)
+{
+    switch (samplerAddress)
+    {
+        case CSharp::SamplerAddressMode::ClampToBorder:
+            return SamplerAddressMode_ClampToBorder;
+        case CSharp::SamplerAddressMode::ClampToEdge:
+            return SamplerAddressMode_ClampToEdge;
+        case CSharp::SamplerAddressMode::MirrorClampToEdge:
+            return SamplerAddressMode_MirrorClampToEdge;
+        case CSharp::SamplerAddressMode::Repeat:
+        default:
+            return SamplerAddressMode_Repeat;
+    }
+}
+
+
+R_INTERNAL Recluse::BorderColor getBorderColor(CSharp::BorderColor borderColor)
+{
+    switch (borderColor)
+    {
+        case CSharp::BorderColor::OpaqueWhite:
+            return BorderColor_OpaqueWhite;
+        case CSharp::BorderColor::TransparentBlack:
+            return BorderColor_TransparentBlack;
+        case CSharp::BorderColor::OpaqueBlack:
+        default:
+            return BorderColor_OpaqueBlack;
+    }
+}
+
+
+R_INTERNAL Recluse::Filter getFilter(CSharp::Filter filter)
+{
+    switch (filter)
+    {
+        case CSharp::Filter::Cubic:
+            return Filter_Cubic;
+        case CSharp::Filter::Nearest:
+            return Filter_Nearest;
+        case CSharp::Filter::Linear:
+        default:
+            return Filter_Linear;
+    }
+}
+
+
+R_INTERNAL Recluse::CompareOp getCompareOp(CSharp::CompareOp op)
+{
+    switch (op)
+    {
+        case CSharp::CompareOp::Always:
+            return CompareOp_Always;
+        case CSharp::CompareOp::Equal:
+            return CompareOp_Equal;
+        case CSharp::CompareOp::Greater:
+            return CompareOp_Greater;
+        case CSharp::CompareOp::GreaterOrEqual:
+            return CompareOp_GreaterOrEqual;
+        case CSharp::CompareOp::Less:
+            return CompareOp_Less;
+        case CSharp::CompareOp::LessOrEqual:
+            return CompareOp_LessOrEqual;
+        case CSharp::CompareOp::NotEqual:
+            return CompareOp_NotEqual;
+        case CSharp::CompareOp::Never:
+        default:
+            return CompareOp_Never;
+            
+    }
+}
+
+
+R_INTERNAL Recluse::SamplerMipMapMode getSamplerMipMode(CSharp::SamplerMipMapMode mipMapMode)
+{
+    switch (mipMapMode)
+    {
+        case CSharp::SamplerMipMapMode::Linear:
+            return SamplerMipMapMode_Linear;
+        case CSharp::SamplerMipMapMode::Nearest:
+        default:
+            return SamplerMipMapMode_Nearest;
+    }
+}
+
+
+ISampler::ISampler(IGraphicsDevice^ Device, 
+        CSharp::SamplerAddressMode AddressModeU, 
+        CSharp::SamplerAddressMode AddressModeV, 
+        CSharp::SamplerAddressMode AddressModeW,
+        System::Single MinLod,
+        System::Single MaxLod,
+        CSharp::Filter MagFilter,
+        CSharp::Filter MinFilter,
+        CSharp::CompareOp CompareOperation,
+        CSharp::SamplerMipMapMode MipMapMode,
+        CSharp::Single MaxAnisotropy,
+        CSharp::Single MipLodBias,
+        CSharp::BorderColor BorderColour)
+    : DeviceRef(Device())
+    , Sampler(nullptr)
+{
+    GraphicsSampler* sampler        = nullptr;
+    SamplerDescription description  = { };
+    description.maxAnisotropy       = MaxAnisotropy;
+    description.mipLodBias          = MipLodBias;
+    description.minLod              = MinLod;
+    description.maxLod              = MaxLod;
+    description.addressModeU        = getSamplerAddressMode(AddressModeU);
+    description.addressModeV        = getSamplerAddressMode(AddressModeV);
+    description.addressModeW        = getSamplerAddressMode(AddressModeW);
+    description.borderColor         = getBorderColor(BorderColour);
+    description.mipMapMode          = getSamplerMipMode(MipMapMode);
+    description.minFilter           = getFilter(MinFilter);
+    description.magFilter           = getFilter(MagFilter);
+    description.compareOp           = getCompareOp(CompareOperation);
+    ResultCode code = Device()->createSampler(&sampler, description);
+    
+}
+
+
+ISampler::~ISampler()
+{
+    if (Sampler)
+    {
+        DeviceRef->destroySampler(Sampler);
+    }
+}
+
+
+void IGraphicsDevice::LoadShaderProgram(System::UInt64 ProgramId, System::UInt64 Permutation, IShaderProgramDefinition^ Definition)
+{
+}
+
+
+void IGraphicsDevice::MakeVertexLayout(System::UInt64 VertexLayoutId, IVertexInputLayout^ VertexLayout)
+{
+}
+
+
+void IGraphicsDevice::UnloadShaderProgram(System::UInt64 ProgramId)
+{
+}
+
+
+void IGraphicsDevice::DestroyVertexLayout(System::UInt64 VertexLayoutId)
+{
 }
 } // CSharp
 } // Recluse

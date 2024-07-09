@@ -53,7 +53,8 @@ struct R_PUBLIC_API ShaderProgramReflection : public Serializable
 
 
 // Definition of a shader program. This is one instance of a program (with any necessary permutations set.)
-// Keep in mind this is a definition struct, that holds onto the shader intermediate code of the rendering application.
+// Keep in mind this is a definition struct, that holds onto the shader intermediate code of the rendering application. Since it is a reference,
+// Once you load it into the graphics device, you can destroy this definition.
 class R_PUBLIC_API ShaderProgramDefinition
 {
 public:

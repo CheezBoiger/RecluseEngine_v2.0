@@ -61,6 +61,7 @@ namespace RecluseEditor
             // Cats are good.
             GameSwapchain.Prepare(Context);
             IResource SwapchainResource = GameSwapchain.GetCurrentFrame();
+            Context.Transition(SwapchainResource, ResourceState.RenderTarget);
             UIntPtr[] arr = new UIntPtr[1] { SwapchainResource.AsView(ResourceViewType.RenderTarget, ResourceViewDimension.Dim2d, ResourceFormat.R8G8B8A8_Unorm, 0, 0, 1, 1) };
             Context.BindRenderTargets(arr, (UIntPtr)0);
 
@@ -90,6 +91,7 @@ namespace RecluseEditor
 
             EditSwapchain.Prepare(Context);
             IResource SwapchainResource = EditSwapchain.GetCurrentFrame();
+            Context.Transition(SwapchainResource, ResourceState.RenderTarget);
             UIntPtr[] arr = new UIntPtr[1] { SwapchainResource.AsView(ResourceViewType.RenderTarget, ResourceViewDimension.Dim2d, ResourceFormat.R8G8B8A8_Unorm, 0, 0, 1, 1) };
             Context.BindRenderTargets(arr, (UIntPtr)0);
 
@@ -127,7 +129,7 @@ namespace RecluseEditor
         public void OnLoaded(object sender, RoutedEventArgs e)
         {
 
-            Device = new Recluse.CSharp.IGraphicsDevice(Recluse.CSharp.GraphicsApi.Direct3D12, "", "");
+            Device = new Recluse.CSharp.IGraphicsDevice(Recluse.CSharp.GraphicsApi.Direct3D12, "", "", true);
             Context = new Recluse.CSharp.IGraphicsContext(Device);      
             Context.SetContextFrame(3);
             //WindowInteropHelper helper = new WindowInteropHelper(this);

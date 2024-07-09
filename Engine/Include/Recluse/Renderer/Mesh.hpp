@@ -5,6 +5,7 @@
 #include "Recluse/Math/Matrix44.hpp"
 #include "Recluse/Graphics/Resource.hpp"
 #include "Recluse/Renderer/RendererResources.hpp"
+#include "Recluse/RGUID.hpp"
 #include <vector>
 #include <map>
 
@@ -50,7 +51,14 @@ struct MeshLod
 };
 
 
-class Mesh 
+class CpuMesh
+{
+public:
+    
+};
+
+
+class Mesh : public Serializable
 {
 public:
     virtual ~Mesh() { }
@@ -75,11 +83,15 @@ public:
         }
     }
 
+    R_PUBLIC_API ResultCode serialize(Archive* archive) const override;
+    R_PUBLIC_API ResultCode deserialize(Archive* archive) override;
+
 private:
     std::map<std::string, SubMesh>  m_subMeshMap;
     std::vector<SubMesh*>           m_submeshes;
     VertexBuffer*                   m_pVertexBuffer;
     IndexBuffer*                    m_pIndexBuffer;
+    RGUID                           m_guid;
 };
 
 
