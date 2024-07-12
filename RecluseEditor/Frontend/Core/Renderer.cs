@@ -7,15 +7,18 @@ using Recluse.CSharp;
 
 namespace RecluseEditor
 {
+    /// <summary>
+    /// Renderer provides live game view and edit view modes, to which must run in realtime.
+    /// </summary>
     public static class Renderer
     {
         private static IGraphicsDevice Device;
         private static IGraphicsContext Context;
         private static ISwapchain EditViewSwapchain = null;
         private static ISwapchain GameViewSwapchain = null;
+        private static IResource DepthBuffer = null;
 
-
-        public delegate void MainRenderDelegate(IGraphicsContext Context, IResource SwapchainResource, object sender, EventArgs e);
+        public delegate void MainRenderDelegate(IGraphicsContext Context, IResource SwapchainResource, IResource DepthBuffer, object sender, EventArgs e);
 
         public enum RenderView
         {
@@ -25,7 +28,7 @@ namespace RecluseEditor
 
         public static void Initialize(GraphicsApi Api, string AppName, string EngineName)
         {
-            Device = new IGraphicsDevice(Api, AppName, EngineName, true);
+            Device = new IGraphicsDevice(Api, AppName, EngineName, false);
             Context = new IGraphicsContext(Device);
             Database.Initialize(Device);
             Context.SetContextFrame(3);
@@ -54,6 +57,8 @@ namespace RecluseEditor
                         3, FrameBuffering.Triple);
                     break;
             }
+
+            CreateDepthBuffer((uint)Host.ActualWidth, (uint)Host.ActualHeight);
         }
 
         public static void ResizeSwapchain(RenderView View, GraphicsHost Host)
@@ -71,6 +76,9 @@ namespace RecluseEditor
             }
             Context.Wait();
             Swapchain.ResizeSwapchain((int)Host.ActualWidth, (int)Host.ActualHeight);
+
+            // Must recreate the depthbuffer.
+            CreateDepthBuffer((uint)Host.ActualWidth, (uint)Host.ActualHeight);
         }
 
         public static void ShutdownSwapchain(RenderView View)
@@ -109,8 +117,17 @@ namespace RecluseEditor
             IResource SwapchainResource = Swapchain.GetCurrentFrame();
             if (MainRender != null)
             {
-                MainRender(Context, SwapchainResource, Sender, Args);
+                MainRender(Context, SwapchainResource, DepthBuffer, Sender, Args);
             }
+
+            #region Grid Rendering
+            //Context.Transition(SwapchainResource, ResourceState.RenderTarget);
+            //Context.EnableDepth(true);
+            //Context.EnableDepthWrite(true);
+            //Context.EnableStencil(false);
+            //Context.BindShaderProgram((ulong)Database.Shaders.Grid, 0);
+            //Context.SetInputVertexLayout((uint)Database.Vertex.PositionOnly);
+            #endregion
             Context.Transition(SwapchainResource, ResourceState.Present);
             Context.End();
             Swapchain.Present(Context);
@@ -132,6 +149,29 @@ namespace RecluseEditor
             }
 
             return (Swapchain != null);
+        }
+
+
+        private static void CreateDepthBuffer(uint Width, uint Height)
+        {
+            if (DepthBuffer != null)
+            {
+                DepthBuffer.ReleaseImmediatelyOnDispose();
+                DepthBuffer.Dispose();
+            }
+            ResourceCreateInformation ResourceCreateInfo = new ResourceCreateInformation();
+            ResourceCreateInfo.Name = "DepthBuffer";
+            ResourceCreateInfo.Width = Width;
+            ResourceCreateInfo.Height = Height;
+            ResourceCreateInfo.MipLevels = 1;
+            ResourceCreateInfo.DepthOrArraySize = 1;
+            ResourceCreateInfo.Samples = 1;
+            ResourceCreateInfo.Format = ResourceFormat.D32_Float;
+            ResourceCreateInfo.Dimension = ResourceDimension.Dim2d;
+            ResourceCreateInfo.Usage = ResourceUsage.DepthStencil | ResourceUsage.ShaderResource;
+            ResourceCreateInfo.MemoryUsage = ResourceMemoryUsage.GpuOnly;
+
+            DepthBuffer = new IResource(Device, ResourceCreateInfo, ResourceState.DepthStencilWrite);
         }
 
         public static IGraphicsDevice GetDevice() { return Device; }

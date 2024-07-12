@@ -49,7 +49,7 @@ namespace RecluseEditor
                 return;
             }
 
-            Renderer.Render(Renderer.RenderView.GameMode, obj, e, (IGraphicsContext Context, IResource SwapchainResource, object Sender, EventArgs E) => 
+            Renderer.Render(Renderer.RenderView.GameMode, obj, e, (IGraphicsContext Context, IResource SwapchainResource, IResource DepthBuffer, object Sender, EventArgs E) => 
                 {
                     t += 1.0f * 0.008f;
                     Context.Transition(SwapchainResource, ResourceState.RenderTarget);
@@ -69,7 +69,7 @@ namespace RecluseEditor
                 return;
             }
 
-            Renderer.Render(Renderer.RenderView.EditMode, obj, e, (IGraphicsContext Context, IResource SwapchainResource, object Sender, EventArgs E) =>
+            Renderer.Render(Renderer.RenderView.EditMode, obj, e, (IGraphicsContext Context, IResource SwapchainResource, IResource DepthBuffer, object Sender, EventArgs E) =>
                 {
                     RenderingEventArgs args = (RenderingEventArgs)e;
 
@@ -82,10 +82,13 @@ namespace RecluseEditor
                     t += 1.0f * FrameDelta;
                     Context.Transition(SwapchainResource, ResourceState.RenderTarget);
                     UIntPtr[] arr = new UIntPtr[1] { SwapchainResource.AsView(ResourceViewType.RenderTarget, ResourceViewDimension.Dim2d, ResourceFormat.R8G8B8A8_Unorm, 0, 0, 1, 1) };
-                    Context.BindRenderTargets(arr, (UIntPtr)0);
+                    UIntPtr depth = DepthBuffer.AsView(ResourceViewType.DepthStencil, ResourceViewDimension.Dim2d, ResourceFormat.D32_Float, 0, 0, 1, 1);
+                    Context.BindRenderTargets(arr, depth);
 
                     Context.ClearRenderTarget(0,
                         new float[4] { 1, (float)Math.Abs(Math.Sin((float)t)), 0, 0 },
+                        new Recluse.CSharp.Rect(0, 0, (float)EditGraphicsHost.ActualWidth, (float)EditGraphicsHost.ActualHeight));
+                    Context.ClearDepthStencil(ClearFlags.Depth, 1.0f, 0, 
                         new Recluse.CSharp.Rect(0, 0, (float)EditGraphicsHost.ActualWidth, (float)EditGraphicsHost.ActualHeight));
                     WriteToEditorOutput("Rendering Time: " + FramesPerSecond + " Fps");
                 });

@@ -230,6 +230,40 @@ public enum class CompareOp : System::Int32
 };
 
 
+public enum class PolygonMode : System::Int32
+{
+    Fill,
+    Line,
+    Point
+};
+
+
+public enum class CullMode : System::Int32 
+{
+    None,
+    Front,
+    Back,
+    FrontAndBack
+};
+
+
+public enum class PrimitiveTopology : System::Int32
+{
+    TriangleList,
+    TriangleStrip,
+    PointList,
+    LineList,
+    LineStrip
+};
+
+
+public enum class FrontFace : System::Int32
+{
+    CounterClockwise,
+    Clockwise
+};
+
+
 public enum class BorderColor : System::Int32
 {
     TransparentBlack,
@@ -338,9 +372,12 @@ public:
     System::UIntPtr AsView(CSharp::ResourceViewType ViewType, CSharp::ResourceViewDimension Dim, CSharp::ResourceFormat Format, System::UInt16 BaseLayer, System::UInt16 BaseMip, System::UInt16 Layers, System::UInt16 Mips);
 
     GraphicsResource* operator ()() { return Resource; }
+
+    void ReleaseImmediatelyOnDispose() { m_releaseImmediately = true; }
 private:
     GraphicsResource* Resource;
     GraphicsDevice* DeviceRef;
+    Bool m_releaseImmediately;
 };
 
 
@@ -413,6 +450,16 @@ public:
     void EnableDepthWrite(System::Boolean Enable);
     void EnableStencil(System::Boolean Enable);
     void SetInputVertexLayout(System::UInt64 InputLayout);
+    void SetCullMode(CullMode Mode);
+    void SetFrontFace(FrontFace Face);
+    void SetDepthCompareOp(CompareOp CompareOperation);
+    void SetTopology(PrimitiveTopology Topology);
+    void SetPolygonMode(PolygonMode Mode);
+    void SetLineWidth(System::Single Width);
+    
+    void DrawIndexedInstanced(System::Int32 IndexCount, System::Int32 InstanceCount, System::Int32 FirstIndex, System::Int32 VertexOffset, System::Int32 FirstInstance);
+    void DrawInstanced(System::Int32 VertexCount, System::Int32 InstanceCount, System::Int32 FirstVertex, System::Int32 FirstInstance);
+    void Dispatch(System::Int32 X, System::Int32 Y, System::Int32 Z);
     ShaderProgramBinder^ BindShaderProgram(System::UInt64 ProgramId, System::UInt32 Permutation);
 
     void SetScissors(array<CSharp::Rect^>^ Rects);
@@ -421,6 +468,7 @@ public:
     void Wait();
     
     GraphicsContext* GetContextHandle() { return Context; }
+    GraphicsContext* operator()() { return GetContextHandle(); }
 
 private:
     

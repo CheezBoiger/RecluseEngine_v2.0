@@ -82,6 +82,8 @@ R_INTERNAL Recluse::ResourceFormat CSharpToNativeFormat(CSharp::ResourceFormat f
             return ResourceFormat_R16G16_Float;
         case ResourceFormat::R16_Uint:
             return ResourceFormat_R16_Uint;
+        case ResourceFormat::D32_Float:
+            return ResourceFormat_D32_Float;
         case ResourceFormat::D24_Unorm_S8_Uint:
             return ResourceFormat_D24_Unorm_S8_Uint;
         case ResourceFormat::D16_Unorm:
@@ -178,6 +180,156 @@ R_INTERNAL Recluse::ResourceDimension CSharpToNativeResourceDimension(CSharp::Re
 }
 
 
+R_INTERNAL Recluse::FrontFace CSharpToNativeFrontFace(CSharp::FrontFace Face)
+{
+    switch (Face)
+    {
+        case FrontFace::Clockwise:
+            return FrontFace_Clockwise;
+        case FrontFace::CounterClockwise:
+        default:
+            return FrontFace_CounterClockwise;
+    }
+}
+
+
+R_INTERNAL Recluse::CullMode CSharpToNativeCullMode(CSharp::CullMode Mode)
+{
+    switch (Mode)
+    {
+        case CullMode::Front:
+            return CullMode_Front;
+        case CullMode::Back:
+            return CullMode_Back;
+        case CullMode::FrontAndBack:
+            return CullMode_FrontAndBack;
+        case CullMode::None:
+        default:
+            return CullMode_None;
+    }
+}
+
+
+R_INTERNAL Recluse::PrimitiveTopology CSharpToNativePrimitiveTopology(CSharp::PrimitiveTopology Topology)
+{
+    switch (Topology)
+    {
+        case PrimitiveTopology::TriangleStrip:
+            return PrimitiveTopology_TriangleStrip;
+        case PrimitiveTopology::PointList:
+            return PrimitiveTopology_PointList;
+        case PrimitiveTopology::LineList:
+            return PrimitiveTopology_LineList;
+        case PrimitiveTopology::LineStrip:
+            return PrimitiveTopology_LineStrip;
+        case PrimitiveTopology::TriangleList:
+        default:
+            return PrimitiveTopology_TriangleList;
+    }
+}
+
+
+R_INTERNAL Recluse::PolygonMode CSharpToNativePolygonMode(CSharp::PolygonMode Mode)
+{
+    switch (Mode)
+    {
+        case PolygonMode::Line:
+            return PolygonMode_Line;
+        case PolygonMode::Point:
+            return PolygonMode_Point;
+        case PolygonMode::Fill:
+        default:
+            return PolygonMode_Fill;
+    }
+}
+
+
+R_INTERNAL Recluse::SamplerAddressMode getSamplerAddressMode(CSharp::SamplerAddressMode samplerAddress)
+{
+    switch (samplerAddress)
+    {
+        case CSharp::SamplerAddressMode::ClampToBorder:
+            return SamplerAddressMode_ClampToBorder;
+        case CSharp::SamplerAddressMode::ClampToEdge:
+            return SamplerAddressMode_ClampToEdge;
+        case CSharp::SamplerAddressMode::MirrorClampToEdge:
+            return SamplerAddressMode_MirrorClampToEdge;
+        case CSharp::SamplerAddressMode::Repeat:
+        default:
+            return SamplerAddressMode_Repeat;
+    }
+}
+
+
+R_INTERNAL Recluse::BorderColor getBorderColor(CSharp::BorderColor borderColor)
+{
+    switch (borderColor)
+    {
+        case CSharp::BorderColor::OpaqueWhite:
+            return BorderColor_OpaqueWhite;
+        case CSharp::BorderColor::TransparentBlack:
+            return BorderColor_TransparentBlack;
+        case CSharp::BorderColor::OpaqueBlack:
+        default:
+            return BorderColor_OpaqueBlack;
+    }
+}
+
+
+R_INTERNAL Recluse::Filter getFilter(CSharp::Filter filter)
+{
+    switch (filter)
+    {
+        case CSharp::Filter::Cubic:
+            return Filter_Cubic;
+        case CSharp::Filter::Nearest:
+            return Filter_Nearest;
+        case CSharp::Filter::Linear:
+        default:
+            return Filter_Linear;
+    }
+}
+
+
+R_INTERNAL Recluse::CompareOp CSharpToNativeCompareOp(CSharp::CompareOp op)
+{
+    switch (op)
+    {
+        case CSharp::CompareOp::Always:
+            return CompareOp_Always;
+        case CSharp::CompareOp::Equal:
+            return CompareOp_Equal;
+        case CSharp::CompareOp::Greater:
+            return CompareOp_Greater;
+        case CSharp::CompareOp::GreaterOrEqual:
+            return CompareOp_GreaterOrEqual;
+        case CSharp::CompareOp::Less:
+            return CompareOp_Less;
+        case CSharp::CompareOp::LessOrEqual:
+            return CompareOp_LessOrEqual;
+        case CSharp::CompareOp::NotEqual:
+            return CompareOp_NotEqual;
+        case CSharp::CompareOp::Never:
+        default:
+            return CompareOp_Never;
+            
+    }
+}
+
+
+R_INTERNAL Recluse::SamplerMipMapMode getSamplerMipMode(CSharp::SamplerMipMapMode mipMapMode)
+{
+    switch (mipMapMode)
+    {
+        case CSharp::SamplerMipMapMode::Linear:
+            return SamplerMipMapMode_Linear;
+        case CSharp::SamplerMipMapMode::Nearest:
+        default:
+            return SamplerMipMapMode_Nearest;
+    }
+}
+
+
 IResource::IResource(GraphicsResource* Resource)
     : Resource(Resource)
     , DeviceRef(nullptr)
@@ -197,6 +349,7 @@ IResource::IResource(IGraphicsDevice^ Device, const ResourceCreateInformation^ C
     description.dimension = CSharpToNativeResourceDimension(CreateInfo->Dimension);
     description.mipLevels = (U32)CreateInfo->MipLevels;
     description.samples = (U32)CreateInfo->Samples;
+    description.miscFlags = 0;
     description.name;
 
     GraphicsDevice* pDevice = Device->GetNative();
@@ -211,7 +364,7 @@ IResource::~IResource()
 {
     if (DeviceRef)
     {
-        DeviceRef->destroyResource(Resource);
+        DeviceRef->destroyResource(Resource, m_releaseImmediately);
     }
 }
 
@@ -644,6 +797,60 @@ void IGraphicsContext::SetInputVertexLayout(System::UInt64 InputLayout)
 }
 
 
+void IGraphicsContext::DrawIndexedInstanced(System::Int32 IndexCount, System::Int32 InstanceCount, System::Int32 FirstIndex, System::Int32 VertexOffset, System::Int32 FirstInstance)
+{
+    Context->drawIndexedInstanced(IndexCount, InstanceCount, FirstIndex, VertexOffset, FirstInstance);
+}
+
+
+void IGraphicsContext::DrawInstanced(System::Int32 VertexCount, System::Int32 InstanceCount, System::Int32 FirstVertex, System::Int32 FirstInstance)
+{
+    Context->drawInstanced(VertexCount, InstanceCount, FirstVertex, FirstInstance);
+}
+
+
+void IGraphicsContext::Dispatch(System::Int32 X, System::Int32 Y, System::Int32 Z)
+{
+    Context->dispatch((U32)X, (U32)Y, (U32)Z);
+}
+
+
+void IGraphicsContext::SetCullMode(CullMode Mode)
+{
+    Context->setCullMode(CSharpToNativeCullMode(Mode));
+}
+
+
+void IGraphicsContext::SetFrontFace(FrontFace Face)
+{
+    Context->setFrontFace(CSharpToNativeFrontFace(Face));
+}
+
+
+void IGraphicsContext::SetDepthCompareOp(CompareOp CompareOperation)
+{
+    Context->setDepthCompareOp(CSharpToNativeCompareOp(CompareOperation));
+}
+
+
+void IGraphicsContext::SetPolygonMode(PolygonMode Mode)
+{
+    Context->setPolygonMode(CSharpToNativePolygonMode(Mode));
+}
+
+
+void IGraphicsContext::SetTopology(PrimitiveTopology Topology)
+{
+    Context->setTopology(CSharpToNativePrimitiveTopology(Topology));
+}
+
+
+void IGraphicsContext::SetLineWidth(System::Single Width)
+{
+    Context->setLineWidth((F32)Width);
+}
+
+
 ShaderProgramBinder^ IGraphicsContext::BindShaderProgram(System::UInt64 ProgramId, System::UInt32 Permutation)
 {
     IShaderProgramBinder& binder = Context->bindShaderProgram((ShaderProgramId)ProgramId, (U32)Permutation);
@@ -693,90 +900,7 @@ ShaderProgramBinder^ ShaderProgramBinder::BindSampler(CSharp::ShaderStage Stage,
 }
 
 
-R_INTERNAL Recluse::SamplerAddressMode getSamplerAddressMode(CSharp::SamplerAddressMode samplerAddress)
-{
-    switch (samplerAddress)
-    {
-        case CSharp::SamplerAddressMode::ClampToBorder:
-            return SamplerAddressMode_ClampToBorder;
-        case CSharp::SamplerAddressMode::ClampToEdge:
-            return SamplerAddressMode_ClampToEdge;
-        case CSharp::SamplerAddressMode::MirrorClampToEdge:
-            return SamplerAddressMode_MirrorClampToEdge;
-        case CSharp::SamplerAddressMode::Repeat:
-        default:
-            return SamplerAddressMode_Repeat;
-    }
-}
 
-
-R_INTERNAL Recluse::BorderColor getBorderColor(CSharp::BorderColor borderColor)
-{
-    switch (borderColor)
-    {
-        case CSharp::BorderColor::OpaqueWhite:
-            return BorderColor_OpaqueWhite;
-        case CSharp::BorderColor::TransparentBlack:
-            return BorderColor_TransparentBlack;
-        case CSharp::BorderColor::OpaqueBlack:
-        default:
-            return BorderColor_OpaqueBlack;
-    }
-}
-
-
-R_INTERNAL Recluse::Filter getFilter(CSharp::Filter filter)
-{
-    switch (filter)
-    {
-        case CSharp::Filter::Cubic:
-            return Filter_Cubic;
-        case CSharp::Filter::Nearest:
-            return Filter_Nearest;
-        case CSharp::Filter::Linear:
-        default:
-            return Filter_Linear;
-    }
-}
-
-
-R_INTERNAL Recluse::CompareOp getCompareOp(CSharp::CompareOp op)
-{
-    switch (op)
-    {
-        case CSharp::CompareOp::Always:
-            return CompareOp_Always;
-        case CSharp::CompareOp::Equal:
-            return CompareOp_Equal;
-        case CSharp::CompareOp::Greater:
-            return CompareOp_Greater;
-        case CSharp::CompareOp::GreaterOrEqual:
-            return CompareOp_GreaterOrEqual;
-        case CSharp::CompareOp::Less:
-            return CompareOp_Less;
-        case CSharp::CompareOp::LessOrEqual:
-            return CompareOp_LessOrEqual;
-        case CSharp::CompareOp::NotEqual:
-            return CompareOp_NotEqual;
-        case CSharp::CompareOp::Never:
-        default:
-            return CompareOp_Never;
-            
-    }
-}
-
-
-R_INTERNAL Recluse::SamplerMipMapMode getSamplerMipMode(CSharp::SamplerMipMapMode mipMapMode)
-{
-    switch (mipMapMode)
-    {
-        case CSharp::SamplerMipMapMode::Linear:
-            return SamplerMipMapMode_Linear;
-        case CSharp::SamplerMipMapMode::Nearest:
-        default:
-            return SamplerMipMapMode_Nearest;
-    }
-}
 
 
 ISampler::ISampler(IGraphicsDevice^ Device, 
@@ -808,7 +932,7 @@ ISampler::ISampler(IGraphicsDevice^ Device,
     description.mipMapMode          = getSamplerMipMode(MipMapMode);
     description.minFilter           = getFilter(MinFilter);
     description.magFilter           = getFilter(MagFilter);
-    description.compareOp           = getCompareOp(CompareOperation);
+    description.compareOp           = CSharpToNativeCompareOp(CompareOperation);
     ResultCode code = Device()->createSampler(&sampler, description);
     
 }
@@ -835,11 +959,13 @@ void IGraphicsDevice::MakeVertexLayout(System::UInt64 VertexLayoutId, IVertexInp
 
 void IGraphicsDevice::UnloadShaderProgram(System::UInt64 ProgramId)
 {
+    this->m_device->unloadShaderProgram((ShaderProgramId)ProgramId);
 }
 
 
 void IGraphicsDevice::DestroyVertexLayout(System::UInt64 VertexLayoutId)
 {
+    m_device->destroyVertexLayout((VertexInputLayoutId)VertexLayoutId);
 }
 } // CSharp
 } // Recluse
