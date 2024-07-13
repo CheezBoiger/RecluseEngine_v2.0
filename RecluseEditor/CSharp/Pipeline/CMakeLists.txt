@@ -9,7 +9,9 @@ set ( RECLUSE_CSHARP_PIPELINE )
 
 include ( CMake/Main.cmake )
 
-include_directories(${CMAKE_SOURCE_DIR}/Framework/Include Include ${CMAKE_SOURCE_DIR}/Pipeline/Include )
+include_directories(${CMAKE_SOURCE_DIR}/Framework/Include Include 
+	${CMAKE_SOURCE_DIR}/Pipeline/Include 
+	${CMAKE_SOURCE_DIR}/RecluseEditor)
 
 add_library( ${RECLUSE_CSHARP_NAME} SHARED
 	${RECLUSE_CSHARP_PIPELINE})
@@ -30,8 +32,11 @@ if (WIN32)
     FOLDER ${RECLUSE_CSHARP_NAME})
 endif()
 
-add_dependencies(${RECLUSE_CSHARP_NAME} RecluseFramework ReclusePipeline)
+add_dependencies(${RECLUSE_CSHARP_NAME}  RecluseFramework ReclusePipeline)
 target_link_libraries(${RECLUSE_CSHARP_NAME} RecluseFramework ReclusePipeline)
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} " /sdl-") 
 set_property(TARGET ${RECLUSE_CSHARP_NAME} PROPERTY COMMON_LANGUAGE_RUNTIME "")
 string(REPLACE "/EHsc" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+if (MSVC)
+	target_compile_options(${RECLUSE_CSHARP_NAME} PRIVATE $<$<BOOL:${MSVC}>:/AI${CMAKE_SOURCE_DIR}/Recluse/bin>)
+endif()

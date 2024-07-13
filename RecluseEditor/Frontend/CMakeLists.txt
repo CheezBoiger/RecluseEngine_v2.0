@@ -60,6 +60,8 @@ csharp_set_xaml_cs_properties(
 	Backend/ShaderGraphWindow.cs
 	)
 	
+# These dependencies need to be built first, before recluseeditor is built.
+add_dependencies(${RECLUSE_EDITOR_FRONTEND} RecluseCSharpGraphics RecluseCSharpPipelineInterop)
 set_property(SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/Content/Main.xaml PROPERTY VS_XAML_TYPE "ApplicationDefinition")
 set_property(SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/Content/Resources/Logo.jpg PROPERTY VS_TOOL_OVERRIDE "Resource")
 	

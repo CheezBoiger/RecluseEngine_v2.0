@@ -321,7 +321,7 @@ ShaderProgramDefinition makeShaderProgramDefinition(ShaderProgramDatabase& db, c
 }
 
 
-ResultCode buildShaderProgramDefinitions(ShaderProgramDatabase& db, const ShaderProgramDescription& description, ShaderProgramId outId, ShaderIntermediateCode imm)
+ResultCode buildShaderProgram(ShaderProgramDatabase& db, const ShaderProgramDescription& description, ShaderProgramId outId, ShaderIntermediateCode imm)
 {
     if (g_shaderBuilderMap.find(imm) == g_shaderBuilderMap.end())
     {
@@ -376,6 +376,23 @@ ResultCode buildShaderProgramDefinitions(ShaderProgramDatabase& db, const Shader
                 }
             }
         }
+    }
+    return result;
+}
+
+
+ResultCode buildShaderPrograms(ShaderProgramDatabase& db, const ShaderProgramDescriptionInfo* descriptions, ShaderIntermediateCode imm)
+{
+    R_ASSERT(descriptions != NULL);
+    R_ASSERT(descriptions->descriptions.size() == descriptions->shaderProgramIds.size());
+    ResultCode result = RecluseResult_Ok;
+    for (U32 i = 0; i < descriptions->descriptions.size(); ++i)
+    {
+        const ShaderProgramDescription& description = descriptions->descriptions[i];
+        ShaderProgramId programId = descriptions->shaderProgramIds[i];
+        result = buildShaderProgram(db, description, programId, imm);
+        if (result != RecluseResult_Ok);
+            break;
     }
     return result;
 }

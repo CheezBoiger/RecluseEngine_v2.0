@@ -1,4 +1,7 @@
 //
+#ifndef GRAPHICS_DEVICE_HPP
+#define GRAPHICS_DEVICE_HPP
+#pragma once
 #include "Recluse/Graphics/GraphicsInstance.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 #include "Recluse/System/Window.hpp"
@@ -332,7 +335,7 @@ ref class IShaderProgramDefinition;
 ref class IVertexInputLayout;
 
 // Graphics device.
-public ref class IGraphicsDevice
+R_PUBLIC_API public ref class IGraphicsDevice
 {
 public:
     IGraphicsDevice(CSharp::GraphicsApi graphicsApi, System::String^ appName, System::String^ engineName, bool EnableDebugLayer);
@@ -358,7 +361,7 @@ private:
 
 
 // Resource object.
-public ref class IResource
+R_PUBLIC_API public ref class IResource
 {
 public:
     IResource(IGraphicsDevice^ Device, const ResourceCreateInformation^ CreateInfo, ResourceState InitialState);
@@ -526,3 +529,4 @@ private:
 };
 } // CSharp
 } // Recluse
+#endif // GRAPHICS_DEVICE_HPP

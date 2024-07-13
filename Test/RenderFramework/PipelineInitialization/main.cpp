@@ -292,7 +292,7 @@ int main(int c, char* argv[])
         description.graphics.hs = nullptr;
 
         description.language = ShaderLanguage_Hlsl;
-        Pipeline::Builder::buildShaderProgramDefinitions(database, description, ShaderKey_SimpleColor, pInstance->getApi() == GraphicsApi_Direct3D12 ? ShaderIntermediateCode_Dxil : ShaderIntermediateCode_Spirv);
+        Pipeline::Builder::buildShaderProgram(database, description, ShaderKey_SimpleColor, pInstance->getApi() == GraphicsApi_Direct3D12 ? ShaderIntermediateCode_Dxil : ShaderIntermediateCode_Spirv);
         Runtime::buildShaderProgram(pDevice, database, 0);
         database.clearShaderProgramDefinitions();
 

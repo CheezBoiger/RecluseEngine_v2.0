@@ -98,11 +98,20 @@ struct R_PUBLIC_API ShaderProgramDescription
     ~ShaderProgramDescription() { }
 };
 
+
+struct ShaderProgramDescriptionInfo
+{
+    // Descriptions that correspond to their shader program index.
+    std::vector<ShaderProgramDescription>    descriptions;
+    // Shader Program ids that correspond to their description.
+    std::vector<ShaderProgramId>            shaderProgramIds;
+};
+
 // Build the shader program definitions. When successful, will store the shader program into the given ShaderProgrmaDatabase. 
-R_PUBLIC_API ResultCode                     buildShaderProgramDefinitions(ShaderProgramDatabase& db, const ShaderProgramDescription& description, ShaderProgramId outId, ShaderIntermediateCode imm);
+R_PUBLIC_API ResultCode                     buildShaderPrograms(ShaderProgramDatabase& db, const ShaderProgramDescriptionInfo* descriptions, ShaderIntermediateCode imm);
 // Build the needed shader program definitions in order to define how the programs should be built in runtime.
-R_PUBLIC_API ResultCode                     buildShaderProgram(const ShaderProgramDescription& description, ShaderProgramId outId, ShaderIntermediateCode imm);
-R_PUBLIC_API ResultCode                     releaseShaderProgram(ShaderProgramId id);
+R_PUBLIC_API ResultCode                     buildShaderProgram(ShaderProgramDatabase& db, const ShaderProgramDescription& description, ShaderProgramId outId, ShaderIntermediateCode imm);
+R_PUBLIC_API ResultCode                     releaseShaderProgram(ShaderProgramDatabase& db, ShaderProgramId id);
 
 // Function to allow saving program definitions on disk.
 R_PUBLIC_API ResultCode                     saveProgramDefinitions(const std::string& dataPath);

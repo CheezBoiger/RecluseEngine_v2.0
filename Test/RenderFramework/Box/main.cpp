@@ -402,7 +402,7 @@ void createShaderProgram(GraphicsDevice* device)
     if (instance->getApi() == GraphicsApi_Direct3D12)
         GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
 
-    Pipeline::Builder::buildShaderProgramDefinitions(database, description, ShaderProgram_Box, instance->getApi() == GraphicsApi_Direct3D12 ? ShaderIntermediateCode_Dxil : ShaderIntermediateCode_Spirv);
+    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_Box, instance->getApi() == GraphicsApi_Direct3D12 ? ShaderIntermediateCode_Dxil : ShaderIntermediateCode_Spirv);
 #if WRITE_DATABASE
     {
         R_VERBOSE("Database", "Writing database.");
@@ -450,7 +450,7 @@ int main(char* argv[], int c)
     Log::initializeLoggingSystem();
     enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
+    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 

@@ -249,7 +249,7 @@ int main(int c, char* argv[])
         description.compute.cs = shaderPath.c_str();
         description.compute.csName = "main";
 
-        Pipeline::Builder::buildShaderProgramDefinitions(database, description, 0, pInstance->getApi() == GraphicsApi_Vulkan ? ShaderIntermediateCode_Spirv : ShaderIntermediateCode_Dxil);
+        Pipeline::Builder::buildShaderProgram(database, description, 0, pInstance->getApi() == GraphicsApi_Vulkan ? ShaderIntermediateCode_Spirv : ShaderIntermediateCode_Dxil);
         Runtime::buildShaderProgram(pDevice, database, ProgramId_Mandelbrot);
         database.clearShaderProgramDefinitions();
     }

@@ -27,12 +27,13 @@ namespace RecluseEditor
             ShaderProgramBuilder ProgramBuilder = new ShaderProgramBuilder();
 
             RasterShaderProgramDescription GridDescription = new RasterShaderProgramDescription();
-            GridDescription.ProgramId = (ulong)Shaders.Grid;
             GridDescription.Language = ShaderLanguage.Hlsl;
 
-            ProgramBuilder.PushDescription(GridDescription);
-            ProgramBuilder.Build(ShaderIntermediateLanguage.Spirv);
-            return false;
+            //ProgramBuilder.PushDescription(GridDescription, (ulong)Shaders.Grid);
+            //ProgramBuilder.Build(ShaderIntermediateLanguage.Spirv);
+            //ProgramBuilder.SaveToDisk(shaderProgramFile);
+            ProgramBuilder.Dispose();
+            return true;
         }
 
 

@@ -210,7 +210,7 @@ void createShaderProgram(GraphicsDevice* device)
     description.graphics.vsName = "Main";
     description.graphics.ps = fsSource.c_str();
     description.graphics.psName = "psMain";
-    Pipeline::Builder::buildShaderProgramDefinitions(database, description, ShaderProgram_Gbuffer, instance->getApi() == GraphicsApi_Direct3D12 ? ShaderIntermediateCode_Dxil : ShaderIntermediateCode_Spirv);
+    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_Gbuffer, instance->getApi() == GraphicsApi_Direct3D12 ? ShaderIntermediateCode_Dxil : ShaderIntermediateCode_Spirv);
     Runtime::buildShaderProgram(device, database, ShaderProgram_Gbuffer);
 
 
@@ -222,7 +222,7 @@ void createShaderProgram(GraphicsDevice* device)
     description.graphics.vsName = "Main";
     description.graphics.ps = fsSource.c_str();
     description.graphics.psName = "psMain";
-    Pipeline::Builder::buildShaderProgramDefinitions(database, description, ShaderProgram_LightResolve, instance->getApi() == GraphicsApi_Direct3D12 ? ShaderIntermediateCode_Dxil : ShaderIntermediateCode_Spirv);
+    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_LightResolve, instance->getApi() == GraphicsApi_Direct3D12 ? ShaderIntermediateCode_Dxil : ShaderIntermediateCode_Spirv);
     Runtime::buildShaderProgram(device, database, ShaderProgram_LightResolve);
     database.clearShaderProgramDefinitions();
 }
