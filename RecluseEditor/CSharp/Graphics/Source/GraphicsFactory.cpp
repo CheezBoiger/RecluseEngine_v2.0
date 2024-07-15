@@ -414,6 +414,12 @@ IGraphicsDevice::IGraphicsDevice(GraphicsApi graphicsApi, System::String^ appNam
     , m_device(nullptr)
     , m_adapter(nullptr)
 {
+    if (EnableDebugLayer)
+    {
+        freopen("Recluse.log.txt", "a+", stdout);
+        Log::initializeLoggingSystem();
+    }
+
     switch (graphicsApi)
     {
         case CSharp::GraphicsApi::Direct3D12:
@@ -426,8 +432,24 @@ IGraphicsDevice::IGraphicsDevice(GraphicsApi graphicsApi, System::String^ appNam
     }
     R_ASSERT(m_instance);
     ApplicationInfo appInfo = { };
-    appInfo.engineName = "";
-    appInfo.appName = "";
+    std::string EngineName = "";
+    std::string AppName = "";
+    if (appName->Length != 0)
+    {
+        AppName.resize(appName->Length);
+        for (U32 i = 0; i < appName->Length; ++i)
+            AppName[i] = appName[i];
+    }
+
+    if (engineName->Length != 0)
+    {
+        EngineName.resize(engineName->Length);
+        for (U32 i = 0; i < engineName->Length; ++i)
+            EngineName[i] = engineName[i];
+    }
+
+    appInfo.engineName = AppName.c_str();
+    appInfo.appName = EngineName.c_str();
     LayerFeatureFlags layerFlags = 0;
     if (EnableDebugLayer)
     {
@@ -452,6 +474,7 @@ IGraphicsDevice::~IGraphicsDevice()
     R_ASSERT(m_device);
     m_adapter->destroyDevice(m_device);
     GraphicsInstance::destroyInstance(m_instance);
+    Log::destroyLoggingSystem();
 }
 
 

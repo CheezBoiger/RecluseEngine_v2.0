@@ -9,6 +9,7 @@ using Microsoft.CSharp;
 using System.Collections;
 using System.Diagnostics;
 using System.Threading;
+using System.Windows.Input;
 
 namespace RecluseEditor
 {
@@ -25,9 +26,6 @@ namespace RecluseEditor
         
         public bool ShouldMessage = false;
         public System.Collections.Concurrent.ConcurrentQueue<string> ConsoleQueue;
-
-        Stopwatch sw;
-        uint frameCounter = 0;
         public MainWindow()
         {
             InitializeComponent();
@@ -36,9 +34,6 @@ namespace RecluseEditor
             TitleName = RecluseEditor.MainApp.ApplicationName;
 
             ConsoleQueue = new System.Collections.Concurrent.ConcurrentQueue<string>();
-
-            sw = new Stopwatch();
-            sw.Start();
         }
 
         // Updates Rendering.
@@ -60,6 +55,7 @@ namespace RecluseEditor
                         new float[4] { (float)Math.Abs(Math.Sin((float)t)), 1, 0, 0 },
                         new Recluse.CSharp.Rect(0, 0, (float)GameGraphicsHost.ActualWidth, (float)GameGraphicsHost.ActualHeight));
                 });
+            
         }
         
         void UpdateEditRender(object obj, EventArgs e)
@@ -115,7 +111,7 @@ namespace RecluseEditor
 
         public void OnLoaded(object sender, RoutedEventArgs e)
         {
-            Renderer.Initialize(GraphicsApi.Direct3D12, "", "");
+            Renderer.Initialize(GraphicsApi.Vulkan, "RecluseEditor", "Recluse");
             GameGraphicsHost = new Recluse.CSharp.GraphicsHost("GameView");
             EditGraphicsHost = new Recluse.CSharp.GraphicsHost("EditView");
 

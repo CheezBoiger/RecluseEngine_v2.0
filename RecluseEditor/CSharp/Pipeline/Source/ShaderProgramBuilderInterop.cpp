@@ -40,7 +40,7 @@ Recluse::ShaderLanguage CSharpToNativeHighLanguage(ShaderLanguage Language)
 }
 
 
-Recluse::BindType CSharpToNativePipelineType(PipelineType Pipeline)
+R_INTERNAL Recluse::BindType CSharpToNativePipelineType(PipelineType Pipeline)
 {
     switch (Pipeline)
     {

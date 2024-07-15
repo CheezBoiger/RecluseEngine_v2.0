@@ -28,7 +28,7 @@ namespace RecluseEditor
 
         public static void Initialize(GraphicsApi Api, string AppName, string EngineName)
         {
-            Device = new IGraphicsDevice(Api, AppName, EngineName, false);
+            Device = new IGraphicsDevice(Api, AppName, EngineName, true);
             Context = new IGraphicsContext(Device);
             Database.Initialize(Device);
             Context.SetContextFrame(3);
@@ -41,6 +41,8 @@ namespace RecluseEditor
         /// <param name="Host"></param>
         public static void InitializeSwapchain(RenderView View, GraphicsHost Host)
         {
+            // Wait for the device to finish, if we hadn't already done so.
+            Context.Wait();
             switch (View)
             {
                 case RenderView.EditMode:

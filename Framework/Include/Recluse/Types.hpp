@@ -19,7 +19,8 @@ typedef short               I16;
 
 typedef unsigned            U32;
 typedef signed              I32;
-typedef unsigned int        Uint;
+typedef unsigned int        UInt;
+typedef UInt                uint;
 
 typedef unsigned long long  U64;
 typedef signed long long    I64;

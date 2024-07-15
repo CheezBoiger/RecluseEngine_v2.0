@@ -9,6 +9,7 @@
 #include <vector>
 #include <vcclr.h>
 #include <msclr/marshal.h>
+
 #using <WindowsBase.dll>
 #using <PresentationCore.dll>
 #using <PresentationFramework.dll>
@@ -275,6 +276,25 @@ public enum class BorderColor : System::Int32
 };
 
 
+public enum class InputRate : System::Int32
+{
+    PerVertex,
+    PerInstance
+};
+
+
+public enum class Semantic : System::Int32
+{
+    Position = Semantic_Position,   
+    Normal = Semantic_Normal,
+    Texcoord = Semantic_Texcoord,
+    Binormal = Semantic_Binormal,
+    Tangent = Semantic_Tangent,
+    Color = Semantic_Color,
+    TessFactor = Semantic_TessFactor
+};
+
+
 public value struct ResourceCreateInformation
 {
     System::UInt32 Width;
@@ -332,7 +352,7 @@ public value struct CopyBufferRegion
 
 ref class IResource;
 ref class IShaderProgramDefinition;
-ref class IVertexInputLayout;
+value struct IVertexInputLayout;
 
 // Graphics device.
 R_PUBLIC_API public ref class IGraphicsDevice
@@ -357,6 +377,35 @@ private:
     GraphicsInstance* m_instance;
     GraphicsAdapter* m_adapter;
     GraphicsDevice* m_device;
+};
+
+
+public value struct IVertexAttribute
+{
+    enum class Helper { OffsetAppend = Recluse::VertexAttribute::OffsetAppend };
+    System::UInt32          Location;
+    System::UInt32          OffsetBytes;
+    CSharp::ResourceFormat  Format;
+    CSharp::Semantic        SemanticTag;
+    System::UInt32          SemanticIndex;
+};
+
+
+public value struct IVertexBinding
+{
+    System::UInt32 Binding;
+    System::UInt32 Stride;
+    InputRate      Rate;
+    System::Collections::ArrayList^ VertexAttributes;
+};
+
+
+public value struct IVertexInputLayout
+{
+public:
+    enum class Limits { BindingCount = VertexInputLayout::VertexInputLayout_BindingCount };
+    enum class Constants { Null = VertexInputLayout::VertexLayout_Null };
+    System::Collections::ArrayList^ VertexBindings;
 };
 
 

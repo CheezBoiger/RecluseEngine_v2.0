@@ -21,14 +21,6 @@ using namespace System::Windows;
 using namespace System::Windows::Interop;
 using namespace Recluse::Pipeline;
 
-
-public enum class PipelineType : System::Int32
-{
-    Graphics,
-    Compute,
-    Raytracing
-};
-
 public enum class ShaderLanguage : System::Int32
 {
     Glsl,
@@ -41,6 +33,14 @@ public enum class ShaderIntermediateLanguage : System::Int32
     Dxil,
     Dxbc,
     Spirv
+};
+
+
+public enum class PipelineType : System::Int32
+{
+    Graphics,
+    Compute,
+    Raytracing
 };
 
 

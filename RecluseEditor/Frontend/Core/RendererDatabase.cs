@@ -3,6 +3,7 @@ using Recluse.CSharp;
 using RecluseEditor.Graphics;
 using Recluse.CSharp.Pipeline;
 using System;
+using System.Security.Policy;
 
 namespace RecluseEditor
 {
@@ -22,7 +23,7 @@ namespace RecluseEditor
             Position_Normal_UV0_UV1
         }
 
-        public static bool Initialize(IGraphicsDevice device)
+        public static bool Initialize(IGraphicsDevice Device)
         {
             ShaderProgramBuilder ProgramBuilder = new ShaderProgramBuilder();
 
