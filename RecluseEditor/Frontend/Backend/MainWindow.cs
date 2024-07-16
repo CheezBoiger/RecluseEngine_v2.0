@@ -111,7 +111,7 @@ namespace RecluseEditor
 
         public void OnLoaded(object sender, RoutedEventArgs e)
         {
-            Renderer.Initialize(GraphicsApi.Vulkan, "RecluseEditor", "Recluse");
+            Renderer.Initialize(GraphicsApi.Direct3D12, "RecluseEditor", "Recluse");
             GameGraphicsHost = new Recluse.CSharp.GraphicsHost("GameView");
             EditGraphicsHost = new Recluse.CSharp.GraphicsHost("EditView");
 
@@ -134,6 +134,7 @@ namespace RecluseEditor
         /// <param name="e"></param>
         public void OnExit(object sender, EventArgs e)
         {
+            Renderer.Shutdown();
             Close();
         }
 
