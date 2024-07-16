@@ -175,8 +175,8 @@ namespace RecluseEditor
         {
             if (DepthBuffer != null)
             {
-                DepthBuffer.ReleaseImmediatelyOnDispose();
-                DepthBuffer.Dispose();
+                DepthBuffer.MarkToReleaseImmediately();
+                DepthBuffer = null;
             }
             ResourceCreateInformation ResourceCreateInfo = new ResourceCreateInformation();
             ResourceCreateInfo.Name = "DepthBuffer";

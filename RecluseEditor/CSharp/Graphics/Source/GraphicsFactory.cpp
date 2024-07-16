@@ -113,6 +113,58 @@ R_INTERNAL Recluse::ResourceFormat CSharpToNativeFormat(CSharp::ResourceFormat f
 };
 
 
+R_INTERNAL CSharp::ResourceFormat NativeFormatToCSharpFormat(Recluse::ResourceFormat Format)
+{
+    switch (Format)
+    {
+        case ResourceFormat_R11G11B10_Float:
+            return ResourceFormat::R11G11B10_Float;
+        case ResourceFormat_R16G16B16A16_Float:
+            return ResourceFormat::R16G16B16A16_Float;
+        case ResourceFormat_R16G16_Float:
+            return ResourceFormat::R16G16_Float;
+        case ResourceFormat_R16_Float:
+            return ResourceFormat::R16_Float;
+        case ResourceFormat_R16_Uint:
+            return ResourceFormat::R16_Uint;
+        case ResourceFormat_R24_Unorm_X8_Typeless:
+            return ResourceFormat::R24_Unorm_X8_Typeless;
+        case ResourceFormat_R32G32B32A32_Float:
+            return ResourceFormat::R32G32B32A32_Float;
+        case ResourceFormat_R32G32B32A32_Uint:
+            return ResourceFormat::R32G32B32A32_Uint;
+        case ResourceFormat_R32G32_Float:
+            return ResourceFormat::R32G32_Float;
+        case ResourceFormat_B8G8R8A8_Srgb:
+            return ResourceFormat::B8G8R8A8_Srgb;
+        case ResourceFormat_B8G8R8A8_Unorm:
+            return ResourceFormat::B8G8R8A8_Unorm;
+        case ResourceFormat_BC1_Unorm:
+            return ResourceFormat::BC1_Unorm;
+        case ResourceFormat_BC2_Unorm:
+            return ResourceFormat::BC2_Unorm;
+        case ResourceFormat_BC3_Unorm:
+            return ResourceFormat::BC3_Unorm;
+        case ResourceFormat_BC4_Unorm:
+            return ResourceFormat::BC4_Unorm;
+        case ResourceFormat_BC5_Unorm:
+            return ResourceFormat::BC5_Unorm;
+        case ResourceFormat_BC7_Unorm:
+            return ResourceFormat::BC7_Unorm;
+        case ResourceFormat_D24_Unorm_S8_Uint:
+            return ResourceFormat::D24_Unorm_S8_Uint;
+        case ResourceFormat_D32_Float:
+            return ResourceFormat::D32_Float;
+        case ResourceFormat_D32_Float_S8_Uint:
+            return ResourceFormat::D32_Float_S8_Uint;
+        case ResourceFormat_R8_Uint:
+            return ResourceFormat::R8_Uint;
+        case ResourceFormat_Unknown:
+            return ResourceFormat::Unknown;
+    }   
+}
+
+
 R_INTERNAL Recluse::ResourceState CSharpToNativeState(CSharp::ResourceState state)
 {
     switch (state)
@@ -361,6 +413,15 @@ IResource::IResource(IGraphicsDevice^ Device, const ResourceCreateInformation^ C
 
 
 IResource::~IResource()
+{
+    if (DeviceRef)
+    {
+        DeviceRef->destroyResource(Resource, m_releaseImmediately);
+    }
+}
+
+
+IResource::!IResource()
 {
     if (DeviceRef)
     {
@@ -923,9 +984,6 @@ ShaderProgramBinder^ ShaderProgramBinder::BindSampler(CSharp::ShaderStage Stage,
 }
 
 
-
-
-
 ISampler::ISampler(IGraphicsDevice^ Device, 
         CSharp::SamplerAddressMode AddressModeU, 
         CSharp::SamplerAddressMode AddressModeV, 
@@ -958,6 +1016,7 @@ ISampler::ISampler(IGraphicsDevice^ Device,
     description.compareOp           = CSharpToNativeCompareOp(CompareOperation);
     ResultCode code = Device()->createSampler(&sampler, description);
     
+    Sampler = sampler;
 }
 
 
@@ -966,6 +1025,16 @@ ISampler::~ISampler()
     if (Sampler)
     {
         DeviceRef->destroySampler(Sampler);
+    }
+}
+
+
+ISampler::!ISampler()
+{
+    if (Sampler)
+    {
+        DeviceRef->destroySampler(Sampler);
+        Sampler = nullptr;
     }
 }
 
@@ -989,6 +1058,13 @@ void IGraphicsDevice::UnloadShaderProgram(System::UInt64 ProgramId)
 void IGraphicsDevice::DestroyVertexLayout(System::UInt64 VertexLayoutId)
 {
     m_device->destroyVertexLayout((VertexInputLayoutId)VertexLayoutId);
+}
+
+
+CSharp::ResourceFormat ISwapchain::GetFormat()
+{
+    const SwapchainCreateDescription& desc = Swapchain->getDesc();
+    return NativeFormatToCSharpFormat(desc.format);
 }
 } // CSharp
 } // Recluse

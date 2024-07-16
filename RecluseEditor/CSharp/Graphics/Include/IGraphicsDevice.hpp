@@ -416,7 +416,8 @@ public:
     IResource(IGraphicsDevice^ Device, const ResourceCreateInformation^ CreateInfo, ResourceState InitialState);
     IResource(GraphicsResource* Resource);
 
-    virtual ~IResource();
+    ~IResource();
+    !IResource();
 
     System::UIntPtr Map(System::UInt64 ReadOffsetBytes, System::UInt64 ReadSizeBytes);
     System::UInt32 Unmap(System::UIntPtr Ptr, System::UInt64 WriteOffsetBytes, System::UInt64 WriteSizeBytes);
@@ -425,7 +426,7 @@ public:
 
     GraphicsResource* operator ()() { return Resource; }
 
-    void ReleaseImmediatelyOnDispose() { m_releaseImmediately = true; }
+    void MarkToReleaseImmediately() { m_releaseImmediately = true; }
 private:
     GraphicsResource* Resource;
     GraphicsDevice* DeviceRef;
@@ -457,6 +458,8 @@ public:
         CSharp::Single MipLodBias,
         CSharp::BorderColor BorderColour);
     ~ISampler();
+    // Finalizer.
+    !ISampler();
 
     GraphicsSampler* operator()() { return Sampler; }
 private:
@@ -540,6 +543,7 @@ public:
     void Prepare(IGraphicsContext^ Context);
     void Present(IGraphicsContext^ Context);
 
+    ResourceFormat GetFormat();
     IResource^ GetCurrentFrame();
 private:
     void CreateSwapchain(GraphicsDevice* DeviceRef, void* WindowPtr, const SwapchainCreateDescription& Description);
