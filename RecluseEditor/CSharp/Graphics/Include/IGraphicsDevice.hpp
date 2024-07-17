@@ -295,6 +295,78 @@ public enum class Semantic : System::Int32
 };
 
 
+public enum class IndexType : System::UInt32
+{
+    Unsigned16,
+    Unsigned32
+};
+
+
+public enum class ColorComponent : System::UInt32
+{
+    Red = Color_R,
+    Green = Color_G,
+    Blue = Color_B,
+    Alpha = Color_A,
+    Rgba = Color_Rgba
+};
+
+
+public enum class BlendOp : System::UInt32
+{
+    Add,
+    Subtract,
+    ReverseSubtract,
+    Min,
+    Max
+};
+
+
+public enum class LogicOp : System::Int32
+{
+    Clear,
+    And,
+    AndReverse,
+    Copy,
+    AndInverted,
+    NoOp,
+    Xor,
+    Or,
+    Nor,
+    Equivalent,
+    Invert,
+    OrReverse,
+    CopyInverted,
+    OrInverted,
+    Nand,
+    Set
+};
+
+
+public enum class BlendFactor : System::Int32
+{
+    Zero,
+    One,
+    SourceColor,
+    OneMinusSourceColor,
+    DestinationColor,
+    OneMinusDestinationColor,
+    SourceAlpha,
+    OneMinusSourceAlpha,
+    DestinationAlpha,
+    OneMinusDestinationAlpha,
+    ConstantColor,
+    OneMinusConstantColor,
+    ConstantAlpha,
+    OneMinusConstantAlpha,
+    SourceAlphaSaturate,
+    SourceOneColor,
+    OneMinusSourceOneColor,
+    SourceOneAlpha,
+    OneMinusSourceOneAlpha
+};
+
+
 public value struct ResourceCreateInformation
 {
     System::UInt32 Width;
@@ -434,13 +506,6 @@ private:
 };
 
 
-public enum class IndexType : System::UInt32
-{
-    Unsigned16,
-    Unsigned32
-};
-
-
 public ref class ISampler
 {
 public:
@@ -508,9 +573,23 @@ public:
     void SetCullMode(CullMode Mode);
     void SetFrontFace(FrontFace Face);
     void SetDepthCompareOp(CompareOp CompareOperation);
+    void SetDepthClampEnable(System::Boolean Enable);
+    void SetDepthBiasEnable(System::Boolean Enable);
+    void SetDepthBiasClamp(System::Single Scale);
+    void SetStencilReference(System::Byte StencilRef);
+    void SetStencilWriteMask(System::Byte Mask);
+    void SetStencilReadMask(System::Byte Mask);
     void SetTopology(PrimitiveTopology Topology);
     void SetPolygonMode(PolygonMode Mode);
     void SetLineWidth(System::Single Width);
+
+    void SetColorWriteMask(System::UInt32 RtIndex, ColorComponent WriteMask);
+    void SetBlendEnable(System::UInt32 RtIndex, System::Boolean Enable);
+    void SetBlendLogicOpEnable(System::Boolean Enable);
+    void SetBlendLogicOp(LogicOp LogicOperation);
+    void SetBlendConstants(array<System::Single^>^ BlendConstants);
+    void SetBlend(System::UInt32 RtIndex, BlendFactor SrcColorFactor, BlendFactor DstColorFactor, BlendOp ColorBlendOp,
+                                          BlendFactor SrcAlphaFactor, BlendFactor DstAlphaFactor, BlendOp AlphaOp);
     
     void DrawIndexedInstanced(System::Int32 IndexCount, System::Int32 InstanceCount, System::Int32 FirstIndex, System::Int32 VertexOffset, System::Int32 FirstInstance);
     void DrawInstanced(System::Int32 VertexCount, System::Int32 InstanceCount, System::Int32 FirstVertex, System::Int32 FirstInstance);

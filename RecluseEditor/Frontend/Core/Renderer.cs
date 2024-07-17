@@ -1,7 +1,7 @@
 //
 using System;
 using System.Collections;
-
+using System.Windows;
 using Recluse;
 using Recluse.CSharp;
 
@@ -146,6 +146,9 @@ namespace RecluseEditor
             //Context.EnableStencil(false);
             //Context.BindShaderProgram((ulong)Database.Shaders.Grid, 0);
             //Context.SetInputVertexLayout((uint)Database.Vertex.PositionOnly);
+            Context.SetCullMode(CullMode.None);
+            Context.SetFrontFace(FrontFace.CounterClockwise);
+            Context.SetDepthCompareOp(CompareOp.LessOrEqual);
             #endregion
             Context.Transition(SwapchainResource, ResourceState.Present);
             Context.End();

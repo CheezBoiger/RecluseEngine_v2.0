@@ -382,6 +382,101 @@ R_INTERNAL Recluse::SamplerMipMapMode getSamplerMipMode(CSharp::SamplerMipMapMod
 }
 
 
+R_INTERNAL Recluse::LogicOp CSharpToNativeLogicOp(CSharp::LogicOp Op)
+{
+    switch (Op)
+    {
+        case LogicOp::And:
+            return LogicOp_And;
+        case LogicOp::AndReverse:
+            return LogicOp_AndReverse;
+        case LogicOp::Copy:
+            return LogicOp_Copy;
+        case LogicOp::AndInverted:
+            return LogicOp_AndInverted;
+        case LogicOp::Xor:
+            return LogicOp_Xor;
+        case LogicOp::Clear:
+            return LogicOp_Clear;
+        case LogicOp::Or:
+            return LogicOp_Or;
+        case LogicOp::Nor:
+            return LogicOp_Nor;
+        case LogicOp::Equivalent:
+            return LogicOp_Equivalent;
+        case LogicOp::NoOp:
+        default:
+            return LogicOp_NoOp;
+    }
+}
+
+
+R_INTERNAL Recluse::BlendOp CSharpToNativeBlendOp(CSharp::BlendOp Op)
+{
+    switch (Op)
+    {
+        case BlendOp::Subtract:
+            return BlendOp_Subtract;
+        case BlendOp::ReverseSubtract:
+            return BlendOp_ReverseSubtract;
+        case BlendOp::Min:
+            return BlendOp_Min;
+        case BlendOp::Max:
+            return BlendOp_Max;
+        case BlendOp::Add:
+        default:
+            return BlendOp_Add;
+    }
+}
+
+
+R_INTERNAL Recluse::BlendFactor CSharpToNativeBlendFactor(CSharp::BlendFactor Factor)
+{
+    switch (Factor)
+    {
+        case BlendFactor::SourceAlpha:
+            return BlendFactor_SourceAlpha;
+        case BlendFactor::SourceOneAlpha:
+            return BlendFactor_SourceOneAlpha;
+        case BlendFactor::OneMinusSourceAlpha:
+            return BlendFactor_OneMinusSourceAlpha;
+        case BlendFactor::DestinationAlpha:
+            return BlendFactor_DestinationAlpha;
+        case BlendFactor::DestinationColor:
+            return BlendFactor_DestinationColor;
+        case BlendFactor::OneMinusDestinationColor:
+            return BlendFactor_OneMinusDestinationColor;
+        case BlendFactor::OneMinusDestinationAlpha:
+            return BlendFactor_OneMinusDestinationAlpha;
+        case BlendFactor::OneMinusConstantColor:
+            return BlendFactor_OneMinusConstantColor;
+        case BlendFactor::ConstantAlpha:
+            return BlendFactor_ConstantAlpha;
+        case BlendFactor::SourceColor:
+            return BlendFactor_SourceColor;
+        case BlendFactor::OneMinusConstantAlpha:
+            return BlendFactor_OneMinusConstantAlpha;
+        case BlendFactor::OneMinusSourceColor:
+            return BlendFactor_OneMinusSourceColor;
+        case BlendFactor::OneMinusSourceOneColor:
+            return BlendFactor_OneMinusSourceOneColor;
+        case BlendFactor::SourceAlphaSaturate:
+            return BlendFactor_SourceAlphaSaturate;
+        case BlendFactor::SourceOneColor:
+            return BlendFactor_SourceOneColor;
+        case BlendFactor::OneMinusSourceOneAlpha:
+            return BlendFactor_OneMinusSourceOneAlpha;
+        case BlendFactor::One:
+            return BlendFactor_One;
+        case BlendFactor::Zero:
+            return BlendFactor_Zero;
+        case BlendFactor::ConstantColor:
+        default:
+            return BlendFactor_ConstantColor;
+    }
+}
+
+
 IResource::IResource(GraphicsResource* Resource)
     : Resource(Resource)
     , DeviceRef(nullptr)
@@ -875,6 +970,42 @@ void IGraphicsContext::EnableStencil(System::Boolean Enable)
 }
 
 
+void IGraphicsContext::SetDepthClampEnable(System::Boolean Enable)
+{
+    Context->setDepthClampEnable(Enable);
+}
+
+
+void IGraphicsContext::SetDepthBiasEnable(System::Boolean Enable)
+{
+    Context->setDepthBiasEnable(Enable);
+}
+
+
+void IGraphicsContext::SetDepthBiasClamp(System::Single Scale)
+{
+    Context->setDepthBiasClamp(Scale);
+}
+
+
+void IGraphicsContext::SetStencilReference(System::Byte StencilRef)
+{
+    Context->setStencilReference(StencilRef);
+}
+
+
+void IGraphicsContext::SetStencilReadMask(System::Byte Mask)
+{
+    Context->setStencilReadMask(Mask);
+}
+
+
+void IGraphicsContext::SetStencilWriteMask(System::Byte Mask)
+{
+    Context->setStencilWriteMask(Mask);
+}
+
+
 void IGraphicsContext::SetInputVertexLayout(System::UInt64 InputLayout)
 {
     Context->setInputVertexLayout((VertexInputLayoutId)InputLayout);
@@ -932,6 +1063,49 @@ void IGraphicsContext::SetTopology(PrimitiveTopology Topology)
 void IGraphicsContext::SetLineWidth(System::Single Width)
 {
     Context->setLineWidth((F32)Width);
+}
+
+
+void IGraphicsContext::SetColorWriteMask(System::UInt32 RtIndex, ColorComponent WriteMask)
+{
+    Context->setColorWriteMask(RtIndex, (ColorComponentMaskFlags)WriteMask);
+}
+
+
+void IGraphicsContext::SetBlendEnable(System::UInt32 RtIndex, System::Boolean Enable)
+{
+    Context->setBlendEnable(RtIndex, Enable);
+}
+
+
+void IGraphicsContext::SetBlendLogicOpEnable(System::Boolean Enable)
+{
+    Context->setBlendLogicOpEnable(Enable);
+}
+
+
+void IGraphicsContext::SetBlendLogicOp(LogicOp LogicOperation)
+{
+    Context->setBlendLogicOp(CSharpToNativeLogicOp(LogicOperation));
+}
+
+
+void IGraphicsContext::SetBlendConstants(array<System::Single^>^ BlendConstants)
+{
+    F32 blendConstants[4];
+    blendConstants[0] = static_cast<F32>(BlendConstants[0]);
+    blendConstants[1] = static_cast<F32>(BlendConstants[1]);
+    blendConstants[2] = static_cast<F32>(BlendConstants[2]);
+    blendConstants[3] = static_cast<F32>(BlendConstants[3]);
+    Context->setBlendConstants(blendConstants);
+}
+
+
+void IGraphicsContext::SetBlend(System::UInt32 RtIndex, BlendFactor SrcColorFactor, BlendFactor DstColorFactor, BlendOp ColorBlendOp,
+                                          BlendFactor SrcAlphaFactor, BlendFactor DstAlphaFactor, BlendOp AlphaOp)
+{
+    Context->setBlend(RtIndex, CSharpToNativeBlendFactor(SrcColorFactor), CSharpToNativeBlendFactor(DstColorFactor), CSharpToNativeBlendOp(ColorBlendOp),
+                               CSharpToNativeBlendFactor(SrcAlphaFactor), CSharpToNativeBlendFactor(DstAlphaFactor), CSharpToNativeBlendOp(AlphaOp));
 }
 
 
