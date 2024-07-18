@@ -137,19 +137,15 @@ public:
     ResultCode                                  deserialize(Archive* pArchive) override;
 
     const MetaMap&                              obtainMetaMap() const { return m_shaderProgramMetaMap; }                        
-    Bool                                        hasShader(Hash64 shaderHash) const
-    {
-        auto& it = m_shaderMap.find(shaderHash);
-        return (it != m_shaderMap.end());  
-    }
+    Bool                                        hasShader(ShaderType shaderType, Hash64 shaderHash) const;
 
-    Bool hasShaderProgramDefinitions(ShaderProgramId shaderProgram)
+    Bool hasShaderProgramDefinitions(ShaderProgramId shaderProgram) const
     {
         auto& it = m_shaderProgramMetaMap.find(shaderProgram);
         return (it != m_shaderProgramMetaMap.end());
     }
 
-    Shader*                         obtainShader(Hash64 id) const;
+    Shader*                         obtainShader(ShaderType shaderType, Hash64 id) const;
 
     const PermutationMap* obtainShaderProgramPermutations(ShaderProgramId shaderProgram) const
     {
@@ -166,10 +162,10 @@ private:
     void                                        cleanUpShaderProgramDefinition(const ShaderProgramDefinition& definition);
     void                                        removeShader(Shader* pShader);
 
-    std::map<Hash64, Shader*>                   m_shaderMap;
-    MetaMap                                     m_shaderProgramMetaMap;
-    std::string                                 m_name;
-    Hash64                                      m_nameHash;
+    std::map<ShaderType, std::map<Hash64, Shader*>> m_shaderMap;
+    MetaMap                                         m_shaderProgramMetaMap;
+    std::string                                     m_name;
+    Hash64                                          m_nameHash;
 };
 
 

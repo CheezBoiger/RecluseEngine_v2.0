@@ -252,14 +252,15 @@ void ShaderProgramDatabase::removeShader(Shader* pShader)
     if (pShader)
     {
         Hash64 shaderHash = makeShaderHash(pShader->getByteCode(), pShader->getSzBytes());
-        auto& iter = m_shaderMap.find(shaderHash);
-        if (iter != m_shaderMap.end())
+        auto& iter = m_shaderMap[pShader->getType()].find(shaderHash);
+        if (iter != m_shaderMap[pShader->getType()].end())
         {
             U32 count = iter->second->release();
             if (count == 0)
             {
+                ShaderType shaderType = pShader->getType();
                 Shader::destroy(iter->second);
-                m_shaderMap.erase(iter);
+                m_shaderMap[shaderType].erase(iter);
             }
         }
     }
@@ -331,14 +332,14 @@ void ShaderProgramDatabase::storeShader(Shader* pShader)
     if (!pShader)
         return;
     Hash64 hash = makeShaderHash(pShader->getByteCode(), pShader->getSzBytes());
-    auto& iter = m_shaderMap.find(hash);
-    if (iter != m_shaderMap.end())
+    auto& iter = m_shaderMap[pShader->getType()].find(hash);
+    if (iter != m_shaderMap[pShader->getType()].end())
     {
         iter->second->addReference();
     }
     else
     {
-        m_shaderMap.insert(std::make_pair(hash, pShader));
+        m_shaderMap[pShader->getType()].insert(std::make_pair(hash, pShader));
         //g_shaderMap[hash]->addReference();
     }
 }
@@ -385,12 +386,28 @@ void ShaderProgramDatabase::storeShaderProgramDefinition(const ShaderProgramDefi
 }
 
 
-Shader* ShaderProgramDatabase::obtainShader(Hash64 id) const
+Shader* ShaderProgramDatabase::obtainShader(ShaderType shaderType, Hash64 id) const
 {
-    auto& iter = m_shaderMap.find(id);
-    if (iter != m_shaderMap.end())
-        return iter->second;
+    const auto& shaderMap = m_shaderMap.find(shaderType);
+    if (shaderMap != m_shaderMap.end())
+    {
+        auto& iter = shaderMap->second.find(id);
+        if (iter != shaderMap->second.end())
+            return iter->second;
+    }
     return nullptr;
+}
+
+
+Bool ShaderProgramDatabase::hasShader(ShaderType shaderType, Hash64 shaderHash) const
+{
+    const auto& shaderMap = m_shaderMap.find(shaderType);
+    if (shaderMap != m_shaderMap.end())
+    {
+        auto& it = shaderMap->second.find(shaderHash);
+        return (it != shaderMap->second.end());  
+    }
+    return false;
 }
 
 
@@ -435,11 +452,14 @@ ResultCode ShaderProgramDatabase::serialize(Archive* pArchive) const
 
     // Write shaders before we write the metamap. Do this first after reading the header! Then we will iterate over all 
     // shader program definitions to write.
-    for (auto& shaderIter : m_shaderMap)
+    for (auto& shaderTypeMap : m_shaderMap)
     {
-        shaderIter.second->serialize(pArchive);
-        U32 references = shaderIter.second->getReference();
-        pArchive->write(&references, sizeof(U32));
+        for (auto& shaderIter : shaderTypeMap.second)
+        {
+            shaderIter.second->serialize(pArchive);
+            U32 references = shaderIter.second->getReference();
+            pArchive->write(&references, sizeof(U32));
+        }
     }
 
     // Now we store the information of each shader program definition!
@@ -542,7 +562,7 @@ ResultCode ShaderProgramDatabase::deserialize(Archive* pArchive)
         pArchive->read(&references, sizeof(U32));
         shader->addReference(references-1);
         Hash64 shaderHash = ShaderProgramDatabase::makeShaderHash(shader->getByteCode(), shader->getSzBytes());
-        m_shaderMap.insert(std::make_pair(shaderHash, shader));
+        m_shaderMap[shader->getType()].insert(std::make_pair(shaderHash, shader));
     }
 
     for (U32 i = 0; i < header.numPrograms; ++i)
@@ -568,31 +588,31 @@ ResultCode ShaderProgramDatabase::deserialize(Archive* pArchive)
                     definition.graphics.usesMeshShaders = !!permHeader.graphics.usesMeshShaders;
                     if (permHeader.graphics.usesMeshShaders)
                     {
-                        definition.graphics.as = obtainShader(permHeader.graphics.as);
-                        definition.graphics.ms = obtainShader(permHeader.graphics.ms);
+                        definition.graphics.as = obtainShader(ShaderType_Amplification, permHeader.graphics.as);
+                        definition.graphics.ms = obtainShader(ShaderType_Mesh, permHeader.graphics.ms);
                     }
                     else
                     {
-                        definition.graphics.vs = obtainShader(permHeader.graphics.vs);
-                        definition.graphics.gs = obtainShader(permHeader.graphics.gs);
-                        definition.graphics.ds = obtainShader(permHeader.graphics.ds);
-                        definition.graphics.hs = obtainShader(permHeader.graphics.hs);
+                        definition.graphics.vs = obtainShader(ShaderType_Vertex, permHeader.graphics.vs);
+                        definition.graphics.gs = obtainShader(ShaderType_Geometry, permHeader.graphics.gs);
+                        definition.graphics.ds = obtainShader(ShaderType_Domain, permHeader.graphics.ds);
+                        definition.graphics.hs = obtainShader(ShaderType_Hull, permHeader.graphics.hs);
                     }
-                    definition.graphics.ps = obtainShader(permHeader.graphics.ps);
+                    definition.graphics.ps = obtainShader(ShaderType_Pixel, permHeader.graphics.ps);
                     break;
                 }
                 case BindType_Compute:
                 {
-                    definition.compute.cs = obtainShader(permHeader.compute.cs);
+                    definition.compute.cs = obtainShader(ShaderType_Compute, permHeader.compute.cs);
                     break;
                 }
                 case BindType_RayTrace:
                 {
-                    definition.raytrace.rany = obtainShader(permHeader.raytrace.rany);
-                    definition.raytrace.rclosest = obtainShader(permHeader.raytrace.rclosest);
-                    definition.raytrace.rgen = obtainShader(permHeader.raytrace.rgen);
-                    definition.raytrace.rintersect = obtainShader(permHeader.raytrace.rintersect);
-                    definition.raytrace.rmiss = obtainShader(permHeader.raytrace.rmiss);
+                    definition.raytrace.rany = obtainShader(ShaderType_RayAnyHit, permHeader.raytrace.rany);
+                    definition.raytrace.rclosest = obtainShader(ShaderType_RayClosestHit, permHeader.raytrace.rclosest);
+                    definition.raytrace.rgen = obtainShader(ShaderType_RayGeneration, permHeader.raytrace.rgen);
+                    definition.raytrace.rintersect = obtainShader(ShaderType_RayIntersect, permHeader.raytrace.rintersect);
+                    definition.raytrace.rmiss = obtainShader(ShaderType_RayMiss, permHeader.raytrace.rmiss);
                     break;
                 }
             }

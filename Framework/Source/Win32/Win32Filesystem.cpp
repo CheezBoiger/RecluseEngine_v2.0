@@ -32,10 +32,11 @@ ResultCode File::readFrom(FileBufferData* pFile, const std::string& filePath)
     {
         DWORD sz        = (DWORD)file.getFileSz();
 
-        pFile->resize(sz);
+        pFile->resize(sz+1);
         result = file.read(pFile->data(), pFile->size());
         file.close();
-        
+        // Null terminate, as we don't gaurantee one.
+        (*pFile)[sz] = '\0';
         R_DEBUG(R_CHANNEL_WIN32, "Read %d bytes of data from file: %s", pFile->size(), filePath.c_str());
     }
 

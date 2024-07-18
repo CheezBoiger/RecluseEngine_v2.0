@@ -168,7 +168,7 @@ R_INTERNAL Shader* compileShader
         ShaderProgramDatabase& db, 
         std::map<ShaderType, ShaderReflection>& reflectionOut,
         const char* entryPoint, 
-        const std::string& shaderPath, 
+        const std::string& shaderCode, 
         ShaderPermutationId permutation,
         ShaderLanguage language, 
         ShaderType shaderType,
@@ -177,17 +177,16 @@ R_INTERNAL Shader* compileShader
     )
 {
     Shader* shader = nullptr;
-    if (!shaderPath.empty())
+    if (!shaderCode.empty())
     {
-        FileBufferData file = { };
-        ResultCode error = File::readFrom(&file, shaderPath);
-        Hash64 shaderHash = db.makeShaderHash(file.data(), sizeof(char) * file.size());
-        if (!db.hasShader(shaderHash))
+        ResultCode error = RecluseResult_Ok;
+        Hash64 shaderHash = db.makeShaderHash(shaderCode.data(), sizeof(char) * shaderCode.size());
+        if (!db.hasShader(shaderType, shaderHash))
         {
             shader = Shader::create();
             if (error == RecluseResult_Ok)
             { 
-                error = shaderBuilder->compile(shader, entryPoint, file.data(), file.size(), language, shaderType, defines);
+                error = shaderBuilder->compile(shader, entryPoint, shaderCode.data(), shaderCode.size(), language, shaderType, defines);
                 if (error != RecluseResult_Ok)
                 {
                     Shader::destroy(shader);
@@ -196,7 +195,6 @@ R_INTERNAL Shader* compileShader
                 else
                 {
                     ShaderReflection reflectionData = { };
-                    shader->setName(shaderPath.c_str());
                     ResultCode reflectError = shaderBuilder->reflect(reflectionData, shader->getByteCode(), shader->getSzBytes(), language);
                     if (reflectError == RecluseResult_Ok)
                     {
@@ -210,7 +208,7 @@ R_INTERNAL Shader* compileShader
         }
         else
         {
-            shader = db.obtainShader(shaderHash);
+            shader = db.obtainShader(shaderType, shaderHash);
         }
         errorOut |= error;
     }
