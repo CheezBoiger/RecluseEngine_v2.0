@@ -4,6 +4,8 @@
 #include "Recluse/Graphics/GraphicsCommon.hpp"
 #include "Recluse/Messaging.hpp"
 
+#include <msclr/marshal_cppstd.h>
+
 namespace Recluse {
 namespace CSharp {
 namespace Pipeline {
@@ -55,12 +57,23 @@ R_INTERNAL Recluse::BindType CSharpToNativePipelineType(PipelineType Pipeline)
 }
 
 
-ShaderProgramBuilder::ShaderProgramBuilder()
+ShaderProgramBuilder::ShaderProgramBuilder(ShaderCompiler Compiler)
     : Database(nullptr)
     , DescriptionInfo(nullptr)
 {
     Database = new ShaderProgramDatabase();
     DescriptionInfo = new ShaderProgramDescriptionInfo();
+
+    switch (Compiler)
+    {
+        case ShaderCompiler::DXC:
+            GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
+            break;
+        case ShaderCompiler::GLSLang:
+        default:
+            GlobalCommands::setValue("ShaderBuilder.NameId", "glslang");
+            break;
+    }
 }
 
 
@@ -74,6 +87,23 @@ ShaderProgramBuilder::~ShaderProgramBuilder()
     {
         delete DescriptionInfo;
     }
+}
+
+
+ShaderProgramBuilder::!ShaderProgramBuilder()
+{
+    if (Database)
+    {
+        delete Database;
+    }
+
+    if (DescriptionInfo)
+    {
+        delete DescriptionInfo;
+    }
+
+    Database = nullptr;
+    DescriptionInfo = nullptr;
 }
 
 
@@ -136,6 +166,19 @@ void ShaderProgramBuilder::Clear()
 }
 
 
+const char* ShaderProgramDescription::MakeNativeString(String^ Str)
+{
+    if (Str && (Str->Length != 0))
+    {
+        String^ const CSharpString = (String^ const)Str;
+        std::string str = msclr::interop::marshal_as<std::string>(CSharpString);
+        Strings->push_back(str);
+        return Strings->back().c_str();
+    }
+    return nullptr;
+}
+
+
 void ShaderProgramDescription::StoreIn(Builder::ShaderProgramDescription& description)
 {
     description.language = CSharpToNativeHighLanguage(Language);
@@ -147,18 +190,39 @@ void RasterShaderProgramDescription::StoreIn(Builder::ShaderProgramDescription& 
 {
     ShaderProgramDescription::StoreIn(description);
     description.pipelineType = BindType_Graphics;
+    description.graphics.ps = MakeNativeString(PS);
+    description.graphics.psName = MakeNativeString(PSName);
 }
 
 
 void VertexRasterShaderProgramDescription::StoreIn(Builder::ShaderProgramDescription& description)
 {
     RasterShaderProgramDescription::StoreIn(description);
+    description.graphics.vs = MakeNativeString(VS);
+    description.graphics.vsName = MakeNativeString(VSName);
+
+    description.graphics.gs = MakeNativeString(GS);
+    description.graphics.gsName = MakeNativeString(GSName);
+
+    description.graphics.ds = MakeNativeString(DS);
+    description.graphics.dsName = MakeNativeString(DSName);
+
+    description.graphics.hs = MakeNativeString(HS);
+    description.graphics.hsName= MakeNativeString(HSName);
 }
 
 
 void MeshShaderProgramDescription::StoreIn(Builder::ShaderProgramDescription& description)
 {
     RasterShaderProgramDescription::StoreIn(description);
+
+    description.graphics.usesMeshShaders = true;
+    
+    description.graphics.as = MakeNativeString(AS);
+    description.graphics.asName = MakeNativeString(ASName);
+    
+    description.graphics.ms = MakeNativeString(MS);
+    description.graphics.msName = MakeNativeString(MSName);
 }
 
 
@@ -166,6 +230,9 @@ void ComputeShaderProgramDescription::StoreIn(Builder::ShaderProgramDescription&
 {
     ShaderProgramDescription::StoreIn(description);
     description.pipelineType = BindType_Compute;
+
+    description.compute.cs = MakeNativeString(CS);
+    description.compute.csName = MakeNativeString(CSName);
 }
 
 
@@ -173,11 +240,41 @@ void RayTracingShaderProgramDescription::StoreIn(Builder::ShaderProgramDescripti
 {
     ShaderProgramDescription::StoreIn(description);
     description.pipelineType = BindType_RayTrace;
+
+    description.raytrace.rany = MakeNativeString(RAny);
+    description.raytrace.ranyName = MakeNativeString(RAnyName);
+
+    description.raytrace.rclosest = MakeNativeString(RClosest);
+    description.raytrace.rclosestName = MakeNativeString(RClosestName);
+
+    description.raytrace.rintersect = MakeNativeString(RIntersect);
+    description.raytrace.rintersectName = MakeNativeString(RIntersectName);
+
+    description.raytrace.rmiss = MakeNativeString(RMiss);
+    description.raytrace.rmissName = MakeNativeString(RMissName);
+
+    description.raytrace.rgen = MakeNativeString(RGen);
+    description.raytrace.rgenName = MakeNativeString(RGenName);
 }
 
 
 ShaderProgramDescription::~ShaderProgramDescription()
 {
+    if (Strings)
+    {
+        delete Strings;
+    }
+    Strings = nullptr;
+}
+
+
+ShaderProgramDescription::!ShaderProgramDescription()
+{
+    if (Strings)
+    {
+        delete Strings;
+    }
+    Strings = nullptr;
 }
 
 

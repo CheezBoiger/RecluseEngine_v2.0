@@ -620,6 +620,7 @@ IGraphicsDevice::IGraphicsDevice(GraphicsApi graphicsApi, System::String^ appNam
     GraphicsDevice* device = nullptr;
     result = m_adapter->createDevice(deviceCreateInfo, &device);
     m_device = device;
+    m_api = graphicsApi;
 }
 
 

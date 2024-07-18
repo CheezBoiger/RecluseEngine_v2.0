@@ -31,7 +31,8 @@ add_executable(${RECLUSE_EDITOR_FRONTEND}
 	Core/Geometry.cs
 	Core/Renderer.cs
 	Core/RendererDatabase.cs
-	Core/Grid.cs)
+	Core/Grid.cs
+	Core/Math.cs)
 	
 csharp_set_designer_cs_properties(
 	Content/Properties/SplashResources.Designer.cs

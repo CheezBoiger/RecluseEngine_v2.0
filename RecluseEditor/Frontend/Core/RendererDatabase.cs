@@ -3,6 +3,7 @@ using Recluse.CSharp;
 using RecluseEditor.Graphics;
 using Recluse.CSharp.Pipeline;
 using System;
+using System.IO;
 using System.Security.Policy;
 
 namespace RecluseEditor
@@ -25,15 +26,30 @@ namespace RecluseEditor
 
         public static bool Initialize(IGraphicsDevice Device)
         {
-            ShaderProgramBuilder ProgramBuilder = new ShaderProgramBuilder();
+            ShaderCompiler Compiler = ShaderCompiler.GLSLang;
+            if (Device.GetApi() == GraphicsApi.Direct3D12)
+                Compiler = ShaderCompiler.DXC;
+            ShaderProgramBuilder ProgramBuilder = new ShaderProgramBuilder(Compiler);
 
-            RasterShaderProgramDescription GridDescription = new RasterShaderProgramDescription();
+            VertexRasterShaderProgramDescription GridDescription = new VertexRasterShaderProgramDescription();
             GridDescription.Language = ShaderLanguage.Hlsl;
+            if (File.Exists("ShaderGrid.vs.hlsl"))
+            {
+                GridDescription.VS = File.ReadAllText("ShaderGrid.vs.hlsl");
+                GridDescription.VSName = "MainVs";
+            }
 
-            //ProgramBuilder.PushDescription(GridDescription, (ulong)Shaders.Grid);
-            //ProgramBuilder.Build(ShaderIntermediateLanguage.Spirv);
-            //ProgramBuilder.SaveToDisk(shaderProgramFile);
-            ProgramBuilder.Dispose();
+            if (File.Exists("ShaderGrid.ps.hlsl"))
+            {
+                GridDescription.PS = File.ReadAllText("ShaderGrid.ps.hlsl");
+                GridDescription.PSName = "MainPs";
+            }
+
+            ProgramBuilder.PushDescription(GridDescription, (ulong)Shaders.Grid);
+            if (ProgramBuilder.Build(ShaderIntermediateLanguage.Dxil))
+            { 
+                ProgramBuilder.LoadToRuntime(Device);
+            }
             return true;
         }
 

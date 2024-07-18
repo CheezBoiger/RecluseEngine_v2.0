@@ -1,52 +1,11 @@
 //
 using System;
 using RecluseEditor;
+using RecluseEditor.Math;
 
 namespace RecluseEditor
 {
-    public class Vector2
-    {
-        public float x { get; set; }
-        public float y { get; set; }
 
-        public Vector2(float x = 0.0f, float y = 0.0f)
-        {
-            this.x = x;
-            this.y = y;
-        }
-    }
-
-    public class Vector3
-    {
-        public float x { get; set; }
-        public float y { get; set; }
-        public float z { get; set; }
-
-        public Vector3(float x = 0.0f, float y = 0.0f, float z = 0.0f)
-        {
-            this.x = x;
-            this.y = y;
-            this.z = z;
-        }
-    }
-
-    public class Vector4
-    {
-        public float x { get; set; }
-        public float y { get; set; }
-        public float z { get; set; }
-        public float w { get; set; }
-
-        public Vector4(float x = 0.0f, float y = 0.0f, float z = 0.0f, float w = 0.0f)
-        {
-            this.x = x;
-            this.y = y;
-            this.z = z;
-            this.w = w;
-        }
-
-        
-    }
     public interface Geometry
     {
         Vector3[] GetPositions(float Scale = 1.0f);

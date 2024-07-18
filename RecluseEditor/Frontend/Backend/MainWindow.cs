@@ -52,7 +52,7 @@ namespace RecluseEditor
                     Context.BindRenderTargets(arr, (UIntPtr)0);
 
                     Context.ClearRenderTarget(0,
-                        new float[4] { (float)Math.Abs(Math.Sin((float)t)), 1, 0, 0 },
+                        new float[4] { (float)System.Math.Abs(System.Math.Sin((float)t)), 1, 0, 0 },
                         new Recluse.CSharp.Rect(0, 0, (float)GameGraphicsHost.ActualWidth, (float)GameGraphicsHost.ActualHeight));
                 });
             
@@ -82,7 +82,7 @@ namespace RecluseEditor
                     Context.BindRenderTargets(arr, depth);
 
                     Context.ClearRenderTarget(0,
-                        new float[4] { 1, (float)Math.Abs(Math.Sin((float)t)), 0, 0 },
+                        new float[4] { 1, (float)System.Math.Abs(System.Math.Sin((float)t)), 0, 0 },
                         new Recluse.CSharp.Rect(0, 0, (float)EditGraphicsHost.ActualWidth, (float)EditGraphicsHost.ActualHeight));
                     Context.ClearDepthStencil(ClearFlags.Depth, 0.0f, 0, 
                         new Recluse.CSharp.Rect(0, 0, (float)EditGraphicsHost.ActualWidth, (float)EditGraphicsHost.ActualHeight));
@@ -111,7 +111,7 @@ namespace RecluseEditor
 
         public void OnLoaded(object sender, RoutedEventArgs e)
         {
-            Renderer.Initialize(GraphicsApi.Vulkan, "RecluseEditor", "Recluse");
+            Renderer.Initialize(GraphicsApi.Direct3D12, "RecluseEditor", "Recluse");
             GameGraphicsHost = new Recluse.CSharp.GraphicsHost("GameView");
             EditGraphicsHost = new Recluse.CSharp.GraphicsHost("EditView");
 

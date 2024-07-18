@@ -443,6 +443,8 @@ public:
     void UnloadShaderProgram(System::UInt64 ProgramId);
     void DestroyVertexLayout(System::UInt64 VertexLayoutId);
 
+    GraphicsApi GetApi() { return m_api; }
+
     GraphicsDevice* GetNative() { return m_device; }
     GraphicsDevice* operator()() { return GetNative(); }
 
@@ -450,6 +452,7 @@ private:
     GraphicsInstance* m_instance;
     GraphicsAdapter* m_adapter;
     GraphicsDevice* m_device;
+    GraphicsApi     m_api;
 };
 
 

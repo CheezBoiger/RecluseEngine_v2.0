@@ -44,6 +44,13 @@ public enum class PipelineType : System::Int32
 };
 
 
+public enum class ShaderCompiler : System::Int32
+{
+    GLSLang,
+    DXC
+};
+
+
 public ref class ShaderProgramPermutationDefinition
 {
 public:
@@ -59,16 +66,25 @@ public ref class ShaderProgramDescription
 public:
     ShaderProgramDescription()
         : Language(ShaderLanguage::Hlsl)
+        , Strings(new std::vector<std::string>())
     { }
 
     ShaderProgramDescription(ShaderLanguage Language)
         : Language(Language)
+        , Strings(new std::vector<std::string>())
     { }
     virtual ~ShaderProgramDescription();
+    !ShaderProgramDescription();
 
     CSharp::Pipeline::ShaderLanguage            Language;
     array<ShaderProgramPermutationDefinition^>^ Permutations;
     virtual void StoreIn(Builder::ShaderProgramDescription& description);
+
+protected:
+    const char* MakeNativeString(String^ Str);
+
+private:
+    std::vector<std::string>* Strings;
 };
 
 
@@ -129,14 +145,30 @@ public ref class RayTracingShaderProgramDescription : public ShaderProgramDescri
 {
 public:
     virtual void StoreIn(Builder::ShaderProgramDescription& description) override;
+
+    String^ RAny;
+    String^ RAnyName;
+    
+    String^ RClosest;
+    String^ RClosestName;
+
+    String^ RIntersect;
+    String^ RIntersectName;
+
+    String^ RMiss;
+    String^ RMissName;
+
+    String^ RGen;
+    String^ RGenName;
 };
 
 
 public ref class ShaderProgramBuilder
 {
 public:
-    ShaderProgramBuilder();
+    ShaderProgramBuilder(ShaderCompiler Compiler);
     ~ShaderProgramBuilder();
+    !ShaderProgramBuilder();
 
     bool PushDescription(ShaderProgramDescription^ Description, UInt64 ShaderProgramId);
     //
