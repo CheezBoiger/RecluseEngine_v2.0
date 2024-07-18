@@ -125,7 +125,7 @@ int main(int c, char* argv[])
     //enableLogTypes(LogType_Debug);
     RealtimeTick::initializeWatch(1ull, 0);
     enableLogTypes(LogType_Notify);
-    GraphicsInstance* pInstance     = GraphicsInstance::create(GraphicsApi_Vulkan);
+    GraphicsInstance* pInstance     = GraphicsInstance::create(GraphicsApi_Direct3D12);
     GraphicsAdapter* pAdapter       = nullptr;
     GraphicsResource* pData         = nullptr;
     PipelineState* pPipeline        = nullptr;
@@ -243,10 +243,12 @@ int main(int c, char* argv[])
         std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
         FileBufferData file;
         std::string shaderPath = currDir + "/" + "test.cs.hlsl";
+
+        File::readFrom(&file, shaderPath);
         Pipeline::Builder::ShaderProgramDescription description = { };
         description.pipelineType = BindType_Compute;
         description.language = ShaderLanguage_Hlsl;
-        description.compute.cs = shaderPath.c_str();
+        description.compute.cs = file.data();
         description.compute.csName = "main";
 
         Pipeline::Builder::buildShaderProgram(database, description, 0, pInstance->getApi() == GraphicsApi_Vulkan ? ShaderIntermediateCode_Spirv : ShaderIntermediateCode_Dxil);

@@ -205,12 +205,17 @@ void createShaderProgram(GraphicsDevice* device)
     std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
     std::string vsSource = currDir + "/" + "gbuffer.vs.hlsl";
     std::string fsSource = currDir + "/" + "gbuffer.ps.hlsl";
+    
+    FileBufferData vsData = { };
+    FileBufferData fsData = { };
+    File::readFrom(&vsData, vsSource);
+    File::readFrom(&fsData, fsSource);
     Pipeline::Builder::ShaderProgramDescription description;
     description.pipelineType = BindType_Graphics;
     description.language = ShaderLanguage_Hlsl;
-    description.graphics.vs = vsSource.c_str();
+    description.graphics.vs = vsData.data();
     description.graphics.vsName = "Main";
-    description.graphics.ps = fsSource.c_str();
+    description.graphics.ps = fsData.data();
     description.graphics.psName = "psMain";
 
     for (U32 i = 0; i < 2; ++i)
@@ -230,11 +235,15 @@ void createShaderProgram(GraphicsDevice* device)
 
     vsSource = currDir + "/" + "quad.vs.hlsl";
     fsSource = currDir + "/" + "resolve.ps.hlsl";
+
+    File::readFrom(&vsData, vsSource);
+    File::readFrom(&fsData, fsSource);
+
     description.pipelineType = BindType_Graphics;
     description.language = ShaderLanguage_Hlsl;
-    description.graphics.vs = vsSource.c_str();
+    description.graphics.vs = vsData.data();
     description.graphics.vsName = "Main";
-    description.graphics.ps = fsSource.c_str();
+    description.graphics.ps = fsData.data();
     description.graphics.psName = "psMain";
 
     Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_LightResolve, instance->getApi() == GraphicsApi_Direct3D12 ? ShaderIntermediateCode_Dxil : ShaderIntermediateCode_Spirv);

@@ -391,12 +391,16 @@ void createShaderProgram(GraphicsDevice* device)
     std::string vsSource = currDir + "/" + "vertex.hlsl";
     std::string fsSource = currDir + "/" + "pixel.hlsl";
 
+    FileBufferData vsData = { };
+    FileBufferData fsData = { };
+    File::readFrom(&vsData, vsSource);
+    File::readFrom(&fsData, fsSource);
     Pipeline::Builder::ShaderProgramDescription description;
     description.pipelineType = BindType_Graphics;
     description.language = ShaderLanguage_Hlsl;
-    description.graphics.vs = vsSource.c_str();
+    description.graphics.vs = vsData.data();
     description.graphics.vsName = "Main";
-    description.graphics.ps = fsSource.c_str();
+    description.graphics.ps = fsData.data();
     description.graphics.psName = "psMain";
     
     if (instance->getApi() == GraphicsApi_Direct3D12)
@@ -450,7 +454,7 @@ int main(char* argv[], int c)
     Log::initializeLoggingSystem();
     enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
+    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 
