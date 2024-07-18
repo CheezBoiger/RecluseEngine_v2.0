@@ -432,6 +432,7 @@ R_PUBLIC_API public ref class IGraphicsDevice
 public:
     IGraphicsDevice(CSharp::GraphicsApi graphicsApi, System::String^ appName, System::String^ engineName, bool EnableDebugLayer);
     ~IGraphicsDevice();
+    !IGraphicsDevice();
 
     void CopyResource(IResource^ Dst, IResource^ Src);
     void CopyBufferRegions(IResource^ Dst, IResource^ Src, array<CSharp::CopyBufferRegion^>^ Regions);
@@ -555,6 +556,7 @@ public ref class IGraphicsContext
 public:
     IGraphicsContext(IGraphicsDevice^ device);
     ~IGraphicsContext();
+    !IGraphicsContext();
 
     void SetContextFrame(System::Int32 frames);
     void Begin();
@@ -616,6 +618,7 @@ public ref class ISwapchain
 public:
     ISwapchain(IGraphicsDevice^ Device, System::IntPtr WindowHandle,  ResourceFormat format, System::Int32 width, System::Int32 height, System::UInt32 numFrames, FrameBuffering frameBuffering);
     ~ISwapchain();
+    !ISwapchain();
 
     void ResizeSwapchain(System::Int32 Width, System::Int32 Height);
 

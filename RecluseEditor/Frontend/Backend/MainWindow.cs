@@ -84,7 +84,7 @@ namespace RecluseEditor
                     Context.ClearRenderTarget(0,
                         new float[4] { 1, (float)Math.Abs(Math.Sin((float)t)), 0, 0 },
                         new Recluse.CSharp.Rect(0, 0, (float)EditGraphicsHost.ActualWidth, (float)EditGraphicsHost.ActualHeight));
-                    Context.ClearDepthStencil(ClearFlags.Depth, 1.0f, 0, 
+                    Context.ClearDepthStencil(ClearFlags.Depth, 0.0f, 0, 
                         new Recluse.CSharp.Rect(0, 0, (float)EditGraphicsHost.ActualWidth, (float)EditGraphicsHost.ActualHeight));
                     WriteToEditorOutput("Rendering Time: " + FramesPerSecond + " Fps");
                 });
@@ -125,6 +125,27 @@ namespace RecluseEditor
                 EditViewBorder.Child = EditGraphicsHost;
                 CompositionTarget.Rendering += InitializeEditRenderer;
             }
+        }
+
+
+        public void OnStateChanged(object sender, EventArgs args)
+        {
+            Window window = sender as Window;
+            if (window.WindowState == WindowState.Minimized)
+            {
+                CompositionTarget.Rendering -= UpdateEditRender;
+                CompositionTarget.Rendering -= UpdateGameRender;
+            }
+            else if (window.WindowState == WindowState.Normal || window.WindowState == WindowState.Maximized)
+            {
+                CompositionTarget.Rendering += ResizeEditRender;
+                CompositionTarget.Rendering += ResizeGameRender;
+            }
+        }
+
+        public void OnWindowClosed(object sender, EventArgs args)
+        {
+            Renderer.Shutdown();
         }
 
         /// <summary>

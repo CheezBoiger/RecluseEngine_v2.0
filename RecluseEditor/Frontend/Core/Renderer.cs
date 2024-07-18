@@ -28,7 +28,7 @@ namespace RecluseEditor
 
         public static void Initialize(GraphicsApi Api, string AppName, string EngineName)
         {
-            Device = new IGraphicsDevice(Api, AppName, EngineName, false);
+            Device = new IGraphicsDevice(Api, AppName, EngineName, true);
             Context = new IGraphicsContext(Device);
             Database.Initialize(Device);
             Context.SetContextFrame(3);
@@ -89,14 +89,10 @@ namespace RecluseEditor
             switch (View)
             {
                 case RenderView.EditMode:
-                    if (EditViewSwapchain != null)
-                        EditViewSwapchain.Dispose();
                     EditViewSwapchain = null;
                     break;
                 case RenderView.GameMode:
                 default:
-                    if (GameViewSwapchain != null)
-                        GameViewSwapchain.Dispose();
                     GameViewSwapchain = null;
                     break;
             }
@@ -107,8 +103,10 @@ namespace RecluseEditor
             Database.CleanUp();
             ShutdownSwapchain(RenderView.EditMode);
             ShutdownSwapchain(RenderView.GameMode);
-            Context.Dispose();
-            Device.Dispose();
+
+            DepthBuffer.MarkToReleaseImmediately();
+            DepthBuffer = null;
+            GC.Collect();
 
             Context = null;
             Device = null;
@@ -131,6 +129,9 @@ namespace RecluseEditor
                     Swapchain = GameViewSwapchain;
                     break;
             }
+
+            if (Swapchain == null)
+                return;
 
             Swapchain.Prepare(Context);
             IResource SwapchainResource = Swapchain.GetCurrentFrame();

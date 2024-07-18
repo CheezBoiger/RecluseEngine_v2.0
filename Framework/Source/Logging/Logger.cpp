@@ -342,6 +342,19 @@ void setLogChannel(const std::string& channel, B8 enable)
 }
 
 
+void enableLogFile(const std::string& logPath, B32 enable)
+{
+    if (enable)
+    {
+        freopen(logPath.c_str(), "a+", stdout);
+    }   
+    else
+    {
+        fclose(stdout);
+    }
+}
+
+
 Log& Log::operator<<(LogCommand command)
 {
     if (command & rEND)

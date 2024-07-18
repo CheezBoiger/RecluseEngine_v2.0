@@ -572,7 +572,7 @@ IGraphicsDevice::IGraphicsDevice(GraphicsApi graphicsApi, System::String^ appNam
 {
     if (EnableDebugLayer)
     {
-        freopen("Recluse.log.txt", "a+", stdout);
+        enableLogFile("recluse.log", true);
         Log::initializeLoggingSystem();
     }
 
@@ -647,6 +647,17 @@ IGraphicsContext::IGraphicsContext(IGraphicsDevice^ device)
     Context = DeviceRef->createContext();
 }
 
+
+IGraphicsDevice::!IGraphicsDevice()
+{
+    if (m_device)
+    {
+        m_adapter->destroyDevice(m_device);
+        GraphicsInstance::destroyInstance(m_instance);
+    }
+    Log::destroyLoggingSystem();
+}
+
 ISwapchain::ISwapchain(IGraphicsDevice^ Device, System::IntPtr WindowHandle,  ResourceFormat format, System::Int32 width, System::Int32 height, System::UInt32 numFrames, FrameBuffering frameBuffering)
     : DeviceRef(nullptr)
     , Swapchain(nullptr)
@@ -688,12 +699,35 @@ ISwapchain::~ISwapchain()
 }
 
 
+ISwapchain::!ISwapchain()
+{
+    if (Swapchain)
+    {
+        DeviceRef->destroySwapchain(Swapchain);
+    }
+    Swapchain = nullptr;
+    DeviceRef = nullptr;
+}
+
+
 IGraphicsContext::~IGraphicsContext()
 {
     if (Context)
     {
         DeviceRef->releaseContext(Context);
     }
+}
+
+
+IGraphicsContext::!IGraphicsContext()
+{
+    if (Context)
+    {
+        DeviceRef->releaseContext(Context);
+    }
+
+    Context = nullptr;
+    DeviceRef = nullptr;
 }
 
 
