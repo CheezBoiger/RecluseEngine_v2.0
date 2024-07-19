@@ -157,9 +157,7 @@ bool ShaderProgramBuilder::LoadFromDisk(String^ Filename)
 bool ShaderProgramBuilder::Build(ShaderIntermediateLanguage IntermediateLanguage)
 {
     R_ASSERT(DescriptionInfo->descriptions.empty() == false);
-    System::Diagnostics::Debug::Print("I am BUILDING everything.");
     ResultCode result = Builder::buildShaderPrograms(*Database, DescriptionInfo, CSharpToNativeIntermediateLanguage(IntermediateLanguage));
-    System::Diagnostics::Debug::Print("I am DONE BUILDING everything.");
     return result == RecluseResult_Ok;
 }
 
@@ -286,10 +284,8 @@ ShaderProgramDescription::!ShaderProgramDescription()
 
 bool ShaderProgramBuilder::LoadToRuntime(CSharp::IGraphicsDevice^ Device)
 {
-    System::Diagnostics::Debug::Print("I am LOADING everything.");
     GraphicsDevice* device = Device->GetNative();
     ResultCode result = Runtime::buildAllShaderPrograms(device, *Database);
-    System::Diagnostics::Debug::Print("I am DONE LOADING everything.");
     return (result == RecluseResult_Ok);
 }
 } // Pipeline
