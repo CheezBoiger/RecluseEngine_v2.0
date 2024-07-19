@@ -141,12 +141,12 @@ namespace RecluseEditor
             }
 
             #region Grid Rendering
-            //Context.Transition(SwapchainResource, ResourceState.RenderTarget);
-            //Context.EnableDepth(true);
-            //Context.EnableDepthWrite(true);
-            //Context.EnableStencil(false);
-            //Context.BindShaderProgram((ulong)Database.Shaders.Grid, 0);
-            //Context.SetInputVertexLayout((uint)Database.Vertex.PositionOnly);
+            Context.Transition(SwapchainResource, ResourceState.RenderTarget);
+            Context.EnableDepth(true);
+            Context.EnableDepthWrite(true);
+            Context.EnableStencil(false);
+            Context.BindShaderProgram((ulong)Database.Shaders.Grid, 0);
+            Context.SetInputVertexLayout((uint)Database.Vertex.PositionOnly);
             Context.SetCullMode(CullMode.None);
             Context.SetFrontFace(FrontFace.CounterClockwise);
             Context.SetDepthCompareOp(CompareOp.LessOrEqual);

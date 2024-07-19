@@ -17,6 +17,8 @@
 
 #pragma managed
 
+#pragma make_public(Recluse::GraphicsDevice)
+
 namespace Recluse {
 namespace CSharp {
 

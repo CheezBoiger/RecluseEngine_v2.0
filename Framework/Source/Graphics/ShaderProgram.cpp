@@ -684,8 +684,10 @@ ResultCode buildAllShaderPrograms(GraphicsDevice* pDevice, const ShaderProgramDa
 {
     ResultCode e = RecluseResult_Ok;
     const ShaderProgramDatabase::MetaMap& metamap = db.obtainMetaMap();
+    R_DEBUG("ShaderProgram", "Building shader programs...");
     for (auto& definitions : metamap)
     {
+        R_DEBUG("ShaderProgram", "Loading ShaderProgram: %d", definitions.first);
         e = buildShaderProgram(pDevice, db, definitions.first);
         if (e == RecluseResult_NeedsUpdate)
             continue;

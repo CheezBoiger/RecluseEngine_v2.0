@@ -47,7 +47,7 @@ namespace RecluseEditor
 
             ProgramBuilder.PushDescription(GridDescription, (ulong)Shaders.Grid);
             if (ProgramBuilder.Build(ShaderIntermediateLanguage.Dxil))
-            { 
+            {
                 ProgramBuilder.LoadToRuntime(Device);
             }
             return true;

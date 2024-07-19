@@ -239,7 +239,6 @@ ShaderProgramDefinition makeShaderProgramDefinition(ShaderProgramDatabase& db, c
         definition.compute.cs               = compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.compute.csName, description.compute.cs, permutation, language, ShaderType_Compute, preprocessDefines, errorOut);
         break;
     case BindType_Graphics:
-        R_ASSERT_FORMAT(description.graphics.vs, "Must have at least a valid vertex shader, in order to build a ShaderProgram!");
         definition.graphics.usesMeshShaders = description.graphics.usesMeshShaders;
         if (description.graphics.usesMeshShaders)
         {
@@ -248,6 +247,7 @@ ShaderProgramDefinition makeShaderProgramDefinition(ShaderProgramDatabase& db, c
         }
         else
         {
+            R_ASSERT_FORMAT(description.graphics.vs, "Must have at least a valid vertex shader, in order to build a ShaderProgram!");
             definition.graphics.vs          = compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.graphics.vsName, description.graphics.vs, permutation, language, ShaderType_Vertex, preprocessDefines, errorOut);
             definition.graphics.gs          = description.graphics.gs ? compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.graphics.gsName, description.graphics.gs, permutation, language, ShaderType_Geometry, preprocessDefines, errorOut) : nullptr;
             definition.graphics.hs          = description.graphics.hs ? compileShader(shaderBuilder, db, definition.shaderReflectionInfo, description.graphics.hsName, description.graphics.hs, permutation, language, ShaderType_Hull, preprocessDefines, errorOut) : nullptr;

@@ -217,6 +217,9 @@ int main(int c, char* argv[])
         R_ERROR("TEST", "Failed to create data resource!");
     }
 
+    pContext = pDevice->createContext();
+    pContext->setFrames(3);
+
     {
         ConstData dat = { };
         dat.color[0] = 1.0f;
@@ -252,7 +255,8 @@ int main(int c, char* argv[])
         description.compute.csName = "main";
 
         Pipeline::Builder::buildShaderProgram(database, description, 0, pInstance->getApi() == GraphicsApi_Vulkan ? ShaderIntermediateCode_Spirv : ShaderIntermediateCode_Dxil);
-        Runtime::buildShaderProgram(pDevice, database, ProgramId_Mandelbrot);
+        //Runtime::buildShaderProgram(pDevice, database, ProgramId_Mandelbrot);
+        Runtime::buildAllShaderPrograms(pDevice, database);
         database.clearShaderProgramDefinitions();
     }
 
@@ -260,8 +264,6 @@ int main(int c, char* argv[])
     pWindow->setToCenter();
     const F32 desiredFps = 240.0f;
     F32 desiredMs = 1.f / desiredFps;
-    pContext = pDevice->createContext();
-    pContext->setFrames(3);
     R_NOTIFY("Compute", "Window width=%d, height=%d", pWindow->getWidth(), pWindow->getHeight());
     F32 seconds = 0.f;
     while (!pWindow->shouldClose()) 

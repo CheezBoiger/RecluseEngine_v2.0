@@ -9,6 +9,7 @@
 #using <mscorlib.dll>
 #using <RecluseCSharpGraphics.dll>
 #include <vector>
+#include <list>
 
 #pragma managed
 
@@ -66,12 +67,12 @@ public ref class ShaderProgramDescription
 public:
     ShaderProgramDescription()
         : Language(ShaderLanguage::Hlsl)
-        , Strings(new std::vector<std::string>())
+        , Strings(new std::list<std::string>())
     { }
 
     ShaderProgramDescription(ShaderLanguage Language)
         : Language(Language)
-        , Strings(new std::vector<std::string>())
+        , Strings(new std::list<std::string>())
     { }
     virtual ~ShaderProgramDescription();
     !ShaderProgramDescription();
@@ -84,7 +85,7 @@ protected:
     const char* MakeNativeString(String^ Str);
 
 private:
-    std::vector<std::string>* Strings;
+    std::list<std::string>* Strings;
 };
 
 

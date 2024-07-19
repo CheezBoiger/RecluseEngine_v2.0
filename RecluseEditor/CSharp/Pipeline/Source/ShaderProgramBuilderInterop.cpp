@@ -2,9 +2,12 @@
 #include "ShaderProgramBuilderInterop.hpp"
 #include "Recluse/Filesystem/Archive.hpp"
 #include "Recluse/Graphics/GraphicsCommon.hpp"
+#include "Recluse/Graphics/GraphicsDevice.hpp"
 #include "Recluse/Messaging.hpp"
 
 #include <msclr/marshal_cppstd.h>
+
+#using <RecluseCSharpGraphics.dll>
 
 namespace Recluse {
 namespace CSharp {
@@ -154,7 +157,9 @@ bool ShaderProgramBuilder::LoadFromDisk(String^ Filename)
 bool ShaderProgramBuilder::Build(ShaderIntermediateLanguage IntermediateLanguage)
 {
     R_ASSERT(DescriptionInfo->descriptions.empty() == false);
+    System::Diagnostics::Debug::Print("I am BUILDING everything.");
     ResultCode result = Builder::buildShaderPrograms(*Database, DescriptionInfo, CSharpToNativeIntermediateLanguage(IntermediateLanguage));
+    System::Diagnostics::Debug::Print("I am DONE BUILDING everything.");
     return result == RecluseResult_Ok;
 }
 
@@ -198,6 +203,7 @@ void RasterShaderProgramDescription::StoreIn(Builder::ShaderProgramDescription& 
 void VertexRasterShaderProgramDescription::StoreIn(Builder::ShaderProgramDescription& description)
 {
     RasterShaderProgramDescription::StoreIn(description);
+
     description.graphics.vs = MakeNativeString(VS);
     description.graphics.vsName = MakeNativeString(VSName);
 
@@ -280,7 +286,10 @@ ShaderProgramDescription::!ShaderProgramDescription()
 
 bool ShaderProgramBuilder::LoadToRuntime(CSharp::IGraphicsDevice^ Device)
 {
-    ResultCode result = Runtime::buildAllShaderPrograms(Device(), *Database);
+    System::Diagnostics::Debug::Print("I am LOADING everything.");
+    GraphicsDevice* device = Device->GetNative();
+    ResultCode result = Runtime::buildAllShaderPrograms(device, *Database);
+    System::Diagnostics::Debug::Print("I am DONE LOADING everything.");
     return (result == RecluseResult_Ok);
 }
 } // Pipeline
