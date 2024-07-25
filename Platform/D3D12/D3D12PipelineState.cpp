@@ -128,7 +128,7 @@ Bool unloadAll(DeviceId deviceId)
 D3DVertexInput* obtain(DeviceId deviceId, VertexInputLayoutId layoutId)
 {
     // If we request null argument, then we are essentially clearing.
-    if (layoutId == VertexInputLayout::VertexLayout_Null)
+    if (layoutId == (VertexInputLayoutId)VertexInputLayout::VertexLayout_Null)
         return nullptr;
 
     auto& iter = g_vertexLayouts[deviceId].find(layoutId);

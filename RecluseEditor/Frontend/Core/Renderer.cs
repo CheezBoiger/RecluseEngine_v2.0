@@ -178,6 +178,7 @@ namespace RecluseEditor
             Context.SetScissors(new Recluse.CSharp.Rect[] { RenderBounds });
             Context.SetCullMode(CullMode.None);
             Context.SetFrontFace(FrontFace.CounterClockwise);
+            Context.SetTopology(PrimitiveTopology.TriangleList);
             Context.SetDepthCompareOp(CompareOp.LessOrEqual);
             Context.DrawInstanced(6, 1, 0, 0);
             #endregion
