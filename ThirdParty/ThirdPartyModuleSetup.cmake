@@ -19,6 +19,17 @@ add_subdirectory ( ${RECLUSE_THIRDPARTY_DIR}/googletest )
 set(MESHOPT_BUILD_SHARED_LIBS ON)
 add_subdirectory( ${RECLUSE_THIRDPARTY_DIR}/meshoptimizer )
 
+execute_process(COMMAND py ${RECLUSE_THIRDPARTY_DIR}/compressonator/Build/fetch_dependencies.py
+	WORKING_DIRECTORY ${RECLUSE_THIRDPARTY_DIR}/compressonator/Build)
+
+set(BUILD_SHARED_LIBS ON)
+set(OPTION_ENABLE_ALL_APPS OFF)
+set(OPTION_BUILD_APPS_CMP_VISION OFF)
+set(OPTION_BUILD_BROTLIG OFF)
+set(OPTION_BUILD_BROTLIG_GUI OFF)
+set(OPTION_BUILD_KTX2 OFF)
+add_subdirectory( ${RECLUSE_THIRDPARTY_DIR}/compressonator )
+
 # Reflection for stuff
 if ( RCL_VULKAN ) 
 	if ( RCL_GLSLANG OR R_GLSLANG_LEGACY_API )
