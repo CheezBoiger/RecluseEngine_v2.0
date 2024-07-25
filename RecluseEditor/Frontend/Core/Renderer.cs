@@ -1,6 +1,7 @@
 //
 using System;
 using System.Collections;
+using System.Runtime.InteropServices;
 using System.Windows;
 using Recluse;
 using Recluse.CSharp;
@@ -16,7 +17,16 @@ namespace RecluseEditor
         private static IGraphicsContext Context;
         private static ISwapchain EditViewSwapchain = null;
         private static ISwapchain GameViewSwapchain = null;
-        private static IResource DepthBuffer = null;
+        private static IResource DepthBuffer        = null;
+        private static IResource CameraView         = null;
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        public class CameraViewConst
+        {
+            public uint a;
+            public uint b;
+            public long c;
+        }
 
         public delegate void MainRenderDelegate(IGraphicsContext Context, IResource SwapchainResource, IResource DepthBuffer, object sender, EventArgs e);
 
@@ -32,6 +42,18 @@ namespace RecluseEditor
             Context = new IGraphicsContext(Device);
             Database.Initialize(Device);
             Context.SetContextFrame(3);
+
+            ResourceCreateInformation CreateInfo = new ResourceCreateInformation();
+            CreateInfo.Format = ResourceFormat.Unknown;
+            CreateInfo.Dimension = ResourceDimension.Buffer;
+            CreateInfo.MipLevels = 1;
+            CreateInfo.Width = (uint)Marshal.SizeOf(typeof(CameraViewConst));
+            CreateInfo.Height = 1;
+            CreateInfo.DepthOrArraySize = 1;
+            CreateInfo.MemoryUsage = ResourceMemoryUsage.CpuVisible;
+            CreateInfo.Usage = ResourceUsage.ConstantBuffer;
+            CreateInfo.Samples = 0;
+            CameraView = new IResource(Device, CreateInfo, ResourceState.ConstantBuffer);
         }
 
         /// <summary>
@@ -106,6 +128,9 @@ namespace RecluseEditor
 
             DepthBuffer.MarkToReleaseImmediately();
             DepthBuffer = null;
+
+            CameraView.MarkToReleaseImmediately();
+            CameraView = null;
             GC.Collect();
 
             Context = null;
@@ -145,11 +170,16 @@ namespace RecluseEditor
             Context.EnableDepth(true);
             Context.EnableDepthWrite(true);
             Context.EnableStencil(false);
-            Context.BindShaderProgram((ulong)Database.Shaders.Grid, 0);
-            Context.SetInputVertexLayout((uint)Database.Vertex.PositionOnly);
+            Context.BindShaderProgram((ulong)Database.Shaders.Grid, 0)
+                .BindConstantBuffer(ShaderStage.All, 0, CameraView, 0, (uint)Marshal.SizeOf(typeof(CameraViewConst)), null);
+            Context.SetInputVertexLayout(unchecked((uint)IVertexInputLayout.Constants.Null));
+            Recluse.CSharp.Rect RenderBounds = new Recluse.CSharp.Rect(0, 0, Swapchain.GetWidth(), Swapchain.GetHeight());
+            Context.SetViewports(new Viewport[] { new Viewport(0, 0, Swapchain.GetWidth(), Swapchain.GetHeight(), 0.0f, 1.0f) });
+            Context.SetScissors(new Recluse.CSharp.Rect[] { RenderBounds });
             Context.SetCullMode(CullMode.None);
             Context.SetFrontFace(FrontFace.CounterClockwise);
             Context.SetDepthCompareOp(CompareOp.LessOrEqual);
+            Context.DrawInstanced(6, 1, 0, 0);
             #endregion
             Context.Transition(SwapchainResource, ResourceState.Present);
             Context.End();
@@ -182,17 +212,17 @@ namespace RecluseEditor
                 DepthBuffer.MarkToReleaseImmediately();
                 DepthBuffer = null;
             }
-            ResourceCreateInformation ResourceCreateInfo = new ResourceCreateInformation();
-            ResourceCreateInfo.Name = "DepthBuffer";
-            ResourceCreateInfo.Width = Width;
-            ResourceCreateInfo.Height = Height;
-            ResourceCreateInfo.MipLevels = 1;
-            ResourceCreateInfo.DepthOrArraySize = 1;
-            ResourceCreateInfo.Samples = 1;
-            ResourceCreateInfo.Format = ResourceFormat.D32_Float;
-            ResourceCreateInfo.Dimension = ResourceDimension.Dim2d;
-            ResourceCreateInfo.Usage = ResourceUsage.DepthStencil | ResourceUsage.ShaderResource;
-            ResourceCreateInfo.MemoryUsage = ResourceMemoryUsage.GpuOnly;
+            ResourceCreateInformation ResourceCreateInfo    = new ResourceCreateInformation();
+            ResourceCreateInfo.Name                         = "DepthBuffer";
+            ResourceCreateInfo.Width                        = Width;
+            ResourceCreateInfo.Height                       = Height;
+            ResourceCreateInfo.MipLevels                    = 1;
+            ResourceCreateInfo.DepthOrArraySize             = 1;
+            ResourceCreateInfo.Samples                      = 1;
+            ResourceCreateInfo.Format                       = ResourceFormat.D32_Float;
+            ResourceCreateInfo.Dimension                    = ResourceDimension.Dim2d;
+            ResourceCreateInfo.Usage                        = ResourceUsage.DepthStencil | ResourceUsage.ShaderResource;
+            ResourceCreateInfo.MemoryUsage                  = ResourceMemoryUsage.GpuOnly;
 
             DepthBuffer = new IResource(Device, ResourceCreateInfo, ResourceState.DepthStencilWrite);
         }

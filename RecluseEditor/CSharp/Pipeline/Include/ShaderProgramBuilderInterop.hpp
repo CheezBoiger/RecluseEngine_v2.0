@@ -4,12 +4,12 @@
 #include "Recluse/Graphics/ShaderProgram.hpp"
 
 #include <vcclr.h>
+#include <vector>
+#include <list>
 
 #using <WindowsBase.dll>
 #using <mscorlib.dll>
 #using <RecluseCSharpGraphics.dll>
-#include <vector>
-#include <list>
 
 #pragma managed
 

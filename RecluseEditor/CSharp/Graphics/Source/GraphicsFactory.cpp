@@ -3,6 +3,7 @@
 #include "Recluse/Graphics/Resource.hpp"
 #include "Recluse/Graphics/GraphicsAdapter.hpp"
 #include <vector>
+#include <list>
 
 namespace Recluse {
 namespace CSharp {
@@ -169,6 +170,8 @@ R_INTERNAL Recluse::ResourceState CSharpToNativeState(CSharp::ResourceState stat
 {
     switch (state)
     {
+        case ResourceState::ConstantBuffer:
+            return Recluse::ResourceState_ConstantBuffer;
         case ResourceState::ShaderResource:
             return Recluse::ResourceState_ShaderResource;
         case ResourceState::UnorderedAccess:
@@ -1248,13 +1251,53 @@ ISampler::!ISampler()
 }
 
 
-void IGraphicsDevice::LoadShaderProgram(System::UInt64 ProgramId, System::UInt64 Permutation, IShaderProgramDefinition^ Definition)
+R_INTERNAL Recluse::InputRate CSharpToNativeInputRate(CSharp::InputRate input)
 {
+    switch (input)
+    {
+        case InputRate::PerInstance:
+            return InputRate_PerInstance;
+        case InputRate::PerVertex:
+        default:
+            return InputRate_PerVertex;
+    }
 }
 
 
-void IGraphicsDevice::MakeVertexLayout(System::UInt64 VertexLayoutId, IVertexInputLayout^ VertexLayout)
+System::Boolean IGraphicsDevice::MakeVertexLayout(System::UInt64 VertexLayoutId, IVertexInputLayout^ VertexLayout)
 {
+    R_ASSERT(VertexLayout != nullptr);
+    Recluse::VertexInputLayout Layout = { };
+    std::list<std::vector<Recluse::VertexAttribute>> attributeList = { };
+
+    Layout.numVertexBindings = VertexLayout->VertexBindings->Count;
+    for (U32 i = 0; i < Layout.numVertexBindings; ++i)
+    {
+        Recluse::VertexBinding& binding = Layout.vertexBindings[i];
+        CSharp::IVertexBinding^ Binding = static_cast<CSharp::IVertexBinding^>(VertexLayout->VertexBindings[i]);
+        
+        binding.binding = Binding->Binding;
+        binding.inputRate = CSharpToNativeInputRate(Binding->Rate);
+        binding.stride = Binding->Stride;
+        binding.numVertexAttributes = Binding->VertexAttributes->Count;
+        if (binding.numVertexAttributes != 0)
+        {
+            attributeList.push_back(std::vector<Recluse::VertexAttribute>());
+            std::vector<Recluse::VertexAttribute>& attributes = attributeList.back();
+            attributes.resize(binding.numVertexAttributes);
+            for (U32 i = 0; i < binding.numVertexAttributes; ++i)
+            {
+                CSharp::IVertexAttribute^ Attrib = static_cast<CSharp::IVertexAttribute^>(Binding->VertexAttributes[i]);
+                attributes[i].format = CSharpToNativeFormat(Attrib->Format);
+                attributes[i].location = Attrib->Location;
+                attributes[i].offsetBytes = Attrib->OffsetBytes;
+                attributes[i].semantic = (Recluse::Semantic)Attrib->SemanticTag;
+                attributes[i].semanticIndex = Attrib->SemanticIndex;
+            }
+            binding.pVertexAttributes = attributes.data();
+        }
+    }
+    return (System::Boolean)m_device->makeVertexLayout((VertexInputLayoutId)VertexLayoutId, Layout);
 }
 
 
@@ -1274,6 +1317,20 @@ CSharp::ResourceFormat ISwapchain::GetFormat()
 {
     const SwapchainCreateDescription& desc = Swapchain->getDesc();
     return NativeFormatToCSharpFormat(desc.format);
+}
+
+
+System::Int32 ISwapchain::GetWidth()
+{
+    const SwapchainCreateDescription& desc = Swapchain->getDesc();
+    return desc.renderWidth;
+}
+
+
+System::Int32 ISwapchain::GetHeight()
+{
+    const SwapchainCreateDescription& desc = Swapchain->getDesc();
+    return desc.renderHeight;
 }
 } // CSharp
 } // Recluse

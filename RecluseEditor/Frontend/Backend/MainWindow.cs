@@ -111,7 +111,7 @@ namespace RecluseEditor
 
         public void OnLoaded(object sender, RoutedEventArgs e)
         {
-            Renderer.Initialize(GraphicsApi.Direct3D12, "RecluseEditor", "Recluse");
+            Renderer.Initialize(GraphicsApi.Vulkan, "RecluseEditor", "Recluse");
             GameGraphicsHost = new Recluse.CSharp.GraphicsHost("GameView");
             EditGraphicsHost = new Recluse.CSharp.GraphicsHost("EditView");
 
@@ -127,7 +127,7 @@ namespace RecluseEditor
             }
         }
 
-
+        private bool WasMinimized = false;
         public void OnStateChanged(object sender, EventArgs args)
         {
             Window window = sender as Window;
@@ -135,11 +135,13 @@ namespace RecluseEditor
             {
                 CompositionTarget.Rendering -= UpdateEditRender;
                 CompositionTarget.Rendering -= UpdateGameRender;
+                WasMinimized = true;
             }
-            else if (window.WindowState == WindowState.Normal || window.WindowState == WindowState.Maximized)
+            else if (WasMinimized && (window.WindowState != WindowState.Minimized))
             {
-                CompositionTarget.Rendering += ResizeEditRender;
-                CompositionTarget.Rendering += ResizeGameRender;
+                OnEditResized(sender, args);
+                OnGameResized(sender, args);
+                WasMinimized = false;
             }
         }
 
@@ -172,8 +174,8 @@ namespace RecluseEditor
             if (Renderer.IsSwapchainActive(Renderer.RenderView.GameMode))
             { 
                 Renderer.ResizeSwapchain(Renderer.RenderView.GameMode, GameGraphicsHost);
-                CompositionTarget.Rendering -= ResizeGameRender;
                 CompositionTarget.Rendering += UpdateGameRender;
+                CompositionTarget.Rendering -= ResizeGameRender;
             }
         }
 
@@ -182,13 +184,14 @@ namespace RecluseEditor
             if (Renderer.IsSwapchainActive(Renderer.RenderView.EditMode))
             { 
                 Renderer.ResizeSwapchain(Renderer.RenderView.EditMode, EditGraphicsHost);
-                CompositionTarget.Rendering -= ResizeEditRender;
                 CompositionTarget.Rendering += UpdateEditRender;
+                CompositionTarget.Rendering -= ResizeEditRender;
             }
         }
 
         public void OnEditResized(object sender, EventArgs e)
         {
+
             CompositionTarget.Rendering -= UpdateEditRender;
             CompositionTarget.Rendering += ResizeEditRender;
         }

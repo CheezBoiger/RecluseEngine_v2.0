@@ -18,6 +18,7 @@
 #pragma managed
 
 #pragma make_public(Recluse::GraphicsDevice)
+#pragma make_public(Recluse::GraphicsContext)
 
 namespace Recluse {
 namespace CSharp {
@@ -51,6 +52,7 @@ public enum class ResourceState : System::Int32
     RenderTarget,
     VertexBuffer,
     IndexBuffer,
+    ConstantBuffer,
     CopySource,
     CopyDestination,
     ShaderResource,
@@ -384,7 +386,7 @@ public value struct ResourceCreateInformation
 };
 
 
-public value struct Rect
+public ref struct Rect
 {
     System::Single X;
     System::Single Y;
@@ -395,7 +397,7 @@ public value struct Rect
 };
 
 
-public value struct Viewport
+public ref struct Viewport
 {
     System::Single X;
     System::Single Y;
@@ -425,8 +427,7 @@ public value struct CopyBufferRegion
 
 
 ref class IResource;
-ref class IShaderProgramDefinition;
-value struct IVertexInputLayout;
+ref struct IVertexInputLayout;
 
 // Graphics device.
 R_PUBLIC_API public ref class IGraphicsDevice
@@ -439,8 +440,7 @@ public:
     void CopyResource(IResource^ Dst, IResource^ Src);
     void CopyBufferRegions(IResource^ Dst, IResource^ Src, array<CSharp::CopyBufferRegion^>^ Regions);
 
-    void LoadShaderProgram(System::UInt64 ProgramId, System::UInt64 Permutation, IShaderProgramDefinition^ Definition);
-    void MakeVertexLayout(System::UInt64 VertexLayoutId, IVertexInputLayout^ VertexLayout);
+    System::Boolean MakeVertexLayout(System::UInt64 VertexLayoutId, IVertexInputLayout^ VertexLayout);
 
     void UnloadShaderProgram(System::UInt64 ProgramId);
     void DestroyVertexLayout(System::UInt64 VertexLayoutId);
@@ -458,7 +458,7 @@ private:
 };
 
 
-public value struct IVertexAttribute
+public ref struct IVertexAttribute
 {
     enum class Helper { OffsetAppend = Recluse::VertexAttribute::OffsetAppend };
     System::UInt32          Location;
@@ -466,24 +466,54 @@ public value struct IVertexAttribute
     CSharp::ResourceFormat  Format;
     CSharp::Semantic        SemanticTag;
     System::UInt32          SemanticIndex;
+
+    IVertexAttribute() { }
+    IVertexAttribute(CSharp::ResourceFormat Format,
+                     System::UInt32 OffsetBytes,
+                     System::UInt32 Location,
+                     CSharp::Semantic SemanticTag,
+                     System::UInt32 SemanticIndex)
+        : Format(Format)
+        , OffsetBytes(OffsetBytes)
+        , Location(Location)
+        , SemanticTag(SemanticTag)
+        , SemanticIndex(SemanticIndex)
+    { }
 };
 
 
-public value struct IVertexBinding
+public ref struct IVertexBinding
 {
     System::UInt32 Binding;
     System::UInt32 Stride;
     InputRate      Rate;
     System::Collections::ArrayList^ VertexAttributes;
+
+    IVertexBinding()
+        : VertexAttributes(gcnew System::Collections::ArrayList())
+    { }
+
+    IVertexBinding(CSharp::InputRate Rate,
+                   System::UInt32 Binding,
+                   System::UInt32 Stride)
+        : VertexAttributes(gcnew System::Collections::ArrayList())
+        , Rate(Rate)
+        , Binding(Binding)
+        , Stride(Stride)
+    { }
 };
 
 
-public value struct IVertexInputLayout
+public ref struct IVertexInputLayout
 {
 public:
     enum class Limits { BindingCount = VertexInputLayout::VertexInputLayout_BindingCount };
     enum class Constants { Null = VertexInputLayout::VertexLayout_Null };
     System::Collections::ArrayList^ VertexBindings;
+
+    IVertexInputLayout()
+        : VertexBindings(gcnew System::Collections::ArrayList())
+    { }
 };
 
 
@@ -500,7 +530,13 @@ public:
     System::UIntPtr Map(System::UInt64 ReadOffsetBytes, System::UInt64 ReadSizeBytes);
     System::UInt32 Unmap(System::UIntPtr Ptr, System::UInt64 WriteOffsetBytes, System::UInt64 WriteSizeBytes);
     void CopyFrom(array<System::Byte>^ Memory);
-    System::UIntPtr AsView(CSharp::ResourceViewType ViewType, CSharp::ResourceViewDimension Dim, CSharp::ResourceFormat Format, System::UInt16 BaseLayer, System::UInt16 BaseMip, System::UInt16 Layers, System::UInt16 Mips);
+    System::UIntPtr AsView(CSharp::ResourceViewType ViewType, 
+        CSharp::ResourceViewDimension Dim, 
+        CSharp::ResourceFormat Format, 
+        System::UInt16 BaseLayer, 
+        System::UInt16 BaseMip, 
+        System::UInt16 Layers, 
+        System::UInt16 Mips);
 
     GraphicsResource* operator ()() { return Resource; }
 
@@ -546,7 +582,12 @@ public:
 
     ShaderProgramBinder^ BindShaderResource(CSharp::ShaderStage Stage, System::UInt32 Slot, System::UIntPtr View);
     ShaderProgramBinder^ BindUnorderedAccessView(CSharp::ShaderStage Stage, System::UInt32 Slot, System::UIntPtr View);
-    ShaderProgramBinder^ BindConstantBuffer(CSharp::ShaderStage Stage, System::UInt32 Slot, IResource^ Resource, System::UInt32 OffsetBytes, System::UInt32 SizeBytes, array<System::Byte>^ Data);
+    ShaderProgramBinder^ BindConstantBuffer(CSharp::ShaderStage Stage, 
+        System::UInt32 Slot, 
+        IResource^ Resource, 
+        System::UInt32 OffsetBytes, 
+        System::UInt32 SizeBytes, 
+        array<System::Byte>^ Data);
     ShaderProgramBinder^ BindSampler(CSharp::ShaderStage Stage, System::UInt32 Slot, ISampler^ Sampler);
 private:
     IShaderProgramBinder& ShaderProgram;
@@ -621,7 +662,13 @@ private:
 public ref class ISwapchain
 {
 public:
-    ISwapchain(IGraphicsDevice^ Device, System::IntPtr WindowHandle,  ResourceFormat format, System::Int32 width, System::Int32 height, System::UInt32 numFrames, FrameBuffering frameBuffering);
+    ISwapchain(IGraphicsDevice^ Device, 
+        System::IntPtr WindowHandle,  
+        ResourceFormat format, 
+        System::Int32 width, 
+        System::Int32 height, 
+        System::UInt32 numFrames, 
+        FrameBuffering frameBuffering);
     ~ISwapchain();
     !ISwapchain();
 
@@ -632,6 +679,8 @@ public:
 
     ResourceFormat GetFormat();
     IResource^ GetCurrentFrame();
+    System::Int32 GetWidth();
+    System::Int32 GetHeight();
 private:
     void CreateSwapchain(GraphicsDevice* DeviceRef, void* WindowPtr, const SwapchainCreateDescription& Description);
     void QuerySwapchainFrames();
