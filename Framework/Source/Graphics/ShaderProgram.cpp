@@ -554,6 +554,7 @@ ResultCode ShaderProgramDatabase::deserialize(Archive* pArchive)
         return RecluseResult_InvalidVersion;
     }
 
+    // Load up the shaders stored in this database first.
     for (U32 i = 0; i < header.numShaders; ++i)
     {
         Shader* shader = Shader::create();
@@ -573,6 +574,7 @@ ResultCode ShaderProgramDatabase::deserialize(Archive* pArchive)
 
         for (U32 permIt = 0; permIt < shaderProgramHeader.numPermutations; ++permIt)
         {
+            // Read the Header info.
             ShaderProgramPermutationHeader permHeader = { };
             pArchive->read(&permHeader, sizeof(ShaderProgramPermutationHeader));
             ShaderProgramPermutation permutation = permHeader.permutation;

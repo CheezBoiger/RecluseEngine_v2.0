@@ -189,7 +189,7 @@ struct VertexInputLayout
     U32             numVertexBindings;
 };
 
-typedef Hash64 VertexInputLayoutId;
+typedef uint VertexInputLayoutId;
 
 struct DepthStencil 
 {
@@ -231,6 +231,20 @@ struct BlendState
 struct TessellationState 
 {
     U32 numControlPoints;
+};
+
+
+class VertexInputStore : public Serializable
+{
+public:
+    VertexInputStore(VertexInputLayout* layout)
+        : layout(layout) { }
+
+    ResultCode serialize(Archive* archive) const override;
+    ResultCode deserialize(Archive* archive) override;
+
+private:
+    VertexInputLayout* layout;
 };
 
 

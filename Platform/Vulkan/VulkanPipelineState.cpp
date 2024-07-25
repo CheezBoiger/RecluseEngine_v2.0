@@ -613,7 +613,7 @@ ResultCode unloadLayout(DeviceId deviceId, VertexInputLayoutId id)
 const VulkanVertexLayout* obtain(DeviceId deviceId, VertexInputLayoutId inputLayoutId)
 {
     // If we request null argument, then we are essentially clearing.
-    if (inputLayoutId == VertexInputLayout::VertexLayout_Null)
+    if (inputLayoutId == (VertexInputLayoutId)VertexInputLayout::VertexLayout_Null)
         return nullptr;
 
     auto iter = g_vertexLayoutMap[deviceId].find(inputLayoutId);

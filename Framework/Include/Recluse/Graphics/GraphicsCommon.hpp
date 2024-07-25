@@ -403,6 +403,53 @@ struct GraphicsResourceDebug
     U64 usedMemoryGpuSizeBytes;
 };
 
+
+struct GraphicsResourceDescription 
+{
+    U32                 width;
+    U32                 height;
+    // Depth or Array Size. If the Resource has 3D dimensions, then it implies depth.
+    // Otherwise any other dimenions will specify array size.
+    U32                 depthOrArraySize;
+    U32                 mipLevels;
+    ResourceDimension   dimension;
+    ResourceFormat      format;
+    U32                 samples;
+    ResourceMemoryUsage memoryUsage;
+    ResourceUsageFlags  usage;
+    ResourceMiscFlags   miscFlags;
+    const char*         name; // for debug purposes.
+};
+
+
+struct ResourceViewDescription 
+{
+    ResourceViewType        type;
+    ResourceFormat          format;
+    ResourceViewDimension   dimension;
+    U32                     baseMipLevel;
+    U32                     mipLevelCount;
+    union
+    {
+        struct 
+        {
+            // Base array layer. If the view type is Cube or Cube Array, then this 
+            // value must be a multiple of 6.
+            U32             baseArrayLayer;
+            // Layer count. If the view type is Cube, then this MUST be 6. If the view type is Cube Array, then this MUST be a 
+            // multiple of 6.
+            U32             layerCount;
+        };
+        struct
+        {
+            U32             firstElement;
+            U32             numElements;
+            U32             byteStride;  
+        };
+    };
+};
+
+
 // Common Graphics Object manager.
 class IGraphicsObject
 {

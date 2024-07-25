@@ -27,7 +27,7 @@ def parse_arguments():
     parser.add_argument("-test", dest="test", action="store_true", help="Enable tests.", default=False)
     parser.add_argument("-developer", dest="developer", action="store_true", help="Enable Developer mode for the engine.", default=False)
     parser.add_argument("-meowhash", dest="meowhash", action="store_true", help="Use Meow hash instead of the default XXHash.", default=False)
-    parser.add_argument("-first-time", dest="ft", action="store_true", help="Run first time set up.", default=False)
+    parser.add_argument("-update", dest="ft", action="store_true", help="Run update set up, which sets up submodules and/or updates them.", default=False)
     parser.add_argument("-config", dest="config", help="Path and name of configuration file.", type=str, default=None)
     args = parser.parse_args()
     parsed_commands = args
