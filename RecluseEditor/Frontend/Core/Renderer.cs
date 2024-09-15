@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using Recluse;
 using Recluse.CSharp;
+using RecluseEditor.Math;
 
 namespace RecluseEditor
 {
@@ -23,9 +24,9 @@ namespace RecluseEditor
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public class CameraViewConst
         {
-            public uint a;
-            public uint b;
-            public long c;
+            public Matrix44 View;
+            public Matrix44 ViewProjection;
+            public Matrix44 Projection;
         }
 
         public delegate void MainRenderDelegate(IGraphicsContext Context, IResource SwapchainResource, IResource DepthBuffer, object sender, EventArgs e);

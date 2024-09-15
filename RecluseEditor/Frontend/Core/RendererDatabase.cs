@@ -40,7 +40,6 @@ namespace RecluseEditor
             SetupVertexLayouts(Device);
             InitializeGridShader(ProgramBuilder);
 
-
             ProgramBuilder.Build(Imm);
             return ProgramBuilder.LoadToRuntime(Device);
         }

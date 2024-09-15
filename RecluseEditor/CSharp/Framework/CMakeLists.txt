@@ -1,22 +1,22 @@
 cmake_minimum_required( VERSION 3.0 )
-project ("RecluseCSharpGraphicsModule")
+project ("RecluseCSharpFrameworkModule")
 
-set ( RECLUSE_CSHARP_NAME "RecluseCSharpGraphics" )
+set ( RECLUSE_CSHARP_NAME "RecluseCSharpFrameworkInterop" )
 set ( RECLUSE_CSHARP_INCLUDE_DIR Include )
 set ( RECLUSE_CSHARP_SOURCE_DIR Source )
 
-set ( RECLUSE_CSHARP_GRAPHICS )
+set ( RECLUSE_CSHARP_FRAMEWORK )
 
 include ( CMake/Main.cmake )
 
 include_directories(${CMAKE_SOURCE_DIR}/Framework/Include Include )
 
 add_library( ${RECLUSE_CSHARP_NAME} SHARED
-	${RECLUSE_CSHARP_GRAPHICS})
+	${RECLUSE_CSHARP_FRAMEWORK})
 	
 # Doing some stuff for organization.
 if (MSVC)
-  foreach(source IN LISTS RECLUSE_CSHARP_GRAPHICS)
+  foreach(source IN LISTS RECLUSE_CSHARP_FRAMEWORK)
     get_filename_component(source_path "${source}" PATH)
     string(REPLACE "/" "\\" source_path_msvc "${source_path}")
     source_group("${source_path_msvc}" FILES "${source}")

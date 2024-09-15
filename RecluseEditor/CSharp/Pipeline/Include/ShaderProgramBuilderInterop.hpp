@@ -9,7 +9,7 @@
 
 #using <WindowsBase.dll>
 #using <mscorlib.dll>
-#using <RecluseCSharpGraphics.dll>
+#using <RecluseCSharpFrameworkInterop.dll>
 
 #pragma managed
 
