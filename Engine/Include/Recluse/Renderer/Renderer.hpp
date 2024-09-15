@@ -47,35 +47,49 @@ struct RenderCommand;
 class RenderCommandList;
 class DebugRenderer;
 
-
+// RenderPassType allows mesh objects to be rendered through any core Arbitrary Output Variables that can then be
+// used for other post processing passes, or custom materials.
 enum RenderPassType : U32 
 {
     // Pre-rendered depth
-    Render_PreZ = 0x0001,
+    Render_PreZ = (1 << 0),
 
-    // If the object is shadowed.
-    Render_Shadow = 0x0002,
+    // If the object is opaque shadowed.
+    Render_ShadowOpaque = (1 << 1),
+
+    // If the object is transparent shadowed. A separate shadow buffer is used that specializes in transparent shadow rendering.
+    Render_ShadowTransparent = (1 << 2),
 
     // If the object is a particle.
-    Render_Particles = 0x0004,
+    Render_Particles = (1 << 3),
 
-    // Should the object be rendered in the gbuffer.
-    Render_Gbuffer = 0x0008,
+    // Should the object be strictly rendered in the gbuffer.
+    Render_Gbuffer = (1 << 4),
 
     // Material based rendering.
-    Render_Material = 0x0010,
+    Render_Material = (1 << 5),
 
-    // Should the object be rendered directly (will not render in gbuffer.)
-    Render_ForwardOpaque = 0x0020,
+    // Should the object be rendered directly to outputs (lighting, normals, and possibly other outputs.)
+    // Allows for custom rendering options and shaders, specified by the user.
+    Render_ForwardCustom = (1 << 6),
 
     // Is the object transparent.
-    Render_ForwardTransparent = 0x0040,
+    Render_ForwardTransparent = (1 << 7),
 
     // If the object meant to represent a haze volume.
-    Render_Haze = 0x0080,
+    Render_Haze = (1 << 8),
 
     // If the object should be rendered for velocity motion blur.
-    Render_ObjectMotionBlur = (0x0100)
+    Render_ObjectMotionBlur = (1 << 9),
+
+    // If the object is unlit
+    Render_Unlit = (1 << 10),
+
+    // Should render depth. If Render_PreZ is used, you should not need this bit.
+    Render_Depth = (1 << 11),
+
+    // Should render stencil.
+    Render_Stencil = (1 << 12)
 };
 
 typedef U32 RenderPassTypeFlags;
@@ -102,6 +116,10 @@ public:
 
     typedef std::function<ResultCode(DebugRenderer*)> DebugDrawFunction;
     typedef std::function<ResultCode(Renderer*)> DebugInitFunction;
+
+    // The rendering task process.
+    static ResultCode kRendererProcessTask(TaskProcess* process);
+
 
     Renderer();
     ~Renderer();
@@ -250,7 +268,6 @@ private:
     // Gpu Resources used as temporary for the current frame. This will be refreshed every new frame.
     TemporaryPool   m_temporaryPools[2];
 };
-
 
 ResourceViewId asView(GraphicsResource* pResource, const ResourceViewDescription& description); 
 ResourceViewId asView(GraphicsResource* pResource, ResourceViewType type, ResourceViewDimension dim);

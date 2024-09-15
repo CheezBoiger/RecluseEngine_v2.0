@@ -40,7 +40,16 @@ class CpuToGpuBuffer
 };
 
 
-class R_PUBLIC_API GPUBuffer 
+class R_PUBLIC_API RendererResource
+{
+public:
+    virtual ~RendererResource() { }
+
+
+};
+
+
+class R_PUBLIC_API GPUBuffer : public RendererResource
 {
 public:
     GPUBuffer()

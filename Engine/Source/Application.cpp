@@ -1,5 +1,4 @@
 //
-#include "Recluse/System/Window.hpp"
 #include "Recluse/System/Input.hpp"
 
 #include "Recluse/Threading/ThreadPool.hpp"
@@ -16,48 +15,245 @@ namespace Recluse {
                 jobThreadADT[jobType] = thread; \
     }
 
-ResultCode Application::loadJobThread(JobTypeFlags flags, ThreadFunction func)
+ResultCode TaskProcess::pushTask(TaskPriority priority, Task task)
 {
-    Thread pThread;
-    ResultCode result = RecluseResult_Ok;
-    result = createThread(&pThread, func);
-
-    if (result == RecluseResult_Ok) 
+    ScopedLock _(m_tasksMutex);
+    auto it = m_tasks.find(priority);
+    if (it != m_tasks.end())
     {
-        m_threads.push_back(pThread);
-
-        LOAD_JOB_THREAD(JobType_Renderer,      flags, &m_threads.back(), m_jobThreads);
-        LOAD_JOB_THREAD(JobType_Simulation,    flags, &m_threads.back(), m_jobThreads);
-        LOAD_JOB_THREAD(JobType_AI,            flags, &m_threads.back(), m_jobThreads);
-        LOAD_JOB_THREAD(JobType_Animation,     flags, &m_threads.back(), m_jobThreads);
-        LOAD_JOB_THREAD(JobType_Physics,       flags, &m_threads.back(), m_jobThreads);
-        LOAD_JOB_THREAD(JobType_Audio,         flags, &m_threads.back(), m_jobThreads);
+        it->second.push_back(task);
     }
-
-    return result;
+    else
+    {
+        // Add new task into data structure.
+        m_tasks[priority] = { task };
+    }
+    return RecluseResult_Ok;
 }
 
 
-Thread* Application::getJobThread(JobType jobType)
+void Application::update()
 {
-    if (m_jobThreads.find(jobType) == m_jobThreads.end()) 
-    {
-        R_WARN("Application", "No job thread available for job type=%d", jobType);
-        return nullptr;
-    }
-    
-    return m_jobThreads[jobType];
+    ResultCode result = onUpdate();
+    R_ASSERT(result == RecluseResult_Ok);
 }
 
 
-void Application::update(const RealtimeTick& tick)
+ResultCode TaskProcess::dispatchTasks()
 {
+    ScopedLock _(m_tasksMutex);
+    if (!m_threadPoolRef)
+    {
+        // single threaded process.
+        for (auto& priorityIt : m_tasks)
+        {
+            for (auto& task : priorityIt.second)
+            {
+                ResultCode result = task();
+                R_ASSERT(result == RecluseResult_Ok);
+            }
+        }
+    }
+    else
+    {
+        // Multithreaded process. Can utilize multiple threads.
+        // Pushes them out to the async workers, and waits until each
+        // task in it's priority list is finished.
+        for (auto & priorityIt : m_tasks)
+        {
+            std::vector<U32> ids = { };
+            for (auto& task : priorityIt.second)
+            {
+                AsyncTaskId id = asyncTask(task);
+                ids.push_back(id);
+            }
+
+            for (auto id : ids)
+            {
+                waitForTask(id);
+            }
+        }
+    }
+    clearTasks();
+    return RecluseResult_Ok;
+}
+
+
+void TaskProcess::clearTasks()
+{
+    // Don't clear the whole priority structure, just the created sets.
+    for (auto& taskPrioritySet : m_tasks)
+    {
+        taskPrioritySet.second.clear();
+    }
+}
+
+
+static U32 processTask(void* payload)
+{
+    R_ASSERT(payload != nullptr);
+    TaskProcess* taskProcess = static_cast<TaskProcess*>(payload);
+
+    // Run the task process.
+    while (taskProcess->isRunning())
+    {
+        TaskProcess::OnProcessTask onTask = taskProcess->getOnProcessTask();
+        R_ASSERT(onTask != nullptr);
+        ResultCode result = onTask(taskProcess);
+        // Should clear all tasks regardless.
+        if (result == RecluseResult_Ok)
+        {
+            result = taskProcess->dispatchTasks();
+            R_ASSERT(result == RecluseResult_Ok);
+        }
+    }
+
+    return RecluseResult_Ok;
+}
+
+
+ResultCode TaskProcess::start()
+{
+    // provide the payload.
+    m_thread.payload = (void*)this;
+    m_tasksMutex = createMutex("TasksMutex");
+    m_asyncCs.initialize();
+    m_isRunning = true;
+    return createThread(&m_thread, processTask);
+}
+
+
+void TaskProcess::signal(Signal signal)
+{ 
+    switch (signal)
+    {
+        case Signal_Stop:
+            m_isRunning = false;
+            break;
+        default:
+            break;
+    }
+}
+
+
+void TaskProcess::join()
+{
+    SizeT threadId = getCurrentThreadId();
+    if ((m_isRunning == false) && threadId != m_thread.uid)
+    {
+        joinThread(&m_thread);
+    }
+}
+
+
+TaskProcess::AsyncTaskId TaskProcess::asyncTask(Task task)
+{
+    static TaskProcess::AsyncTaskId id = 0;
+    static const TaskProcess::AsyncTaskId InvalidId = -1; // We probably need to prevent wrap around on this value.
+    TaskProcess::AsyncTaskId handle = InvalidId;
+    {
+        ScopedCriticalSection _(m_asyncCs);
+        handle = ++id;
+        // Wrap around if we manage to increment to the invalid value. By this time, we shouldn't have that many 
+        // tasks running on this process.
+        if (handle == InvalidId)
+            handle = id = 0;
+        m_asyncTasks[handle] = { task, false };
+    }
+
+    // This function will be the one to run the task.
+    auto TaskJobFunction = [&, handle] () -> void 
+    {
+        m_asyncCs.enter();
+        Task asyncTask = m_asyncTasks[handle].task;
+        m_asyncCs.leave();
+
+        ResultCode code = asyncTask(); 
+
+        m_asyncCs.enter();
+        m_asyncTasks[handle].finished = true;
+        m_asyncCs.leave();
+    };
+
+    // Submit the task.
+    m_threadPoolRef->submitTask(TaskJobFunction);
+    return handle;
+}
+
+
+void TaskProcess::waitForTask(TaskProcess::AsyncTaskId taskId)
+{
+    Bool finished = false;
+    // Spinlock until we finish
+    while (!finished)
+    {
+        ScopedCriticalSection _(m_asyncCs);
+        auto it = m_asyncTasks.find(taskId);
+        if (it != m_asyncTasks.end())
+        {
+            AsyncTask task = m_asyncTasks[taskId];
+            finished = task.finished;
+        }
+        else
+        {
+            // There is no task with that id, exit this blocking call.
+            break;
+        }
+    }
+
+    if (finished)
+    {
+        ScopedCriticalSection _(m_asyncCs);
+        m_asyncTasks.erase(taskId);
+    }
+}
+
+
+ResultCode Application::makeTaskProcess(TaskProcess::OnProcessTask onProcessTask)
+{
+    RGUID guid = generateRGUID();
+    U64 id = guid.ss.hash0;
+    m_taskProcesses[id] = TaskProcess(&m_workerPool, onProcessTask);
+    return RecluseResult_Ok;
+}
+
+
+ResultCode Application::startProcesses()
+{
+    // Start up the assigned tasks.
+    for (auto& it : m_taskProcesses)
+    {
+        it.second.start();
+        R_NOTIFY("Application", "Starting process!");
+    }
+    return RecluseResult_Ok;
+}
+
+
+void Application::stopProcesses()
+{
+    for (auto& it : m_taskProcesses)
+    {
+        it.second.signal(TaskProcess::Signal_Stop);
+        it.second.join();
+    }
+}
+
+
+void Application::startWorkerPool()
+{
+    m_workerPool.start();
+}
+
+
+void Application::stopWorkerPool()
+{
+    m_workerPool.stop();
 }
 
 namespace MainThreadLoop {
 
 Application* k_pApp         = nullptr;
-Window* k_pWindow           = nullptr;
 ThreadPool* k_pThreadPool   = nullptr;
 MessageBus* k_pMessageBus   = nullptr;
 Mutex k_pMessageMutex       = MutexValue::kNull;
@@ -75,7 +271,7 @@ ResultCode loadApp(Application* pApp)
     ResultCode result = RecluseResult_Ok;
 
     if (!pApp->isInitialized())
-        result = pApp->init(k_pWindow, k_pMessageBus);
+        result = pApp->init(k_pMessageBus);
 
     if (result == RecluseResult_Ok)
         k_pApp = pApp;
@@ -91,14 +287,7 @@ ResultCode initialize()
     k_pMessageMutex = createMutex();
     k_pMessageBus = new MessageBus();
     k_pMessageBus->initialize();
-
-    k_pWindow = Window::create(u8"TestApp", 0, 0, 800, 600);
-    k_pWindow->show();
-
     k_mainLoopInitialized = true;
-
-    // initialize the main watch.
-    RealtimeTick::initializeWatch(getMainThreadId(), JobType_Main);    
 
     return RecluseResult_Ok;
 }
@@ -106,31 +295,23 @@ ResultCode initialize()
 
 ResultCode MainThreadLoop::run()
 {
-    R_ASSERT(k_pWindow          != NULL);
     R_ASSERT(k_pMessageBus      != NULL);
     R_ASSERT(k_pMessageMutex    != MutexValue::kNull);
 
-    while (!k_pWindow->shouldClose()) 
+    while (k_pApp->isRunning()) 
     {
-        RealtimeTick::updateWatch(getCurrentThreadId(), JobType_Main);
-        RealtimeTick tick = RealtimeTick::getTick(JobType_Main);
-        pollEvents();
-        if (k_pApp) 
-        {
-            // Update the application tick. Usually game logic is here.
-            // This is our sim thread.
-            k_pApp->update(tick);   
-        } 
-        else 
-        {
-            R_WARN(__FUNCTION__, "No application loaded to run!");
-        }
-
+        // All messaging receivers are handled internally by the engine systems.
         // Notify all message receivers.
-        ScopedLock lck(k_pMessageMutex);
-        k_pMessageBus->notifyAll();
-        // Be sure to clear up the bus memory when we finish processing our messages.
-        k_pMessageBus->clearQueue();
+        {
+            ScopedLock lck(k_pMessageMutex);
+            k_pMessageBus->notifyAll();
+            // Be sure to clear up the bus memory when we finish processing our messages.
+            k_pMessageBus->clearQueue();
+        }
+        // Application update logic is usually here.
+        // The application is responsible for handling input, game logic, rendering, physics and whatnot.
+        // 
+        k_pApp->update();
     }
 
     return RecluseResult_Ok;
@@ -145,9 +326,6 @@ ResultCode cleanUp()
     {
         result = k_pApp->cleanUp();
     }
-
-    Window::destroy(k_pWindow);
-    k_pWindow = nullptr;
 
     destroyMutex(k_pMessageMutex);
     k_pMessageMutex = MutexValue::kNull;

@@ -24,7 +24,7 @@ ResultCode createThread(Thread* pThread, ThreadFunction startRoutine)
     R_DEBUG(R_CHANNEL_WIN32, "Creating thread");
     //handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)fun, 
     //            pThread->payload, 0, (LPDWORD)&pThread->uid);
-    handle = reinterpret_cast<HANDLE>(_beginthreadex(0, 0, startRoutine, pThread->payload, 0, (U32*)&pThread->uid));
+    handle = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)startRoutine, pThread->payload, 0, (LPDWORD)&pThread->uid);
 
     pThread->threadState    = ThreadState_Running;
     pThread->resultCode     = ThreadResultCode_NotReady;
@@ -48,6 +48,7 @@ ResultCode createThread(Thread* pThread, ThreadFunction startRoutine)
 
 
 ResultCode joinThread(Thread* pThread)
+
 {
     R_ASSERT(pThread != NULL);
 

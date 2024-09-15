@@ -22,7 +22,7 @@ public:
     static R_PUBLIC_API R_OS_CALL void updateWatch(U64 id, U32 watchType);
 
     // Get the current time in sec.
-    F32 getCurrentTimeS() const { return m_currentTimeS; }
+    F32 getCurrentTimeSeconds() const { return m_currentTimeS; }
 
     // Get the delta time in sec.
     F32 delta() const { return m_deltaTimeS; }

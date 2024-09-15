@@ -183,8 +183,8 @@ void Renderer::render()
         LightCluster::combineForward
                         (
                             context, 
-                            m_currentCommandKeys[Render_ForwardOpaque].data(), 
-                            m_currentCommandKeys[Render_ForwardOpaque].size()
+                            m_currentCommandKeys[Render_ForwardCustom].data(), 
+                            m_currentCommandKeys[Render_ForwardCustom].size()
                         );
 #endif
     // Check if any debug draw functions exist.
@@ -389,38 +389,14 @@ void Renderer::pushRenderCommand(const RenderCommand& renderCommand, RenderPassT
 
     // Store mesh commands to be referenced for each draw pass.
     CommandKey key                  = { m_currentRenderCommands->getNumberCommands() };
-
-    if (renderFlags & Render_PreZ) 
+    // Check if any passes were requested by the command.
+    for (U32 i = 0; i < 32; ++i)
     {
-        m_currentCommandKeys[Render_PreZ].push_back(key.value);
+        if (renderFlags & (1 << i))
+        {
+            m_currentCommandKeys[(1 << i)].push_back(key.value);
+        }
     }
-
-    if (renderFlags & Render_Gbuffer) 
-    {
-        m_currentCommandKeys[Render_Gbuffer].push_back(key.value);
-    }
-
-    if (renderFlags & Render_Shadow) 
-    {
-        m_currentCommandKeys[Render_Shadow].push_back(key.value);
-    }
-
-    // Mesh is treated as particles.
-    if (renderFlags & Render_Particles) 
-    {
-        m_currentCommandKeys[Render_Particles].push_back(key.value);
-    }
-
-    if (renderFlags & Render_ForwardOpaque)
-    {
-        m_currentCommandKeys[Render_ForwardOpaque].push_back(key.value);
-    }
-
-    if (renderFlags & Render_ForwardTransparent)
-    {
-        m_currentCommandKeys[Render_ForwardTransparent].push_back(key.value);
-    }
-
     // Push the render command to the last, this will serve as our reference to render in
     // certain render passes.
     m_currentRenderCommands->push(renderCommand);
@@ -504,36 +480,32 @@ ResultCode Renderer::destroyTexture2D(Texture2D* pTexture)
 }
 
 
-static ResultCode kRendererJob(void* pData)
+ResultCode Renderer::kRendererProcessTask(TaskProcess* process)
 {
     Renderer* pRenderer                     = Renderer::getMain();
     Mutex renderMutex                       = pRenderer->getMutex();
     U64 threadId                            = getCurrentThreadId();
     F32 counterFrameMs                      = 0.f;
 
-        // Initialize the renderer watch.
-    RealtimeTick::initializeWatch(threadId, JobType_Renderer);
-
-    // Initialize module here.
-    while (pRenderer->isActive()) 
+    // Check if renderer is active here.
+    if (pRenderer->isActive()) 
     {
         ScopedLock lck(renderMutex);
-        RealtimeTick::updateWatch(threadId, JobType_Renderer);
-
-        RealtimeTick tick = RealtimeTick::getTick(JobType_Renderer);
+        RealtimeTick tick = RealtimeTick::getTick(0);
 
         // Render interpolation is required.
         if (pRenderer->isRunning()) 
         {
-            const RendererConfigs& renderConfigs    = pRenderer->getCurrentConfigs();
-            const F32 desiredFrameRateMs = 1.0f / renderConfigs.maxFrameRate;
-            Limiter::limit(desiredFrameRateMs, threadId, JobType_Renderer);
-            pRenderer->update(tick.getCurrentTimeS(), tick.delta());
+            pRenderer->update(tick.getCurrentTimeSeconds(), tick.delta());
             pRenderer->render();
             pRenderer->present();
         }
+    } 
+    else
+    {
+        R_NOTIFY("Renderer", "Shutting renderer task process.");
+        process->signal(TaskProcess::Signal_Stop);
     }
-
     return RecluseResult_Ok;
 }
 
@@ -586,8 +558,7 @@ ResultCode Renderer::onInitializeModule(Application* pApp)
                     }
                 }
             });
-
-    return pApp->loadJobThread(JobType_Renderer, kRendererJob);
+    return RecluseResult_Ok;
 }
 
 

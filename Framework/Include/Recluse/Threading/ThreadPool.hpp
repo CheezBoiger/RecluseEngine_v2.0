@@ -6,81 +6,75 @@
 #include "Recluse/Threading/Sema.hpp"
 
 #include <vector>
+#include <list>
+#include <functional>
 
 namespace Recluse {
 
 
-typedef ThreadFunction ThreadJob;
+typedef std::function<void()> ThreadTask;
 
-
-struct R_PUBLIC_API JobFinishedPayload 
-{
-    ThreadJob   func;
-    SizeT       uid;
-    U32         resultCode;
-};
-
-
-struct TaskJob
-{
-    ThreadJob   jobFunc;
-    void*       pPayload;
-};
-
-class ThreadPool 
+class R_PUBLIC_API ThreadPool 
 {
 public:
-    R_PUBLIC_API ThreadPool(U32 numWorkers = 2);
-    R_PUBLIC_API ~ThreadPool();
+    enum Status 
+    {
+        Status_Idle,
+        Status_Running,
+        Status_Pause,
+        Status_Stopping,
+        Status_Stopped
+    };
 
-    R_PUBLIC_API ResultCode submitJob(ThreadJob job);
+    enum Signal 
+    {
+        Signal_None,
+        Signal_Stop = (1 << 0),
+        Signal_Pause = (1<<1),
+        Signal_Resume =(1<<2)
+    };
+
+    ThreadPool(U32 numWorkers = 2);
+    ~ThreadPool();
+
+    ResultCode submitTask(ThreadTask job);
     
-    R_PUBLIC_API ResultCode waitFinished();
+    void start();
+    void stop();
 
-    R_PUBLIC_API Bool isExecuting();
+    //ResultCode wait();
 
-    R_PUBLIC_API Bool isFinished();
+    //Bool isExecuting();
     
 private:
-
-    void threadStartFunc()
+    // The actual worker itself.
+    struct Worker
     {
-        while (!m_allWorkersFinished)
-        {
-            if (tryLockMutex(m_mutex) == RecluseResult_Ok)
-            {
-                TaskJob taskJob = m_jobTasks.back();
-                
-                m_jobTasks.pop_back();
-                // Unlock the mutex when we finish.
-                unlockMutex(m_mutex);
+        Worker(ThreadPool* pool = nullptr)
+            : poolRef(pool)
+            , signals(0)
+            , status(Status_Stopped) { thread = { }; }
 
-                // Run the task with the given payload.
-                taskJob.jobFunc(taskJob.pPayload);
+        Thread  thread;
+        Status  status;
 
-                JobFinishedPayload finished = { };
-                finished.func = taskJob.jobFunc;
-                finished.resultCode = 00;
+        ThreadTask  nextTask();
+        void        signal(Signal signal) { signals |= signal; }
+        U32         getSignals() { return signals; }
+        void        join();
+        void        clearSignals() { signals = 0; }
 
-                while (!tryLockMutex(m_finishedMutex))
-                {
-                    // spin until we get our mutex.
-                }
+    private:
+        U32     signals;
+        ThreadPool* poolRef;
+    };
 
-                m_finishedResults.push_back(finished);
-                unlockMutex(m_finishedMutex);
-            }
-        }
-    }
+    static U32 threadEntryTask(void* payload);
 
     // Tasks to complete, which are carried by worker threads.
-    std::vector<TaskJob>                m_jobTasks;
-    std::vector<JobFinishedPayload>     m_finishedResults;
+    CriticalSection                     m_taskCs;
 
-    std::vector<Thread>                 m_threadWorkers;
-    std::vector<Thread>                 m_finishedThreads;
-    Bool                                m_allWorkersFinished;
-    Mutex                               m_mutex;
-    Mutex                               m_finishedMutex;
+    std::list<ThreadTask>               m_jobTasks;
+    std::vector<Worker>                 m_threadWorkers;
 };
 } // Recluse

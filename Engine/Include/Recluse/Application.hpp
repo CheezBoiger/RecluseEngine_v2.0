@@ -13,6 +13,7 @@
 #include "Recluse/MessageBus.hpp"
 #include <map>
 #include <list>
+#include <set>
 #include <functional>
 
 #define R_BUILD_RETAIL                (0)
@@ -28,23 +29,97 @@
 
 namespace Recluse {
 
-class Window;
 class Application;
 
-enum JobType 
+typedef std::function<ResultCode()> Task;
+typedef U32 TaskPriority;
+
+typedef U32 TaskTypeFlags;
+
+
+// Task process is a separate asyncronous process, that runs independent of the main thread.
+// This would need to be used for anything that requires it's own independent execution.
+class R_PUBLIC_API TaskProcess
 {
-    JobType_Main = 0,      //< Main will always be 0
-    JobType_Simulation,
-    JobType_Renderer,
-    JobType_Physics,
-    JobType_Audio,
-    JobType_Animation,
-    JobType_AI,
-    JobType_Network
+
+public:
+    enum Signal 
+    {
+        Signal_Notify,  //< Signal to notify the process in it's task.
+        Signal_Stop,    //< Signal to stop the process.
+        Signal_Pause,   //< Signal to pause the process.
+        Signal_Resume   //< Signal to resume the process.
+    };
+
+    typedef U32 AsyncTaskId;
+    typedef ThreadFunction ProcessTask;
+    typedef std::function<ResultCode(TaskProcess*)> OnProcessTask; 
+
+    TaskProcess(ThreadPool* workerPool = nullptr, OnProcessTask onTask = nullptr)
+        : m_onTask(onTask)
+        , m_threadPoolRef(workerPool)
+        , m_tasksMutex(nullptr)
+        , m_isRunning(false) { }
+
+    ~TaskProcess() 
+    { 
+        if (m_tasksMutex) 
+            destroyMutex(m_tasksMutex);
+        
+        if (m_asyncCs.isInitialized())
+            m_asyncCs.release();
+        
+        m_tasksMutex = nullptr;
+    }
+
+    // Start the process.
+    ResultCode start();
+
+    // Push a task with the given priorities.
+    // Likely want this to be pushed during update call, so that thread pool can take hold.
+    // Parallel tasks are done when they are pushed with the same priority.
+    // 0 is highest priority, with least priority values going up.
+    ResultCode      pushTask(TaskPriority priority, Task task);
+
+    // Asyncronous task, that does not run in parallel like the pushTask().
+    // This task works without barriers, and should work separately.
+    AsyncTaskId     asyncTask(Task task);
+    void            waitForTask(AsyncTaskId taskId);
+
+    OnProcessTask   getOnProcessTask() { return m_onTask; }
+
+    Bool isRunning() const  { return m_isRunning; }
+
+    // Signal to the process. Can be called by the main task.
+    void signal(Signal signal = Signal_Notify);
+
+    // Dispatch all pushed tasks that were called with pushTask(). 
+    // Ensure any data within scope, should be called with this manually in the scope of that data to be processed.
+    // Failure to do so will result in undefined behaviour, likely a crash.
+    ResultCode dispatchTasks();
+    void clearTasks();
+
+    // Waits to join back with the caller thread. Will block the caller until this process is complete.
+    // Will not attempt to join, if the process itself attempts to call this.
+    void join();
+private:
+    struct AsyncTask
+    {
+        Task task;
+        Bool finished;
+    };
+
+    Mutex                                       m_tasksMutex;
+    CriticalSection                             m_asyncCs;
+    std::map<TaskPriority, std::vector<Task>>   m_tasks;
+    std::map<AsyncTaskId, AsyncTask>            m_asyncTasks;
+    volatile Bool                                        m_isRunning;
+    Thread                                      m_thread;
+
+    ProcessTask                                 m_mainTask;
+    OnProcessTask                               m_onTask;
+    ThreadPool*                                 m_threadPoolRef;
 };
-
-
-typedef U32 JobTypeFlags;
 
 // Application interface for your application.
 // This should, and would be integrated into your game, in order to 
@@ -53,50 +128,65 @@ class R_PUBLIC_API Application
 {
 public:
 
-    Application()
-        : m_pWindowRef(nullptr)
+    Application(const std::string& appName = "")
+        : m_appName(appName)
         , m_pScene(nullptr)
         , m_pMessageBusRef(nullptr)
         , m_initialized(false)
+        , m_isRunning(false)
     { }
 
     virtual         ~Application() { }    
 
     // System update.
-    virtual void    update(const RealtimeTick& tick);
+    void    update();
 
     ResultCode cleanUp() 
     { 
         ResultCode result = onCleanUp();
         if (result == RecluseResult_Ok)
         {
-            // Do no destroy window, this should be handled externally.
-            m_pWindowRef = nullptr;
+            stopProcesses();
+            stopWorkerPool();
             m_initialized = false;
         }
         return result;
     }
 
-    ResultCode init(Window* pWindowHandle, MessageBus* pMessageBus) 
+    ResultCode init(MessageBus* pMessageBus) 
     { 
-        m_pWindowRef        = pWindowHandle;
         m_pMessageBusRef    = pMessageBus;
+
         ResultCode result = onInit();
         if (result == RecluseResult_Ok)
+        {
+            startWorkerPool();
+            startProcesses();
             markInitialized();
+            m_isRunning = true;
+        }
         return result;
     }
 
-    ResultCode         loadJobThread(JobTypeFlags flags, ThreadFunction func);
-    Thread*         getJobThread(JobType jobType);
-
     Engine::Scene*  getScene() { return m_pScene; }
-    Window*         getWindow() { return m_pWindowRef; }
     MessageBus*     getMessageBus() { return m_pMessageBusRef; }
 
     inline Bool isInitialized() const { return m_initialized; }
+    inline Bool isRunning() const { return m_isRunning; }
+
+    void stop() { m_isRunning = false; }
+
+    // Creates a task process, and requests for one to be made. This process
+    // runs asyncronously, independent of the main thread.
+    ResultCode makeTaskProcess(TaskProcess::OnProcessTask onProcessTask);
+
+    
 
 protected:
+    ResultCode startProcesses();
+    void stopProcesses();
+    void startWorkerPool();
+    void stopWorkerPool();
 
     //! Application specific initialization. This requires 
     //! individual app owners to initialize each module for their 
@@ -107,15 +197,23 @@ protected:
     //! Requires all modules initialized, to be cleaned up manually as well.
     virtual ResultCode onCleanUp() = 0;
 
+    //! User logic for updates and task creation.
+    virtual ResultCode onUpdate() = 0;
+
     void markInitialized() { m_initialized = true; } 
+    //ResultCode initializeThreads();
+    //ResultCode cleanUpThreads();
+
+
 
 private:
-    Window*                     m_pWindowRef;
-    MessageBus*                 m_pMessageBusRef;
-    Engine::Scene*              m_pScene;
-    std::list<Thread>           m_threads;
-    std::map<JobType, Thread*>  m_jobThreads;
-    Bool                        m_initialized;
+    MessageBus*                             m_pMessageBusRef;
+    Engine::Scene*                          m_pScene;
+    std::map<U64, TaskProcess>              m_taskProcesses;
+    Bool                                    m_initialized;
+    volatile Bool                           m_isRunning;
+    ThreadPool                              m_workerPool;
+    std::string                             m_appName;
 };
 
 

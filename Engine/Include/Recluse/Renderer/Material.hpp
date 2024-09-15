@@ -5,6 +5,7 @@
 #include "Recluse/Graphics/ResourceView.hpp"
 
 #include "Recluse/Serialization/Hasher.hpp"
+#include "Recluse/Renderer/RendererResources.hpp"
 
 #include <unordered_map>
 
@@ -23,7 +24,7 @@ struct TextureViewID
     ResourceViewDimension   dimension;
 };
 
-class R_PUBLIC_API TextureResource 
+class R_PUBLIC_API TextureResource : public RendererResource
 {
 public:
     TextureResource() { }
@@ -31,6 +32,15 @@ public:
 
     Hash64 getCrC() const { return m_crc; }
     void genCrC(void* pUnique, U64 sz);
+
+    // Evicts the resource, or stores to disk, instead of remaining in main memory.
+    ResultCode evict();
+
+    // If the resource if evicted.
+    Bool isEvicted();
+    
+    // Streams the resource back into main memory, from disk.
+    ResultCode makeResident();
 
 private:
     Hash64 m_crc;
@@ -82,7 +92,17 @@ private:
 };
 
 
-// Engine material.
+// Material shader is the system that specifies the shader that will consume the material.
+class MaterialShader 
+{
+public:
+
+private:
+    
+};
+
+
+// Engine material. This usually holds onto material assets and resources for the renderer.
 class Material 
 {
 public:
@@ -95,22 +115,29 @@ public:
 
     //R_PUBLIC_API MaterialType getMatType() const { return m_matType; }
 
-    R_PUBLIC_API B32 addTex(Texture2D* pTexture, const std::string& attrib) 
+    // Adds a texture to this material.
+    R_PUBLIC_API Texture2D* addTexture(Texture2D* pTexture, const std::string& attrib) 
     {
-        U32 index = m_textures.size();
-        m_textures.push_back(pTexture);
-        m_matMap[attrib] = index;
-        return true;
+        m_resourceMap[recluseHashFast(attrib.data(), attrib.size())] = pTexture;
+        return nullptr;
     }
+
+    R_PUBLIC_API RendererResource* addResource(RendererResource* pResource, const std::string& attrib)
+    {
+        m_resourceMap[recluseHashFast(attrib.data(), attrib.size())] = pResource;
+        return nullptr;
+    }
+
+    R_PUBLIC_API RendererResource* getResource(const std::string& attrib);
 
     R_PUBLIC_API B32 hasTex(const std::string& attrib) const
     {
-        return m_matMap.find(attrib) != m_matMap.end();
+        return m_resourceMap.find(recluseHashFast(attrib.data(), attrib.size())) != m_resourceMap.end();
     }
 
     R_PUBLIC_API Texture2D* getTex(const std::string& attrib) 
     {
-        return m_textures[m_matMap[attrib]];
+        return (Texture2D*)m_resourceMap[recluseHashFast(attrib.data(), attrib.size())];
     }
 
     // Removes a texture with the attribute. This will only nullify the texture slot,
@@ -119,8 +146,7 @@ public:
     {
         if (hasTex(attrib)) 
         {
-            m_textures[m_matMap[attrib]] = nullptr;
-            m_matMap.erase(attrib);
+            m_resourceMap.erase(recluseHashFast(attrib.data(), attrib.size()));
         }
 
         return false;    
@@ -132,22 +158,28 @@ public:
 
     const std::string&              getName() const { return m_matName; }
 
-    Texture2D* const*               getResources() { return m_textures.data(); }
-
-    // reorganizes the material structure. Any empty slots, will now be cleaned off and sorted.
-    // Be sure to update any dirty references that may be referencing a given texture.
-    R_PUBLIC_API void               restructure();
+    // Declares attributes within the material. Any already declared attribs will be ignored.
+    R_PUBLIC_API Material& declare(const std::string& attrib)
+    {
+        Hash64 hash = recluseHashFast(attrib.data(), attrib.size());
+        auto iter = m_resourceMap.find(hash);
+        if (iter == m_resourceMap.end())
+        {
+            m_resourceMap[hash] = nullptr;
+        }
+        return (*this);
+    }
 
     // Clear the whole material.
-    R_PUBLIC_API void               clear();
+    R_PUBLIC_API void               clear() { m_resourceMap.clear(); } 
 
 protected:
 
     //SurfaceTypeFlags                        m_flags;
     //MaterialType                            m_matType;
-    std::unordered_map<std::string, U32>    m_matMap;
-    std::vector<Texture2D*>                 m_textures;
-    std::string                             m_matName;
+    std::unordered_map<Hash64, RendererResource*>      m_resourceMap;
+    std::string                                        m_matName;
+    MaterialShader*                                     m_materialShader;
 };
 
 

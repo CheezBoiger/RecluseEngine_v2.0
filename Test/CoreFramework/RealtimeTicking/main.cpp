@@ -17,16 +17,18 @@ int main()
     F32 seconds     = 0.f;
     F32 maxTimeS    = 60.0f;
 
-    while(1) {
+    while(1) 
+    {
         RealtimeTick::updateWatch(1ull, 0);
 
         // Get the current tick.
         RealtimeTick tick   = RealtimeTick::getTick(0);
         seconds            += tick.delta();
 
-        R_VERBOSE("TIMING", "Current Time: %f, Delta Time: %f Seconds: %f", tick.getCurrentTimeS(), tick.delta(), seconds);
+        R_VERBOSE("TIMING", "Current Time: %f, Delta Time: %f Seconds: %f", tick.getCurrentTimeSeconds(), tick.delta(), seconds);
 
-        if (seconds >= maxTimeS) {
+        if (seconds >= maxTimeS) 
+        {
             break;
         }
 
