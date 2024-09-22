@@ -16,7 +16,7 @@ class VulkanPipelineState;
 class VulkanContext;
 
 
-class VulkanPrimaryCommandList : public GraphicsCommandList 
+class RecluseVulkan_PUBLIC_API VulkanPrimaryCommandList : public GraphicsCommandList 
 {
 public:
     VulkanPrimaryCommandList()

@@ -3,6 +3,9 @@
 
 #include "Recluse/Types.hpp"
 #include "Recluse/Graphics/GraphicsCommon.hpp"
+
+#include "RecluseFramework_exports.hpp"
+
 #include <vector>
 
 // Vendor IDs
@@ -15,7 +18,7 @@
 namespace Recluse {
 
 
-struct R_PUBLIC_API ApplicationInfo 
+struct RecluseFramework_PUBLIC_API ApplicationInfo 
 {
     const char* appName;
     const char* engineName;
@@ -42,13 +45,13 @@ public:
     // Create the graphics instance. This should be the starting point for your graphics rendering 
     // devices. Only one instance is allowed to be created at a time. If you desire to use a different
     // API during runtime, be sure to destroy the current instance first, before creating a new one.
-    static R_PUBLIC_API GraphicsInstance*       create(enum GraphicsAPI api = GraphicsApi_Vulkan);
+    static RecluseFramework_PUBLIC_API GraphicsInstance*       create(enum GraphicsAPI api = GraphicsApi_Vulkan);
 
     // Destroy the graphics instance. Be sure to clean up any memory or objects that were allocated by 
     // adapters.
-    static R_PUBLIC_API ResultCode              destroyInstance(GraphicsInstance* pInstance);
+    static RecluseFramework_PUBLIC_API ResultCode              destroyInstance(GraphicsInstance* pInstance);
 
-    R_PUBLIC_API ResultCode                     initialize(const ApplicationInfo& appInfo, LayerFeatureFlags flags) 
+    ResultCode                     initialize(const ApplicationInfo& appInfo, LayerFeatureFlags flags) 
     { 
         ResultCode err = onInitialize(appInfo, flags);
         queryGraphicsAdapters();
@@ -56,7 +59,7 @@ public:
     }
 
     // Get available adapters.
-    R_PUBLIC_API std::vector<GraphicsAdapter*>& getGraphicsAdapters() { return m_graphicsAdapters; }
+    std::vector<GraphicsAdapter*>& getGraphicsAdapters() { return m_graphicsAdapters; }
 
     // Get the runtime graphics api.
     GraphicsAPI                                 getApi() const { return m_api; }

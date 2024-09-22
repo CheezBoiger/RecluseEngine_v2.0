@@ -1,0 +1,14 @@
+// Copyright (c) Recluse Engine.
+// This file is auto-generated. DO NOT MODIFIY
+#ifndef ${RECLUSE_EXPORT_NAME}_exports_HPP
+#define ${RECLUSE_EXPORT_NAME}_exports_HPP
+
+#include "Recluse/Arch.hpp"
+
+#if ${RECLUSE_EXPORT_NAME}_DLL_EXPORT
+#define ${RECLUSE_EXPORT_NAME}_PUBLIC_API R_EXPORT_API
+#else
+#define ${RECLUSE_EXPORT_NAME}_PUBLIC_API R_IMPORT_API
+#endif
+
+#endif /* ${RECLUSE_EXPORT_NAME}_exports_HPP */

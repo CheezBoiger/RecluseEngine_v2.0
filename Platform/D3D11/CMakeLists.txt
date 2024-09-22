@@ -9,6 +9,8 @@ set ( RECLUSE_D3D11_BUILD 0 )
 
 set ( RECLUSE_VERSION_STRING "v${RECLUSE_D3D11_MAJOR}.${RECLUSE_D3D11_MINOR}.${RECLUSE_D3D11_BUILD}" )
 
+include ( ${CMAKE_SOURCE_DIR}/Systems/CMake/GenerateExports.cmake )
+
 # Use this variable to include to the source library build.
 set ( RECLUSE_D3D11_COMPILE_FILES )
 set ( RECLUSE_D3D11_INCLUDE ${RECLUSE_FRAMEWORK_INCLUDE} )
@@ -42,6 +44,10 @@ add_library (               ${RECLUSE_D3D11_NAME} SHARED    ${RECLUSE_D3D11_COMP
 target_include_directories( ${RECLUSE_D3D11_NAME} PUBLIC    ${RECLUSE_D3D11_INCLUDE_FILES} ${RECLUSE_D3D11_SOURCE} ${RECLUSE_D3D11_THIRD_PARTY})
 target_link_libraries (     ${RECLUSE_D3D11_NAME}           ${RECLUSE_D3D11_LINK_BINARIES} RecluseFramework )
 add_dependencies( ${RECLUSE_D3D11_NAME} RecluseFramework )
+
+ExportThisLibrary(${RECLUSE_D3D11_NAME})
+ImportThisLibrary(${RECLUSE_D3D11_NAME} "RecluseFramework")
+
 # Doing some stuff for organization.
 if (MSVC)
   foreach(source IN LISTS RECLUSE_D3D11_COMPILE_FILES)

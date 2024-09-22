@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Recluse/Types.hpp"
+#include "RecluseFramework_exports.hpp"
 #include <map>
 
 namespace Recluse {
@@ -391,13 +392,13 @@ namespace Internal {
     {
         void* value;
 
-        R_PUBLIC_API DataListener(const std::string& command, void* globalVariable);
+        RecluseFramework_PUBLIC_API DataListener(const std::string& command, void* globalVariable);
     private:
         void storeData(const std::string& command, DataListener* data);
     };
-    R_PUBLIC_API DataListener* obtainData(const std::string& command);
-    R_PUBLIC_API Bool setData(const std::string& command, const void* value, size_t sizeBytesToWrite);
-    R_PUBLIC_API Bool setDataAsString(const std::string& command, const char* value);
+    RecluseFramework_PUBLIC_API DataListener* obtainData(const std::string& command);
+    RecluseFramework_PUBLIC_API Bool setData(const std::string& command, const void* value, size_t sizeBytesToWrite);
+    RecluseFramework_PUBLIC_API Bool setDataAsString(const std::string& command, const char* value);
 } // Internal
 
 

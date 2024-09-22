@@ -6,6 +6,8 @@
 #include "Recluse/Renderer/Mesh.hpp"
 #include "Recluse/RGUID.hpp"
 
+#include "ReclusePipeline_exports.hpp"
+
 #include <vector>
 
 namespace Recluse {
@@ -14,7 +16,7 @@ namespace Builder {
 
 
 // Mesh Builder
-class R_PUBLIC_API MeshBuilder : public Serializable
+class ReclusePipeline_PUBLIC_API MeshBuilder : public Serializable
 {
 public:
     // 

@@ -8,7 +8,7 @@
 namespace Recluse {
 
 
-class R_PUBLIC_API PoolAllocator : public Allocator
+class RecluseFramework_PUBLIC_API PoolAllocator : public Allocator
 {
 public:
     ResultCode onInitialize() override

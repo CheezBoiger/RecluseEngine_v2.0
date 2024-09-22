@@ -7,6 +7,8 @@
 #include "Recluse/Serialization/Hasher.hpp"
 #include "Recluse/Renderer/RendererResources.hpp"
 
+#include "RecluseEngine_exports.hpp"
+
 #include <unordered_map>
 
 namespace Recluse {
@@ -24,7 +26,7 @@ struct TextureViewID
     ResourceViewDimension   dimension;
 };
 
-class R_PUBLIC_API TextureResource : public RendererResource
+class RecluseEngine_PUBLIC_API TextureResource : public RendererResource
 {
 public:
     TextureResource() { }
@@ -46,7 +48,7 @@ private:
     Hash64 m_crc;
 };
 
-class R_PUBLIC_API Texture2D : public TextureResource 
+class RecluseEngine_PUBLIC_API Texture2D : public TextureResource 
 {
 public:
     Texture2D() 
@@ -67,7 +69,7 @@ private:
 };
 
 
-class R_PUBLIC_API TextureView : public TextureResource 
+class RecluseEngine_PUBLIC_API TextureView : public TextureResource 
 {
 public:
     TextureView()
@@ -108,7 +110,7 @@ class Material
 public:
     virtual ~Material() { }
 
-    R_PUBLIC_API Material(const std::string& matName)//, MaterialType type) 
+    RecluseEngine_PUBLIC_API Material(const std::string& matName)//, MaterialType type) 
         : /* m_matType(type)
         , m_flags(0)
         , */m_matName(matName) { }
@@ -116,33 +118,33 @@ public:
     //R_PUBLIC_API MaterialType getMatType() const { return m_matType; }
 
     // Adds a texture to this material.
-    R_PUBLIC_API Texture2D* addTexture(Texture2D* pTexture, const std::string& attrib) 
+    RecluseEngine_PUBLIC_API Texture2D* addTexture(Texture2D* pTexture, const std::string& attrib) 
     {
         m_resourceMap[recluseHashFast(attrib.data(), attrib.size())] = pTexture;
         return nullptr;
     }
 
-    R_PUBLIC_API RendererResource* addResource(RendererResource* pResource, const std::string& attrib)
+    RecluseEngine_PUBLIC_API RendererResource* addResource(RendererResource* pResource, const std::string& attrib)
     {
         m_resourceMap[recluseHashFast(attrib.data(), attrib.size())] = pResource;
         return nullptr;
     }
 
-    R_PUBLIC_API RendererResource* getResource(const std::string& attrib);
+    RecluseEngine_PUBLIC_API RendererResource* getResource(const std::string& attrib);
 
-    R_PUBLIC_API B32 hasTex(const std::string& attrib) const
+    RecluseEngine_PUBLIC_API B32 hasTex(const std::string& attrib) const
     {
         return m_resourceMap.find(recluseHashFast(attrib.data(), attrib.size())) != m_resourceMap.end();
     }
 
-    R_PUBLIC_API Texture2D* getTex(const std::string& attrib) 
+    RecluseEngine_PUBLIC_API Texture2D* getTex(const std::string& attrib) 
     {
         return (Texture2D*)m_resourceMap[recluseHashFast(attrib.data(), attrib.size())];
     }
 
     // Removes a texture with the attribute. This will only nullify the texture slot,
     // in order to clean up, you must call restructure().
-    R_PUBLIC_API B32 removeTex(const std::string& attrib) 
+    RecluseEngine_PUBLIC_API B32 removeTex(const std::string& attrib) 
     {
         if (hasTex(attrib)) 
         {
@@ -159,7 +161,7 @@ public:
     const std::string&              getName() const { return m_matName; }
 
     // Declares attributes within the material. Any already declared attribs will be ignored.
-    R_PUBLIC_API Material& declare(const std::string& attrib)
+    RecluseEngine_PUBLIC_API Material& declare(const std::string& attrib)
     {
         Hash64 hash = recluseHashFast(attrib.data(), attrib.size());
         auto iter = m_resourceMap.find(hash);
@@ -171,7 +173,7 @@ public:
     }
 
     // Clear the whole material.
-    R_PUBLIC_API void               clear() { m_resourceMap.clear(); } 
+    RecluseEngine_PUBLIC_API void               clear() { m_resourceMap.clear(); } 
 
 protected:
 
@@ -184,11 +186,11 @@ protected:
 
 
 // Need to call these in order to properly create textures.
-R_PUBLIC_API void           initializeTextureLUT();
-R_PUBLIC_API void           cleanupTextureLUT();
+RecluseEngine_PUBLIC_API void           initializeTextureLUT();
+RecluseEngine_PUBLIC_API void           cleanupTextureLUT();
 
-R_PUBLIC_API TextureView*   lookupTextureView(const TextureViewID& id);
-R_PUBLIC_API ResultCode        addTextureView(const TextureViewID& id);
-R_PUBLIC_API ResultCode        removeTextureView(const TextureViewID& id);
+RecluseEngine_PUBLIC_API TextureView*   lookupTextureView(const TextureViewID& id);
+RecluseEngine_PUBLIC_API ResultCode        addTextureView(const TextureViewID& id);
+RecluseEngine_PUBLIC_API ResultCode        removeTextureView(const TextureViewID& id);
 } // Engine
 } // Recluse

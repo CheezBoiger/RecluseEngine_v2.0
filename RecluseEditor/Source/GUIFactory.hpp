@@ -5,6 +5,8 @@
 #include "Recluse/Types.hpp"
 #include "GUIContext.hpp"
 
+#include "RecluseEditorBase_exports.hpp"
+
 
 namespace Recluse {
 namespace Editor {
@@ -17,10 +19,10 @@ enum GUIContext
 };
 
 // Create a GUI context.
-R_PUBLIC_API ResultCode         createContext(GUIContext ctx);
+RecluseEditorBase_PUBLIC_API ResultCode      createContext(GUIContext ctx);
 
 // Destroy the GUI context.
-R_PUBLIC_API void            destroyContext(IGUIContext* pCtx);
+RecluseEditorBase_PUBLIC_API void            destroyContext(IGUIContext* pCtx);
 } // Editor
 } // GUIFactory
 } // Recluse

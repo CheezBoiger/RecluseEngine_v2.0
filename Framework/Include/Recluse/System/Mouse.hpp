@@ -5,6 +5,7 @@
 #include "Recluse/System/Input.hpp"
 #include "Recluse/System/InputController.hpp"
 #include "Recluse/Serialization/SerialTypes.hpp"
+#include "RecluseFramework_exports.hpp"
 
 namespace Recluse {
 
@@ -23,11 +24,11 @@ public:
         , m_isClamped(false)
         , m_isEnabled(false) { }
 
-    virtual R_PUBLIC_API ResultCode    integrateInput(const IInputFeedback& feedback) override;
-    virtual R_PUBLIC_API ResultCode    initialize(const std::string& controllerName) override;
-    virtual R_PUBLIC_API ResultCode    destroy() override;
-    virtual R_PUBLIC_API ResultCode    getInput(IInputFeedback& feedback) override;
-    R_PUBLIC_API ResultCode            setIconPath(const std::string& iconPath);
+    virtual RecluseFramework_PUBLIC_API ResultCode    integrateInput(const IInputFeedback& feedback) override;
+    virtual RecluseFramework_PUBLIC_API ResultCode    initialize(const std::string& controllerName) override;
+    virtual RecluseFramework_PUBLIC_API ResultCode    destroy() override;
+    virtual RecluseFramework_PUBLIC_API ResultCode    getInput(IInputFeedback& feedback) override;
+    RecluseFramework_PUBLIC_API ResultCode            setIconPath(const std::string& iconPath);
 
     I32                             getXPos() const { return m_xPosition; }
     I32                             getYPos() const { return m_yPosition; }

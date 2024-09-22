@@ -20,11 +20,18 @@ set ( RECLUSE_D3D12_RELEASE_LIB ${CMAKE_SOURCE_DIR}/../Recluse/Lib/RecluseD3D12.
 
 set ( RECLUSE_THIRDPARTY_DIR ${CMAKE_SOURCE_DIR}/Thirdparty )
 
+function(ImportThisLibrary TARGET_LIBRARY IMPORT_LIBRARY)
+	set(RECLUSE_GENERATED_LIBRARY_DIRECTORY ${CMAKE_SOURCE_DIR}/../Recluse/Build/Libraries)
+	set(IMPORT_LIBRARY_DIRECTORY ${RECLUSE_GENERATED_LIBRARY_DIRECTORY}/${IMPORT_LIBRARY})
+	target_include_directories(${TARGET_LIBRARY} PUBLIC ${IMPORT_LIBRARY_DIRECTORY})
+endfunction()
+
 function(initialize_recluse_framework TARGET_NAME )
     message(STATUS "Recluse: Linking ${TARGET_NAME} with Recluse Framework")
     include_directories(${RECLUSE_FRAMEWORK_INCLUDE} ${RECLUSE_GENERATED_INCLUDES})
     target_link_libraries(${TARGET_NAME} debug ${RECLUSE_FRAMEWORK_DEBUG_LIB})
     target_link_libraries(${TARGET_NAME} optimized ${RECLUSE_FRAMEWORK_RELEASE_LIB})
+	ImportThisLibrary(${TARGET_NAME} "RecluseFramework")
 endfunction()
 
 function( initialize_recluse_engine TARGET_NAME )
@@ -32,6 +39,7 @@ function( initialize_recluse_engine TARGET_NAME )
     target_include_directories(${TARGET_NAME} PUBLIC ${RECLUSE_ENGINE_INCLUDE})
     target_link_libraries(${TARGET_NAME} debug ${RECLUSE_ENGINE_DEBUG_LIB})
     target_link_libraries(${TARGET_NAME} optimized ${RECLUSE_ENGINE_RELEASE_LIB})
+	ImportThisLibrary(${TARGET_NAME} "RecluseEngine")
 endfunction()
 
 function( initialize_recluse_pipeline TARGET_NAME )
@@ -39,6 +47,7 @@ function( initialize_recluse_pipeline TARGET_NAME )
     target_include_directories(${TARGET_NAME} PUBLIC ${RECLUSE_PIPELINE_INCLUDE})
     target_link_libraries(${TARGET_NAME} debug ${RECLUSE_PIPELINE_DEBUG_LIB})
     target_link_libraries(${TARGET_NAME} optimized ${RECLUSE_PIPELINE_RELEASE_LIB})
+	ImportThisLibrary(${TARGET_NAME} "ReclusePipeline")
 endfunction()
 
 function(initialize_gtest_framework TARGET_NAME )

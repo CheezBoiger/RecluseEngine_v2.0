@@ -5,12 +5,14 @@
 #include "Recluse/Types.hpp"
 #include "Recluse/Math/Vector4.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 namespace Recluse {
 namespace Math {
 struct Matrix43;
 
 // 4x4 square matrix.
-struct R_PUBLIC_API Matrix44 
+struct RecluseFramework_PUBLIC_API Matrix44 
 {
     union 
     {
@@ -76,18 +78,18 @@ struct R_PUBLIC_API Matrix44
     operator Matrix43() const;
 };
 
-R_PUBLIC_API Matrix44 rotate(const Matrix44& init, const Float3& axis, F32 radius);
-R_PUBLIC_API Matrix44 transpose(const Matrix44& init);
-R_PUBLIC_API Matrix44 translate(const Matrix44& init, const Float3& trans);
-R_PUBLIC_API Matrix44 scale(const Matrix44& init, const Float4& scalar);
-R_PUBLIC_API Matrix44 adjugate(const Matrix44& init);
-R_PUBLIC_API Matrix44 inverse(const Matrix44& init);
-R_PUBLIC_API F32      determinant(const Matrix44& init);
-R_PUBLIC_API Matrix44 perspectiveLH_Aspect(F32 fov, F32 aspect, F32 ne, F32 fa);
-R_PUBLIC_API Matrix44 perspectiveLH(F32 w, F32 h, F32 ne, F32 fa);
+RecluseFramework_PUBLIC_API Matrix44 rotate(const Matrix44& init, const Float3& axis, F32 radius);
+RecluseFramework_PUBLIC_API Matrix44 transpose(const Matrix44& init);
+RecluseFramework_PUBLIC_API Matrix44 translate(const Matrix44& init, const Float3& trans);
+RecluseFramework_PUBLIC_API Matrix44 scale(const Matrix44& init, const Float4& scalar);
+RecluseFramework_PUBLIC_API Matrix44 adjugate(const Matrix44& init);
+RecluseFramework_PUBLIC_API Matrix44 inverse(const Matrix44& init);
+RecluseFramework_PUBLIC_API F32      determinant(const Matrix44& init);
+RecluseFramework_PUBLIC_API Matrix44 perspectiveLH_Aspect(F32 fov, F32 aspect, F32 ne, F32 fa);
+RecluseFramework_PUBLIC_API Matrix44 perspectiveLH(F32 w, F32 h, F32 ne, F32 fa);
 
-R_PUBLIC_API Matrix44 perspectiveRH_Aspect(F32 fov, F32 aspect, F32 ne, F32 fa);
-R_PUBLIC_API Matrix44 perspectiveRH(F32 w, F32 h, F32 ne, F32 fa);
+RecluseFramework_PUBLIC_API Matrix44 perspectiveRH_Aspect(F32 fov, F32 aspect, F32 ne, F32 fa);
+RecluseFramework_PUBLIC_API Matrix44 perspectiveRH(F32 w, F32 h, F32 ne, F32 fa);
 
 // top = top plane.
 // bottom = bottom plane.
@@ -95,14 +97,14 @@ R_PUBLIC_API Matrix44 perspectiveRH(F32 w, F32 h, F32 ne, F32 fa);
 // right = right plane.
 // ne = near plane.
 // fa = far plane.
-R_PUBLIC_API Matrix44 orthographicLH(F32 top, F32 bottom, F32 left, F32 right, F32 ne, F32 fa);
-R_PUBLIC_API Matrix44 orthographicRH(F32 top, F32 bottom, F32 left, F32 right, F32 ne, F32 fa);
+RecluseFramework_PUBLIC_API Matrix44 orthographicLH(F32 top, F32 bottom, F32 left, F32 right, F32 ne, F32 fa);
+RecluseFramework_PUBLIC_API Matrix44 orthographicRH(F32 top, F32 bottom, F32 left, F32 right, F32 ne, F32 fa);
 
 // 
-R_PUBLIC_API Matrix44 lookAtLH(const Float3& position, const Float3& target, const Float3& up = Float3(0, 1, 0));
-R_PUBLIC_API Matrix44 lookAtRH(const Float3& position, const Float3& target, const Float3& up = Float3(0, 1, 0));
+RecluseFramework_PUBLIC_API Matrix44 lookAtLH(const Float3& position, const Float3& target, const Float3& up = Float3(0, 1, 0));
+RecluseFramework_PUBLIC_API Matrix44 lookAtRH(const Float3& position, const Float3& target, const Float3& up = Float3(0, 1, 0));
 // [4 x 4] * [4 x 1] = [4 x 1]
-R_PUBLIC_API Float4 operator*(const Matrix44& lh, const Float4& rh);
+RecluseFramework_PUBLIC_API Float4 operator*(const Matrix44& lh, const Float4& rh);
 
 
 typedef Matrix44 Mat44;

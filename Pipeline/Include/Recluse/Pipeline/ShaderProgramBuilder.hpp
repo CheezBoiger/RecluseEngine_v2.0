@@ -2,13 +2,15 @@
 #pragma once
 #include "Recluse/Graphics/ShaderProgram.hpp"
 
+#include "ReclusePipeline_exports.hpp"
+
 
 namespace Recluse {
 namespace Pipeline {
 namespace Builder {
 
 // Shader program permutation definition, defines possible permutations for a given shader program.
-struct R_PUBLIC_API ShaderProgramPermutationDefinition
+struct ReclusePipeline_PUBLIC_API ShaderProgramPermutationDefinition
 {
     ShaderProgramPermutationDefinition(const char* name = nullptr, U32 offset = 0, U32 size = 0, U32 value = 0)
         : name(name), offset(offset), size(size), value(value) { }
@@ -23,7 +25,7 @@ typedef std::vector<ShaderProgramPermutationDefinition> ShaderProgramPermutation
 // Shader Program description is a metadata struct that describes the shader program that 
 // is to be created for rendering use. This essentially sets up the program that the backend renderer
 // will use when binding to the graphics pipeline.
-struct R_PUBLIC_API ShaderProgramDescription
+struct ReclusePipeline_PUBLIC_API ShaderProgramDescription
 {
     union 
     {
@@ -108,14 +110,14 @@ struct ShaderProgramDescriptionInfo
 };
 
 // Build the shader program definitions. When successful, will store the shader program into the given ShaderProgrmaDatabase. 
-R_PUBLIC_API ResultCode                     buildShaderPrograms(ShaderProgramDatabase& db, const ShaderProgramDescriptionInfo* descriptions, ShaderIntermediateCode imm);
+ReclusePipeline_PUBLIC_API ResultCode                     buildShaderPrograms(ShaderProgramDatabase& db, const ShaderProgramDescriptionInfo* descriptions, ShaderIntermediateCode imm);
 // Build the needed shader program definitions in order to define how the programs should be built in runtime.
-R_PUBLIC_API ResultCode                     buildShaderProgram(ShaderProgramDatabase& db, const ShaderProgramDescription& description, ShaderProgramId outId, ShaderIntermediateCode imm);
-R_PUBLIC_API ResultCode                     releaseShaderProgram(ShaderProgramDatabase& db, ShaderProgramId id);
+ReclusePipeline_PUBLIC_API ResultCode                     buildShaderProgram(ShaderProgramDatabase& db, const ShaderProgramDescription& description, ShaderProgramId outId, ShaderIntermediateCode imm);
+ReclusePipeline_PUBLIC_API ResultCode                     releaseShaderProgram(ShaderProgramDatabase& db, ShaderProgramId id);
 
 // Function to allow saving program definitions on disk.
-R_PUBLIC_API ResultCode                     saveProgramDefinitions(const std::string& dataPath);
-R_PUBLIC_API ResultCode                     loadProgramDefinitions(const std::string& dataPath);
+ReclusePipeline_PUBLIC_API ResultCode                     saveProgramDefinitions(const std::string& dataPath);
+ReclusePipeline_PUBLIC_API ResultCode                     loadProgramDefinitions(const std::string& dataPath);
 } // Builder
 } // Pipeline
 } // Recluse

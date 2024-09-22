@@ -17,6 +17,7 @@ set ( RECLUSE_VULKAN_INCLUDE_FILES ${RECLUSE_VULKAN_INCLUDE} )
 set ( RECLUSE_VULKAN_LINK_BINARIES )
 set ( RECLUSE_VULKAN_THIRD_PARTY ${RECLUSE_THIRDPARTY_DIR} )
 
+include ( ${CMAKE_SOURCE_DIR}/Systems/CMake/GenerateExports.cmake )
 
 #if ( RCL_VULKAN )
     add_definitions( -DRCL_VULKAN=1 )
@@ -76,6 +77,9 @@ add_library (               ${RECLUSE_VULKAN_NAME} SHARED    ${RECLUSE_VULKAN_CO
 target_include_directories( ${RECLUSE_VULKAN_NAME} PUBLIC    ${RECLUSE_VULKAN_INCLUDE_FILES} ${RECLUSE_VULKAN_SOURCE} ${RECLUSE_VULKAN_THIRD_PARTY})
 target_link_libraries (     ${RECLUSE_VULKAN_NAME}           ${RECLUSE_VULKAN_LINK_BINARIES} RecluseFramework )
 add_dependencies( ${RECLUSE_VULKAN_NAME} RecluseFramework )
+
+ExportThisLibrary(${RECLUSE_VULKAN_NAME})
+ImportThisLibrary(${RECLUSE_VULKAN_NAME} "RecluseFramework")
 # Doing some stuff for organization.
 if (MSVC)
   foreach(source IN LISTS RECLUSE_VULKAN_COMPILE_FILES)

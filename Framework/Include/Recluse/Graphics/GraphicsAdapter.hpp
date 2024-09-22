@@ -5,10 +5,12 @@
 #include "Recluse/Graphics/GraphicsInstance.hpp"
 #include "Recluse/Graphics/GraphicsCommon.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 namespace Recluse {
 
 
-struct R_PUBLIC_API AdapterInfo 
+struct AdapterInfo 
 {
     char            deviceName[256];
     U32             vendorId;
@@ -16,7 +18,7 @@ struct R_PUBLIC_API AdapterInfo
 };
 
 
-struct R_PUBLIC_API AdapterLimits 
+struct AdapterLimits 
 {
     U32     maxConstBufferBinds;
     U32     maxUavBinds;
@@ -29,14 +31,14 @@ struct R_PUBLIC_API AdapterLimits
     Bool    hasAsyncCompute;
 };
 
-struct R_PUBLIC_API DeviceCreateInfo 
+struct DeviceCreateInfo 
 {
     U32 reserved0;
 };
 
 class GraphicsDevice;
 
-class R_PUBLIC_API GraphicsAdapter 
+class GraphicsAdapter 
 {
 public:
     virtual ~GraphicsAdapter() { }

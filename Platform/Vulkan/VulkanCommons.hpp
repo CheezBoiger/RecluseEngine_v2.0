@@ -8,6 +8,8 @@
 #include "Recluse/Graphics/GraphicsCommon.hpp"
 #include "Recluse/Graphics/PipelineState.hpp"
 
+#include "RecluseVulkan_exports.hpp"
+
 #if defined (RECLUSE_WINDOWS)
 #define VK_USE_PLATFORM_WIN32_KHR 1
 #endif

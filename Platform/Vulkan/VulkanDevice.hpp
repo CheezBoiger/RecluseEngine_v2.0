@@ -12,8 +12,10 @@
 #include "VulkanDescriptorManager.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 #include "VulkanCommandList.hpp"
-
 #include "Recluse/Threading/Threading.hpp"
+
+#include "RecluseVulkan_exports.hpp"
+
 #include <vector>
 #include <list>
 #include <array>
@@ -51,7 +53,7 @@ struct VulkanContextFrame
 };
 
 
-class VulkanContext : public GraphicsContext
+class RecluseVulkan_PUBLIC_API VulkanContext : public GraphicsContext
 {
 private:
     struct ContextState;
@@ -325,7 +327,7 @@ private:
 };
 
 
-class VulkanDevice : public GraphicsDevice 
+class RecluseVulkan_PUBLIC_API VulkanDevice : public GraphicsDevice 
 {
 public:
     VulkanDevice()

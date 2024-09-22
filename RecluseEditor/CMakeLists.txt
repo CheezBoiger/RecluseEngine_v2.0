@@ -18,6 +18,7 @@ set ( RECLUSE_EDITOR_LINK_BINARIES )
 
 # include our build files here.
 include ( CMake/Main.cmake )
+include ( ${CMAKE_SOURCE_DIR}/Systems/CMake/GenerateExports.cmake )
 
 add_executable( ${RECLUSE_EDITOR_NAME} ${RECLUSE_EDITOR_COMPILE_FILES} )
 target_include_directories( 
@@ -29,6 +30,10 @@ target_link_libraries( ${RECLUSE_EDITOR_NAME}
 	RecluseFramework RecluseEngine ${RECLUSE_EDITOR_LINK_BINARIES} wx::net wx::core wx::base)
 	
 add_dependencies(${RECLUSE_EDITOR_NAME} RecluseFramework RecluseEngine)
+
+ExportThisLibrary(${RECLUSE_EDITOR_NAME})
+ImportThisLibrary(${RECLUSE_EDITOR_NAME} "RecluseFramework")
+ImportThisLibrary(${RECLUSE_EDITOR_NAME} "RecluseEngine")
 
 add_subdirectory(CSharp/Framework)
 add_subdirectory(CSharp/Pipeline)

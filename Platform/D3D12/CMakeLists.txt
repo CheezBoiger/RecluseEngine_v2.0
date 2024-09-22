@@ -18,6 +18,9 @@ set ( RECLUSE_D3D12_LINK_BINARIES )
 set ( RECLUSE_D3D12_THIRD_PARTY ${RECLUSE_THIRDPARTY_DIR} )
 
 
+include ( ${CMAKE_SOURCE_DIR}/Systems/CMake/GenerateExports.cmake )
+
+
 if (R_DEVELOPER)
 	add_definitions(-DRECLUSE_DEVELOPER=1)
 endif(R_DEVELOPER)
@@ -66,6 +69,10 @@ add_library (               ${RECLUSE_D3D12_NAME} SHARED    ${RECLUSE_D3D12_COMP
 target_include_directories( ${RECLUSE_D3D12_NAME} PUBLIC    ${RECLUSE_D3D12_INCLUDE_FILES} ${RECLUSE_D3D12_SOURCE} ${RECLUSE_D3D12_THIRD_PARTY})
 target_link_libraries (     ${RECLUSE_D3D12_NAME}           ${RECLUSE_D3D12_LINK_BINARIES} RecluseFramework)
 add_dependencies( ${RECLUSE_D3D12_NAME} RecluseFramework )
+
+ExportThisLibrary(${RECLUSE_D3D12_NAME})
+ImportThisLibrary(${RECLUSE_D3D12_NAME} "RecluseFramework")
+
 # Doing some stuff for organization.
 if (MSVC)
   foreach(source IN LISTS RECLUSE_D3D12_COMPILE_FILES)

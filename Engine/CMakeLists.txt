@@ -17,6 +17,8 @@ set ( RECLUSE_ENGINE_INCLUDE_FILES )
 set ( RECLUSE_ENGINE_COMPILE_FILES )
 set ( RECLUSE_ENGINE_LINK_BINARIES )
 
+include ( ${CMAKE_SOURCE_DIR}/Systems/CMake/GenerateExports.cmake )
+
 # include our build files here.
 
 # Editor SDK is enabled. This allows for Shim access to the engine.
@@ -34,6 +36,9 @@ target_include_directories( ${RECLUSE_ENGINE_NAME} PUBLIC ${RECLUSE_INCLUDE_FILE
     ${RECLUSE_ENGINE_INCLUDE_DIR} ${RECLUSE_FRAMEWORK_INCLUDE_DIR} ${RECLUSE_GENERATED_INCLUDE_DIR} ${RECLUSE_THIRD_PARTY_DIR})
 target_link_libraries( ${RECLUSE_ENGINE_NAME} RecluseFramework ${RECLUSE_ENGINE_LINK_BINARIES})
 add_dependencies(${RECLUSE_ENGINE_NAME} RecluseFramework)
+
+ExportThisLibrary(${RECLUSE_ENGINE_NAME})
+ImportThisLibrary(${RECLUSE_ENGINE_NAME} "RecluseFramework")
 
 # Doing some stuff for organization.
 if (MSVC)

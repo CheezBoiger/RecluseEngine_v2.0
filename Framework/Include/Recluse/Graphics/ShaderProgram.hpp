@@ -9,6 +9,8 @@
 #include "Recluse/Graphics/GraphicsCommon.hpp"
 #include "Recluse/Graphics/PipelineState.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 #include <unordered_map>
 #include <map>
 #include <bitset>
@@ -21,7 +23,7 @@ typedef U64 ShaderProgramPermutation;
 class GraphicsDevice;
 
 
-struct R_PUBLIC_API ShaderProgramReflection : public Serializable
+struct RecluseFramework_PUBLIC_API ShaderProgramReflection : public Serializable
 {
     std::array<ShaderBind, 16>  cbvs;
     std::array<ShaderBind, 64>  srvs;
@@ -55,7 +57,7 @@ struct R_PUBLIC_API ShaderProgramReflection : public Serializable
 // Definition of a shader program. This is one instance of a program (with any necessary permutations set.)
 // Keep in mind this is a definition struct, that holds onto the shader intermediate code of the rendering application. Since it is a reference,
 // Once you load it into the graphics device, you can destroy this definition.
-class R_PUBLIC_API ShaderProgramDefinition
+class RecluseFramework_PUBLIC_API ShaderProgramDefinition
 {
 public:
     // The pipeline that must be bound to the rendering backend.
@@ -113,7 +115,7 @@ public:
 };
 
 
-class R_PUBLIC_API ShaderProgramDatabase : public Serializable
+class RecluseFramework_PUBLIC_API ShaderProgramDatabase : public Serializable
 {
 public:
     static Hash64                               makeShaderHash(const char* bytecode, U32 lengthBytes);
@@ -171,13 +173,13 @@ private:
 
 namespace Runtime {
 // Build the actual shader program. This is the realtime runner that requires building the shaders and their respective permutations.
-R_PUBLIC_API ResultCode                     buildShaderProgram(GraphicsDevice* pDevice, const ShaderProgramDatabase& db, ShaderProgramId shaderProgram);
-R_PUBLIC_API ResultCode                     buildAllShaderPrograms(GraphicsDevice* pDevice, const ShaderProgramDatabase& db);
-R_PUBLIC_API ResultCode                     releaseShaderProgram(GraphicsDevice* pDevice, ShaderProgramId shaderProgram);
-R_PUBLIC_API ResultCode                     releaseAllShaderPrograms(GraphicsDevice* pDevice);
+RecluseFramework_PUBLIC_API ResultCode                     buildShaderProgram(GraphicsDevice* pDevice, const ShaderProgramDatabase& db, ShaderProgramId shaderProgram);
+RecluseFramework_PUBLIC_API ResultCode                     buildAllShaderPrograms(GraphicsDevice* pDevice, const ShaderProgramDatabase& db);
+RecluseFramework_PUBLIC_API ResultCode                     releaseShaderProgram(GraphicsDevice* pDevice, ShaderProgramId shaderProgram);
+RecluseFramework_PUBLIC_API ResultCode                     releaseAllShaderPrograms(GraphicsDevice* pDevice);
 // Build all vertex input layouts, stores in their own register.
-R_PUBLIC_API ResultCode                     buildVertexInputLayout(GraphicsDevice* pDevice, const VertexInputLayout& layout, VertexInputLayoutId inputLayoutId);
-R_PUBLIC_API ResultCode                     releaseVertexInputLayout(GraphicsDevice* pDevice, VertexInputLayoutId inputLayoutId);
-R_PUBLIC_API ResultCode                     releaseAllVertexInputLayouts(GraphicsDevice* pDevice);
+RecluseFramework_PUBLIC_API ResultCode                     buildVertexInputLayout(GraphicsDevice* pDevice, const VertexInputLayout& layout, VertexInputLayoutId inputLayoutId);
+RecluseFramework_PUBLIC_API ResultCode                     releaseVertexInputLayout(GraphicsDevice* pDevice, VertexInputLayoutId inputLayoutId);
+RecluseFramework_PUBLIC_API ResultCode                     releaseAllVertexInputLayouts(GraphicsDevice* pDevice);
 } // Runtime
 } // Recluse

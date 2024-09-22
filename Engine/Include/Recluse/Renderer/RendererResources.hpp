@@ -7,6 +7,8 @@
 #include "Recluse/Filesystem/Filesystem.hpp"
 #include "Recluse/Filesystem/Filesystem.hpp"
 
+#include "RecluseEngine_exports.hpp"
+
 namespace Recluse {
 namespace Engine {
 
@@ -40,7 +42,7 @@ class CpuToGpuBuffer
 };
 
 
-class R_PUBLIC_API RendererResource
+class RecluseEngine_PUBLIC_API RendererResource
 {
 public:
     virtual ~RendererResource() { }
@@ -49,7 +51,7 @@ public:
 };
 
 
-class R_PUBLIC_API GPUBuffer : public RendererResource
+class RecluseEngine_PUBLIC_API GPUBuffer : public RendererResource
 {
 public:
     GPUBuffer()
@@ -77,7 +79,7 @@ private:
 };
 
 
-class R_PUBLIC_API IndexBuffer : public GPUBuffer 
+class RecluseEngine_PUBLIC_API IndexBuffer : public GPUBuffer 
 {
 public:
     IndexBuffer() { }
@@ -105,7 +107,7 @@ private:
 };
 
 
-class R_PUBLIC_API VertexBuffer : public GPUBuffer 
+class RecluseEngine_PUBLIC_API VertexBuffer : public GPUBuffer 
 {
 public:
     VertexBuffer() { }
@@ -142,20 +144,20 @@ namespace RenderDB {
 
 typedef U32 RenderID;
 
-extern R_PUBLIC_API Bool         registerTexture2D(RenderID id);
-extern R_PUBLIC_API Bool         registerGPUBuffer(RenderID id);
+extern RecluseEngine_PUBLIC_API Bool         registerTexture2D(RenderID id);
+extern RecluseEngine_PUBLIC_API Bool         registerGPUBuffer(RenderID id);
 
-extern R_PUBLIC_API Bool         isCachedGPUBuffer(RenderID id);
-extern R_PUBLIC_API Bool         isCachedTexture2D(RenderID id);
+extern RecluseEngine_PUBLIC_API Bool         isCachedGPUBuffer(RenderID id);
+extern RecluseEngine_PUBLIC_API Bool         isCachedTexture2D(RenderID id);
 
-extern R_PUBLIC_API Texture2D*   getTexture2D(RenderID id);
-extern R_PUBLIC_API GPUBuffer*   getGPUBuffer(RenderID id);
+extern RecluseEngine_PUBLIC_API Texture2D*   getTexture2D(RenderID id);
+extern RecluseEngine_PUBLIC_API GPUBuffer*   getGPUBuffer(RenderID id);
 
-extern R_PUBLIC_API ResultCode      cacheGPUBuffer(RenderID id, GPUBuffer* pBuffer);
-extern R_PUBLIC_API ResultCode      cacheTexture2D(RenderID id, Texture2D* pTexture);
+extern RecluseEngine_PUBLIC_API ResultCode      cacheGPUBuffer(RenderID id, GPUBuffer* pBuffer);
+extern RecluseEngine_PUBLIC_API ResultCode      cacheTexture2D(RenderID id, Texture2D* pTexture);
 
-extern R_PUBLIC_API Bool         removeTexture2D(RenderID id);
-extern R_PUBLIC_API Bool         removeGPUBuffer(RenderID id);
+extern RecluseEngine_PUBLIC_API Bool         removeTexture2D(RenderID id);
+extern RecluseEngine_PUBLIC_API Bool         removeGPUBuffer(RenderID id);
 } // RenderDB
 } // Engine
 } // Recluse

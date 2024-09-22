@@ -13,7 +13,7 @@ class Archive
 {
 public:
 
-    R_PUBLIC_API Archive(const std::string& filepath, char* access)
+    RecluseFramework_PUBLIC_API Archive(const std::string& filepath, char* access)
         : m_filepath(filepath)
         , m_cursor(0ull) 
     {
@@ -28,21 +28,21 @@ public:
 
     // Write to file with pointer to data, and the size of the data.
     // Returns RecluseResult_Ok if the write was succesful.
-    ResultCode R_PUBLIC_API write(const void* ptr, U64 sz);
+    ResultCode RecluseFramework_PUBLIC_API write(const void* ptr, U64 sz);
 
     // Reads the file, passing information to input memory, and determines how much to read,
     // from given size bytes. Returns RecluseResult_Ok, if the read operation was successful.
     // 
-    ResultCode R_PUBLIC_API read(void* ptr, U64 sz);
+    ResultCode RecluseFramework_PUBLIC_API read(void* ptr, U64 sz);
 
     // Closes the archive file. This effectively invalidates the handle to the filepath.
-    ResultCode R_PUBLIC_API close();
+    ResultCode RecluseFramework_PUBLIC_API close();
 
     // Checks if the file is still open for reading/writing.
     Bool isOpen() { return m_file.isOpen(); }
 
 protected:
-    ResultCode R_PUBLIC_API openFile(char* access);
+    ResultCode RecluseFramework_PUBLIC_API openFile(char* access);
 
 private:
     File            m_file;

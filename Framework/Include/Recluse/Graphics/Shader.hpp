@@ -7,6 +7,8 @@
 #include "Recluse/Serialization/Serializable.hpp"
 #include "Recluse/Utility.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 #include <vector>
 
 namespace Recluse {
@@ -93,9 +95,9 @@ class Shader final : public IReference, public Serializable
 public:
     ~Shader() { }
 
-    static R_PUBLIC_API Shader*     create();
-    static R_PUBLIC_API void        destroy(Shader* pShader);
-    static R_PUBLIC_API Hash64      makeShaderHash(const char* bytecode, U64 bytecodeLength);
+    static RecluseFramework_PUBLIC_API Shader*     create();
+    static RecluseFramework_PUBLIC_API void        destroy(Shader* pShader);
+    static RecluseFramework_PUBLIC_API Hash64      makeShaderHash(const char* bytecode, U64 bytecodeLength);
 
 private:
 
@@ -116,12 +118,12 @@ public:
     ShaderIntermediateCode  getIntermediateCodeType() const { return m_intermediateCode; }
 
     // Load the bytecode data to the shader. This requires that the data be in bytecode, not source!
-    R_PUBLIC_API ResultCode load(const char* entryPoint, const char* byteCode, U64 szBytes, ShaderIntermediateCode imm, ShaderType shaderType);
+    RecluseFramework_PUBLIC_API ResultCode load(const char* entryPoint, const char* byteCode, U64 szBytes, ShaderIntermediateCode imm, ShaderType shaderType);
 
     // Save the compilation to a file.
-    R_PUBLIC_API ResultCode saveToFile(const char* filePath);
+    RecluseFramework_PUBLIC_API ResultCode saveToFile(const char* filePath);
 
-    R_PUBLIC_API Shader*    convertTo(ShaderIntermediateCode intermediateCode);
+    RecluseFramework_PUBLIC_API Shader*    convertTo(ShaderIntermediateCode intermediateCode);
     const char*             getEntryPointName() const { return m_entryPoint.c_str(); }
     ShaderType              getType() const { return m_shaderType; }
     const char*             getByteCode() const { return m_byteCode.data(); }
@@ -145,8 +147,8 @@ public:
     void                    setPermutationId(ShaderPermutationId permutation) { m_permutation = permutation; }
     ShaderPermutationId     getPermutationId() const { return m_permutation; }
 
-    R_PUBLIC_API ResultCode serialize(Archive* archive) const override;
-    R_PUBLIC_API ResultCode deserialize(Archive* archive) override;
+    RecluseFramework_PUBLIC_API ResultCode serialize(Archive* archive) const override;
+    RecluseFramework_PUBLIC_API ResultCode deserialize(Archive* archive) override;
 
 private:
 
@@ -181,7 +183,7 @@ public:
     std::vector<ShaderBind> srvs;
     std::vector<ShaderBind> uavs;
     std::vector<ShaderBind> samplers;
-    R_PUBLIC_API ResultCode serialize(Archive* archive) const override;
-    R_PUBLIC_API ResultCode deserialize(Archive* archive) override;
+    RecluseFramework_PUBLIC_API ResultCode serialize(Archive* archive) const override;
+    RecluseFramework_PUBLIC_API ResultCode deserialize(Archive* archive) override;
 };
 } // Recluse

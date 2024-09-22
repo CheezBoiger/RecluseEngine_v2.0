@@ -11,6 +11,9 @@
 #include "Recluse/Threading/ThreadPool.hpp"
 
 #include "Recluse/MessageBus.hpp"
+
+#include "RecluseEngine_exports.hpp"
+
 #include <map>
 #include <list>
 #include <set>
@@ -39,7 +42,7 @@ typedef U32 TaskTypeFlags;
 
 // Task process is a separate asyncronous process, that runs independent of the main thread.
 // This would need to be used for anything that requires it's own independent execution.
-class R_PUBLIC_API TaskProcess
+class RecluseEngine_PUBLIC_API TaskProcess
 {
 
 public:
@@ -55,10 +58,11 @@ public:
     typedef ThreadFunction ProcessTask;
     typedef std::function<ResultCode(TaskProcess*)> OnProcessTask; 
 
-    TaskProcess(ThreadPool* workerPool = nullptr, OnProcessTask onTask = nullptr)
+    TaskProcess(ThreadPool* workerPool = nullptr, OnProcessTask onTask = nullptr, const char* processName = nullptr)
         : m_onTask(onTask)
         , m_threadPoolRef(workerPool)
         , m_tasksMutex(nullptr)
+        , m_processName(processName ? processName : "")
         , m_isRunning(false) { }
 
     ~TaskProcess() 
@@ -73,7 +77,7 @@ public:
     }
 
     // Start the process.
-    ResultCode start();
+    ResultCode      start();
 
     // Push a task with the given priorities.
     // Likely want this to be pushed during update call, so that thread pool can take hold.
@@ -88,20 +92,23 @@ public:
 
     OnProcessTask   getOnProcessTask() { return m_onTask; }
 
-    Bool isRunning() const  { return m_isRunning; }
+    // Check if this process is running.
+    Bool            isRunning() const  { return m_isRunning; }
 
     // Signal to the process. Can be called by the main task.
-    void signal(Signal signal = Signal_Notify);
+    void            signal(Signal signal = Signal_Notify);
 
     // Dispatch all pushed tasks that were called with pushTask(). 
     // Ensure any data within scope, should be called with this manually in the scope of that data to be processed.
     // Failure to do so will result in undefined behaviour, likely a crash.
-    ResultCode dispatchTasks();
-    void clearTasks();
+    ResultCode      dispatchTasks();
+    void            clearTasks();
+
+    std::string     getProcessName() const { return m_processName; }
 
     // Waits to join back with the caller thread. Will block the caller until this process is complete.
     // Will not attempt to join, if the process itself attempts to call this.
-    void join();
+    void            join();
 private:
     struct AsyncTask
     {
@@ -113,20 +120,23 @@ private:
     CriticalSection                             m_asyncCs;
     std::map<TaskPriority, std::vector<Task>>   m_tasks;
     std::map<AsyncTaskId, AsyncTask>            m_asyncTasks;
-    volatile Bool                                        m_isRunning;
+    Bool                                        m_isRunning;
     Thread                                      m_thread;
 
     ProcessTask                                 m_mainTask;
     OnProcessTask                               m_onTask;
     ThreadPool*                                 m_threadPoolRef;
+    std::string                                 m_processName;
 };
 
 // Application interface for your application.
 // This should, and would be integrated into your game, in order to 
 // connect to the engine components, as well as the editor system.
-class R_PUBLIC_API Application 
+class RecluseEngine_PUBLIC_API Application 
 {
 public:
+    typedef U64 ProcessId;
+    static const ProcessId InvalidProcessId = 0;
 
     Application(const std::string& appName = "")
         : m_appName(appName)
@@ -139,55 +149,26 @@ public:
     virtual         ~Application() { }    
 
     // System update.
-    void    update();
+    void            update();
 
-    ResultCode cleanUp() 
-    { 
-        ResultCode result = onCleanUp();
-        if (result == RecluseResult_Ok)
-        {
-            stopProcesses();
-            stopWorkerPool();
-            m_initialized = false;
-        }
-        return result;
-    }
-
-    ResultCode init(MessageBus* pMessageBus) 
-    { 
-        m_pMessageBusRef    = pMessageBus;
-
-        ResultCode result = onInit();
-        if (result == RecluseResult_Ok)
-        {
-            startWorkerPool();
-            startProcesses();
-            markInitialized();
-            m_isRunning = true;
-        }
-        return result;
-    }
+    ResultCode      cleanUp();
+    ResultCode      init(MessageBus* pMessageBus);
 
     Engine::Scene*  getScene() { return m_pScene; }
     MessageBus*     getMessageBus() { return m_pMessageBusRef; }
 
-    inline Bool isInitialized() const { return m_initialized; }
-    inline Bool isRunning() const { return m_isRunning; }
+    inline Bool     isInitialized() const { return m_initialized; }
+    inline Bool     isRunning() const { return m_isRunning; }
 
-    void stop() { m_isRunning = false; }
+    void            stop() { m_isRunning = false; }
 
     // Creates a task process, and requests for one to be made. This process
     // runs asyncronously, independent of the main thread.
-    ResultCode makeTaskProcess(TaskProcess::OnProcessTask onProcessTask);
+    ProcessId       makeTaskProcess(TaskProcess::OnProcessTask onProcessTask, const char* processName = nullptr);
 
     
 
 protected:
-    ResultCode startProcesses();
-    void stopProcesses();
-    void startWorkerPool();
-    void stopWorkerPool();
-
     //! Application specific initialization. This requires 
     //! individual app owners to initialize each module for their 
     //! game system.
@@ -207,11 +188,16 @@ protected:
 
 
 private:
+    ResultCode  startProcesses();
+    void        stopProcesses();
+    void        startWorkerPool();
+    void        stopWorkerPool();
+
     MessageBus*                             m_pMessageBusRef;
     Engine::Scene*                          m_pScene;
-    std::map<U64, TaskProcess>              m_taskProcesses;
+    std::map<ProcessId, TaskProcess>        m_taskProcesses;
     Bool                                    m_initialized;
-    volatile Bool                           m_isRunning;
+    Bool                                    m_isRunning;
     ThreadPool                              m_workerPool;
     std::string                             m_appName;
 };
@@ -223,17 +209,17 @@ private:
 namespace MainThreadLoop {
 
 
-R_PUBLIC_API ResultCode        loadApp(Application* pApp);
-R_PUBLIC_API ResultCode        run();
-R_PUBLIC_API ResultCode        initialize();
-R_PUBLIC_API ResultCode        cleanUp();
-R_PUBLIC_API void           setFixedTickRate(F32 tickRateSeconds);
+RecluseEngine_PUBLIC_API ResultCode        loadApp(Application* pApp);
+RecluseEngine_PUBLIC_API ResultCode        run();
+RecluseEngine_PUBLIC_API ResultCode        initialize();
+RecluseEngine_PUBLIC_API ResultCode        cleanUp();
+RecluseEngine_PUBLIC_API void           setFixedTickRate(F32 tickRateSeconds);
 
-R_PUBLIC_API Application*   getApp();
-R_PUBLIC_API F32            getFixedTickRate();
+RecluseEngine_PUBLIC_API Application*   getApp();
+RecluseEngine_PUBLIC_API F32            getFixedTickRate();
 
 // This is operating system specific.
-R_PUBLIC_API Bool           isMainThread();
-R_PUBLIC_API MessageBus*    getMessageBus();
+RecluseEngine_PUBLIC_API Bool           isMainThread();
+RecluseEngine_PUBLIC_API MessageBus*    getMessageBus();
 } // MainThreadLoop
 } // Recluse

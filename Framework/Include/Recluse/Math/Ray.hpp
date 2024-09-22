@@ -3,11 +3,13 @@
 
 #include "Recluse/Math/Vector3.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 namespace Recluse {
 namespace Math { 
 
 // 2D ray math.
-struct R_PUBLIC_API Ray2d
+struct RecluseFramework_PUBLIC_API Ray2d
 {
     Float2 o;
     Float2 dir;
@@ -18,7 +20,7 @@ struct R_PUBLIC_API Ray2d
 };
 
 // 3D ray math.
-struct R_PUBLIC_API Ray3d 
+struct RecluseFramework_PUBLIC_API Ray3d 
 {
     Float3 o;
     Float3 dir;
@@ -30,6 +32,6 @@ struct R_PUBLIC_API Ray3d
 };
 
 
-R_PUBLIC_API Float3 rayPoint(const Ray3d& ray, F32 t);
+RecluseFramework_PUBLIC_API Float3 rayPoint(const Ray3d& ray, F32 t);
 } // Math
 } // Recluse

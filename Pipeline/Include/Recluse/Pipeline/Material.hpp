@@ -2,6 +2,8 @@
 #pragma once
 #include "Recluse/Types.hpp"
 
+#include "ReclusePipeline_exports.hpp"
+
 #include <unordered_map>
 #include <vector>
 
@@ -48,14 +50,14 @@ class Material
 public:
     virtual ~Material() { }
 
-    R_PUBLIC_API Material(const std::string& matName, MaterialType type) 
+    ReclusePipeline_PUBLIC_API Material(const std::string& matName, MaterialType type) 
         : m_matType(type)
         , m_flags(0)
         , m_matName(matName) { }
 
-    R_PUBLIC_API MaterialType getMatType() const { return m_matType; }
+    ReclusePipeline_PUBLIC_API MaterialType getMatType() const { return m_matType; }
 
-    R_PUBLIC_API B32 addTexture(Texture* pTexture, const std::string& attrib) 
+    ReclusePipeline_PUBLIC_API B32 addTexture(Texture* pTexture, const std::string& attrib) 
     {
         U32 index = m_textures.size();
         m_textures.push_back(pTexture);
@@ -63,19 +65,19 @@ public:
         return true;
     }
 
-    R_PUBLIC_API B32 hasTexture(const std::string& attrib) const
+    ReclusePipeline_PUBLIC_API B32 hasTexture(const std::string& attrib) const
     {
         return m_matMap.find(attrib) != m_matMap.end();
     }
 
-    R_PUBLIC_API Texture* getTexture(const std::string& attrib) 
+    ReclusePipeline_PUBLIC_API Texture* getTexture(const std::string& attrib) 
     {
         return m_textures[m_matMap[attrib]];
     }
 
     // Removes a texture with the attribute. This will only nullify the texture slot,
     // in order to clean up, you must call restructure().
-    R_PUBLIC_API B32 removeTexture(const std::string& attrib) 
+    ReclusePipeline_PUBLIC_API B32 removeTexture(const std::string& attrib) 
     {
         if (hasTexture(attrib)) 
         {
@@ -86,9 +88,9 @@ public:
         return false;    
     }
 
-    R_PUBLIC_API void               setSurfaceType(SurfaceTypeFlags flags) { m_flags = flags; }
+    ReclusePipeline_PUBLIC_API void               setSurfaceType(SurfaceTypeFlags flags) { m_flags = flags; }
 
-    R_PUBLIC_API SurfaceTypeFlags   getSurfaceTypeFlags() { return m_flags; }
+    ReclusePipeline_PUBLIC_API SurfaceTypeFlags   getSurfaceTypeFlags() { return m_flags; }
 
     const std::string&              getName() const { return m_matName; }
 
@@ -96,10 +98,10 @@ public:
 
     // reorganizes the material structure. Any empty slots, will now be cleaned off and sorted.
     // Be sure to update any dirty references that may be referencing a given texture.
-    R_PUBLIC_API void               restructure();
+    ReclusePipeline_PUBLIC_API void               restructure();
 
     // Clear the whole material.
-    R_PUBLIC_API void               clear();
+    ReclusePipeline_PUBLIC_API void               clear();
 
 protected:
 

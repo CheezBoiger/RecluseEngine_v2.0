@@ -20,7 +20,7 @@ struct BuddyBlock
 
 // Buddy allocator implementation.
 //
-class R_PUBLIC_API BuddyAllocator : public Allocator 
+class RecluseFramework_PUBLIC_API BuddyAllocator : public Allocator 
 {
 private:
     typedef Allocation BlockAllocation;

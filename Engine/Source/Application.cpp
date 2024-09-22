@@ -39,6 +39,35 @@ void Application::update()
 }
 
 
+ResultCode Application::cleanUp()
+{
+    ResultCode result = onCleanUp();
+    if (result == RecluseResult_Ok)
+    {
+        stopProcesses();
+        stopWorkerPool();
+        m_initialized = false;
+    }
+    return result;
+}
+
+
+ResultCode Application::init(MessageBus* pMessageBus)
+{
+    m_pMessageBusRef    = pMessageBus;
+
+    ResultCode result = onInit();
+    if (result == RecluseResult_Ok)
+    {
+        startWorkerPool();
+        startProcesses();
+        markInitialized();
+        m_isRunning = true;
+    }
+    return result;
+}
+
+
 ResultCode TaskProcess::dispatchTasks()
 {
     ScopedLock _(m_tasksMutex);
@@ -59,7 +88,7 @@ ResultCode TaskProcess::dispatchTasks()
         // Multithreaded process. Can utilize multiple threads.
         // Pushes them out to the async workers, and waits until each
         // task in it's priority list is finished.
-        for (auto & priorityIt : m_tasks)
+        for (auto& priorityIt : m_tasks)
         {
             std::vector<U32> ids = { };
             for (auto& task : priorityIt.second)
@@ -209,12 +238,12 @@ void TaskProcess::waitForTask(TaskProcess::AsyncTaskId taskId)
 }
 
 
-ResultCode Application::makeTaskProcess(TaskProcess::OnProcessTask onProcessTask)
+Application::ProcessId Application::makeTaskProcess(TaskProcess::OnProcessTask onProcessTask, const char* processName)
 {
     RGUID guid = generateRGUID();
-    U64 id = guid.ss.hash0;
-    m_taskProcesses[id] = TaskProcess(&m_workerPool, onProcessTask);
-    return RecluseResult_Ok;
+    ProcessId processId = guid.ss.hash0;
+    m_taskProcesses[processId] = TaskProcess(&m_workerPool, onProcessTask, processName);
+    return processId;
 }
 
 

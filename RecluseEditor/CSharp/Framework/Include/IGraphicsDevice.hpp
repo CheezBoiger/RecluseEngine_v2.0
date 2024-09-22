@@ -430,7 +430,7 @@ ref class IResource;
 ref struct IVertexInputLayout;
 
 // Graphics device.
-R_PUBLIC_API public ref class IGraphicsDevice
+public ref class IGraphicsDevice
 {
 public:
     IGraphicsDevice(CSharp::GraphicsApi graphicsApi, System::String^ appName, System::String^ engineName, bool EnableDebugLayer);
@@ -518,7 +518,7 @@ public:
 
 
 // Resource object.
-R_PUBLIC_API public ref class IResource
+public ref class IResource
 {
 public:
     IResource(IGraphicsDevice^ Device, const ResourceCreateInformation^ CreateInfo, ResourceState InitialState);

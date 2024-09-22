@@ -7,6 +7,7 @@
 #include "Recluse/Logger.hpp"
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Application.hpp"
+#include "Recluse/System/KeyboardInput.hpp"
 
 #include "Recluse/Renderer/Renderer.hpp"
 #include "Recluse/Renderer/RenderCommand.hpp"
@@ -36,13 +37,13 @@ public:
 
         //R_VERBOSE("GameLoop", "time=%f fps", 1.f / tick.delta());
         //R_VERBOSE("GameLoop", "renderTime=%f fps", RealtimeTick::getTick(0).delta());
-
         pollEvents();
 
         if (m_window->shouldClose())
         {
             stop();
         }
+
         return RecluseResult_Ok;
     }
 
@@ -60,7 +61,7 @@ public:
         setLogChannel("Application", true);
 
         RendererConfigs config = { };
-        config.api = GraphicsApi_Direct3D12;
+        config.api = GraphicsApi_Vulkan;
         config.enableGpuValidation = true;
         config.buffering = 3;
         config.maxFrameRate = 60.0f;
@@ -72,9 +73,8 @@ public:
         MessageBus::fireEvent(getMessageBus(), RenderEvent_Initialize);
         MessageBus::fireEvent(getMessageBus(), RenderEvent_Resume);
 
-        R_NOTIFY("Renderer", "RUIN");
         // Make task process for the renderer.
-        makeTaskProcess(Renderer::kRendererProcessTask);
+        makeTaskProcess(Renderer::kRendererProcessTask, "Renderer");
 #if 1
         makeTaskProcess([] (TaskProcess* process) -> ResultCode 
         {
@@ -104,12 +104,12 @@ public:
                     result[i] = arr0[i] + arr1[1];
                     s += " " + std::to_string(result[i]);
                 }
-                R_NOTIFY("MainProcess", "%s", s.c_str());
+                R_NOTIFY(process->getProcessName().c_str(), "%s", s.c_str());
                 return RecluseResult_Ok;
             });
             process->dispatchTasks();
             return RecluseResult_Ok;
-        });
+        }, "RandomTask");
 #endif
         return RecluseResult_Ok;
     }

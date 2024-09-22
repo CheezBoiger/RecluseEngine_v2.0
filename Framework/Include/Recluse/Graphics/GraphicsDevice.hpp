@@ -10,6 +10,8 @@
 #include "Recluse/Graphics/PipelineState.hpp"
 #include "Recluse/Graphics/ShaderProgram.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 namespace Recluse {
 
 class GraphicsCommandList;
@@ -105,7 +107,7 @@ struct ResourceTransitionDescription
 
 // The context of the rendering api, this will describe the rendering frame work to be sent to the GPU.
 // This consists of drawcalls, dispatches, copies, and other gpu related activities.
-class R_PUBLIC_API GraphicsContext : public ICastableObject
+class GraphicsContext : public ICastableObject
 {
 public:
     virtual ~GraphicsContext() { }
@@ -292,7 +294,7 @@ public:
 };
 
 
-class R_PUBLIC_API GraphicsDevice : public ICastableObject
+class GraphicsDevice : public ICastableObject
 {
 public:
     static const U32 kMaxGraphicsContexts = 4;
@@ -385,23 +387,23 @@ public:
     GraphicsSwapchain(const SwapchainCreateDescription& desc)
         : m_desc(desc) { }
 
-    R_PUBLIC_API virtual ~GraphicsSwapchain() { }
+    virtual ~GraphicsSwapchain() { }
 
     // Rebuild the swapchain if need be. Pass in NULL to rebuild the swapchain as is.
     // Be sure to update any new frame info and handles that are managed by the front engine!
-    R_PUBLIC_API ResultCode                 rebuild(const SwapchainCreateDescription& desc) 
+    ResultCode                 rebuild(const SwapchainCreateDescription& desc) 
     { 
         m_desc = desc;
         return onRebuild(); 
     }
 
     // Prepares the next frame for rendering, this also begins the next command recording session.
-    R_PUBLIC_API virtual ResultCode         prepare(GraphicsContext* context) { return RecluseResult_NoImpl; }
+    virtual ResultCode         prepare(GraphicsContext* context) { return RecluseResult_NoImpl; }
     // Present the current image.
-    R_PUBLIC_API virtual ResultCode         present(GraphicsContext* context) { return RecluseResult_NoImpl; }
+    virtual ResultCode         present(GraphicsContext* context) { return RecluseResult_NoImpl; }
 
     // Get the current frame index, updates after every present call. Make sure to call this after prepare() !!
-    R_PUBLIC_API virtual U32                getCurrentFrameIndex() { return RecluseResult_NoImpl; }
+    virtual U32                getCurrentFrameIndex() { return RecluseResult_NoImpl; }
 
     virtual GraphicsResource*               getFrame(U32 idx) = 0;
 

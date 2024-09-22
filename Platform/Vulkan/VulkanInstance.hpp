@@ -9,7 +9,7 @@
 namespace Recluse {
 namespace Vulkan {
 
-class VulkanInstance : public GraphicsInstance 
+class RecluseVulkan_PUBLIC_API VulkanInstance : public GraphicsInstance 
 {
 public:
     VulkanInstance() 

@@ -3,6 +3,8 @@
 
 #include "Recluse/Types.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 #include <chrono>
 #include <varargs.h>
 
@@ -57,23 +59,23 @@ enum LogCommand
 struct Log 
 {
 private:
-    R_PUBLIC_API void stringify(const Math::Float2& f2);
-    R_PUBLIC_API void stringify(const Math::Float3& f3);
-    R_PUBLIC_API void stringify(const Math::Float4& f4);
-    R_PUBLIC_API void stringify(const Math::Matrix22& m22);
-    R_PUBLIC_API void stringify(const Math::Matrix33& m33);
-    R_PUBLIC_API void stringify(const Math::Matrix44& m44);
-    R_PUBLIC_API void stringify(const Math::Matrix43& m43);
+    RecluseFramework_PUBLIC_API void stringify(const Math::Float2& f2);
+    RecluseFramework_PUBLIC_API void stringify(const Math::Float3& f3);
+    RecluseFramework_PUBLIC_API void stringify(const Math::Float4& f4);
+    RecluseFramework_PUBLIC_API void stringify(const Math::Matrix22& m22);
+    RecluseFramework_PUBLIC_API void stringify(const Math::Matrix33& m33);
+    RecluseFramework_PUBLIC_API void stringify(const Math::Matrix44& m44);
+    RecluseFramework_PUBLIC_API void stringify(const Math::Matrix43& m43);
 public:
     // Data message.
     LogMessage data;
 
     // One time initialize of the data structure for our logging system.
     // Optional message cache size can be defined as well. Be sure to have enough memory if needed.
-    static R_PUBLIC_API void initializeLoggingSystem(U32 messageCacheCount = 1024u);
+    static RecluseFramework_PUBLIC_API void initializeLoggingSystem(U32 messageCacheCount = 1024u);
     
     // Final call once the process is completely finished. 
-    static R_PUBLIC_API void destroyLoggingSystem();
+    static RecluseFramework_PUBLIC_API void destroyLoggingSystem();
 
     Log(LogType type = LogType_Msg, const std::string& chan = u8"") 
     {
@@ -81,7 +83,7 @@ public:
         data.channel = chan;
     }
 
-    R_PUBLIC_API ~Log();
+    RecluseFramework_PUBLIC_API ~Log();
 
     template<typename Type>
     Log& operator<<(const Type& data) 
@@ -165,26 +167,26 @@ public:
         return (*this);
     }
 
-    R_PUBLIC_API Log& operator<<(const DateFormatter& formatter);
-    R_PUBLIC_API Log& operator<<(LogCommand command);
+    RecluseFramework_PUBLIC_API Log& operator<<(const DateFormatter& formatter);
+    RecluseFramework_PUBLIC_API Log& operator<<(LogCommand command);
 };
 
 
 // Filter out any log types we want to listen to. By default, all log types are enabled.
-R_PUBLIC_API extern void        setLogMask(LogTypeFlags enableFlags);
-R_PUBLIC_API extern void        enableLogTypes(LogTypeFlags flags);
-R_PUBLIC_API extern void        disableLogTypes(LogTypeFlags flags);
+RecluseFramework_PUBLIC_API extern void        setLogMask(LogTypeFlags enableFlags);
+RecluseFramework_PUBLIC_API extern void        enableLogTypes(LogTypeFlags flags);
+RecluseFramework_PUBLIC_API extern void        disableLogTypes(LogTypeFlags flags);
 
 // Show which channels to filter out. By default, all channels are enabled, so show which channels 
 // we wish to store.
-R_PUBLIC_API extern void        setLogChannel(const std::string& channel, B8 enable);
+RecluseFramework_PUBLIC_API extern void        setLogChannel(const std::string& channel, B8 enable);
 
 // Display logging info to standard output.
-R_PUBLIC_API extern void        enableStandardOutput(B32 enable);
+RecluseFramework_PUBLIC_API extern void        enableStandardOutput(B32 enable);
 
 // Log information into a file.
-R_PUBLIC_API extern void        enableLogFile(const std::string& logPath, B32 enable = false);
-R_PUBLIC_API extern void        setLogFileMaxCache(U64 maxCachedSizeBytes);
-R_PUBLIC_API extern void        setLogFileMaxSize(U64 maxSizeBytes);
-R_PUBLIC_API extern std::string getLogFilePath();
+RecluseFramework_PUBLIC_API extern void        enableLogFile(const std::string& logPath, B32 enable = false);
+RecluseFramework_PUBLIC_API extern void        setLogFileMaxCache(U64 maxCachedSizeBytes);
+RecluseFramework_PUBLIC_API extern void        setLogFileMaxSize(U64 maxSizeBytes);
+RecluseFramework_PUBLIC_API extern std::string getLogFilePath();
 } // Recluse

@@ -3,6 +3,8 @@
 
 #include "Recluse/Types.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 namespace Recluse {
 
 // Thread function, used and called as the start routine for creating threads.
@@ -27,7 +29,7 @@ enum ThreadState
 };
 
 
-struct R_PUBLIC_API Thread 
+struct RecluseFramework_PUBLIC_API Thread 
 {
     ThreadFunction      func;
     void*               payload;
@@ -52,42 +54,42 @@ constexpr Mutex kNull = nullptr;
 
 constexpr U64 kInfiniteMs = ~0ull;
 
-R_PUBLIC_API R_OS_CALL ResultCode createThread(Thread* thread, ThreadFunction startRoutine);
-R_PUBLIC_API R_OS_CALL ResultCode resumeThread(Thread* thread);
-R_PUBLIC_API R_OS_CALL ResultCode stopThread(Thread* thread);
-R_PUBLIC_API R_OS_CALL ResultCode detachThread(Thread* thread);
-R_PUBLIC_API R_OS_CALL ResultCode joinThread(Thread* thread);
-R_PUBLIC_API R_OS_CALL ResultCode killThread(Thread* thread);
+RecluseFramework_PUBLIC_API R_OS_CALL ResultCode createThread(Thread* thread, ThreadFunction startRoutine);
+RecluseFramework_PUBLIC_API R_OS_CALL ResultCode resumeThread(Thread* thread);
+RecluseFramework_PUBLIC_API R_OS_CALL ResultCode stopThread(Thread* thread);
+RecluseFramework_PUBLIC_API R_OS_CALL ResultCode detachThread(Thread* thread);
+RecluseFramework_PUBLIC_API R_OS_CALL ResultCode joinThread(Thread* thread);
+RecluseFramework_PUBLIC_API R_OS_CALL ResultCode killThread(Thread* thread);
 
-R_PUBLIC_API R_OS_CALL Mutex   createMutex(const char* name = nullptr);
-R_PUBLIC_API R_OS_CALL ResultCode lockMutex(Mutex mutex, U64 waitMs = kInfiniteMs);
-R_PUBLIC_API R_OS_CALL ResultCode unlockMutex(Mutex mutex);
-R_PUBLIC_API R_OS_CALL ResultCode waitMutex(Mutex mutex, U64 waitTimeMs);
-R_PUBLIC_API R_OS_CALL ResultCode destroyMutex(Mutex mutex);
-R_PUBLIC_API R_OS_CALL ResultCode tryLockMutex(Mutex mutex);
+RecluseFramework_PUBLIC_API R_OS_CALL Mutex   createMutex(const char* name = nullptr);
+RecluseFramework_PUBLIC_API R_OS_CALL ResultCode lockMutex(Mutex mutex, U64 waitMs = kInfiniteMs);
+RecluseFramework_PUBLIC_API R_OS_CALL ResultCode unlockMutex(Mutex mutex);
+RecluseFramework_PUBLIC_API R_OS_CALL ResultCode waitMutex(Mutex mutex, U64 waitTimeMs);
+RecluseFramework_PUBLIC_API R_OS_CALL ResultCode destroyMutex(Mutex mutex);
+RecluseFramework_PUBLIC_API R_OS_CALL ResultCode tryLockMutex(Mutex mutex);
 
-R_PUBLIC_API R_OS_CALL ResultCode atomicAdd();
-R_PUBLIC_API R_OS_CALL ResultCode atomicSub();
-R_PUBLIC_API R_OS_CALL U64     getMainThreadId();
-R_PUBLIC_API R_OS_CALL U64     getCurrentThreadId();
+RecluseFramework_PUBLIC_API R_OS_CALL ResultCode atomicAdd();
+RecluseFramework_PUBLIC_API R_OS_CALL ResultCode atomicSub();
+RecluseFramework_PUBLIC_API R_OS_CALL U64     getMainThreadId();
+RecluseFramework_PUBLIC_API R_OS_CALL U64     getCurrentThreadId();
 
-R_PUBLIC_API R_OS_CALL Semaphore  createSemaphore(const char* name = nullptr);
-R_PUBLIC_API R_OS_CALL ResultCode    destroySemaphore(Semaphore sema);
-R_PUBLIC_API R_OS_CALL ResultCode    signalSemaphore(Semaphore sema);
-R_PUBLIC_API R_OS_CALL ResultCode    waitSemaphore(Semaphore sema);
+RecluseFramework_PUBLIC_API R_OS_CALL Semaphore  createSemaphore(const char* name = nullptr);
+RecluseFramework_PUBLIC_API R_OS_CALL ResultCode    destroySemaphore(Semaphore sema);
+RecluseFramework_PUBLIC_API R_OS_CALL ResultCode    signalSemaphore(Semaphore sema);
+RecluseFramework_PUBLIC_API R_OS_CALL ResultCode    waitSemaphore(Semaphore sema);
 
-R_PUBLIC_API R_OS_CALL U64    compareExchange(I64* dest, I64 ex, I64 comp);
-R_PUBLIC_API R_OS_CALL I16    compareExchange(I16* dest, I16 ex, I16 comp);
-R_PUBLIC_API R_OS_CALL U128   compareExchange(U128* dest, U128 ex, U128 comp);
+RecluseFramework_PUBLIC_API R_OS_CALL U64    compareExchange(I64* dest, I64 ex, I64 comp);
+RecluseFramework_PUBLIC_API R_OS_CALL I16    compareExchange(I16* dest, I16 ex, I16 comp);
+RecluseFramework_PUBLIC_API R_OS_CALL U128   compareExchange(U128* dest, U128 ex, U128 comp);
 
-R_PUBLIC_API R_OS_CALL Bool testAndSet(U32* ptr, U32 offset);
+RecluseFramework_PUBLIC_API R_OS_CALL Bool testAndSet(U32* ptr, U32 offset);
 
 // Causes this thread to sleep for some milliseconds.
-R_PUBLIC_API R_OS_CALL ResultCode    sleep(U64 milliseconds);
+RecluseFramework_PUBLIC_API R_OS_CALL ResultCode    sleep(U64 milliseconds);
 
 // C++ RAII locking mechanism within a scope.
 // Intended for scope locking mutexes.
-class R_PUBLIC_API ScopedLock 
+class RecluseFramework_PUBLIC_API ScopedLock 
 {
 public:
     volatile ScopedLock(Mutex mutex) 
@@ -124,7 +126,7 @@ private:
 // Microsoft may attempt to handle critical code sections in user-mode in order to 
 // prevent kernel level calls, which would be slower. Linux simply uses mutexes 
 // and spinlocks, which can provide about similar performance as well.
-class R_PUBLIC_API CriticalSection
+class RecluseFramework_PUBLIC_API CriticalSection
 {
 public:
     CriticalSection()
@@ -152,7 +154,7 @@ private:
 
 // C++ RAII critical section mechanism used for handling enter and exit
 // calls to the critical section. 
-class R_PUBLIC_API ScopedCriticalSection
+class RecluseFramework_PUBLIC_API ScopedCriticalSection
 {
 public:
     ScopedCriticalSection(CriticalSection& cs)
@@ -170,7 +172,7 @@ private:
 };
 
 
-class R_PUBLIC_API CriticalSectionGuard : public CriticalSection
+class RecluseFramework_PUBLIC_API CriticalSectionGuard : public CriticalSection
 {
 public:
     CriticalSectionGuard() { initialize(); }

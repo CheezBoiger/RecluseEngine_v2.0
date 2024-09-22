@@ -25,6 +25,9 @@
 
 #define R_NULLIFY_RENDER 0
 
+R_DECLARE_GLOBAL_COLOR4(g_rendererClearColor, Recluse::Math::Color4(0.0f, 0.0f, 0.0f, 1.0f), "Renderer.ClearColor")
+R_DECLARE_GLOBAL_BOOLEAN(g_useClearColor, false, "Renderer.UseClearColor")
+
 namespace Recluse {
 namespace Engine {
 
@@ -147,6 +150,7 @@ void Renderer::render()
     GraphicsContext* context = getContext();
 
     m_pSwapchain->prepare(context);
+        GraphicsResource* swapchainFrame = m_pSwapchain->getFrame(m_pSwapchain->getCurrentFrameIndex());
 #if (!R_NULLIFY_RENDER)
         // TODO: Would make more sense to manually transition the resource itself, 
         //       and not the resource view...
@@ -201,7 +205,31 @@ void Renderer::render()
             }
         }
     }
-    context->transition(m_pSwapchain->getFrame(m_pSwapchain->getCurrentFrameIndex()), ResourceState_Present);
+
+    if (g_useClearColor)
+    {
+        ResourceViewDescription description = { };
+        description.format = m_pSwapchain->getDesc().format;
+        description.baseArrayLayer = 0;
+        description.baseMipLevel = 0;
+        description.mipLevelCount = 1;
+        description.layerCount = 1;
+        description.type = ResourceViewType_RenderTarget;
+        description.dimension = ResourceViewDimension_2d;
+        ResourceViewId swapchainRenderTargetId = swapchainFrame->asView(description);
+        ResourceViewId sp[] = { swapchainRenderTargetId };
+        F32 clearColor[] = { 1.0f, 0.0f, 0.0f, 1.0f };
+        Rect rect = { };
+        rect.x = 0;
+        rect.y = 0;
+        rect.width = m_pSwapchain->getDesc().renderWidth;
+        rect.height = m_pSwapchain->getDesc().renderHeight;
+        context->transition(swapchainFrame, ResourceState_RenderTarget);
+        context->bindRenderTargets(1, sp);
+        context->clearRenderTarget(0, clearColor, rect);
+    }
+
+    context->transition(swapchainFrame, ResourceState_Present);
     context->end();
     resetCommandKeys();
     clear();

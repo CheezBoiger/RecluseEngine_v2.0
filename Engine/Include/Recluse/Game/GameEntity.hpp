@@ -11,6 +11,8 @@
 
 #include "Recluse/Game/GameSystem.hpp"
 
+#include "RecluseEngine_exports.hpp"
+
 #include <map>
 #include <vector>
 #include <algorithm>
@@ -85,7 +87,7 @@ class GameEntity : public Serializable
 public:
     virtual ~GameEntity() { }
 
-    R_PUBLIC_API GameEntity
+    RecluseEngine_PUBLIC_API GameEntity
             (
                 const GameEntityAllocation& allocation,
                 const RGUID& uuid,
@@ -102,17 +104,17 @@ public:
     {}
 
     // Instantiates a game object into the pool
-    static R_PUBLIC_API GameEntity* instantiate(U64 szBytes, GameEntityMemoryAllocationType allocType = GameEntityMemoryAllocationType_Dynamic);
+    static RecluseEngine_PUBLIC_API GameEntity* instantiate(U64 szBytes, GameEntityMemoryAllocationType allocType = GameEntityMemoryAllocationType_Dynamic);
     
     // Frees a game object from the pool.
-    static R_PUBLIC_API void        free(GameEntity* gameObject);
+    static RecluseEngine_PUBLIC_API void        free(GameEntity* gameObject);
 
     // Optional call to override the game object allocation pool. If no custom allocations are desired,
     // will use default allocating instead (mainly malloc.)
-    static R_PUBLIC_API void        setOnAllocation(GameEntityAllocationCall allocCallback);
+    static RecluseEngine_PUBLIC_API void        setOnAllocation(GameEntityAllocationCall allocCallback);
 
     // Get an entity from the entity pool.
-    static R_PUBLIC_API GameEntity* findEntity(const RGUID& guid);
+    static RecluseEngine_PUBLIC_API GameEntity* findEntity(const RGUID& guid);
 
     Bool isActive() const 
     {
@@ -128,59 +130,59 @@ public:
     }
 
     // Initialize the game object.
-    R_PUBLIC_API void                   initialize() 
+    RecluseEngine_PUBLIC_API void                   initialize() 
     {
         m_status = GameEntityStatus_Initialized;
     }
     
     // Wake the game object, this should be called when
     // game object is asleep, or first time initialized.
-    R_PUBLIC_API void                   wake() 
+    RecluseEngine_PUBLIC_API void                   wake() 
     { 
         m_status = GameEntityStatus_Awake;
     }
 
     // Put game object to sleep.
-    R_PUBLIC_API void                   sleep() 
+    RecluseEngine_PUBLIC_API void                   sleep() 
     {
         m_status = GameEntityStatus_Asleep;
     }
 
-    R_PUBLIC_API void                   destroy() 
+    RecluseEngine_PUBLIC_API void                   destroy() 
     {
         m_status = GameEntityStatus_Destroyed;
     }
 
-    virtual R_PUBLIC_API ResultCode     serialize(Archive* pArchive) const override;
-    virtual R_PUBLIC_API ResultCode     deserialize(Archive* pArchive) override;
+    virtual RecluseEngine_PUBLIC_API ResultCode     serialize(Archive* pArchive) const override;
+    virtual RecluseEngine_PUBLIC_API ResultCode     deserialize(Archive* pArchive) override;
 
     // Get the game object name.
-    R_PUBLIC_API const std::string&     getName() const { return m_name; }
+    const std::string&     getName() const { return m_name; }
 
     // Get the game object tag.
-    R_PUBLIC_API const std::string&     getTag() const { return m_tag; }
+    RecluseEngine_PUBLIC_API const std::string&     getTag() const { return m_tag; }
 
     // Grab the game object status.
-    R_PUBLIC_API GameEntityStatus       getStatus() const { return m_status; }
+    RecluseEngine_PUBLIC_API GameEntityStatus       getStatus() const { return m_status; }
 
     // Check if the game entity is ready or active.
-    R_PUBLIC_API Bool                   isReady() const { return (m_status == GameEntityStatus_Initialized) || (m_status == GameEntityStatus_Active); }
+    RecluseEngine_PUBLIC_API Bool                   isReady() const { return (m_status == GameEntityStatus_Initialized) || (m_status == GameEntityStatus_Active); }
 
     // Get the game object parent.
-    R_PUBLIC_API RGUID                  getParent() const { return m_parent; }
+    RecluseEngine_PUBLIC_API RGUID                  getParent() const { return m_parent; }
 
-    R_PUBLIC_API RGUID                  getUUID() const { return m_guuid; }
+    RecluseEngine_PUBLIC_API RGUID                  getUUID() const { return m_guuid; }
 
     void setName(const std::string& newName) { m_name = newName; }
     void setTag(const std::string& newTag) { m_tag = newTag; }
 
     // Obtain the object allocation.
-    R_PUBLIC_API GameEntityAllocation   getAllocation() const { return m_allocation; }
+    RecluseEngine_PUBLIC_API GameEntityAllocation   getAllocation() const { return m_allocation; }
 
     // Add a node to this game object. This game object becomes the 
     // parent of pNode. Any game objects that are similar to this one,
     // will not be added as a child.
-    R_PUBLIC_API void                   addChild(RGUID node) 
+    RecluseEngine_PUBLIC_API void                   addChild(RGUID node) 
     { 
         // No need to do anything if this node already exists in this game object.
         GameEntity* entity = GameEntity::findEntity(node);
@@ -205,7 +207,7 @@ public:
     }
 
     // Removes a child from this game object.
-    R_PUBLIC_API void removeChild(RGUID node) 
+    RecluseEngine_PUBLIC_API void removeChild(RGUID node) 
     {
         GameEntity* entity = GameEntity::findEntity(node);
         if (!entity) return;
@@ -225,9 +227,9 @@ public:
         }
     }
 
-    R_PUBLIC_API std::vector<RGUID>&  getChildren() { return m_children; }
+    RecluseEngine_PUBLIC_API std::vector<RGUID>&  getChildren() { return m_children; }
 
-    R_PUBLIC_API B32                        isParent(RGUID child) const 
+    RecluseEngine_PUBLIC_API B32                        isParent(RGUID child) const 
     {
         auto iter = std::find(m_children.begin(), m_children.end(), child);
         return (iter != m_children.end());

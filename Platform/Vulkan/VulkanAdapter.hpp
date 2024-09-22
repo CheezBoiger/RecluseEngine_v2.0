@@ -14,7 +14,7 @@ class VulkanDevice;
 
 // Vulkan Graphics Adapter, which defines the actual physical device that we query for Vulkan. This is the device that 
 // does the actual rendering, and has supported features and limits that we query for.
-class VulkanAdapter : public GraphicsAdapter 
+class RecluseVulkan_PUBLIC_API VulkanAdapter : public GraphicsAdapter 
 {
 public:
     ~VulkanAdapter();

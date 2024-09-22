@@ -2,6 +2,8 @@
 cmake_minimum_required(VERSION 3.16)
 project("RecluseFramework")
 
+include ( ${CMAKE_SOURCE_DIR}/Systems/CMake/GenerateExports.cmake )
+
 set ( RECLUSE_FRAMEWORK_NAME "RecluseFramework" )
 set ( RECLUSE_FRAMEWORK_MINOR 0 )
 set ( RECLUSE_FRAMEWORK_MAJOR 0 )
@@ -30,6 +32,9 @@ endif(R_DEVELOPER)
 add_library (               ${RECLUSE_FRAMEWORK_NAME} SHARED    ${RECLUSE_FRAMEWORK_COMPILE_FILES} ) 
 target_include_directories( ${RECLUSE_FRAMEWORK_NAME} PUBLIC    ${RECLUSE_FRAMEWORK_INCLUDE_FILES} ${RECLUSE_FRAMEWORK_SOURCE} ${RECLUSE_FRAMEWORK_THIRD_PARTY})
 target_link_libraries (     ${RECLUSE_FRAMEWORK_NAME}           ${RECLUSE_FRAMEWORK_LINK_BINARIES} )
+
+ExportThisLibrary(${RECLUSE_FRAMEWORK_NAME})
+
 # Doing some stuff for organization.
 if (MSVC)
   foreach(source IN LISTS RECLUSE_FRAMEWORK_COMPILE_FILES)

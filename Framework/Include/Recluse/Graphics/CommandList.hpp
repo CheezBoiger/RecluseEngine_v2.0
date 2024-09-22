@@ -8,6 +8,8 @@
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 #include "Recluse/Graphics/Resource.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 namespace Recluse {
 
 class GraphicsResource;
@@ -25,7 +27,7 @@ enum CommandListStatus
 };
 
 
-class R_PUBLIC_API GraphicsCommandList 
+class GraphicsCommandList 
 {
 public:
     virtual ~GraphicsCommandList() { }

@@ -9,7 +9,7 @@
 namespace Recluse {
 
 
-class R_PUBLIC_API RendererSystem : public ECS::System<RendererComponent>
+class RecluseEngine_PUBLIC_API RendererSystem : public ECS::System<RendererComponent>
 {
 public:
     R_DECLARE_GAME_SYSTEM(RendererSystem);

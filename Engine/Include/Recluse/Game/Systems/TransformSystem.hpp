@@ -10,7 +10,7 @@ namespace Recluse {
 
 // Transform system handles updating all transform components in the 
 // world.
-class R_PUBLIC_API TransformSystem : public ECS::System<Transform>
+class RecluseEngine_PUBLIC_API TransformSystem : public ECS::System<Transform>
 {
 public:
     R_DECLARE_GAME_SYSTEM(TransformSystem);

@@ -5,6 +5,8 @@
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 #include "Recluse/Memory/MemoryPool.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 namespace Recluse {
 
 
@@ -16,7 +18,7 @@ struct MapRange
 
 // Graphics Resource description.
 //
-class R_PUBLIC_API GraphicsResource : public virtual IGraphicsObject, public ICastableObject
+class GraphicsResource : public virtual IGraphicsObject, public ICastableObject
 {
 public:
     GraphicsResource()

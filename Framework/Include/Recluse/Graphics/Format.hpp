@@ -4,6 +4,8 @@
 #include "Recluse/Types.hpp"
 #include "Recluse/Serialization/Hasher.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 namespace Recluse {
 
 enum ResourceFormat 
@@ -41,7 +43,7 @@ enum ResourceFormat
 };
 
 
-R_PUBLIC_API const char* getResourceFormatString(ResourceFormat format);
+RecluseFramework_PUBLIC_API const char* getResourceFormatString(ResourceFormat format);
 
 typedef Hash64 GraphicsId;
 } // Recluse

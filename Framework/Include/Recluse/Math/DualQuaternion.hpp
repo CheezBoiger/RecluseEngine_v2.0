@@ -3,9 +3,11 @@
 
 #include "Recluse/Math/Quaternion.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 namespace Recluse {
 namespace Math {
-struct R_PUBLIC_API DualQuaternion
+struct RecluseFramework_PUBLIC_API DualQuaternion
 {
     Quaternion real;    // Real part.
     Quaternion dual;    // Dual part.

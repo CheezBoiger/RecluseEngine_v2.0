@@ -4,6 +4,8 @@
 #include "Recluse/Types.hpp"
 #include "Recluse/Arch.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 namespace Recluse {
 
 //////////////////////////////////////////////////////////
@@ -28,7 +30,7 @@ struct LocalDateTimeDesc
 // Obtain the local time.
 //
 ///////////////////////////////////////////////////////////
-R_PUBLIC_API R_OS_CALL extern void getLocalDateTime(LocalDateTimeDesc& descOut);
+RecluseFramework_PUBLIC_API R_OS_CALL extern void getLocalDateTime(LocalDateTimeDesc& descOut);
 
 
 class DateFormatter
@@ -45,13 +47,13 @@ class DateFormatter
 	};
 
 public:
-	R_PUBLIC_API static const char kDay = 'D';
-	R_PUBLIC_API static const char kMonth = 'M';
-	R_PUBLIC_API static const char kYear = 'Y';
-	R_PUBLIC_API static const char kHour = 'h';
-	R_PUBLIC_API static const char kMinute = 'm';
-	R_PUBLIC_API static const char kSecond = 's';
-	R_PUBLIC_API static const char* kDefaultFormat;
+	RecluseFramework_PUBLIC_API static const char kDay = 'D';
+	RecluseFramework_PUBLIC_API static const char kMonth = 'M';
+	RecluseFramework_PUBLIC_API static const char kYear = 'Y';
+	RecluseFramework_PUBLIC_API static const char kHour = 'h';
+	RecluseFramework_PUBLIC_API static const char kMinute = 'm';
+	RecluseFramework_PUBLIC_API static const char kSecond = 's';
+	RecluseFramework_PUBLIC_API static const char* kDefaultFormat;
 
 	DateFormatter(const char* sFormat = kDefaultFormat)
 	{

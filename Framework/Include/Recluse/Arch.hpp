@@ -14,8 +14,8 @@
     #include <Windows.h>
     #define RECLUSE_WINDOWS 1
     // Called to allow exporting to public api. This will then expose to external modules.
-    #define R_PUBLIC_API __declspec(dllexport)
-    #define R_IMPORT __declspec(dllimport)
+    #define R_IMPORT_API __declspec(dllimport)
+    #define R_EXPORT_API __declspec(dllexport)
     #define R_FORCE_INLINE __forceinline
     #define R_NOVTABLE __declspec(novtable)
     #define R_DEBUG_BREAK() do { __debugbreak(); } while(0)
@@ -30,8 +30,8 @@
 #elif defined(__linux__)
     #error "Linux currently not supported for Recluse!"
     #define RECLUSE_LINUX
-    #define R_PUBLIC_API
-    #define R_IMPORT
+    #define R_EXPORT_API
+    #define R_IMPORT_API
     #define R_FORCE_INLINE 
     #define R_NOVTABLE
     #define R_DEBUG_BREAK()

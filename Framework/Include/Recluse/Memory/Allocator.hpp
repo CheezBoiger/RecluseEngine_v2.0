@@ -6,6 +6,8 @@
 #include "Recluse/Types.hpp"
 #include "Recluse/Memory/MemoryCommon.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 namespace Recluse {
 
 
@@ -21,7 +23,7 @@ typedef struct Allocation
 
 //! Recluse Allocator class. This is the abstract class that is used for defining multiple allocation
 //! data structures.
-class R_PUBLIC_API Allocator 
+class RecluseFramework_PUBLIC_API Allocator 
 {
 public:
     virtual ~Allocator() 
@@ -179,11 +181,11 @@ public:
 // ex. 
 //          Object* pObj = new (allocator) Object();
 //
-R_PUBLIC_API void*   operator new (size_t sizeBytes, Recluse::Allocator* alloc);
+RecluseFramework_PUBLIC_API void*   operator new (size_t sizeBytes, Recluse::Allocator* alloc);
 
 // Operator overload for deleting allocated pointers.
 // This is a helpful function, instead of having to all individually the object allocator, and performing a bunch of
 // stuff...
 //
-R_PUBLIC_API void    operator delete (void* ptr, Recluse::Allocator* alloc);
+RecluseFramework_PUBLIC_API void    operator delete (void* ptr, Recluse::Allocator* alloc);
 #endif // RECLUSE_ALLOCATOR_HPP

@@ -3,6 +3,8 @@
 
 #include "Recluse/Types.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 namespace Recluse {
 
 
@@ -43,9 +45,9 @@ struct MonitorDesc
 // Monitor querying api calls, this is usually specific to each operating system.
 //
 //
-R_PUBLIC_API R_OS_CALL extern U32              getMonitorCount();
-R_PUBLIC_API R_OS_CALL extern Bool             queryMonitors(MonitorDesc* pDescsOut, U32 count);
-R_PUBLIC_API R_OS_CALL extern MonitorDesc      getActiveMonitor();
+RecluseFramework_PUBLIC_API R_OS_CALL extern U32              getMonitorCount();
+RecluseFramework_PUBLIC_API R_OS_CALL extern Bool             queryMonitors(MonitorDesc* pDescsOut, U32 count);
+RecluseFramework_PUBLIC_API R_OS_CALL extern MonitorDesc      getActiveMonitor();
 //
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -80,29 +82,29 @@ public:
     }
 
     // Create the window.
-    static R_OS_CALL R_PUBLIC_API Window*       create(const std::string& title, U32 x, U32 y, U32 width, U32 height, ScreenMode screenMode = ScreenMode_Windowed, void* parentWindowHandle = nullptr);
+    static R_OS_CALL RecluseFramework_PUBLIC_API Window*       create(const std::string& title, U32 x, U32 y, U32 width, U32 height, ScreenMode screenMode = ScreenMode_Windowed, void* parentWindowHandle = nullptr);
     // Destroy the window.
-    static R_OS_CALL R_PUBLIC_API ResultCode    destroy(Window* pWindow);
-    static R_OS_CALL R_PUBLIC_API Window*       getActiveFocusedWindow();
+    static R_OS_CALL RecluseFramework_PUBLIC_API ResultCode    destroy(Window* pWindow);
+    static R_OS_CALL RecluseFramework_PUBLIC_API Window*       getActiveFocusedWindow();
 
     // close the window.
-    R_OS_CALL R_PUBLIC_API void close();
+    R_OS_CALL RecluseFramework_PUBLIC_API void close();
     // Show the window,
-    R_OS_CALL R_PUBLIC_API void show();
+    R_OS_CALL RecluseFramework_PUBLIC_API void show();
     // obtain the native window handle.
     void*                       getNativeHandle() { return m_handle; }
     // Set the title of the window.
     void                        setTitle(const std::string& title);
     // Programmatically resize the window.
-    R_OS_CALL R_PUBLIC_API void setScreenSize(U32 width, U32 height);
+    R_OS_CALL RecluseFramework_PUBLIC_API void setScreenSize(U32 width, U32 height);
     // Set the window to the center of your screen.
-    R_OS_CALL R_PUBLIC_API void setToCenter();
+    R_OS_CALL RecluseFramework_PUBLIC_API void setToCenter();
     // Set the window to a location on your screen.
-    R_OS_CALL R_PUBLIC_API void setToPosition(U32 x, U32 y);
+    R_OS_CALL RecluseFramework_PUBLIC_API void setToPosition(U32 x, U32 y);
     // Restores the window back to display.
-    R_OS_CALL R_PUBLIC_API void restore();
+    R_OS_CALL RecluseFramework_PUBLIC_API void restore();
     // Minimize the window.
-    R_OS_CALL R_PUBLIC_API void minimize();
+    R_OS_CALL RecluseFramework_PUBLIC_API void minimize();
     // Maximize the window to the max window size.
     void                        maximize();
     B32                         isMinimized() const { return m_isMinimized; }
@@ -133,18 +135,18 @@ public:
     U32                         getMonitorIndex() const { return m_monitorIndex; }
 
     // Grabs the display monitor that has the most area of intesection with the window.
-    R_PUBLIC_API MonitorDesc    getCurrentActiveMonitor();
+    RecluseFramework_PUBLIC_API MonitorDesc    getCurrentActiveMonitor();
 
     void                        setOnWindowResize(OnWindowResizeFunction func) { m_onWindowResizeCallback = func; }
 
     // Set the screen mode.
-    R_PUBLIC_API void           setScreenMode(ScreenMode mode);
+    RecluseFramework_PUBLIC_API void           setScreenMode(ScreenMode mode);
     
     void                        overridePosition(U32 x, U32 y) { m_xPos = x; m_yPos = y; }
     void                        overrideMinimized(Bool isMinimized) { m_status.mustMinimize = isMinimized; }
     void                        overrideRestored(Bool isRestored) { m_status.mustRestore = true; }
 
-    R_PUBLIC_API void           update();
+    RecluseFramework_PUBLIC_API void           update();
 
 private:
 

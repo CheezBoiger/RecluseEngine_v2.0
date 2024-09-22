@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Recluse/Types.hpp"
+#include "RecluseFramework_exports.hpp"
 
 namespace Recluse {
 
@@ -14,12 +15,12 @@ class RealtimeTick
 public:
 
     // Get the realtime tick. Read-only object, so is safe to query.
-    static R_PUBLIC_API R_OS_CALL RealtimeTick getTick(U32 watchType);
+    static RecluseFramework_PUBLIC_API R_OS_CALL RealtimeTick getTick(U32 watchType);
 
     // Updates the watch. This must be called per thread loop, and only ONE 
     // thread should be calling this. Do not call on separate threads, otherwise
     // we end up losing the time for that one.
-    static R_PUBLIC_API R_OS_CALL void updateWatch(U64 id, U32 watchType);
+    static RecluseFramework_PUBLIC_API R_OS_CALL void updateWatch(U64 id, U32 watchType);
 
     // Get the current time in sec.
     F32 getCurrentTimeSeconds() const { return m_currentTimeS; }
@@ -30,7 +31,7 @@ public:
     // Initialize the realtime tick manager. Should be 
     // called first, before calling getTick(). Requires an ID in order to 
     // know this is the right system that is updating the watch.
-    static R_PUBLIC_API R_OS_CALL void initializeWatch(U64 id, U32 watchType);
+    static RecluseFramework_PUBLIC_API R_OS_CALL void initializeWatch(U64 id, U32 watchType);
 
 protected:
     // Realtime tick initializer. Be sure to call this once and reference

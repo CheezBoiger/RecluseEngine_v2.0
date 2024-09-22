@@ -18,7 +18,7 @@ using namespace Math;
 
 // Transform component that stores transformations
 // and positioning of a given entity.
-class R_PUBLIC_API Transform : public ECS::Component
+class RecluseEngine_PUBLIC_API Transform : public ECS::Component
 {
 public:
     R_COMPONENT_DECLARE(Transform);
@@ -64,7 +64,7 @@ private:
 };
 
 
-class R_PUBLIC_API TransformRegistry : public ECS::ComponentRegistry<Transform>
+class RecluseEngine_PUBLIC_API TransformRegistry : public ECS::ComponentRegistry<Transform>
 {
 public:
     R_COMPONENT_REGISTRY_DECLARE(TransformRegistry);

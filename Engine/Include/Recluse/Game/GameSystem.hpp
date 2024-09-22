@@ -9,6 +9,8 @@
 #include "Recluse/RGUID.hpp"
 #include "Recluse/Time.hpp"
 
+#include "RecluseEngine_exports.hpp"
+
 #include <tuple>
 #include <vector>
 
@@ -47,7 +49,7 @@ class Registry;
     virtual const char* getName() const override { return systemName(); }
 
 
-class R_PUBLIC_API AbstractSystem : public Serializable
+class AbstractSystem : public Serializable
 {
 public:
     virtual ~AbstractSystem() { }
@@ -122,7 +124,7 @@ private:
 //! Systems are what hold the game logic in the world scene, and what 
 //! will perform work on components that only it will be allowed to see.
 template<typename TypeComponent>
-class R_PUBLIC_API System : public AbstractSystem
+class System : public AbstractSystem
 {
 public:
 

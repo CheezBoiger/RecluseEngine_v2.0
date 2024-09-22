@@ -8,6 +8,8 @@
 #include "Recluse/Game/GameSystem.hpp"
 #include "Recluse/RGUID.hpp"
 
+#include "RecluseEngine_exports.hpp"
+
 #include <vector>
 #include <map>
 
@@ -81,7 +83,7 @@ private:
 
 // Component abstraction class. This is mainly a container holding 
 // data that is to be processed or read by GameSystems. 
-class R_PUBLIC_API Component : public AbstractComponent
+class Component : public AbstractComponent
 {
 public:
     typedef Component Super;

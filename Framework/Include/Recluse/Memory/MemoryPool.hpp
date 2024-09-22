@@ -6,6 +6,8 @@
 
 #include "Recluse/Types.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 namespace Recluse {
 
 
@@ -42,7 +44,7 @@ class MemoryScanner;
 
 // Memory Pool consists of an allocated space that will be used for suballocations, or committed space.
 // This arena is intended to be used with Allocators.
-class R_PUBLIC_API MemoryPool 
+class RecluseFramework_PUBLIC_API MemoryPool 
 {
 public:
     // Memory pool allocation construction.

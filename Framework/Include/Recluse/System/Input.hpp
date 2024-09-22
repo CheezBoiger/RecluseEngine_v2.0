@@ -3,11 +3,13 @@
 
 #include "Recluse/Types.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 namespace Recluse {
 
 
 // Poll events for the system.
-R_PUBLIC_API void pollEvents();
+RecluseFramework_PUBLIC_API void pollEvents();
 
 
 enum GamePadInput

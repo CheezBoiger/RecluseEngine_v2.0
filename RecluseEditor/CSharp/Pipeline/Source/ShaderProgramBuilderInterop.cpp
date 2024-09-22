@@ -7,7 +7,7 @@
 
 #include <msclr/marshal_cppstd.h>
 
-#using <RecluseCSharpGraphics.dll>
+#using <RecluseCSharpFrameworkInterop.dll>
 
 namespace Recluse {
 namespace CSharp {

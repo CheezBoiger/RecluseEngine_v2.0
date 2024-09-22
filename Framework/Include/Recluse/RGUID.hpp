@@ -3,6 +3,7 @@
 
 #include "Recluse/Arch.hpp"
 #include "Recluse/Types.hpp"
+#include "RecluseFramework_exports.hpp"
 
 #include <xhash>
 
@@ -82,5 +83,5 @@ struct RGUID
 };
 
 //
-R_PUBLIC_API RGUID generateRGUID(U64 seed = 0);
+RecluseFramework_PUBLIC_API RGUID generateRGUID(U64 seed = 0);
 } // Recluse

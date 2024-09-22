@@ -8,6 +8,8 @@
 #include "Recluse/RGUID.hpp"
 #include "Recluse/Serialization/Hasher.hpp"
 #include "Recluse/Threading/Threading.hpp"
+
+#include "RecluseFramework_exports.hpp"
 #include <queue>
 #include <functional>
 #include <map>
@@ -46,16 +48,16 @@ public:
         pBus->pushEvent(id);
     }
 
-    R_PUBLIC_API MessageBus();
+    RecluseFramework_PUBLIC_API MessageBus();
 
     ~MessageBus() {} 
 
     // Initialize the messaging bus system.
-    R_PUBLIC_API void initialize(SizeT eventCacheSzBytes = R_MB(2ull));
+    RecluseFramework_PUBLIC_API void initialize(SizeT eventCacheSzBytes = R_MB(2ull));
 
-    R_PUBLIC_API void cleanUp();
+    RecluseFramework_PUBLIC_API void cleanUp();
 
-    R_PUBLIC_API void addReceiver
+    RecluseFramework_PUBLIC_API void addReceiver
                         (
                             const std::string& nodeName, 
                             MessageReceiveFunc receiver
@@ -85,7 +87,7 @@ public:
     }
 
     // Only notify one message receiver of the fired events.
-    R_PUBLIC_API void notifyOne(const std::string& nodeName);
+    RecluseFramework_PUBLIC_API void notifyOne(const std::string& nodeName);
 
     // Clears the event queue. This is required after notifying, as the 
     // queue will still contain all allocated events.

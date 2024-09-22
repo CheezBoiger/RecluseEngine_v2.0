@@ -8,6 +8,8 @@
 #include "Recluse/Math/Vector4.hpp"
 #include "Recluse/Math/Matrix44.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 namespace Recluse {
 namespace Math {
 
@@ -21,7 +23,7 @@ namespace Math {
 // euler represention (to which euler angles require knowledge of both the 3 axis of rotations, their order,
 // and possible loss of degree of freedom due to gimbal-locking.)
 // Quaternions are useful in solving these issues.
-struct R_PUBLIC_API Quaternion 
+struct RecluseFramework_PUBLIC_API Quaternion 
 {
     union 
     {
@@ -54,27 +56,27 @@ struct R_PUBLIC_API Quaternion
 };
 
 // Quaternion normalization.
-R_PUBLIC_API Quaternion normalize(const Quaternion& quat);
-R_PUBLIC_API F32        norm(const Quaternion& quat);
-R_PUBLIC_API F32        norm2(const Quaternion& quat);
-R_PUBLIC_API F32        dot(const Quaternion& a, const Quaternion& b);
-R_PUBLIC_API Quaternion lookRotation(const Float3& dir, const Float3& up);
-R_PUBLIC_API Quaternion conjugate(const Quaternion& quat);
-R_PUBLIC_API Quaternion inverse(const Quaternion& quat);
+RecluseFramework_PUBLIC_API Quaternion normalize(const Quaternion& quat);
+RecluseFramework_PUBLIC_API F32        norm(const Quaternion& quat);
+RecluseFramework_PUBLIC_API F32        norm2(const Quaternion& quat);
+RecluseFramework_PUBLIC_API F32        dot(const Quaternion& a, const Quaternion& b);
+RecluseFramework_PUBLIC_API Quaternion lookRotation(const Float3& dir, const Float3& up);
+RecluseFramework_PUBLIC_API Quaternion conjugate(const Quaternion& quat);
+RecluseFramework_PUBLIC_API Quaternion inverse(const Quaternion& quat);
 
 // Angle-Axis representation computation for a float axis, with rotation radians.
-R_PUBLIC_API Quaternion angleAxis(const Float3& axis, F32 radians);
+RecluseFramework_PUBLIC_API Quaternion angleAxis(const Float3& axis, F32 radians);
 
 // Converts an euler represented vector to a quaternion.
-R_PUBLIC_API Quaternion eulerToQuat(const Float3& euler);
+RecluseFramework_PUBLIC_API Quaternion eulerToQuat(const Float3& euler);
 
 // Converts a quaternion to an euler represented vector.
-R_PUBLIC_API Float3     quatToEuler(const Quaternion& quat);
+RecluseFramework_PUBLIC_API Float3     quatToEuler(const Quaternion& quat);
 
 // Converts a quaternion to a 4x4 matrix.
-R_PUBLIC_API Matrix44   quatToMat44(const Quaternion& quat);
+RecluseFramework_PUBLIC_API Matrix44   quatToMat44(const Quaternion& quat);
 
 // Spherical linear interpolation with two quaternions of time t.
-R_PUBLIC_API Quaternion slerp(const Quaternion& a, const Quaternion& b, F32 t);
+RecluseFramework_PUBLIC_API Quaternion slerp(const Quaternion& a, const Quaternion& b, F32 t);
 } // Math
 } // Recluse

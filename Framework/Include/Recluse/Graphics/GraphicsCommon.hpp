@@ -168,7 +168,7 @@ enum FrameBuffering
 };
 
 
-enum R_PUBLIC_API LayerFeatureFlag 
+enum LayerFeatureFlag 
 {
     LayerFeatureFlag_None               = 0,
     // Checks if gpu has dedicated/hardware raytracing.

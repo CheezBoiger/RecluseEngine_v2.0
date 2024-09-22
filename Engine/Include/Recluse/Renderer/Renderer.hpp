@@ -19,6 +19,8 @@
 #include "Recluse/System/DLLLoader.hpp"
 #include "Recluse/Threading/Threading.hpp"
 
+#include "RecluseEngine_exports.hpp"
+
 #include <vector>
 #include <functional>
 #include <unordered_map>
@@ -110,7 +112,7 @@ typedef MapContainer<U32, std::vector<U64>> CommandKeyContainer;
 // Top level rendering engine. Implements Render Hardware Interface, and 
 // manages all resources and states created in game graphics. This will usually
 // implement any render passes and stages of the graphics pipeline.
-class R_PUBLIC_API Renderer final : public EngineModule<Renderer> 
+class RecluseEngine_PUBLIC_API Renderer final : public EngineModule<Renderer> 
 {
 public:
 

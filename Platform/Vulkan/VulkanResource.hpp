@@ -13,7 +13,7 @@ class VulkanPrimaryCommandList;
 
 // Vulkan resource inherits from GraphicsResource, which is what will
 // be used by the engine API.
-class VulkanResource : public GraphicsResource, public VulkanGraphicsObject
+class RecluseVulkan_PUBLIC_API VulkanResource : public GraphicsResource, public VulkanGraphicsObject
 {
 public:
 

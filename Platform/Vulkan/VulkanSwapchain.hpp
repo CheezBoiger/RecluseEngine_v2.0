@@ -20,7 +20,7 @@ struct QueueFamily;
 // We can theoretically have as many frames as we may want (although we probably should only have about 2 at least, 3+ recommended)
 // but the number of available buffers in the graphics engine is the one that we are governed by.
 // 
-class VulkanSwapchain : public GraphicsSwapchain 
+class RecluseVulkan_PUBLIC_API VulkanSwapchain : public GraphicsSwapchain 
 {
 public:
     VulkanSwapchain(const SwapchainCreateDescription& desc, VulkanQueue* pBackbufferQueue) 

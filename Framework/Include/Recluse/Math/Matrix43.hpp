@@ -5,11 +5,13 @@
 #include "Recluse/Math/MathCommons.hpp"
 #include "Recluse/Math/MathIntrinsics.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 namespace Recluse {
 namespace Math {
 struct Matrix44;
 
-struct R_PUBLIC_API Matrix43
+struct RecluseFramework_PUBLIC_API Matrix43
 {
 public:
     union 

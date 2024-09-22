@@ -4,10 +4,12 @@
 #include "Recluse/Arch.hpp"
 #include "Recluse/Types.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 namespace Recluse {
 
 
-class R_OS_SPECIFIC R_PUBLIC_API DllLoader 
+class R_OS_SPECIFIC RecluseFramework_PUBLIC_API DllLoader 
 {
 public:
     DllLoader(const std::string& dllName = "");

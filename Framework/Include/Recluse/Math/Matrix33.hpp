@@ -4,10 +4,12 @@
 #include "Recluse/Types.hpp"
 #include "Recluse/Math/Vector3.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 namespace Recluse {
 namespace Math {
 
-struct R_PUBLIC_API Matrix33 
+struct RecluseFramework_PUBLIC_API Matrix33 
 { 
     F32 m[9];
 
@@ -55,9 +57,9 @@ struct R_PUBLIC_API Matrix33
     static Matrix33 identity();
 };
 
-R_PUBLIC_API Matrix33 inverse(const Matrix33& mat33);
-R_PUBLIC_API F32 determinant(const Matrix33& mat33);
-R_PUBLIC_API Matrix33 transpose(const Matrix33& mat33);
+RecluseFramework_PUBLIC_API Matrix33 inverse(const Matrix33& mat33);
+RecluseFramework_PUBLIC_API F32 determinant(const Matrix33& mat33);
+RecluseFramework_PUBLIC_API Matrix33 transpose(const Matrix33& mat33);
 
 
 typedef Matrix33 Mat33;

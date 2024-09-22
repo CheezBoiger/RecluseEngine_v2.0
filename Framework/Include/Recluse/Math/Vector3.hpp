@@ -4,6 +4,8 @@
 #include "Recluse/Types.hpp"
 #include "Recluse/Math/Vector2.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 
 namespace Recluse {
 namespace Math {
@@ -30,7 +32,7 @@ struct Bool3
 };
 
 // Float Vector data structure.
-struct R_PUBLIC_API Float3 
+struct RecluseFramework_PUBLIC_API Float3 
 {
     union 
     {
@@ -71,15 +73,15 @@ struct R_PUBLIC_API Float3
     inline Bool3  operator<=(F32 scalar) const;
     inline Bool3  operator>=(F32 scalar) const;
 
-    inline R_PUBLIC_API friend Float3 operator*(F32 scalar, const Float3& rh);
-    inline R_PUBLIC_API friend Float3 operator+(F32 scalar, const Float3& rh);
-    inline R_PUBLIC_API friend Float3 operator-(F32 scalar, const Float3& rh);
-    inline R_PUBLIC_API friend Float3 operator/(F32 scalar, const Float3& rh);
+    inline RecluseFramework_PUBLIC_API friend Float3 operator*(F32 scalar, const Float3& rh);
+    inline RecluseFramework_PUBLIC_API friend Float3 operator+(F32 scalar, const Float3& rh);
+    inline RecluseFramework_PUBLIC_API friend Float3 operator-(F32 scalar, const Float3& rh);
+    inline RecluseFramework_PUBLIC_API friend Float3 operator/(F32 scalar, const Float3& rh);
 
 };
 
 
-struct Int3 
+struct RecluseFramework_PUBLIC_API Int3 
 {
     union 
     {
@@ -146,7 +148,7 @@ struct Int3
 };
 
 
-struct R_PUBLIC_API UInt3 
+struct RecluseFramework_PUBLIC_API UInt3 
 {
     union 
     {
@@ -157,7 +159,7 @@ struct R_PUBLIC_API UInt3
 };
 
 
-struct R_PUBLIC_API Short3 
+struct RecluseFramework_PUBLIC_API Short3 
 {
     union 
     {
@@ -168,7 +170,7 @@ struct R_PUBLIC_API Short3
 };
 
 
-struct R_PUBLIC_API UShort3 
+struct RecluseFramework_PUBLIC_API UShort3 
 {
     union 
     {
@@ -179,7 +181,7 @@ struct R_PUBLIC_API UShort3
 };
 
 
-struct R_PUBLIC_API UByte3
+struct RecluseFramework_PUBLIC_API UByte3
 {
     union
     {
@@ -199,30 +201,30 @@ struct R_PUBLIC_API UByte3
 
 typedef UByte3 Color3;
 
-R_PUBLIC_API Float3     cross(const Float3& lh, const Float3& rh);
-R_PUBLIC_API F32        dot(const Float3& lh, const Float3& rh);
-R_PUBLIC_API U32        dot(const Int3& lh, const Int3& rh);
-R_PUBLIC_API F32        length(const Float3& v);
-R_PUBLIC_API F32        length2(const Float3& v);
-R_PUBLIC_API Float3     normalize(const Float3& v);
+RecluseFramework_PUBLIC_API Float3     cross(const Float3& lh, const Float3& rh);
+RecluseFramework_PUBLIC_API F32        dot(const Float3& lh, const Float3& rh);
+RecluseFramework_PUBLIC_API U32        dot(const Int3& lh, const Int3& rh);
+RecluseFramework_PUBLIC_API F32        length(const Float3& v);
+RecluseFramework_PUBLIC_API F32        length2(const Float3& v);
+RecluseFramework_PUBLIC_API Float3     normalize(const Float3& v);
 
 // Euclidean distance between point p0, and p1.
-R_PUBLIC_API F32        dist(const Float3& p0, const Float3& p1);
-R_PUBLIC_API U32        dist(const UByte3& p0, const UByte3& p1);
-R_PUBLIC_API U32        dist(const UInt3& p0, const UInt3& p1);
+RecluseFramework_PUBLIC_API F32        dist(const Float3& p0, const Float3& p1);
+RecluseFramework_PUBLIC_API U32        dist(const UByte3& p0, const UByte3& p1);
+RecluseFramework_PUBLIC_API U32        dist(const UInt3& p0, const UInt3& p1);
 
-R_PUBLIC_API Color3     floatToColor(const Float3& color);
-R_PUBLIC_API Float3     colorToFloat(const Color3& color);
+RecluseFramework_PUBLIC_API Color3     floatToColor(const Float3& color);
+RecluseFramework_PUBLIC_API Float3     colorToFloat(const Color3& color);
 
 // Obtain the reflection vector from the incidence, which is governed by the facing normal.
-R_PUBLIC_API Float3     reflect(const Float3& incidence, const Float3& normal);
+RecluseFramework_PUBLIC_API Float3     reflect(const Float3& incidence, const Float3& normal);
 
 // Obtain the refraction vector, which is governed by the facing normal, and ratio of indices of refraction.
-R_PUBLIC_API Float3     refract(const Float3& incidence, const Float3& normal, F32 eta);
+RecluseFramework_PUBLIC_API Float3     refract(const Float3& incidence, const Float3& normal, F32 eta);
 // check if any component in the vector is nonzero.
-R_PUBLIC_API Bool       any(const Float3& a);
+RecluseFramework_PUBLIC_API Bool       any(const Float3& a);
 // check if all components in the vector are nonzero.
-R_PUBLIC_API Bool       all(const Float3& a);
+RecluseFramework_PUBLIC_API Bool       all(const Float3& a);
 
 
 typedef Float3  FVector3;

@@ -47,7 +47,7 @@ typedef U32 CameraPostProcessFlags;
 
 // Camera is the abstract transformation that is used to view the scene.
 // It also serves to perform visibility culling.
-class R_PUBLIC_API Camera : public ECS::Component
+class RecluseEngine_PUBLIC_API Camera : public ECS::Component
 {
 public:
     R_COMPONENT_DECLARE(Camera);

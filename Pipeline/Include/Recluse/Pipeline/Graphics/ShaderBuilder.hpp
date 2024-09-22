@@ -6,6 +6,8 @@
 
 #include "Recluse/Serialization/Hasher.hpp"
 
+#include "ReclusePipeline_exports.hpp"
+
 namespace Recluse {
 namespace Pipeline {
 
@@ -17,7 +19,7 @@ struct PreprocessDefine
 
 // ShaderBuilder, handles high level shading languages, and transforms them into
 // bytecode to be read to the gpu.
-class R_PUBLIC_API ShaderBuilder 
+class ReclusePipeline_PUBLIC_API ShaderBuilder 
 {
 public:
     ShaderBuilder(ShaderIntermediateCode imm)
@@ -69,7 +71,7 @@ private:
 };
 
 // Must be newly allocated.
-R_PUBLIC_API ShaderBuilder* createShaderBuilder(const std::string& nameID, ShaderIntermediateCode intermediateCode);
+ReclusePipeline_PUBLIC_API ShaderBuilder* createShaderBuilder(const std::string& nameID, ShaderIntermediateCode intermediateCode);
 
 // Must call when cleaning up our shader builders.
 static void freeShaderBuilder(ShaderBuilder* pBuilder) 

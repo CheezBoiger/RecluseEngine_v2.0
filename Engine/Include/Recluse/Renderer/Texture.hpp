@@ -5,6 +5,8 @@
 #include "Recluse/Types.hpp"
 #include "Recluse/Graphics/Format.hpp"
 
+#include "RecluseEngine_exports.hpp"
+
 #include <vector>
 
 namespace Recluse {
@@ -13,7 +15,7 @@ namespace Engine {
 
 // This structure describes the subresource within a texture. Should be used to read from
 // a texture, for each of its subresource. 
-class R_PUBLIC_API Subresource
+class RecluseEngine_PUBLIC_API Subresource
 {
 public:
     Subresource(U32 width = 1, U32 height = 1, UPtr offsetAddress = 0u)
@@ -37,7 +39,7 @@ private:
 };
 
 // 
-R_PUBLIC_API U32 obtainFormatBytes(U32 resourceFormat);
+RecluseEngine_PUBLIC_API U32 obtainFormatBytes(U32 resourceFormat);
 
 // Texture which is stored in host side memory, from raw perspective.
 // This structure does not determine the layout of images from certain formats (PNG, JPG, etc...)
@@ -45,7 +47,7 @@ R_PUBLIC_API U32 obtainFormatBytes(U32 resourceFormat);
 // 
 // This resource also doesn't pertain to how a device (ex. GPU) will allocate based on texture layout (linear, or optimal) so be sure to 
 // call on the device api to figure out possible layout information of textures.
-class R_PUBLIC_API Texture
+class RecluseEngine_PUBLIC_API Texture
 {
 public:
     Texture();

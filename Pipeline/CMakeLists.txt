@@ -17,6 +17,8 @@ set ( RECLUSE_PIPELINE_INCLUDE_FILES ${RECLUSE_PIPELINE_INCLUDE} )
 set ( RECLUSE_PIPELINE_LINK_LIBRARIES )
 set ( RECLUSE_PIPELINE_THIRD_PARTY ${RECLUSE_THIRDPARTY_DIR} )
 
+include ( ${CMAKE_SOURCE_DIR}/Systems/CMake/GenerateExports.cmake )
+
 set ( RECLUSE_ENGINE_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/Engine/Include )
 
 include ( CMake/Pipeline.cmake )
@@ -26,6 +28,12 @@ target_include_directories( ${RECLUSE_PIPELINE_NAME} PUBLIC    ${RECLUSE_INCLUDE
 target_link_libraries (     ${RECLUSE_PIPELINE_NAME}           RecluseFramework ${RECLUSE_PIPELINE_LINK_LIBRARIES} RecluseEngine )
 add_dependencies(${RECLUSE_PIPELINE_NAME} RecluseFramework)
 add_dependencies(${RECLUSE_PIPELINE_NAME} RecluseEngine)
+
+ExportThisLibrary(${RECLUSE_PIPELINE_NAME})
+
+ImportThisLibrary(${RECLUSE_PIPELINE_NAME} "RecluseFramework")
+ImportThisLibrary(${RECLUSE_PIPELINE_NAME} "RecluseEngine")
+
 # Doing some stuff for organization.
 if (MSVC)
   foreach(source IN LISTS RECLUSE_PIPELINE_COMPILE_FILES)

@@ -7,6 +7,8 @@
 
 #include "Recluse/Renderer/Texture.hpp"
 
+#include "ReclusePipeline_exports.hpp"
+
 namespace Recluse {
 namespace Pipeline {
 
@@ -44,6 +46,6 @@ enum CompressFlag
 };
 typedef U32 CompressFlags;
 
-R_PUBLIC_API Engine::Texture compress(const Engine::Texture& texture, CompressionFormat compressionFormat, CompressFlags compressFlags);
+ReclusePipeline_PUBLIC_API Engine::Texture compress(const Engine::Texture& texture, CompressionFormat compressionFormat, CompressFlags compressFlags);
 } // Pipeline
 } // Recluse

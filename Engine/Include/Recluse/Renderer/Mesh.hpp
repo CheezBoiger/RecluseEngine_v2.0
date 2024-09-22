@@ -6,6 +6,9 @@
 #include "Recluse/Graphics/Resource.hpp"
 #include "Recluse/Renderer/RendererResources.hpp"
 #include "Recluse/RGUID.hpp"
+
+#include "RecluseEngine_exports.hpp"
+
 #include <vector>
 #include <map>
 
@@ -28,7 +31,7 @@ typedef Float3 MeshScaleData;
 
 
 // Per mesh information.
-struct R_PUBLIC_API PerMeshTransform 
+struct RecluseEngine_PUBLIC_API PerMeshTransform 
 {
     Matrix44 world;
     Matrix44 worldToViewClip;
@@ -36,7 +39,7 @@ struct R_PUBLIC_API PerMeshTransform
 };
 
 
-struct R_PUBLIC_API SubMesh 
+struct RecluseEngine_PUBLIC_API SubMesh 
 {
     std::string name;
     U64         offset;
@@ -63,18 +66,18 @@ class Mesh : public Serializable
 public:
     virtual ~Mesh() { }
 
-    R_PUBLIC_API Mesh()
+    RecluseEngine_PUBLIC_API Mesh()
         : m_pVertexBuffer(nullptr)
         , m_pIndexBuffer(nullptr) { }
 
-    R_PUBLIC_API ResultCode initialize(VertexBuffer* pVertexBuffer, IndexBuffer* pIndexBuffer);
+    RecluseEngine_PUBLIC_API ResultCode initialize(VertexBuffer* pVertexBuffer, IndexBuffer* pIndexBuffer);
 
-    R_PUBLIC_API VertexBuffer* getVertexBuffer() { return m_pVertexBuffer; }
-    R_PUBLIC_API IndexBuffer* getIndexBuffer() { return m_pIndexBuffer; }
+    RecluseEngine_PUBLIC_API VertexBuffer* getVertexBuffer() { return m_pVertexBuffer; }
+    RecluseEngine_PUBLIC_API IndexBuffer* getIndexBuffer() { return m_pIndexBuffer; }
 
-    R_PUBLIC_API const std::vector<SubMesh*>& getSubMeshes() { return m_submeshes; };
+    RecluseEngine_PUBLIC_API const std::vector<SubMesh*>& getSubMeshes() { return m_submeshes; };
 
-    R_PUBLIC_API void addSubmeshes(U32 numSubmeshes, SubMesh* pSubmeshes) 
+    RecluseEngine_PUBLIC_API void addSubmeshes(U32 numSubmeshes, SubMesh* pSubmeshes) 
     {
         for (U32 i = 0; i < numSubmeshes; ++i) 
         { 
@@ -83,8 +86,8 @@ public:
         }
     }
 
-    R_PUBLIC_API ResultCode serialize(Archive* archive) const override;
-    R_PUBLIC_API ResultCode deserialize(Archive* archive) override;
+    RecluseEngine_PUBLIC_API ResultCode serialize(Archive* archive) const override;
+    RecluseEngine_PUBLIC_API ResultCode deserialize(Archive* archive) override;
 
 private:
     std::map<std::string, SubMesh>  m_subMeshMap;
@@ -106,13 +109,13 @@ class InstancedMeshHandler
 public:
 
     //< Register a mesh id. Get the assigned mesh id to update with.
-    R_PUBLIC_API InstancedMeshId RegisterMeshId();
+    RecluseEngine_PUBLIC_API InstancedMeshId RegisterMeshId();
     
     //< Unregister a mesh id. 
-    R_PUBLIC_API Bool            UnregisterMeshId();
+    RecluseEngine_PUBLIC_API Bool            UnregisterMeshId();
 
     //< Update the mesh handler.
-    R_PUBLIC_API void            update();
+    RecluseEngine_PUBLIC_API void            update();
 
 private:
     InstancedMeshBuffer             m_instancedMeshBuffer;
@@ -127,7 +130,7 @@ class MeshInstanced
 {
 public:
     
-    R_PUBLIC_API ResultCode initializeInstanced();
+    RecluseEngine_PUBLIC_API ResultCode initializeInstanced();
 
 private:
     InstancedMeshHandler* m_instancedMeshHandler;

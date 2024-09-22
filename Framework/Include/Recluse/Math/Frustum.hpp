@@ -4,6 +4,8 @@
 #include "Recluse/Math/Plane.hpp"
 #include "Recluse/Math/Matrix44.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 namespace Recluse {
 namespace Math {
 
@@ -47,6 +49,6 @@ struct Frustum
 
 
 // Check whether we intersect any of the faces of the frustum.
-R_PUBLIC_API Bool intersects(const Frustum& frustum, const Bounds3d& bounds);
+RecluseFramework_PUBLIC_API Bool intersects(const Frustum& frustum, const Bounds3d& bounds);
 } // Math
 } // Recluse

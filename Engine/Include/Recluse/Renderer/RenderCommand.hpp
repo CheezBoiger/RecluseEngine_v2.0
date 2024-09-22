@@ -11,6 +11,8 @@
 #include "Recluse/Memory/Allocator.hpp"
 #include "Recluse/Memory/MemoryPool.hpp"
 
+#include "RecluseEngine_exports.hpp"
+
 namespace Recluse {
 namespace Engine {
 
@@ -120,7 +122,7 @@ struct DrawRenderCommand : public DrawableRenderCommand
 
 // High level render command list, which will be read by the low level backend, once the render thread
 // is kicked off. Should reset every frame render.
-class R_PUBLIC_API RenderCommandList 
+class RecluseEngine_PUBLIC_API RenderCommandList 
 {
 public:
     RenderCommandList()

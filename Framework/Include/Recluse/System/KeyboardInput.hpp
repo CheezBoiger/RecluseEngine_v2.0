@@ -4,6 +4,8 @@
 #include "Recluse/System/InputController.hpp"
 #include "Recluse/Arch.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 namespace Recluse {
 
 enum KeyStatus
@@ -130,7 +132,7 @@ enum KeyCode
 };
 
 
-class R_PUBLIC_API KeyboardListener
+class RecluseFramework_PUBLIC_API KeyboardListener
 {
 public:
 	KeyboardListener() { }

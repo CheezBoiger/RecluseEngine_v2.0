@@ -5,6 +5,8 @@
 #include "Recluse/Threading/Threading.hpp"
 #include "Recluse/Threading/Sema.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 #include <vector>
 #include <list>
 #include <functional>
@@ -14,7 +16,10 @@ namespace Recluse {
 
 typedef std::function<void()> ThreadTask;
 
-class R_PUBLIC_API ThreadPool 
+// ThreadPool is a structure that handles the concurrent execution of tasks, without needing to 
+// re-create workers, and instead, re-use existing threads. The workers themselves will remain alive, 
+// until signalled to stop, and all remaining enqueued tasks have been completed.
+class RecluseFramework_PUBLIC_API ThreadPool 
 {
 public:
     enum Status 
@@ -37,9 +42,14 @@ public:
     ThreadPool(U32 numWorkers = 2);
     ~ThreadPool();
 
+    // Submits a task to the pool, this will be picked up by a worker thread 
+    // and completed. 
     ResultCode submitTask(ThreadTask job);
     
+    // Starts up the pool of workers, which will run concurrently until stop() is called.
     void start();
+
+    // Signals worker threads to stop, and finishes any remaining tasks in the pool.
     void stop();
 
     //ResultCode wait();

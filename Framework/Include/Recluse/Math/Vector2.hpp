@@ -4,10 +4,12 @@
 #include "Recluse/Math/MathCommons.hpp"
 #include "Recluse/Types.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 namespace Recluse {
 namespace Math {
 
-struct R_PUBLIC_API Float2 
+struct RecluseFramework_PUBLIC_API Float2 
 { 
     union 
     {
@@ -52,7 +54,7 @@ struct R_PUBLIC_API Float2
 };
 
 
-struct R_PUBLIC_API Int2 
+struct RecluseFramework_PUBLIC_API Int2 
 {
     union 
     {
@@ -98,7 +100,7 @@ struct R_PUBLIC_API Int2
     inline Int2 operator>>(U32 shft) const;
 };
 
-class R_PUBLIC_API UInt2 
+class RecluseFramework_PUBLIC_API UInt2 
 {
     union 
     {
@@ -122,7 +124,7 @@ class R_PUBLIC_API UInt2
 };
 
 
-struct R_PUBLIC_API Short2 
+struct RecluseFramework_PUBLIC_API Short2 
 {
     union 
     {
@@ -133,7 +135,7 @@ struct R_PUBLIC_API Short2
 };
 
 
-struct R_PUBLIC_API UShort2 
+struct RecluseFramework_PUBLIC_API UShort2 
 {
     union 
     {
@@ -144,7 +146,7 @@ struct R_PUBLIC_API UShort2
 };
 
 
-struct R_PUBLIC_API UByte2
+struct RecluseFramework_PUBLIC_API UByte2
 {
     union
     {
@@ -154,26 +156,26 @@ struct R_PUBLIC_API UByte2
     };
 };
 
-R_PUBLIC_API F32        dot(const Float2& a, const Float2& b);
-R_PUBLIC_API F32        dot(const Int2& a, const Int2& b);
-R_PUBLIC_API F32        dot(const UInt2& a, const UInt2& b);
+RecluseFramework_PUBLIC_API F32        dot(const Float2& a, const Float2& b);
+RecluseFramework_PUBLIC_API F32        dot(const Int2& a, const Int2& b);
+RecluseFramework_PUBLIC_API F32        dot(const UInt2& a, const UInt2& b);
 
-R_PUBLIC_API F32        length(const Float2& a);
-R_PUBLIC_API F32        length2(const Float2& a);
+RecluseFramework_PUBLIC_API F32        length(const Float2& a);
+RecluseFramework_PUBLIC_API F32        length2(const Float2& a);
 
-R_PUBLIC_API Float2     normalize(const Float2& a);
-R_PUBLIC_API Int2       normalize(const Int2& a);
-R_PUBLIC_API UInt2      normalize(const UInt2& a);
+RecluseFramework_PUBLIC_API Float2     normalize(const Float2& a);
+RecluseFramework_PUBLIC_API Int2       normalize(const Int2& a);
+RecluseFramework_PUBLIC_API UInt2      normalize(const UInt2& a);
 
 // Obtain the reflection vector from the incidence, which is governed by the facing normal.
-R_PUBLIC_API Float2     reflect(const Float2& incidence, const Float2& normal);
+RecluseFramework_PUBLIC_API Float2     reflect(const Float2& incidence, const Float2& normal);
 
 // Obtain the refraction vector, which is governed by the facing normal, and the ratio of indices of refraction.
-R_PUBLIC_API Float2     refract(const Float2& incidence, const Float2& normal, F32 eta);
+RecluseFramework_PUBLIC_API Float2     refract(const Float2& incidence, const Float2& normal, F32 eta);
 
 // Check if any component of the vector is nonzero.
-R_PUBLIC_API Bool       any(const Float2& a);
+RecluseFramework_PUBLIC_API Bool       any(const Float2& a);
 // Check if all components of the vector are nonzero.
-R_PUBLIC_API Bool       all(const Float2& a);
+RecluseFramework_PUBLIC_API Bool       all(const Float2& a);
 } // Math
 } // Recluse
