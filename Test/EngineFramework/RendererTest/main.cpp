@@ -74,7 +74,7 @@ public:
         MessageBus::fireEvent(getMessageBus(), RenderEvent_Resume);
 
         // Make task process for the renderer.
-        makeTaskProcess(Renderer::kRendererProcessTask, "Renderer");
+        m_renderProcessId = makeTaskProcess(Renderer::kRendererProcessTask, "Renderer");
 #if 1
         makeTaskProcess([] (TaskProcess* process) -> ResultCode 
         {
@@ -123,6 +123,7 @@ public:
         return RecluseResult_Ok;
     }
 
+    ProcessId m_renderProcessId;
     Window* m_window;
 };
 

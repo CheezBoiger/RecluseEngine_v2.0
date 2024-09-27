@@ -18,6 +18,7 @@
 #include <list>
 #include <set>
 #include <functional>
+#include <tuple>
 
 #define R_BUILD_RETAIL                (0)
 #define R_BUILD_RELEASE               (0)
@@ -166,7 +167,11 @@ public:
     // runs asyncronously, independent of the main thread.
     ProcessId       makeTaskProcess(TaskProcess::OnProcessTask onProcessTask, const char* processName = nullptr);
 
-    
+    // Requests to stop a process task, this would not be completed until next tick update.
+    ResultCode      requestStopProcess(ProcessId processId);
+
+    // Requests to start a new process task, this will start at the end of the tick update.
+    ProcessId       requestNewProcess(TaskProcess::OnProcessTask onProcessTask, const char* processName = nullptr);
 
 protected:
     //! Application specific initialization. This requires 
@@ -193,6 +198,9 @@ private:
     void        startWorkerPool();
     void        stopWorkerPool();
 
+    void        flushStopRequests();
+    void        flushNewRequests();
+
     MessageBus*                             m_pMessageBusRef;
     Engine::Scene*                          m_pScene;
     std::map<ProcessId, TaskProcess>        m_taskProcesses;
@@ -200,6 +208,9 @@ private:
     Bool                                    m_isRunning;
     ThreadPool                              m_workerPool;
     std::string                             m_appName;
+
+    std::vector<ProcessId>                                                      m_stopRequests;
+    std::vector<std::tuple<TaskProcess::OnProcessTask, const char*, ProcessId>> m_newRequests;
 };
 
 

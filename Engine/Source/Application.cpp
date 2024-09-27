@@ -35,7 +35,64 @@ ResultCode TaskProcess::pushTask(TaskPriority priority, Task task)
 void Application::update()
 {
     ResultCode result = onUpdate();
+
+    flushStopRequests();
+    flushNewRequests();
+
     R_ASSERT(result == RecluseResult_Ok);
+}
+
+
+void Application::flushStopRequests()
+{
+    if (!m_stopRequests.empty())
+    {
+        std::vector<ProcessId> stoppedProcesses;
+        for (auto it : m_stopRequests)
+        {
+            auto proc = m_taskProcesses.find(it);
+            if (proc != m_taskProcesses.end())
+            {
+                proc->second.signal(TaskProcess::Signal_Stop);
+                proc->second.join();   
+                stoppedProcesses.push_back(it);
+            }
+        }
+
+        if (!stoppedProcesses.empty())
+        {
+            for (auto processId : stoppedProcesses)
+                m_taskProcesses.erase(processId);
+        }
+
+        m_stopRequests.clear();
+    }
+}
+
+
+void Application::flushNewRequests()
+{
+    if (!m_newRequests.empty())
+    {
+        for (auto& tuple : m_newRequests)
+        {
+            ProcessId processId = std::get<2>(tuple);
+            m_taskProcesses[processId] = TaskProcess(&m_workerPool, std::get<0>(tuple), std::get<1>(tuple));
+            m_taskProcesses[processId].start();
+            R_NOTIFY("Application", "Starting process!");
+        }
+        m_newRequests.clear();
+    }
+}
+
+
+Application::ProcessId Application::requestNewProcess(TaskProcess::OnProcessTask onProcessTask, const char* processName)
+{
+    RGUID guid = generateRGUID();
+    ProcessId id = guid.ss.hash0;
+    std::tuple<TaskProcess::OnProcessTask, const char*, ProcessId> d = std::make_tuple(onProcessTask, processName, id);
+    m_newRequests.push_back(d);
+    return id;
 }
 
 
@@ -49,6 +106,13 @@ ResultCode Application::cleanUp()
         m_initialized = false;
     }
     return result;
+}
+
+
+ResultCode Application::requestStopProcess(ProcessId processId)
+{
+    m_stopRequests.push_back(processId);
+    return RecluseResult_Ok;
 }
 
 
