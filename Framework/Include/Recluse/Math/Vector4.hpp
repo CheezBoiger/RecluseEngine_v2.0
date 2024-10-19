@@ -39,7 +39,7 @@ struct RecluseFramework_PUBLIC_API Float4
     {
         struct { F32 x, y, z, w; };
         struct { F32 r, g, b, a; };
-        struct { F32 s, t, r, q; };
+        struct { F32 s, t, p, q; };
         struct { F32 u, v, w, c; };
         __m128 row;
     };
@@ -92,7 +92,7 @@ struct RecluseFramework_PUBLIC_API UInt4
     union 
     {
         struct { U32 x, y, z, w; };
-        struct { U32 s, t, r, q; };
+        struct { U32 s, t, p, q; };
         struct { U32 r, g, b, a; };
     };
 
@@ -166,7 +166,7 @@ struct RecluseFramework_PUBLIC_API UByte4
     union
     {
         struct { U8 x, y, z, w; };
-        struct { U8 s, t, r, q; };
+        struct { U8 s, t, p, q; };
         struct { U8 r, g, b, a; };
     };
 

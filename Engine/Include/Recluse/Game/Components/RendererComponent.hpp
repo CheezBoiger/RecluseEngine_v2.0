@@ -20,6 +20,14 @@ enum RenderUpdateFlag
 };
 
 
+enum RenderModel
+{
+    RenderModel_Static,
+    RenderModel_Dynamic,
+    RenderMode_Skinned
+};
+
+
 typedef U32 RenderUpdateFlags;
 
 
@@ -29,13 +37,23 @@ public:
     R_COMPONENT_DECLARE(RendererComponent);
 
     virtual ~RendererComponent() { }
-    RendererComponent() { }
+    RendererComponent(RenderModel renderModel) 
+        : m_renderModel(renderModel) { }
+
+    RenderModel getRenderModel() const { return m_renderModel; }
+
+    // Sends a request to update the gpu resource, that is responsible for rendering the 
+    // model transform of the render object. 
+    void        updateModelData();
     
     GraphicsResource*   m_gfxResourceRef;   // Reference to the graphics resource.
     U32                 m_gfxMeshId;    // Mesh index within an instance.
     U32                 m_gfxMatId;     // Material index within an instance.
     RenderUpdateFlags   m_flags;        // Update flags.
     Bool                m_isVisible;    // Is the mesh visible?
+
+private:
+    RenderModel m_renderModel;
 };
 
 

@@ -335,4 +335,15 @@ Bool Filesystem::createDirectory(const std::string& directoryPath)
     } while (pos != std::string::npos);
     return true;
 }
+
+
+std::string File::extension(const std::string& filePath)
+{
+    std::string ext;
+    if (size_t off = filePath.find_last_of('.'))
+    {
+        ext = filePath.substr(off, filePath.size());
+    }
+    return ext;
+}
 } // Recluse

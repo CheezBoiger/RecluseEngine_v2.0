@@ -23,10 +23,10 @@ GraphicsContext* DebugRenderer::getContext()
 
 DebugRenderer* DebugRenderer::get()
 {
-    Renderer* renderer = Renderer::getMain();
+    RendererModule* renderer = RendererModule::getMain();
     R_ASSERT_FORMAT(renderer != nullptr, "Main renderer does not exist, unable to obtain debug renderer!");
 
-    ModulePlugin<Renderer>* plugin = Renderer::getMain()->getPlugin(RendererPluginID_DebugRenderer);
+    ModulePlugin<RendererModule>* plugin = RendererModule::getMain()->getPlugin(RendererPluginID_DebugRenderer);
     return dynamic_cast<DebugRenderer*>(plugin);
 }
 } // Engine

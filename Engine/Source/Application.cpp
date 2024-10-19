@@ -137,7 +137,7 @@ ResultCode TaskProcess::dispatchTasks()
     ScopedLock _(m_tasksMutex);
     if (!m_threadPoolRef)
     {
-        // single threaded process.
+        // single threaded process. would make our dispatch call syncronous.
         for (auto& priorityIt : m_tasks)
         {
             for (auto& task : priorityIt.second)

@@ -80,6 +80,15 @@ struct RGUID
                 (a.version.minor > b.version.minor) :  (a.version.major > b.version.major);
         }
     };
+
+    struct Equal
+    {
+    public:
+        bool operator()(const RGUID& a, const RGUID& b) const
+        {
+            return (a.version.major == b.version.major) && (a.version.minor == b.version.minor);
+        }
+    };
 };
 
 //

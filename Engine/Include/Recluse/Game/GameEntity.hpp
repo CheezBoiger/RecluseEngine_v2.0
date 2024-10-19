@@ -8,6 +8,7 @@
 #include "Recluse/Game/Component.hpp"
 #include "Recluse/Serialization/Hasher.hpp"
 #include "Recluse/RGUID.hpp"
+#include "Recluse/Utility.hpp"
 
 #include "Recluse/Game/GameSystem.hpp"
 
@@ -116,6 +117,9 @@ public:
     // Get an entity from the entity pool.
     static RecluseEngine_PUBLIC_API GameEntity* findEntity(const RGUID& guid);
 
+    // Free all resources from the manager, this should be called at the end of all use for entities.
+    static RecluseEngine_PUBLIC_API void        freeAll();
+
     Bool isActive() const 
     {
         return (m_status == GameEntityStatus_Active);
@@ -171,7 +175,7 @@ public:
     // Get the game object parent.
     RecluseEngine_PUBLIC_API RGUID                  getParent() const { return m_parent; }
 
-    RecluseEngine_PUBLIC_API RGUID                  getUUID() const { return m_guuid; }
+    RecluseEngine_PUBLIC_API RGUID                  getGUID() const { return m_guuid; }
 
     void setName(const std::string& newName) { m_name = newName; }
     void setTag(const std::string& newTag) { m_tag = newTag; }

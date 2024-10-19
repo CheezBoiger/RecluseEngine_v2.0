@@ -112,7 +112,7 @@ typedef MapContainer<U32, std::vector<U64>> CommandKeyContainer;
 // Top level rendering engine. Implements Render Hardware Interface, and 
 // manages all resources and states created in game graphics. This will usually
 // implement any render passes and stages of the graphics pipeline.
-class RecluseEngine_PUBLIC_API Renderer final : public EngineModule<Renderer> 
+class RecluseEngine_PUBLIC_API RendererModule final : public EngineModule<RendererModule> 
 {
 public:
 
@@ -123,8 +123,8 @@ public:
     static ResultCode kRendererProcessTask(TaskProcess* process);
 
 
-    Renderer();
-    ~Renderer();
+    RendererModule();
+    ~RendererModule();
 
     // Initializes the debug plugin for DebugRenderer use.
     ResultCode                  initializeDebugPlugin(DebugInitFunction pluginFunc);
@@ -192,6 +192,7 @@ private:
     void                        cleanUpModules();
     void                        createDevice(const RendererConfigs& configs);
     void                        allocateSceneBuffers(const RendererConfigs& configs);
+    void                        clearPresentationFrame(GraphicsContext* context, GraphicsResource* swapchainFrame);
     
     void                        clear();
 

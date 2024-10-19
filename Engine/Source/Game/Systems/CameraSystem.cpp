@@ -21,6 +21,10 @@ void CameraSystem::onUpdate(ECS::Registry* registry, const RealtimeTick& tick)
         {
             camera->update(transform);
         }
+        else
+        {
+            R_WARN("Camera", "This camera does not have a transform to update with! Will not perform an update.");
+        }
     }
 }
 } // Engine

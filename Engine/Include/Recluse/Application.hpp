@@ -91,6 +91,7 @@ public:
     AsyncTaskId     asyncTask(Task task);
     void            waitForTask(AsyncTaskId taskId);
 
+    // Get the process task that is running on this Process.
     OnProcessTask   getOnProcessTask() { return m_onTask; }
 
     // Check if this process is running.
@@ -204,6 +205,7 @@ private:
     MessageBus*                             m_pMessageBusRef;
     Engine::Scene*                          m_pScene;
     std::map<ProcessId, TaskProcess>        m_taskProcesses;
+    std::map<Hash64, MessageBus*>           m_messageBusMap;
     Bool                                    m_initialized;
     Bool                                    m_isRunning;
     ThreadPool                              m_workerPool;

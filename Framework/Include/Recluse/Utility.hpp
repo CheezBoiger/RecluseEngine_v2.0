@@ -10,7 +10,8 @@
 
 namespace Recluse {
 
-
+// Macro used to deprecate any functionality within the framework api.
+#define R_DEPRECATED_FUNCTION(str) [[deprecated(str)]]
 
 template<typename ToCast, typename Class>
 static R_FORCE_INLINE ToCast staticCast(Class obj)

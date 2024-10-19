@@ -36,15 +36,6 @@ ResultCode Scene::addEntity(ECS::GameEntity* obj)
 }
 
 
-void Scene::update(ECS::Registry* registry, const RealtimeTick& tick)
-{
-    for (auto& system : m_systems)
-    {
-        system->update(registry, tick);
-    }
-}
-
-
 void Scene::initialize()
 {
 }
@@ -52,7 +43,6 @@ void Scene::initialize()
 
 void Scene::destroy()
 {
-    unregisterSystems();
     for (U32 i = 0; i < m_entities.size(); ++i)
     {
         ECS::GameEntity::free(m_entities[i]);
@@ -158,32 +148,8 @@ ResultCode Scene::deserialize(Archive* pArchive)
 }
 
 
-void Scene::registerSystem(ECS::AbstractSystem* pSystem, MessageBus* bus)
-{
-    // Registering any system must Initialize first.
-    pSystem->initialize(bus); 
-    m_systems.push_back(pSystem); 
-}
-
-
-void Scene::unregisterSystems()
-{
-    for (auto& system : m_systems)
-    {
-        R_ASSERT_FORMAT(system->cleanUp() == RecluseResult_Ok, "cleanUp() failed for system %s", system->getName());
-        ECS::AbstractSystem::free(system);
-    }
-
-    m_systems.clear();
-}
-
-
 void Scene::drawDebug(ECS::Registry* registry, DebugRenderer* debugRenderer)
 {
-    for (auto& system : m_systems)
-    {
-        system->drawDebug(registry, debugRenderer);   
-    }
 }
 } // Engine
 } // Recluse

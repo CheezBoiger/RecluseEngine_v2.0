@@ -44,12 +44,24 @@ public:
             stop();
         }
 
+        KeyboardListener listener;
+
+        if (listener.isKeyDownOnce(KeyCode_0))
+        {
+            GlobalCommands::setValue("Renderer.ClearFrame", GlobalCommands::obtainValue<Bool>("Renderer.ClearFrame") ? false : true);
+        }
+
+        if (listener.isKeyDownOnce(KeyCode_1))
+        {
+            GlobalCommands::setValue("Renderer.UseClearColor", GlobalCommands::obtainValue<Bool>("Renderer.UseClearColor") ? false : true);
+        }
+
         return RecluseResult_Ok;
     }
 
     virtual ResultCode onInit() override
     {
-        Renderer::initializeModule(this);
+        RendererModule::initializeModule(this);
 
         m_window = Window::create("", 0, 0, 1200, 800);
         m_window->setToCenter();
@@ -61,20 +73,20 @@ public:
         setLogChannel("Application", true);
 
         RendererConfigs config = { };
-        config.api = GraphicsApi_Vulkan;
+        config.api = GraphicsApi_Direct3D12;
         config.enableGpuValidation = true;
         config.buffering = 3;
         config.maxFrameRate = 60.0f;
         config.windowHandle = m_window->getNativeHandle();
         config.renderWidth = m_window->getWidth();
         config.renderHeight = m_window->getHeight();
-        Renderer::getMain()->setNewConfigurations(config);
+        RendererModule::getMain()->setNewConfigurations(config);
 
         MessageBus::fireEvent(getMessageBus(), RenderEvent_Initialize);
         MessageBus::fireEvent(getMessageBus(), RenderEvent_Resume);
-
+        GlobalCommands::setValue("Renderer.ClearColor", Math::Color4(255, 0, 0, 0));
         // Make task process for the renderer.
-        m_renderProcessId = makeTaskProcess(Renderer::kRendererProcessTask, "Renderer");
+        m_renderProcessId = makeTaskProcess(RendererModule::kRendererProcessTask, "Renderer");
 #if 1
         makeTaskProcess([] (TaskProcess* process) -> ResultCode 
         {
@@ -135,13 +147,6 @@ int main(int c, char* argv[])
     MainThreadLoop::loadApp(&testApp);
     MainThreadLoop::run();
     MainThreadLoop::cleanUp();
-
-    Engine::Material material("PBR_RoughMetal");
-
-    material.declare("RoughMetal")
-        .declare("Albedo")
-        .declare("Normal")
-        .declare("config");
     Log::destroyLoggingSystem();     
     return 0;
 }

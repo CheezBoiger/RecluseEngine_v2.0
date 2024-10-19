@@ -165,17 +165,17 @@ void addEntities(Scene* pScene, ECS::Registry* registry)
     pScene->addEntity(entity);
     pScene->addEntity(entity2);
 
-    registry->makeComponent<Transform>(entity->getUUID(), true);
-    registry->makeComponent<Transform>(entity2->getUUID(), true);
+    registry->makeComponent<Transform>(entity->getGUID(), true);
+    registry->makeComponent<Transform>(entity2->getGUID(), true);
 
-    registry->makeComponent<MoverComponent>(entity->getUUID(), true);
+    registry->makeComponent<MoverComponent>(entity->getGUID(), true);
     GlobalCommands::setValue("Transform.EnableLogging", true);
 
-    entity->getComponent<Transform>(registry)->position = Math::Float3(43, 12, -2);
-    entity->getComponent<MoverComponent>(registry)->direction = Math::normalize(Math::Float3(1, 0, 0));
+    registry->getComponent<Transform>(entity->getGUID())->position = Math::Float3(43, 12, -2);
+    registry->getComponent<MoverComponent>(entity->getGUID())->direction = Math::normalize(Math::Float3(1, 0, 0));
 
-    registry->makeComponent<MoverComponent>(entity2->getUUID(), true);
-    entity2->getComponent<MoverComponent>(registry)->direction = Math::normalize(Math::Float3(-1, 0, 0));
+    registry->makeComponent<MoverComponent>(entity2->getGUID(), true);
+    registry->getComponent<MoverComponent>(entity2->getGUID())->direction = Math::normalize(Math::Float3(-1, 0, 0));
 }
 
 
@@ -189,8 +189,9 @@ int main(int c, char* argv[])
     ECS::Registry registry;
     Scene* pScene = new Scene();
     pScene->initialize();
-    pScene->addSystem<TransformSystem>(&g_bus);
-    pScene->addSystem<MoverSystem>(&g_bus);
+
+    ECS::AbstractSystem* transformSystem = ECS::AbstractSystem::allocate<TransformSystem>(&g_bus);
+    ECS::AbstractSystem* moverSystem = ECS::AbstractSystem::allocate<MoverSystem>(&g_bus);
 
     addEntities(pScene, &registry);
 
@@ -199,8 +200,8 @@ int main(int c, char* argv[])
 
         RealtimeTick::updateWatch(1ull, 0);
         RealtimeTick tick = RealtimeTick::getTick(0);
-        pScene->update(&registry, tick);
-
+        moverSystem->update(&registry, tick);
+        transformSystem->update(&registry, tick);
         g_bus.notifyAll();
         g_bus.clearQueue();
         counter += tick.delta() * 1.0f;
@@ -209,6 +210,10 @@ int main(int c, char* argv[])
 
     pScene->destroy();
     delete pScene;
+    transformSystem->cleanUp();
+    moverSystem->cleanUp();
+    ECS::AbstractSystem::free(transformSystem);
+    ECS::AbstractSystem::free(moverSystem);
     registry.cleanUp();
     Log::destroyLoggingSystem();
     g_bus.cleanUp();

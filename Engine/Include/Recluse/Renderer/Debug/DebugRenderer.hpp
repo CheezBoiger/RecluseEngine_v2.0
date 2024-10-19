@@ -19,7 +19,7 @@ class GraphicsInstance;
 
 namespace Engine {
 
-class Renderer;
+class RendererModule;
 
 
 
@@ -34,7 +34,7 @@ public:
     // Get the debug renderer from the engine module. This is the current debug renderer.
     static DebugRenderer* get();
 
-    void                setRenderer(Renderer* pRenderer) { renderer = pRenderer; }
+    void                setRenderer(RendererModule* pRenderer) { renderer = pRenderer; }
     TemporaryBuffer     createTempBuffer(const TemporaryBufferDescription& description);
     GraphicsContext*    getContext();
 
@@ -49,7 +49,7 @@ public:
 
     virtual void        drawMesh(const std::vector<Math::Float3>& vertices, const std::vector<U16>& indices) = 0;
 private:
-    Renderer* renderer;
+    RendererModule* renderer;
 };
 } // Engine
 } // Recluse

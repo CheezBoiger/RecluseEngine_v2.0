@@ -15,6 +15,8 @@ add_subdirectory ( ${RECLUSE_THIRDPARTY_DIR}/wxWidgets )
 #add_subdirectory ( ${RECLUSE_THIRDPARTY_DIR}/zlib )
 add_subdirectory ( ${RECLUSE_THIRDPARTY_DIR}/googletest )
 
+add_subdirectory ( ${RECLUSE_THIRDPARTY_DIR}/zlib )
+
 # Enable Shared libs on meshoptimizer.
 set(MESHOPT_BUILD_SHARED_LIBS ON)
 add_subdirectory( ${RECLUSE_THIRDPARTY_DIR}/meshoptimizer )

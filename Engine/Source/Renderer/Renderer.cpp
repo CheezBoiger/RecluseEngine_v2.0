@@ -25,6 +25,7 @@
 
 #define R_NULLIFY_RENDER 0
 
+R_DECLARE_GLOBAL_BOOLEAN(g_clearFrame, false, "Renderer.ClearFrame");
 R_DECLARE_GLOBAL_COLOR4(g_rendererClearColor, Recluse::Math::Color4(0.0f, 0.0f, 0.0f, 1.0f), "Renderer.ClearColor")
 R_DECLARE_GLOBAL_BOOLEAN(g_useClearColor, false, "Renderer.UseClearColor")
 
@@ -32,19 +33,19 @@ namespace Recluse {
 namespace Engine {
 
 
-DEFINE_ENGINE_MODULE(Renderer);
+DEFINE_ENGINE_MODULE(RendererModule);
 
-Renderer::Renderer()
+RendererModule::RendererModule()
 {
 }
 
 
-Renderer::~Renderer()
+RendererModule::~RendererModule()
 {
 }
 
 
-void Renderer::initialize()
+void RendererModule::initialize()
 {
     R_ASSERT_FORMAT(m_newRendererConfigs.buffering >= 1, "Must at least be one buffer count!");
     // Immediately initialize the render configs to the current.
@@ -117,7 +118,7 @@ void Renderer::initialize()
 }
 
 
-void Renderer::cleanUp()
+void RendererModule::cleanUp()
 {
     m_pContext->wait();
     freeSceneBuffers();
@@ -132,7 +133,7 @@ void Renderer::cleanUp()
 }
 
 
-void Renderer::present(Bool delayPresent)
+void RendererModule::present(Bool delayPresent)
 {
     // Present.
     ResultCode result = m_pSwapchain->present(m_pContext);
@@ -144,13 +145,52 @@ void Renderer::present(Bool delayPresent)
 }
 
 
-void Renderer::render()
+void RendererModule::clearPresentationFrame(GraphicsContext* context, GraphicsResource* swapchainFrame)
+{
+    if (g_clearFrame)
+    {
+        ResourceViewDescription description = { };
+        description.format = m_pSwapchain->getDesc().format;
+        description.baseArrayLayer = 0;
+        description.baseMipLevel = 0;
+        description.mipLevelCount = 1;
+        description.layerCount = 1;
+        description.type = ResourceViewType_RenderTarget;
+        description.dimension = ResourceViewDimension_2d;
+        ResourceViewId swapchainRenderTargetId = swapchainFrame->asView(description);
+        ResourceViewId sp[] = { swapchainRenderTargetId };
+        F32 clearColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+        if (g_useClearColor)
+        {
+            clearColor[0] = F32(g_rendererClearColor.r) / 255.0f;
+            clearColor[1] = F32(g_rendererClearColor.g) / 255.0f;
+            clearColor[2] = F32(g_rendererClearColor.b) / 255.0f;
+            clearColor[3] = F32(g_rendererClearColor.a) / 255.0f;
+        }
+
+        Rect rect = { };
+        rect.x = 0;
+        rect.y = 0;
+        rect.width = m_pSwapchain->getDesc().renderWidth;
+        rect.height = m_pSwapchain->getDesc().renderHeight;
+        context->transition(swapchainFrame, ResourceState_RenderTarget);
+        context->bindRenderTargets(1, sp);
+        context->clearRenderTarget(0, clearColor, rect);
+    }
+}
+
+
+void RendererModule::render()
 {
     sortCommandKeys();
     GraphicsContext* context = getContext();
 
     m_pSwapchain->prepare(context);
         GraphicsResource* swapchainFrame = m_pSwapchain->getFrame(m_pSwapchain->getCurrentFrameIndex());
+
+        clearPresentationFrame(context, swapchainFrame);
+
 #if (!R_NULLIFY_RENDER)
         // TODO: Would make more sense to manually transition the resource itself, 
         //       and not the resource view...
@@ -195,7 +235,7 @@ void Renderer::render()
     if (!m_debugDrawFunctions.empty())
     {
         // By this state, the debug pass should render on top of the final render target.
-        ModulePlugin<Renderer>* plugin = getPlugin(RendererPluginID_DebugRenderer);
+        ModulePlugin<RendererModule>* plugin = getPlugin(RendererPluginID_DebugRenderer);
         if (plugin)
         {
             DebugRenderer* debugRenderer = dynamic_cast<DebugRenderer*>(plugin);
@@ -206,29 +246,6 @@ void Renderer::render()
         }
     }
 
-    if (g_useClearColor)
-    {
-        ResourceViewDescription description = { };
-        description.format = m_pSwapchain->getDesc().format;
-        description.baseArrayLayer = 0;
-        description.baseMipLevel = 0;
-        description.mipLevelCount = 1;
-        description.layerCount = 1;
-        description.type = ResourceViewType_RenderTarget;
-        description.dimension = ResourceViewDimension_2d;
-        ResourceViewId swapchainRenderTargetId = swapchainFrame->asView(description);
-        ResourceViewId sp[] = { swapchainRenderTargetId };
-        F32 clearColor[] = { 1.0f, 0.0f, 0.0f, 1.0f };
-        Rect rect = { };
-        rect.x = 0;
-        rect.y = 0;
-        rect.width = m_pSwapchain->getDesc().renderWidth;
-        rect.height = m_pSwapchain->getDesc().renderHeight;
-        context->transition(swapchainFrame, ResourceState_RenderTarget);
-        context->bindRenderTargets(1, sp);
-        context->clearRenderTarget(0, clearColor, rect);
-    }
-
     context->transition(swapchainFrame, ResourceState_Present);
     context->end();
     resetCommandKeys();
@@ -236,13 +253,13 @@ void Renderer::render()
 }
 
 
-void Renderer::pushDebugDraw(DebugDrawFunction f)
+void RendererModule::pushDebugDraw(DebugDrawFunction f)
 {
     m_debugDrawFunctions.push_back(f);
 }
 
 
-void Renderer::determineAdapter(std::vector<GraphicsAdapter*>& adapters)
+void RendererModule::determineAdapter(std::vector<GraphicsAdapter*>& adapters)
 {
     for (U32 i = 0; i < adapters.size(); ++i) 
     {
@@ -267,7 +284,7 @@ void Renderer::determineAdapter(std::vector<GraphicsAdapter*>& adapters)
 }
 
 
-void Renderer::createDevice(const RendererConfigs& configs)
+void RendererModule::createDevice(const RendererConfigs& configs)
 {
     DeviceCreateInfo info                   = { };
     //info.winHandle                          = m_windowHandle;
@@ -288,12 +305,12 @@ void Renderer::createDevice(const RendererConfigs& configs)
 }
 
 
-void Renderer::setUpModules()
+void RendererModule::setUpModules()
 {
     m_sceneBuffers.gbuffer[Engine::GBuffer_Depth] = new Texture2D();
     m_sceneBuffers.gbuffer[Engine::GBuffer_Depth]->initialize
                                     (
-                                        this, 
+                                        m_pDevice, 
                                         ResourceFormat_D32_Float_S8_Uint, 
                                         m_currentRendererConfigs.renderWidth, 
                                         m_currentRendererConfigs.renderHeight, 
@@ -312,7 +329,7 @@ void Renderer::setUpModules()
 }
 
 
-void Renderer::cleanUpModules()
+void RendererModule::cleanUpModules()
 {
     //PreZ::destroy(m_pDevice);
 
@@ -325,7 +342,7 @@ void Renderer::cleanUpModules()
 }
 
 
-VertexBuffer* Renderer::createVertexBuffer(U64 perVertexSzBytes, U64 totalVertices)
+VertexBuffer* RendererModule::createVertexBuffer(U64 perVertexSzBytes, U64 totalVertices)
 {
     ResultCode result          = RecluseResult_Ok;
     VertexBuffer* pBuffer   = new VertexBuffer();
@@ -342,7 +359,7 @@ VertexBuffer* Renderer::createVertexBuffer(U64 perVertexSzBytes, U64 totalVertic
 }
 
 
-IndexBuffer* Renderer::createIndexBuffer(IndexType indexType, U64 totalIndices)
+IndexBuffer* RendererModule::createIndexBuffer(IndexType indexType, U64 totalIndices)
 {
     ResultCode result = RecluseResult_Ok;
     IndexBuffer* pBuffer = new IndexBuffer();
@@ -359,7 +376,7 @@ IndexBuffer* Renderer::createIndexBuffer(IndexType indexType, U64 totalIndices)
 }
 
 
-ResultCode Renderer::destroyGPUBuffer(GPUBuffer* pBuffer)
+ResultCode RendererModule::destroyGPUBuffer(GPUBuffer* pBuffer)
 {
     ResultCode result = RecluseResult_Ok;
 
@@ -375,7 +392,7 @@ ResultCode Renderer::destroyGPUBuffer(GPUBuffer* pBuffer)
 }
 
 
-void Renderer::resetCommandKeys()
+void RendererModule::resetCommandKeys()
 {
     m_currentFrameIndex = (m_currentFrameIndex + 1) % m_maxBufferCount;
     
@@ -391,7 +408,7 @@ void Renderer::resetCommandKeys()
 }
 
 
-void Renderer::sortCommandKeys()
+void RendererModule::sortCommandKeys()
 {
     R_ASSERT(m_currentCommandKeys.isValid());
 
@@ -411,7 +428,7 @@ void Renderer::sortCommandKeys()
 }
 
 
-void Renderer::pushRenderCommand(const RenderCommand& renderCommand, RenderPassTypeFlags renderFlags)
+void RendererModule::pushRenderCommand(const RenderCommand& renderCommand, RenderPassTypeFlags renderFlags)
 {
     R_ASSERT(m_currentRenderCommands != NULL);
 
@@ -431,7 +448,7 @@ void Renderer::pushRenderCommand(const RenderCommand& renderCommand, RenderPassT
 }
 
 
-void Renderer::allocateSceneBuffers(const RendererConfigs& configs)
+void RendererModule::allocateSceneBuffers(const RendererConfigs& configs)
 {
     U32 width = configs.renderWidth;
     U32 height = configs.renderHeight;
@@ -461,7 +478,7 @@ void Renderer::allocateSceneBuffers(const RendererConfigs& configs)
 }
 
 
-void Renderer::freeSceneBuffers()
+void RendererModule::freeSceneBuffers()
 {
     if (m_sceneBuffers.gbuffer[Engine::GBuffer_Depth]) 
     {
@@ -480,16 +497,16 @@ void Renderer::freeSceneBuffers()
 }
 
 
-Texture2D* Renderer::createTexture2D(U32 width, U32 height, U32 mips, U32 layers, ResourceFormat format)
+Texture2D* RendererModule::createTexture2D(U32 width, U32 height, U32 mips, U32 layers, ResourceFormat format)
 {
     Texture2D* pTexture = new Texture2D();
     ResultCode result = RecluseResult_Ok;
 
-    result = pTexture->initialize(this, format, width, height, layers, mips);
+    result = pTexture->initialize(m_pDevice, format, width, height, layers, mips);
 
     if (result != RecluseResult_Ok) 
     {
-        pTexture->destroy(this);
+        pTexture->destroy(m_pDevice);
         delete pTexture;
     }
   
@@ -497,20 +514,20 @@ Texture2D* Renderer::createTexture2D(U32 width, U32 height, U32 mips, U32 layers
 }
 
 
-ResultCode Renderer::destroyTexture2D(Texture2D* pTexture)
+ResultCode RendererModule::destroyTexture2D(Texture2D* pTexture)
 {
     R_ASSERT(pTexture != NULL);
 
-    pTexture->destroy(this);
+    pTexture->destroy(m_pDevice);
     delete pTexture;
 
     return RecluseResult_Ok;
 }
 
 
-ResultCode Renderer::kRendererProcessTask(TaskProcess* process)
+ResultCode RendererModule::kRendererProcessTask(TaskProcess* process)
 {
-    Renderer* pRenderer                     = Renderer::getMain();
+    RendererModule* pRenderer               = RendererModule::getMain();
     Mutex renderMutex                       = pRenderer->getMutex();
     U64 threadId                            = getCurrentThreadId();
     F32 counterFrameMs                      = 0.f;
@@ -538,7 +555,7 @@ ResultCode Renderer::kRendererProcessTask(TaskProcess* process)
 }
 
 
-ResultCode Renderer::onInitializeModule(Application* pApp)
+ResultCode RendererModule::onInitializeModule(Application* pApp)
 {
     m_configLock = createMutex();
 
@@ -590,7 +607,7 @@ ResultCode Renderer::onInitializeModule(Application* pApp)
 }
 
 
-ResultCode Renderer::onCleanUpModule(Application* pApp)
+ResultCode RendererModule::onCleanUpModule(Application* pApp)
 {
     ScopedLock lck(getMutex());
     cleanUp();
@@ -601,7 +618,7 @@ ResultCode Renderer::onCleanUpModule(Application* pApp)
 }
 
 
-void Renderer::destroyDevice()
+void RendererModule::destroyDevice()
 {
     if (m_pDevice) 
     {
@@ -617,7 +634,7 @@ void Renderer::destroyDevice()
 }
 
 
-void Renderer::update(F32 currentTime, F32 deltaTime)
+void RendererModule::update(F32 currentTime, F32 deltaTime)
 {
     // Current time is just the time given during app's life.
     m_renderState.currentTime   = currentTime;
@@ -642,7 +659,7 @@ void Renderer::update(F32 currentTime, F32 deltaTime)
 }
 
 
-void Renderer::recreate()
+void RendererModule::recreate()
 {
     ScopedLock lck(m_configLock);
 
@@ -650,20 +667,20 @@ void Renderer::recreate()
 }
 
 
-void Renderer::clear()
+void RendererModule::clear()
 {
     m_debugDrawFunctions.clear();
 }
 
 
-TemporaryBuffer Renderer::createTemporaryBuffer(const TemporaryBufferDescription& description)
+TemporaryBuffer RendererModule::createTemporaryBuffer(const TemporaryBufferDescription& description)
 {
     TemporaryBuffer temp = { };
     return (void*)0;
 }
 
 
-ResultCode Renderer::createTemporaryResourcePool(U32 bufferCount)
+ResultCode RendererModule::createTemporaryResourcePool(U32 bufferCount)
 {
     // First free the temporary resources.
     freeTemporaryResources();
@@ -720,7 +737,7 @@ ResultCode Renderer::createTemporaryResourcePool(U32 bufferCount)
 }
 
 
-ResultCode Renderer::freeTemporaryResources()
+ResultCode RendererModule::freeTemporaryResources()
 {
     for (U32 i = 0; i < 2; ++i)
     {

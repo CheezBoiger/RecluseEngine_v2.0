@@ -30,7 +30,7 @@ public:
             ECS::GameEntity* pObject = objects.front();
             objects.pop();
             
-            RGUID rguid                                 = pObject->getUUID();
+            RGUID rguid                                 = pObject->getGUID();
             const std::vector<RGUID>& children          = pObject->getChildren();
             U32 numChildren                                     = (U32)children.size();
             const char* name                                    = "cats";
@@ -84,7 +84,6 @@ int main(int c, char* argv[])
     while ((counter++) < 500) {
         RealtimeTick::updateWatch(1ull, 0);
         RealtimeTick tick = RealtimeTick::getTick(0);
-        pScene->update(&registry, tick);
     }
 
     ArchiveWriter archiveWriter("Test.archive");

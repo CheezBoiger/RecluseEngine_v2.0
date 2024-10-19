@@ -3,9 +3,12 @@
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Filesystem/Archive.hpp"
 
+#include <unordered_map>
+
 namespace Recluse {
 namespace ECS {
 
+std::unordered_map<RGUID, GameEntity*, RGUID::Hash, RGUID::Equal> kEntityMap;
 
 static GameEntity* defaultAlloc(U64 szBytes, GameEntityMemoryAllocationType type)
 {
@@ -25,8 +28,11 @@ static GameEntity* defaultAlloc(U64 szBytes, GameEntityMemoryAllocationType type
         guid.ss.hash1   = (U32)((allocation.offsetAddress & 0xFFFFFFFF00000000) >> 32);
     
         void* ptr       = reinterpret_cast<void*>(allocation.offsetAddress);
-
-        return new (ptr) GameEntity(allocation, guid);
+        
+        GameEntity* entity = new (ptr) GameEntity(allocation, guid);
+    
+        kEntityMap.insert(std::make_pair(guid, entity));
+        return entity;
     }
     else
     {
@@ -42,6 +48,12 @@ static void defaultFree(GameEntity* pEntity)
     R_ASSERT(pEntity != NULL);
 
     GameEntityAllocation allocation = pEntity->getAllocation();
+
+    auto it = kEntityMap.find(pEntity->getGUID());
+    if (it != kEntityMap.end())
+    {
+        kEntityMap.erase(it);
+    }
     
     free((void*)allocation.offsetAddress);
 }
@@ -60,7 +72,24 @@ static GameEntity* defaultGetEntity(const RGUID& rguid)
 }
 
 
-GameEntityAllocationCall gameEntityAllocator { nullptr, nullptr, defaultAlloc, defaultFree, defaultGetEntity };
+R_INTERNAL void defaultCleanUpEntities()
+{
+    if (!kEntityMap.empty())
+    {
+        for (auto& it : kEntityMap)
+        {
+            GameEntity* entity = it.second;
+            R_ASSERT(entity);
+            GameEntityAllocation allocation = entity->getAllocation();
+            free((void*)allocation.offsetAddress);
+        }
+
+        kEntityMap.clear();
+    }
+}
+
+
+GameEntityAllocationCall gameEntityAllocator { defaultCleanUpEntities, nullptr, defaultAlloc, defaultFree, defaultGetEntity };
 
 
 GameEntity* GameEntity::instantiate(U64 szBytes, GameEntityMemoryAllocationType allocType)
@@ -88,11 +117,17 @@ GameEntity* GameEntity::findEntity(const RGUID& guid)
 }
 
 
+void GameEntity::freeAll()
+{
+    gameEntityAllocator.onCleanUpFn();
+}
+
+
 ResultCode GameEntity::serialize(Archive* pArchive) const
 {
     // TODO: Need to figure out how to obtain a proper rguid.
     //       Parent needs to also be included as well!
-    RGUID guid = getUUID();
+    RGUID guid = getGUID();
     pArchive->write((void*)&guid, sizeof(RGUID));
 
     const std::string& s    = getName();

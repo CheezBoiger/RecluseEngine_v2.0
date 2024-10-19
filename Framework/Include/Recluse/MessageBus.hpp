@@ -10,6 +10,7 @@
 #include "Recluse/Threading/Threading.hpp"
 
 #include "RecluseFramework_exports.hpp"
+
 #include <queue>
 #include <functional>
 #include <map>
@@ -71,7 +72,8 @@ public:
         m_messages.push(pMessage);
     }
 
-    // Notify all message receivers of the given fired events.
+    // Notify all message receivers of the given fired events. This is a syncronous call,
+    // so unless you need to call this asyncronously, be sure to call this on a separate thread.
     void notifyAll() 
     {
         // Notify all message receivers.
@@ -86,7 +88,8 @@ public:
         }
     }
 
-    // Only notify one message receiver of the fired events.
+    // Only notify one message receiver of the fired events. This is a syncronous call,
+    // so unless you need to call this asyncronously, be sure to call this on a separate thread.
     RecluseFramework_PUBLIC_API void notifyOne(const std::string& nodeName);
 
     // Clears the event queue. This is required after notifying, as the 
@@ -101,7 +104,7 @@ private:
     MutexGuard                      m_messageQueueMutex;
     Allocator*                      m_pMessageAllocator;
     MemoryPool                      m_messageMemPool;
-    std::queue<EventMessage*>       m_messages;
+    std::queue<EventMessage*>       m_messages;             //< The Message queue.
     std::vector<MessageReceiveFunc> m_messageReceivers;
     std::map<std::string, U32>      m_receiverNodeNames;
 };

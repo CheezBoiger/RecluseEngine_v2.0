@@ -11,7 +11,7 @@ namespace Engine {
 void LightSystem::onUpdate(ECS::Registry* registry, const RealtimeTick& tick)
 {
     std::vector<Light*> lights = obtainComponents(registry);
-    Renderer* renderer = Renderer::getMain();
+    RendererModule* renderer = RendererModule::getMain();
     for (U32 lightIdx = 0; lightIdx < lights.size(); ++lightIdx)
     {
         Light* light = lights[lightIdx];

@@ -54,11 +54,11 @@ public:
     Texture2D() 
         : m_resource(nullptr) { }
 
-    ResultCode initialize(Renderer* pRenderer, ResourceFormat format, U32 width, U32 height, U32 arrayLevel, U32 mips);
-    void destroy(Renderer* pRenderer);
+    ResultCode initialize(GraphicsDevice* pDevice, ResourceFormat format, U32 width, U32 height, U32 arrayLevel, U32 mips);
+    void destroy(GraphicsDevice* pDevice);
 
     // Load texture data to this resource handle.
-    void load(Renderer* pRenderer, void* pData, U64 szBytes);
+    void load(GraphicsDevice* pDevice, void* pData, U64 szBytes);
 
     GraphicsResource* getResource() { return m_resource; }
 
@@ -77,10 +77,10 @@ public:
         , m_view(nullptr) { }
 
     // initializes and stores the texture view into the texture database.
-    ResultCode initialize(Renderer* pRenderer, Texture2D* pTexture, ResourceViewDescription& desc);
+    ResultCode initialize(GraphicsDevice* pDevice, Texture2D* pTexture, ResourceViewDescription& desc);
 
     // destroys this texture view, along with the lookup from the texture database.
-    ResultCode destroy(Renderer* pRenderer);
+    ResultCode destroy(GraphicsDevice* pDevice);
 
     Texture2D* getTexture() const { return m_texture; }
     GraphicsResourceView* getView() const { return m_view; }

@@ -572,6 +572,9 @@ ID3D12RootSignature* internalCreateRootSignatureWithTable(ID3D12Device* pDevice,
 R_INTERNAL
 ID3D12RootSignature* internalCreateRootSignatureSeparateParameters(ID3D12Device* pDevice, const RootSigLayout& layout)
 {
+    // TODO: This function is supposed to create separate root parameter structs, that define different layouts of the 
+    //          shader registers. We shouldn't really allow separate parameter registers, but it would allow a different option to 
+    //          create layouts for shader data.
     R_NO_IMPL();
     return nullptr;
 }

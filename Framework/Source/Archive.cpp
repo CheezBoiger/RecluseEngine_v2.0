@@ -2,6 +2,8 @@
 #include "Recluse/Filesystem/Archive.hpp"
 #include "Recluse/Messaging.hpp"
 
+#include "zlib.h"
+
 namespace Recluse {
 
 
@@ -32,7 +34,7 @@ ResultCode Archive::close()
     return RecluseResult_Ok;
 }
 
-
+ 
 ResultCode Archive::write(const void* ptr, U64 sz)
 {
     ResultCode result = RecluseResult_Ok;

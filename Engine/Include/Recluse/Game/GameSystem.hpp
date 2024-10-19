@@ -55,9 +55,16 @@ public:
     virtual ~AbstractSystem() { }
 
     template<typename SpecializedSys>
-    static ECS::AbstractSystem* allocate()
+    static ECS::AbstractSystem* allocate(MessageBus* bus)
     {
-        return new SpecializedSys();
+        ECS::AbstractSystem* system = new SpecializedSys();
+        ResultCode result = system->initialize(bus);
+        if (result != RecluseResult_Ok)
+        {
+            AbstractSystem::free(system);
+            system = nullptr;
+        }
+        return system;
     }
 
     static ResultCode free(AbstractSystem* psystem) 
@@ -94,8 +101,11 @@ public:
 
 protected:
 
-    // Allows initializing the system before on intialize().
+    // Allows initializing the system on intialize().
     virtual ResultCode      onInitialize(MessageBus* bus = nullptr) { return RecluseResult_NoImpl; }
+
+    // Allows post initialization after all initialize systems.
+    virtual ResultCode      onPostInitialize() { return RecluseResult_NoImpl; }
 
     // Allows cleaning up the system before releasing.
     virtual ResultCode      onCleanUp()                     { return RecluseResult_NoImpl; }

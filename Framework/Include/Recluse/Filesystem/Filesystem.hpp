@@ -43,6 +43,9 @@ struct RecluseFramework_PUBLIC_API File
     // Updates the FileBufferDataAsync object when the separate run finishes.
     static ResultCode writeToAsync(FileBufferDataAsync* pBuffer, const std::string& filePath);
 
+    // Get the extension of the filepath. It is usually in the filename.
+    static std::string extension(const std::string& filePath);
+
     // Opens the file with the given access permissions.
     ResultCode open(const std::string& filePath, char* access);
 

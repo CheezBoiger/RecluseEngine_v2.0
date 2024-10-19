@@ -21,6 +21,10 @@ namespace Engine {
 class Camera;
 class DebugRenderer;
 
+// Scene holds the hierarchical structure of the world. Can and should be used to 
+// determine the order of entities in the world, by which who is their parent, and children,
+// the lights and cameras in the world, and the probes that make up the overall environment.
+//
 class Scene : public Serializable 
 {
 public:
@@ -39,7 +43,7 @@ public:
     RecluseEngine_PUBLIC_API ECS::GameEntity*               getEntity(U32 idx);
 
     RecluseEngine_PUBLIC_API void                           setName(const std::string& name);
-    const std::string&                          getName() const { return m_name; }
+    const std::string&                                      getName() const { return m_name; }
 
     // Get game objects inside this scene.
     //
@@ -51,9 +55,6 @@ public:
     // Deserialize the serialize.
     RecluseEngine_PUBLIC_API ResultCode                     load(Archive* pArchive);
 
-    // Update the scene systems. This can also be overridden to allow multithreading purposes.
-    virtual RecluseEngine_PUBLIC_API void                   update(ECS::Registry* registry, const RealtimeTick& tick);
-
     // add a camera to the scene.
     void                                        addCamera(Camera* camera) { m_cameras.emplace_back(camera); }
 
@@ -62,18 +63,6 @@ public:
     Camera*                                     getCamera(U32 index) { return m_cameras[index]; }
 
     void                                        drawDebug(ECS::Registry* registry, DebugRenderer* debugRenderer);
-
-    // Adds a system into this scene. Systems are usually global, but in our engine, they are 
-    // only global to our respective scene. Therefore, it is essential that any new scenes must 
-    // use any old systems, if we require transitions! 
-    //
-    //! bus - MessageBus for which the system will listen to.
-    template<typename Sys>
-    void                                        addSystem(MessageBus* bus = nullptr, U32 priority = 0u)
-    {
-        ECS::AbstractSystem* system = ECS::AbstractSystem::allocate<Sys>();
-        registerSystem(system, bus);
-    }
 
 protected:
 
@@ -95,10 +84,6 @@ protected:
 
 private:
 
-    // Register a system into the scene.
-    RecluseEngine_PUBLIC_API void registerSystem(ECS::AbstractSystem* pSystem, MessageBus* bus);
-    RecluseEngine_PUBLIC_API void unregisterSystems();
-
     // Game objects in the scene.
     std::vector<ECS::GameEntity*>       m_entities;
     std::string                         m_name;
@@ -106,9 +91,6 @@ private:
     // cameras set in scene.
     // the index 0 is always the main camera.
     std::vector<Camera*>                m_cameras;
-
-    // Systems to update.
-    std::vector<ECS::AbstractSystem*>   m_systems;
 };
 } // Engine
 } // Recluse

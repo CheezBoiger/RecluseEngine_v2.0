@@ -41,9 +41,8 @@ static std::unordered_map
         TextureViewIDComparer
     > gTextureViewLUT;
 
-ResultCode Texture2D::initialize(Renderer* pRenderer, ResourceFormat format, U32 width, U32 height, U32 arrayLevel, U32 mips)
+ResultCode Texture2D::initialize(GraphicsDevice* pDevice, ResourceFormat format, U32 width, U32 height, U32 arrayLevel, U32 mips)
 {
-    GraphicsDevice* pDevice             = pRenderer->getDevice();
     GraphicsResourceDescription desc    = { };
     ResultCode result                      = RecluseResult_Ok;
 
@@ -87,25 +86,24 @@ void TextureResource::genCrC(void* pUnique, U64 sz)
 }
 
 
-void Texture2D::destroy(Renderer* pRenderer)
+void Texture2D::destroy(GraphicsDevice* pDevice)
 {
     if (m_resource) 
     {
-        pRenderer->getDevice()->destroyResource(m_resource);
+        pDevice->destroyResource(m_resource);
         m_resource = nullptr;   
     }
 }
 
 
-void Texture2D::load(Renderer* pRenderer, void* pData, U64 szBytes)
+void Texture2D::load(GraphicsDevice* pDevice, void* pData, U64 szBytes)
 {
-    pRenderer->getContext()->copyResource(m_resource, nullptr);
+    pDevice->copyResource(m_resource, nullptr);
 }
 
 
-ResultCode TextureView::initialize(Renderer* pRenderer, Texture2D* pTexture, ResourceViewDescription& desc)
+ResultCode TextureView::initialize(GraphicsDevice* pDevice, Texture2D* pTexture, ResourceViewDescription& desc)
 {
-    GraphicsDevice* pDevice = pRenderer->getDevice();
     ResultCode result = RecluseResult_Ok;
 
     m_texture = pTexture;
@@ -116,7 +114,7 @@ ResultCode TextureView::initialize(Renderer* pRenderer, Texture2D* pTexture, Res
 }
 
 
-ResultCode TextureView::destroy(Renderer* pRenderer)
+ResultCode TextureView::destroy(GraphicsDevice* pDevice)
 {
 
     return RecluseResult_Ok;

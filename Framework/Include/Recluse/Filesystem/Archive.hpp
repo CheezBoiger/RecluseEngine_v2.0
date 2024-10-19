@@ -15,7 +15,7 @@ public:
 
     RecluseFramework_PUBLIC_API Archive(const std::string& filepath, char* access)
         : m_filepath(filepath)
-        , m_cursor(0ull) 
+        , m_cursor(0ull)
     {
         ResultCode result = openFile(access); 
     }
