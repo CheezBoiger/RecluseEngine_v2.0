@@ -95,7 +95,10 @@ public:
     DescriptorHeap();
     virtual ~DescriptorHeap() { }
 
-    ResultCode                              initialize(ID3D12Device* pDevice, U32 nodeMask, U32 numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
+    ResultCode                              initialize(ID3D12Device* pDevice, 
+                                                U32 nodeMask, U32 numDescriptors, 
+                                                D3D12_DESCRIPTOR_HEAP_TYPE type, 
+                                                D3D12_DESCRIPTOR_HEAP_FLAGS flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
     ResultCode                              release();
 
     virtual CpuDescriptorTable              allocate(U32 numDescriptors) { return CpuDescriptorTable(); }
@@ -131,11 +134,11 @@ public:
 
 protected:
 
-    virtual D3D12_DESCRIPTOR_HEAP_DESC      makeDescriptorHeapDescription(U32 nodeMask, U32 numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type)
+    virtual D3D12_DESCRIPTOR_HEAP_DESC      makeDescriptorHeapDescription(U32 nodeMask, U32 numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE)
     {
         D3D12_DESCRIPTOR_HEAP_DESC desc = { };
         desc.NumDescriptors = numDescriptors;
-        desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+        desc.Flags = flags;
         desc.NodeMask = nodeMask;
         desc.Type = type;
         return desc;
@@ -155,6 +158,7 @@ protected:
 };
 
 
+// Cpu descriptor heap, allocated on host memory. This memory can be written to/read by the host and device (gpu).
 class CpuDescriptorHeap : public DescriptorHeap
 {
 public:
@@ -163,6 +167,7 @@ public:
 };
 
 
+// Device local descriptor heap memory. This can only be written/read by the gpu only. Cpu shouldn't read or write to it.
 // Because the rendering gpu can only bind a limited set of descriptor heaps, with one type, per frame, along with a limited number to create due to the 
 // memory size of about 96 MB, we should keep one set of gpu descriptor heaps per frame.
 class ShaderVisibleDescriptorHeap : public DescriptorHeap
@@ -171,7 +176,7 @@ public:
     virtual SmartPtr<Allocator>             makeAllocator(ID3D12DescriptorHeap* pHeap, U64 numDescriptors, U64 descriptorSizeBytes) override;
 
 protected:
-    D3D12_DESCRIPTOR_HEAP_DESC              makeDescriptorHeapDescription(U32 nodeMask, U32 numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type) override
+    D3D12_DESCRIPTOR_HEAP_DESC              makeDescriptorHeapDescription(U32 nodeMask, U32 numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE) override
     {
         D3D12_DESCRIPTOR_HEAP_DESC desc = DescriptorHeap::makeDescriptorHeapDescription(nodeMask, numDescriptors, type);
         desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
@@ -299,6 +304,6 @@ private:
     ID3D12Device*                                           m_pDevice;
     U32                                                     m_currentTableHeapIndex;
     U32                                                     m_currentHeapIndex;
-};
+}; // DescriptorHeapAllocationManager
 } // D3D12
 } // Recluse 

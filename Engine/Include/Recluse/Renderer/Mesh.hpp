@@ -3,6 +3,7 @@
 
 #include "Recluse/Types.hpp"
 #include "Recluse/Math/Matrix44.hpp"
+#include "Recluse/Math/Quaternion.hpp"
 #include "Recluse/Graphics/Resource.hpp"
 #include "Recluse/Renderer/RendererResources.hpp"
 #include "Recluse/RGUID.hpp"
@@ -25,9 +26,9 @@ namespace Engine {
 
 using namespace Math;
 
-typedef Float3 MeshRotationData;
-typedef Float3 MeshTranslateData;
-typedef Float3 MeshScaleData;
+typedef Quaternion  MeshRotationData;
+typedef Float3      MeshTranslateData;
+typedef Float3      MeshScaleData;
 
 
 // Per mesh information.

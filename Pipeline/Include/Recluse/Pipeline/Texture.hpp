@@ -46,6 +46,7 @@ enum CompressFlag
 };
 typedef U32 CompressFlags;
 
+// Compression for the texture. Returns compressed texture handle.
 ReclusePipeline_PUBLIC_API Engine::Texture compress(const Engine::Texture& texture, CompressionFormat compressionFormat, CompressFlags compressFlags);
 } // Pipeline
 } // Recluse

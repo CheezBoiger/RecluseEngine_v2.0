@@ -454,7 +454,7 @@ int main(char* argv[], int c)
     Log::initializeLoggingSystem();
     enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
+    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 
@@ -470,7 +470,7 @@ int main(char* argv[], int c)
         appInfo.appMinor = 0;
         appInfo.appMajor = 0;
         appInfo.appPatch = 0;
-        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
+        LayerFeatureFlags flags = 0;// LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
         instance->initialize(appInfo, flags);
     }
     
@@ -484,7 +484,7 @@ int main(char* argv[], int c)
 
     context = device->createContext();
     R_ASSERT(context);
-    context->setFrames(2);
+    context->setFrames(3);
 
     SwapchainCreateDescription swapchainDescription = { };
     swapchainDescription.buffering      = FrameBuffering_Triple;

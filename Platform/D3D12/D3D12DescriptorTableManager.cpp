@@ -176,10 +176,10 @@ Bool DescriptorHeap::contains(D3D12_CPU_DESCRIPTOR_HANDLE handle)
 }
 
 
-ResultCode DescriptorHeap::initialize(ID3D12Device* pDevice, U32 nodeMask, U32 numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type)
+ResultCode DescriptorHeap::initialize(ID3D12Device* pDevice, U32 nodeMask, U32 numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags)
 {
     R_ASSERT(pDevice != NULL);
-    D3D12_DESCRIPTOR_HEAP_DESC desc = makeDescriptorHeapDescription(nodeMask, numDescriptors, type);
+    D3D12_DESCRIPTOR_HEAP_DESC desc = makeDescriptorHeapDescription(nodeMask, numDescriptors, type, flags);
     HRESULT result = pDevice->CreateDescriptorHeap(&desc, __uuidof(ID3D12DescriptorHeap), (void**)&m_pHeap);
 
     if (FAILED(result))
@@ -371,8 +371,8 @@ void ShaderVisibleDescriptorHeapInstance::initialize(ID3D12Device* pDevice)
             "Microsoft spec states that our maximum shader visible descriptor size be %d descriptors, but we are specifying %d!", 
             kStandardMaxVisibleDescriptorHeapSize, g_maxShaderVisibleHeapDescriptorSize
         );
-    m_gpuHeap[GpuHeapType_CbvSrvUav].initialize(pDevice, 0, g_maxShaderVisibleHeapDescriptorSize, getNativeFromGpuHeapType(GpuHeapType_CbvSrvUav));
-    m_gpuHeap[GpuHeapType_Sampler].initialize(pDevice, 0, g_maxShaderVisibleHeapSamplerDescriptorSize, getNativeFromGpuHeapType(GpuHeapType_Sampler));
+    m_gpuHeap[GpuHeapType_CbvSrvUav].initialize(pDevice, 0, g_maxShaderVisibleHeapDescriptorSize, getNativeFromGpuHeapType(GpuHeapType_CbvSrvUav), D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+    m_gpuHeap[GpuHeapType_Sampler].initialize(pDevice, 0, g_maxShaderVisibleHeapSamplerDescriptorSize, getNativeFromGpuHeapType(GpuHeapType_Sampler), D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
 }
 
 

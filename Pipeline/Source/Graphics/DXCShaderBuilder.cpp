@@ -24,6 +24,7 @@ namespace Recluse {
 namespace Pipeline {
 
 
+// Direct blob. 
 class DxcBlob : public IDxcBlob
 {
 public:
@@ -75,12 +76,12 @@ std::wstring getShaderProfile(ShaderType type)
     std::wstring model;
     switch (type) 
     {
-        case ShaderType_Vertex: model = std::wstring(L"vs_"); break;
-        case ShaderType_Pixel: model = std::wstring(L"ps_"); break;
-        case ShaderType_Compute: model = std::wstring(L"cs_"); break; 
-        case ShaderType_Geometry: model = std::wstring(L"gs_"); break;
-        case ShaderType_Domain: model = std::wstring(L"ds_"); break;
-        case ShaderType_Hull: model = std::wstring(L"hs_"); break;
+        case ShaderType_Vertex:     model = std::wstring(L"vs_"); break;
+        case ShaderType_Pixel:      model = std::wstring(L"ps_"); break;
+        case ShaderType_Compute:    model = std::wstring(L"cs_"); break; 
+        case ShaderType_Geometry:   model = std::wstring(L"gs_"); break;
+        case ShaderType_Domain:     model = std::wstring(L"ds_"); break;
+        case ShaderType_Hull:       model = std::wstring(L"hs_"); break;
         default: return L"unknown";
     }
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
@@ -132,6 +133,7 @@ public:
         return RecluseResult_Ok;
     }
 
+    // On compile.
     ResultCode onCompile
         (
             const std::vector<char>& srcCode, 
@@ -162,11 +164,15 @@ public:
         for (U32 i = 0; i < nativeDefines.size(); ++i)
         {
             int count = MultiByteToWideChar(CP_UTF8, 0, defines[i].variable.c_str(), defines[i].variable.size(), nullptr, 0);
+
             nativeDefines[i].Name = new WCHAR[count + 1];
+
             MultiByteToWideChar(CP_UTF8, 0, defines[i].variable.c_str(), defines[i].variable.size(), const_cast<LPWSTR>(nativeDefines[i].Name), count);
             nativeDefines[i].Name[count] = L'\0';
             count = MultiByteToWideChar(CP_UTF8, 0, defines[i].value.c_str(), defines[i].value.size(), nullptr, 0);
+
             nativeDefines[i].Value = new WCHAR[count + 1];
+
             MultiByteToWideChar(CP_UTF8, 0, defines[i].value.c_str(), defines[i].value.size(), const_cast<LPWSTR>(nativeDefines[i].Value), count);
             nativeDefines[i].Value[count] = L'\0';
             dxcDefines[i].Name = nativeDefines[i].Name;
@@ -234,6 +240,7 @@ public:
         return RecluseResult_Ok;
     }
 
+    // Shader reflection.
     ResultCode reflect(ShaderReflection& reflectionOutput, const char* bytecode, U64 sizeBytes, ShaderLanguage lang) override
     {
         CComPtr<IDxcContainerReflection> containerReflection;

@@ -1,7 +1,6 @@
 //
 #include "Recluse/Pipeline/Texture.hpp"
 
-
 namespace Recluse {
 namespace Pipeline {
 

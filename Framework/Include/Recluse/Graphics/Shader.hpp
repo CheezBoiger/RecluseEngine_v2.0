@@ -27,6 +27,11 @@ enum ShaderLanguage
 {
     ShaderLanguage_Glsl,
     ShaderLanguage_Hlsl,
+
+    // SLang is higher level shader language than GLSL or HLSL, but it combines the capabilities of 
+    // HLSL to make a more robust and adaptable syntax that can run on any gpu platform. Ideally, the 
+    // language is designed to be portable, hence it's write-shaders-once-run-anywhere motto.
+    ShaderLanguage_Slang, //< Currently not supported.
     ShaderLanguage_Count
 };
 
@@ -89,7 +94,7 @@ static ShaderStageFlags shaderTypeToShaderStageFlags(ShaderType type)
 
 typedef U64 ShaderPermutationId;
 
-// Shader is a container that uses the crc
+// Shader is a container that uses the crc. 
 class Shader final : public IReference, public Serializable
 {
 public:
@@ -123,15 +128,16 @@ public:
     // Save the compilation to a file.
     RecluseFramework_PUBLIC_API ResultCode saveToFile(const char* filePath);
 
-    RecluseFramework_PUBLIC_API Shader*    convertTo(ShaderIntermediateCode intermediateCode);
-    const char*             getEntryPointName() const { return m_entryPoint.c_str(); }
-    ShaderType              getType() const { return m_shaderType; }
-    const char*             getByteCode() const { return m_byteCode.data(); }
-    U64                     getSzBytes() const { return m_byteCode.size(); }
-    ShaderId                getNameHashId() const { return m_shaderNameHash; }
-    ShaderId                getInstanceId() const { return m_instanceId; }
+    RecluseFramework_PUBLIC_API Shader*     convertTo(ShaderIntermediateCode intermediateCode);
+    const char*                             getEntryPointName() const { return m_entryPoint.c_str(); }
+    ShaderType                              getType() const { return m_shaderType; }
+    const char*                             getByteCode() const { return m_byteCode.data(); }
+    U64                                     getSzBytes() const { return m_byteCode.size(); }
+    ShaderId                                getNameHashId() const { return m_shaderNameHash; }
+    ShaderId                                getInstanceId() const { return m_instanceId; }
     
-    void                    setName(const char* name) 
+    // Sets the name of the shader.
+    void                                    setName(const char* name) 
     {
         m_shaderName = name;
         m_shaderNameHash = recluseHashFast(m_shaderName.data(), m_shaderName.size());
@@ -139,16 +145,16 @@ public:
 
     // Obtain the shader hash id, this is usually equal across the same shader with different permutations.
     // PermutationId defines the unique id between similar shaders, in order to distinguish from other combinations.
-    Hash64                  getShaderHashId() const { return m_shaderHashId; }
+    Hash64                                  getShaderHashId() const { return m_shaderHashId; }
 
-    const char*             getName() const { return m_shaderName.c_str(); }
-    U64                     getNameSize() const { return static_cast<U64>(m_shaderName.size()); }
+    const char*                             getName() const { return m_shaderName.c_str(); }
+    U64                                     getNameSize() const { return static_cast<U64>(m_shaderName.size()); }
 
-    void                    setPermutationId(ShaderPermutationId permutation) { m_permutation = permutation; }
-    ShaderPermutationId     getPermutationId() const { return m_permutation; }
+    void                                    setPermutationId(ShaderPermutationId permutation) { m_permutation = permutation; }
+    ShaderPermutationId                     getPermutationId() const { return m_permutation; }
 
-    RecluseFramework_PUBLIC_API ResultCode serialize(Archive* archive) const override;
-    RecluseFramework_PUBLIC_API ResultCode deserialize(Archive* archive) override;
+    RecluseFramework_PUBLIC_API ResultCode  serialize(Archive* archive) const override;
+    RecluseFramework_PUBLIC_API ResultCode  deserialize(Archive* archive) override;
 
 private:
 
@@ -163,6 +169,8 @@ private:
     ShaderPermutationId     m_permutation;
 };
 
+// Shader bind identifier, this is mainly used to identify the slot or index of a 
+// shader register within shader code.
 typedef U32 ShaderBind;
 
 // Shader Reflection information.
@@ -171,12 +179,12 @@ class ShaderReflection : public Serializable
 public:
     struct 
     {
-        U8  numCbvs;
-        U8  numSrvs;
-        U8  numUavs;
-        U8  numSamplers;
-        U8  numInputParameters;
-        U8  numOutputParameters;
+        U8  numCbvs;                //< Number of constant buffer.
+        U8  numSrvs;                //< Number of shader resource views.
+        U8  numUavs;                //< Number of unordered access views.
+        U8  numSamplers;            //< Number of samplers.
+        U8  numInputParameters;     //< Number of input parameters.
+        U8  numOutputParameters;    //< Number of output parameters.
         U16 pad0;
     } metadata;
     std::vector<ShaderBind> cbvs;

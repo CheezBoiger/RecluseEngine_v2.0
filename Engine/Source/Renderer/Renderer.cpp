@@ -187,6 +187,9 @@ void RendererModule::render()
     GraphicsContext* context = getContext();
 
     m_pSwapchain->prepare(context);
+        // Push any copy commands that were requested.
+        pushCopyCommands(context);
+
         GraphicsResource* swapchainFrame = m_pSwapchain->getFrame(m_pSwapchain->getCurrentFrameIndex());
 
         clearPresentationFrame(context, swapchainFrame);
@@ -634,6 +637,29 @@ void RendererModule::destroyDevice()
 }
 
 
+ResultCode RendererModule::pushCopyCommands(GraphicsContext* context)
+{
+    R_ASSERT(context != NULL);
+    if (!m_frameCopyRegions.empty())
+    {
+        for (uint i = 0; i < m_frameCopyRegions.size(); ++i)
+        {
+            BufferCopy& copy = m_frameCopyRegions[i];
+            context->copyBufferRegions(copy.dst, copy.src, &copy.region, 1);
+        }
+        clearCopyCommands();
+    }
+    return RecluseResult_Ok;
+}
+
+
+ResultCode RendererModule::clearCopyCommands()
+{
+    m_frameCopyRegions.clear();
+    return RecluseResult_Ok;
+}
+
+
 void RendererModule::update(F32 currentTime, F32 deltaTime)
 {
     // Current time is just the time given during app's life.
@@ -685,7 +711,9 @@ ResultCode RendererModule::createTemporaryResourcePool(U32 bufferCount)
     // First free the temporary resources.
     freeTemporaryResources();
 
-    for (U32 i = 0; i < 2; ++i)
+    m_temporaryPools.resize(2);
+
+    for (U32 i = 0; i < m_temporaryPools.size(); ++i)
     {
         m_temporaryPools[i].Cs.initialize();
         m_temporaryPools[i].PerFrameAllocator.resize(bufferCount);

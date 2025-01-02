@@ -26,22 +26,22 @@ ShaderLanguage kDefaultShaderLanguage = ShaderLanguage_Hlsl;
 // Serialize our enum types with the following for json configs.
 NLOHMANN_JSON_SERIALIZE_ENUM(Recluse::ShaderStage,
     {
-        { Recluse::ShaderStage_Vertex,          "vertex" },
-        { Recluse::ShaderStage_Pixel,           "pixel" },
-        { Recluse::ShaderStage_Fragment,        "frag" },
-        { Recluse::ShaderStage_Hull,            "hull" },
-        { Recluse::ShaderStage_Domain,          "domain" },
-        { Recluse::ShaderStage_Compute,         "compute" },
-        { Recluse::ShaderStage_TessellationControl,    "tessc"},
-        { Recluse::ShaderStage_TessellationEvaluation,       "tesse" },
-        { Recluse::ShaderStage_Geometry,        "geometry"},
-        { Recluse::ShaderStage_RayAnyHit,      "anyhit" },
-        { Recluse::ShaderStage_RayClosestHit,  "closesthit" },
-        { Recluse::ShaderStage_RayGeneration,         "raygen" },
-        { Recluse::ShaderStage_RayIntersect,   "intersect" },
-        { Recluse::ShaderStage_RayMiss,        "raymiss" },
-        { Recluse::ShaderStage_Amplification,   "amp" },
-        { Recluse::ShaderStage_Mesh,            "mesh" }
+        { Recluse::ShaderStage_Vertex,                  "vertex"        },
+        { Recluse::ShaderStage_Pixel,                   "pixel"         },
+        { Recluse::ShaderStage_Fragment,                "frag"          },
+        { Recluse::ShaderStage_Hull,                    "hull"          },
+        { Recluse::ShaderStage_Domain,                  "domain"        },
+        { Recluse::ShaderStage_Compute,                 "compute"       },
+        { Recluse::ShaderStage_TessellationControl,     "tessc"         },
+        { Recluse::ShaderStage_TessellationEvaluation,  "tesse"         },
+        { Recluse::ShaderStage_Geometry,                "geometry"      },
+        { Recluse::ShaderStage_RayAnyHit,               "anyhit"        },
+        { Recluse::ShaderStage_RayClosestHit,           "closesthit"    },
+        { Recluse::ShaderStage_RayGeneration,           "raygen"        },
+        { Recluse::ShaderStage_RayIntersect,            "intersect"     },
+        { Recluse::ShaderStage_RayMiss,                 "raymiss"       },
+        { Recluse::ShaderStage_Amplification,           "amp"           },
+        { Recluse::ShaderStage_Mesh,                    "mesh"          }
     }
 )
 
@@ -54,11 +54,11 @@ NLOHMANN_JSON_SERIALIZE_ENUM(Recluse::ShaderLanguage,
 )
 
 
-#define SCENE_BUFFER_DECLARE_STR "RECLUSE_DECLARE_SCENE_BUFFER"
-#define SCENE_BUFFER_PARAM_STR "RECLUSE_SCENE_PARAMETER"
-#define SCENE_BUFFER_END_STR    "RECLUSE_END_SCENE_BUFFER"
+#define SCENE_BUFFER_DECLARE_STR    "RECLUSE_DECLARE_SCENE_BUFFER"
+#define SCENE_BUFFER_PARAM_STR      "RECLUSE_SCENE_PARAMETER"
+#define SCENE_BUFFER_END_STR        "RECLUSE_END_SCENE_BUFFER"
 
-#define SCENE_BUFFER_INCLUDE "RecluseSceneBuffer.h"
+#define SCENE_BUFFER_INCLUDE        "RecluseSceneBuffer.h"
 
 #define MAP_SHADER_KEYWORD(keyword, glslKeyword, hlslKeyword) { keyword, { { ShaderLanguage_Glsl, glslKeyword }, { ShaderLanguage_Hlsl, hlslKeyword } } }
 
@@ -72,8 +72,12 @@ static std::unordered_map<std::string, std::map<ShaderLanguage, std::string>> kS
     MAP_SHADER_KEYWORD("Float3",    "vec3",     "float3"),
     MAP_SHADER_KEYWORD("Float4",    "vec4",     "float4"),
     MAP_SHADER_KEYWORD("I32",       "int",      "int"),
-    MAP_SHADER_KEYWORD("U32",       "uint",     "uint")
+    MAP_SHADER_KEYWORD("U32",       "uint",     "uint"),
+    MAP_SHADER_KEYWORD("Half",      "float",    "half"),
+    MAP_SHADER_KEYWORD("Half2",     "vec2",     "half2")
 };
+
+#undef MAP_SHADER_KEYWORD
 
 #define GET(key, lang) kShaderKeywordMap[key][lang]
 
@@ -90,22 +94,21 @@ struct ShaderMetaData
 
 struct CompilerState 
 {
-    std::string name;
-    ShaderLanguage  language;
-    std::string outputExt;
-    std::string version;
-    B32         appendExt;
+    std::string                 name;
+    ShaderLanguage              language;
+    std::string                 outputExt;
+    std::string                 version;
+    B32                         appendExt;
     
     struct 
     {
         // Global extension of our shaders.
         // usually defined as ".*shaderTypeExt.*ext"
-        std::string                         ext;
+        std::vector<std::string>            extensions;
         std::map<ShaderType, std::string>   shaderTypeExt;
     } input;
 
     CompilerState() {
-        input.ext = "";
     }
 };
 
@@ -308,12 +311,17 @@ ResultCode compileShaders(ShaderLanguage lang)
         sourceFilePath = sourceFilePath + "." + 
             gConfigs.pCompilerState->input.shaderTypeExt[shaderMetadata->shaderType];
 
-        if (!gConfigs.pCompilerState->input.ext.empty()) 
-        {
-            sourceFilePath = sourceFilePath + "." + gConfigs.pCompilerState->input.ext;
-        }
+        ResultCode result = RecluseResult_NotFound;
 
-        ResultCode result = File::readFrom(&buffer, sourceFilePath);
+        do 
+        {
+            if (!gConfigs.pCompilerState->input.extensions.empty()) 
+            {
+                sourceFilePath = sourceFilePath + "." + gConfigs.pCompilerState->input.extensions[0];
+            }
+
+            ResultCode result = File::readFrom(&buffer, sourceFilePath);
+        } while (result != RecluseResult_Ok);
 
         if (result != RecluseResult_Ok) 
         {
@@ -452,7 +460,7 @@ ResultCode setConfigs(const std::string& configPath, U32 compilerIndex)
         {
             CompilerState compilerState = { };
             auto compiler               = compilers[i];
-            ShaderLanguage lang             = compiler["language"].get<ShaderLanguage>();
+            ShaderLanguage lang         = compiler["language"].get<ShaderLanguage>();
             std::string name            = compiler["name"].get<std::string>();
             std::string ext             = "";
             B32 appendExt               = false;
@@ -480,7 +488,19 @@ ResultCode setConfigs(const std::string& configPath, U32 compilerIndex)
             if (compiler.find("input") != compiler.end()) 
             {
                 auto input              = compiler["input"];
-                compilerState.input.ext = input["ext"].get<std::string>();     
+                auto extensions         = input["ext"];
+
+                if (extensions.is_array())
+                {
+                    for (auto& ext : extensions)
+                    {
+                        compilerState.input.extensions.push_back(ext.get<std::string>());
+                    }
+                }
+                else
+                {
+                    compilerState.input.extensions.push_back(input["ext"].get<std::string>());
+                }
             }
 
             R_INFO

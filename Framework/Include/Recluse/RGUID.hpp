@@ -9,11 +9,18 @@
 
 namespace Recluse {
 
+// Unique Identifier for all objects and resources in the engine.
 struct RGUID 
 {
     static const U64 kInvalidValue = ~0ULL;
 
-    RGUID(U64 minor = kInvalidValue, U64 major = kInvalidValue)
+    RGUID
+    (
+          U64 major = kInvalidValue
+#ifndef R_USE_64BIT_IDENTIFIERS
+        , U64 minor = kInvalidValue
+#endif
+    )
         : version{minor, major} { }
 
     union 
@@ -21,23 +28,30 @@ struct RGUID
         struct 
         {
             U64 major;
+#ifndef R_USE_64BIT_IDENTIFIERS
             U64 minor;
+#endif
         } version;
 
         struct 
         {
             U32 hash0;
             U32 hash1;
+#ifndef R_USE_64BIT_IDENTIFIERS
             U32 hash2;
             U32 hash3;
+#endif
         } ss;
     };
 
 
     Bool operator==(const RGUID& rh) const
     {
-        return (version.major == rh.version.major) &&
-                (version.minor == rh.version.minor);
+        return (version.major == rh.version.major) 
+#ifndef R_USE_64BIT_IDENTIFIERS
+            && (version.minor == rh.version.minor)
+#endif
+            ;
     }
 
     Bool operator!=(const RGUID& rh) const
@@ -45,9 +59,14 @@ struct RGUID
         return !((*this) == rh);
     }
 
+    // Check if this rguid is valid. Returns true if this guid is valid, false otherwise.
     Bool isValid() const
     {
-        return (version.major != kInvalidValue) && (version.minor != kInvalidValue);
+        return (version.major != kInvalidValue)
+#ifndef R_USE_64BIT_IDENTIFIERS
+            && (version.minor != kInvalidValue)
+#endif
+            ;
     }
 
     // Hash representation function for RGUID. Use this for STD data structures that require
@@ -57,7 +76,10 @@ struct RGUID
         bool operator()(const RGUID& rguid) const
         {
             return std::hash<U64>()(rguid.version.major)
-                    ^ std::hash<U64>()(rguid.version.minor);
+#ifndef R_USE_64BIT_IDENTIFIERS
+                    ^ std::hash<U64>()(rguid.version.minor)
+#endif
+            ;
         }
     };
 
@@ -91,6 +113,6 @@ struct RGUID
     };
 };
 
-//
+// Generates an RGUID identifier, which can be used to represent unique entities and objects.
 RecluseFramework_PUBLIC_API RGUID generateRGUID(U64 seed = 0);
 } // Recluse

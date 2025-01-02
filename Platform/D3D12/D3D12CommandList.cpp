@@ -363,15 +363,13 @@ void D3D12Context::bindCurrentResources()
     if (state.isDirty(ContextDirty_Descriptors))
     {
         CpuDescriptorTable table = Pipelines::makeDescriptorSrvCbvUavTable(m_pDevice, state.m_rootSigLayout, state.m_resourceTable);
-        ShaderVisibleDescriptorHeapInstance* instance = m_pDevice->getDescriptorHeapManager()->getShaderVisibleInstance(currentBufferIndex());
-        ShaderVisibleDescriptorTable shaderVisibleTable = instance->upload(m_pDevice->get(), GpuHeapType_CbvSrvUav, table);
+        ShaderVisibleDescriptorTable shaderVisibleTable = uploadToShaderVisible(table, GpuHeapType_CbvSrvUav);
         bindResourceTable(currentList, state.m_pipelineStateObject.pipelineType, 0, shaderVisibleTable.baseGpuDescriptorHandle);
     }
     if (state.isDirty(ContextDirty_SamplerDescriptors))
     {
         CpuDescriptorTable table = Pipelines::makeDescriptorSamplertable(m_pDevice, state.m_rootSigLayout, state.m_resourceTable);
-        ShaderVisibleDescriptorHeapInstance* instance = m_pDevice->getDescriptorHeapManager()->getShaderVisibleInstance(currentBufferIndex());
-        ShaderVisibleDescriptorTable shaderVisibleTable = instance->upload(m_pDevice->get(), GpuHeapType_Sampler, table);
+        ShaderVisibleDescriptorTable shaderVisibleTable = uploadToShaderVisible(table, GpuHeapType_Sampler);
         bindResourceTable(currentList, state.m_pipelineStateObject.pipelineType, 1, shaderVisibleTable.baseGpuDescriptorHandle);
     }
 }

@@ -15,6 +15,7 @@
 #include "RecluseEngine_exports.hpp"
 
 #include <map>
+#include <set>
 #include <vector>
 #include <algorithm>
 
@@ -292,6 +293,71 @@ private:
 
     // The actual game object allocation.
     GameEntityAllocation                                    m_allocation;
+};
+
+
+// EntityHierarchy is used to define the hierarchy of entities in a scene or system.
+// Use this when handling and managing a system hierarchy. EntityHierarchy should not
+// have any loops, as it is acyclic.
+class RecluseEngine_PUBLIC_API EntityHierarchy : public Serializable
+{
+public:
+
+    EntityHierarchy() { }
+    ~EntityHierarchy() { }
+
+    ResultCode          addAsChildrenForEntity(const RGUID& parent, const RGUID* children, U32 numChildren);
+    ResultCode          removeAsChildrenForEntity(const RGUID& parent, const RGUID* children, U32 numChildren);
+
+    U32                 getNumberOfChildrenOfEntity(const RGUID& parent);
+    ResultCode          getChildrenOfEntity(const RGUID& parent, RGUID* childrenOut);
+
+    // Gets the parent of a node, if one exists. Otherwise, returns invalid value.
+    RGUID               getParent(const RGUID& node);
+
+    // Check if this node exists in this hierarchy.
+    Bool                exists(const RGUID& node);
+
+    // Check if this node is a possible child of parent.
+    Bool                isChildOf(const RGUID& node, const RGUID& parent);
+
+    // Check if this node is a possible parent of child.
+    Bool                isParentOf(const RGUID& node, const RGUID& child);
+
+    // Removes a node and any associated parent/children involved with it. Be sure to call this function if an entity
+    // is going to be completely destroyed! Otherwise record will still be kept...
+    ResultCode          remove(const RGUID& node);
+
+    // Adds a node to the hierarchy, this would check if the node is already a child, or parent of other children.
+    // If not, will be a root node that is parentless.
+    ResultCode          add(const RGUID& node, const RGUID& parent = RGUID());
+
+    ResultCode          serialize(Archive* archive) const override;
+    ResultCode          deserialize(Archive* archive) override;
+
+    U32                 getNumberOfRootNodes() const { return m_roots.size(); }
+    ResultCode          getRootNodes(RGUID* nodes, U32 numRootNodes);
+
+    U32                 getFlatten() const;
+
+private:
+    // Children data structure.
+    typedef std::set<RGUID, RGUID::Less> ChildrenDataStructure;
+
+
+    struct Relation
+    {
+        ChildrenDataStructure   children;
+        RGUID                   parent;  
+    };
+
+    std::map<RGUID, Relation, RGUID::Less>  m_hierarchy;
+
+    // Nodes that are parentless. They are usually the top of the hierarchy, since they have no parent, likely root nodes.
+    std::set<RGUID, RGUID::Less>            m_roots;
+
+    // Cached hierarchy, no update needed.
+    Bool m_cached;
 };
 } // ECS
 } // Recluse

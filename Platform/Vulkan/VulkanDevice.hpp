@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <list>
+#include <memory>
 #include <array>
 
 namespace Recluse {
@@ -413,22 +414,21 @@ private:
 
     VulkanAdapter*                  m_adapter;
     VkDevice                        m_device;
+
+    struct MemoryManager
+    {
+        std::unique_ptr<MemoryPool> pool;
+        std::unique_ptr<Allocator> allocator;
+        CriticalSection             cs;
+
+        void initialize();
+        void free();
+    };
+
     struct 
     {
-        CriticalSection m_invalidCs;
-        CriticalSection m_flushCs;
-        struct 
-        {
-            MemoryPool* pool;
-            Allocator* allocator;
-        } invalid;
-
-        struct 
-        {
-            MemoryPool* pool;
-            Allocator* allocator;
-        } flush;
-
+        MemoryManager invalid;
+        MemoryManager flush;
     } m_memCache;
 
     SmartPtr<VulkanAllocationManager>   m_allocationManager;

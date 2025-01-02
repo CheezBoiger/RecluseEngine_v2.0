@@ -761,55 +761,90 @@ void VulkanDevice::destroyDescriptorHeap()
 }
 
 
+void VulkanDevice::MemoryManager::initialize()
+{
+    U64 cacheSizeBytes  = align(sizeof(VkMappedMemoryRange) * 128ULL, pointerSizeBytes());
+    pool                = std::make_unique<MemoryPool>(cacheSizeBytes);
+    allocator           = std::make_unique<LinearAllocator>();
+
+    UPtr alignedAddress = align(pool->getBaseAddress(), pointerSizeBytes());
+
+    allocator->initialize(alignedAddress, cacheSizeBytes);
+    cs.initialize();
+};
+
+
+void VulkanDevice::MemoryManager::free()
+{
+    if (allocator)
+    {
+        allocator->cleanUp();
+        allocator.release();
+    }
+
+    if (pool)
+    {
+        pool.release();
+    }
+
+    cs.release();
+}
+
+
 void VulkanDevice::allocateMemCache()
 {
     // TODO: In the future, we might need to consider multithreading cases, although
     //       I don't think we will have more than one main rendering thread.
-    U64 cacheSizeBytes              = align(sizeof(VkMappedMemoryRange) * 128ull, pointerSizeBytes());
-    m_memCache.flush.pool           = new MemoryPool(cacheSizeBytes);
-    m_memCache.invalid.pool         = new MemoryPool(cacheSizeBytes);
-    m_memCache.flush.allocator      = new LinearAllocator();
-    m_memCache.invalid.allocator    = new LinearAllocator();
-    UPtr alignedFlushAddress        = align(m_memCache.flush.pool->getBaseAddress(), pointerSizeBytes());
-    UPtr alignedInvalidAddress      = align(m_memCache.invalid.pool->getBaseAddress(), pointerSizeBytes());
+    //U64 cacheSizeBytes              = align(sizeof(VkMappedMemoryRange) * 128ull, pointerSizeBytes());
+    //m_memCache.flush.pool           = new MemoryPool(cacheSizeBytes);
+    //m_memCache.invalid.pool         = new MemoryPool(cacheSizeBytes);
+    //m_memCache.flush.allocator      = new LinearAllocator();
+    //m_memCache.invalid.allocator    = new LinearAllocator();
+    //UPtr alignedFlushAddress        = align(m_memCache.flush.pool->getBaseAddress(), pointerSizeBytes());
+    //UPtr alignedInvalidAddress      = align(m_memCache.invalid.pool->getBaseAddress(), pointerSizeBytes());
 
-    m_memCache.flush.allocator->initialize(alignedFlushAddress, cacheSizeBytes);
-    m_memCache.invalid.allocator->initialize(alignedInvalidAddress, cacheSizeBytes);
-    m_memCache.m_flushCs.initialize();
-    m_memCache.m_invalidCs.initialize();
+    //m_memCache.flush.allocator->initialize(alignedFlushAddress, cacheSizeBytes);
+    //m_memCache.invalid.allocator->initialize(alignedInvalidAddress, cacheSizeBytes);
+    //m_memCache.m_flushCs.initialize();
+    //m_memCache.m_invalidCs.initialize();
+    m_memCache.flush.initialize();
+    m_memCache.invalid.initialize();
 }
 
 
 void VulkanDevice::freeMemCache()
 {
-    if (m_memCache.flush.allocator) 
-    {
-        m_memCache.flush.allocator->cleanUp();
-        delete m_memCache.flush.allocator;
-        m_memCache.flush.allocator = nullptr;        
-    }
-    
-    if (m_memCache.flush.pool) 
-    {
-        delete m_memCache.flush.pool; 
-        m_memCache.flush.pool = nullptr;   
-    }
+    //if (m_memCache.flush.allocator) 
+    //{
+    //    m_memCache.flush.allocator->cleanUp();
+    //    delete m_memCache.flush.allocator;
+    //    m_memCache.flush.allocator = nullptr;        
+    //}
+    //
+    //if (m_memCache.flush.pool) 
+    //{
+    //    delete m_memCache.flush.pool; 
+    //    m_memCache.flush.pool = nullptr;   
+    //}
 
-    if (m_memCache.invalid.allocator) 
-    {
-        m_memCache.invalid.allocator->cleanUp();
-        delete m_memCache.invalid.allocator;
-        m_memCache.invalid.allocator = nullptr;   
-    }
+    //if (m_memCache.invalid.allocator) 
+    //{
+    //    m_memCache.invalid.allocator->cleanUp();
+    //    delete m_memCache.invalid.allocator;
+    //    m_memCache.invalid.allocator = nullptr;   
+    //}
 
-    if (m_memCache.invalid.pool) 
-    {
-        delete m_memCache.invalid.pool;
-        m_memCache.invalid.pool = nullptr;
-    }
+    //if (m_memCache.invalid.pool) 
+    //{
+    //    delete m_memCache.invalid.pool;
+    //    m_memCache.invalid.pool = nullptr;
+    //}
 
-    m_memCache.m_flushCs.release();
-    m_memCache.m_invalidCs.release();
+    //m_memCache.m_flushCs.release();
+    //m_memCache.m_invalidCs.release();
+
+    m_memCache.flush.free();
+    m_memCache.invalid.free();
 }
 
 
@@ -868,7 +903,7 @@ void VulkanDevice::pushFlushMemoryRange(const VkMappedMemoryRange& mappedRange)
     UPtr address = 0ull;
 
     {
-        ScopedCriticalSection _(m_memCache.m_flushCs);
+        ScopedCriticalSection _(m_memCache.flush.cs);
         address = m_memCache.flush.allocator->allocate(sizeof(VkMappedMemoryRange), 0);
         result = m_memCache.flush.allocator->getLastError();
     } 
@@ -904,7 +939,7 @@ void VulkanDevice::pushInvalidateMemoryRange(const VkMappedMemoryRange& mappedRa
     UPtr address = 0ull;
 
     {
-        ScopedCriticalSection _(m_memCache.m_invalidCs);
+        ScopedCriticalSection _(m_memCache.invalid.cs);
         address = m_memCache.invalid.allocator->allocate(sizeof(VkMappedMemoryRange), 0);
         result = m_memCache.invalid.allocator->getLastError();
     }

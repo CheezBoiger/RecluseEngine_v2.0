@@ -150,10 +150,14 @@ public:
 
     // Returns a tuple of components from an entity. Any components not found,
     // will return nullptr for each component not found.
-    template<typename... Args>
-    std::tuple<Args*...> obtainTuple(Registry* registry, const RGUID& id)
+    //
+    // To use, specify as: obtainTuple<MyComponent0, MyComponent1, etc...>(registry, id)
+    //
+    // Where MyComponent0, MyComponent1, etc... are the components you want to query for this system.
+    template<typename... ComponentTypes>
+    std::tuple<ComponentTypes*...> obtainTuple(Registry* registry, const RGUID& id)
     {
-        std::tuple<Args*...> args = { obtainComponent<Args>(registry, id)... }; 
+        std::tuple<ComponentTypes*...> args = { obtainComponent<ComponentTypes>(registry, id)... }; 
         return args;
     }
 

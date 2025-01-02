@@ -198,6 +198,8 @@ private:
 
     ResultCode                          createCommandList(D3D12PrimaryCommandList** ppList, GraphicsQueueTypeFlags flags);
     ResultCode                          destroyCommandList(D3D12PrimaryCommandList* pList);
+
+    // Uploads to the current shader visible heap. Should be used sparingly.
     ShaderVisibleDescriptorTable        uploadToShaderVisible(CpuDescriptorTable table, GpuHeapType shaderVisibleType);
     void                                bindCurrentResources();
     void                                internalBindVertexBuffersAndIndexBuffer(ID3D12GraphicsCommandList* list, ContextState& state);

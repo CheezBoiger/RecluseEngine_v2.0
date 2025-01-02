@@ -19,7 +19,9 @@ RGUID generateRGUID(U64 seed)
 
     RGUID nRGUID;
     nRGUID.version.major = std::uniform_int_distribution<U64>()(twister);
+#ifndef R_USE_64BIT_IDENTIFIERS
     nRGUID.version.minor = std::uniform_int_distribution<U64>()(twister);
+#endif
 
     return nRGUID;
 }

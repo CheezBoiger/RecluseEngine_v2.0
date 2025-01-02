@@ -207,6 +207,9 @@ private:
     ResultCode                  createTemporaryResourcePool(U32 bufferCount);
     ResultCode                  freeTemporaryResources();
 
+    ResultCode                  pushCopyCommands(GraphicsContext* context);
+    ResultCode                  clearCopyCommands();
+
     // Graphics context and information.
     GraphicsInstance*                   m_pInstance;
     GraphicsAdapter*                    m_pAdapter;
@@ -269,7 +272,15 @@ private:
     std::vector<LightDescription>                           m_lightDescriptions;
 
     // Gpu Resources used as temporary for the current frame. This will be refreshed every new frame.
-    TemporaryPool   m_temporaryPools[2];
+    std::vector<TemporaryPool>                              m_temporaryPools;
+
+    struct BufferCopy
+    {
+        CopyBufferRegion region;
+        GraphicsResource* dst;
+        GraphicsResource* src;
+    };
+    std::vector<BufferCopy>                                 m_frameCopyRegions;
 };
 
 ResourceViewId asView(GraphicsResource* pResource, const ResourceViewDescription& description); 

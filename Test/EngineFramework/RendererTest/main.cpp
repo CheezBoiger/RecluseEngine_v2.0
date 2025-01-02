@@ -73,7 +73,7 @@ public:
         setLogChannel("Application", true);
 
         RendererConfigs config = { };
-        config.api = GraphicsApi_Direct3D12;
+        config.api = GraphicsApi_Vulkan;
         config.enableGpuValidation = true;
         config.buffering = 3;
         config.maxFrameRate = 60.0f;
