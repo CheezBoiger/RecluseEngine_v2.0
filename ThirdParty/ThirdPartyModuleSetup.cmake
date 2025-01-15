@@ -30,7 +30,7 @@ set(OPTION_BUILD_APPS_CMP_VISION OFF)
 set(OPTION_BUILD_BROTLIG OFF)
 set(OPTION_BUILD_BROTLIG_GUI OFF)
 set(OPTION_BUILD_KTX2 OFF)
-#add_subdirectory( ${RECLUSE_THIRDPARTY_DIR}/compressonator )
+add_subdirectory( ${RECLUSE_THIRDPARTY_DIR}/compressonator )
 
 # Reflection for stuff
 if ( RCL_VULKAN ) 
