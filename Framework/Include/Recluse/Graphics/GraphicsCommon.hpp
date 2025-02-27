@@ -184,7 +184,11 @@ enum LayerFeatureFlag
     LayerFeatureFlag_DebugMarking       = (1 << 4),
     // Enable Gpu related validation, messages and errors. 
     // Warning: This will slow down performance, in order to debug gpu related issues.
-    LayerFeatureFlag_GpuDebugValidation      = (1 << 5)
+    LayerFeatureFlag_GpuDebugValidation      = (1 << 5),
+    // Feature if support sampler feedback is available.
+    LayerFeatureFlag_SamplerFeedback    = (1 << 6),
+    // Feature if support for variable rate shading is available.
+    LayerFeatureFlag_VariableRateShading = (1 << 7),
 };
 
 

@@ -357,8 +357,19 @@ void VulkanAdapter::checkAvailableDeviceExtensions()
         std::vector<const char*>{   "VK_EXT_mesh_shader", 
                                     "VK_KHR_spirv_1_4",
                                     "VK_KHR_shader_float_controls"}));
+    m_supportedDeviceExtensions.push_back(std::make_tuple(LayerFeatureFlag_SamplerFeedback,
+        std::vector<const char*>{   "VK_NV_shader_image_footprint" }));
+    m_supportedDeviceExtensions.push_back(std::make_tuple(LayerFeatureFlag_VariableRateShading,
+        std::vector<const char*>{   "VK_KHR_fragment_shading_rate", 
+                                    "VK_KHR_create_renderpass2",
+                                    "VK_KHR_multiview",
+                                    "VK_KHR_maintenance2",
+                                    "VK_KHR_get_physical_device_properties2" }));
     
-    m_supportedDeviceExtensionFlags = LayerFeatureFlag_MeshShading | LayerFeatureFlag_Raytracing;
+    m_supportedDeviceExtensionFlags =   LayerFeatureFlag_MeshShading | 
+                                        LayerFeatureFlag_Raytracing | 
+                                        LayerFeatureFlag_SamplerFeedback | 
+                                        LayerFeatureFlag_VariableRateShading;
 
     // Query all device extensions available for this device.
     for (U32 i = 0; i < m_supportedDeviceExtensions.size(); ++i) 

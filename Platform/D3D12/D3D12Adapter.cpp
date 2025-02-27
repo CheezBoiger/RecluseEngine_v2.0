@@ -124,5 +124,70 @@ ResultCode D3D12Adapter::destroyDevice(GraphicsDevice* pDevice)
 
     return RecluseResult_Failed;
 }
+
+
+ResultCode D3D12Adapter::querySupportedFeatures()
+{
+    // Temporary device is used to check supported features.
+    ID3D12Device* tempDevice = nullptr;
+
+    R_ASSERT(m_pAdapter);
+
+    HRESULT result = D3D12CreateDevice(m_pAdapter, D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), (void**)&tempDevice);
+
+    if (result != S_OK)
+    {
+        return RecluseResult_Failed;
+    }
+
+    // Check Raytracing capabilities.
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS5 options;
+        result = tempDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &options, sizeof(options)); 
+        if (result == S_OK)
+        {
+            if (options.RaytracingTier >= D3D12_RAYTRACING_TIER_1_0)
+            {
+                R_DEBUG(R_CHANNEL_D3D12, "Supports Raytracing.");
+                m_supportedFlags |= LayerFeatureFlag_Raytracing;
+            }
+        }
+    }
+
+    // Check mesh shading capabilities.
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS7 options;
+        result = tempDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &options, sizeof(options));
+        if (result == S_OK)
+        {
+            if (options.MeshShaderTier >= D3D12_MESH_SHADER_TIER_1)
+            {
+                R_DEBUG(R_CHANNEL_D3D12, "Supports Mesh Shading.");
+                m_supportedFlags |= LayerFeatureFlag_MeshShading;
+            }
+            if (options.SamplerFeedbackTier >= D3D12_SAMPLER_FEEDBACK_TIER_0_9)
+            {
+                R_DEBUG(R_CHANNEL_D3D12, "Supports Sampler Feedback.");
+                m_supportedFlags |= LayerFeatureFlag_SamplerFeedback;
+            }
+        }
+    }
+
+    // Check sampler feedback support.
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS6 options;
+        result = tempDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &options, sizeof(options));
+        if (result == S_OK)
+        {
+            if (options.VariableShadingRateTier >= D3D12_VARIABLE_SHADING_RATE_TIER_1)
+            {
+                R_DEBUG(R_CHANNEL_D3D12, "Supports Variable Rate Shading.");
+                m_supportedFlags |= LayerFeatureFlag_VariableRateShading;
+            }
+        }
+    }
+
+    tempDevice->Release();
+}
 } // D3D12
 } // Recluse

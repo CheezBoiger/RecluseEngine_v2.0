@@ -113,6 +113,7 @@ void D3D12Instance::queryGraphicsAdapters()
     {
         D3D12Adapter* pAdapter  = new D3D12Adapter(adapters[i]);
         pAdapter->m_pInstance   = this;
+        pAdapter->querySupportedFeatures();
         m_graphicsAdapters[i]   = pAdapter;
     }
 }

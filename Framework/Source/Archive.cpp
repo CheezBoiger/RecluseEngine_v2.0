@@ -2,7 +2,7 @@
 #include "Recluse/Filesystem/Archive.hpp"
 #include "Recluse/Messaging.hpp"
 
-#include "zlib.h"
+//#include "zlib.h"
 
 namespace Recluse {
 

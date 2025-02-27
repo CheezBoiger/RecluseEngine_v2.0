@@ -35,9 +35,16 @@ public:
 
     void destroy();
 
+    Bool hasSupportedFeatures(LayerFeatureFlags flags) const { return (flags & m_supportedFlags); }
+
 private:
 
     D3D12Adapter(IDXGIAdapter* adapter = NULL);
+
+    ResultCode querySupportedFeatures();
+
+    // Supported flags on this adapter.
+    LayerFeatureFlags m_supportedFlags;
 
     IDXGIAdapter* m_pAdapter;
     D3D12Instance* m_pInstance;
