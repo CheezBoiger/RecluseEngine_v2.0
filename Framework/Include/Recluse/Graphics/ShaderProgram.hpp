@@ -163,6 +163,7 @@ private:
     void                                        storeShader(Shader* pShader);
     void                                        cleanUpShaderProgramDefinition(const ShaderProgramDefinition& definition);
     void                                        removeShader(Shader* pShader);
+    U32                                         countShaders() const;
 
     std::map<ShaderType, std::map<Hash64, Shader*>> m_shaderMap;
     MetaMap                                         m_shaderProgramMetaMap;

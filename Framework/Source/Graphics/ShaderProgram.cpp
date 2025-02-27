@@ -437,8 +437,20 @@ void ShaderProgramDatabase::clearShaderProgramDefinitions()
 }
 
 
+U32 ShaderProgramDatabase::countShaders() const
+{
+    U32 numShaders = 0;
+    for (auto& shaderTypeMap : m_shaderMap)
+    {
+        numShaders += static_cast<U32>(shaderTypeMap.second.size());
+    }
+    return numShaders;
+}
+
+
 ResultCode ShaderProgramDatabase::serialize(Archive* pArchive) const
 {
+    // Count the number of shaders inside the shader map.
     {
         ShaderProgramDatabaseHeader shaderProgramDatabaseHeader = { };
         memcpy(shaderProgramDatabaseHeader.name, (void*)m_name.data(), m_name.size());
@@ -446,7 +458,7 @@ ResultCode ShaderProgramDatabase::serialize(Archive* pArchive) const
         shaderProgramDatabaseHeader.nameSize = static_cast<U32>(m_name.size());
         shaderProgramDatabaseHeader.version = kCurrentShaderProgramDatabaseVersion;
         shaderProgramDatabaseHeader.numPrograms = static_cast<U32>(m_shaderProgramMetaMap.size());
-        shaderProgramDatabaseHeader.numShaders = static_cast<U32>(m_shaderMap.size());
+        shaderProgramDatabaseHeader.numShaders = countShaders();
         pArchive->write(&shaderProgramDatabaseHeader, sizeof(ShaderProgramDatabaseHeader));
     }
 

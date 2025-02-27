@@ -34,3 +34,6 @@
 [submodule "ThirdParty/compressonator"]
 	path = ThirdParty/compressonator
 	url = https://github.com/GPUOpen-Tools/compressonator.git
+[submodule "ThirdParty/opencv"]
+	path = ThirdParty/opencv
+	url = https://github.com/opencv/opencv.git
