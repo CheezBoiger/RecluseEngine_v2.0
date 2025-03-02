@@ -14,8 +14,6 @@
 #include <dxcapi.h>
 #include <d3d12shader.h>
 #include <d3dcompiler.h>
-
-#include "dxc/DxilContainer/DxilContainer.h"
 #endif
 
 R_DECLARE_GLOBAL_STRING(g_shaderModel, "6_0", "DXC.ShaderModel");
@@ -267,7 +265,7 @@ public:
             R_ERROR("DXC", "Failed to properly reflect shader!");
             return RecluseResult_Failed;
         }
-        hr = containerReflection->FindFirstPartKind(hlsl::DFCC_DXIL, &shaderIndex);
+        hr = containerReflection->FindFirstPartKind(DXBC_DXIL, &shaderIndex);
         R_ASSERT(SUCCEEDED(hr));
         containerReflection->GetPartReflection(shaderIndex, __uuidof(ID3D12ShaderReflection), (void**)&shaderReflection);
         R_ASSERT(SUCCEEDED(hr));

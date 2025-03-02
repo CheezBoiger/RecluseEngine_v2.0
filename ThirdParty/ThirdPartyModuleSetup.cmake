@@ -21,6 +21,16 @@ add_subdirectory ( ${RECLUSE_THIRDPARTY_DIR}/zlib )
 set(MESHOPT_BUILD_SHARED_LIBS ON)
 add_subdirectory( ${RECLUSE_THIRDPARTY_DIR}/meshoptimizer )
 
+
+# Look for OpenCV, as it is needed for the compressor.
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${RECLUSE_THIRDPARTY_DIR}/CMake)
+
+
+find_package(OpenCV)
+if (NOT ${OpenCV_FOUND})
+	add_subdirectory( ${RECLUSE_THIRDPARTY_DIR}/opencv )
+endif()
+
 execute_process(COMMAND py ${RECLUSE_THIRDPARTY_DIR}/compressonator/Build/fetch_dependencies.py
 	WORKING_DIRECTORY ${RECLUSE_THIRDPARTY_DIR}/compressonator/Build)
 
@@ -30,7 +40,10 @@ set(OPTION_BUILD_APPS_CMP_VISION OFF)
 set(OPTION_BUILD_BROTLIG OFF)
 set(OPTION_BUILD_BROTLIG_GUI OFF)
 set(OPTION_BUILD_KTX2 OFF)
-add_subdirectory( ${RECLUSE_THIRDPARTY_DIR}/compressonator )
+set(OPTION_BUILD_APPS_CMP_CLI ON)
+set(OPTION_BUILD_CMP_SDK ON)
+set(OPTION_CMP_OPENCV ON)
+#add_subdirectory( ${RECLUSE_THIRDPARTY_DIR}/compressonator )
 
 # Reflection for stuff
 if ( RCL_VULKAN ) 

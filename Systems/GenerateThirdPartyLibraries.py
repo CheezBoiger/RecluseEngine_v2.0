@@ -1,0 +1,98 @@
+#
+#
+#
+#
+import subprocess, os
+import argparse
+import sys
+
+import xml.etree.ElementTree as ET
+
+build_systems_dir = os.path.dirname(os.path.realpath(__file__)) + "/../Systems"
+thirdparty_dir = os.path.dirname(os.path.realpath(__file__)) + "../ThirdParty"
+
+recluse_install_dir = os.path.join(build_systems_dir, "../Recluse")
+
+parsed_commands = None
+
+def parse_arguments():
+    global parsed_commands
+    parser = argparse.ArgumentParser(description="Generate third party dependencies projects, and compile them.")
+    parser.add_argument("-libdir", dest="libdir", help="Library absolute directory.", default="")
+    parser.add_argument("-init", dest="init", action="store_true", help="Initialize the library manager system. Should run if first time setup", default=False)
+    args = parser.parse_args()
+    parsed_commands = args
+    return
+    
+def parse_cmake_commands_from_build_file(build_file_path):
+    tree = ET.parse(build_file_path)
+    root = tree.getroot()
+    build_commands = []
+    install_commands = []
+    generate_commands = []
+    if root.tag == "project":
+        for child in root:
+            if child.tag == "build":
+                for subchild in child:
+                    if subchild.tag == "type":
+                        config = subchild.text
+                        build_commands += ["--config", config]
+                        install_commands += ["--config", config]
+                    if subchild.tag == "param":
+                        attrib = subchild.attrib
+                        generate_commands += ['-D', attrib['var'] + "=" + attrib['value']]
+            if child.tag == "install":
+                for subchild in child:
+                    if subchild.tag == "prefix":
+                        prefix_dir = subchild.attrib['path']
+                        if prefix_dir == "${RECLUSE_INSTALL_PREFIX}":
+                            prefix_dir = recluse_install_dir
+                        install_commands += ['--prefix', prefix_dir]
+                continue
+    return generate_commands, build_commands, install_commands
+
+def main():
+    parse_arguments()
+    print(f"Checking third party lib builds in: {parsed_commands.libdir}")
+    thirdparty_build_dir = build_systems_dir + "/../Build64/ThirdParty"
+    # Create and go to this build dir.
+    if not os.path.exists("Build64"):
+        os.makedirs("Build64")
+    os.chdir("Build64")
+    
+    if not os.path.exists("ThirdParty"):
+        os.makedirs("ThirdParty")
+    os.chdir("ThirdParty")
+    
+    # Perform the build scripts here.
+    for path, directories, files in os.walk(parsed_commands.libdir):
+        for directory in directories:
+            print(f"{directory}")
+            thirdparty_path = os.path.join(path, directory)
+            files = os.listdir(thirdparty_path)
+            for file in files:
+                directory_cmake_path = os.path.join(thirdparty_path, directory)
+                file_path = os.path.join(thirdparty_path, file)
+                file_ext = os.path.splitext(file_path)[1]
+                if file_ext == ".rbuild":
+                    os.chdir(directory_cmake_path)
+                    subprocess.call(['git', 'submodule', 'update', '--recursive', '--init'])
+                    os.chdir(thirdparty_build_dir)
+                    
+                    if not os.path.exists(directory):
+                        os.makedirs(directory)
+                    os.chdir(directory)
+                    
+                    generate_commands, build_commands, install_commands = parse_cmake_commands_from_build_file(file_path)
+                    subprocess.call(["cmake"] + generate_commands + [f"{directory_cmake_path}"])
+                    subprocess.call(["cmake", "--build", "."] + build_commands)
+                    subprocess.call(["cmake", "--install", "."] + install_commands)
+                    os.chdir("..")
+                
+        break
+    
+    #os.chdir("../..")
+    return;
+
+if __name__ == '__main__':
+    main()

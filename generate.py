@@ -10,6 +10,7 @@ import sys
 build_systems_dir = os.path.dirname(os.path.realpath(__file__)) + "/Systems"
 
 generate_engine_resources = build_systems_dir + "/GenerateEngineResources.py"
+generate_3rdparty_libs = build_systems_dir + "/GenerateThirdPartyLibraries.py"
 
 
 parsed_commands = None
@@ -18,6 +19,7 @@ parsed_commands = None
 def parse_arguments():
     global parsed_commands
     parser = argparse.ArgumentParser(description="Parsable arguments for the Recluse build system.")
+    parser.add_argument("-libdir", dest="libdir", help="Library absolute directory.", default="")
     parser.add_argument("-vulkan", dest="vulkan", action="store_true", help="Enable vulkan", default=False)
     parser.add_argument("-dx11", dest="dx11", action="store_true", help="Enable DX11", default=False)
     parser.add_argument("-dx12", dest="dx12", action="store_true", help="Enable DX12", default=False)
@@ -31,6 +33,10 @@ def parse_arguments():
     parser.add_argument("-config", dest="config", help="Path and name of configuration file.", type=str, default=None)
     args = parser.parse_args()
     parsed_commands = args
+    
+    if not os.path.isabs(parsed_commands.libdir):
+        print("path given is not absolute.")
+        parsed_commands.libdir = os.path.join(os.getcwd(), parsed_commands.libdir)
     return
     
     
@@ -76,8 +82,11 @@ def add_additional_cmake_commands():
     else:
         cmds.append("-DRCL_DX11=False")
         
-    if parsed_commands.config is not None:
-        print(f"You typed in: {parsed_commands.config}")
+    if parsed_commands.libdir != "":
+        cmds.append(f"-DRECLUSE_THIRDPARTY_DIR:STRING={parsed_commands.libdir}")
+        
+    #if parsed_commands.config is not None:
+    #    print(f"You typed in: {parsed_commands.config}")
         
     return cmds
 
@@ -99,6 +108,7 @@ def main():
     check_install_package("xxhash")
     
     #subprocess.call(["git", "submodule", "update"])
+    subprocess.call(["py", f"{generate_3rdparty_libs}", "-libdir", f"{parsed_commands.libdir}"])
     subprocess.call(["py", f"{generate_engine_resources}"])
     if not os.path.exists("Build64"):
         os.makedirs("Build64")
@@ -106,11 +116,11 @@ def main():
     
     additional_cmake_commands = add_additional_cmake_commands()
     
-    cmake_commands = ["cmake"]
+    cmake_commands = ["cmake", "-G Visual Studio 17 2022"]
     
     cmake_commands.extend(additional_cmake_commands)
-    cmake_commands.append("..")
-    print(cmake_commands)
+    cmake_commands.append('..')
+    #print(cmake_commands)
     subprocess.call(cmake_commands)
     
     # Call test params.

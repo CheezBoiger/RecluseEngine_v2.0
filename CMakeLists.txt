@@ -1,14 +1,23 @@
 # CMake Entry point build.
-cmake_minimum_required ( VERSION 3.16 )
+cmake_minimum_required ( VERSION 3.10 )
 
 # Mostly third party configurations are set here.
 
-include ( ThirdParty/ThirdPartyModuleSetup.cmake )
+# This cmake file now runs on its own script.
+#include ( ThirdParty/ThirdPartyModuleSetup.cmake )
 
 # The actual project should be set here.
 
 set( RECLUSE_DIRECTORY 		${CMAKE_SOURCE_DIR}/Recluse )
+set( RECLUSE_LIB_DIRECTORY  ${RECLUSE_DIRECTORY}/lib )
+set( RECLUSE_INCLUDE_DIRECTORY ${RECLUSE_DIRECTORY}/include )
+set( RECLUSE_BINARY_DIRECTORY  ${RECLUSE_DIRECTORY}/bin )
 set( CMAKE_INSTALL_PREFIX 	${RECLUSE_DIRECTORY} CACHE PATH "..." FORCE )
+
+set( RECLUSE_THIRDPARTY_DIR RecluseLibraries CACHE STRING "User specified thirdparty directory.")
+
+# Look for OpenCV, as it is needed for the compressor.
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/Systems/CMake)
 
 # Project system.
 

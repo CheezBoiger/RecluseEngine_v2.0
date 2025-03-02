@@ -27,7 +27,7 @@ target_include_directories(
 	${RECLUSE_EDITOR_INCLUDE_DIR} ${RECLUSE_ENGINE_INCLUDE_DIR} ${RECLUSE_FRAMEWORK_INCLUDE_DIR} ${RECLUSE_EDITOR_INCLUDE_FILES} )
 
 target_link_libraries( ${RECLUSE_EDITOR_NAME} 
-	RecluseFramework RecluseEngine ${RECLUSE_EDITOR_LINK_BINARIES} wx::net wx::core wx::base)
+	RecluseFramework RecluseEngine ${RECLUSE_EDITOR_LINK_BINARIES})
 	
 add_dependencies(${RECLUSE_EDITOR_NAME} RecluseFramework RecluseEngine)
 
@@ -69,7 +69,7 @@ install(TARGETS ${RECLUSE_EDITOR_NAME}
         ARCHIVE DESTINATION Lib)
 
 # Code to run after the compilation of our thirdparty libs AND our Editor executable.
-install(CODE [[
+#install(CODE [[
 #			file(GET_RUNTIME_DEPENDENCIES 
 #				EXECUTABLES $<TARGET_FILE:RecluseEditor>
 #				RESOLVED_DEPENDENCIES_VAR R_DEPS
@@ -103,14 +103,14 @@ install(CODE [[
 #				message(ERROR "Can not resolve ${_FILE}")
 #			endforeach()
 #				
-				file(GLOB_RECURSE WX_DLLS "${CMAKE_INSTALL_PREFIX}/lib/vc_x64_dll/*.dll")
-				foreach(_FILE ${WX_DLLS})
-					file(INSTALL
-						DESTINATION ${CMAKE_INSTALL_PREFIX}/Bin
-						TYPE SHARED_LIBRARY
-						FOLLOW_SYMLINK_CHAIN
-						FILES "${_FILE}"
-					)
-				endforeach()
+#				file(GLOB_RECURSE WX_DLLS "${CMAKE_INSTALL_PREFIX}/lib/vc_x64_dll/*.dll")
+#				foreach(_FILE ${WX_DLLS})
+#					file(INSTALL
+#						DESTINATION ${CMAKE_INSTALL_PREFIX}/Bin
+#						TYPE SHARED_LIBRARY
+#						FOLLOW_SYMLINK_CHAIN
+#						FILES "${_FILE}"
+#					)
+#				endforeach()
 #				#message(WARNING "${WX_DLLS}")
-		]])
+#		]])

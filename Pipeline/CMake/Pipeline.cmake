@@ -23,6 +23,8 @@ set(RECLUSE_PIPELINE_COMPILE_FILES ${RECLUSE_PIPELINE_COMPILE_FILES}
 								  ${RECLUSE_PIPE_SOURCE}/Graphics/DXCShaderBuilder.cpp
 								  ${RECLUSE_PIPE_SOURCE}/Graphics/GlslangShaderBuilder.cpp)
 								  
+set ( RECLUSE_PIPELINE_THIRD_PARTY ${RECLUSE_PIPELINE_THIRD_PARTY} ${RECLUSE_THIRDPARTY_DIR}/stb ${RECLUSE_THIRDPARTY_DIR}/tinygltf )
+								  
 if ( RCL_VULKAN )
 	find_package( Vulkan )
 	if ( Vulkan_FOUND )
@@ -34,7 +36,7 @@ if ( RCL_VULKAN )
 				add_definitions( -DR_GLSLANG_LEGACY_API=0 )
 			endif()
 			set ( RECLUSE_PIPELINE_LINK_LIBRARIES ${RECLUSE_PIPELINE_LINK_LIBRARIES} ${Vulkan_LIBRARIES} )
-			set ( RECLUSE_PIPELINE_INCLUDE_FILES ${RECLUSE_PIPELINE_INCLUDE_FILES} ${Vulkan_INCLUDE_DIRS} )
+			set ( RECLUSE_PIPELINE_THIRD_PARTY ${RECLUSE_PIPELINE_THIRD_PARTY} ${Vulkan_INCLUDE_DIRS} ${RECLUSE_THIRDPARTY_DIR}/SPIRV-Reflect )
 			set ( VULKAN_GLSLANG_LIBRARY_RELEASE optimized $ENV{VULKAN_SDK}/Lib/glslang.lib 
 									 optimized $ENV{VULKAN_SDK}/Lib/shaderc.lib
 									 optimized $ENV{VULKAN_SDK}/Lib/shaderc_util.lib
@@ -64,7 +66,9 @@ if ( RCL_VULKAN )
 						optimized $ENV{VULKAN_SDK}/Lib/GenericCodeGen.lib)
 			endif()
 			set ( VULKAN_GLSLANG_LIBRARIES ${VULKAN_GLSLANG_LIBRARY_RELEASE} ${VULKAN_GLSLANG_LIBRARY_DEBUG} )
-			set ( RECLUSE_PIPELINE_LINK_LIBRARIES ${RECLUSE_PIPELINE_LINK_LIBRARIES} ${VULKAN_GLSLANG_LIBRARIES} spirv-reflect-static )
+			set ( RECLUSE_PIPELINE_LINK_LIBRARIES ${RECLUSE_PIPELINE_LINK_LIBRARIES} 
+				${VULKAN_GLSLANG_LIBRARIES} 
+				${RECLUSE_LIB_DIRECTORY}/spirv-reflect-static.lib )
 		endif()
 	endif()
 endif()
@@ -76,8 +80,8 @@ if ( RCL_DX11 OR RCL_DX12 )
 		set ( RECLUSE_PIPELINE_LINK_LIBRARIES ${RECLUSE_PIPELINE_LINK_LIBRARIES} dxcompiler.lib )
         add_definitions( -DRCL_DXC=1 )
         message(WARNING "d3dcompiler.dll and dxil.dll needed with executable, since we are now including dxc...")
-		set ( RECLUSE_PIPELINE_INCLUDE_FILES 
-				${RECLUSE_PIPELINE_INCLUDE_FILES} 
+		set ( RECLUSE_PIPELINE_THIRD_PARTY 
+				${RECLUSE_PIPELINE_THIRD_PARTY}
 				${RECLUSE_THIRDPARTY_DIR}/DirectXShaderCompiler/include 
 			)
     endif()
