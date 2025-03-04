@@ -24,12 +24,13 @@ def parse_arguments():
     parsed_commands = args
     return
     
-def parse_cmake_commands_from_build_file(build_file_path):
+def parse_cmake_commands_from_build_file(build_file_path, build_path, cmake_directory_path):
     tree = ET.parse(build_file_path)
     root = tree.getroot()
     build_commands = []
     install_commands = []
     generate_commands = []
+    
     if root.tag == "project":
         for child in root:
             if child.tag == "build":
@@ -41,6 +42,26 @@ def parse_cmake_commands_from_build_file(build_file_path):
                     if subchild.tag == "param":
                         attrib = subchild.attrib
                         generate_commands += ['-D', attrib['var'] + "=" + attrib['value']]
+                    if subchild.tag == "prerun":
+                        for prerunChild in subchild:
+                            print(prerunChild.tag)
+                            if prerunChild.tag == "task":
+                                attrib = prerunChild.attrib
+                                build_path = os.path.abspath(build_file_path)
+                                script_exec = attrib['exec']
+                                script_params = []
+                                for data in prerunChild:
+                                    if data.tag == 'param':
+                                        param_text = data.text
+                                        param_text = param_text.replace('${RECLUSE_THIRDPARTY_DIRECTORY}', cmake_directory_path)
+                                        param_text = param_text.replace('/', '\\')
+                                        script_params.append(param_text)
+                                command = []
+                                if (script_exec != "call"):
+                                    command.append(script_exec)
+                                command += script_params
+                                subprocess.call(command)
+                                        
             if child.tag == "install":
                 for subchild in child:
                     if subchild.tag == "prefix":
@@ -53,7 +74,7 @@ def parse_cmake_commands_from_build_file(build_file_path):
 
 def main():
     parse_arguments()
-    print(f"Checking third party lib builds in: {parsed_commands.libdir}")
+    print(f"Checking Recluse third party lib builds in: {parsed_commands.libdir}")
     thirdparty_build_dir = build_systems_dir + "/../Build64/ThirdParty"
     # Create and go to this build dir.
     if not os.path.exists("Build64"):
@@ -64,8 +85,17 @@ def main():
         os.makedirs("ThirdParty")
     os.chdir("ThirdParty")
     
+    # initialize the repo 
+    if parsed_commands.init:
+        os.chdir(parsed_commands.libdir)
+        subprocess.call(["git", "clone", "https://github.com/CheezBoiger/RecluseLibraries.git"])
+        os.chdir("RecluseLibraries")
+        subprocess.call(['git', 'submodule', 'update', '--recursive', '--init'])
+        os.chdir(thirdparty_build_dir)
+    
+    libdir = os.path.join(parsed_commands.libdir, "RecluseLibraries")
     # Perform the build scripts here.
-    for path, directories, files in os.walk(parsed_commands.libdir):
+    for path, directories, files in os.walk(libdir):
         for directory in directories:
             print(f"{directory}")
             thirdparty_path = os.path.join(path, directory)
@@ -83,7 +113,7 @@ def main():
                         os.makedirs(directory)
                     os.chdir(directory)
                     
-                    generate_commands, build_commands, install_commands = parse_cmake_commands_from_build_file(file_path)
+                    generate_commands, build_commands, install_commands = parse_cmake_commands_from_build_file(file_path, thirdparty_build_dir, directory_cmake_path)
                     subprocess.call(["cmake"] + generate_commands + [f"{directory_cmake_path}"])
                     subprocess.call(["cmake", "--build", "."] + build_commands)
                     subprocess.call(["cmake", "--install", "."] + install_commands)

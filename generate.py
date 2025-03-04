@@ -31,6 +31,7 @@ def parse_arguments():
     parser.add_argument("-meowhash", dest="meowhash", action="store_true", help="Use Meow hash instead of the default XXHash.", default=False)
     parser.add_argument("-update", dest="ft", action="store_true", help="Run update set up, which sets up submodules and/or updates them.", default=False)
     parser.add_argument("-config", dest="config", help="Path and name of configuration file.", type=str, default=None)
+    parser.add_argument("-initlib", dest="initlib", help="Init the third party libraries.", action="store_true", default=False)
     args = parser.parse_args()
     parsed_commands = args
     
@@ -83,7 +84,8 @@ def add_additional_cmake_commands():
         cmds.append("-DRCL_DX11=False")
         
     if parsed_commands.libdir != "":
-        cmds.append(f"-DRECLUSE_THIRDPARTY_DIR:STRING={parsed_commands.libdir}")
+        libdir = os.path.join(parsed_commands.libdir, "RecluseLibraries")
+        cmds.append(f"-DRECLUSE_THIRDPARTY_DIR:STRING={libdir}")
         
     #if parsed_commands.config is not None:
     #    print(f"You typed in: {parsed_commands.config}")
@@ -108,7 +110,11 @@ def main():
     check_install_package("xxhash")
     
     #subprocess.call(["git", "submodule", "update"])
-    subprocess.call(["py", f"{generate_3rdparty_libs}", "-libdir", f"{parsed_commands.libdir}"])
+    party_command = ["py", f"{generate_3rdparty_libs}", "-libdir", f"{parsed_commands.libdir}"]
+    if (parsed_commands.initlib):
+        party_command.append("-init")
+        
+    subprocess.call(party_command)
     subprocess.call(["py", f"{generate_engine_resources}"])
     if not os.path.exists("Build64"):
         os.makedirs("Build64")
