@@ -538,9 +538,18 @@ void destroyPipelineLayout(VulkanDevice* pDevice, VkPipelineLayout layout)
 
 namespace VertexLayout {
 
-std::map<DeviceId, std::unordered_map<VertexInputLayoutId, VulkanVertexLayout>> g_vertexLayoutMap;
+std::map<DeviceId, std::map<Hash64, ReferenceCounter<VulkanVertexLayout>>>              g_vertexLayoutMap;
+std::map<DeviceId, std::unordered_map<VertexInputLayoutId, Hash64>>                     g_layouts;
 
-static VulkanVertexLayout createVertexInput(const VertexInputLayout& vi)
+VulkanVertexLayout* obtainLayout(DeviceId id, Hash64 h)
+{
+    auto it = g_vertexLayoutMap[id].find(h);
+    if (it == g_vertexLayoutMap[id].end())
+        return nullptr;
+    return &it->second.get();
+}
+
+static Hash64 createVertexInput(DeviceId deviceId, const VertexInputLayout& vi)
 {
     R_ASSERT(vi.numVertexBindings < VertexInputLayout::VertexInputLayout_BindingCount);
     VulkanVertexLayout layout = { };
@@ -583,7 +592,16 @@ static VulkanVertexLayout createVertexInput(const VertexInputLayout& vi)
         layout.bindings.push_back(bindingDescription);
     }
 
-    return layout;
+    // Use the hash value to determine this vertex layout's unique-ness.
+    Hash64 h = layout.hash();
+
+    auto it = g_vertexLayoutMap[deviceId].find(h);
+    if (it != g_vertexLayoutMap[deviceId].end())
+        it->second.addReference();
+    else
+        g_vertexLayoutMap[deviceId].insert(std::make_pair(h, layout));
+
+    return h;
 }
 
 ResultCode make(DeviceId deviceId, VertexInputLayoutId id, const VertexInputLayout& vl)
@@ -591,18 +609,26 @@ ResultCode make(DeviceId deviceId, VertexInputLayoutId id, const VertexInputLayo
     auto iter = g_vertexLayoutMap[deviceId].find(id);
     if (iter != g_vertexLayoutMap[deviceId].end())
         return RecluseResult_AlreadyExists;
-    VulkanVertexLayout layout = createVertexInput(vl);
-    g_vertexLayoutMap[deviceId][id] = layout;
+    Hash64 hh = createVertexInput(deviceId, vl);
+    g_layouts[deviceId][id] = hh;
     return RecluseResult_Ok;
 }
 
 
 ResultCode unloadLayout(DeviceId deviceId, VertexInputLayoutId id)
 {
-    auto iter = g_vertexLayoutMap[deviceId].find(id);
-    if (iter != g_vertexLayoutMap[deviceId].end())
+    auto iter = g_layouts[deviceId].find(id);
+    if (iter != g_layouts[deviceId].end())
     {
-        g_vertexLayoutMap[deviceId].erase(iter);
+        Hash64 hh = iter->second;
+        g_layouts[deviceId].erase(iter);
+        auto vli = g_vertexLayoutMap[deviceId].find(hh);
+
+        if (vli != g_vertexLayoutMap[deviceId].end())
+        {
+            if (vli->second.release() == 0)
+                g_vertexLayoutMap[deviceId].erase(hh);
+        }
         return RecluseResult_Ok;
     }
 
@@ -616,9 +642,9 @@ const VulkanVertexLayout* obtain(DeviceId deviceId, VertexInputLayoutId inputLay
     if (inputLayoutId == (VertexInputLayoutId)VertexInputLayout::VertexLayout_Null)
         return nullptr;
 
-    auto iter = g_vertexLayoutMap[deviceId].find(inputLayoutId);
-    if (iter != g_vertexLayoutMap[deviceId].end())
-        return &iter->second;
+    auto iter = g_layouts[deviceId].find(inputLayoutId);
+    if (iter != g_layouts[deviceId].end())
+        return obtainLayout(deviceId, iter->second);
     R_ASSERT_FORMAT(false, "No Vertex Input found for the LayoutId(%d)", inputLayoutId);
     return nullptr;
 }
@@ -626,6 +652,7 @@ const VulkanVertexLayout* obtain(DeviceId deviceId, VertexInputLayoutId inputLay
 
 Bool unloadAll(DeviceId deviceId)
 {
+    g_layouts[deviceId].clear();
     g_vertexLayoutMap[deviceId].clear();
     return true;
 }

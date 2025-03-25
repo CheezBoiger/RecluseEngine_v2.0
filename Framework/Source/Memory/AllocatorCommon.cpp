@@ -14,6 +14,14 @@ void* operator new (size_t sizeBytes, Recluse::Allocator* alloc)
 }
 
 
+void* operator new[] (size_t sizeBytes, Recluse::Allocator* alloc)
+{
+    R_ASSERT(alloc != NULL);
+    
+    return (void*)alloc->allocate(sizeBytes, Recluse::pointerSizeBytes());
+}
+
+
 void operator delete(void* ptr, Recluse::Allocator* alloc)
 {
     R_ASSERT(alloc != NULL);
@@ -22,4 +30,10 @@ void operator delete(void* ptr, Recluse::Allocator* alloc)
 
     R_DEBUG_WRAP(Recluse::ResultCode err = alloc->getLastError());
     R_DEBUG_WRAP(R_ASSERT(err == Recluse::RecluseResult_Ok));
+}
+
+
+void operator delete[] (void* ptr, Recluse::Allocator* alloc)
+{
+    alloc->free((Recluse::UPtr)ptr);
 }

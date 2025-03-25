@@ -45,7 +45,8 @@ R_DECLARE_GLOBAL_U32(g_d3d12MaxPipelineAge, 256, "D3D12.MaxPipelineAge");
 namespace VertexInputs {
 
 
-std::map<DeviceId, std::unordered_map<VertexInputLayoutId, D3DVertexInput>> g_vertexLayouts;
+std::map<DeviceId, std::map<Hash64, ReferenceCounter<D3DVertexInput>>>      g_vertexLayouts;
+std::map<DeviceId, std::unordered_map<VertexInputLayoutId, Hash64>>         g_layouts;
 
 
 D3D12_INPUT_CLASSIFICATION getInputClassification(InputRate inputRate)
@@ -62,8 +63,8 @@ D3D12_INPUT_CLASSIFICATION getInputClassification(InputRate inputRate)
 ResultCode make(DeviceId deviceId, VertexInputLayoutId id, const VertexInputLayout& layout)
 {
     R_ASSERT(layout.numVertexBindings < VertexInputLayout::VertexInputLayout_BindingCount);
-    auto iter = g_vertexLayouts[deviceId].find(id);
-    if (iter != g_vertexLayouts[deviceId].end())
+    auto iter = g_layouts[deviceId].find(id);
+    if (iter != g_layouts[deviceId].end())
     {
         return RecluseResult_AlreadyExists;
     }
@@ -100,18 +101,42 @@ ResultCode make(DeviceId deviceId, VertexInputLayoutId id, const VertexInputLayo
             inputs.vertexByteStrides.push_back(vertexBinding.stride == 0 ? strideBytes : vertexBinding.stride);
         }
 
-        g_vertexLayouts[deviceId].insert(std::make_pair(id, inputs));
+        // Insert the hash.
+        Hash64 hh = inputs.hash();
+        auto it = g_vertexLayouts[deviceId].find(hh);
+        if (it == g_vertexLayouts[deviceId].end())
+            g_vertexLayouts[deviceId].insert(std::make_pair(hh, inputs));
+        else
+            it->second.addReference();
+
+        g_layouts[deviceId].insert(std::make_pair(id, hh));
     }
     return RecluseResult_Ok;
 }
 
 
+D3DVertexInput* obtainLayout(DeviceId deviceId, Hash64 h)
+{
+    auto it = g_vertexLayouts[deviceId].find(h);
+    if (it == g_vertexLayouts[deviceId].end())
+        return nullptr;
+    return &it->second.get();
+}
+
+
 ResultCode unload(DeviceId deviceId, VertexInputLayoutId id)
 {
-    auto& iter = g_vertexLayouts[deviceId].find(id);
-    if (iter != g_vertexLayouts[deviceId].end())
+    auto& iter = g_layouts[deviceId].find(id);
+    if (iter != g_layouts[deviceId].end())
     {
-        g_vertexLayouts[deviceId].erase(iter);
+        Hash64 h = iter->second;
+        g_layouts[deviceId].erase(iter);
+        auto vli = g_vertexLayouts[deviceId].find(h);
+        if (vli != g_vertexLayouts[deviceId].end())
+        {
+            if (vli->second.release() == 0)
+                g_vertexLayouts[deviceId].erase(vli);
+        }
         return RecluseResult_Ok;
     }
     return RecluseResult_NotFound;
@@ -121,6 +146,7 @@ ResultCode unload(DeviceId deviceId, VertexInputLayoutId id)
 Bool unloadAll(DeviceId deviceId)
 {
     g_vertexLayouts[deviceId].clear();
+    g_layouts[deviceId].clear();
     return true;
 }
 
@@ -131,10 +157,10 @@ D3DVertexInput* obtain(DeviceId deviceId, VertexInputLayoutId layoutId)
     if (layoutId == (VertexInputLayoutId)VertexInputLayout::VertexLayout_Null)
         return nullptr;
 
-    auto& iter = g_vertexLayouts[deviceId].find(layoutId);
-    if (iter != g_vertexLayouts[deviceId].end())
+    auto& iter = g_layouts[deviceId].find(layoutId);
+    if (iter != g_layouts[deviceId].end())
     {
-        return &iter->second;
+        return obtainLayout(deviceId, iter->second);
     }
     else
     {

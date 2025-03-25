@@ -20,6 +20,12 @@ struct VulkanVertexLayout
 {
     std::vector<VkVertexInputAttributeDescription> descriptions;
     std::vector<VkVertexInputBindingDescription> bindings;
+
+
+    Hash64 hash() const
+    {
+        return recluseHashFast(descriptions.data(), descriptions.size()) ^ recluseHashFast(bindings.data(), bindings.size());
+    }
 };
 
 

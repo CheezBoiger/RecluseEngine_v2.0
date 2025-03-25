@@ -25,6 +25,11 @@ struct D3DVertexInput
 {
     std::vector<D3D12_INPUT_ELEMENT_DESC> elements;
     std::vector<U32> vertexByteStrides;
+
+    Hash64 hash() const 
+    {
+        return recluseHashFast(elements.data(), elements.size()) ^ recluseHashFast(vertexByteStrides.data(), vertexByteStrides.size());
+    }
 };
 
 

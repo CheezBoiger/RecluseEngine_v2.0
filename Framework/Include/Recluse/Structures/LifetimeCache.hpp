@@ -3,6 +3,8 @@
 
 #include "Recluse/Types.hpp"
 
+#include "Recluse/Memory/Allocator.hpp"
+
 #include <memory>
 #include <unordered_map>
 
@@ -15,7 +17,7 @@ namespace Recluse {
 // resources are tagged to the recent tick, and pushed to the top of the list, which will then sort the oldest
 // to the bottom. Any untagged resources, are left with the last tick they were accessed with, to which the last
 // resource is cleaned up first.
-template<typename IdentificationKey, typename Object>
+template<typename IdentificationKey, typename Object, typename AllocatorType = MallocAllocator>
 class LifetimeCache
 {
     // Lifetime node holds onto the data, as well as the key and age.
@@ -39,11 +41,12 @@ class LifetimeCache
     };
 public:
 
-    LifetimeCache() 
+    LifetimeCache(const AllocatorType& allocator = AllocatorType()) 
         : m_root(nullptr)
         , m_tail(nullptr)
         , m_tick(0)
         , m_nodes(0)
+        , m_allocator(allocator)
     { }
 
     ~LifetimeCache()
@@ -71,7 +74,8 @@ public:
         while (current)
         {
             LifetimeNode* next = current->next;
-            delete current;
+            current->~LifetimeNode();
+            operator delete (current, &m_allocator);
             current = next;
         }
         m_cacheMap.clear();
@@ -111,7 +115,8 @@ public:
                 deleteFunc(tail->key, tail->data);
                 // Don't forget to erase the mapped portion too.
                 m_cacheMap.erase(tail->key);
-                delete tail;
+                tail->~LifetimeNode();
+                operator delete (tail, &m_allocator);
                 m_nodes -= 1;
             }
         }
@@ -144,7 +149,7 @@ public:
     Object* insert(IdentificationKey key, Object&& data)
     {
         // We need to create a new entry.
-        LifetimeNode* node = new LifetimeNode(key);
+        LifetimeNode* node = new (&m_allocator) LifetimeNode(key);
         node->key = key;
         node->age = m_tick;
         node->data = std::move(data);
@@ -204,7 +209,7 @@ private:
     // Map cache, used for O(1) access. Only holds onto weak references of the node.
     // Actual data is stored in linked list.
     std::unordered_map<IdentificationKey, LifetimeNode*> m_cacheMap;
-
+    AllocatorType   m_allocator;
     // The link list data structure. Houses the actual node and data associated. Has poor cache locality,
     // but might not be totally bad since we aren't iterating through all resources sequentially. Still though,
     // it might be worth exploring an array type of data structure.

@@ -183,9 +183,13 @@ public:
 //
 RecluseFramework_PUBLIC_API void*   operator new (size_t sizeBytes, Recluse::Allocator* alloc);
 
+RecluseFramework_PUBLIC_API void* operator new[] (size_t bytes, Recluse::Allocator* alloc);
+
 // Operator overload for deleting allocated pointers.
 // This is a helpful function, instead of having to all individually the object allocator, and performing a bunch of
 // stuff...
 //
 RecluseFramework_PUBLIC_API void    operator delete (void* ptr, Recluse::Allocator* alloc);
+
+RecluseFramework_PUBLIC_API void    operator delete[] (void* ptr, Recluse::Allocator* alloc);
 #endif // RECLUSE_ALLOCATOR_HPP
