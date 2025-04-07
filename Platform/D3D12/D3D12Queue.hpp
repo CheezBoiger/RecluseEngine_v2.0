@@ -43,5 +43,8 @@ private:
     ID3D12Fence*                pFence;
     HANDLE                      pEvent;
 };
+
+
+
 } // D3D12
 } // Recluse

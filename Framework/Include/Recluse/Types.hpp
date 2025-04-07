@@ -6,6 +6,7 @@
 #pragma once
 
 #include "Recluse/Arch.hpp"
+#include "Recluse/Math/half.hpp"
 #include <string>
 
 namespace Recluse {
@@ -27,6 +28,10 @@ typedef signed long long    I64;
 
 typedef float               F32;
 typedef double              F64;
+
+typedef half_float::half    Half;
+typedef Half                F16;
+
 
 typedef struct
 {

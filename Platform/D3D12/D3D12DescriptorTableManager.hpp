@@ -305,5 +305,30 @@ private:
     U32                                                     m_currentTableHeapIndex;
     U32                                                     m_currentHeapIndex;
 }; // DescriptorHeapAllocationManager
+
+
+class D3D12QueryManager
+{
+public:
+    struct Index
+    {
+        U32 start;
+        U32 range;
+    };
+
+    D3D12QueryManager();
+    ~D3D12QueryManager();
+
+    ResultCode          initialize(ID3D12Device* device, UINT nodeMask, D3D12_QUERY_HEAP_TYPE type, U32 maxQueries);
+    ResultCode          release();
+
+    Index               requestIndices(U32 requestIndices);
+    ResultCode          reset();
+
+private:
+    ID3D12QueryHeap*    m_heap;
+    U32                 m_currentAvailableIndex;
+    U32                 m_maxQueryCount;
+}; // D3D12QueryManager
 } // D3D12
 } // Recluse 

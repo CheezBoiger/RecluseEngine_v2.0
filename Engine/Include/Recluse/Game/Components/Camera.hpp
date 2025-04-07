@@ -43,6 +43,15 @@ enum CameraProjection
     CameraProjection_Orthographic
 };
 
+
+enum Tonemap
+{
+    Tonemap_None,
+    Tonemap_Reinhard,
+    Tonemap_Uncharted,
+    Tonemap_ACES
+};
+
 typedef U32 CameraPostProcessFlags;
 
 // Camera is the abstract transformation that is used to view the scene.
@@ -170,6 +179,24 @@ private:
     
     std::map<RGUID, U32, RGUID::Less>   cameraMap;
     std::vector<Camera*>                activeCameras;
+};
+
+
+// Camera transition.
+class CameraTransition
+{
+public:
+    enum Interpolation
+    {
+        Interpolation_None,
+        Interpolation_Lerp,
+        Interpolation_Slerp,
+    };
+    F32             duration;       // Transition duration
+    Float3          targetPosition;
+    Quaternion      targetRotation;
+    Interpolation   interpolation;
+    F32             idleDuration;   // After camera has stopped, how long to wait.
 };
 } // Engine
 } // Recluse

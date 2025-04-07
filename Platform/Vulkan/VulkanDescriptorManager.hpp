@@ -223,5 +223,30 @@ private:
     std::vector<DescriptorAllocatorInstance>    m_bufferedInstances;
     VkDescriptorPoolCreateFlags                 m_flags;
 };
+
+
+class VulkanQueryManager
+{
+public:
+    VulkanQueryManager();
+    ~VulkanQueryManager();
+
+    struct Index
+    {
+        U32 start;
+        U32 range;
+    };
+
+    ResultCode  initialize(VkDevice device, VkQueryType queryType, U32 maxQueryCount);
+    ResultCode  release(VkDevice device);
+    
+    Index       requestIndices(U32 requestedIndices);
+    ResultCode  reset();
+
+private:
+    VkQueryPool m_query;
+    U32         m_currentAvailableIndex;
+    U32         m_maxQueryCount;
+}; // VulkanQueryManager
 } // Vulkan
 } // Recluse

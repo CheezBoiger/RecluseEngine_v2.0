@@ -101,6 +101,9 @@ void VulkanContext::begin()
     vkWaitForFences(m_pDevice->get(), 1, &frameFence, VK_TRUE, UINT64_MAX);
     vkResetFences(m_pDevice->get(), 1, &frameFence);
 
+    // Reset our queries.
+    contextFrame.timestampQuery.reset();
+
     prepare();
 
     m_primaryCommandList.use(getCurrentFrameIndex());
@@ -730,6 +733,8 @@ void VulkanContext::createContextFrames(U32 buffering)
         semaphoreInfo.flags = 0;
         vkCreateSemaphore(m_pDevice->get(), &semaphoreInfo, nullptr, &frame.waitSemaphore);
         vkCreateSemaphore(m_pDevice->get(), &semaphoreInfo, nullptr, &frame.signalSemaphore);
+
+        frame.timestampQuery.initialize(m_pDevice->get(), VK_QUERY_TYPE_TIMESTAMP, 128);
         m_frameResources[i] = frame;
     }
 }
@@ -742,6 +747,8 @@ void VulkanContext::destroyContextFrames()
         vkDestroyFence(m_pDevice->get(), m_frameResources[i].fence, nullptr);
         vkDestroySemaphore(m_pDevice->get(), m_frameResources[i].waitSemaphore, nullptr);
         vkDestroySemaphore(m_pDevice->get(), m_frameResources[i].signalSemaphore, nullptr);
+
+        m_frameResources[i].timestampQuery.release(m_pDevice->get());
     }
     m_frameResources.clear();
 }

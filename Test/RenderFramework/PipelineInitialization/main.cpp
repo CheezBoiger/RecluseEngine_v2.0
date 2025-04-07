@@ -112,7 +112,7 @@ int main(int c, char* argv[])
     RealtimeTick::initializeWatch(1ull, 0);
     enableLogTypes(LogType_Debug);
     disableLogTypes(LogType_Warn);
-    GraphicsInstance* pInstance             = GraphicsInstance::create(GraphicsApi_Direct3D12);
+    GraphicsInstance* pInstance             = GraphicsInstance::create(GraphicsApi_Vulkan);
     GraphicsAdapter* pAdapter               = nullptr;
     GraphicsResource* pData                 = nullptr;
     GraphicsResource* pData2                = nullptr;
@@ -279,12 +279,18 @@ int main(int c, char* argv[])
         std::string vsSource = currDir + "/" + "test.vs.hlsl";
         std::string fsSource = currDir + "/" + "test.fs.hlsl";
 
+        FileBufferData vertFileSource;
+        FileBufferData pixelFileSource;
+
+        File::readFrom(&vertFileSource, vsSource);
+        File::readFrom(&pixelFileSource, fsSource);
+
         Pipeline::Builder::ShaderProgramDescription description = { };
         description.pipelineType = BindType_Graphics;
-        description.graphics.vs = vsSource.c_str();
+        description.graphics.vs = vertFileSource.data();
         description.graphics.vsName = "main";
         
-        description.graphics.ps = fsSource.c_str();
+        description.graphics.ps = pixelFileSource.data();
         description.graphics.psName = "main";
 
         description.graphics.ds = nullptr;
@@ -367,7 +373,7 @@ int main(int c, char* argv[])
                 context->bindVertexBuffers(1, &pVertexBuffer, &offset);
 
                 KeyboardListener listener = { };
-
+                
                 if (pMouse->getButtonState(1) == InputState_Down)
                 {
                     binder.bindConstantBuffer(ShaderStage_Fragment | ShaderStage_Vertex, 0, pData, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentFrameIndex(), sizeof(ConstData));                 
@@ -389,6 +395,14 @@ int main(int c, char* argv[])
     }
 
     pContext->wait();
+
+    int nerd[10] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+    const int* d = nerd;
+    int* const s = nerd;
+
+    int const* a = nerd;
+    
+    
 
     pDevice->destroySwapchain(pSwapchain);
     pDevice->destroyResource(pVertexBuffer);

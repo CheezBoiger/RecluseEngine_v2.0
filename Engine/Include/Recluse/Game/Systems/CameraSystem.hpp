@@ -16,8 +16,8 @@ public:
     virtual ~CameraSystem() { onCleanUp(); }
 
     virtual ResultCode onCleanUp() override;
-    virtual ResultCode onInitialize(MessageBus* bus) override;
-    virtual void onUpdate(ECS::Registry* registry, const RealtimeTick& tick) override;
+    virtual ResultCode onInitialize() override;
+    virtual void onUpdate(ECS::Registry* registry, const RealtimeTick& tick, Scene* scene) override;
 
 private:
 

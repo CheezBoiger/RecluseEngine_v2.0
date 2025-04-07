@@ -18,11 +18,10 @@ namespace Engine {
 
 enum CommandOp 
 {
-    CommandOp_DrawableInstanced,
-    CommandOp_DrawableIndexedInstanced,
+    CommandOp_DrawInstanced,
+    CommandOp_DrawIndexedInstanced,
     CommandOp_Dispatch,
-    CommandOp_Resources,
-    CommandOp_BindPipe
+    CommandOp_BindResources,
 };
 
 
@@ -38,12 +37,14 @@ enum ResourceBindOp
 
 enum VertexAttribFlag 
 {
-    VERTEX_ATTRIB_POSITION   = 0x0001,
-    VERTEX_ATTRIB_NORMAL     = 0x0002,
-    VERTEX_ATTRIB_TEXCOORDS  = 0x0004,
-    VERTEX_ATTRIB_TANGENT    = 0x0008,
-    VERTEX_ATTRIB_BITANGENT  = 0x0010,
-    VERTEX_ATTRIB_BONES      = 0x0020,
+    VertexAttrib_Position   = 0x0001,
+    VertexAttrib_Normal     = 0x0002,
+    VertexAttrib_Texcoord0  = 0x0004,
+    VertexAttrib_Texcoord1  = 0x0008,
+    VertexAttrib_Tangent    = 0x0010,
+    VertexAttrib_Bitangent  = 0x0020,
+    VertexAttrib_Bones      = 0x0040,
+    VertexAttrib_BoneIndices = 0x0080,
 };
 
 typedef U32 VertexAttribFlags;
@@ -54,16 +55,17 @@ struct RenderCommand
 {
     CommandOp               op          : 24;   //
     U32                     stencilRef  : 8;    // 4 B
+    void*                   opData;             //
 };
 
 
-struct ResourceBindCommand : public RenderCommand
+struct ResourceBindCommand
 {
     ResourceBindOpFlags bindFlags;
-    GraphicsResource** pRtvs;
-    GraphicsResource** pCbvs;
-    GraphicsResource** pSrvs;
-    GraphicsResource** pUavs;
+    GraphicsResource**  pRtvs;
+    GraphicsResource**  pCbvs;
+    GraphicsResource**  pSrvs;
+    GraphicsResource**  pUavs;
     U16                 numRtvs;
     U16                 numCbvs;
     U16                 numUavs;
@@ -71,28 +73,29 @@ struct ResourceBindCommand : public RenderCommand
 };
 
 
-struct DrawableRenderCommand : public RenderCommand 
+struct DrawBatch
 {
     GraphicsResource**  ppVertexBuffers;                // 16 B
     U64*                pOffsets;                       // 24 B
     PerMeshTransform*   pPerMeshTransform;              // 32 B
     U32                 numVertexBuffers    : 8;        // 
     VertexAttribFlags   vertexTypeFlags     : 24;       // 36 B
+    PrimitiveTopology   topology;
 };
 
 
 struct IndexedInstancedSubMesh 
 {
-    Material* pMaterial;                        // 
-    U32 indexCount;                             // 
-    U32 firstInstance;                          // 
-    U32 firstIndex;                             // 
-    U32 vertexOffset;                           // 
-    U32 instanceCount;                          // 
+    Material*   pMaterial;                        // 
+    U32         indexCount;                             // 
+    U32         firstInstance;                          // 
+    U32         firstIndex;                             // 
+    U32         vertexOffset;                           // 
+    U32         instanceCount;                          // 
 };
 
 
-struct DrawIndexedRenderCommand : public DrawableRenderCommand 
+struct DrawIndexedBatch : public DrawBatch
 {
     GraphicsResource*           pIndexBuffer;   // 56 B
     IndexedInstancedSubMesh*    pSubMeshes;     // 64 B
@@ -104,15 +107,15 @@ struct DrawIndexedRenderCommand : public DrawableRenderCommand
 
 struct InstancedSubMesh 
 {
-    Material* pMaterial;                        //
-    U32 vertexCount;                            // 
-    U32 instanceCount;                          // 
-    U32 firstVertex;                            // 
-    U32 firstInstance;                          // 
+    Material*   pMaterial;                        //
+    U32         vertexCount;                            // 
+    U32         instanceCount;                          // 
+    U32         firstVertex;                            // 
+    U32         firstInstance;                          // 
 };
 
 
-struct DrawRenderCommand : public DrawableRenderCommand 
+struct DrawInstancedBatch : public DrawBatch
 {
     InstancedSubMesh*   pSubMeshes;             // 56 B
     U32                 numSubMeshes;           // 60 B
@@ -122,33 +125,41 @@ struct DrawRenderCommand : public DrawableRenderCommand
 
 // High level render command list, which will be read by the low level backend, once the render thread
 // is kicked off. Should reset every frame render.
-class RecluseEngine_PUBLIC_API RenderCommandList 
+class RecluseEngine_PUBLIC_API CommandList 
 {
 public:
-    RenderCommandList()
-        : m_pAllocator(nullptr)
-        , m_pointerAllocator(nullptr)
-        , m_pool(nullptr)
-        , m_pointerPool(nullptr) { }
+    // Cast void data from render command to another type.
+    template<typename Type>
+    static Type* cast(void* data)
+    {
+        return static_cast<Type*>(data);
+    }
 
-    void initialize();
-    void destroy();
+    CommandList();
+    ~CommandList();
+    
+    // Initialize the render commandlist, which will preallocate the necessary amount 
+    // of scratch memory.
+    void                initialize(U32 scratchSizeBytes = R_KB(2));
+    void                destroy();
 
-    inline ResultCode push(const RenderCommand& renderCommand);
-    inline void reset();
+    inline ResultCode   push(const RenderCommand& renderCommand);
+    inline void         reset();
 
-    RenderCommand** getRenderCommands() const { return (RenderCommand**)m_pointerPool->getBaseAddress(); }    
-
-    U64 getNumberCommands() const { return m_pAllocator->getTotalAllocations(); }
+    RenderCommand*      getRenderCommands() const { return (RenderCommand*)m_pAllocator->getBaseAddr(); }    
+    U64                 getNumberCommands() const;
 
 private:
     
     void resize();
 
-    Allocator* m_pAllocator;
-    Allocator* m_pointerAllocator;
+    // Memory allocation that is used to iterate through commands.
+    Allocator*  m_pAllocator;
     MemoryPool* m_pool;
-    MemoryPool* m_pointerPool;
+
+    // Scratch memory used for rendering command information.
+    MemoryPool* m_scratch;
+    Allocator*  m_scratchAllocator;
 };
 } // Engine
 } // Recluse

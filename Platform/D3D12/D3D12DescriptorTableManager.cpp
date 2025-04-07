@@ -647,5 +647,67 @@ ResultCode DescriptorHeapAllocationManager::release()
     m_currentHeapIndex = 0;
     return RecluseResult_Ok;
 }
+
+
+D3D12QueryManager::D3D12QueryManager()
+    : m_heap(nullptr)
+    , m_currentAvailableIndex(0)
+{
+}
+
+
+D3D12QueryManager::~D3D12QueryManager()
+{
+    release();
+}
+
+
+ResultCode D3D12QueryManager::initialize(ID3D12Device* device, UINT nodeMask, D3D12_QUERY_HEAP_TYPE type, U32 maxQueries)
+{
+    R_ASSERT(device && maxQueries > 0);
+    ResultCode result = RecluseResult_Failed;
+    if (maxQueries > 0)
+    {
+        D3D12_QUERY_HEAP_DESC desc = { };
+        desc.Count = maxQueries;
+        desc.Type = type;
+        desc.NodeMask = nodeMask;
+        HRESULT hr = device->CreateQueryHeap(&desc, __uuidof(ID3D12QueryHeap), (void**)&m_heap);
+
+        result = SUCCEEDED(hr) ? RecluseResult_Ok : RecluseResult_Failed;
+        m_maxQueryCount = maxQueries;
+    }
+    return result;
+}
+
+
+ResultCode D3D12QueryManager::release()
+{
+    if (m_heap)
+        m_heap->Release();
+    return RecluseResult_Ok;
+}
+
+
+ResultCode D3D12QueryManager::reset()
+{
+    // Resets back to 0.
+    m_currentAvailableIndex = 0;
+    
+    return RecluseResult_Ok;
+}
+
+
+D3D12QueryManager::Index D3D12QueryManager::requestIndices(U32 requestedIndices)
+{
+    Index result = { GraphicsQuery::InvalidQuery, GraphicsQuery::InvalidQuery };
+    if ((m_currentAvailableIndex + requestedIndices) < m_maxQueryCount)
+    {
+        result.start = m_currentAvailableIndex;
+        result.range = requestedIndices;
+        m_currentAvailableIndex += requestedIndices;
+    }
+    return result;
+}
 } // D3D12
 } // Recluse

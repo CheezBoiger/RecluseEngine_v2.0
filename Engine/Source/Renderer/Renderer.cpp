@@ -10,6 +10,7 @@
 #include "Recluse/System/Limiter.hpp"
 #include "Recluse/Renderer/Debug/DebugRenderer.hpp"
 #include "Recluse/Memory/LinearAllocator.hpp"
+#include "Recluse/Core/Profile/Profiler.hpp"
 
 #include "Recluse/Messaging.hpp"
 
@@ -112,6 +113,8 @@ void RendererModule::initialize()
         R_ERROR("Renderer", "ReserveMemory call completed with result: %d", result);
     }
 
+    m_commandMx = createMutex("CommandKeyMutex");
+
     allocateSceneBuffers(m_currentRendererConfigs);
 
     setUpModules();
@@ -122,7 +125,7 @@ void RendererModule::cleanUp()
 {
     m_pContext->wait();
     freeSceneBuffers();
-
+    destroyMutex(m_commandMx);
     // Clean up all modules, as well as resources handled by them...
     cleanUpModules();
     m_pDevice->releaseContext(m_pContext);
@@ -142,6 +145,10 @@ void RendererModule::present(Bool delayPresent)
         m_pContext->wait();
         m_pSwapchain->rebuild(m_pSwapchain->getDesc());
     }
+
+    // After present, we need to increment the next frame, and clear those resources once we know they are ready.
+    resetCommandKeys();
+    clear();
 }
 
 
@@ -202,37 +209,31 @@ void RendererModule::render()
         
         context->transition(pSceneDepth, ResourceState_DepthStencilWrite);
 
-        PreZ::generate
-                (
+        PreZ::generate(
                     context, 
                     m_currentRenderCommands, 
                     m_currentCommandKeys[Render_PreZ].data(), 
-                    m_currentCommandKeys[Render_PreZ].size()
-                );
+                    m_currentCommandKeys[Render_PreZ].size());
 
         context->transition(pSceneDepth, ResourceState_DepthStencilReadOnly);
 
         // Asyncronous Queue -> Do Light culling here.
         LightCluster::cullLights(context);
 
-        AOV::generate
-                (
+        AOV::generate(
                     context, 
                     m_currentRenderCommands,
                     m_currentCommandKeys[Render_Gbuffer].data(), 
-                    m_currentCommandKeys[Render_Gbuffer].size()
-                );
+                    m_currentCommandKeys[Render_Gbuffer].size());
 
         // Deferred rendering combine.
         LightCluster::combineDeferred(context);
 
         // Forward pass combine.
-        LightCluster::combineForward
-                        (
+        LightCluster::combineForward(
                             context, 
                             m_currentCommandKeys[Render_ForwardCustom].data(), 
-                            m_currentCommandKeys[Render_ForwardCustom].size()
-                        );
+                            m_currentCommandKeys[Render_ForwardCustom].size());
 #endif
     // Check if any debug draw functions exist.
     if (!m_debugDrawFunctions.empty())
@@ -251,8 +252,6 @@ void RendererModule::render()
 
     context->transition(swapchainFrame, ResourceState_Present);
     context->end();
-    resetCommandKeys();
-    clear();
 }
 
 
@@ -311,14 +310,12 @@ void RendererModule::createDevice(const RendererConfigs& configs)
 void RendererModule::setUpModules()
 {
     m_sceneBuffers.gbuffer[Engine::GBuffer_Depth] = new Texture2D();
-    m_sceneBuffers.gbuffer[Engine::GBuffer_Depth]->initialize
-                                    (
+    m_sceneBuffers.gbuffer[Engine::GBuffer_Depth]->initialize(
                                         m_pDevice, 
                                         ResourceFormat_D32_Float_S8_Uint, 
                                         m_currentRendererConfigs.renderWidth, 
                                         m_currentRendererConfigs.renderHeight, 
-                                        1, 1
-                                    );
+                                        1, 1);
 
     //PreZ::initialize(m_pDevice, &m_sceneBuffers);
 
@@ -433,6 +430,7 @@ void RendererModule::sortCommandKeys()
 
 void RendererModule::pushRenderCommand(const RenderCommand& renderCommand, RenderPassTypeFlags renderFlags)
 {
+    ScopedLock _(m_commandMx);
     R_ASSERT(m_currentRenderCommands != NULL);
 
     // Store mesh commands to be referenced for each draw pass.
@@ -467,11 +465,14 @@ void RendererModule::allocateSceneBuffers(const RendererConfigs& configs)
     viewDesc.type = ResourceViewType_DepthStencil;
 
     m_renderCommands.resize(configs.buffering);
+    m_perFrameMutex.resize(configs.buffering);
     m_maxBufferCount = configs.buffering;
     for (U32 i = 0; i < configs.buffering; ++i)
     {
-        m_renderCommands[i] = new RenderCommandList();
-        m_renderCommands[i]->initialize();
+        m_renderCommands[i] = new CommandList();
+        m_renderCommands[i]->initialize(R_MB(16));
+
+        m_perFrameMutex[i] = createMutex();
     }
 
     m_commandKeys.resize(m_maxBufferCount);
@@ -495,6 +496,7 @@ void RendererModule::freeSceneBuffers()
     {
         m_renderCommands[i]->destroy();
         delete m_renderCommands[i];
+        destroyMutex(m_perFrameMutex[i]);
     }
     m_renderCommands.clear();
 }
@@ -528,6 +530,35 @@ ResultCode RendererModule::destroyTexture2D(Texture2D* pTexture)
 }
 
 
+void RendererModule::lock()
+{
+    Mutex frameMutex = m_perFrameMutex[m_currentFrameIndex];
+    lockMutex(frameMutex);
+}
+
+
+void RendererModule::unlock()
+{
+    Mutex frameMutex = m_perFrameMutex[m_currentFrameIndex];
+    unlockMutex(frameMutex);
+}
+
+
+void RendererModule::simLock()
+{
+    Mutex frameMutex = m_perFrameMutex[m_currentSimFrameIndex];
+    lockMutex(frameMutex);
+}
+
+
+void RendererModule::simUnlock()
+{
+    Mutex frameMutex = m_perFrameMutex[m_currentSimFrameIndex];
+    unlockMutex(frameMutex);
+    m_currentSimFrameIndex = (m_currentSimFrameIndex + 1) % m_maxBufferCount;
+}
+
+
 ResultCode RendererModule::kRendererProcessTask(TaskProcess* process)
 {
     RendererModule* pRenderer               = RendererModule::getMain();
@@ -544,9 +575,13 @@ ResultCode RendererModule::kRendererProcessTask(TaskProcess* process)
         // Render interpolation is required.
         if (pRenderer->isRunning()) 
         {
+            pRenderer->lock();
+
             pRenderer->update(tick.getCurrentTimeSeconds(), tick.delta());
             pRenderer->render();
             pRenderer->present();
+
+            pRenderer->unlock();
         }
     } 
     else
@@ -561,7 +596,7 @@ ResultCode RendererModule::kRendererProcessTask(TaskProcess* process)
 ResultCode RendererModule::onInitializeModule(Application* pApp)
 {
     m_configLock = createMutex();
-
+    RealtimeTick::initializeWatch(getCurrentThreadId(), 0);
     MainThreadLoop::getMessageBus()->addReceiver(
         "Renderer", [=] (EventMessage* pMsg) -> void 
             { 

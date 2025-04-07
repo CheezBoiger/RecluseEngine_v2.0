@@ -10,27 +10,18 @@
 #include <vector>
 
 namespace Recluse {
-
+namespace Engine {
 
 R_DECLARE_GLOBAL_BOOLEAN(g_enableTransformLogging, false, "Transform.EnableLogging");
 
 
-ResultCode TransformSystem::onInitialize(MessageBus* bus)
+ResultCode TransformSystem::onInitialize()
 {
-    if (bus)
-    {
-        bus->addReceiver("TransformSystem", 
-            [&] (EventMessage* msg) -> void 
-            {
-                if (msg->getEvent() == TransformEvent_Update)
-                    m_doUpdate = true;
-            });
-    }
     return RecluseResult_Ok;
 }
 
 
-void TransformSystem::onUpdate(ECS::Registry* registry, const RealtimeTick& tick)
+void TransformSystem::onUpdate(ECS::Registry* registry, const RealtimeTick& tick, Scene* scene)
 {
     if (m_doUpdate)
     {
@@ -50,7 +41,7 @@ void TransformSystem::onUpdate(ECS::Registry* registry, const RealtimeTick& tick
             if (g_enableTransformLogging)
             {
                 ECS::GameEntity* tentity = ECS::GameEntity::findEntity(transform->getOwner());
-                R_VERBOSE("Transform", "Owner: %s, Position: (%f, %f, %f)", tentity->getName().c_str(), 
+                R_VERBOSE(getName(), "Owner: %s, Position: (%f, %f, %f)", tentity->getName().c_str(), 
                     transform->position.x, transform->position.y, transform->position.z);
             }
         }
@@ -63,4 +54,13 @@ ResultCode TransformSystem::onCleanUp()
 {
     return RecluseResult_Ok;
 }
+
+
+ResultCode TransformSystem::onEvent(EventMessage* event)
+{
+    if (event->getEvent() == TransformEvent_Update)
+        m_doUpdate = true;
+    return RecluseResult_Ok;
+}
+} // Engine
 } // Recluse

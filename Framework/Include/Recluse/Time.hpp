@@ -50,7 +50,7 @@ protected:
 
 
 // Stopwatch for just querying the time now, and doesn't worry about anything else.
-class RealtimeStopWatch
+class RecluseFramework_PUBLIC_API RealtimeStopWatch
 {
 public:
     R_OS_CALL RealtimeStopWatch();

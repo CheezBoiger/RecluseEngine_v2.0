@@ -25,10 +25,13 @@ class D3D12RenderPass;
 class D3D12Resource;
 class D3D12Device;
 
+// D3D12 Context frame. The gpu could potentially have more than one frame inflight, any available 
+// frame that can be worked on by the host cpu, will be signaled by the fence value, and allocated command list.
 struct ContextFrame 
 {
     ID3D12CommandAllocator* pAllocator;
     U64                     fenceValue;
+    D3D12QueryManager       timestampQuery;
 };
 
 

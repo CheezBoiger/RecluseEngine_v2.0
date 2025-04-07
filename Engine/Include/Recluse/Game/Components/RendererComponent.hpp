@@ -45,6 +45,9 @@ public:
     // Sends a request to update the gpu resource, that is responsible for rendering the 
     // model transform of the render object. 
     void        updateModelData();
+
+    Bool        isVisible() const { return m_isVisible; }
+    void        setVisible(Bool visible) { m_isVisible = visible; }
     
     GraphicsResource*   m_gfxResourceRef;   // Reference to the graphics resource.
     U32                 m_gfxMeshId;    // Mesh index within an instance.

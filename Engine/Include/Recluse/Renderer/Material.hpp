@@ -118,37 +118,40 @@ public:
     //R_PUBLIC_API MaterialType getMatType() const { return m_matType; }
 
     // Adds a texture to this material.
-    RecluseEngine_PUBLIC_API Texture2D* addTexture(Texture2D* pTexture, const std::string& attrib) 
+    RecluseEngine_PUBLIC_API Material& updateTexture(Texture2D* pTexture, const std::string& attrib) 
     {
         m_resourceMap[recluseHashFast(attrib.data(), attrib.size())] = pTexture;
-        return nullptr;
+        return (*this);
     }
 
-    RecluseEngine_PUBLIC_API RendererResource* addResource(RendererResource* pResource, const std::string& attrib)
+    RecluseEngine_PUBLIC_API Material& updateResource(RendererResource* pResource, const std::string& attrib)
     {
         m_resourceMap[recluseHashFast(attrib.data(), attrib.size())] = pResource;
-        return nullptr;
+        return (*this);
     }
 
     RecluseEngine_PUBLIC_API RendererResource* getResource(const std::string& attrib);
 
-    RecluseEngine_PUBLIC_API B32 hasTex(const std::string& attrib) const
+    // Checks if this material has an available resource/texture.
+    // Returns true if has resource/texture, false otherwise.
+    RecluseEngine_PUBLIC_API B32 hasResource(const std::string& attrib) const
     {
         return m_resourceMap.find(recluseHashFast(attrib.data(), attrib.size())) != m_resourceMap.end();
     }
 
-    RecluseEngine_PUBLIC_API Texture2D* getTex(const std::string& attrib) 
+    RecluseEngine_PUBLIC_API Texture2D* getTexture(const std::string& attrib) 
     {
         return (Texture2D*)m_resourceMap[recluseHashFast(attrib.data(), attrib.size())];
     }
 
     // Removes a texture with the attribute. This will only nullify the texture slot,
     // in order to clean up, you must call restructure().
-    RecluseEngine_PUBLIC_API B32 removeTex(const std::string& attrib) 
+    RecluseEngine_PUBLIC_API B32 removeTexture(const std::string& attrib) 
     {
-        if (hasTex(attrib)) 
+        if (hasResource(attrib)) 
         {
             m_resourceMap.erase(recluseHashFast(attrib.data(), attrib.size()));
+            return true;
         }
 
         return false;    
@@ -181,7 +184,6 @@ protected:
     //MaterialType                            m_matType;
     std::unordered_map<Hash64, RendererResource*>      m_resourceMap;
     std::string                                        m_matName;
-    MaterialShader*                                     m_materialShader;
 };
 
 

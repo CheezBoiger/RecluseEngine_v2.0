@@ -46,14 +46,18 @@ struct QueueFamily
 };
 
 
+// Vulkan Context frame. The gpu could potentially have more than one frame inflight, any available 
+// frame that can be worked on by the host cpu, will be signaled by the fence value, and allocated command buffer.
 struct VulkanContextFrame
 {   
     VkSemaphore waitSemaphore;
     VkSemaphore signalSemaphore;
     VkFence     fence;
+    VulkanQueryManager timestampQuery;
 };
 
 
+// Vulkan Context.
 class RecluseVulkan_PUBLIC_API VulkanContext : public GraphicsContext
 {
 private:

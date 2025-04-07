@@ -26,7 +26,7 @@ void MessageBus::initialize(SizeT eventCacheSzBytes)
     m_pMessageAllocator->initialize
             (
                 m_messageMemPool.getPtrAddressAt(sizeof(LinearAllocator)), 
-                m_messageMemPool.getTotalSizeBytes()
+                m_messageMemPool.getTotalSizeBytes() - sizeof(LinearAllocator)
             );
 }
 

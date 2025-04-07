@@ -7,7 +7,7 @@
 #include <vector>
 
 namespace Recluse {
-
+namespace Engine {
 // Transform system handles updating all transform components in the 
 // world.
 class RecluseEngine_PUBLIC_API TransformSystem : public ECS::System<Transform>
@@ -17,11 +17,13 @@ public:
 
     virtual             ~TransformSystem() { onCleanUp(); }
 
-    virtual ResultCode     onInitialize(MessageBus* bus)                        override;
-    virtual ResultCode     onCleanUp()                                          override;
-    virtual void           onUpdate(ECS::Registry* registry, const RealtimeTick& tick)                   override;
+    virtual ResultCode     onInitialize()                                                                       override;
+    virtual ResultCode     onCleanUp()                                                                          override;
+    virtual void           onUpdate(ECS::Registry* registry, const RealtimeTick& tick, Engine::Scene* scene)    override;
+    virtual ResultCode     onEvent(EventMessage* event) override;
 
 private:
     Bool m_doUpdate = false;
 };
+} // Engine
 } // Recluse

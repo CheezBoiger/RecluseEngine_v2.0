@@ -17,9 +17,11 @@
 
 namespace Recluse {
 
+
 // EventId is in the form of hash values.
 typedef Hash64 EventId;
 typedef U64 GroupId;
+
 
 class EventMessage 
 {
@@ -33,6 +35,8 @@ public:
 private:
     EventId m_eventId;
 };
+
+
 
 typedef std::function<void(EventMessage*)> MessageReceiveFunc;
 

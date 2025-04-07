@@ -27,6 +27,23 @@
     #else
         #define RECLUSE_32BIT
     #endif
+    #include <fenv.h>
+
+    #if !defined(FE_INEXACT)
+    #define FE_INEXACT   _SW_INEXACT       // _EM_INEXACT     0x00000001 inexact (precision)
+    #endif
+    #if !defined(FE_UNDERFLOW)
+    #define FE_UNDERFLOW _SW_UNDERFLOW     // _EM_UNDERFLOW   0x00000002 underflow
+    #endif
+    #if !defined(FE_OVERFLOW)
+    #define FE_OVERFLOW  _SW_OVERFLOW      // _EM_OVERFLOW    0x00000004 overflow
+    #endif
+    #if !defined(FE_DIVBYZERO)
+    #define FE_DIVBYZERO _SW_ZERODIVIDE    // _EM_ZERODIVIDE  0x00000008 zero divide
+    #endif
+    #if !defined(FE_INVALID)
+    #define FE_INVALID   _SW_INVALID       // _EM_INVALID     0x00000010 invalid
+    #endif
 #elif defined(__linux__)
     #error "Linux currently not supported for Recluse!"
     #define RECLUSE_LINUX

@@ -15,7 +15,40 @@ namespace Recluse {
                 jobThreadADT[jobType] = thread; \
     }
 
-ResultCode TaskProcess::pushTask(TaskPriority priority, Task task)
+TaskManager::TaskManager()
+    : m_tasksMutex(nullptr)
+    , m_asyncCs()
+{
+}
+
+TaskManager::~TaskManager()
+{
+    cleanUp();
+}
+
+
+ResultCode TaskManager::initialize()
+{
+    m_tasksMutex = createMutex("TasksMutex");
+    m_asyncCs.initialize();
+    return RecluseResult_Ok;
+}
+
+
+ResultCode TaskManager::cleanUp()
+{
+    if (m_tasksMutex) 
+        destroyMutex(m_tasksMutex);
+        
+    if (m_asyncCs.isInitialized())
+        m_asyncCs.release();
+        
+    m_tasksMutex = nullptr;
+    return RecluseResult_Ok;
+}
+
+
+ResultCode TaskManager::pushTask(TaskPriority priority, Task task)
 {
     ScopedLock _(m_tasksMutex);
     auto it = m_tasks.find(priority);
@@ -34,7 +67,13 @@ ResultCode TaskProcess::pushTask(TaskPriority priority, Task task)
 
 void Application::update()
 {
-    ResultCode result = onUpdate();
+    ResultCode result = onUpdate(m_taskManager);
+
+    if (result == RecluseResult_Ok)
+    {
+        result = m_taskManager.dispatchTasks(&m_workerPool);
+        R_ASSERT(result == RecluseResult_Ok);
+    }
 
     flushStopRequests();
     flushNewRequests();
@@ -99,6 +138,7 @@ Application::ProcessId Application::requestNewProcess(TaskProcess::OnProcessTask
 ResultCode Application::cleanUp()
 {
     ResultCode result = onCleanUp();
+    m_taskManager.cleanUp();
     if (result == RecluseResult_Ok)
     {
         stopProcesses();
@@ -119,7 +159,7 @@ ResultCode Application::requestStopProcess(ProcessId processId)
 ResultCode Application::init(MessageBus* pMessageBus)
 {
     m_pMessageBusRef    = pMessageBus;
-
+    m_taskManager.initialize();
     ResultCode result = onInit();
     if (result == RecluseResult_Ok)
     {
@@ -132,10 +172,10 @@ ResultCode Application::init(MessageBus* pMessageBus)
 }
 
 
-ResultCode TaskProcess::dispatchTasks()
+ResultCode TaskManager::dispatchTasks(ThreadPool* pool)
 {
     ScopedLock _(m_tasksMutex);
-    if (!m_threadPoolRef)
+    if (!pool)
     {
         // single threaded process. would make our dispatch call syncronous.
         for (auto& priorityIt : m_tasks)
@@ -157,7 +197,7 @@ ResultCode TaskProcess::dispatchTasks()
             std::vector<U32> ids = { };
             for (auto& task : priorityIt.second)
             {
-                AsyncTaskId id = asyncTask(task);
+                AsyncTaskId id = asyncTask(task, pool);
                 ids.push_back(id);
             }
 
@@ -172,7 +212,7 @@ ResultCode TaskProcess::dispatchTasks()
 }
 
 
-void TaskProcess::clearTasks()
+void TaskManager::clearTasks()
 {
     // Don't clear the whole priority structure, just the created sets.
     for (auto& taskPrioritySet : m_tasks)
@@ -209,8 +249,7 @@ ResultCode TaskProcess::start()
 {
     // provide the payload.
     m_thread.payload = (void*)this;
-    m_tasksMutex = createMutex("TasksMutex");
-    m_asyncCs.initialize();
+    m_taskManager.initialize();
     m_isRunning = true;
     return createThread(&m_thread, processTask);
 }
@@ -239,11 +278,11 @@ void TaskProcess::join()
 }
 
 
-TaskProcess::AsyncTaskId TaskProcess::asyncTask(Task task)
+TaskManager::AsyncTaskId TaskManager::asyncTask(Task task, ThreadPool* pool)
 {
-    static TaskProcess::AsyncTaskId id = 0;
-    static const TaskProcess::AsyncTaskId InvalidId = -1; // We probably need to prevent wrap around on this value.
-    TaskProcess::AsyncTaskId handle = InvalidId;
+    static TaskManager::AsyncTaskId id = 0;
+    static const TaskManager::AsyncTaskId InvalidId = -1; // We probably need to prevent wrap around on this value.
+    TaskManager::AsyncTaskId handle = InvalidId;
     {
         ScopedCriticalSection _(m_asyncCs);
         handle = ++id;
@@ -269,12 +308,12 @@ TaskProcess::AsyncTaskId TaskProcess::asyncTask(Task task)
     };
 
     // Submit the task.
-    m_threadPoolRef->submitTask(TaskJobFunction);
+    pool->submitTask(TaskJobFunction);
     return handle;
 }
 
 
-void TaskProcess::waitForTask(TaskProcess::AsyncTaskId taskId)
+void TaskManager::waitForTask(TaskManager::AsyncTaskId taskId)
 {
     Bool finished = false;
     // Spinlock until we finish

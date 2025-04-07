@@ -30,6 +30,7 @@ include ( CMake/Game.cmake )
 include ( CMake/Renderer.cmake )
 include ( CMake/Scene.cmake )
 include ( CMake/Animation.cmake )
+include ( CMake/Core.cmake )
 
 add_library( ${RECLUSE_ENGINE_NAME} SHARED ${RECLUSE_ENGINE_COMPILE_FILES})
 target_include_directories( ${RECLUSE_ENGINE_NAME} PUBLIC ${RECLUSE_INCLUDE_FILES} 

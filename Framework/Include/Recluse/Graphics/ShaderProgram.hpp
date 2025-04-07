@@ -172,6 +172,24 @@ private:
 };
 
 
+class RecluseFramework_PUBLIC_API VertexLayoutDatabase : public Serializable
+{
+public:
+    VertexLayoutDatabase() { }
+
+    ResultCode                                          serialize(Archive* archive) const override { return RecluseResult_NoImpl; }
+    ResultCode                                          deserialize(Archive* archive) override { return RecluseResult_NoImpl; }
+    VertexInputLayout*                                  getLayout(VertexInputLayoutId id);
+    // Stores a vertex layout id, but checks if there is already an identical id.
+    ResultCode                                          store(VertexInputLayoutId id, VertexInputLayout* layout);
+private:
+    std::map<VertexInputLayoutId, VertexInputLayout*>   m_vertexLayouts;
+    std::map<Hash64, VertexInputLayout>                 m_uniqueLayouts;
+    std::map<Hash64, std::vector<VertexAttribute>>      m_attributes;
+    
+};
+
+
 namespace Runtime {
 // Build the actual shader program. This is the realtime runner that requires building the shaders and their respective permutations.
 RecluseFramework_PUBLIC_API ResultCode                     buildShaderProgram(GraphicsDevice* pDevice, const ShaderProgramDatabase& db, ShaderProgramId shaderProgram);

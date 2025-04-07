@@ -40,9 +40,12 @@ struct RecluseEngine_PUBLIC_API PerMeshTransform
 };
 
 
+// A Submesh is a portion of a mesh that has a separate rendering method or technique.
+// Instinctively it will be a part of the mesh with it's own material.
 struct RecluseEngine_PUBLIC_API SubMesh 
 {
     std::string name;
+    Material*   material;
     U64         offset;
     U64         numVertices;
 };
@@ -101,7 +104,7 @@ private:
 
 typedef GPUBuffer PerInstancedMeshBuffer;
 typedef GPUBuffer InstancedMeshBuffer;
-typedef U64       InstancedMeshId;
+typedef U32       InstancedMeshId;          // Instanced Id, this is used to lookup matrix info from buffer.
 
 
 //< 
@@ -119,7 +122,7 @@ public:
     RecluseEngine_PUBLIC_API void            update();
 
 private:
-    InstancedMeshBuffer             m_instancedMeshBuffer;
+    InstancedMeshBuffer             m_gpu4x4Matrices;   //< gpu matrix data. 
     
     // CPU side transform data.
     std::vector<MeshTranslateData>  m_dataTranslates;   //< Mesh Translations.
@@ -127,11 +130,13 @@ private:
     std::vector<MeshScaleData>      m_dataScales;       //< Mesh Scales;
 };
 
-class MeshInstanced 
+class InstancedMesh 
 {
 public:
     
     RecluseEngine_PUBLIC_API ResultCode initializeInstanced();
+
+    RecluseEngine_PUBLIC_API InstancedMeshHandler* getHandler() { return m_instancedMeshHandler; } 
 
 private:
     InstancedMeshHandler* m_instancedMeshHandler;

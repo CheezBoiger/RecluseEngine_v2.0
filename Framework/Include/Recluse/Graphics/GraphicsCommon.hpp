@@ -398,6 +398,7 @@ enum GraphicsQueueType
     QUEUE_TYPE_COPY         = (1 << 3)
 };
 
+
 typedef U32 GraphicsQueueTypeFlags;
 
 
@@ -476,10 +477,15 @@ public:
 };
 
 
-class GraphicsQuery : public IGraphicsObject
+// Graphics Query object.
+class GraphicsQuery
 {
 public:
-    void* ptr;
+    enum { InvalidQuery = ~0u };
+    GraphicsQuery() : index(InvalidQuery) { }
+    Bool isValid() const { return (index != InvalidQuery); }
+protected:
+    U32 index;
 };
 
 

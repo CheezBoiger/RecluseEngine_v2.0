@@ -7,6 +7,7 @@
 #include "Recluse/Math/Vector2.hpp"
 #include "Recluse/Math/Vector4.hpp"
 #include "Recluse/Math/Matrix22.hpp"
+#include "Recluse/Math/Half.hpp"
 
 #include "Recluse/Algorithms/Mergesort.hpp"
 #include "Recluse/Algorithms/QSort.hpp"
@@ -89,7 +90,12 @@ int main(int c, char* argv[])
     mergeSort<int, CompareLess>(items, 10, nullptr);
     quickSort<int, CompareLess>(items, 0, 9);
     selectionSort<int, CompareLess>(items, 0, 10);
-    Log::destroyLoggingSystem();
 
+    Half rat(static_cast<float>(.5f));
+    Half mat(static_cast<float>(1.0f));
+
+    R_TRACE("Halfs", "%f, %f", static_cast<float>(mat), static_cast<float>(rat));
+
+    Log::destroyLoggingSystem();
     return 0;
 }

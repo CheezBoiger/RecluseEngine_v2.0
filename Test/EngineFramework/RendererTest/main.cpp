@@ -12,6 +12,7 @@
 #include "Recluse/Renderer/Renderer.hpp"
 #include "Recluse/Renderer/RenderCommand.hpp"
 #include "Recluse/Renderer/Material.hpp"
+#include "Recluse/Core/Profile/Profiler.hpp"
 
 #include "Recluse/System/Window.hpp"
 #include "Recluse/Generated/RendererResources.hpp"
@@ -27,34 +28,43 @@ class TestApplication : public Application
 {
 public:
 
-    virtual ResultCode onUpdate() override
+    virtual ResultCode onUpdate(TaskManager& manager) override
     {
-        DrawRenderCommand rcmd = {};
-        rcmd.op = CommandOp_DrawableInstanced;
-        rcmd.vertexTypeFlags = VERTEX_ATTRIB_POSITION | VERTEX_ATTRIB_NORMAL;
-        rcmd.numSubMeshes = 0;
+        DrawBatch rcmd = {};
         //pRenderer->pushRenderCommand(rcmd, RENDER_PREZ);
 
         //R_VERBOSE("GameLoop", "time=%f fps", 1.f / tick.delta());
         //R_VERBOSE("GameLoop", "renderTime=%f fps", RealtimeTick::getTick(0).delta());
+        
         pollEvents();
 
         if (m_window->shouldClose())
         {
             stop();
         }
+        
+        RendererModule::getMain()->simLock();
 
-        KeyboardListener listener;
+        manager.pushTask(1, [] () -> ResultCode 
+            {
+                KeyboardListener listener;
+                if (listener.isKeyDownOnce(KeyCode_0))
+                {
+                    GlobalCommands::setValue("Renderer.ClearFrame", GlobalCommands::obtainValue<Bool>("Renderer.ClearFrame") ? false : true);
+                }
 
-        if (listener.isKeyDownOnce(KeyCode_0))
-        {
-            GlobalCommands::setValue("Renderer.ClearFrame", GlobalCommands::obtainValue<Bool>("Renderer.ClearFrame") ? false : true);
-        }
+                if (listener.isKeyDownOnce(KeyCode_1))
+                {
+                    GlobalCommands::setValue("Renderer.UseClearColor", GlobalCommands::obtainValue<Bool>("Renderer.UseClearColor") ? false : true);
+                }
 
-        if (listener.isKeyDownOnce(KeyCode_1))
-        {
-            GlobalCommands::setValue("Renderer.UseClearColor", GlobalCommands::obtainValue<Bool>("Renderer.UseClearColor") ? false : true);
-        }
+                return RecluseResult_Ok;
+            });
+
+        RendererModule::getMain()->simUnlock();
+
+        CpuPerformanceProfile::PerformanceMeasurement measure = CpuPerformanceProfile::query("RandomTask", "Main");
+        R_NOTIFY("Main", "RandomTask: %f ms", measure.milliseconds);
 
         return RecluseResult_Ok;
     }
@@ -89,42 +99,43 @@ public:
         m_renderProcessId = makeTaskProcess(RendererModule::kRendererProcessTask, "Renderer");
 #if 1
         makeTaskProcess([] (TaskProcess* process) -> ResultCode 
-        {
-            std::array<U32, 10> arr0;
-            std::array<U32, 10> arr1;
-            std::array<U32, 10> result;
-            process->pushTask(0, [&] () -> ResultCode 
             {
-                for (U32 i = 0; i < arr0.size(); ++i)
-                    arr0[i] = i * 2;
-                return RecluseResult_Ok; 
-            });
-            process->pushTask(0, [&] () -> ResultCode 
-            {
-                for (U32 i = 0; i < arr1.size(); ++i)
+                R_SCOPED_CPU_PROFILER(RandomTask, Math::Color4(1, 1, 1, 1), Main);
+                std::array<U32, 5000> arr0;
+                std::array<U32, 5000> arr1;
+                std::array<U32, 5000> result;
+                process->pushTask(0, [&] () -> ResultCode 
                 {
-                    arr1[i] = i+1;
-                }
-                return RecluseResult_Ok;
-            });
-            // Push the final task.
-            process->pushTask(1, [&] () -> ResultCode 
-            {
-                std::string s = "";
-                for (U32 i = 0; i < result.size(); ++i)
+                    for (U32 i = 0; i < arr0.size(); ++i)
+                        arr0[i] = i * 2;
+                    return RecluseResult_Ok; 
+                });
+                process->pushTask(0, [&] () -> ResultCode 
                 {
-                    result[i] = arr0[i] + arr1[1];
-                    s += " " + std::to_string(result[i]);
-                }
-                R_NOTIFY(process->getProcessName().c_str(), "%s", s.c_str());
+                    for (U32 i = 0; i < arr1.size(); ++i)
+                    {
+                        arr1[i] = i+1;
+                    }
+                    return RecluseResult_Ok;
+                });
+                // Push the final task.
+                process->pushTask(1, [&] () -> ResultCode 
+                {
+                    std::string s = "";
+                    for (U32 i = 0; i < result.size(); ++i)
+                    {
+                        result[i] = arr0[i] + arr1[1];
+                        s += " " + std::to_string(result[i]);
+                    }
+                    //R_NOTIFY(process->getProcessName().c_str(), "%s", s.c_str());
+                    return RecluseResult_Ok;
+                });
+                process->dispatchTasks();
                 return RecluseResult_Ok;
-            });
-            process->dispatchTasks();
+            }, "RandomTask");
+ #endif
             return RecluseResult_Ok;
-        }, "RandomTask");
-#endif
-        return RecluseResult_Ok;
-    }
+        }
     virtual ResultCode onCleanUp() override
     {
         MessageBus::fireEvent(getMessageBus(), RenderEvent_Shutdown);

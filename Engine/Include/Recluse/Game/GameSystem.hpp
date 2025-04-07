@@ -8,6 +8,7 @@
 #include "Recluse/Serialization/Serializable.hpp"
 #include "Recluse/RGUID.hpp"
 #include "Recluse/Time.hpp"
+#include "Recluse/MessageBus.hpp"
 
 #include "RecluseEngine_exports.hpp"
 
@@ -19,6 +20,7 @@ class MessageBus;
 namespace Engine {
 class Renderer;
 class DebugRenderer;
+class Scene;
 } // Engine
 } // Recluse
 
@@ -32,21 +34,35 @@ typedef Hash64 GameUUID;
 class GameEntity;
 class Registry;
 
-#define R_PUBLIC_DECLARE_GAME_ECS(_class) \
-    public: \
+
+#define R_CLASS_PUBLIC_DEFINE public:
+
+#define R_CLASS_GUID_DECLARE_IMPLEMENTATION(_class) \
     static Recluse::ECS::GameUUID classGUID() { return recluseHash(#_class, sizeof(#_class)); } \
+    virtual Recluse::ECS::GameUUID getClassGUID() const override { return classGUID(); }
+
+#define R_CLASS_NAME_DECLARE_IMPLEMENTATION(_class) \
     static const char* className() { return #_class; } \
-    virtual Recluse::ECS::GameUUID getClassGUID() const override { return classGUID(); } \
     virtual const char* getClassName() const override { return className(); }
+
+#define R_CLASS_SYSTEM_NAME_DECLARE_IMPLEMENTATION(_system) \
+    static const char* systemName() { return #_system; } \
+    virtual const char* getName() const override { return systemName(); }    
+
+// Declare a game component.
+#define R_PUBLIC_DECLARE_GAME_ECS(_class) \
+    R_CLASS_PUBLIC_DEFINE \
+    R_CLASS_GUID_DECLARE_IMPLEMENTATION(_class) \
+    R_CLASS_NAME_DECLARE_IMPLEMENTATION(_class)
 
 
 // Required declare for the game system to be used. 
 // Use the constructor you feel is important.
 // A Default destructor is required in order to do final cleanups at the end of an application's life.
 #define R_DECLARE_GAME_SYSTEM(_system) \
-    public: \
-    static const char* systemName() { return #_system; } \
-    virtual const char* getName() const override { return systemName(); }
+    R_CLASS_PUBLIC_DEFINE \
+    R_CLASS_SYSTEM_NAME_DECLARE_IMPLEMENTATION(_system)
+
 
 
 class AbstractSystem : public Serializable
@@ -77,12 +93,20 @@ public:
     void                     setPriority(U32 priority) { m_priority = priority; }
     U32                      getPriority() const { return m_priority; }
 
-    // This system is required to update all components when necessary.
-    void                                update(Registry* registry, const RealtimeTick& tick) { onUpdate(registry, tick); }
+    // This system is required to update all components when necessary. 
+    // \param Registry
+    // \param tick
+    // \param scene (Optional) 
+    void                                update(Registry* registry, const RealtimeTick& tick, Engine::Scene* scene = nullptr) { onUpdate(registry, tick); }
 
     ResultCode                          initialize(MessageBus* bus = nullptr)
     {
-        return onInitialize(bus);
+        ResultCode result = onInitialize();
+        if (bus && result == RecluseResult_Ok)
+        {
+            bus->addReceiver(getName(), [&] (EventMessage* event) -> void { onEvent(event); });
+        }
+        return result;
     }
 
     ResultCode         cleanUp()
@@ -98,11 +122,12 @@ public:
     // Deserialize the system and its components.
     virtual ResultCode      deserialize(Archive* archive) override { return RecluseResult_NoImpl; }
     virtual const char*     getName() const { return "System"; }
+    virtual ResultCode      onEvent(EventMessage* event) { return RecluseResult_NoImpl; }
 
 protected:
 
     // Allows initializing the system on intialize().
-    virtual ResultCode      onInitialize(MessageBus* bus = nullptr) { return RecluseResult_NoImpl; }
+    virtual ResultCode      onInitialize() { return RecluseResult_NoImpl; }
 
     // Allows post initialization after all initialize systems.
     virtual ResultCode      onPostInitialize() { return RecluseResult_NoImpl; }
@@ -115,7 +140,7 @@ protected:
 
     // To update all components in the world. 
     // \param scene The scene instance that we are updating on.
-    virtual void            onUpdate(Registry* registry, const RealtimeTick& tick) { }
+    virtual void            onUpdate(Registry* registry, const RealtimeTick& tick, Engine::Scene* scene = nullptr) { }
 
     // Updates all component in the world after onUpdate() calls have been made.
     virtual void            onPostUpdate(Registry* registry, const RealtimeTick& tick) { }
@@ -177,9 +202,12 @@ public:
 
     virtual const char*     getName() const override { return "System"; }
 
+    // On event callback to be used for System.
+    virtual ResultCode      onEvent(EventMessage* event) { return RecluseResult_NoImpl; }
+
 protected:
     // Allows initializing the system before on intialize().
-    virtual ResultCode      onInitialize(MessageBus* bus = nullptr) override { return RecluseResult_NoImpl; }
+    virtual ResultCode      onInitialize() override { return RecluseResult_NoImpl; }
 
     // Allows cleaning up the system before releasing.
     virtual ResultCode      onCleanUp() override                    { return RecluseResult_NoImpl; }
@@ -189,7 +217,7 @@ protected:
 
     // To update all components in the world. 
     // \param scene The scene instance that we are updating on.
-    virtual void            onUpdate(Registry* registry, const RealtimeTick& tick) override { }
+    virtual void            onUpdate(Registry* registry, const RealtimeTick& tick, Engine::Scene* scene = nullptr) override { }
 
     // Updates all component in the world after onUpdate() calls have been made.
     virtual void            onPostUpdate(Registry* registry, const RealtimeTick& tick) override { }

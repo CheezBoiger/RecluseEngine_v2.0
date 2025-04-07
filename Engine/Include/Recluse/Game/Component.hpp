@@ -31,16 +31,26 @@ enum ComponentUpdateFlag
 // Attribute semantics for the editor.
 #define RATTRIBUTE(varName, varValue)
 
+#define R_COMPONENT_PUBLIC public:
+
+#define R_COMPONENT_GUID_DECLARE(_class, _type) \
+    static _type classGUID() { return recluseHashFast(#_class, sizeof(#_class)); } 
+
+#define R_COMPONENT_CLASS_DECLARE(_class) \
+    R_COMPONENT_GUID_DECLARE(_class, Recluse::ECS::ComponentUUID) \
+    virtual Recluse::ECS::ComponentUUID getClassGUID() const override { return _class::classGUID(); }
+
 // Call this macro when declareing a component. This will be used by the engine to determine 
 // the proper calls to be made to the GameObject.
 #define R_COMPONENT_DECLARE(_class) \
-    public: \
-    static Recluse::ECS::ComponentUUID classGUID() { return recluseHashFast(#_class, sizeof(#_class)); } \
-    virtual Recluse::ECS::ComponentUUID getClassGUID() const override { return _class::classGUID(); }
+    R_COMPONENT_PUBLIC \
+    R_COMPONENT_CLASS_DECLARE(_class)
+
 
 #define R_COMPONENT_REGISTRY_DECLARE(_class) \
-    public: \
-    static Recluse::ECS::RegistryUUID classGUID() { return recluseHashFast(#_class, sizeof(#_class)); } 
+    R_COMPONENT_PUBLIC \
+    R_COMPONENT_GUID_DECLARE(_class, Recluse::ECS::RegistryUUID)
+
 
 class AbstractComponent : public Serializable
 {

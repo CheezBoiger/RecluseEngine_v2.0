@@ -1,5 +1,6 @@
 //
 #pragma once
+
 #include "Recluse/Pipeline/ShaderProgramBuilder.hpp"
 #include "Recluse/Graphics/ShaderProgram.hpp"
 

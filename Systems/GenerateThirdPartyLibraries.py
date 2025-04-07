@@ -61,6 +61,8 @@ def parse_cmake_commands_from_build_file(build_file_path, build_path, cmake_dire
                                     command.append(script_exec)
                                 command += script_params
                                 subprocess.call(command)
+                    if subchild.tag == "include":
+                        print("Nice")
                                         
             if child.tag == "install":
                 for subchild in child:

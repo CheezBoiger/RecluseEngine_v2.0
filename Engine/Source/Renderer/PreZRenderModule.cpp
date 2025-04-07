@@ -36,9 +36,9 @@ void destroy(GraphicsDevice* pDevice)
 }
 
 
-void generate(GraphicsContext* context, Engine::RenderCommandList* pMeshCommandList, U64* keys, U64 sz)
+void generate(GraphicsContext* context, Engine::CommandList* pMeshCommandList, U64* keys, U64 sz)
 {
-    Engine::RenderCommand** pRenderCommands     = pMeshCommandList->getRenderCommands();
+    Engine::RenderCommand* pRenderCommands     = pMeshCommandList->getRenderCommands();
     Rect depthRect                              = { };
     depthRect.x         = depthRect.y           = 0.f;
 
@@ -70,75 +70,55 @@ void generate(GraphicsContext* context, Engine::RenderCommandList* pMeshCommandL
     for (U64 i = 0; i < sz; ++i) 
     {
         U64 key = keys[i];
-        Engine::RenderCommand* pRCmd            = pRenderCommands[key];
+        Engine::RenderCommand& renderCommand    = pRenderCommands[key];
         PipelineState* pipeline                 = nullptr;
-        Engine::DrawableRenderCommand* meshCmd  = nullptr;
 
-        if 
-            (
-                pRCmd->op != Engine::CommandOp_DrawableIndexedInstanced 
-                && pRCmd->op != Engine::CommandOp_DrawableInstanced
-            ) 
+        if (renderCommand.op != Engine::CommandOp_DrawIndexedInstanced 
+                && renderCommand.op != Engine::CommandOp_DrawInstanced) 
         {
             continue;
         }
 
-        meshCmd                         = static_cast<Engine::DrawableRenderCommand*>(pRCmd);
-        Engine::VertexAttribFlags flags = meshCmd->vertexTypeFlags;
-
         R_ASSERT_FORMAT(pipeline != NULL, "No pipeline exists for this mesh!");
 
         context->setInputVertexLayout(VertexLayout_PositionOnly);
-        context->bindVertexBuffers(meshCmd->numVertexBuffers, meshCmd->ppVertexBuffers, meshCmd->pOffsets);
-        context->setTopology(PrimitiveTopology_TriangleList);
+        Engine::DrawBatch* batch = Engine::CommandList::cast<Engine::DrawBatch>(renderCommand.opData);
 
-        switch (meshCmd->op) 
+        context->bindVertexBuffers(batch->numVertexBuffers, batch->ppVertexBuffers, batch->pOffsets);
+        context->setTopology(batch->topology);
+
+        switch (renderCommand.op) 
         {
-            case Engine::CommandOp_DrawableIndexedInstanced:
+            case Engine::CommandOp_DrawIndexedInstanced:
             {
-                Engine::DrawIndexedRenderCommand* pIndexedCmd = 
-                    static_cast<Engine::DrawIndexedRenderCommand*>(meshCmd);
-
-                context->bindIndexBuffer
-                                (
-                                    pIndexedCmd->pIndexBuffer, 
+                Engine::DrawIndexedBatch* pIndexedCmd = Engine::CommandList::cast<Engine::DrawIndexedBatch>(batch);
+                context->bindIndexBuffer(pIndexedCmd->pIndexBuffer, 
                                     pIndexedCmd->indexType, 
-                                    pIndexedCmd->indexType
-                                );
+                                    pIndexedCmd->indexType);
 
                 for (U32 submeshIdx = 0; submeshIdx < pIndexedCmd->numSubMeshes; ++submeshIdx) 
                 {
                     Engine::IndexedInstancedSubMesh& submesh = pIndexedCmd->pSubMeshes[submeshIdx];
-                    
-                    context->drawIndexedInstanced
-                                        (
-                                            submesh.indexCount,
+                    context->drawIndexedInstanced(submesh.indexCount,
                                             submesh.instanceCount,
                                             submesh.firstIndex,
                                             submesh.vertexOffset,
-                                            submesh.firstInstance
-                                        );
+                                            submesh.firstInstance);
                 }
 
                 break;
             }
 
-            case Engine::CommandOp_DrawableInstanced:
+            case Engine::CommandOp_DrawInstanced:
             {
-                Engine::DrawRenderCommand* pDrawCmd = static_cast<Engine::DrawRenderCommand*>(meshCmd);
-
+                Engine::DrawInstancedBatch* pDrawCmd = Engine::CommandList::cast<Engine::DrawInstancedBatch>(batch);
                 for (U32 submeshIdx = 0; submeshIdx < pDrawCmd->numSubMeshes; ++submeshIdx) 
                 {
                     Engine::InstancedSubMesh& submesh = pDrawCmd->pSubMeshes[submeshIdx];
-
-                    context->drawInstanced
-                                        (
-                                            submesh.vertexCount,
-                                            submesh.instanceCount,
-                                            submesh.firstVertex,
-                                            submesh.firstInstance
-                                        );
-                
+                    context->drawInstanced(submesh.vertexCount,
+                                           submesh.instanceCount,
+                                           submesh.firstVertex,
+                                           submesh.firstInstance);
                 }                
                 break;
             }

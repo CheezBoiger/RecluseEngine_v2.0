@@ -449,7 +449,10 @@ void D3D12Context::resetCurrentResources()
 {
     HRESULT result = S_OK;
     ContextFrame& buffer = m_contextFrames[m_currentContextFrameIndex];
-        
+    
+    // Reset the timestamp query.
+    buffer.timestampQuery.reset();
+
     result = buffer.pAllocator->Reset();
 
     if (FAILED(result)) 
@@ -484,6 +487,8 @@ void D3D12Context::initializeBufferResources(U32 buffering)
                                     (void**)&m_contextFrames[i].pAllocator);
         R_ASSERT(result == S_OK);
         m_contextFrames[i].fenceValue = m_queue->getFence()->GetCompletedValue();
+
+        m_contextFrames[i].timestampQuery.initialize(m_pDevice->get(), 0, D3D12_QUERY_HEAP_TYPE_TIMESTAMP, 128);
     }
     m_contextFrames[m_currentContextFrameIndex].fenceValue = m_queue->waitForGpu(m_contextFrames[m_currentContextFrameIndex].fenceValue);
 }
@@ -497,6 +502,7 @@ void D3D12Context::destroyBufferResources()
     {
         if (m_contextFrames[i].pAllocator) 
         {
+            m_contextFrames[i].timestampQuery.release();
             m_contextFrames[i].pAllocator->Reset();
             m_contextFrames[i].pAllocator->Release();
             m_contextFrames[i].pAllocator = nullptr;

@@ -113,19 +113,12 @@ class MoverSystem : public ECS::System<MoverComponent>
 public:
     R_DECLARE_GAME_SYSTEM(MoverSystem);
 
-    ResultCode onInitialize(MessageBus* bus) override
+    ResultCode onInitialize() override
     {
-        if (bus)
-        {
-            bus->addReceiver("MoverSystem", [] (EventMessage* msg) -> void 
-            {
-                msg->getEvent(); 
-            });
-        }
         return RecluseResult_Ok;
     }
 
-    void onUpdate(ECS::Registry* registry, const RealtimeTick& tick) override
+    void onUpdate(ECS::Registry* registry, const RealtimeTick& tick, Engine::Scene* scene) override
     {
         std::vector<MoverComponent*> movers = obtainComponents(registry);
         for (U64 i = 0; i < movers.size(); ++i)
@@ -196,8 +189,8 @@ int main(int c, char* argv[])
     addEntities(pScene, &registry);
 
     F32 counter = 0;
-    while (counter < 10.0f) {
-
+    while (counter < 10.0f) 
+    {
         RealtimeTick::updateWatch(1ull, 0);
         RealtimeTick tick = RealtimeTick::getTick(0);
         moverSystem->update(&registry, tick);

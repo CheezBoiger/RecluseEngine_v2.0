@@ -584,7 +584,9 @@ int main(char* argv[], int c)
                 context->setTopology(PrimitiveTopology_TriangleList);
                 context->setViewports(1, &viewport);
                 context->setScissors(1, &scissor);
+                GraphicsQuery query = context->beginQuery(GraphicsQueryType_Timestamp);
                 context->drawIndexedInstanced(36, 1, 0, 0, 0);
+                context->endQuery(&query);
                 context->transition(textureResource, ResourceState_CopySource);
                 context->transition(swapchainImage, ResourceState_CopyDestination);
                 context->copyResource(swapchainImage, textureResource);

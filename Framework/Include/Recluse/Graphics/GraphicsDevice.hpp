@@ -282,15 +282,15 @@ public:
     // frame.
     virtual void                    submitBundles(GraphicsContext** ppBundles, U32 count) { }
 
-    // Begins queries, with the specified type.
+    // Begins query, with the specified type.
     // Be sure to call endQuery() once satisfied on what to capture.
-    virtual void                    beginQueries(GraphicsQuery** queries, U32 numQueries, GraphicsQueryType queryType) { }
+    virtual GraphicsQuery           beginQuery(GraphicsQueryType queryType) { return GraphicsQuery(); }
 
     // Ends a query capture. Should be called after every beginQuery() call.
-    virtual void                    endQueries(GraphicsQuery** queries, U32 numQueries) { }
+    virtual void                    endQuery(GraphicsQuery* query) { }
 
-    // Resolves queries to their respective resource buffers.
-    virtual void                    resolveQueries(GraphicsQuery** queries, U32 numQueries, GraphicsResource** resources, U32 numResources) { }
+    // Resolves queries into a graphics resource, which should then be accessed by the host.
+    virtual void                    resolveQueries(GraphicsQuery* queries, U32 numQueries, GraphicsResource* resource) { }
 };
 
 

@@ -277,5 +277,82 @@ void DescriptorAllocator::resize(VulkanDevice* pDevice, U32 newBufferCount)
 {
     checkAndManageInstances(pDevice, newBufferCount, m_flags);
 }
+
+
+ResultCode VulkanQueryManager::initialize(VkDevice device, VkQueryType type, U32 maxQueryCount)
+{
+    R_ASSERT(device && maxQueryCount > 0);
+    ResultCode result = RecluseResult_Failed;
+    if (!m_query && maxQueryCount > 0)
+    {
+        VkQueryPoolCreateInfo info;
+        info.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
+        info.queryType = type;
+        info.queryCount = maxQueryCount;
+        info.pNext = nullptr;
+        info.flags = 0; // Reserved for future use.
+
+        if (type == VK_QUERY_TYPE_PIPELINE_STATISTICS)
+        {
+            // If the query is a pipeline statistics type, we need to fill this info out too.
+            info.pipelineStatistics =   VK_QUERY_PIPELINE_STATISTIC_INPUT_ASSEMBLY_PRIMITIVES_BIT |
+                                        VK_QUERY_PIPELINE_STATISTIC_INPUT_ASSEMBLY_VERTICES_BIT |
+                                        VK_QUERY_PIPELINE_STATISTIC_FRAGMENT_SHADER_INVOCATIONS_BIT |
+                                        VK_QUERY_PIPELINE_STATISTIC_VERTEX_SHADER_INVOCATIONS_BIT | 
+                                        VK_QUERY_PIPELINE_STATISTIC_CLIPPING_PRIMITIVES_BIT | 
+                                        VK_QUERY_PIPELINE_STATISTIC_CLIPPING_INVOCATIONS_BIT | 
+                                        VK_QUERY_PIPELINE_STATISTIC_GEOMETRY_SHADER_INVOCATIONS_BIT |
+                                        VK_QUERY_PIPELINE_STATISTIC_COMPUTE_SHADER_INVOCATIONS_BIT;
+        }
+
+        VkResult vkr = vkCreateQueryPool(device, &info, nullptr, &m_query);
+        if (vkr == VK_SUCCESS)
+            result = RecluseResult_Ok;
+        m_maxQueryCount = maxQueryCount;
+    }
+    return result;
+}
+
+
+VulkanQueryManager::VulkanQueryManager()
+    : m_query(nullptr)
+    , m_currentAvailableIndex(0)
+    , m_maxQueryCount(0)
+{
+}
+
+
+VulkanQueryManager::~VulkanQueryManager()
+{
+}
+
+
+ResultCode VulkanQueryManager::release(VkDevice device)
+{
+    if (m_query)
+        vkDestroyQueryPool(device, m_query, nullptr);
+    m_query = nullptr;
+    return RecluseResult_Ok;
+}
+
+
+ResultCode VulkanQueryManager::reset()
+{   
+    m_currentAvailableIndex = 0;
+    return RecluseResult_Ok;
+}
+
+
+VulkanQueryManager::Index VulkanQueryManager::requestIndices(U32 requested)
+{
+    Index result = { GraphicsQuery::InvalidQuery, GraphicsQuery::InvalidQuery };
+    if ((m_currentAvailableIndex + requested) < m_maxQueryCount)
+    {
+        result.start = m_currentAvailableIndex;
+        result.range = requested;
+        m_currentAvailableIndex += requested;
+    }
+    return result;
+}
 } // Vulkan
 } // Recluse

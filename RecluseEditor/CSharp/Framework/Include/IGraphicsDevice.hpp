@@ -2,6 +2,7 @@
 #ifndef GRAPHICS_DEVICE_HPP
 #define GRAPHICS_DEVICE_HPP
 #pragma once
+
 #include "Recluse/Graphics/GraphicsInstance.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 #include "Recluse/System/Window.hpp"

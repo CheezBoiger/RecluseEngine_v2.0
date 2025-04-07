@@ -46,7 +46,7 @@ class Texture2D;
 class Mesh;
 class Primitive;
 struct RenderCommand;
-class RenderCommandList;
+class CommandList;
 class DebugRenderer;
 
 // RenderPassType allows mesh objects to be rendered through any core Arbitrary Output Variables that can then be
@@ -120,7 +120,7 @@ public:
     typedef std::function<ResultCode(Renderer*)> DebugInitFunction;
 
     // The rendering task process.
-    static ResultCode kRendererProcessTask(TaskProcess* process);
+    static ResultCode kRendererProcessTask(TaskProcess* manager);
 
 
     RendererModule();
@@ -135,11 +135,16 @@ public:
     // Recreate the renderer pipeline, with the new configurations.
     void                        recreate();
 
+    // Use this in sim code to lock the renderer from submitting commands that aren't ready.
+    void                        simLock();
+    // Be sure to unlock once ready to have renderer submit commands.
+    void                        simUnlock();
+
     // Push the render command to the rendering engine. This will store the command for the drawing frame.
     void                        pushRenderCommand(const RenderCommand& renderCommand, RenderPassTypeFlags renderFlags);
     void                        pushDebugDraw(DebugDrawFunction debugDrawFunction);
 
-    // Push a light to the renderer. Used throughout renderer.
+    // Push a light to the renderer. Used throughout renderer. Must be called each frame.
     void                        pushLight(const LightDescription& lightDescription) { m_lightDescriptions.push_back(lightDescription); }
 
     // Start submitting rendering to draw onto the screen.
@@ -210,6 +215,12 @@ private:
     ResultCode                  pushCopyCommands(GraphicsContext* context);
     ResultCode                  clearCopyCommands();
 
+    //  Lock the current frame, so that it prevents automatic transition of the frame.
+    // DO NOT CALL THIS IN SIM CODE.
+    void                        lock();
+    // Be sure to unlock the frame once finished. DO NOT CALL THIS IN SIM CODE.
+    void                        unlock();
+
     // Graphics context and information.
     GraphicsInstance*                   m_pInstance;
     GraphicsAdapter*                    m_pAdapter;
@@ -225,8 +236,10 @@ private:
 
     // Scene buffer objects.
     SceneBufferDefinitions              m_sceneBuffers;
-    std::vector<RenderCommandList*>     m_renderCommands;
+    std::vector<Mutex>                  m_perFrameMutex;
+    std::vector<CommandList*>           m_renderCommands;
     U32                                 m_currentFrameIndex;
+    U32                                 m_currentSimFrameIndex;
     U32                                 m_maxBufferCount;
 
     struct CommandKey 
@@ -263,9 +276,17 @@ private:
         std::vector<Allocator*> PerFrameAllocator;
     };
 
+    // Draw filter filters out draws that pertain to certain passes.
+    struct DrawFilter
+    {
+        U32 passFilter;
+        std::vector<U64> drawKey; // DrawKey pertains to the drawcall that works with it.
+    };
+
     // command keys identify the index within the render command, to begin rendering for.
     std::vector<std::unordered_map<U32, std::vector<U64>>>  m_commandKeys;
-    RenderCommandList*                                      m_currentRenderCommands;
+    Mutex                                                   m_commandMx;
+    CommandList*                                            m_currentRenderCommands;
     CommandKeyContainer                                     m_currentCommandKeys;
     std::vector<DebugDrawFunction>                          m_debugDrawFunctions;
     // Lights in the scene.

@@ -13,15 +13,15 @@
 using namespace Recluse;
 using namespace Recluse::Engine;
 
-
 IndexedInstancedSubMesh indexedSubmeshes[8];
 InstancedSubMesh submeshes[12];
 
-void fillList(RenderCommandList& list)
+void fillList(CommandList& list)
 {
     ResultCode result = RecluseResult_Ok;
-    DrawRenderCommand rcmd = { };
-    DrawIndexedRenderCommand icmd = { };
+    RenderCommand cmd = { };
+    DrawInstancedBatch rcmd = { };
+    DrawIndexedBatch icmd = { };
 
     for (U32 i = 0; i < 8; ++i) {
         indexedSubmeshes[i].firstIndex = 0;
@@ -38,23 +38,26 @@ void fillList(RenderCommandList& list)
     
     }
 
-    rcmd.op = CommandOp_DrawableInstanced;
-    rcmd.numVertexBuffers = 2;
     rcmd.numSubMeshes = 12;
     rcmd.pSubMeshes = submeshes;
+    rcmd.topology = PrimitiveTopology_TriangleList;
 
-    icmd.op = CommandOp_DrawableIndexedInstanced;
-    icmd.numVertexBuffers = 1;
     icmd.indexType = IndexType_Unsigned32;
     icmd.numSubMeshes = 8;
     icmd.pSubMeshes = indexedSubmeshes;
+    icmd.topology = PrimitiveTopology_TriangleList;
 
-    for (U32 i = 0; i < 2000; ++i) {
-        result = list.push(rcmd);
+
+    cmd.op = CommandOp_DrawInstanced;
+    cmd.opData = &rcmd;
+    for (U32 i = 0; i < 12000; ++i) {
+        result = list.push(cmd);
     }
 
+    cmd.op = CommandOp_DrawIndexedInstanced;
+    cmd.opData = &icmd;
     for (U32 i = 0; i < 6000; ++i) {
-        result = list.push(icmd);
+        result = list.push(cmd);
     }
 
     if (result != RecluseResult_Ok) {
@@ -65,11 +68,12 @@ void fillList(RenderCommandList& list)
 int main(int c, char* argv[])
 {
     Log::initializeLoggingSystem();
+    enableLogTypes(LogType_Verbose);
     RealtimeTick::initializeWatch(1ull, 0);
 
-    RenderCommandList list;
+    CommandList list;
 
-    list.initialize();
+    list.initialize(R_MB(16));
 
     RealtimeTick::updateWatch(1ull, 0);
     RealtimeTick tick = RealtimeTick::getTick(0);
@@ -79,41 +83,51 @@ int main(int c, char* argv[])
     RealtimeTick::updateWatch(1ull, 0);
     tick = RealtimeTick::getTick(0);
 
-    R_TRACE("TEST", "Took %f secs to fill commandlist.", tick.delta());
+    R_VERBOSE("TEST", "Took %f secs to fill commandlist.", tick.delta());
 
-    RenderCommand** commands = list.getRenderCommands();
+    RenderCommand* commands = list.getRenderCommands();
     U64 numRenderCommands = list.getNumberCommands();
 
-    CommandOp op = CommandOp_DrawableIndexedInstanced;
+    U32 totalSubmeshes = 0;
+    U32 totalVertices = 0;
 
     for (U64 i = 0; i < numRenderCommands; ++i) {
 
-        RenderCommand* cmd = commands[i];
-        switch (cmd->op) {
-    
-            case CommandOp_DrawableInstanced:
+        RenderCommand& cmd = commands[i];
+        switch (cmd.op) 
+        {
+            case CommandOp_DrawInstanced:
             {
                 //R_TRACE("TEST", "I am a draw command! %d", i);
-                DrawRenderCommand* rcmd = static_cast<DrawRenderCommand*>(cmd);
-                op = rcmd->op;
-                //R_TRACE("TEST", "%d", rcmd)
+                DrawInstancedBatch* rcmd = static_cast<DrawInstancedBatch*>(cmd.opData);
+                //R_TRACE("TEST", "Draw call numSubmeshes=%d", rcmd->numSubMeshes);
+                totalSubmeshes += rcmd->numSubMeshes;
+                for (U32 i = 0; i < rcmd->numSubMeshes; ++i)
+                {
+                    InstancedSubMesh& submesh = rcmd->pSubMeshes[i];
+                    totalVertices += submesh.vertexCount;
+                } 
                 break;
             }
-            case CommandOp_DrawableIndexedInstanced:    
+            case CommandOp_DrawIndexedInstanced:    
             {
                 //R_TRACE("TEST", "I am a draw indexed command! %d", i);
-                DrawIndexedRenderCommand* icmd = static_cast<DrawIndexedRenderCommand*>(cmd);
-                //R_TRACE("TEST", "%d", icmd);
-                op = icmd->op;
+                DrawIndexedBatch* icmd = static_cast<DrawIndexedBatch*>(cmd.opData);
+                totalSubmeshes += icmd->numSubMeshes;
+                for (U32 i = 0; i < icmd->numSubMeshes; ++i)
+                {
+                    IndexedInstancedSubMesh& submesh = icmd->pSubMeshes[i];
+                    totalVertices += submesh.indexCount;
+                }
+                //R_TRACE("TEST", "Indexed Draw call numSubmeshes=%d", icmd->numSubMeshes);
                 break;
             }
         }
-    
     }
 
     RealtimeTick::updateWatch(1ull, 0);
     tick = RealtimeTick::getTick(0);
-    R_VERBOSE("TEST", "Took %f secs to read list.", tick.delta());
+    R_VERBOSE("TEST", "Total submeshes=%d, totalIndices=%d, totalVertices=%d, Took %f ms to read list.", totalSubmeshes, totalVertices, totalVertices, tick.delta() * 1000);
 
     list.reset();
     list.destroy();

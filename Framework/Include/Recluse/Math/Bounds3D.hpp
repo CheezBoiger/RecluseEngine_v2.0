@@ -54,7 +54,7 @@ RecluseFramework_PUBLIC_API Bool    contains(const Bounds3d& container, const Bo
 // Get the surface area of our bounding box.
 RecluseFramework_PUBLIC_API F32     surfaceArea(const Bounds3d& a);
 
-// Get the center position of our bounding box.
+// Get the center position of our bounding box. Also known as the centroid.
 RecluseFramework_PUBLIC_API Float3  center(const Bounds3d& a);
 
 // Get the total extent our box (the actual size of the box.)
