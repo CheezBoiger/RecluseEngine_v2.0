@@ -241,7 +241,15 @@ public:
     ResultCode  release(VkDevice device);
     
     Index       requestIndices(U32 requestedIndices);
-    ResultCode  reset();
+
+    // Host/Cpu side query pool reset, similar to D3D12, only that Vulkan supports this call
+    // for API versions v1.2.0+.
+    // For older APIs, use resetLegacy() call during command buffer recording.
+    ResultCode  reset(VkDevice device);
+
+    // Uses the legacy command from Vulkan API v1.0, to reset the query pool.
+    // This requires an open and recording command buffer to work.
+    ResultCode  resetLegacy(VkCommandBuffer cmdBuffer);
 
 private:
     VkQueryPool m_query;

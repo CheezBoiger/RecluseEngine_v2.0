@@ -80,7 +80,7 @@ public:
     const VkPhysicalDeviceMemoryProperties& getMemoryProperties() const;
     VkPhysicalDeviceMemoryProperties2       getMemoryProperties2() const;
     const VkPhysicalDeviceFeatures&         getFeatures() const;
-    VkPhysicalDeviceFeatures2               getFeatures2() const;
+    PhysicalDeviceFeaturesInfo              getFeatures2() const;
     VkFormatProperties                      getFormatProperties(VkFormat format) const;
     std::vector<VkQueueFamilyProperties>    getQueueFamilyProperties() const;
     std::vector<VkExtensionProperties>      getDeviceExtensionProperties() const;

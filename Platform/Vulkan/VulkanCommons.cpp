@@ -12,6 +12,7 @@ PFN_vkCreateRayTracingPipelinesKHR  pfn_vkCreateRayTracingPipelinesKHR  = nullpt
 namespace Recluse {
 namespace Vulkan {
 
+uint32_t                 targetApiVersion = R_RECLUSE_TARGET_VULKAN_API_VERSION();
 
 VkStencilOp getNativeStencilOp(Recluse::StencilOp op)
 {

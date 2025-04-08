@@ -324,6 +324,7 @@ VulkanQueryManager::VulkanQueryManager()
 
 VulkanQueryManager::~VulkanQueryManager()
 {
+    //R_ASSERT_FORMAT(!m_query, "A query pool was not released before destruction!");
 }
 
 
@@ -336,9 +337,19 @@ ResultCode VulkanQueryManager::release(VkDevice device)
 }
 
 
-ResultCode VulkanQueryManager::reset()
+ResultCode VulkanQueryManager::reset(VkDevice device)
 {   
+    R_ASSERT(device);
     m_currentAvailableIndex = 0;
+    vkResetQueryPool(device, m_query, m_currentAvailableIndex, m_maxQueryCount);
+    return RecluseResult_Ok;
+}
+
+
+ResultCode VulkanQueryManager::resetLegacy(VkCommandBuffer cmdBuffer)
+{
+    m_currentAvailableIndex = 0;
+    vkCmdResetQueryPool(cmdBuffer, m_query, m_currentAvailableIndex, m_maxQueryCount);
     return RecluseResult_Ok;
 }
 

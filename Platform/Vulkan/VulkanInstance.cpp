@@ -210,7 +210,7 @@ ResultCode VulkanInstance::onInitialize(const ApplicationInfo& appInfo, LayerFea
     m_engineName                            = appInfo.engineName;
 
     nativeAppInfo.sType                     = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    nativeAppInfo.apiVersion                = VK_MAKE_VERSION(1, 1, 0); // We will target Vulkan v1.1.0
+    nativeAppInfo.apiVersion                = Vulkan::targetApiVersion;
     nativeAppInfo.pApplicationName          = appInfo.appName;
     nativeAppInfo.pEngineName               = appInfo.engineName;
     nativeAppInfo.engineVersion             = VK_MAKE_VERSION(appInfo.engineMajor, appInfo.engineMinor, appInfo.enginePatch);

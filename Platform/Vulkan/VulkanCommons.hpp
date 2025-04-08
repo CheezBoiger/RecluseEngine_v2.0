@@ -17,6 +17,7 @@
 #include <vulkan/vulkan.h>
 
 #define R_CHANNEL_VULKAN "Vulkan"
+#define R_RECLUSE_TARGET_VULKAN_API_VERSION() VK_MAKE_API_VERSION(0, 1, 1, 0)
 
 // VK Version header must be equal, or above, this value, as an interface for ray tracing wasn't officially
 // supported for some time. We might want to use the NVidia provided interface, but that might require some work.
@@ -57,6 +58,8 @@ public:
 
 namespace Vulkan {
 
+// The target api version for vulkan.
+extern uint32_t                 targetApiVersion;
 extern VkFormat                 getVulkanFormat(Recluse::ResourceFormat format);
 extern Recluse::ResourceFormat  getResourceFormat(VkFormat format);
 extern VkStencilOp              getNativeStencilOp(Recluse::StencilOp op);
@@ -179,5 +182,36 @@ static void unpackVulkanShaderSetBinding(ShaderBind setBinding, U32& set, U32& b
     set     = unpackVulkanSet(setBinding);
     binding = unpackVulkanBinding(binding);
 }
+
+
+struct PhysicalDeviceFeaturesInfo
+{
+    VkPhysicalDeviceHostQueryResetFeatures  hostQueryResetFeatures;
+    VkPhysicalDeviceFeatures2               features2;
+
+    PhysicalDeviceFeaturesInfo()
+        : features2({ })
+    {
+        features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+
+        hostQueryResetFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES;
+        hostQueryResetFeatures.pNext = nullptr;
+
+
+        features2.pNext = &hostQueryResetFeatures;
+    }
+
+    PhysicalDeviceFeaturesInfo(const PhysicalDeviceFeaturesInfo& info)
+    {
+        hostQueryResetFeatures = info.hostQueryResetFeatures;
+        features2.features = info.features2.features;
+
+        features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+        hostQueryResetFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES;
+        hostQueryResetFeatures.pNext = nullptr;
+
+        features2.pNext = &hostQueryResetFeatures;
+    }
+};
 } // Vulkan
 } // Recluse

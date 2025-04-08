@@ -101,14 +101,22 @@ void VulkanContext::begin()
     vkWaitForFences(m_pDevice->get(), 1, &frameFence, VK_TRUE, UINT64_MAX);
     vkResetFences(m_pDevice->get(), 1, &frameFence);
 
-    // Reset our queries.
-    contextFrame.timestampQuery.reset();
+    if (Vulkan::targetApiVersion >= VK_MAKE_API_VERSION(0, 1, 2, 0))
+    {
+        // Reset our queries.
+        contextFrame.timestampQuery.reset(m_pDevice->get());
+    }
 
     prepare();
 
     m_primaryCommandList.use(getCurrentFrameIndex());
     m_primaryCommandList.reset();
     m_primaryCommandList.begin();
+
+    if (Vulkan::targetApiVersion < VK_MAKE_API_VERSION(0, 1, 2, 0))
+    {
+        contextFrame.timestampQuery.resetLegacy(m_primaryCommandList.get());
+    }
 
     if (g_justLog)
     {
@@ -185,9 +193,9 @@ ResultCode VulkanContext::submitFinalCommandBuffer(VkCommandBuffer commandBuffer
 
 
 #define CHECK_AND_ENABLE_FEATURE_IF_AVAILABLE(enabled, available, feature) \
-    if (available.feature) \
+    if (available.features2.features.feature) \
     { \
-        enabled.feature = true; \
+        enabled.features2.features.feature = true; \
     } \
     else \
     { \
@@ -196,10 +204,10 @@ ResultCode VulkanContext::submitFinalCommandBuffer(VkCommandBuffer commandBuffer
 
 
 R_INTERNAL
-VkPhysicalDeviceFeatures checkEnableFeatures(VulkanAdapter* adapter)
+PhysicalDeviceFeaturesInfo checkEnableFeatures(VulkanAdapter* adapter)
 {
-    VkPhysicalDeviceFeatures enabledFeatures    = { };
-    VkPhysicalDeviceFeatures availableFeatures  = adapter->getFeatures();
+    PhysicalDeviceFeaturesInfo enabledFeatures   = { };
+    PhysicalDeviceFeaturesInfo availableFeatures  = adapter->getFeatures2();
 
     CHECK_AND_ENABLE_FEATURE_IF_AVAILABLE(enabledFeatures, availableFeatures, geometryShader);
     CHECK_AND_ENABLE_FEATURE_IF_AVAILABLE(enabledFeatures, availableFeatures, tessellationShader);
@@ -214,6 +222,15 @@ VkPhysicalDeviceFeatures checkEnableFeatures(VulkanAdapter* adapter)
     CHECK_AND_ENABLE_FEATURE_IF_AVAILABLE(enabledFeatures, availableFeatures, samplerAnisotropy);
     CHECK_AND_ENABLE_FEATURE_IF_AVAILABLE(enabledFeatures, availableFeatures, wideLines);
 
+    if (availableFeatures.hostQueryResetFeatures.hostQueryReset)
+    {
+        enabledFeatures.hostQueryResetFeatures.hostQueryReset = true;
+    }
+    else
+    {
+        enabledFeatures.hostQueryResetFeatures.hostQueryReset = false;
+    }
+
     return enabledFeatures;
 }
 
@@ -224,8 +241,9 @@ ResultCode VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& in
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos; 
 
     VkDeviceCreateInfo createInfo                       = { };
-
-    VkPhysicalDeviceFeatures features                   = checkEnableFeatures(adapter);
+    
+    PhysicalDeviceFeaturesInfo features                 = checkEnableFeatures(adapter);
+   
     VulkanInstance* pVc                                 = adapter->getInstance();
     std::vector<VkQueueFamilyProperties> queueFamilies  = adapter->getQueueFamilyProperties();
     std::vector<const char*> deviceExtensions           = adapter->queryAvailableDeviceExtensions(pVc->getRequestedDeviceFeatures());
@@ -302,7 +320,8 @@ ResultCode VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& in
     createInfo.queueCreateInfoCount     = (U32)queueCreateInfos.size();
     createInfo.enabledExtensionCount    = (U32)deviceExtensions.size();
     createInfo.ppEnabledExtensionNames  = deviceExtensions.data();
-    createInfo.pEnabledFeatures         = &features;
+    createInfo.pEnabledFeatures         = nullptr; //&features.features2.features;
+    createInfo.pNext                    = &features.features2; // We instead need to pass features2 to pNext, which requires pEnabledFeatures to be NULL.
 
     VkResult result = vkCreateDevice(adapter->get(), &createInfo, nullptr, &m_device);
 
@@ -327,7 +346,7 @@ ResultCode VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& in
         R_ERROR(R_CHANNEL_VULKAN, "Failed to initialize the allocation manager!");
     }
 
-    m_enabledFeatures = features;
+    m_enabledFeatures = features.features2.features;
 
     return 0;
 }
@@ -1036,7 +1055,7 @@ Bool VulkanDevice::makeVertexLayout(VertexInputLayoutId id, const VertexInputLay
     {
         R_ERROR(R_CHANNEL_VULKAN, "Can not make vertex layouts with id of %d! This is reserved for null arguments.", VertexInputLayout::VertexLayout_Null);
         return false;
-    }
+    } 
     ResultCode result = Pipelines::VertexLayout::make(getDeviceId(), id, layout);
     return (result == RecluseResult_Ok || result == RecluseResult_AlreadyExists);
 }
@@ -1057,7 +1076,6 @@ GraphicsContext* VulkanDevice::createContext()
         R_ERROR(R_CHANNEL_VULKAN, "Reached maximum allowable graphics contexts to create!");
         return nullptr;
     }
-
     VulkanContext* pContext = new VulkanContext(this, getQueue(VK_QUEUE_COMPUTE_BIT | VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_TRANSFER_BIT));
     m_allocatedContexts.push_back(pContext);
     return pContext;

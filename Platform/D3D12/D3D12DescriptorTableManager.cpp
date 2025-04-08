@@ -693,7 +693,6 @@ ResultCode D3D12QueryManager::reset()
 {
     // Resets back to 0.
     m_currentAvailableIndex = 0;
-    
     return RecluseResult_Ok;
 }
 

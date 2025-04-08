@@ -110,16 +110,19 @@ const VkPhysicalDeviceFeatures& VulkanAdapter::getFeatures() const
 VkPhysicalDeviceMemoryProperties2 VulkanAdapter::getMemoryProperties2() const
 {
     VkPhysicalDeviceMemoryProperties2 props = { };
+    // Be sure to set the structure type when querying for structures from the physical device,
+    // This is important to avoid possible headaches.
+    props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
     vkGetPhysicalDeviceMemoryProperties2(m_phyDevice, &props);
     return props;
 }
 
 
-VkPhysicalDeviceFeatures2 VulkanAdapter::getFeatures2() const
+PhysicalDeviceFeaturesInfo VulkanAdapter::getFeatures2() const
 {
-    VkPhysicalDeviceFeatures2 features = { };
-    vkGetPhysicalDeviceFeatures2(m_phyDevice, &features);
-    return features;
+    PhysicalDeviceFeaturesInfo info = { };
+    vkGetPhysicalDeviceFeatures2(m_phyDevice, &info.features2);
+    return info;
 }
 
 
@@ -342,6 +345,9 @@ void VulkanAdapter::checkAvailableDeviceExtensions()
 
     // TODO: Need to find a better way to query extensions. Some of these have dependencies between device and instance extensions.
     //       We could create a config that has an extension, and its dependency, than create some kind of DAG?
+    m_supportedDeviceExtensions.push_back(std::make_tuple(LayerFeatureFlag_None, 
+        std::vector<const char*>{   "VK_EXT_host_query_reset", // Cpu side query reset
+                                    "VK_KHR_maintenance1" }));  // This is required for fixes on vulkan 1.1.0
     m_supportedDeviceExtensions.push_back(std::make_tuple(LayerFeatureFlag_Raytracing, 
         std::vector<const char*>{   "VK_KHR_ray_tracing_pipeline", 
                                     "VK_KHR_acceleration_structure", 
