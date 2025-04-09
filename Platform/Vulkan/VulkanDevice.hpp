@@ -54,6 +54,7 @@ struct VulkanContextFrame
     VkSemaphore signalSemaphore;
     VkFence     fence;
     VulkanQueryManager timestampQuery;
+    VulkanQueryManager occlusionQuery;
 };
 
 
@@ -140,6 +141,9 @@ public:
     void setViewports(U32 numViewports, Viewport* pViewports) override;
     void setScissors(U32 numScissors, Rect* pRects) override;
     void dispatch(U32 x, U32 y, U32 z) override;
+
+    GraphicsQuery beginQuery(GraphicsQueryType type) override;
+    void endQuery(const GraphicsQuery& query) override;
 
     void transition(GraphicsResource* pResource, ResourceState dstState, U16 baseMip, U16 mipCount, U16 baseLayer, U16 layerCount) override;
 

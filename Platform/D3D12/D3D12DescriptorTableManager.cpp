@@ -651,7 +651,9 @@ ResultCode DescriptorHeapAllocationManager::release()
 
 D3D12QueryManager::D3D12QueryManager()
     : m_heap(nullptr)
+    , m_scratchBuffer(nullptr)
     , m_currentAvailableIndex(0)
+    , m_type(D3D12_QUERY_HEAP_TYPE_OCCLUSION)
 {
 }
 
@@ -676,6 +678,7 @@ ResultCode D3D12QueryManager::initialize(ID3D12Device* device, UINT nodeMask, D3
 
         result = SUCCEEDED(hr) ? RecluseResult_Ok : RecluseResult_Failed;
         m_maxQueryCount = maxQueries;
+        m_type = type;
     }
     return result;
 }
@@ -697,16 +700,68 @@ ResultCode D3D12QueryManager::reset()
 }
 
 
-D3D12QueryManager::Index D3D12QueryManager::requestIndices(U32 requestedIndices)
+D3D12QueryManager::Index D3D12QueryManager::beginQuery(ID3D12GraphicsCommandList* commandlist)
 {
-    Index result = { GraphicsQuery::InvalidQuery, GraphicsQuery::InvalidQuery };
-    if ((m_currentAvailableIndex + requestedIndices) < m_maxQueryCount)
+    U32 index = allocateIndex();
+    if (index != GraphicsQuery::InvalidQuery)
     {
-        result.start = m_currentAvailableIndex;
-        result.range = requestedIndices;
-        m_currentAvailableIndex += requestedIndices;
+        switch (getQueryType())
+        {
+            case D3D12_QUERY_TYPE_TIMESTAMP: 
+                // TODO(): Both vulkan and d3d12 have similar behavior with timestamp queries, we should make a special function case for them.
+                commandlist->EndQuery(m_heap, getQueryType(), index);
+                break;
+            case D3D12_QUERY_TYPE_OCCLUSION:
+            default:    
+                commandlist->BeginQuery(m_heap, getQueryType(), index);
+                break;
+        }
     }
-    return result;
+    return index;
+}
+
+
+D3D12QueryManager::Index D3D12QueryManager::allocateIndex()
+{
+    U32 index = GraphicsQuery::InvalidQuery;
+    if ((m_currentAvailableIndex + 1) < m_maxQueryCount)
+    {
+        index = m_currentAvailableIndex;
+        m_currentAvailableIndex += 1;
+    }
+    return index;
+}
+
+
+void D3D12QueryManager::endQuery(ID3D12GraphicsCommandList* list, Index query)
+{
+    switch (getQueryType())
+    {
+        case D3D12_QUERY_TYPE_TIMESTAMP: 
+        {
+            Index stopIndex = allocateIndex();
+            R_ASSERT_FORMAT((stopIndex - 1) == query, "Query timestamps should be next to each other!");
+            list->EndQuery(m_heap, getQueryType(), stopIndex);
+            break;
+        }
+        case D3D12_QUERY_TYPE_OCCLUSION:
+        default:
+        {
+            list->EndQuery(m_heap, getQueryType(), query);
+            break;
+        }
+    }
+}
+
+
+D3D12_QUERY_TYPE D3D12QueryManager::getQueryType() const
+{
+    switch (m_type)
+    {
+        case D3D12_QUERY_HEAP_TYPE_OCCLUSION:   return D3D12_QUERY_TYPE_OCCLUSION;
+        case D3D12_QUERY_HEAP_TYPE_TIMESTAMP:   return D3D12_QUERY_TYPE_TIMESTAMP;
+        default:                                return D3D12_QUERY_TYPE_TIMESTAMP;
+    }
 }
 } // D3D12
 } // Recluse

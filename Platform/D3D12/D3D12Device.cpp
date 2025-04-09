@@ -452,6 +452,7 @@ void D3D12Context::resetCurrentResources()
     
     // Reset the timestamp query.
     buffer.timestampQuery.reset();
+    buffer.occlusionQuery.reset();
 
     result = buffer.pAllocator->Reset();
 
@@ -472,6 +473,46 @@ void D3D12Context::resetCurrentResources()
 }
 
 
+GraphicsQuery D3D12Context::beginQuery(GraphicsQueryType queryType)
+{
+    GraphicsQuery query = { };
+    ContextFrame* frame = getCurrentContextFrame();
+    D3D12QueryManager* manager = nullptr;
+    switch (queryType)
+    {
+        case GraphicsQueryType_Timestamp: manager = &frame->timestampQuery;
+            break;
+        case GraphicsQueryType_Occlusion: manager = &frame->occlusionQuery;
+            break;
+        default:
+            break;
+    }
+    if (manager)
+    {
+        D3D12QueryManager::Index index = manager->beginQuery(m_pPrimaryCommandList->get());
+        query = { index, queryType };
+    }
+    return query;
+}
+
+
+void D3D12Context::endQuery(const GraphicsQuery& query)
+{
+    if (!query.isValid())
+        return;
+    D3D12QueryManager* manager = nullptr;
+    ContextFrame* frame = getCurrentContextFrame();
+    switch (query.getType())
+    {
+        case GraphicsQueryType_Timestamp: manager = &frame->timestampQuery; break;
+        case GraphicsQueryType_Occlusion: manager = &frame->occlusionQuery; break;
+        default: break;
+    }
+    if (manager)
+        manager->endQuery(m_pPrimaryCommandList->get(), query);
+}
+
+
 void D3D12Context::initializeBufferResources(U32 buffering)
 {
     if (buffering == 0) return;
@@ -489,6 +530,7 @@ void D3D12Context::initializeBufferResources(U32 buffering)
         m_contextFrames[i].fenceValue = m_queue->getFence()->GetCompletedValue();
 
         m_contextFrames[i].timestampQuery.initialize(m_pDevice->get(), 0, D3D12_QUERY_HEAP_TYPE_TIMESTAMP, 128);
+        m_contextFrames[i].occlusionQuery.initialize(m_pDevice->get(), 0, D3D12_QUERY_HEAP_TYPE_OCCLUSION, 128);
     }
     m_contextFrames[m_currentContextFrameIndex].fenceValue = m_queue->waitForGpu(m_contextFrames[m_currentContextFrameIndex].fenceValue);
 }
@@ -503,6 +545,7 @@ void D3D12Context::destroyBufferResources()
         if (m_contextFrames[i].pAllocator) 
         {
             m_contextFrames[i].timestampQuery.release();
+            m_contextFrames[i].occlusionQuery.release();
             m_contextFrames[i].pAllocator->Reset();
             m_contextFrames[i].pAllocator->Release();
             m_contextFrames[i].pAllocator = nullptr;

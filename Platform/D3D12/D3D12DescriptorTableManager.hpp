@@ -310,11 +310,7 @@ private:
 class D3D12QueryManager
 {
 public:
-    struct Index
-    {
-        U32 start;
-        U32 range;
-    };
+    typedef U32 Index;
 
     D3D12QueryManager();
     ~D3D12QueryManager();
@@ -322,13 +318,19 @@ public:
     ResultCode          initialize(ID3D12Device* device, UINT nodeMask, D3D12_QUERY_HEAP_TYPE type, U32 maxQueries);
     ResultCode          release();
 
-    Index               requestIndices(U32 requestIndices);
+    Index               beginQuery(ID3D12GraphicsCommandList* commandlist);
+    void                endQuery(ID3D12GraphicsCommandList* commandlist, Index query);
     ResultCode          reset();
 
 private:
-    ID3D12QueryHeap*    m_heap;
-    U32                 m_currentAvailableIndex;
-    U32                 m_maxQueryCount;
+    Index                   allocateIndex();
+    D3D12_QUERY_TYPE        getQueryType() const;
+    
+    ID3D12QueryHeap*        m_heap;
+    U32                     m_currentAvailableIndex;
+    U32                     m_maxQueryCount;
+    D3D12_QUERY_HEAP_TYPE   m_type;
+    ID3D12Resource*         m_scratchBuffer;
 }; // D3D12QueryManager
 } // D3D12
 } // Recluse 

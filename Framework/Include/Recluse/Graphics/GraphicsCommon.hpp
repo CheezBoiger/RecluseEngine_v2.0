@@ -477,25 +477,29 @@ public:
 };
 
 
-// Graphics Query object.
-class GraphicsQuery
-{
-public:
-    enum { InvalidQuery = ~0u };
-    GraphicsQuery() : index(InvalidQuery) { }
-    Bool isValid() const { return (index != InvalidQuery); }
-protected:
-    U32 index;
-};
-
-
 enum GraphicsQueryType
 {
+    GraphicsQueryType_None,
     // Query occlusions results, number of samples that pass depth/stencil tests.
     GraphicsQueryType_Occlusion,
     // High performance timing capture.
     GraphicsQueryType_Timestamp,
     // Captures abstract pipelining data for graphics and compute passes.
     GraphicsQueryType_PipelineStatistics,
+};
+
+
+// Graphics Query object.
+class GraphicsQuery
+{
+public:
+    enum { InvalidQuery = ~0u };
+    GraphicsQuery(U32 index = InvalidQuery, GraphicsQueryType type = GraphicsQueryType_None) : index(index), type(type) { }
+    Bool isValid() const { return (index != InvalidQuery); }
+    GraphicsQueryType getType() const { return type; }
+    operator U32() const { return index; }
+protected:
+    U32 index;
+    GraphicsQueryType type;
 };
 } // Recluse

@@ -32,6 +32,7 @@ struct ContextFrame
     ID3D12CommandAllocator* pAllocator;
     U64                     fenceValue;
     D3D12QueryManager       timestampQuery;
+    D3D12QueryManager       occlusionQuery;
 };
 
 
@@ -140,6 +141,8 @@ public:
     void                                dispatch(U32 x, U32 y, U32 z) override;
 
     void                                bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* pOffsets) override;
+    GraphicsQuery                       beginQuery(GraphicsQueryType queryType) override;
+    void                                endQuery(const GraphicsQuery& query) override;
 
     ID3D12GraphicsCommandList*          currentGraphicsCommandList() { return m_pPrimaryCommandList->get(); }
     void                                pushState(ContextFlags flags = ContextFlag_None) override;

@@ -231,30 +231,33 @@ public:
     VulkanQueryManager();
     ~VulkanQueryManager();
 
-    struct Index
-    {
-        U32 start;
-        U32 range;
-    };
+    typedef U32 Index;
 
-    ResultCode  initialize(VkDevice device, VkQueryType queryType, U32 maxQueryCount);
-    ResultCode  release(VkDevice device);
+    ResultCode      initialize(VkDevice device, VkQueryType queryType, U32 maxQueryCount);
+    ResultCode      release(VkDevice device);
     
-    Index       requestIndices(U32 requestedIndices);
+    Index           beginQuery(VkCommandBuffer cmdBuffer);
+    void            endQuery(VkCommandBuffer cmdBuffer, Index query);
 
     // Host/Cpu side query pool reset, similar to D3D12, only that Vulkan supports this call
     // for API versions v1.2.0+.
     // For older APIs, use resetLegacy() call during command buffer recording.
-    ResultCode  reset(VkDevice device);
+    ResultCode      reset(VkDevice device);
 
     // Uses the legacy command from Vulkan API v1.0, to reset the query pool.
     // This requires an open and recording command buffer to work.
-    ResultCode  resetLegacy(VkCommandBuffer cmdBuffer);
+    ResultCode      resetLegacy(VkCommandBuffer cmdBuffer);
 
 private:
-    VkQueryPool m_query;
-    U32         m_currentAvailableIndex;
-    U32         m_maxQueryCount;
+
+    Index           allocateIndex();
+
+    VkQueryPool     m_query;
+    U32             m_currentAvailableIndex;
+    U32             m_maxQueryCount;
+    VkQueryType     m_type;
+    VkBuffer        m_scratchBuffer;
+    VkDeviceMemory  m_scratchMemory;
 }; // VulkanQueryManager
 } // Vulkan
 } // Recluse

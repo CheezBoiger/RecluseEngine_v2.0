@@ -454,7 +454,7 @@ int main(char* argv[], int c)
     Log::initializeLoggingSystem();
     enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
+    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 
@@ -470,7 +470,7 @@ int main(char* argv[], int c)
         appInfo.appMinor = 0;
         appInfo.appMajor = 0;
         appInfo.appPatch = 0;
-        LayerFeatureFlags flags = 0;// LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
+        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
         instance->initialize(appInfo, flags);
     }
     
@@ -584,9 +584,9 @@ int main(char* argv[], int c)
                 context->setTopology(PrimitiveTopology_TriangleList);
                 context->setViewports(1, &viewport);
                 context->setScissors(1, &scissor);
-                GraphicsQuery query = context->beginQuery(GraphicsQueryType_Timestamp);
+                GraphicsQuery query = context->beginQuery(GraphicsQueryType_Occlusion);
                 context->drawIndexedInstanced(36, 1, 0, 0, 0);
-                context->endQuery(&query);
+                context->endQuery(query);
                 context->transition(textureResource, ResourceState_CopySource);
                 context->transition(swapchainImage, ResourceState_CopyDestination);
                 context->copyResource(swapchainImage, textureResource);

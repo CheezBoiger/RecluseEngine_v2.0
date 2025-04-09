@@ -105,6 +105,7 @@ void VulkanContext::begin()
     {
         // Reset our queries.
         contextFrame.timestampQuery.reset(m_pDevice->get());
+        contextFrame.occlusionQuery.reset(m_pDevice->get());
     }
 
     prepare();
@@ -116,6 +117,7 @@ void VulkanContext::begin()
     if (Vulkan::targetApiVersion < VK_MAKE_API_VERSION(0, 1, 2, 0))
     {
         contextFrame.timestampQuery.resetLegacy(m_primaryCommandList.get());
+        contextFrame.occlusionQuery.resetLegacy(m_primaryCommandList.get());
     }
 
     if (g_justLog)
@@ -754,6 +756,7 @@ void VulkanContext::createContextFrames(U32 buffering)
         vkCreateSemaphore(m_pDevice->get(), &semaphoreInfo, nullptr, &frame.signalSemaphore);
 
         frame.timestampQuery.initialize(m_pDevice->get(), VK_QUERY_TYPE_TIMESTAMP, 128);
+        frame.occlusionQuery.initialize(m_pDevice->get(), VK_QUERY_TYPE_OCCLUSION, 128);
         m_frameResources[i] = frame;
     }
 }
@@ -768,8 +771,49 @@ void VulkanContext::destroyContextFrames()
         vkDestroySemaphore(m_pDevice->get(), m_frameResources[i].signalSemaphore, nullptr);
 
         m_frameResources[i].timestampQuery.release(m_pDevice->get());
+        m_frameResources[i].occlusionQuery.release(m_pDevice->get());
     }
     m_frameResources.clear();
+}
+
+
+GraphicsQuery VulkanContext::beginQuery(GraphicsQueryType type)
+{
+    GraphicsQuery query = { };
+    VulkanContextFrame& contextFrame = getContextFrame(getCurrentFrameIndex());
+    VulkanQueryManager* manager = nullptr;
+    switch (type)
+    {
+        case GraphicsQueryType_Occlusion: manager = &contextFrame.occlusionQuery; break;
+        case GraphicsQueryType_Timestamp: manager = &contextFrame.timestampQuery; break;
+        default: break;
+    }
+
+    if (manager)
+    {
+        VulkanQueryManager::Index index = manager->beginQuery(m_primaryCommandList.get());
+        query = { index, type };
+    }
+    return query;
+}
+
+
+void VulkanContext::endQuery(const GraphicsQuery& query)
+{
+    if (!query.isValid())
+        return;
+    
+    VulkanContextFrame& contextFrame = getContextFrame(getCurrentFrameIndex());
+    VulkanQueryManager* manager = nullptr;
+    switch (query.getType())
+    {
+        case GraphicsQueryType_Occlusion: manager = &contextFrame.occlusionQuery; break;
+        case GraphicsQueryType_Timestamp: manager = &contextFrame.timestampQuery; break;
+        default: break;
+    }
+
+    if (manager)
+        manager->endQuery(m_primaryCommandList.get(), query);
 }
 
 

@@ -309,6 +309,7 @@ ResultCode VulkanQueryManager::initialize(VkDevice device, VkQueryType type, U32
         if (vkr == VK_SUCCESS)
             result = RecluseResult_Ok;
         m_maxQueryCount = maxQueryCount;
+        m_type = type;
     }
     return result;
 }
@@ -318,6 +319,7 @@ VulkanQueryManager::VulkanQueryManager()
     : m_query(nullptr)
     , m_currentAvailableIndex(0)
     , m_maxQueryCount(0)
+    , m_type(VK_QUERY_TYPE_OCCLUSION)
 {
 }
 
@@ -354,16 +356,50 @@ ResultCode VulkanQueryManager::resetLegacy(VkCommandBuffer cmdBuffer)
 }
 
 
-VulkanQueryManager::Index VulkanQueryManager::requestIndices(U32 requested)
+VulkanQueryManager::Index VulkanQueryManager::beginQuery(VkCommandBuffer cmdBuffer)
 {
-    Index result = { GraphicsQuery::InvalidQuery, GraphicsQuery::InvalidQuery };
-    if ((m_currentAvailableIndex + requested) < m_maxQueryCount)
+    Index index = allocateIndex();
+    if (index != GraphicsQuery::InvalidQuery)
     {
-        result.start = m_currentAvailableIndex;
-        result.range = requested;
-        m_currentAvailableIndex += requested;
+        switch (m_type)
+        {
+            // TODO(): Both vulkan and d3d12 have similar behavior with timestamp queries, we should make a special function case for them.
+            case VK_QUERY_TYPE_TIMESTAMP: vkCmdWriteTimestamp(cmdBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, m_query, index); break;
+            case VK_QUERY_TYPE_OCCLUSION: vkCmdBeginQuery(cmdBuffer, m_query, index, 0); break;
+            default: break;
+        }
     }
-    return result;
+    
+    return index;
+}
+
+
+void VulkanQueryManager::endQuery(VkCommandBuffer cmdBuffer, Index query)
+{
+    switch (m_type)
+    {
+        case VK_QUERY_TYPE_TIMESTAMP: 
+        {
+            Index timestampNext = allocateIndex();
+            R_ASSERT_FORMAT((timestampNext - 1) == query, "Timestamp queries should be next to each other!");
+            vkCmdWriteTimestamp(cmdBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, m_query, timestampNext);
+            break;
+        }
+        case VK_QUERY_TYPE_OCCLUSION: vkCmdEndQuery(cmdBuffer, m_query, query); break;
+        default: break;
+    }
+}
+
+
+VulkanQueryManager::Index VulkanQueryManager::allocateIndex()
+{
+    Index index = GraphicsQuery::InvalidQuery;
+    if ((m_currentAvailableIndex + 1) < m_maxQueryCount)
+    {
+        index = m_currentAvailableIndex;
+        m_currentAvailableIndex += 1;
+    }
+    return index;
 }
 } // Vulkan
 } // Recluse
