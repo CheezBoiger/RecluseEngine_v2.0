@@ -320,6 +320,10 @@ public:
 
     Index               beginQuery(ID3D12GraphicsCommandList* commandlist);
     void                endQuery(ID3D12GraphicsCommandList* commandlist, Index query);
+
+    // Resolve the query pool. On D3D12 this can be done at the end of a frame.
+    void                resolve(ID3D12GraphicsCommandList* commandlist);
+
     ResultCode          reset();
 
 private:
@@ -331,6 +335,8 @@ private:
     U32                     m_maxQueryCount;
     D3D12_QUERY_HEAP_TYPE   m_type;
     ID3D12Resource*         m_scratchBuffer;
+
+    std::vector<GraphicsQuery> m_resolvesNeeded;
 }; // D3D12QueryManager
 } // D3D12
 } // Recluse 

@@ -14,24 +14,38 @@ namespace Recluse {
 
 typedef unsigned char       U8;
 typedef char                I8;
+typedef U8                  u8;
+typedef I8                  i8;
 
 typedef unsigned short      U16;
 typedef short               I16;
+typedef U16                 u16;
+typedef I16                 i16;
 
 typedef unsigned            U32;
 typedef signed              I32;
 typedef unsigned int        UInt;
 typedef UInt                uint;
+typedef U32                 u32;
+typedef I32                 i32;
 
 typedef unsigned long long  U64;
 typedef signed long long    I64;
+typedef U64                 u64;
+typedef I64                 i64;
 
 typedef float               F32;
 typedef double              F64;
+typedef F32                 f32;
+typedef F64                 f64;
+typedef F32                 fsingle;
+typedef F32                 lowp;
+typedef F64                 highp;
 
 typedef half_float::half    Half;
 typedef Half                F16;
-
+typedef F16                 f16;
+typedef Half                half;
 
 typedef struct
 {
@@ -46,6 +60,9 @@ typedef U64                 B64;
 typedef bool                Bool;
 typedef B32                 Bool32;
 typedef B64                 Bool64;
+typedef B8                  b8;
+typedef B32                 b32;
+typedef B64                 b64;
 
 // Error type to use for error checking.
 typedef U32                 ResultCode;
@@ -59,6 +76,9 @@ typedef U32 UPtr;
 typedef U32 SizeT;
 #endif
 #endif
+
+typedef SizeT sizet;
+typedef UPtr uptr;
 
 // Check the OS architecture bitness size. 
 // This is the size of the supported instruction set.

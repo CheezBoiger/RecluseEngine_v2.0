@@ -174,8 +174,8 @@ void addEntities(Scene* pScene, ECS::Registry* registry)
 
 int main(int c, char* argv[])
 {
-    Log::initializeLoggingSystem();
-    enableLogTypes(LogType_Verbose);
+    LogSystem::initializeLoggingSystem();
+    LogSystem::enableLogTypes(LogType_Verbose);
     RealtimeTick::initializeWatch(1ull, 0);
     g_bus.initialize();
 
@@ -208,7 +208,7 @@ int main(int c, char* argv[])
     ECS::AbstractSystem::free(transformSystem);
     ECS::AbstractSystem::free(moverSystem);
     registry.cleanUp();
-    Log::destroyLoggingSystem();
+    LogSystem::destroyLoggingSystem();
     g_bus.cleanUp();
     return 0;
 }

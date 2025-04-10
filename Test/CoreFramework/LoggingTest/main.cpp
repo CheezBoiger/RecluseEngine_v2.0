@@ -48,7 +48,7 @@ ResultCode printHello(void* data)
 
 int main(int c, char* argv[])
 {
-    Log::initializeLoggingSystem(2048u);
+    LogSystem::initializeLoggingSystem(2048u);
 
     std::vector<Thread> threads(5);
     std::vector<I32> uids(5);
@@ -65,7 +65,7 @@ int main(int c, char* argv[])
         joinThread(&threads[i]);
     }
     
-    Log::destroyLoggingSystem();
+    LogSystem::destroyLoggingSystem();
 
     return 0;
 }

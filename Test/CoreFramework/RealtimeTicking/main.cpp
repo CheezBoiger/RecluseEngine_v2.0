@@ -8,7 +8,7 @@ using namespace Recluse;
 
 int main()
 {
-    Log::initializeLoggingSystem();
+    LogSystem::initializeLoggingSystem();
 
     // Initialize the realtime tick.
     RealtimeTick::initializeWatch(1ull, 0);
@@ -34,7 +34,7 @@ int main()
 
     }
 
-    Log::destroyLoggingSystem();
+    LogSystem::destroyLoggingSystem();
 
     return 0;
 }

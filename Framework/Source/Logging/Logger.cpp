@@ -268,7 +268,21 @@ void LoggingQueue::cleanup()
 }
 
 
-void Log::initializeLoggingSystem(U32 messageCacheCount)
+LogMessage* LoggingQueue::getHead() const
+{
+    LogMessage* pLog = nullptr;
+
+    ScopedLock lck(m_mutex);
+
+    pLog = (m_head) ? &m_head->logMessage : nullptr;
+    return pLog;    
+}
+
+
+namespace LogSystem {
+
+
+void initializeLoggingSystem(U32 messageCacheCount)
 {
     if (!loggingQueue) 
     {
@@ -284,7 +298,7 @@ void Log::initializeLoggingSystem(U32 messageCacheCount)
 }
 
 
-void Log::destroyLoggingSystem()
+void destroyLoggingSystem()
 {
     isLogging = false;
     joinThread(&displayThread);
@@ -297,17 +311,6 @@ void Log::destroyLoggingSystem()
         loggingQueue = nullptr;   
     }
 
-}
-
-
-LogMessage* LoggingQueue::getHead() const
-{
-    LogMessage* pLog = nullptr;
-
-    ScopedLock lck(m_mutex);
-
-    pLog = (m_head) ? &m_head->logMessage : nullptr;
-    return pLog;    
 }
 
 
@@ -342,6 +345,15 @@ void setLogChannel(const std::string& channel, B8 enable)
 }
 
 
+void setLogChannels(const std::vector<LogChannelConfig>& configs)
+{
+    for (const auto& config : configs)
+    {
+        setLogChannel(config.channel, config.enable);
+    }
+}
+
+
 void enableLogFile(const std::string& logPath, B32 enable)
 {
     if (enable)
@@ -353,7 +365,7 @@ void enableLogFile(const std::string& logPath, B32 enable)
         fclose(stdout);
     }
 }
-
+} // LogSystem
 
 Log& Log::operator<<(LogCommand command)
 {

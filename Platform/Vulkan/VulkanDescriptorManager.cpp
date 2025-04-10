@@ -391,6 +391,16 @@ void VulkanQueryManager::endQuery(VkCommandBuffer cmdBuffer, Index query)
 }
 
 
+void VulkanQueryManager::resolve(VkDevice device)
+{
+    // Return if no queries were used in this pass.
+    if (m_currentAvailableIndex == 0)
+        return;
+    // Cpu side query resolve, we will only read if the data is available (which the driver provides the available bit.)
+    vkGetQueryPoolResults(device, m_query, 0, m_currentAvailableIndex, sizeof(U64) * 128, scratch.data(), 0, VK_QUERY_RESULT_WITH_AVAILABILITY_BIT);
+}
+
+
 VulkanQueryManager::Index VulkanQueryManager::allocateIndex()
 {
     Index index = GraphicsQuery::InvalidQuery;

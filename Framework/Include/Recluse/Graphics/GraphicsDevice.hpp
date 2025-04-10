@@ -288,9 +288,6 @@ public:
 
     // Ends a query capture. Should be called after every beginQuery() call.
     virtual void                    endQuery(const GraphicsQuery& query) { }
-
-    // Resolves queries into a graphics resource, which should then be accessed by the host.
-    virtual void                    resolveQueries(GraphicsQuery* queries, U32 numQueries, GraphicsResource* resource) { }
 };
 
 

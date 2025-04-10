@@ -67,8 +67,8 @@ void fillList(CommandList& list)
 
 int main(int c, char* argv[])
 {
-    Log::initializeLoggingSystem();
-    enableLogTypes(LogType_Verbose);
+    LogSystem::initializeLoggingSystem();
+    LogSystem::enableLogTypes(LogType_Verbose);
     RealtimeTick::initializeWatch(1ull, 0);
 
     CommandList list;
@@ -131,6 +131,6 @@ int main(int c, char* argv[])
 
     list.reset();
     list.destroy();
-    Log::destroyLoggingSystem();
+    LogSystem::destroyLoggingSystem();
     return 0;
 }

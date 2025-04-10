@@ -121,10 +121,10 @@ GraphicsResource* createUavResource(GraphicsResource* pPrevious)
 
 int main(int c, char* argv[])
 {
-    Log::initializeLoggingSystem();
+    LogSystem::initializeLoggingSystem();
     //enableLogTypes(LogType_Debug);
     RealtimeTick::initializeWatch(1ull, 0);
-    enableLogTypes(LogType_Notify);
+    LogSystem::enableLogTypes(LogType_Notify);
     GraphicsInstance* pInstance     = GraphicsInstance::create(GraphicsApi_Direct3D12);
     GraphicsAdapter* pAdapter       = nullptr;
     GraphicsResource* pData         = nullptr;
@@ -325,6 +325,6 @@ int main(int c, char* argv[])
     pDevice->releaseContext(pContext);
     pAdapter->destroyDevice(pDevice);
     GraphicsInstance::destroyInstance(pInstance);
-    Log::destroyLoggingSystem();
+    LogSystem::destroyLoggingSystem();
     return 0;
 }

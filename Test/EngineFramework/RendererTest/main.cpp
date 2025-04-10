@@ -77,10 +77,10 @@ public:
         m_window->setToCenter();
         m_window->show();
 
-        enableLogTypes(LogType_Debug | LogType_Notify);
-        setLogChannel("Renderer", true);
-        setLogChannel("MainProcess", true);
-        setLogChannel("Application", true);
+        LogSystem::enableLogTypes(LogType_Debug | LogType_Notify);
+        LogSystem::setLogChannel("Renderer", true);
+        LogSystem::setLogChannel("MainProcess", true);
+        LogSystem::setLogChannel("Application", true);
 
         RendererConfigs config = { };
         config.api = GraphicsApi_Vulkan;
@@ -152,12 +152,12 @@ public:
 
 int main(int c, char* argv[])
 {
-    Log::initializeLoggingSystem();
+    LogSystem::initializeLoggingSystem();
     TestApplication testApp = {};
     MainThreadLoop::initialize();
     MainThreadLoop::loadApp(&testApp);
     MainThreadLoop::run();
     MainThreadLoop::cleanUp();
-    Log::destroyLoggingSystem();     
+    LogSystem::destroyLoggingSystem();     
     return 0;
 }

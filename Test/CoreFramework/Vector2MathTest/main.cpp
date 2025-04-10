@@ -23,7 +23,7 @@ using namespace Recluse::Math;
 
 int main(int c, char* argv[])
 {
-    Log::initializeLoggingSystem();
+    LogSystem::initializeLoggingSystem();
     
     Float2 a = Float2( 1.0f,  1.0f);    
     Float2 b = Float2(-1.0f, -1.0f);
@@ -96,6 +96,6 @@ int main(int c, char* argv[])
 
     R_TRACE("Halfs", "%f, %f", static_cast<float>(mat), static_cast<float>(rat));
 
-    Log::destroyLoggingSystem();
+    LogSystem::destroyLoggingSystem();
     return 0;
 }

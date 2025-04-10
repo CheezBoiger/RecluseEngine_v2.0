@@ -679,6 +679,30 @@ ResultCode D3D12QueryManager::initialize(ID3D12Device* device, UINT nodeMask, D3
         result = SUCCEEDED(hr) ? RecluseResult_Ok : RecluseResult_Failed;
         m_maxQueryCount = maxQueries;
         m_type = type;
+
+        if (result == RecluseResult_Ok)
+        {
+            D3D12_RESOURCE_DESC desc = { };
+            desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+            desc.Format = DXGI_FORMAT_UNKNOWN;
+            desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+            desc.MipLevels = 1;
+            desc.Alignment = 0;
+            desc.DepthOrArraySize = 1;
+            desc.Height = 1;
+            desc.Width = maxQueries * 16;
+            desc.SampleDesc.Count = 1;
+            desc.SampleDesc.Quality = 0;
+            D3D12_HEAP_PROPERTIES heapProps = { };
+            heapProps.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+            heapProps.CreationNodeMask = 0;
+            heapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+            heapProps.Type = D3D12_HEAP_TYPE_READBACK;
+            heapProps.VisibleNodeMask = 0;
+
+            hr = device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COMMON, nullptr, __uuidof(ID3D12Resource), (void**)&m_scratchBuffer);
+            R_ASSERT(SUCCEEDED(hr));
+        }
     }
     return result;
 }
@@ -688,6 +712,8 @@ ResultCode D3D12QueryManager::release()
 {
     if (m_heap)
         m_heap->Release();
+    if (m_scratchBuffer)
+        m_scratchBuffer->Release();
     return RecluseResult_Ok;
 }
 
@@ -751,6 +777,29 @@ void D3D12QueryManager::endQuery(ID3D12GraphicsCommandList* list, Index query)
             break;
         }
     }
+}
+
+
+void D3D12QueryManager::resolve(ID3D12GraphicsCommandList* commandlist)
+{
+    // No queries, skip.
+    if (m_currentAvailableIndex == 0)
+        return;
+
+    D3D12_RESOURCE_BARRIER barrier = { };
+    barrier.Transition.pResource = m_scratchBuffer;
+    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
+    barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
+    barrier.Transition.Subresource = 0;
+    commandlist->ResourceBarrier(1, &barrier);
+
+    commandlist->ResolveQueryData(m_heap, getQueryType(), 0, m_currentAvailableIndex, m_scratchBuffer, 0);
+
+    barrier.Transition.pResource = m_scratchBuffer;
+    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+    barrier.Transition.StateAfter =  D3D12_RESOURCE_STATE_COMMON;
+    barrier.Transition.Subresource = 0;
+    commandlist->ResourceBarrier(1, &barrier);
 }
 
 

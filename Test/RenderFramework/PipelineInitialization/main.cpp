@@ -108,10 +108,10 @@ void updateConstData(GraphicsResource* pData, RealtimeTick& tick, U64 offsetByte
 
 int main(int c, char* argv[])
 {
-    Log::initializeLoggingSystem();
+    LogSystem::initializeLoggingSystem();
     RealtimeTick::initializeWatch(1ull, 0);
-    enableLogTypes(LogType_Debug);
-    disableLogTypes(LogType_Warn);
+    LogSystem::enableLogTypes(LogType_Debug);
+    LogSystem::disableLogTypes(LogType_Warn);
     GraphicsInstance* pInstance             = GraphicsInstance::create(GraphicsApi_Vulkan);
     GraphicsAdapter* pAdapter               = nullptr;
     GraphicsResource* pData                 = nullptr;
@@ -414,6 +414,6 @@ int main(int c, char* argv[])
     Window::destroy(pWindow);
     pMouse->destroy();
     delete pMouse;
-    Log::destroyLoggingSystem();
+    LogSystem::destroyLoggingSystem();
     return 0;
 }

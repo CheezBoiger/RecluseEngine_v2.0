@@ -114,6 +114,11 @@ void D3D12Context::end()
 {
     // We should always flush any remaining barrier transitions, especially if they involve transiting our back buffer back to present state.
     flushBarrierTransitions();
+
+    // Resolve any queries that have been used.
+    getCurrentContextFrame()->timestampQuery.resolve(m_pPrimaryCommandList->get());
+    getCurrentContextFrame()->occlusionQuery.resolve(m_pPrimaryCommandList->get());    
+
     m_pPrimaryCommandList->end();
     // Fire off our command list!
     submitPrimaryCommandList(m_pPrimaryCommandList->get());

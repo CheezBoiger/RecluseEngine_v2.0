@@ -72,7 +72,7 @@ void updateResource(GraphicsResource* pResource)
 
 int main(int c, char* argv[])
 {
-    Log::initializeLoggingSystem();     
+    LogSystem::initializeLoggingSystem();     
     RealtimeTick::initializeWatch(1ull, 0);
     GraphicsInstance* pInstance     = nullptr;
     GraphicsAdapter* pAdapter       = nullptr;
@@ -342,6 +342,6 @@ int main(int c, char* argv[])
     pAdapter->destroyDevice(pDevice);
     Window::destroy(pWindow);
     GraphicsInstance::destroyInstance(pInstance);
-    Log::destroyLoggingSystem();
+    LogSystem::destroyLoggingSystem();
     return 0;
 }

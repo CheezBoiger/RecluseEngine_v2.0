@@ -71,7 +71,7 @@ public:
 
 int main(int c, char* argv[])
 {
-    Log::initializeLoggingSystem();
+    LogSystem::initializeLoggingSystem();
     RealtimeTick::initializeWatch(1ull, 0);
 
     Scene* pScene = new GameWorldScene();
@@ -101,6 +101,6 @@ int main(int c, char* argv[])
     pScene->destroy();
   
     delete pScene;
-    Log::destroyLoggingSystem();
+    LogSystem::destroyLoggingSystem();
     return 0;
 }

@@ -239,6 +239,10 @@ public:
     Index           beginQuery(VkCommandBuffer cmdBuffer);
     void            endQuery(VkCommandBuffer cmdBuffer, Index query);
 
+    // Resolve data from queries. This is a cpu/host resolve call, different from D3D12, so be sure to 
+    // call this function after submitting to the render queue.
+    void            resolve(VkDevice device);
+
     // Host/Cpu side query pool reset, similar to D3D12, only that Vulkan supports this call
     // for API versions v1.2.0+.
     // For older APIs, use resetLegacy() call during command buffer recording.
@@ -256,8 +260,8 @@ private:
     U32             m_currentAvailableIndex;
     U32             m_maxQueryCount;
     VkQueryType     m_type;
-    VkBuffer        m_scratchBuffer;
-    VkDeviceMemory  m_scratchMemory;
+    // Scratch memory.
+    std::vector<U64> scratch;
 }; // VulkanQueryManager
 } // Vulkan
 } // Recluse

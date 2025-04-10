@@ -739,8 +739,8 @@ void destroyCubes(GraphicsDevice* device, std::vector<MeshDraw>& meshes)
 
 int main(char* argv[], int c)
 {
-    Log::initializeLoggingSystem();
-    enableLogTypes(LogType_Debug | LogType_Info);
+    LogSystem::initializeLoggingSystem();
+    LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
     instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
     GraphicsAdapter* adapter    = nullptr;
@@ -850,6 +850,6 @@ int main(char* argv[], int c)
     device->releaseContext(context);
     adapter->destroyDevice(device);
     GraphicsInstance::destroyInstance(instance);
-    Log::destroyLoggingSystem();
+    LogSystem::destroyLoggingSystem();
     return 0;
 }

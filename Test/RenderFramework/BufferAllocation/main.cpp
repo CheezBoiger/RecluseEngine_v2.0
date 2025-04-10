@@ -11,7 +11,7 @@ using namespace Recluse;
 
 int main(int c, char* argv[])
 {
-    Log::initializeLoggingSystem();
+    LogSystem::initializeLoggingSystem();
 
     GraphicsInstance* pInstance = GraphicsInstance::create(GraphicsApi_Vulkan);
 
@@ -113,6 +113,6 @@ int main(int c, char* argv[])
    GraphicsInstance::destroyInstance(pInstance);
 
 Exit:
-    Log::destroyLoggingSystem();
+    LogSystem::destroyLoggingSystem();
     return 0;
 }

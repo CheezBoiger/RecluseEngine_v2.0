@@ -17,7 +17,7 @@ inline void logTick()
 
 int main()
 {
-    Log::initializeLoggingSystem();
+    LogSystem::initializeLoggingSystem();
 
     // Initialize the realtime tick.
     RealtimeTick::initializeWatch(1ull, 0);
@@ -49,6 +49,6 @@ int main()
 
     R_DEBUG("Core", "Finished!");
 
-    Log::destroyLoggingSystem();
+    LogSystem::destroyLoggingSystem();
     return 0;
 }

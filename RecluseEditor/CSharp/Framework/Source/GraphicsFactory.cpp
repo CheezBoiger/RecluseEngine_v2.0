@@ -575,8 +575,8 @@ IGraphicsDevice::IGraphicsDevice(GraphicsApi graphicsApi, System::String^ appNam
 {
     if (EnableDebugLayer)
     {
-        enableLogFile("recluse.log", true);
-        Log::initializeLoggingSystem();
+        LogSystem::enableLogFile("recluse.log", true);
+        LogSystem::initializeLoggingSystem();
     }
 
     switch (graphicsApi)
@@ -634,7 +634,7 @@ IGraphicsDevice::~IGraphicsDevice()
     R_ASSERT(m_device);
     m_adapter->destroyDevice(m_device);
     GraphicsInstance::destroyInstance(m_instance);
-    Log::destroyLoggingSystem();
+    LogSystem::destroyLoggingSystem();
 }
 
 
@@ -659,7 +659,7 @@ IGraphicsDevice::!IGraphicsDevice()
         m_adapter->destroyDevice(m_device);
         GraphicsInstance::destroyInstance(m_instance);
     }
-    Log::destroyLoggingSystem();
+    LogSystem::destroyLoggingSystem();
 }
 
 ISwapchain::ISwapchain(IGraphicsDevice^ Device, System::IntPtr WindowHandle,  ResourceFormat format, System::Int32 width, System::Int32 height, System::UInt32 numFrames, FrameBuffering frameBuffering)

@@ -31,7 +31,7 @@ void resizeFunc(U32 x, U32 y, U32 width, U32 height)
 
 int main(int c, char* argv[])
 {
-    Log::initializeLoggingSystem();
+    LogSystem::initializeLoggingSystem();
     RealtimeTick::initializeWatch(1ull, 0);
     GraphicsInstance* pInstance       = GraphicsInstance::create(GraphicsApi_Vulkan);
 
@@ -159,6 +159,6 @@ int main(int c, char* argv[])
     Window::destroy(pWindow);
 
 Exit:
-    Log::destroyLoggingSystem();
+    LogSystem::destroyLoggingSystem();
     return 0;
 }

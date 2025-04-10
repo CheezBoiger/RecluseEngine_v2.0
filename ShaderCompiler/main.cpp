@@ -16,7 +16,7 @@ using namespace std;
 
 int main(int c, char* argv[])
 {
-    Recluse::Log::initializeLoggingSystem();
+    Recluse::LogSystem::initializeLoggingSystem();
 
     cxxopts::Options options("Recluse ShaderCompiler", u8"Shader Compiler for Recluse Shaders.");
     
@@ -61,6 +61,6 @@ int main(int c, char* argv[])
 
     R_VERBOSE("ShaderCompiler", "Finished!");
 
-    Recluse::Log::destroyLoggingSystem();
+    Recluse::LogSystem::destroyLoggingSystem();
     return 0;
 }

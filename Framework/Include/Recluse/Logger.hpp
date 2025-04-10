@@ -6,6 +6,7 @@
 #include "RecluseFramework_exports.hpp"
 
 #include <chrono>
+#include <vector>
 #include <varargs.h>
 
 namespace Recluse {
@@ -69,13 +70,6 @@ private:
 public:
     // Data message.
     LogMessage data;
-
-    // One time initialize of the data structure for our logging system.
-    // Optional message cache size can be defined as well. Be sure to have enough memory if needed.
-    static RecluseFramework_PUBLIC_API void initializeLoggingSystem(U32 messageCacheCount = 1024u);
-    
-    // Final call once the process is completely finished. 
-    static RecluseFramework_PUBLIC_API void destroyLoggingSystem();
 
     Log(LogType type = LogType_Msg, const std::string& chan = u8"") 
     {
@@ -172,6 +166,22 @@ public:
 };
 
 
+struct LogChannelConfig
+{
+    std::string channel;
+    B8          enable;
+};
+
+
+namespace LogSystem {
+
+// One time initialize of the data structure for our logging system.
+// Optional message cache size can be defined as well. Be sure to have enough memory if needed.
+RecluseFramework_PUBLIC_API void               initializeLoggingSystem(U32 messageCacheCount = 1024u);
+    
+// Final call once the process is completely finished. 
+RecluseFramework_PUBLIC_API void               destroyLoggingSystem();
+
 // Filter out any log types we want to listen to. By default, all log types are enabled.
 RecluseFramework_PUBLIC_API extern void        setLogMask(LogTypeFlags enableFlags);
 RecluseFramework_PUBLIC_API extern void        enableLogTypes(LogTypeFlags flags);
@@ -180,6 +190,7 @@ RecluseFramework_PUBLIC_API extern void        disableLogTypes(LogTypeFlags flag
 // Show which channels to filter out. By default, all channels are enabled, so show which channels 
 // we wish to store.
 RecluseFramework_PUBLIC_API extern void        setLogChannel(const std::string& channel, B8 enable);
+RecluseFramework_PUBLIC_API extern void        setLogChannels(const std::vector<LogChannelConfig>& channels);
 
 // Display logging info to standard output.
 RecluseFramework_PUBLIC_API extern void        enableStandardOutput(B32 enable);
@@ -189,4 +200,5 @@ RecluseFramework_PUBLIC_API extern void        enableLogFile(const std::string& 
 RecluseFramework_PUBLIC_API extern void        setLogFileMaxCache(U64 maxCachedSizeBytes);
 RecluseFramework_PUBLIC_API extern void        setLogFileMaxSize(U64 maxSizeBytes);
 RecluseFramework_PUBLIC_API extern std::string getLogFilePath();
+} // LogSystem
 } // Recluse

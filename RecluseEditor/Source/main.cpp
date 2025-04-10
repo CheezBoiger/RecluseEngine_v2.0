@@ -10,7 +10,7 @@
 
 int main(int c, char* argv[])
 {
-    Recluse::Log::initializeLoggingSystem();
+    Recluse::LogSystem::initializeLoggingSystem();
     Recluse::RealtimeTick::initializeWatch(0, 0);
 
     Recluse::ResultCode result = Recluse::Editor::GUIFactory::createContext(Recluse::Editor::GUIFactory::Context_WxWidgets);
@@ -27,6 +27,6 @@ int main(int c, char* argv[])
         R_ERROR(R_EDITOR_CHAN, "No context was created!");
     }
 
-    Recluse::Log::destroyLoggingSystem();
+    Recluse::LogSystem::destroyLoggingSystem();
     return 0;
 }

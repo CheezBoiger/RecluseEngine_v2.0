@@ -12,7 +12,7 @@ using namespace Recluse;
 
 int main(int c, char* argv[])
 {
-    Log::initializeLoggingSystem();
+    LogSystem::initializeLoggingSystem();
     RealtimeTick::initializeWatch(1ull, 0);
 
     GraphicsSwapchain* pSwapchain   = nullptr;
@@ -110,6 +110,6 @@ int main(int c, char* argv[])
     Window::destroy(pWindow);
 
 Exit:
-    Log::destroyLoggingSystem();
+    LogSystem::destroyLoggingSystem();
     return 0;
 }
