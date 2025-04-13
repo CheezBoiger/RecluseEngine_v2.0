@@ -8,6 +8,7 @@
 
 #include <codecvt>
 #include <locale>
+#include <map>
 
 #if defined RCL_DXC 
 #include <atlbase.h>
@@ -92,7 +93,13 @@ class DXCShaderBuilder : public ShaderBuilder
 {
 public:
     DXCShaderBuilder(ShaderIntermediateCode imm)
-        : ShaderBuilder(imm) { }
+        : ShaderBuilder(imm) 
+    {
+        m_optimizationMap = { 
+            { Config::Default, L"-O3" },
+            { Config::Disable, L"-O0" }
+        }; 
+    }
 
     ResultCode setUp() override
     {
@@ -197,6 +204,9 @@ public:
         {
             arguments[argCount++] = L"-spirv";
         }
+
+        // Optimization settings
+        arguments[argCount++] = m_optimizationMap[getOptimizationOption()];
 
         int count = MultiByteToWideChar(CP_UTF8, 0, entryPoint, sizeof(entryPoint), nullptr, 0);
         WCHAR* wideEntryPoint = new WCHAR[count];
@@ -337,6 +347,7 @@ private:
     CComPtr<IDxcCompiler> m_compiler;
     CComPtr<IDxcLibrary> m_library;
     //CComPtr<IDxcUtils> m_utils;
+    std::map<Config::OptimizationOption, const wchar_t*> m_optimizationMap;
 };
 #endif
 

@@ -9,6 +9,7 @@ namespace Recluse {
 template <typename T>
 static void recluseSwap(T& lh, T& rh) 
 {
+    // TODO: Bad swap, probably want a better one later.
     T temp = lh;
     lh = rh;
     rh = temp;

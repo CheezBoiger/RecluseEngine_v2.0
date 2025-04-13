@@ -66,7 +66,6 @@ void RendererModule::initialize()
 
         return;
     }
-   
 
     info.engineName     = RECLUSE_ENGINE_NAME_STRING;
     info.engineMajor    = RECLUSE_ENGINE_VERSION_MAJOR;

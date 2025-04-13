@@ -17,13 +17,35 @@ struct PreprocessDefine
     std::string value;
 };
 
+
 // ShaderBuilder, handles high level shading languages, and transforms them into
 // bytecode to be read to the gpu.
 class ReclusePipeline_PUBLIC_API ShaderBuilder 
 {
 public:
+    // Configuration for the shader builder.
+    struct Config
+    {
+        enum 
+        {
+            // Default Config 
+            Default, 
+            // Optimize, which is default
+            Optimize = Default, 
+            // Disable optimizations, intended for debugging shaders.
+            Disable 
+        };
+        typedef u32 OptimizationOption;
+
+
+        OptimizationOption  option;
+        Bool                dumpSymbols;
+    };
+
     ShaderBuilder(ShaderIntermediateCode imm)
-        : m_imm(imm) { }
+        : m_imm(imm)
+        , m_builderConfig({ }) 
+    { }
     virtual ~ShaderBuilder() { }
     
     // Set up the shader builder. Should be the warm up setup.
@@ -33,10 +55,14 @@ public:
     // that is initialized by the shaderbuilder should be cleaned up.
     virtual ResultCode tearDown() { return RecluseResult_NoImpl; }
 
-    // compiler the shader and return the bytecode.
+    // Set the configuration.
+    void setConfiguration(const Config& config) { m_builderConfig = config; }
+
+    // compile the shader and return the bytecode.
+    // If successful, the shader will contain the compiled bytecode and information.
     ResultCode compile
         (
-            Shader* pShader,
+            Shader* pShaderOut,
             const char* entryPoint,
             const char* srcCode, 
             U64 sourceCodeBytes,
@@ -51,9 +77,15 @@ public:
 
     // Shader reflection function.
     virtual ResultCode reflect(ShaderReflection& reflectionOutput, const char* bytecode, U64 sizeBytes, ShaderLanguage lang) { return RecluseResult_NoImpl; }
+    
+    // Is the builder for debug mode.
+    Bool isDebugMode() const { return (m_builderConfig.option != Config::Disable); }
+
+    Config::OptimizationOption getOptimizationOption() const { return m_builderConfig.option; }
 
 private:
 
+    // OnCompile function abstract intended to be overridden on specifying shaderbuilders.
     virtual ResultCode onCompile
                         (
                             const std::vector<char>& srcCode,
@@ -67,7 +99,8 @@ private:
 
     virtual ResultCode preprocessInputResources(ShaderLanguage lang, std::vector<char>& sourceCode);
 
-    ShaderIntermediateCode m_imm;
+    ShaderIntermediateCode  m_imm;
+    Config                  m_builderConfig;
 };
 
 // Must be newly allocated.

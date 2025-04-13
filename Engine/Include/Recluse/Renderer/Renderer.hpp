@@ -107,6 +107,18 @@ struct MaterialDescription
 };
 
 
+// Is this object recreatable?
+class RecreatableObject
+{
+public:
+    RecreatableObject() { }
+    virtual ~RecreatableObject() { }
+
+    virtual Bool isRecreatable() const = 0;
+    virtual ResultCode recreate() = 0;
+};
+
+
 typedef MapContainer<U32, std::vector<U64>> CommandKeyContainer;
 
 // Top level rendering engine. Implements Render Hardware Interface, and 

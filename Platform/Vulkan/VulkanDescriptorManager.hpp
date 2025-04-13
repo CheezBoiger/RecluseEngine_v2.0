@@ -252,6 +252,9 @@ public:
     // This requires an open and recording command buffer to work.
     ResultCode      resetLegacy(VkCommandBuffer cmdBuffer);
 
+    // Get the number of used queries from this manager.
+    U32             numUsedQueries() const { return m_currentAvailableIndex; }
+
 private:
 
     Index           allocateIndex();

@@ -18,7 +18,7 @@ ResultCode printHello(void* data)
 
     Log log(LogType_Debug);
     
-    log << DateFormatter("%Y-%M-%D %h:%m:%s") << "Testing insta-Logging..." << rFLUSH;
+    log << DateFormatter("%Y-%M-%D %h:%m:%s") << "Testing insta-Logging..." << rFlush;
 
     R_DEBUG("TestFramework", "Testing debugging system. uid=%d", uid);
 
@@ -42,7 +42,7 @@ ResultCode printHello(void* data)
         count++;
     }
 
-    log << "Finished" << rFLUSH;
+    log << "Finished" << rFlush;
     return RecluseResult_Ok;
 }
 

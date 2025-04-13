@@ -28,6 +28,18 @@ class RendererModule;
 class DebugRenderer
 {
 public:
+    enum LitType
+    {
+        // Mesh is flat lit.
+        LitType_Flat,
+        // Mesh is shaded lit.
+        LitType_Shaded,
+        // Mesh is wireframe.
+        LitType_Wireframe,
+        // Mesh is only drawn as outlines.
+        LitType_Outline,
+    };
+
     virtual ~DebugRenderer() { }
     DebugRenderer() : renderer(nullptr) { }
 
@@ -41,13 +53,42 @@ public:
     virtual void        drawText(U32 x, U32 y, F32 scale, const char* text, const Math::Color4& color) = 0;
     virtual void        drawText(const Math::Float3& position, const char* text, F32 scale, const Math::Color4& color) = 0;
 
-    virtual void        drawBox(const Math::Bounds3d& bounds, const Math::Matrix44& transform, const Math::Color4& color, Bool solid = true) = 0;
+    
+    virtual void        drawBox(const Math::Bounds3d& bounds, const Math::Matrix44& transform, const Math::Color4& color, LitType lit = LitType_Flat) = 0;
     virtual void        drawPoint(const Math::Float3& position, F32 scale, const Math::Color4& color) = 0;
-    virtual void        drawSphere(const Math::Float3& position, F32 radius, const Math::Color4& color) = 0;
+
+    // Draw a debug sphere.
+    // \param position The position of the sphere in worldspace.
+    // \param radius The radius of the sphere, this determines its the size.
+    // \\param color The color of the sphere.
+    virtual void        drawSphere(const Math::Float3& position, F32 radius, const Math::Color4& color, LitType lit = LitType_Flat) = 0;
+
+    // Draw line in the world. 
+    // \param start = start position in worldspace coordinates
+    // \param end = end position in worldspace coordinates
+    // \param scale = the width of the line in scale values.
+    // \param color = the color of the line.
     virtual void        drawLine(const Math::Float3& start, const Math::Float3& end, F32 scale, const Math::Color4& color) = 0;
+
+    // Draw a ray in the world, with the origin starting position, and carrying on with the direction.
+    // \param origin The origin of the ray in worldspace
+    // \param direction The direction of the ray in worldspace, where it points to, along with the range.
+    // \param color The color of the ray.
     virtual void        drawRay(const Math::Float3& origin, const Math::Float3& direction, const Math::Color4& color) = 0;
 
-    virtual void        drawMesh(const std::vector<Math::Float3>& vertices, const std::vector<U16>& indices) = 0;
+    // Draw a debug mesh in the world, with a given topology, world transform and type.
+    // \param topology The topology of the mesh.
+    // \param worldTransform The world transform for the mesh
+    // \param vertices The vertices of the mesh
+    // \param indices The indices of the mesh.
+    // \param color The color of the mesh
+    // \param debugType The Lit type of the mesh.
+    virtual void        drawMesh(PrimitiveTopology topology, 
+                            const Math::Mat44& worldTransform, 
+                            const std::vector<Math::Float3>& vertices, 
+                            const std::vector<U16>& indices, 
+                            const Math::Color4& color,
+                            LitType debugType = LitType_Flat) = 0;
 private:
     RendererModule* renderer;
 };

@@ -51,8 +51,8 @@ struct LogMessage
 
 enum LogCommand
 {
-    rEND     = (1 << 0),     // Insert an end line.
-    rFLUSH   = (1 << 1),     // Flush out the command.
+    rEnd     = (1 << 0),     // Insert an end line.
+    rFlush   = (1 << 1),     // Flush out the command.
 };
 
 // Logging message struct. Contains message strings to be stored.
@@ -78,6 +78,10 @@ public:
     }
 
     RecluseFramework_PUBLIC_API ~Log();
+
+    // Flush the log, sending out to be read, unless disabled.
+    // true to force a flush.
+    RecluseFramework_PUBLIC_API void flush(Bool force = false);
 
     template<typename Type>
     Log& operator<<(const Type& data) 

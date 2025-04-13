@@ -120,6 +120,7 @@ F32 dot(const Quaternion& a, const Quaternion& b)
 
 Quaternion slerp(const Quaternion& a, const Quaternion& b, F32 t)
 {
+#if 0
     static const F32 kThreshold = 0.9995f;
     F32 d                       = dot(a, b);
     Quaternion q;
@@ -138,7 +139,6 @@ Quaternion slerp(const Quaternion& a, const Quaternion& b, F32 t)
     {
         q = -b;
         d = -d;
-    
     }
 
     d           = R_CLAMP(d, -1, 1);
@@ -149,6 +149,11 @@ Quaternion slerp(const Quaternion& a, const Quaternion& b, F32 t)
     q1          = normalize(q1);
 
     return a * cosf(theta) + q1 * sinf(theta);
+#else
+    lowp angle = acosf(dot(a, b));
+    lowp denom = 1.0f / sinf(angle);
+    return (a * sinf((1 - t) * angle) + b * sinf(t * angle)) * denom;
+#endif
 }
 
 

@@ -24,7 +24,8 @@ public:
 
     enum Interpolation
     {
-        Interpolation_Linear,
+        Interpolation_Lerp,
+        Interpolation_Slerp,
         Interpolation_Step,
         Interpolation_CubicSpline
     };

@@ -325,6 +325,9 @@ public:
     void                resolve(ID3D12GraphicsCommandList* commandlist);
 
     ResultCode          reset();
+    
+    // Get the number of used queries from this manager.
+    U32                 numUsedQueries() const { return m_currentAvailableIndex; }
 
 private:
     Index                   allocateIndex();

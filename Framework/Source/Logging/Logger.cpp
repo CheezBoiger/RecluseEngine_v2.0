@@ -130,12 +130,18 @@ static Bool isDisabledChannel(const std::string& channel)
 
 Log::~Log()
 {
-    if (loggingQueue && isLogging) 
+    // Flush only if there is any actual information to flush.
+    if (!data.msg.empty())
+        flush(true);
+}
+
+
+void Log::flush(Bool force)
+{
+    if (loggingQueue && isLogging)
     {
         if (!isDisabledChannel(data.channel))
-        {
             loggingQueue->store(*this);
-        }
     }
 }
 
@@ -369,14 +375,14 @@ void enableLogFile(const std::string& logPath, B32 enable)
 
 Log& Log::operator<<(LogCommand command)
 {
-    if (command & rEND)
+    if (command & rEnd)
     {
         data.msg += "\n";
     }
 
     // We are given the command to flush out this message data.
     // After flush, we must clear out the existing buffer.
-    if (command & rFLUSH)
+    if (command & rFlush)
     {
         loggingQueue->store(*this);
         data.msg.clear();

@@ -37,8 +37,17 @@ typedef Hash64 EnginePluginId;
     static char* GetLibraryName() { return #PluginLibraryName; } \
     static bool IsLibrary() { return UsesLibrary; }
 
+class ModulePluginHandler
+{
+public:
+    static void destroy(ModulePluginHandler* handler)
+    {
+        delete handler;
+    }
+};
+
 template<typename ModuleImpl>
-class ModulePlugin
+class ModulePlugin : public ModulePluginHandler
 {
 public:
     virtual ~ModulePlugin() { }
@@ -138,8 +147,10 @@ public:
         {
             // Don't initialize here, only initialize where the module itself can.
             ModulePlugin<ModuleImpl>* plugin = Plugin::create();
-            m_plugins.insert(std::make_pair(Plugin::obtainId(), std::move(plugin)));
-            return RecluseResult_Ok;
+            ResultCode result = plugin->initialize(getMain());
+            if (result == RecluseResult_Ok)
+                m_plugins.insert(std::make_pair(Plugin::obtainId(), std::move(plugin)));
+            return result;
         }
         return RecluseResult_AlreadyExists;
     }
@@ -148,8 +159,8 @@ public:
     {
         for (auto plugin : m_plugins)
         {
-            plugin.second->cleanUp(nullptr);
-            delete plugin.second;
+            plugin.second->cleanUp(getMain());
+            ModulePluginHandler::destroy(plugin.second);
         }
         m_plugins.clear();
         return RecluseResult_Ok;

@@ -141,5 +141,17 @@ static U32 isqrt(U32 v)
 	}
 	return x0;
 }
+
+
+static u32 popcount(u32 num)
+{
+	return 0;
+}
+
+
+static u32 bitReverse(u32 num)
+{
+	return 0;
+}
 } // Math
 } // Recluse

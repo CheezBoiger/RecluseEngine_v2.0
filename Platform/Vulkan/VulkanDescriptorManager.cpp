@@ -307,7 +307,10 @@ ResultCode VulkanQueryManager::initialize(VkDevice device, VkQueryType type, U32
 
         VkResult vkr = vkCreateQueryPool(device, &info, nullptr, &m_query);
         if (vkr == VK_SUCCESS)
+        {
+            scratch.resize(maxQueryCount);
             result = RecluseResult_Ok;
+        }
         m_maxQueryCount = maxQueryCount;
         m_type = type;
     }
@@ -334,6 +337,7 @@ ResultCode VulkanQueryManager::release(VkDevice device)
 {
     if (m_query)
         vkDestroyQueryPool(device, m_query, nullptr);
+    scratch.clear();
     m_query = nullptr;
     return RecluseResult_Ok;
 }

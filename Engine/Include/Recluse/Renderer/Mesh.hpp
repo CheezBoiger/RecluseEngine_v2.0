@@ -6,9 +6,11 @@
 #include "Recluse/Math/Quaternion.hpp"
 #include "Recluse/Graphics/Resource.hpp"
 #include "Recluse/Renderer/RendererResources.hpp"
+#include "Recluse/Renderer/Renderer.hpp"
 #include "Recluse/RGUID.hpp"
 
 #include "RecluseEngine_exports.hpp"
+#include "Recluse/Math/Bounds3D.hpp"
 
 #include <vector>
 #include <map>
@@ -40,21 +42,39 @@ struct RecluseEngine_PUBLIC_API PerMeshTransform
 };
 
 
+enum SubMeshFlag
+{
+    SubMeshFlag_None = 0,
+    SubMeshFlag_Indexed = (1 << 0)
+};
+typedef uint SubMeshFlags;
+
+
+
 // A Submesh is a portion of a mesh that has a separate rendering method or technique.
 // Instinctively it will be a part of the mesh with it's own material.
 struct RecluseEngine_PUBLIC_API SubMesh 
 {
-    std::string name;
-    Material*   material;
-    U64         offset;
-    U64         numVertices;
+    // Name of the submesh.
+    std::string     name;
+    SubMeshFlags    flags;
+
+    // Material Id to query.
+    uint            materialId;
+
+    // Submesh vertex offset.
+    uint            offsetElements;
+    // Number of vertices that correspond to this mesh
+    uint            rangeElements;
+
+    Math::Bounds3d  bounds;
 };
 
 
 struct MeshLod
 {
-    U64 index;
-    U64 offsetVert;
+    uint offset;
+    uint numVertices;
 };
 
 
@@ -65,7 +85,7 @@ public:
 };
 
 
-class Mesh : public Serializable
+class Mesh : public Serializable, public RecreatableObject
 {
 public:
     virtual ~Mesh() { }
@@ -92,6 +112,10 @@ public:
 
     RecluseEngine_PUBLIC_API ResultCode serialize(Archive* archive) const override;
     RecluseEngine_PUBLIC_API ResultCode deserialize(Archive* archive) override;
+    RecluseEngine_PUBLIC_API ResultCode recreate() override { return RecluseResult_NoImpl; }
+    RecluseEngine_PUBLIC_API Bool       isRecreatable() const override { return false; }
+
+    RecluseEngine_PUBLIC_API SubMesh*   getSubMesh(U32 idx) { return m_submeshes[idx]; }
 
 private:
     std::map<std::string, SubMesh>  m_subMeshMap;

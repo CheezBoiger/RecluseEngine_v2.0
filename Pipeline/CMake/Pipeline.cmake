@@ -7,6 +7,8 @@ set (RECLUSE_PIPELINE_INCLUDE_FILES ${RECLUSE_PIPELINE_INCLUDE_FILES}
 									${RECLUSE_PIPE_INCLUDE}/Texture.hpp
 									${RECLUSE_PIPE_INCLUDE}/Material.hpp
 									${RECLUSE_PIPE_INCLUDE}/ShaderProgramBuilder.hpp
+									${RECLUSE_PIPE_INCLUDE}/SceneBuilder.hpp
+									${RECLUSE_PIPE_INCLUDE}/Importer.hpp
 									${RECLUSE_PIPE_INCLUDE}/Graphics/ShaderBuilder.hpp)
 									
 set(RECLUSE_PIPELINE_COMPILE_FILES ${RECLUSE_PIPELINE_COMPILE_FILES}
@@ -15,8 +17,12 @@ set(RECLUSE_PIPELINE_COMPILE_FILES ${RECLUSE_PIPELINE_COMPILE_FILES}
 								  ${RECLUSE_PIPE_SOURCE}/TextureCompressor.cpp
 								  ${RECLUSE_PIPE_SOURCE}/Texture.cpp
 								  ${RECLUSE_PIPE_SOURCE}/SceneImporter/GLTFImporter.cpp
-								  ${RECLUSE_PIPE_SOURCE}/SceneImporter/FBXImporter.cpp
-								  ${RECLUSE_PIPE_SOURCE}/SceneImporter/Importer.hpp
+								  ${RECLUSE_PIPE_SOURCE}/SceneImporter/FBX/FBXMeshBuilder.cpp
+								  ${RECLUSE_PIPE_SOURCE}/SceneImporter/FBX/FBXImporter.cpp
+								  ${RECLUSE_PIPE_SOURCE}/SceneImporter/FBX/FBXImporter.hpp
+								  ${RECLUSE_PIPE_SOURCE}/SceneImporter/FBX/FBXMeshBuilder.hpp
+								  ${RECLUSE_PIPE_SOURCE}/SceneImporter/FBX/FBXSceneBuilder.hpp
+								  ${RECLUSE_PIPE_SOURCE}/SceneImporter/FBX/FBXSceneBuilder.cpp
 								  ${RECLUSE_PIPE_SOURCE}/ShaderProgramBuilder.cpp
 								  ${RECLUSE_PIPE_SOURCE}/Graphics/ShaderBuilderCommon.cpp
 								  ${RECLUSE_PIPE_SOURCE}/Graphics/ShaderBuilderCommon.hpp
