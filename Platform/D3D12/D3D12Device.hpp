@@ -138,6 +138,8 @@ public:
     void                                setTopology(PrimitiveTopology topology) override;
     void                                setFrontFace(FrontFace frontFace) override;
     void                                dispatch(U32 x, U32 y, U32 z) override;
+    void                                beginLabel(const char* label, const Math::Float4& color) override;
+    void                                endLabel() override;
 
     void                                bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* pOffsets) override;
     GraphicsQuery                       beginQuery(GraphicsQueryType queryType) override;

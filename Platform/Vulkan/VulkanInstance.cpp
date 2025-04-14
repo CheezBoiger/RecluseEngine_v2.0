@@ -350,6 +350,10 @@ void VulkanInstance::queryFunctions()
             pfn_vkSetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)getProcAddr("vkSetDebugUtilsObjectNameEXT");
         if (!pfn_vkSetDebugUtilsObjectTagEXT)
             pfn_vkSetDebugUtilsObjectTagEXT = (PFN_vkSetDebugUtilsObjectTagEXT)getProcAddr("vkSetDebugUtilsObjectTagEXT");
+        if (!pfn_vkCmdBeginDebugUtilsLabelEXT)
+            pfn_vkCmdBeginDebugUtilsLabelEXT = (PFN_vkCmdBeginDebugUtilsLabelEXT)getProcAddr("vkCmdBeginDebugUtilsLabelEXT");
+        if (!pfn_vkCmdEndDebugUtilsLabelEXT)
+            pfn_vkCmdEndDebugUtilsLabelEXT = (PFN_vkCmdEndDebugUtilsLabelEXT)getProcAddr("vkCmdEndDebugUtilsLabelEXT");
     }
 
 #if defined(RECLUSE_RAYTRACING_HEADER)

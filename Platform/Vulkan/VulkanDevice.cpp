@@ -26,7 +26,7 @@ R_DECLARE_GLOBAL_BOOLEAN(g_justLog, false, "Vulkan.Test");
 
 
 void checkAvailableDeviceExtensions(const VulkanAdapter* adapter, std::vector<const char*>& extensions)
-{
+{ 
 }
 
 
@@ -814,6 +814,38 @@ void VulkanContext::endQuery(const GraphicsQuery& query)
 
     if (manager)
         manager->endQuery(m_primaryCommandList.get(), query);
+}
+
+
+void VulkanContext::beginLabel(const char* label, const Math::Float4& color)
+{
+    VkCommandBuffer cmdlist = m_primaryCommandList.get();
+    VulkanInstance* instance = m_pDevice->getAdapter()->getInstance();
+    if (instance->supportsDebugMarking())
+    {
+        VkDebugUtilsLabelEXT labelDesc = { };
+        labelDesc.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+
+        labelDesc.pLabelName = label;        
+
+        labelDesc.color[0] = color[0];
+        labelDesc.color[1] = color[1];
+        labelDesc.color[2] = color[2];
+        labelDesc.color[3] = color[3];
+
+        pfn_vkCmdBeginDebugUtilsLabelEXT(cmdlist, &labelDesc);
+    }
+}
+
+
+void VulkanContext::endLabel()
+{
+    VkCommandBuffer cmdlist = m_primaryCommandList.get();
+    VulkanInstance* instance = m_pDevice->getAdapter()->getInstance();
+    if (instance->supportsDebugMarking())
+    {
+        pfn_vkCmdEndDebugUtilsLabelEXT(cmdlist);
+    }
 }
 
 

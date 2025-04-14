@@ -7,6 +7,7 @@
 #include "Recluse/Graphics/GraphicsCommon.hpp"
 #include "Recluse/Threading/Threading.hpp"
 #include "Recluse/Memory/BuddyAllocator.hpp"
+#include "Recluse/Memory/LinearAllocator.hpp"
 #include <vector>
 #include <map>
 
@@ -148,6 +149,7 @@ private:
 };
 
 
+// temporary allocator used for temporary allocations!!
 class D3D12TemporaryResourceAllocator
 {
 public:
@@ -163,7 +165,13 @@ public:
     ResultCode clear();
 
 private:
+    struct LinearAllocatorContext
+    {
+        Allocator* create() { return new LinearAllocator(); }
+        void destroy(Allocator* allocator) { delete allocator; }
+    };
     ID3D12Device* m_pDevice;
+    std::map<ResourceMemoryUsage, std::vector<SmartPtr<D3D12ResourcePagedAllocator<LinearAllocatorContext>>>> m_pagedAllocators;
 };
 } // D3D12
 } // Recluse

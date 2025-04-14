@@ -142,6 +142,9 @@ public:
     void setScissors(U32 numScissors, Rect* pRects) override;
     void dispatch(U32 x, U32 y, U32 z) override;
 
+    void beginLabel(const char* label, const Math::Float4& color) override;
+    void endLabel() override;
+
     GraphicsQuery beginQuery(GraphicsQueryType type) override;
     void endQuery(const GraphicsQuery& query) override;
 

@@ -386,6 +386,9 @@ constexpr R_FORCE_INLINE U32 makeBitset32(U32 offset, U32 size, U32 value)
 }
 
 
+R_OS_CALL RecluseFramework_PUBLIC_API std::wstring asciiToWide(const std::string& str); 
+
+
 namespace GlobalCommands {
 namespace Internal {
     struct DataListener;

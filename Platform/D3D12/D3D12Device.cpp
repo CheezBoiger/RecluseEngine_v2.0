@@ -660,6 +660,24 @@ void D3D12Context::copyBufferRegions(
 }
 
 
+void D3D12Context::beginLabel(const char* label, const Math::Float4& color)
+{
+    ID3D12GraphicsCommandList* list = m_pPrimaryCommandList->get();
+    D3D12Instance* instance = m_pDevice->getAdapter()->getInstance();
+    if (instance->isLayerFeatureEnabled(LayerFeatureFlag_DebugMarking))
+        list->BeginEvent(1, label, sizeof(label));
+}
+
+
+void D3D12Context::endLabel()
+{
+    ID3D12GraphicsCommandList* list = m_pPrimaryCommandList->get();
+    D3D12Instance* instance = m_pDevice->getAdapter()->getInstance();
+    if (instance->isLayerFeatureEnabled(LayerFeatureFlag_DebugMarking))
+        list->EndEvent();
+}
+
+
 ResultCode D3D12Device::createSampler(GraphicsSampler** sampler, const SamplerDescription& desc)
 {
     D3D12Sampler* d3d12Sampler = DescriptorViews::makeSampler(this, desc);

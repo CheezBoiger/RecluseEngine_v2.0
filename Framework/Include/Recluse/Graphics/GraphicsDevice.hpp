@@ -9,6 +9,7 @@
 #include "Recluse/Graphics/GraphicsCommon.hpp"
 #include "Recluse/Graphics/PipelineState.hpp"
 #include "Recluse/Graphics/ShaderProgram.hpp"
+#include "Recluse/Math/Vector4.hpp"
 
 #include "RecluseFramework_exports.hpp"
 
@@ -189,6 +190,9 @@ public:
 
     virtual void                    setScissors(U32 numScissors, Rect* pRects) { }
     virtual void                    setViewports(U32 numViewports, Viewport* pViewports) { }
+
+    virtual void                    beginLabel(const char* label, const Math::Float4& color) { }
+    virtual void                    endLabel() { }
 
     // Dispatch call to run a bound compute shader.
     // \param x The number of workgroups to dispatch in the x direction.

@@ -574,4 +574,14 @@ void* DllLoader::procAddress(const std::string& name)
 {
     return GetProcAddress((HMODULE)library, name.c_str());
 }
+
+
+std::wstring asciiToWide(const std::string& str)
+{
+    std::wstring wst;
+    i32 sizeBytes = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), (i32)str.size(), NULL, 0);
+    wst.resize(sizeBytes);
+    MultiByteToWideChar(CP_UTF8, 0, str.c_str(), (i32)str.size(), &wst[0], wst.size());
+    return wst;
+}
 } // Recluse

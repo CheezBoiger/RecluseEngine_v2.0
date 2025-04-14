@@ -12,16 +12,16 @@ namespace D3D12 {
 const U64 D3D12ResourceAllocationManager::kAllocationPageSizeBytes = R_MB(64);
 
 
-template<typename Cont>
-D3D12ResourcePagedAllocator<Cont>::D3D12ResourcePagedAllocator()
+template<typename AllocationContext>
+D3D12ResourcePagedAllocator<AllocationContext>::D3D12ResourcePagedAllocator()
     : m_pAllocator(nullptr)
 {
     
 }
 
 
-template<typename Cont>
-ResultCode D3D12ResourcePagedAllocator<Cont>::initialize(ID3D12Device* pDevice, U64 totalSizeBytes, ResourceMemoryUsage usage, U32 allocatorIndex)
+template<typename AllocationContext>
+ResultCode D3D12ResourcePagedAllocator<AllocationContext>::initialize(ID3D12Device* pDevice, U64 totalSizeBytes, ResourceMemoryUsage usage, U32 allocatorIndex)
 {  
     //R_ASSERT(allocatorContext   != NULL);
     R_ASSERT(totalSizeBytes     != 0u);
@@ -61,7 +61,7 @@ ResultCode D3D12ResourcePagedAllocator<Cont>::initialize(ID3D12Device* pDevice, 
     heapDesc.Properties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 
     HRESULT result = pDevice->CreateHeap(&heapDesc, __uuidof(ID3D12Heap), (void**)&m_pool.pHeap);
-
+    
     if (FAILED(result))
     {
         R_ERROR(R_CHANNEL_D3D12, "Failed to create Direct3D 12 heap! ErrCode=%d", result);
@@ -76,8 +76,8 @@ ResultCode D3D12ResourcePagedAllocator<Cont>::initialize(ID3D12Device* pDevice, 
 }
 
 
-template<typename Cont>
-ResultCode D3D12ResourcePagedAllocator<Cont>::release()
+template<typename AllocationContext>
+ResultCode D3D12ResourcePagedAllocator<AllocationContext>::release()
 {
     if (m_pAllocator)
     {
@@ -96,8 +96,8 @@ ResultCode D3D12ResourcePagedAllocator<Cont>::release()
 }
 
 
-template<typename Cont>
-ResultCode D3D12ResourcePagedAllocator<Cont>::allocate
+template<typename AllocationContext>
+ResultCode D3D12ResourcePagedAllocator<AllocationContext>::allocate
                             (
                                 ID3D12Device* pDevice,
                                 const D3D12_RESOURCE_ALLOCATION_INFO& allocInfo,
@@ -116,8 +116,8 @@ ResultCode D3D12ResourcePagedAllocator<Cont>::allocate
 }
 
 
-template<typename Cont>
-ResultCode D3D12ResourcePagedAllocator<Cont>::free(D3D12MemoryObject* pObject)
+template<typename AllocationContext>
+ResultCode D3D12ResourcePagedAllocator<AllocationContext>::free(D3D12MemoryObject* pObject)
 {
     R_ASSERT(pObject != NULL);
 
@@ -136,8 +136,8 @@ ResultCode D3D12ResourcePagedAllocator<Cont>::free(D3D12MemoryObject* pObject)
 }
 
 
-template<typename Cont>
-void D3D12ResourcePagedAllocator<Cont>::clear()
+template<typename AllocationContext>
+void D3D12ResourcePagedAllocator<AllocationContext>::clear()
 {
     R_ASSERT(m_pool.pHeap != NULL);
     R_ASSERT(m_pAllocator != NULL);
@@ -185,30 +185,30 @@ ResultCode D3D12ResourceAllocationManager::allocate(D3D12MemoryObject* pOut, con
     if (result == RecluseResult_Ok)
     {
         if (result != RecluseResult_Ok) 
-    {
-        R_ERROR("D3D12Allocator", "Failed to allocate d3d12 resource!");
-    } 
-    else 
-    {
-        HRESULT hresult     = S_OK;
-        UPtr addressOffset   = outputBlock.address;
-    
-        hresult = m_pDevice->CreatePlacedResource(outputBlock.alloc->get(), addressOffset, &desc, 
-            initialState, clearValue, __uuidof(ID3D12Resource), (void**)&pOut->pResource);
-        
-        if (FAILED(hresult)) 
         {
-            R_ERROR("D3D12Allocator", "Failed to call CreatePlacedResource() on code=(%d)", hresult);
+            R_ERROR("D3D12Allocator", "Failed to allocate d3d12 resource!");
         } 
         else 
         {
-            pOut->basePtr           = addressOffset;
-            pOut->sizeInBytes       = resourceAllocationInfo.SizeInBytes;
-            pOut->allocatorIndex    = outputBlock.alloc->getAllocatorIndex();
+            HRESULT hresult     = S_OK;
+            UPtr addressOffset   = outputBlock.address;
+    
+            hresult = m_pDevice->CreatePlacedResource(outputBlock.alloc->get(), addressOffset, &desc, 
+                initialState, clearValue, __uuidof(ID3D12Resource), (void**)&pOut->pResource);
+        
+            if (FAILED(hresult)) 
+            {
+                R_ERROR("D3D12Allocator", "Failed to call CreatePlacedResource() on code=(%d)", hresult);
+            } 
+            else 
+            {
+                pOut->basePtr           = addressOffset;
+                pOut->sizeInBytes       = resourceAllocationInfo.SizeInBytes;
+                pOut->allocatorIndex    = outputBlock.alloc->getAllocatorIndex();
+            }
         }
     }
-    }
-
+    
     pOut->usage = usage;
     return result;
 }

@@ -251,6 +251,7 @@ GraphicsResource* buildVertexBuffer()
     desc.usage = ResourceUsage_VertexBuffer | ResourceUsage_CopyDestination;
     desc.dimension = ResourceDimension_Buffer;
     desc.format = ResourceFormat_Unknown;
+    desc.name = "Box/VertexBuffer";
     device->createResource(&vertexBuffer, desc, ResourceState_CopyDestination);
 
     desc.memoryUsage = ResourceMemoryUsage_CpuToGpu;
@@ -287,6 +288,7 @@ GraphicsResource* buildIndexBuffer()
     desc.usage = ResourceState_IndexBuffer | ResourceUsage_CopyDestination;
     desc.dimension = ResourceDimension_Buffer;
     desc.format = ResourceFormat_Unknown;
+    desc.name = "Box/IndexBuffer";
     device->createResource(&vertexBuffer, desc, ResourceState_CopyDestination);
 
     desc.memoryUsage = ResourceMemoryUsage_CpuToGpu;
@@ -454,7 +456,7 @@ int main(char* argv[], int c)
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
+    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 
@@ -470,7 +472,7 @@ int main(char* argv[], int c)
         appInfo.appMinor = 0;
         appInfo.appMajor = 0;
         appInfo.appPatch = 0;
-        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation;
+        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation | LayerFeatureFlag_DebugMarking;
         instance->initialize(appInfo, flags);
     }
     
@@ -566,11 +568,13 @@ int main(char* argv[], int c)
                 Rect scissor = { 0, 0, pSc->getDesc().renderWidth, pSc->getDesc().renderHeight };
                 Math::Float4 clearColor = { 0, 0, 0, 1.0f };
                 U64 offset[] = { 0 };
+                context->beginLabel("Forward", { 0.5, 0.5, 0.5, 1.0 });
                 context->bindRenderTargets(1, &viewId, depthId);
                 context->clearDepthStencil(ClearFlag_Depth, 0.f, 0, scissor);
                 context->clearRenderTarget(0, &clearColor.x, scissor);
                 context->setInputVertexLayout(VertexLayout_PositionNormalTexCoordColor);
                 context->setColorWriteMask(0, Color_Rgba);
+                context->beginLabel("Box", { });
                 IShaderProgramBinder& binder = context->bindShaderProgram(ShaderProgram_Box);
                 binder.bindShaderResource(ShaderStage_Pixel, 0, textureView);
                 binder.bindSampler(ShaderStage_Pixel, 0, sampler);
@@ -586,7 +590,9 @@ int main(char* argv[], int c)
                 context->setScissors(1, &scissor);
                 GraphicsQuery query = context->beginQuery(GraphicsQueryType_Occlusion);
                 context->drawIndexedInstanced(36, 1, 0, 0, 0);
+                context->endLabel();
                 context->endQuery(query);
+                context->endLabel();
                 context->transition(textureResource, ResourceState_CopySource);
                 context->transition(swapchainImage, ResourceState_CopyDestination);
                 context->copyResource(swapchainImage, textureResource);
