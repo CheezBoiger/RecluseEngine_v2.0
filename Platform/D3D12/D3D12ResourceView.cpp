@@ -525,7 +525,7 @@ ResultCode D3D12Sampler::initialize(D3D12Device* pDevice, const SamplerDescripti
     samplerDesc.Filter                  = (desc.maxAnisotropy > 0.f) 
                                                 ? D3D12_FILTER_ANISOTROPIC 
                                                 : getFilterMode(desc.minFilter, desc.magFilter, desc.mipMapMode, isCompare);
-    samplerDesc.MaxAnisotropy           = desc.maxAnisotropy;
+    samplerDesc.MaxAnisotropy           = static_cast<UINT>(desc.maxAnisotropy);
     samplerDesc.MinLOD                  = desc.minLod;
     samplerDesc.MaxLOD                  = desc.maxLod;
     samplerDesc.MipLODBias              = desc.mipLodBias;

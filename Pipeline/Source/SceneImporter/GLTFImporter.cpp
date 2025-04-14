@@ -1,6 +1,6 @@
 
 
-#include "SceneImporter/Importer.hpp"
+#include "Recluse/Pipeline/Importer.hpp"
 #include "Recluse/Messaging.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION 1

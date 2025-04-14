@@ -478,7 +478,7 @@ ResultCode ShaderProgramDatabase::serialize(Archive* pArchive) const
     for (auto& shaderProgram : m_shaderProgramMetaMap)
     {
         ShaderProgramHeader shaderProgramHeader = { };
-        shaderProgramHeader.numPermutations = shaderProgram.second.size();
+        shaderProgramHeader.numPermutations = static_cast<U32>(shaderProgram.second.size());
         shaderProgramHeader.programId = shaderProgram.first;
         pArchive->write(&shaderProgramHeader, sizeof(ShaderProgramHeader));
 

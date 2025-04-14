@@ -37,7 +37,8 @@ static B32 areMemoryResourcesOnSeparatePages
 }
 
 
-ResultCode VulkanPagedAllocator::allocate(VulkanMemory* pOut, const VkMemoryRequirements& requirements, VkDeviceSize granularityBytes, VkImageTiling tiling)
+template<typename AllocationContext>
+ResultCode VulkanPagedAllocator<AllocationContext>::allocate(VulkanMemory* pOut, const VkMemoryRequirements& requirements, VkDeviceSize granularityBytes, VkImageTiling tiling)
 {
      R_ASSERT(m_allocator != NULL);
 
@@ -77,7 +78,8 @@ ResultCode VulkanPagedAllocator::allocate(VulkanMemory* pOut, const VkMemoryRequ
 }
 
 
-ResultCode VulkanPagedAllocator::free(VulkanMemory* pOut)
+template<typename AllocationContext>
+ResultCode VulkanPagedAllocator<AllocationContext>::free(VulkanMemory* pOut)
 {
     R_ASSERT(m_allocator != NULL);
     
@@ -91,7 +93,8 @@ ResultCode VulkanPagedAllocator::free(VulkanMemory* pOut)
 }
 
 
-Bool VulkanPagedAllocator::hasSpace(VkDeviceSize requestedSize) const
+template<typename AllocationContext>
+Bool VulkanPagedAllocator<AllocationContext>::hasSpace(VkDeviceSize requestedSize) const
 {
     const U64 totalSizeBytes = m_allocator->getTotalSizeBytes();
     const U64 usedSizeBytes = m_allocator->getUsedSizeBytes();
@@ -99,14 +102,14 @@ Bool VulkanPagedAllocator::hasSpace(VkDeviceSize requestedSize) const
 }
 
 
-void VulkanPagedAllocator::release(VkDevice device)
+template<typename AllocationContext>
+void VulkanPagedAllocator<AllocationContext>::release(VkDevice device)
 {
     if (m_allocator) 
     {
 
         m_allocator->cleanUp();
-
-        delete m_allocator;
+        m_allocationContext.destroy(m_allocator);
         m_allocator = nullptr;
     }
 
@@ -152,7 +155,7 @@ void VulkanAllocationManager::emptyGarbage(U32 index)
         
         VulkanMemory& mrange                = garbage[i];
         Allocation alloc                    = { };
-        VulkanPagedAllocator* allocator     = m_resourceAllocators[mrange.memoryTypeIndex][mrange.allocatorIndex];
+        VulkanPagedAllocator<BuddyAllocationContext>* allocator     = m_resourceAllocators[mrange.memoryTypeIndex][mrange.allocatorIndex];
 
         alloc.baseAddress                   = mrange.offsetBytes;
         alloc.sizeBytes                     = mrange.sizeBytes;
@@ -229,7 +232,9 @@ void VulkanAllocationManager::update(const UpdateConfig& config)
     }
 }
 
-void VulkanPagedAllocator::clear()
+
+template<typename AllocationContext>
+void VulkanPagedAllocator<AllocationContext>::clear()
 {
     R_ASSERT(m_pool.memory != VK_NULL_HANDLE);
     R_ASSERT(m_allocator    != NULL);
@@ -250,9 +255,9 @@ ResultCode VulkanAllocationManager::initialize(VulkanDevice* device)
 }
 
 
-VulkanPagedAllocator* VulkanAllocationManager::getAllocator(ResourceMemoryUsage usage, MemoryTypeIndex memoryTypeIndex, VkDeviceSize sizeBytes, VkDeviceSize alignment)
+VulkanPagedAllocator<VulkanAllocationManager::BuddyAllocationContext>* VulkanAllocationManager::getAllocator(ResourceMemoryUsage usage, MemoryTypeIndex memoryTypeIndex, VkDeviceSize sizeBytes, VkDeviceSize alignment)
 {
-    VulkanPagedAllocator* pAllocator    = nullptr;
+    VulkanPagedAllocator<BuddyAllocationContext>* pAllocator    = nullptr;
 
     auto it = m_resourceAllocators.find(memoryTypeIndex);
     if (it == m_resourceAllocators.end())
@@ -263,7 +268,7 @@ VulkanPagedAllocator* VulkanAllocationManager::getAllocator(ResourceMemoryUsage 
     {
         for (U32 i = 0; i < m_resourceAllocators[memoryTypeIndex].size(); ++i)
         {
-            VulkanPagedAllocator* potentialAllocator = m_resourceAllocators[memoryTypeIndex][i];
+            VulkanPagedAllocator<BuddyAllocationContext>* potentialAllocator = m_resourceAllocators[memoryTypeIndex][i];
             U64 adjustedAlignment = Math::maximum(alignment, m_bufferImageGranularityBytes);
             if (potentialAllocator->hasSpace(align(sizeBytes, adjustedAlignment)))
             {
@@ -289,8 +294,8 @@ ResultCode VulkanAllocationManager::allocate(VulkanMemory* pOut, ResourceMemoryU
 
     ScopedCriticalSection cs(m_allocationCs);
 
-    VulkanPagedAllocator* pagedAllocator    = getAllocator(usage, memoryTypeIndex, requirements.size, requirements.alignment);
-    ResultCode result                       = RecluseResult_Ok;
+    VulkanPagedAllocator<BuddyAllocationContext>* pagedAllocator    = getAllocator(usage, memoryTypeIndex, requirements.size, requirements.alignment);
+    ResultCode result                                               = RecluseResult_Ok;
 
     if (!pagedAllocator)
     {
@@ -345,12 +350,12 @@ ResultCode VulkanAllocationManager::free(VulkanMemory* pOut, Bool immediate)
     }
     else
     {
-        VulkanMemory& mrange                = *pOut;
-        Allocation alloc                    = { };
-        VulkanPagedAllocator* allocator     = m_resourceAllocators[mrange.memoryTypeIndex][mrange.allocatorIndex];
+        VulkanMemory& mrange                                        = *pOut;
+        Allocation alloc                                            = { };
+        VulkanPagedAllocator<BuddyAllocationContext>* allocator     = m_resourceAllocators[mrange.memoryTypeIndex][mrange.allocatorIndex];
 
-        alloc.baseAddress                   = mrange.offsetBytes;
-        alloc.sizeBytes                     = mrange.sizeBytes;
+        alloc.baseAddress                                           = mrange.offsetBytes;
+        alloc.sizeBytes                                             = mrange.sizeBytes;
 
         result = allocator->free(&mrange);
 
@@ -370,7 +375,7 @@ ResultCode VulkanAllocationManager::free(VulkanMemory* pOut, Bool immediate)
 }
 
 
-VulkanPagedAllocator* VulkanAllocationManager::allocateMemoryPage(MemoryTypeIndex memoryTypeIndex, ResourceMemoryUsage usage, VkDeviceSize pageSizeBytes)
+VulkanPagedAllocator<VulkanAllocationManager::BuddyAllocationContext>* VulkanAllocationManager::allocateMemoryPage(MemoryTypeIndex memoryTypeIndex, ResourceMemoryUsage usage, VkDeviceSize pageSizeBytes)
 {
     VkDevice device                     = m_pDevice->get();
     
@@ -383,10 +388,10 @@ VulkanPagedAllocator* VulkanAllocationManager::allocateMemoryPage(MemoryTypeInde
     }
 #endif
 
-   m_resourceAllocators[memoryTypeIndex].push_back(makeSmartPtr(new VulkanPagedAllocator()));
-    VulkanPagedAllocator* pAllocator    = m_resourceAllocators[memoryTypeIndex].back();
+   m_resourceAllocators[memoryTypeIndex].push_back(makeSmartPtr(new VulkanPagedAllocator<BuddyAllocationContext>()));
+    VulkanPagedAllocator<BuddyAllocationContext>* pAllocator    = m_resourceAllocators[memoryTypeIndex].back();
     const U32 allocationId              = (m_resourceAllocators[memoryTypeIndex].size() - 1);
-    ResultCode result = pAllocator->initialize(device, new BuddyAllocator(), memoryTypeIndex, Math::maximum(align(pageSizeBytes, m_bufferImageGranularityBytes), align(kPerMemoryPageSizeBytes, m_bufferImageGranularityBytes)), usage, allocationId);
+    ResultCode result = pAllocator->initialize(device, memoryTypeIndex, Math::maximum(align(pageSizeBytes, m_bufferImageGranularityBytes), align(kPerMemoryPageSizeBytes, m_bufferImageGranularityBytes)), usage, allocationId);
     m_totalAllocationSizeBytes          += pAllocator->getTotalSizeBytes();
     R_ASSERT_FORMAT(result == RecluseResult_Ok, "Failed to create new allocator for vulkan!");
     return pAllocator;

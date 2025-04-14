@@ -40,9 +40,9 @@ public:
         // of each point in our mesh.
         FbxVector4* controlPoints = meshNode->GetControlPoints();
 
-        for (u32 polygonIdx = 0; polygonIdx < numPolygons; ++polygonIdx)
+        for (i32 polygonIdx = 0; polygonIdx < numPolygons; ++polygonIdx)
         {
-            for (u32 i = 0 ; i < meshNode->GetElementPolygonGroupCount(); ++i)
+            for (i32 i = 0 ; i < meshNode->GetElementPolygonGroupCount(); ++i)
             {
             }
 

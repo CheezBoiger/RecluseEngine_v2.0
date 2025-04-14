@@ -16,7 +16,6 @@
 namespace Recluse {
 namespace D3D12 {
 class D3D12Adapter;
-class D3D12ResourcePagedAllocator;
 class D3D12ResourceAllocationManager;
 class D3D12Swapchain;
 class D3D12Queue;

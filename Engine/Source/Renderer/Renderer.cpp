@@ -238,13 +238,16 @@ void RendererModule::render()
     if (!m_debugDrawFunctions.empty())
     {
         // By this state, the debug pass should render on top of the final render target.
-        ModulePlugin<RendererModule>* plugin = getPlugin(RendererPluginID_DebugRenderer);
-        if (plugin)
+        for (uint i = 0; i < getPluginCount(RendererPluginID_DebugRenderer); ++i)
         {
-            DebugRenderer* debugRenderer = dynamic_cast<DebugRenderer*>(plugin);
-            for (auto func : m_debugDrawFunctions)
+            DebugRenderer* plugin = getPlugin<DebugRenderer>(RendererPluginID_DebugRenderer, i);
+            if (plugin)
             {
-                func(debugRenderer);
+                DebugRenderer* debugRenderer = dynamic_cast<DebugRenderer*>(plugin);
+                for (auto func : m_debugDrawFunctions)
+                {
+                    func(debugRenderer);
+                }
             }
         }
     }
@@ -319,11 +322,15 @@ void RendererModule::setUpModules()
     //PreZ::initialize(m_pDevice, &m_sceneBuffers);
 
     // DebugRenderer Module.
-    Plugin* debugPlugin = getPlugin(RendererPluginID_DebugRenderer);
-    if (debugPlugin)
+    for (uint i = 0; i < getPluginCount(RendererPluginID_DebugRenderer); ++i)
     {
-        R_DEBUG("Renderer", "Initializing Debug Renderer Plugin");
-        debugPlugin->initialize(this);
+        Plugin* debugPlugin = getPlugin<Plugin>(RendererPluginID_DebugRenderer, i);
+        if (debugPlugin)
+        {
+            R_DEBUG("Renderer", "Initializing Debug Renderer Plugin");
+            ResultCode result = debugPlugin->initialize(this);
+            R_WARN("Renderer", "a debug plugin for the renderer failed to initialize! Will not be using.");
+        }
     }
 }
 
@@ -331,13 +338,7 @@ void RendererModule::setUpModules()
 void RendererModule::cleanUpModules()
 {
     //PreZ::destroy(m_pDevice);
-
-    Plugin* debugPlugin = getPlugin(RendererPluginID_DebugRenderer);
-    if (debugPlugin)
-    {
-        R_DEBUG("Renderer", "Cleaning up Debug Renderer Plugin.");
-        debugPlugin->cleanUp(this);
-    }
+    cleanUpPlugins();
 }
 
 
@@ -735,8 +736,7 @@ void RendererModule::clear()
 
 TemporaryBuffer RendererModule::createTemporaryBuffer(const TemporaryBufferDescription& description)
 {
-    TemporaryBuffer temp = { };
-    return (void*)0;
+    return { };
 }
 
 
@@ -801,7 +801,7 @@ ResultCode RendererModule::createTemporaryResourcePool(U32 bufferCount)
 
 ResultCode RendererModule::freeTemporaryResources()
 {
-    for (U32 i = 0; i < 2; ++i)
+    for (U32 i = 0; i < m_temporaryPools.size(); ++i)
     {
         TemporaryPool& pool = m_temporaryPools[i];
         for (U32 i = 0; i < pool.PerFrameAllocator.size(); ++i)

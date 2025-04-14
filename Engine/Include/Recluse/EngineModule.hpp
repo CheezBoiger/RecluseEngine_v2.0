@@ -5,9 +5,12 @@
 #include "Recluse/Application.hpp"
 #include "Recluse/Threading/Threading.hpp"
 #include "Recluse/Threading/ThreadPool.hpp"
+#include "Recluse/Serialization/Hasher.hpp"
 #include "Recluse/Memory/MemoryCommon.hpp"
 
 #include <map>
+#include <list>
+#include <vector>
 #include <memory>
 #include <functional>
 
@@ -35,6 +38,7 @@ typedef Hash64 EnginePluginId;
          return new PluginImpl(); \
     } \
     static char* GetLibraryName() { return #PluginLibraryName; } \
+    static Hash64 GetNameHash() const { return recluseHashFast(GetLibraryName(), sizeof(GetLibraryName()); } \
     static bool IsLibrary() { return UsesLibrary; }
 
 class ModulePluginHandler
@@ -46,7 +50,9 @@ public:
     }
 };
 
-template<typename ModuleImpl>
+
+// Plugin module interface. Used for assigning plugins to an engine module.
+template<typename ModuleImpl, Bool UniqueOnly = true>
 class ModulePlugin : public ModulePluginHandler
 {
 public:
@@ -56,6 +62,11 @@ public:
     virtual ResultCode initialize(ModuleImpl* impl) { return RecluseResult_NoImpl; }
     virtual ResultCode cleanUp(ModuleImpl* impl) { return RecluseResult_NoImpl; } 
 
+    virtual ResultCode preSetup(ModuleImpl* impl) { return RecluseResult_NoImpl; }
+    virtual ResultCode postSetup(ModuleImpl* impl) { return RecluseResult_NoImpl; }
+
+    // Checks if there can only be one unique plugin with this PluginId.
+    static Bool isUnique() { return UniqueOnly; }
 };
 
 //! EngineModule defines the singleton module used by the game engine.
@@ -130,37 +141,70 @@ public:
     void            enableRunning(Bool enable) { ScopedLock lck(m_sync); m_isRunning = enable; }
     Mutex           getMutex() { return m_sync; }
 
-    ModulePlugin<ModuleImpl>* getPlugin(EnginePluginId id)
+    template<typename PluginClass = ModulePlugin<ModuleImpl>>
+    PluginClass* getPlugin(EnginePluginId id, uint index = 0)
     {
         auto it = m_plugins.find(id);
         if (it == m_plugins.end())
             return nullptr;
         else
-            return it->second;
+        {
+            return it->second.empty() ? nullptr :  dynamic_cast<PluginClass*>(it->second[index]);
+        }
+    }
+
+    uint getPluginCount(EnginePluginId id)
+    {
+        auto it = m_plugins.find(id);
+        if (it == m_plugins.end())
+            return 0;
+        else
+        {
+            return it->second.size();
+        }
     }
 
     template<typename Plugin>
     ResultCode addPlugin()
     {
+        ResultCode result = RecluseResult_Ok;
         auto it = m_plugins.find(Plugin::obtainId());
         if (it == m_plugins.end())
         {
             // Don't initialize here, only initialize where the module itself can.
             ModulePlugin<ModuleImpl>* plugin = Plugin::create();
-            ResultCode result = plugin->initialize(getMain());
+            //result = plugin->initialize(getMain());
             if (result == RecluseResult_Ok)
-                m_plugins.insert(std::make_pair(Plugin::obtainId(), std::move(plugin)));
-            return result;
+            {
+                m_plugins[Plugin::obtainId].push_back(std::move(plugin));
+            }
         }
-        return RecluseResult_AlreadyExists;
+        else
+        {
+            // some plugins exist for this. Make sure we aren't using the same one.
+            if (Plugin::isUnique())
+                result = RecluseResult_AlreadyExists;
+            else
+            {
+                ModulePlugin<ModuleImpl>* plugin = Plugin::create();
+                //result = plugin->initialize(getMain());
+                if (result == RecluseResult_Ok)
+                    it->second.push_back(std::move(plugin));
+            }
+        }
+        return result;
     }
 
     ResultCode cleanUpPlugins()
     {
-        for (auto plugin : m_plugins)
+        for (auto& pluginList : m_plugins)
         {
-            plugin.second->cleanUp(getMain());
-            ModulePluginHandler::destroy(plugin.second);
+            for (auto& plugin : pluginList.second)
+            {
+                plugin->cleanUp(getMain());
+                ModulePluginHandler::destroy(plugin);
+            }
+            pluginList.second.clear();
         }
         m_plugins.clear();
         return RecluseResult_Ok;
@@ -173,7 +217,7 @@ private:
 
     // Thread pool which we can use to launch how many threads.
     ThreadPool      m_threadPool;
-    std::map<EnginePluginId, ModulePlugin<ModuleImpl>*> m_plugins;
+    std::map<EnginePluginId, std::vector<ModulePlugin<ModuleImpl>*>> m_plugins;
 };
 } // Engine
 } // Recluse

@@ -6,15 +6,18 @@
 
 #include "Recluse/Graphics/GraphicsCommon.hpp"
 #include "Recluse/Threading/Threading.hpp"
+#include "Recluse/Memory/BuddyAllocator.hpp"
 #include <vector>
 #include <map>
 
 namespace Recluse {
 namespace D3D12 {
 
+
 // Allocator for D3D12 resources. This does not allocate the d3d12 memory heap itself,
 // only manages it, so be sure to handle the heap creation and destruction outside this
 // class!
+template<typename AllocatorContext>
 class D3D12ResourcePagedAllocator 
 {
 public:
@@ -33,8 +36,7 @@ public:
     // \param pAllocator The allocator to use for the heap memory that is initialized.
     // \param usage The memory usage that is associated with this memory heap.
     // \param allocateIndex the index id that is associated with this allocator.
-    ResultCode initialize(ID3D12Device* pDevice, 
-                          Allocator* pAllocator, 
+    ResultCode initialize(ID3D12Device* pDevice,
                           U64 totalSizeBytes, 
                           ResourceMemoryUsage usage, 
                           U32 allocatorIndex);
@@ -69,9 +71,11 @@ private:
     // The allocator index id.
     U32                             m_allocatorIndex;
     // The allocator that is used to perform the suballocations.
-    SmartPtr<Allocator>             m_pAllocator;
+    Allocator*                      m_pAllocator;
     // All garbage resources to be released.
     std::vector<D3D12MemoryObject*> m_garbageResources;
+
+    AllocatorContext                m_alloc;
 };
 
 
@@ -129,12 +133,37 @@ public:
 private:
     ResultCode cleanGarbage(U32 index);
 
+    struct BuddyAllocationContext
+    {
+        Allocator* create() { return new BuddyAllocator(); }
+        void destroy(Allocator* allocator) { delete allocator; }
+    };
+
     ID3D12Device*                                                                       m_pDevice;
-    std::map<ResourceMemoryUsage, std::vector<SmartPtr<D3D12ResourcePagedAllocator>>>   m_pagedAllocators;
+    std::map<ResourceMemoryUsage, std::vector<SmartPtr<D3D12ResourcePagedAllocator<BuddyAllocationContext>>>>   m_pagedAllocators;
     U32                                                                                 m_garbageIndex;
     std::vector<std::vector<D3D12MemoryObject>>                                         m_garbage;
     MemoryReserveDescription                                                            m_description;
     CriticalSection                                                                     m_allocateCs;
+};
+
+
+class D3D12TemporaryResourceAllocator
+{
+public:
+    ResultCode initialize(ID3D12Device* device);
+    ResultCode release();
+
+    ResultCode allocate(D3D12MemoryObject* pOut,
+                    const D3D12_RESOURCE_DESC& desc,
+                    ResourceMemoryUsage usage,
+                    D3D12_RESOURCE_STATES initialState);
+
+    // Clear out the temporary resources. Starting fresh.
+    ResultCode clear();
+
+private:
+    ID3D12Device* m_pDevice;
 };
 } // D3D12
 } // Recluse

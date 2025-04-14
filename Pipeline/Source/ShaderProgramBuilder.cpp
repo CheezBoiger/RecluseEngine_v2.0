@@ -309,10 +309,10 @@ ShaderProgramDefinition makeShaderProgramDefinition(ShaderProgramDatabase& db, c
                     programReflection.samplers[index] = sampler;
             }
         }
-        programReflection.numCbvs = cbvSet.size();
-        programReflection.numSrvs = srvSet.size();
-        programReflection.numUavs = uavSet.size();
-        programReflection.numSamplers = samplerSet.size();
+        programReflection.numCbvs       = static_cast<U8>(cbvSet.size());
+        programReflection.numSrvs       = static_cast<U8>(srvSet.size());
+        programReflection.numUavs       = static_cast<U8>(uavSet.size());
+        programReflection.numSamplers   = static_cast<U8>(samplerSet.size());
     }
 
     return definition;

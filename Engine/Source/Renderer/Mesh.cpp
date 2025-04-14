@@ -18,7 +18,7 @@ ResultCode GPUBuffer::initialize(GraphicsDevice* pDevice, U64 totalSzBytes, Reso
     desc.depthOrArraySize             = 1;
     desc.mipLevels                      = 1;
     desc.height                         = 1;
-    desc.width                          = totalSzBytes;
+    desc.width                          = static_cast<U32>(totalSzBytes);
     
     result = pDevice->createResource(&m_pResource, desc, ResourceState_CopyDestination);
 
@@ -37,7 +37,7 @@ ResultCode GPUBuffer::stage(GraphicsContext* pContext, void* ptr, U64 offsetByte
     GraphicsResourceDescription stageDesc = { };
     stageDesc.dimension     = ResourceDimension_Buffer;
     stageDesc.memoryUsage   = ResourceMemoryUsage_CpuToGpu;
-    stageDesc.width         = szBytes;
+    stageDesc.width         = static_cast<U32>(szBytes);
     stageDesc.usage         = ResourceUsage_TransferSource;
     stageDesc.depthOrArraySize = 1;
     stageDesc.mipLevels     = 1;

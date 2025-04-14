@@ -714,6 +714,8 @@ ResultCode D3D12QueryManager::release()
         m_heap->Release();
     if (m_scratchBuffer)
         m_scratchBuffer->Release();
+    m_heap          = nullptr;
+    m_scratchBuffer = nullptr;
     return RecluseResult_Ok;
 }
 

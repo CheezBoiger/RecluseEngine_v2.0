@@ -247,10 +247,10 @@ void D3D12Context::clearDepthStencil(ClearFlags clearFlags, F32 clearDepth, U8 c
         flags |= D3D12_CLEAR_FLAG_STENCIL;
 
     D3D12_RECT nativeRect   = { };
-    nativeRect.left         = rect.x;
-    nativeRect.right        = rect.x + rect.width;
-    nativeRect.top          = rect.y;
-    nativeRect.bottom       = rect.y + rect.height;
+    nativeRect.left         = static_cast<LONG>(rect.x);
+    nativeRect.right        = static_cast<LONG>(rect.x + rect.width);
+    nativeRect.top          = static_cast<LONG>(rect.y);
+    nativeRect.bottom       = static_cast<LONG>(rect.y + rect.height);
     
     pList->ClearDepthStencilView(dsvHandle, flags, clearDepth, clearStencil, 1, &nativeRect);
 }
@@ -266,10 +266,10 @@ void D3D12Context::clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect)
     FLOAT clearValue[4];
     D3D12_RECT d3d12Rect = { };
 
-    d3d12Rect.left      = rect.x;
-    d3d12Rect.right     = rect.x + rect.width;
-    d3d12Rect.top       = rect.y;
-    d3d12Rect.bottom    = rect.y + rect.height;
+    d3d12Rect.left      = static_cast<LONG>(rect.x);
+    d3d12Rect.right     = static_cast<LONG>(rect.x + rect.width);
+    d3d12Rect.top       = static_cast<LONG>(rect.y);
+    d3d12Rect.bottom    = static_cast<LONG>(rect.y + rect.height);
 
     clearValue[0] = clearColor[0];
     clearValue[1] = clearColor[1];
@@ -569,10 +569,10 @@ void D3D12Context::setScissors(U32 numScissors, Rect* pRects)
     
     for (U32 i = 0; i < numScissors; ++i)
     {
-        rects[i].left   = pRects[i].x;
-        rects[i].top    = pRects[i].y;
-        rects[i].right  = pRects[i].width;
-        rects[i].bottom = pRects[i].height;
+        rects[i].left   = static_cast<LONG>(pRects[i].x);
+        rects[i].top    = static_cast<LONG>(pRects[i].y);
+        rects[i].right  = static_cast<LONG>(pRects[i].width);
+        rects[i].bottom = static_cast<LONG>(pRects[i].height);
     }
 
     pList->RSSetScissorRects(numScissors, rects);

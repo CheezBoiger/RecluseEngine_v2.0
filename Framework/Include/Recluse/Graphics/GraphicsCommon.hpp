@@ -383,12 +383,17 @@ struct MemoryReserveDescription
 
 struct TemporaryBufferDescription
 {
-    ResourceUsage usage;
+    ResourceUsage       usage;
     ResourceMemoryUsage memoryUsage;
-    U32 sizeRequest;
+    U32                 sizeBytes;
 };
 
-typedef void* TemporaryBuffer;
+struct TemporaryBuffer
+{
+    GraphicsResource* resource;
+    u32 offset;
+    u32 sz;
+};
 
 enum GraphicsQueueType 
 {

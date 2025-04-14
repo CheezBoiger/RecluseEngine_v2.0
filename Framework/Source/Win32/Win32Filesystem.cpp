@@ -323,7 +323,7 @@ Bool Filesystem::createDirectory(const std::string& directoryPath)
     I32 pos = 0;
     do
     {
-        pos = directoryPath.find_first_of("\\/", pos + 1);
+        pos = static_cast<i32>(directoryPath.find_first_of("\\/", static_cast<sizet>(pos + 1)));
         if (!CreateDirectory(directoryPath.substr(0, pos).c_str(), NULL))
         {
             DWORD err = GetLastError();

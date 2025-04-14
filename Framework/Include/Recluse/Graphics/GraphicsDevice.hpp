@@ -147,6 +147,11 @@ public:
     virtual void                    copyResource(GraphicsResource* dst, GraphicsResource* src) 
         { }
 
+    // Creates a temporary resource for the current context frame. Will be destroyed when we come back to this frame again.
+    // \param description The resource description that you want to temporarily allocate.
+    virtual GraphicsResource*       createTemporaryResource(const GraphicsResourceDescription& description)
+        { return nullptr; }
+
     // Submits copy of regions from src resource to dst resource. Source may be a texture.
     virtual void                    copyBufferRegions(
                                         GraphicsResource* dst, 

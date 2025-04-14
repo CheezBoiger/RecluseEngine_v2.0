@@ -3,6 +3,7 @@
 
 #include "VulkanCommons.hpp"
 #include "Recluse/Memory/Allocator.hpp"
+#include "Recluse/Memory/BuddyAllocator.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 #include "Recluse/Threading/Threading.hpp"
 #include "Recluse/Types.hpp"
@@ -34,6 +35,7 @@ struct VulkanMemory
 
 // Vulkan allocator manager, handles memory heaps provided by Vulkan API.
 //
+template<typename AllocationContext>
 class VulkanPagedAllocator 
 {
 public:
@@ -45,13 +47,12 @@ public:
 
     // Initializes the allocator, which will handle one-time heap allocation. 
     ResultCode initialize(VkDevice device,
-                          Allocator* pAllocator,
                           U32 memoryTypeIndex,
                           VkDeviceSize memorySizeBytes,
                           ResourceMemoryUsage usage,
                           U32 allocationId) 
     {
-        m_allocator             = pAllocator;
+        m_allocator             = m_allocationContext.create();
         m_pool.sizeBytes        = memorySizeBytes;
         m_allocationId          = allocationId;
         if (!m_allocator) return RecluseResult_NullPtrExcept;
@@ -122,8 +123,9 @@ public:
     
 private:
     VulkanMemoryPool                        m_pool;
-    SmartPtr<Allocator>                     m_allocator;
+    Allocator*                              m_allocator;
     U32                                     m_allocationId;
+    AllocationContext                       m_allocationContext;
 };
 
 
@@ -190,12 +192,20 @@ public:
     U64                     getTotalAllocationSizeBytes() const { return m_totalAllocationSizeBytes; }    
 
 private:
+
+    // Buddy allocation stuff.
+    struct BuddyAllocationContext
+    {
+        Allocator* create() { return new BuddyAllocator(); }
+        void destroy(Allocator* allocator) { delete allocator; }
+    };
+
     // Empty garbage from last frame.
     void                    emptyGarbage(U32 index);
     // Get the next allocator available.
-    VulkanPagedAllocator*   getAllocator(ResourceMemoryUsage usage, MemoryTypeIndex memoryTypeIndex, VkDeviceSize sizeBytes, VkDeviceSize alignment);
+    VulkanPagedAllocator<BuddyAllocationContext>*   getAllocator(ResourceMemoryUsage usage, MemoryTypeIndex memoryTypeIndex, VkDeviceSize sizeBytes, VkDeviceSize alignment);
     // Allocate a page of memory if required.
-    VulkanPagedAllocator*   allocateMemoryPage(MemoryTypeIndex memoryTypeIndex, ResourceMemoryUsage usage, VkDeviceSize pageSizeBytes);
+    VulkanPagedAllocator<BuddyAllocationContext>*   allocateMemoryPage(MemoryTypeIndex memoryTypeIndex, ResourceMemoryUsage usage, VkDeviceSize pageSizeBytes);
     // Performs allocation of a resources with the provided requirements.
     // \param pOut output result of vulkan.
     // \param usage The memory usage that is requested.
@@ -208,7 +218,7 @@ private:
                                      const VkMemoryRequirements& requirements,
                                      VkImageTiling tiling = VK_IMAGE_TILING_LINEAR);
 
-    std::map<MemoryTypeIndex, std::vector<SmartPtr<VulkanPagedAllocator>>>      m_resourceAllocators;
+    std::map<MemoryTypeIndex, std::vector<SmartPtr<VulkanPagedAllocator<BuddyAllocationContext>>>>      m_resourceAllocators;
     std::map<MemoryTypeIndex, U64>                                              m_pagedMemoryTotalSizeBytes;
     U32                                                                         m_garbageIndex;
     U32                                                                         m_numObjectAllocations;

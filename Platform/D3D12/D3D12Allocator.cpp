@@ -12,16 +12,18 @@ namespace D3D12 {
 const U64 D3D12ResourceAllocationManager::kAllocationPageSizeBytes = R_MB(64);
 
 
-D3D12ResourcePagedAllocator::D3D12ResourcePagedAllocator()
+template<typename Cont>
+D3D12ResourcePagedAllocator<Cont>::D3D12ResourcePagedAllocator()
     : m_pAllocator(nullptr)
 {
     
 }
 
 
-ResultCode D3D12ResourcePagedAllocator::initialize(ID3D12Device* pDevice, Allocator* pAllocator, U64 totalSizeBytes, ResourceMemoryUsage usage, U32 allocatorIndex)
+template<typename Cont>
+ResultCode D3D12ResourcePagedAllocator<Cont>::initialize(ID3D12Device* pDevice, U64 totalSizeBytes, ResourceMemoryUsage usage, U32 allocatorIndex)
 {  
-    R_ASSERT(pAllocator         != NULL);
+    //R_ASSERT(allocatorContext   != NULL);
     R_ASSERT(totalSizeBytes     != 0u);
 
     D3D12_HEAP_TYPE heapType                = D3D12_HEAP_TYPE_DEFAULT;
@@ -68,19 +70,21 @@ ResultCode D3D12ResourcePagedAllocator::initialize(ID3D12Device* pDevice, Alloca
 
     m_pool.sizeInBytes = totalSizeBytes;
     m_allocatorIndex = allocatorIndex;
-    m_pAllocator = makeSmartPtr(pAllocator);
+    m_pAllocator = m_alloc.create();
     m_pAllocator->initialize(0ull, totalSizeBytes);
     return RecluseResult_Ok;
 }
 
 
-ResultCode D3D12ResourcePagedAllocator::release()
+template<typename Cont>
+ResultCode D3D12ResourcePagedAllocator<Cont>::release()
 {
     if (m_pAllocator)
     {
         m_pAllocator->reset();
         m_pAllocator->cleanUp();
-        m_pAllocator.release();
+        m_alloc.destroy(m_pAllocator);
+        m_pAllocator = nullptr;
     }
     
     if (m_pool.pHeap)
@@ -92,7 +96,8 @@ ResultCode D3D12ResourcePagedAllocator::release()
 }
 
 
-ResultCode D3D12ResourcePagedAllocator::allocate
+template<typename Cont>
+ResultCode D3D12ResourcePagedAllocator<Cont>::allocate
                             (
                                 ID3D12Device* pDevice,
                                 const D3D12_RESOURCE_ALLOCATION_INFO& allocInfo,
@@ -111,7 +116,8 @@ ResultCode D3D12ResourcePagedAllocator::allocate
 }
 
 
-ResultCode D3D12ResourcePagedAllocator::free(D3D12MemoryObject* pObject)
+template<typename Cont>
+ResultCode D3D12ResourcePagedAllocator<Cont>::free(D3D12MemoryObject* pObject)
 {
     R_ASSERT(pObject != NULL);
 
@@ -130,7 +136,8 @@ ResultCode D3D12ResourcePagedAllocator::free(D3D12MemoryObject* pObject)
 }
 
 
-void D3D12ResourcePagedAllocator::clear()
+template<typename Cont>
+void D3D12ResourcePagedAllocator<Cont>::clear()
 {
     R_ASSERT(m_pool.pHeap != NULL);
     R_ASSERT(m_pAllocator != NULL);
@@ -149,25 +156,25 @@ ResultCode D3D12ResourceAllocationManager::initialize(ID3D12Device* pDevice)
 
 ResultCode D3D12ResourceAllocationManager::allocate(D3D12MemoryObject* pOut, const D3D12_RESOURCE_DESC& desc, ResourceMemoryUsage usage, D3D12_CLEAR_VALUE* clearValue, D3D12_RESOURCE_STATES initialState)
 {
-    std::vector<SmartPtr<D3D12ResourcePagedAllocator>>& pagedAllocators = m_pagedAllocators[usage];
+    std::vector<SmartPtr<D3D12ResourcePagedAllocator<BuddyAllocationContext>>>& pagedAllocators = m_pagedAllocators[usage];
     D3D12_RESOURCE_ALLOCATION_INFO resourceAllocationInfo   = m_pDevice->GetResourceAllocationInfo(0, 1, &desc);
     ScopedCriticalSection _(m_allocateCs);
     if (pagedAllocators.empty())
     {
-        pagedAllocators.push_back(new D3D12ResourcePagedAllocator());
-        pagedAllocators.back()->initialize(m_pDevice, new BuddyAllocator(), Math::maximum(align(resourceAllocationInfo.SizeInBytes, resourceAllocationInfo.Alignment), kAllocationPageSizeBytes), usage, pagedAllocators.size() - 1u); 
+        pagedAllocators.push_back(new D3D12ResourcePagedAllocator<BuddyAllocationContext>());
+        pagedAllocators.back()->initialize(m_pDevice, Math::maximum(align(resourceAllocationInfo.SizeInBytes, resourceAllocationInfo.Alignment), kAllocationPageSizeBytes), usage, pagedAllocators.size() - 1u); 
     }
     
-    D3D12ResourcePagedAllocator* pagedAllocator = pagedAllocators.back();
-    D3D12ResourcePagedAllocator::OutputBlock outputBlock = { };
+    D3D12ResourcePagedAllocator<BuddyAllocationContext>* pagedAllocator = pagedAllocators.back();
+    D3D12ResourcePagedAllocator<BuddyAllocationContext>::OutputBlock outputBlock = { };
     ResultCode result = pagedAllocator->allocate(m_pDevice, resourceAllocationInfo, outputBlock);
 
 
     if (result == RecluseResult_OutOfMemory)
     {
         U64 newSizeChunk = Math::maximum(align(resourceAllocationInfo.SizeInBytes, resourceAllocationInfo.Alignment), kAllocationPageSizeBytes);
-        pagedAllocators.push_back(new D3D12ResourcePagedAllocator());
-        pagedAllocators.back()->initialize(m_pDevice, new BuddyAllocator(), kAllocationPageSizeBytes, usage, pagedAllocators.size() - 1u);
+        pagedAllocators.push_back(new D3D12ResourcePagedAllocator<BuddyAllocationContext>());
+        pagedAllocators.back()->initialize(m_pDevice, kAllocationPageSizeBytes, usage, pagedAllocators.size() - 1u);
         result = pagedAllocators.back()->allocate(m_pDevice, resourceAllocationInfo, outputBlock);
     }
     if (result != RecluseResult_Ok)
@@ -221,8 +228,8 @@ ResultCode D3D12ResourceAllocationManager::free(D3D12MemoryObject* pObject, Bool
     else
     {
         D3D12MemoryObject& object = *pObject;
-        std::vector<SmartPtr<D3D12ResourcePagedAllocator>>& pagedAllocators = m_pagedAllocators[object.usage];
-        D3D12ResourcePagedAllocator* pagedAllocator = pagedAllocators[object.allocatorIndex];
+        std::vector<SmartPtr<D3D12ResourcePagedAllocator<BuddyAllocationContext>>>& pagedAllocators = m_pagedAllocators[object.usage];
+        D3D12ResourcePagedAllocator<BuddyAllocationContext>* pagedAllocator = pagedAllocators[object.allocatorIndex];
         result = pagedAllocator->free(&object);
     }
     return result;
@@ -257,8 +264,8 @@ ResultCode D3D12ResourceAllocationManager::cleanGarbage(U32 index)
     for (U32 i = 0; i < garbage.size(); ++i)
     {
         D3D12MemoryObject& object = garbage[i];
-        std::vector<SmartPtr<D3D12ResourcePagedAllocator>>& pagedAllocators = m_pagedAllocators[object.usage];
-        D3D12ResourcePagedAllocator* pagedAllocator = pagedAllocators[object.allocatorIndex];
+        std::vector<SmartPtr<D3D12ResourcePagedAllocator<BuddyAllocationContext>>>& pagedAllocators = m_pagedAllocators[object.usage];
+        D3D12ResourcePagedAllocator<BuddyAllocationContext>* pagedAllocator = pagedAllocators[object.allocatorIndex];
         pagedAllocator->free(&object);
     }
     garbage.clear();

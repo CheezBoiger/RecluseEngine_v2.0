@@ -230,7 +230,7 @@ ResultCode DescriptorAllocator::checkAndManageInstances(VulkanDevice* pDevice, U
     {
         // TODO: We need to resize this properly, without losing our existing allocaters!
         // If the new count is greater than existing, then we need to allocate.
-        for (U32 i = bufferedInstanceCount; i < newBufferCount; ++i)
+        for (I32 i = bufferedInstanceCount; i < newBufferCount; ++i)
         {
             m_bufferedInstances.push_back(DescriptorAllocatorInstance());
             DescriptorAllocatorInstance& instance = m_bufferedInstances[i];
