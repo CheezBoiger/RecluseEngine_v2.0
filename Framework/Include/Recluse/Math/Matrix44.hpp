@@ -103,7 +103,8 @@ RecluseFramework_PUBLIC_API Matrix44 orthographicRH(F32 top, F32 bottom, F32 lef
 // 
 RecluseFramework_PUBLIC_API Matrix44 lookAtLH(const Float3& position, const Float3& target, const Float3& up = Float3(0, 1, 0));
 RecluseFramework_PUBLIC_API Matrix44 lookAtRH(const Float3& position, const Float3& target, const Float3& up = Float3(0, 1, 0));
-// [4 x 4] * [4 x 1] = [4 x 1]
+
+// [4 x 4] * [4 x 1] = [4 x 1] for row major multiplication.
 RecluseFramework_PUBLIC_API Float4 operator*(const Matrix44& lh, const Float4& rh);
 
 

@@ -1,6 +1,6 @@
-
+// Recluse Engine.
+#if defined(RECLUSE_DEBUG) || defined(RECLUSE_DEVELOPER)
 #pragma once
-
 #include "Recluse/Core/Profile/Profiler.hpp"
 #include "Recluse/Types.hpp"
 #include "Recluse/Arch.hpp"
@@ -13,3 +13,4 @@ ResultCode storeMeasurement(const std::string& profileName, const CpuPerformance
 ResultCode queryMeasurement(const std::string& profileName, CpuPerformanceProfile::PerformanceMeasurement& output, const std::string& groupName = std::string());
 } // CpuProfileDatabase
 } // Recluse
+#endif

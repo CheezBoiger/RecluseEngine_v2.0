@@ -71,10 +71,10 @@ public:
     virtual ~AbstractSystem() { }
 
     template<typename SpecializedSys>
-    static ECS::AbstractSystem* allocate(MessageBus* bus)
+    static ECS::AbstractSystem* allocate()
     {
         ECS::AbstractSystem* system = new SpecializedSys();
-        ResultCode result = system->initialize(bus);
+        ResultCode result = system->initialize();
         if (result != RecluseResult_Ok)
         {
             AbstractSystem::free(system);
@@ -99,19 +99,50 @@ public:
     // \param scene (Optional) 
     void                                update(Registry* registry, const RealtimeTick& tick, Engine::Scene* scene = nullptr) { onUpdate(registry, tick); }
 
-    ResultCode                          initialize(MessageBus* bus = nullptr)
+    // Initializes this system. Returns Ok if the system was properly initialized.
+    ResultCode                          initialize()
     {
-        ResultCode result = onInitialize();
-        if (bus && result == RecluseResult_Ok)
+        return onInitialize();
+    }
+
+    // Links a message bus to this system. Returns Ok if the bus was found, and removed from listening to,
+    // otherwise returns NotFound.
+    ResultCode linkMessageBus(MessageBus* bus)
+    {
+        ResultCode result = RecluseResult_Failed;
+        if (bus)
         {
-            bus->addReceiver(getName(), [&] (EventMessage* event) -> void { onEvent(event); });
+            auto it = m_messageBusMap.find(bus->getId());
+            if (it == m_messageBusMap.end())
+            {
+                bus->addReceiver(getName(), [&] (const EventMessage& event) -> ResultCode { return onEvent(event); });
+                m_messageBusMap.insert(std::make_pair(bus->getId(), bus));
+                result = RecluseResult_Ok;
+            }
+        }
+        return result;
+    }
+
+    // Unlinks a message bus to this system. Returns Ok if the bus was found, and removed from listening to,
+    // otherwise returns NotFound.
+    ResultCode unlinkMessageBus(MessageBus::Id busId)
+    {
+        ResultCode result = RecluseResult_NotFound;
+        auto it = m_messageBusMap.find(busId);
+        if (it != m_messageBusMap.end())
+        {
+            m_messageBusMap.erase(it);
+            result = RecluseResult_Ok;
         }
         return result;
     }
 
     ResultCode         cleanUp()
     {
-        return onCleanUp();
+        ResultCode result = onCleanUp();
+        if (result == RecluseResult_Ok)
+            result = cleanUpMessageBuses();
+        return result;
     }
 
     void                    drawDebug(Registry* registry, Engine::DebugRenderer* renderer) { onDrawDebug(registry, renderer); }
@@ -122,7 +153,7 @@ public:
     // Deserialize the system and its components.
     virtual ResultCode      deserialize(Archive* archive) override { return RecluseResult_NoImpl; }
     virtual const char*     getName() const { return "System"; }
-    virtual ResultCode      onEvent(EventMessage* event) { return RecluseResult_NoImpl; }
+    virtual ResultCode      onEvent(const EventMessage& event) { return RecluseResult_NoImpl; }
 
 protected:
 
@@ -147,10 +178,17 @@ protected:
 
     virtual void            onDrawDebug(Registry* registry, Engine::DebugRenderer* context) { }
 
+    ResultCode              cleanUpMessageBuses()
+    {
+        m_messageBusMap.clear();
+        return RecluseResult_Ok;
+    }
+
 private:
     // Priority value of this abstract system. This will be used to determine the 
     // order of which this system will operate.
-    U32                 m_priority;
+    U32                                     m_priority;
+    std::map<MessageBus::Id, MessageBus*>   m_messageBusMap;
 };
 
 
@@ -203,7 +241,7 @@ public:
     virtual const char*     getName() const override { return "System"; }
 
     // On event callback to be used for System.
-    virtual ResultCode      onEvent(EventMessage* event) { return RecluseResult_NoImpl; }
+    virtual ResultCode      onEvent(const EventMessage& event) override { return RecluseResult_NoImpl; }
 
 protected:
     // Allows initializing the system before on intialize().

@@ -19,7 +19,7 @@ public:
     virtual ResultCode  onInitialize()                                                              override { return RecluseResult_NoImpl; }
     virtual ResultCode  onCleanUp()                                                                 override;
     virtual void        onUpdate(ECS::Registry* registry, const RealtimeTick& tick, Scene* scene)   override;
-    virtual ResultCode  onEvent(EventMessage* event)                                                override;
+    virtual ResultCode  onEvent(const EventMessage& event)                                          override;
 };
 } // Engine
 } // Recluse

@@ -397,10 +397,10 @@ struct TemporaryBuffer
 
 enum GraphicsQueueType 
 {
-    QUEUE_TYPE_PRESENT      = (1 << 0),
-    QUEUE_TYPE_GRAPHICS     = (1 << 1),
-    QUEUE_TYPE_COMPUTE      = (1 << 2),
-    QUEUE_TYPE_COPY         = (1 << 3)
+    QueueType_Present      = (1 << 0),
+    QueueType_Graphics     = (1 << 1),
+    QueueType_Compute      = (1 << 2),
+    QueueType_Copy         = (1 << 3)
 };
 
 

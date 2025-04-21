@@ -18,6 +18,7 @@ MessageBus::MessageBus()
 
 void MessageBus::initialize(SizeT eventCacheSzBytes)
 {
+    static U32 idCount = 0;
     // Pre-allocate a sizeable pool. Include room for our allocator!
     m_messageMemPool.preAllocate(eventCacheSzBytes + sizeof(LinearAllocator));
 
@@ -28,6 +29,8 @@ void MessageBus::initialize(SizeT eventCacheSzBytes)
                 m_messageMemPool.getPtrAddressAt(sizeof(LinearAllocator)), 
                 m_messageMemPool.getTotalSizeBytes() - sizeof(LinearAllocator)
             );
+
+    m_id = ++idCount;
 }
 
 
@@ -61,9 +64,11 @@ void MessageBus::notifyOne(const std::string& nodeName)
 
     MessageReceiveFunc func =  m_messageReceivers[m_receiverNodeNames[nodeName]];
 
+     ScopedLock _(m_messageQueueMutex);
     while (!m_messages.empty()) 
     {
-        func(m_messages.front());
+        ResultCode result = func(*m_messages.front());
+        // TODO: Handle result.
         m_messages.pop();    
     }
 }

@@ -50,7 +50,7 @@ ResultCode createThread(Thread* pThread, ThreadFunction startRoutine)
 ResultCode joinThread(Thread* pThread)
 
 {
-    R_ASSERT(pThread != NULL);
+    R_STATIC_ASSERT(pThread != NULL);
 
     R_DEBUG(R_CHANNEL_WIN32, "Joining thread...");
     
@@ -64,7 +64,7 @@ ResultCode joinThread(Thread* pThread)
 
 ResultCode killThread(Thread* pThread)
 {
-    R_ASSERT(pThread != NULL);
+    R_STATIC_ASSERT(pThread != NULL);
 
     R_DEBUG(R_CHANNEL_WIN32, "Killing thread=%d ...", pThread->uid);
 
@@ -78,8 +78,8 @@ ResultCode killThread(Thread* pThread)
 
 ResultCode stopThread(Thread* pThread)
 {
-    R_ASSERT(pThread != NULL);
-    R_ASSERT(pThread->threadState == ThreadState_Running); 
+    R_STATIC_ASSERT(pThread != NULL);
+    R_STATIC_ASSERT(pThread->threadState == ThreadState_Running); 
 
     SuspendThread(pThread->handle);
     
@@ -91,8 +91,8 @@ ResultCode stopThread(Thread* pThread)
 
 ResultCode resumeThread(Thread* pThread)
 {
-    R_ASSERT(pThread != NULL);
-    R_ASSERT(pThread->threadState == ThreadState_Suspended);
+    R_STATIC_ASSERT(pThread != NULL);
+    R_STATIC_ASSERT(pThread->threadState == ThreadState_Suspended);
 
     ResumeThread(pThread->handle);
 
@@ -203,7 +203,7 @@ U128 compareExchange(U128* dest, U128 ex, U128 comp)
 }
 
 
-Bool testAndSet(U32* ptr, U32 offset)
+u32 testAndSet(volatile uptr ptr, U32 offset)
 {
     return InterlockedBitTestAndSet((LONG*)ptr, (LONG)offset);
 }
@@ -211,7 +211,7 @@ Bool testAndSet(U32* ptr, U32 offset)
 
 ResultCode CriticalSection::initialize()
 {
-    R_ASSERT_FORMAT(m_section == NULL, "Critical Section is not null prior to initialization! Could indicate was already created? section=%d", m_section);
+    R_STATIC_ASSERT_FORMAT(m_section == NULL, "Critical Section is not null prior to initialization! Could indicate was already created? section=%d", m_section);
     m_section = malloc(sizeof(CRITICAL_SECTION));
     InitializeCriticalSection((LPCRITICAL_SECTION)m_section);
     return RecluseResult_Ok;
@@ -220,7 +220,7 @@ ResultCode CriticalSection::initialize()
 
 ResultCode CriticalSection::release()
 {
-    R_ASSERT(m_section != NULL);
+    R_STATIC_ASSERT(m_section != NULL);
     DeleteCriticalSection((LPCRITICAL_SECTION)m_section);
     ::free(m_section);
     m_section = NULL;
@@ -230,7 +230,7 @@ ResultCode CriticalSection::release()
 
 ResultCode CriticalSection::enter()
 {
-    R_ASSERT(m_section != NULL);
+    R_STATIC_ASSERT(m_section != NULL);
     EnterCriticalSection((LPCRITICAL_SECTION)m_section);
     return RecluseResult_Ok;
 }
@@ -238,7 +238,7 @@ ResultCode CriticalSection::enter()
 
 ResultCode CriticalSection::tryEnter()
 {
-    R_ASSERT(m_section != NULL);
+    R_STATIC_ASSERT(m_section != NULL);
     BOOL success = TryEnterCriticalSection((LPCRITICAL_SECTION)m_section);
     return (success ? RecluseResult_Ok : RecluseResult_Failed);
 }
@@ -246,8 +246,21 @@ ResultCode CriticalSection::tryEnter()
 
 ResultCode CriticalSection::leave()
 {
-    R_ASSERT(m_section != NULL);
+    R_STATIC_ASSERT(m_section != NULL);
     LeaveCriticalSection((LPCRITICAL_SECTION)m_section);
     return RecluseResult_Ok;
+}
+
+
+i32 fetchAdd(uptr ptr, i32 arg)
+{
+    LONG result = InterlockedAdd((LONG*)ptr, (LONG)arg);
+    return (i32)result;
+}
+
+i32 fetchSub(uptr ptr, i32 arg)
+{
+    LONG result = InterlockedAdd((LONG*)ptr, (LONG)-arg);
+    return (i32)result;
 }
 } // Recluse

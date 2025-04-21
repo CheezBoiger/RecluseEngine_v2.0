@@ -88,41 +88,41 @@ ResultCode CommandList::push(const RenderCommand& renderCommand)
         case CommandOp_DrawInstanced:
         {
             //COPY_COMMAND_TO_POOL(DrawRenderCommand, renderCommand);
-            DrawInstancedBatch* cmd = CommandList::cast<DrawInstancedBatch>(renderCommand.opData);
-            DrawInstancedBatch* pCommand = new (m_scratchAllocator) DrawInstancedBatch();
+            DrawInstancedBatch* cmd         = CommandList::cast<DrawInstancedBatch>(renderCommand.opData);
+            DrawInstancedBatch* pCommand    = new (m_scratchAllocator) DrawInstancedBatch();
             R_ASSERT(m_scratchAllocator->getLastError() == RecluseResult_Ok);
-            pCommand->numSubMeshes = cmd->numSubMeshes;
-            InstancedSubMesh* submeshes = new (m_scratchAllocator) InstancedSubMesh[cmd->numSubMeshes];
+            pCommand->numSubMeshes          = cmd->numSubMeshes;
+            InstancedSubMesh* submeshes     = new (m_scratchAllocator) InstancedSubMesh[cmd->numSubMeshes];
             R_ASSERT(m_scratchAllocator->getLastError() == RecluseResult_Ok);
             
             for (U32 i = 0; i < cmd->numSubMeshes; ++i)
             {
-                InstancedSubMesh& dstSubmesh = submeshes[i];
-                InstancedSubMesh& srcSubmesh = cmd->pSubMeshes[i];
-                dstSubmesh.firstInstance = srcSubmesh.firstInstance;
-                dstSubmesh.firstVertex = srcSubmesh.firstVertex;
-                dstSubmesh.instanceCount = srcSubmesh.instanceCount;
-                dstSubmesh.vertexCount = srcSubmesh.vertexCount;
-                dstSubmesh.pMaterial = srcSubmesh.pMaterial;
+                InstancedSubMesh& dstSubmesh    = submeshes[i];
+                InstancedSubMesh& srcSubmesh    = cmd->pSubMeshes[i];
+                dstSubmesh.firstInstance        = srcSubmesh.firstInstance;
+                dstSubmesh.firstVertex          = srcSubmesh.firstVertex;
+                dstSubmesh.instanceCount        = srcSubmesh.instanceCount;
+                dstSubmesh.vertexCount          = srcSubmesh.vertexCount;
+                dstSubmesh.pMaterial            = srcSubmesh.pMaterial;
             }
 
-            pCommand->pSubMeshes = submeshes;
-            allocation = (UPtr)pCommand;
+            pCommand->pSubMeshes    = submeshes;
+            allocation              = (UPtr)pCommand;
             break;     
         }
 
         case CommandOp_DrawIndexedInstanced:
         {
             //COPY_COMMAND_TO_POOL(DrawIndexedRenderCommand, renderCommand); 
-            DrawIndexedBatch* cmd = CommandList::cast<DrawIndexedBatch>(renderCommand.opData);
-            DrawIndexedBatch* pCommand = new (m_scratchAllocator) DrawIndexedBatch();
+            DrawIndexedBatch* cmd       = CommandList::cast<DrawIndexedBatch>(renderCommand.opData);
+            DrawIndexedBatch* pCommand  = new (m_scratchAllocator) DrawIndexedBatch();
 
             R_ASSERT(m_scratchAllocator->getLastError() == RecluseResult_Ok);
 
-            pCommand->indexType = cmd->indexType;
-            pCommand->numSubMeshes = cmd->numSubMeshes;
-            pCommand->offset = cmd->offset;
-            pCommand->pIndexBuffer = cmd->pIndexBuffer;
+            pCommand->indexType         = cmd->indexType;
+            pCommand->numSubMeshes      = cmd->numSubMeshes;
+            pCommand->offset            = cmd->offset;
+            pCommand->pIndexBuffer      = cmd->pIndexBuffer;
 
             R_ASSERT(cmd->numSubMeshes > 0);
             IndexedInstancedSubMesh* submeshes = new (m_scratchAllocator) IndexedInstancedSubMesh[cmd->numSubMeshes];
@@ -134,28 +134,28 @@ ResultCode CommandList::push(const RenderCommand& renderCommand)
                 IndexedInstancedSubMesh& submesh = submeshes[i];
                 IndexedInstancedSubMesh& srcSubmesh = cmd->pSubMeshes[i];
 
-                submesh.firstIndex = srcSubmesh.firstIndex;
-                submesh.firstInstance = srcSubmesh.firstInstance;
-                submesh.indexCount = srcSubmesh.indexCount;
-                submesh.instanceCount = srcSubmesh.instanceCount;
-                submesh.vertexOffset = srcSubmesh.vertexOffset;
-                submesh.pMaterial = srcSubmesh.pMaterial;
+                submesh.firstIndex      = srcSubmesh.firstIndex;
+                submesh.firstInstance   = srcSubmesh.firstInstance;
+                submesh.indexCount      = srcSubmesh.indexCount;
+                submesh.instanceCount   = srcSubmesh.instanceCount;
+                submesh.vertexOffset    = srcSubmesh.vertexOffset;
+                submesh.pMaterial       = srcSubmesh.pMaterial;
             }
-            pCommand->pSubMeshes = submeshes;
+            pCommand->pSubMeshes        = submeshes;
 
             allocation = (UPtr)pCommand;
             break;
         }
     }
 
-    UPtr ptrAlloc = m_pAllocator->allocate(sizeof(RenderCommand), 1ull);
-    ResultCode result = m_pAllocator->getLastError();
+    UPtr ptrAlloc       = m_pAllocator->allocate(sizeof(RenderCommand), 1ull);
+    ResultCode result   = m_pAllocator->getLastError();
     if (result == RecluseResult_Ok) 
     {
-        RenderCommand* allocatedCmd = new ((void*)ptrAlloc) RenderCommand();
-        allocatedCmd->op = renderCommand.op;
-        allocatedCmd->stencilRef = renderCommand.stencilRef;
-        allocatedCmd->opData = (void*)allocation;
+        RenderCommand* allocatedCmd     = new ((void*)ptrAlloc) RenderCommand();
+        allocatedCmd->op                = renderCommand.op;
+        allocatedCmd->stencilRef        = renderCommand.stencilRef;
+        allocatedCmd->opData            = (void*)allocation;
     }
     
     return RecluseResult_Ok;

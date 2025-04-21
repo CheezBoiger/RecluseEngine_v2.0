@@ -86,12 +86,13 @@ private:
     };
 
 public:
-    VulkanContext(VulkanDevice* pDevice, VulkanQueue* queue)
+    VulkanContext(VulkanDevice* pDevice, VulkanQueue* queue, VulkanQueue* computeQueue = nullptr)
         : m_bufferCount(0)
         , m_currentContextFrameIndex(0)
         , m_boundRenderPass(nullptr)
         , m_pDevice(pDevice) 
-        , m_queue(queue)
+        , m_graphicsQueue(queue)
+        , m_computeQueue(computeQueue)
     { 
     }
 
@@ -124,7 +125,7 @@ public:
     VulkanPrimaryCommandList*       getPrimaryCommandList() { return &m_primaryCommandList; }
     ResultCode                      wait() override;
     VkRenderPass                    getRenderPass();
-    Bool                            supportsAsyncCompute() const;
+    Bool                            supportsAsyncCompute() const override;
 
     void clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) override;
     void clearDepthStencil(ClearFlags flags, F32 clearDepth, U8 clearStencil, const Rect& rect) override;
@@ -334,7 +335,8 @@ private:
     std::vector<ContextState>                                           m_contextStates;
     VkDescriptorSet                                                     m_boundDescriptorSet;
     U32                                                                 m_currentStateIdx;
-    VulkanQueue*                                                        m_queue;
+    VulkanQueue*                                                        m_graphicsQueue;
+    VulkanQueue*                                                        m_computeQueue;
     VulkanShaderProgramBinder                                           m_shaderProgramBinder;
 };
 

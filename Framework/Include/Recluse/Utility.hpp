@@ -411,7 +411,7 @@ template<typename Class>
 Class obtainValue(const std::string& command)
 {
     Internal::DataListener* pData = Internal::obtainData(command);
-    return *reinterpret_cast<Class*>(pData->value);
+    return pData ? *reinterpret_cast<Class*>(pData->value) : Class();
 }
 
 namespace {
@@ -435,9 +435,14 @@ Bool setValue(const std::string& command, const char* value)
 }
 } // anonymous namespace
 
+#if defined(RECLUSE_DEVELOPER) || defined(RECLUSE_DEBUG)
 #define R_DECLARE_GLOBAL_VARIABLE(varName, defaultValue, commandName, dataType) \
     dataType varName = defaultValue; \
     Recluse::GlobalCommands::Internal::DataListener _listener__ ## varName = Recluse::GlobalCommands::Internal::DataListener(commandName, &varName);
+#else
+#define R_DECLARE_GLOBAL_VARIABLE(varName, defaultValue, commandName, dataType) \
+    dataType varName = defaultValue;
+#endif
 
 #define R_DECLARE_GLOBAL_BOOLEAN(varName, defaultValue, commandName) R_DECLARE_GLOBAL_VARIABLE(varName, defaultValue, commandName, Recluse::Bool)
 #define R_DECLARE_GLOBAL_F32(varName, defaultValue, commandName) R_DECLARE_GLOBAL_VARIABLE(varName, defaultValue, commandName, Recluse::F32)

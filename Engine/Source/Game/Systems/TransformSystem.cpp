@@ -56,9 +56,9 @@ ResultCode TransformSystem::onCleanUp()
 }
 
 
-ResultCode TransformSystem::onEvent(EventMessage* event)
+ResultCode TransformSystem::onEvent(const EventMessage& event)
 {
-    if (event->getEvent() == TransformEvent_Update)
+    if (event.getEvent() == TransformEvent_Update)
         m_doUpdate = true;
     return RecluseResult_Ok;
 }

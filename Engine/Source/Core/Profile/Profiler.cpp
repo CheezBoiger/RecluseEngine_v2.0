@@ -3,9 +3,9 @@
 #include "Recluse/Time.hpp"
 
 #include "ProfilerManager.hpp"
+#if defined(RECLUSE_DEBUG) || defined(RECLUSE_DEVELOPER)
 
 namespace Recluse {
-
 
 CpuPerformanceProfile::CpuPerformanceProfile(const std::string& profileName, Math::Color4& color, const std::string& groupName)
     : groupName(groupName)
@@ -43,3 +43,5 @@ CpuPerformanceProfile::PerformanceMeasurement CpuPerformanceProfile::query(const
     return measurement;
 }
 } // Recluse
+
+#endif

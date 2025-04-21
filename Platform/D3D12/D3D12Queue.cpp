@@ -21,6 +21,7 @@ ResultCode D3D12Queue::initialize(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE
     desc.Priority                       = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
     
     desc.Type                           = type;
+    m_type                              = type;
     
     result = device->CreateCommandQueue(&desc, __uuidof(ID3D12CommandQueue), (void**)&m_queue);
 
@@ -34,7 +35,7 @@ ResultCode D3D12Queue::initialize(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE
     pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, __uuidof(ID3D12Fence), (void**)&pFence);
     pEvent = CreateEvent(nullptr, false, false, nullptr);
 
-    pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, __uuidof(ID3D12CommandAllocator), (void**)&m_allocator);
+    pDevice->CreateCommandAllocator(type, __uuidof(ID3D12CommandAllocator), (void**)&m_allocator);
 
     return RecluseResult_Ok;
 }
@@ -45,28 +46,28 @@ void D3D12Queue::destroy()
     if (m_allocator)
     {
         m_allocator->Release();
-        m_allocator = nullptr;
     }
 
     if (m_queue) 
     {
         R_DEBUG(R_CHANNEL_D3D12, "Releasing D3D12 queue...");
-        
         m_queue->Release();
-        m_queue = nullptr;    
     }
 
     if (pFence)
     {
         pFence->Release();
-        pFence = nullptr;
     }
 
     if (pEvent)
     {
         CloseHandle(pEvent);
-        pEvent = nullptr;
     }
+
+    m_allocator = nullptr;
+    m_queue     = nullptr;
+    pFence      = nullptr;
+    pEvent      = nullptr;
 }
 
 
@@ -92,7 +93,7 @@ ErrType D3D12Queue::submit(const QueueSubmit* payload)
 ID3D12GraphicsCommandList* D3D12Queue::createOneTimeCommandList(U32 nodeMask, ID3D12Device* pDevice)
 {
     ID3D12GraphicsCommandList* pList = nullptr;
-    HRESULT result = pDevice->CreateCommandList(nodeMask, D3D12_COMMAND_LIST_TYPE_DIRECT, m_allocator, nullptr, __uuidof(ID3D12GraphicsCommandList), (void**)&pList);
+    HRESULT result = pDevice->CreateCommandList(nodeMask, m_type, m_allocator, nullptr, __uuidof(ID3D12GraphicsCommandList), (void**)&pList);
     
     if (FAILED(result))
     {

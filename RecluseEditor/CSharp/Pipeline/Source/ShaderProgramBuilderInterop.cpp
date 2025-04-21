@@ -156,8 +156,10 @@ bool ShaderProgramBuilder::LoadFromDisk(String^ Filename)
 
 bool ShaderProgramBuilder::Build(ShaderIntermediateLanguage IntermediateLanguage)
 {
+    // TODO: We need to support a shader compiler for the editor.
     R_ASSERT(DescriptionInfo->descriptions.empty() == false);
-    ResultCode result = Builder::buildShaderPrograms(*Database, DescriptionInfo, CSharpToNativeIntermediateLanguage(IntermediateLanguage));
+    CSharpToNativeIntermediateLanguage(IntermediateLanguage);
+    ResultCode result = Builder::buildShaderPrograms(*Database, DescriptionInfo);
     return result == RecluseResult_Ok;
 }
 

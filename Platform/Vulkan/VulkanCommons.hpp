@@ -3,6 +3,7 @@
 
 #include "Recluse/Arch.hpp"
 #include "Recluse/Types.hpp"
+#include "Recluse/Messaging.hpp"
 #include "Recluse/Graphics/Shader.hpp"
 #include "Recluse/Graphics/Format.hpp"
 #include "Recluse/Graphics/GraphicsCommon.hpp"
@@ -79,7 +80,11 @@ static VkSampleCountFlagBits getSamples(Recluse::U32 count)
         case 16: return VK_SAMPLE_COUNT_16_BIT;
         case 32: return VK_SAMPLE_COUNT_32_BIT;
         case 64: return VK_SAMPLE_COUNT_64_BIT;
-        default: return VK_SAMPLE_COUNT_1_BIT;
+        default: 
+        {
+            R_WARN(R_CHANNEL_VULKAN, "Sampling count is not supported (=%d), resorting to 1 sample count.", count);
+            return VK_SAMPLE_COUNT_1_BIT;
+        }
     }
 }
 

@@ -218,6 +218,13 @@ void createShaderProgram(GraphicsDevice* device)
     description.graphics.ps = fsData.data();
     description.graphics.psName = "psMain";
 
+    Pipeline::ShaderBuilder* shaderBuilder = nullptr;
+    if (instance->getApi() == GraphicsApi_Direct3D12)
+        shaderBuilder = Pipeline::createShaderBuilder("dxc", ShaderIntermediateCode_Dxil);
+    else
+        shaderBuilder = Pipeline::createShaderBuilder("glsl", ShaderIntermediateCode_Spirv);
+    shaderBuilder->setUp();
+
     for (U32 i = 0; i < 2; ++i)
     {
         Pipeline::Builder::ShaderProgramPermutationDefinitionInstance permutation;
@@ -230,7 +237,7 @@ void createShaderProgram(GraphicsDevice* device)
         description.permutationDefinitions.push_back(permutation);
     }
 
-    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_Gbuffer, instance->getApi() == GraphicsApi_Direct3D12 ? ShaderIntermediateCode_Dxil : ShaderIntermediateCode_Spirv);
+    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_Gbuffer, shaderBuilder);
     Runtime::buildShaderProgram(device, database, ShaderProgram_Gbuffer);
 
     vsSource = currDir + "/" + "quad.vs.hlsl";
@@ -246,7 +253,7 @@ void createShaderProgram(GraphicsDevice* device)
     description.graphics.ps = fsData.data();
     description.graphics.psName = "psMain";
 
-    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_LightResolve, instance->getApi() == GraphicsApi_Direct3D12 ? ShaderIntermediateCode_Dxil : ShaderIntermediateCode_Spirv);
+    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_LightResolve, shaderBuilder);
     Runtime::buildShaderProgram(device, database, ShaderProgram_LightResolve);
     {
         ArchiveWriter writer("dxil.database");
@@ -261,7 +268,8 @@ void createShaderProgram(GraphicsDevice* device)
     }
 #endif
     database.clearShaderProgramDefinitions();
-
+    shaderBuilder->tearDown();
+    Pipeline::freeShaderBuilder(shaderBuilder);
 }
 
 

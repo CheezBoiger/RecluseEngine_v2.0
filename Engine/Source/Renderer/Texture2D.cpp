@@ -41,7 +41,7 @@ static std::unordered_map
         TextureViewIDComparer
     > gTextureViewLUT;
 
-ResultCode Texture2D::initialize(GraphicsDevice* pDevice, ResourceFormat format, U32 width, U32 height, U32 arrayLevel, U32 mips)
+ResultCode Texture2D::initialize(GraphicsDevice* pDevice, ResourceFormat format, U32 width, U32 height, U32 arrayLevel, U32 mips, const char* debugName)
 {
     GraphicsResourceDescription desc    = { };
     ResultCode result                      = RecluseResult_Ok;
@@ -55,6 +55,9 @@ ResultCode Texture2D::initialize(GraphicsDevice* pDevice, ResourceFormat format,
     desc.dimension      = ResourceDimension_2d;
     desc.samples        = 1;
     desc.format         = format;
+    
+    if (debugName)
+        desc.name = debugName;
 
     switch (desc.format) 
     {

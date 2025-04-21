@@ -139,7 +139,10 @@ void VulkanContext::endRenderPass(VkCommandBuffer buffer)
 
 Bool VulkanContext::supportsAsyncCompute() const
 {
-    return false;
+    // We need to make sure queue is actually available, otherwise this will crash.
+    R_ASSERT(m_graphicsQueue);
+    // If we were granted a compute queue, we support async compute.
+    return (m_computeQueue != nullptr) && (m_computeQueue->getFamily()->queueFamilyIndex != m_graphicsQueue->getFamily()->queueFamilyIndex); 
 }
 
 
@@ -188,7 +191,7 @@ ResultCode VulkanContext::submitFinalCommandBuffer(VkCommandBuffer commandBuffer
     submitInfo.pCommandBuffers          = &primaryCmdBuf;
     submitInfo.pWaitDstStageMask        = waitStages;
 
-    vkQueueSubmit(m_queue->get(), 1, &submitInfo, fence);
+    vkQueueSubmit(m_graphicsQueue->get(), 1, &submitInfo, fence);
 
     return RecluseResult_Ok;
 }
@@ -624,7 +627,7 @@ ResultCode VulkanContext::createCommandPools(U32 buffers)
     poolIf.flags                                    = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     VkQueueFlags queueFlags                         = (VK_QUEUE_COMPUTE_BIT | VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_TRANSFER_BIT); 
     ResultCode result                               = RecluseResult_Ok;
-    poolIf.queueFamilyIndex = m_queue->getFamily()->queueFamilyIndex;
+    poolIf.queueFamilyIndex = m_graphicsQueue->getFamily()->queueFamilyIndex;
     m_commandPools.resize(buffers);
     for (U32 j = 0; j < m_commandPools.size(); ++j) 
     { 
@@ -666,7 +669,7 @@ void VulkanContext::destroyCommandPools()
 ResultCode VulkanContext::createPrimaryCommandList(VkQueueFlags flags)
 {
     ResultCode result = RecluseResult_Ok;
-    U32 queueFamilyIndex = m_queue->getFamily()->queueFamilyIndex;
+    U32 queueFamilyIndex = m_graphicsQueue->getFamily()->queueFamilyIndex;
     R_DEBUG(R_CHANNEL_VULKAN, "Creating command list...");
     result = m_primaryCommandList.initialize
                 (
@@ -1072,7 +1075,7 @@ void VulkanDevice::pushInvalidateMemoryRange(const VkMappedMemoryRange& mappedRa
 
 ResultCode VulkanContext::wait()
 {
-    m_queue->wait();
+    m_graphicsQueue->wait();
     return RecluseResult_Ok;
 }
 

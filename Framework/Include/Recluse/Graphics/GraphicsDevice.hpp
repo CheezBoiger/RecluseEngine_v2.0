@@ -191,7 +191,12 @@ public:
     virtual void                    setScissors(U32 numScissors, Rect* pRects) { }
     virtual void                    setViewports(U32 numViewports, Viewport* pViewports) { }
 
+    // Label functions, these would likely not be used in the release version of the engine.
+    
+    // Begin a label tag event, used for debugging. Must be ended with an endLabel() call.
     virtual void                    beginLabel(const char* label, const Math::Float4& color) { }
+    
+    // End a label tag event, used for debugging. Must be used to end a beginLabel() call.
     virtual void                    endLabel() { }
 
     // Dispatch call to run a bound compute shader.
@@ -219,7 +224,7 @@ public:
     virtual void                    transition(GraphicsResource* pResource, ResourceState newState, U16 baseMip = 0, U16 mipCount = 0, U16 baseLayer = 0, U16 layerCount = 0) { }
     virtual void                    transitionResources(const ResourceTransitionDescription* transitions, U32 resourceCount) { }
 
-    virtual Bool                    supportsAsyncCompute() { return false; }
+    virtual Bool                    supportsAsyncCompute() const { return false; }
 
     virtual void                    dispatchAsync(U32 x, U32 y, U32 z) { R_ASSERT(supportsAsyncCompute()); }
 

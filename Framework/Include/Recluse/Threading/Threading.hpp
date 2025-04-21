@@ -4,6 +4,7 @@
 #include "Recluse/Types.hpp"
 
 #include "RecluseFramework_exports.hpp"
+#include "Recluse/Messaging.hpp"
 
 namespace Recluse {
 
@@ -68,10 +69,10 @@ RecluseFramework_PUBLIC_API R_OS_CALL ResultCode waitMutex(Mutex mutex, U64 wait
 RecluseFramework_PUBLIC_API R_OS_CALL ResultCode destroyMutex(Mutex mutex);
 RecluseFramework_PUBLIC_API R_OS_CALL ResultCode tryLockMutex(Mutex mutex);
 
-RecluseFramework_PUBLIC_API R_OS_CALL ResultCode atomicAdd();
-RecluseFramework_PUBLIC_API R_OS_CALL ResultCode atomicSub();
-RecluseFramework_PUBLIC_API R_OS_CALL U64     getMainThreadId();
-RecluseFramework_PUBLIC_API R_OS_CALL U64     getCurrentThreadId();
+RecluseFramework_PUBLIC_API R_OS_CALL i32       fetchAdd(uptr ptr, i32 arg);
+RecluseFramework_PUBLIC_API R_OS_CALL i32       fetchSub(uptr ptr, i32 arg);
+RecluseFramework_PUBLIC_API R_OS_CALL U64       getMainThreadId();
+RecluseFramework_PUBLIC_API R_OS_CALL U64       getCurrentThreadId();
 
 RecluseFramework_PUBLIC_API R_OS_CALL Semaphore  createSemaphore(const char* name = nullptr);
 RecluseFramework_PUBLIC_API R_OS_CALL ResultCode    destroySemaphore(Semaphore sema);
@@ -82,7 +83,7 @@ RecluseFramework_PUBLIC_API R_OS_CALL U64    compareExchange(I64* dest, I64 ex, 
 RecluseFramework_PUBLIC_API R_OS_CALL I16    compareExchange(I16* dest, I16 ex, I16 comp);
 RecluseFramework_PUBLIC_API R_OS_CALL U128   compareExchange(U128* dest, U128 ex, U128 comp);
 
-RecluseFramework_PUBLIC_API R_OS_CALL Bool testAndSet(U32* ptr, U32 offset);
+RecluseFramework_PUBLIC_API R_OS_CALL u32 testAndSet(volatile uptr ptr, U32 offset);
 
 // Causes this thread to sleep for some milliseconds.
 RecluseFramework_PUBLIC_API R_OS_CALL ResultCode    sleep(U64 milliseconds);
@@ -177,5 +178,37 @@ class RecluseFramework_PUBLIC_API CriticalSectionGuard : public CriticalSection
 public:
     CriticalSectionGuard() { initialize(); }
     ~CriticalSectionGuard() { release(); }
+};
+
+
+class RecluseFramework_PUBLIC_API SpinlockObject
+{
+public:
+    SpinlockObject()
+        : m_v(0)
+    { }
+    uptr operator()() volatile { return (uptr)&m_v; }
+private:
+    volatile i32 m_v;
+};
+
+
+class RecluseFramework_PUBLIC_API ScopedSpinlock
+{
+public:
+    ScopedSpinlock(SpinlockObject& o)
+        : m_o(o)
+    {
+        while (testAndSet(m_o(), 0));
+    }
+
+    ~ScopedSpinlock()
+    {
+        i32 v = fetchSub(m_o(), 1);
+        R_ASSERT(v == 0);
+    }
+
+private:
+    volatile SpinlockObject& m_o;
 };
 } // Recluse

@@ -30,7 +30,7 @@ public:
     ~EventMessage() { }
     EventMessage(EventId eventId = kBadEventId) : m_eventId(eventId) { }
 
-    EventId getEvent() { return m_eventId; }
+    EventId getEvent() const { return m_eventId; }
 
 private:
     EventId m_eventId;
@@ -38,14 +38,15 @@ private:
 
 
 
-typedef std::function<void(EventMessage*)> MessageReceiveFunc;
+typedef std::function<ResultCode(const EventMessage&)> MessageReceiveFunc;
 
 // Simple Message bus to be used for input messaging. This is a simple bus design,
 // We might want something more efficient later on.
 class MessageBus 
 {
 public:
-    friend class Recluse::EventMessage;
+    friend class    Recluse::EventMessage;
+    typedef U32     Id;
 
     // Helper to fire an event.
     static void fireEvent(MessageBus* pBus, EventId id)
@@ -83,9 +84,12 @@ public:
         // Notify all message receivers.
         while (!m_messages.empty()) 
         {
+            // Must lock the mutex and read at a time.
+            ScopedLock _(m_messageQueueMutex);
             for (MessageReceiveFunc func : m_messageReceivers) 
             {
-                func(m_messages.front());
+                ResultCode result = func(*m_messages.front());
+                // TODO: Proper message handling.
             }
             
             m_messages.pop();
@@ -100,9 +104,12 @@ public:
     // queue will still contain all allocated events.
     void clearQueue() 
     {
+        ScopedLock _(m_messageQueueMutex);
         if (m_messages.empty())
             m_pMessageAllocator->reset();
     }
+
+    Id getId() const { return m_id; }
 
 private:
     MutexGuard                      m_messageQueueMutex;
@@ -111,5 +118,9 @@ private:
     std::queue<EventMessage*>       m_messages;             //< The Message queue.
     std::vector<MessageReceiveFunc> m_messageReceivers;
     std::map<std::string, U32>      m_receiverNodeNames;
+
+    // Message bus id.
+    Id                              m_id;
+    
 };
 } // Recluse

@@ -40,6 +40,7 @@ public:
 
         if (m_window->shouldClose())
         {
+            MessageBus::fireEvent(getMessageBus(), RenderEvent_Pause);
             stop();
         }
         
@@ -63,8 +64,8 @@ public:
 
         RendererModule::getMain()->simUnlock();
 
-        CpuPerformanceProfile::PerformanceMeasurement measure = CpuPerformanceProfile::query("RandomTask", "Main");
-        R_NOTIFY("Main", "RandomTask: %f ms", measure.milliseconds);
+        //CpuPerformanceProfile::PerformanceMeasurement measure = CpuPerformanceProfile::query("RandomTask", "Main");
+        //R_NOTIFY("Main", "RandomTask: %f ms", measure.milliseconds);
 
         return RecluseResult_Ok;
     }
@@ -91,6 +92,7 @@ public:
         config.renderWidth = m_window->getWidth();
         config.renderHeight = m_window->getHeight();
         RendererModule::getMain()->setNewConfigurations(config);
+        RendererModule::getMain()->linkMessageBus(getMessageBus());
 
         MessageBus::fireEvent(getMessageBus(), RenderEvent_Initialize);
         MessageBus::fireEvent(getMessageBus(), RenderEvent_Resume);

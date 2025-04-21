@@ -52,7 +52,8 @@ void RendererModule::initialize()
     // Immediately initialize the render configs to the current.
     m_currentRendererConfigs = m_newRendererConfigs;
 
-    LayerFeatureFlags flags  = m_currentRendererConfigs.enableGpuValidation ? (LayerFeatureFlag_GpuDebugValidation | LayerFeatureFlag_DebugValidation) : 0;
+    LayerFeatureFlags flags  = m_currentRendererConfigs.enableGpuValidation ? 
+        (LayerFeatureFlag_GpuDebugValidation | LayerFeatureFlag_DebugValidation | LayerFeatureFlag_DebugMarking) : 0;
     ApplicationInfo info    = { };
     SwapchainCreateDescription swapchainDescription = { };
     ResultCode result          = RecluseResult_Ok;
@@ -127,6 +128,7 @@ void RendererModule::cleanUp()
     destroyMutex(m_commandMx);
     // Clean up all modules, as well as resources handled by them...
     cleanUpModules();
+    m_pDevice->destroySwapchain(m_pSwapchain);
     m_pDevice->releaseContext(m_pContext);
     if (m_pDevice) 
     {
@@ -201,8 +203,6 @@ void RendererModule::render()
         clearPresentationFrame(context, swapchainFrame);
 
 #if (!R_NULLIFY_RENDER)
-        // TODO: Would make more sense to manually transition the resource itself, 
-        //       and not the resource view...
         GraphicsResource* pSceneDepth = m_sceneBuffers.gbuffer[GBuffer_Depth]->getResource();
         //GraphicsResource* pSceneAlbedo = m_sceneBuffers.pSceneAlbedo->getResource();
         
@@ -317,7 +317,7 @@ void RendererModule::setUpModules()
                                         ResourceFormat_D32_Float_S8_Uint, 
                                         m_currentRendererConfigs.renderWidth, 
                                         m_currentRendererConfigs.renderHeight, 
-                                        1, 1);
+                                        1, 1, "Gbuffer/Depth");
 
     //PreZ::initialize(m_pDevice, &m_sceneBuffers);
 
@@ -597,50 +597,52 @@ ResultCode RendererModule::onInitializeModule(Application* pApp)
 {
     m_configLock = createMutex();
     RealtimeTick::initializeWatch(getCurrentThreadId(), 0);
-    MainThreadLoop::getMessageBus()->addReceiver(
-        "Renderer", [=] (EventMessage* pMsg) -> void 
-            { 
-                EventId ev = pMsg->getEvent();
-                R_DEBUG("Renderer", "Received message!");
-                if (isActive()) 
-                {
-                    // Handle the message.
-                    switch (ev) 
-                    {
-                        case RenderEvent_Resume:
-                            enableRunning(true);
-                            break;
+    return RecluseResult_Ok;
+}
 
-                        case RenderEvent_Pause:
-                            enableRunning(false);
-                            break;
 
-                        case RenderEvent_Shutdown: 
-                        {
-                            enableRunning(false);
-                            cleanUpModule(MainThreadLoop::getApp());
-                            break;
-                        }
+ResultCode RendererModule::onEvent(const EventMessage& message)
+{
+    EventId ev = message.getEvent();
+    R_DEBUG("Renderer", "Received message!");
+    if (isActive()) 
+    {
+        // Handle the message.
+        switch (ev) 
+        {
+            case RenderEvent_Resume:
+                enableRunning(true);
+                break;
 
-                        case RenderEvent_ConfigureRenderer:
-                        {
-                            recreate();
-                            break;
-                        }
+            case RenderEvent_Pause:
+                enableRunning(false);
+                break;
 
-                        case RenderEvent_SceneUpdate:
-                            break;
+            case RenderEvent_Shutdown: 
+            {
+                enableRunning(false);
+                cleanUpModule(MainThreadLoop::getApp());
+                break;
+            }
 
-                        case RenderEvent_Initialize:
-                        {
-                            initialize();
-                        }
+            case RenderEvent_ConfigureRenderer:
+            {
+                recreate();
+                break;
+            }
 
-                        default:
-                            break;
-                    }
-                }
-            });
+            case RenderEvent_SceneUpdate:
+                break;
+
+            case RenderEvent_Initialize:
+            {
+                initialize();
+            }
+
+            default:
+                break;
+        }
+    }
     return RecluseResult_Ok;
 }
 

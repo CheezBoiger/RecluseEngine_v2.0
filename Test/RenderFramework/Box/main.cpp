@@ -20,6 +20,8 @@
 #include "Recluse/Math/Vector4.hpp"
 #include "Recluse/Time.hpp"
 
+#include "Recluse/Threading/Threading.hpp"
+
 #include "../Shared/Geometry.hpp"
 
 #include <array>
@@ -405,10 +407,19 @@ void createShaderProgram(GraphicsDevice* device)
     description.graphics.ps = fsData.data();
     description.graphics.psName = "psMain";
     
+    Pipeline::ShaderBuilder* shaderBuilder = nullptr;
     if (instance->getApi() == GraphicsApi_Direct3D12)
-        GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
+        // GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
+    {
+        shaderBuilder = Pipeline::createShaderBuilder("dxc", ShaderIntermediateCode_Dxil);
+    }
+    else
+    {
+        shaderBuilder = Pipeline::createShaderBuilder("glslang", ShaderIntermediateCode_Spirv);
+    }
+    shaderBuilder->setUp();
 
-    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_Box, instance->getApi() == GraphicsApi_Direct3D12 ? ShaderIntermediateCode_Dxil : ShaderIntermediateCode_Spirv);
+    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_Box, shaderBuilder);
 #if WRITE_DATABASE
     {
         R_VERBOSE("Database", "Writing database.");
@@ -427,6 +438,8 @@ void createShaderProgram(GraphicsDevice* device)
 #endif
     Runtime::buildShaderProgram(device, database, ShaderProgram_Box);
     database.clearShaderProgramDefinitions();
+    shaderBuilder->tearDown();
+    Pipeline::freeShaderBuilder(shaderBuilder);
 }
 
 
@@ -456,7 +469,7 @@ int main(char* argv[], int c)
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
+    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 
@@ -472,7 +485,7 @@ int main(char* argv[], int c)
         appInfo.appMinor = 0;
         appInfo.appMajor = 0;
         appInfo.appPatch = 0;
-        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation | LayerFeatureFlag_DebugMarking;
+        LayerFeatureFlags flags = 0;//LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation | LayerFeatureFlag_DebugMarking;
         instance->initialize(appInfo, flags);
     }
     
@@ -508,7 +521,6 @@ int main(char* argv[], int c)
     GraphicsResource* constantBuffer = buildConstantBuffer(device);
 
     depthBuffer = buildDepthBuffer(window->getWidth(), window->getHeight());    
-
     std::array<F32, 10> lastMs;
     U32 frameCount = 0;
     GraphicsSwapchain* pSc = swapchain;

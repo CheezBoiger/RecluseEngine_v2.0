@@ -199,6 +199,8 @@ public:
 
     void                        update(F32 currentTime, F32 deltaTime);
 
+    ResultCode                  onEvent(const EventMessage& message) override;
+
 private:
 
     virtual ResultCode          onInitializeModule(Application* pApp) override;

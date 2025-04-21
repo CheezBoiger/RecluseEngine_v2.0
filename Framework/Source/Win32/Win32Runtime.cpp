@@ -9,9 +9,15 @@
 #include "Recluse/Time.hpp"
 #include "Recluse/System/Input.hpp"
 #include "Recluse/Messaging.hpp"
+#include "Recluse/Threading/Threading.hpp"
+
 #include "Recluse/System/Window.hpp"
 #include "Recluse/System/Mouse.hpp"
 #include "Recluse/System/DLLLoader.hpp"
+
+#include "Recluse/Serialization/Hasher.hpp"
+
+#include <map>
 
 // Number of watch types available to the engine. This can vary, so be sure to update the cost needed.
 #define MAX_WATCH_TYPE_INDICES      (16)
@@ -585,3 +591,53 @@ std::wstring asciiToWide(const std::string& str)
     return wst;
 }
 } // Recluse
+
+
+
+static Recluse::MutexGuard mut;
+static std::map<Recluse::Hash64, bool> m_assertTableLookup;
+
+
+static bool assertLookup(Recluse::Hash64 key)
+{
+    Recluse::ScopedLock _(mut);
+    auto it = m_assertTableLookup.find(key);
+    if (it == m_assertTableLookup.end())
+    {
+        m_assertTableLookup[key] = true;
+        return true;
+    }
+    return it->second;
+}
+
+
+void assertHandler(Recluse::Hash64 key, const wchar_t* file, unsigned int line, const wchar_t* assert_cond, bool cond)
+{
+    if (!cond && assertLookup(key))
+    {
+        //_set_error_mode(_OUT_TO_MSGBOX);
+        //(!!(cond)) || (_wassert(assert_cond, file, (unsigned)(line)), 0);
+        std::wstring cond_str = L"An assertion error was made, with the following info:\n\nFile: " + std::wstring(file);
+        cond_str += L"\nLine: " + std::to_wstring(line);
+        cond_str += L"\nAssert: " + std::wstring(assert_cond);
+        cond_str += L"\n\nWhat would you like to do?";
+        int Result = MessageBoxW(nullptr, cond_str.c_str(), L"Assertion Error", MB_ABORTRETRYIGNORE);
+
+        switch (Result)
+        {
+            case IDABORT:
+                ExitProcess(1);
+                break;
+            case IDIGNORE:
+                {
+                    Recluse::ScopedLock _lck(mut);
+                    m_assertTableLookup[key] = false;
+                }
+                break;
+            case IDRETRY:
+            default:
+                R_DEBUG_BREAK();
+                break;
+        }
+    }
+}

@@ -39,5 +39,8 @@ struct LightDescription
     F32             attenuation;
     Bool            enable          : 1;
     Bool            shadowed        : 1;
+	
+	LightDescription() { }
+	~LightDescription() { }
 };
 }

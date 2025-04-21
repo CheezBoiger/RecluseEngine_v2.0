@@ -18,9 +18,8 @@ public:
     // Need to manually write the default constructor as LightDescription has unions,
     // no way for C++ to know how to automagically construct that.
     Light()
-        : lightDescription({ })
     {
-    };
+    }
 
     REDITOR(RATTRIBUTE("visible", "public"),
             RATTRIBUTE("default", null),

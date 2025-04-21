@@ -14,7 +14,7 @@ namespace Pipeline {
 namespace Builder {
 
 
-std::unordered_map<ShaderIntermediateCode, ShaderBuilder*> g_shaderBuilderMap;
+//std::unordered_map<ShaderIntermediateCode, ShaderBuilder*> g_shaderBuilderMap;
 
 ShaderProgramDescription::ShaderProgramDescription(const ShaderProgramDescription& description)
 {
@@ -319,16 +319,9 @@ ShaderProgramDefinition makeShaderProgramDefinition(ShaderProgramDatabase& db, c
 }
 
 
-ResultCode buildShaderProgram(ShaderProgramDatabase& db, const ShaderProgramDescription& description, ShaderProgramId outId, ShaderIntermediateCode imm)
+ResultCode buildShaderProgram(ShaderProgramDatabase& db, const ShaderProgramDescription& description, ShaderProgramId outId, ShaderBuilder* shaderBuilder)
 {
-    if (g_shaderBuilderMap.find(imm) == g_shaderBuilderMap.end())
-    {
-        g_shaderBuilderMap[imm] = createShaderBuilder(g_shaderBuilderName, imm);
-        g_shaderBuilderMap[imm]->setUp();
-    }
-
     ResultCode result                  = RecluseResult_Ok;
-    ShaderBuilder* shaderBuilder    = g_shaderBuilderMap[imm];
     R_ASSERT(shaderBuilder != NULL);
 
     auto makeInstanceFunc = [&description, shaderBuilder, outId, &db] (const ShaderProgramPermutationDefinitionInstance& permutationDefinition, ShaderProgramPermutation permutation) -> ResultCode
@@ -379,7 +372,7 @@ ResultCode buildShaderProgram(ShaderProgramDatabase& db, const ShaderProgramDesc
 }
 
 
-ResultCode buildShaderPrograms(ShaderProgramDatabase& db, const ShaderProgramDescriptionInfo* descriptions, ShaderIntermediateCode imm)
+ResultCode buildShaderPrograms(ShaderProgramDatabase& db, const ShaderProgramDescriptionInfo* descriptions, ShaderBuilder* shaderBuilder)
 {
     R_ASSERT(descriptions != NULL);
     R_ASSERT(descriptions->descriptions.size() == descriptions->shaderProgramIds.size());
@@ -388,7 +381,7 @@ ResultCode buildShaderPrograms(ShaderProgramDatabase& db, const ShaderProgramDes
     {
         const ShaderProgramDescription& description = descriptions->descriptions[i];
         ShaderProgramId programId = descriptions->shaderProgramIds[i];
-        result = buildShaderProgram(db, description, programId, imm);
+        result = buildShaderProgram(db, description, programId, shaderBuilder);
         if (result != RecluseResult_Ok);
             break;
     }

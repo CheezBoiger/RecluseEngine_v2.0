@@ -240,8 +240,14 @@ int main(int c, char* argv[])
     }
 
     {
+        Pipeline::ShaderBuilder* shaderBuilder = nullptr;
         if (pInstance->getApi() == GraphicsApi_Direct3D12)
-            GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
+            // GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
+            shaderBuilder = Pipeline::createShaderBuilder("dxc", ShaderIntermediateCode_Dxil);
+        else
+            shaderBuilder = Pipeline::createShaderBuilder("glsl", ShaderIntermediateCode_Spirv);
+        shaderBuilder->setUp();
+
         ShaderProgramDatabase database = ShaderProgramDatabase("Compute.Database");
         std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
         FileBufferData file;
@@ -254,10 +260,12 @@ int main(int c, char* argv[])
         description.compute.cs = file.data();
         description.compute.csName = "main";
 
-        Pipeline::Builder::buildShaderProgram(database, description, 0, pInstance->getApi() == GraphicsApi_Vulkan ? ShaderIntermediateCode_Spirv : ShaderIntermediateCode_Dxil);
+        Pipeline::Builder::buildShaderProgram(database, description, 0, shaderBuilder);
         //Runtime::buildShaderProgram(pDevice, database, ProgramId_Mandelbrot);
         Runtime::buildAllShaderPrograms(pDevice, database);
         database.clearShaderProgramDefinitions();
+        shaderBuilder->tearDown();
+        Pipeline::freeShaderBuilder(shaderBuilder);
     }
 
     pWindow->show();

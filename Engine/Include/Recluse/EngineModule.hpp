@@ -96,8 +96,39 @@ public:
     static ResultCode cleanUpModule(Application* pApp)
     {
         ResultCode result = getMain()->cleanUpInstance(pApp);
+        getMain()->cleanUpMessageBuses();
         return result;
     }
+
+    ResultCode linkMessageBus(MessageBus* bus)
+    {
+        auto it = m_messageBusMap.find(bus->getId());
+        ResultCode result = RecluseResult_AlreadyExists;
+        if (it == m_messageBusMap.end())
+        {
+            bus->addReceiver(getModuleName(), [&] (const EventMessage& message) -> ResultCode
+                { 
+                    return onEvent(message);
+                });
+            m_messageBusMap.insert(std::make_pair(bus->getId(), bus));
+            result = RecluseResult_Ok;
+        }
+        return result;
+    }
+
+    ResultCode unlinkMessageBus(MessageBus::Id busId)
+    {
+        ResultCode result = RecluseResult_NotFound;
+        auto it = m_messageBusMap.find(busId);
+        if (it != m_messageBusMap.end())
+        {
+            m_messageBusMap.erase(it);
+            result = RecluseResult_Ok;
+        }
+        return result;
+    }
+
+    virtual ResultCode onEvent(const EventMessage& eventMessage) { return RecluseResult_NoImpl; }
 
 protected:
     EngineModule() { }
@@ -210,6 +241,12 @@ public:
         return RecluseResult_Ok;
     }
 
+    ResultCode cleanUpMessageBuses()
+    {
+        m_messageBusMap.clear();
+        return RecluseResult_Ok;
+    }
+
 private:
     volatile Bool   m_isRunning = false;
     volatile Bool   m_isActive  = false;
@@ -218,6 +255,9 @@ private:
     // Thread pool which we can use to launch how many threads.
     ThreadPool      m_threadPool;
     std::map<EnginePluginId, std::vector<ModulePlugin<ModuleImpl>*>> m_plugins;
+
+    // Message bus map.
+    std::map<MessageBus::Id, MessageBus*> m_messageBusMap;
 };
 } // Engine
 } // Recluse

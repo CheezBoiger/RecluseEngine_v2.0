@@ -183,10 +183,13 @@ int main(int c, char* argv[])
     Scene* pScene = new Scene();
     pScene->initialize();
 
-    ECS::AbstractSystem* transformSystem = ECS::AbstractSystem::allocate<TransformSystem>(&g_bus);
-    ECS::AbstractSystem* moverSystem = ECS::AbstractSystem::allocate<MoverSystem>(&g_bus);
+    ECS::AbstractSystem* transformSystem = ECS::AbstractSystem::allocate<TransformSystem>();
+    ECS::AbstractSystem* moverSystem = ECS::AbstractSystem::allocate<MoverSystem>();
 
     addEntities(pScene, &registry);
+
+    transformSystem->linkMessageBus(&g_bus);
+    moverSystem->linkMessageBus(&g_bus);
 
     F32 counter = 0;
     while (counter < 10.0f) 

@@ -13,62 +13,71 @@
 
 namespace Recluse {
 namespace Pipeline {
+namespace Builder {
 namespace FBX {
 
 class FbxImport : public Pipeline::Builder::Importer
 {
 public:
-    const char* FbxChannel = "FBX";
+    static constexpr const char* FbxChannel = "FBX";
+
     typedef std::vector<FbxNodeAttribute::EType> ElementTypes;
     typedef std::function<ResultCode(FbxNode* node)> FbxProcessFunction;
+
+    struct ProcessDescription
+    {
+        ElementTypes        types;
+        FbxProcessFunction  func;
+    };
+
+    class Process
+    {
+    public:
+        typedef std::map<FbxNodeAttribute::EType, std::vector<FbxProcessFunction>> ProcessMap;
+
+        Bool contains(FbxNodeAttribute::EType etype) const
+        {
+            auto it = m_processMap.find(etype);
+            return (it != m_processMap.end());
+        }
+
+        const std::vector<FbxProcessFunction>& get(FbxNodeAttribute::EType etype) const
+        {
+            auto it = m_processMap.find(etype);
+            if (it == m_processMap.end())
+                return { };
+            return it->second;
+        }
+
+        const std::vector<FbxProcessFunction>& operator[](FbxNodeAttribute::EType etype) const
+        {
+            return get(etype);
+        }
+
+        Process& operator()(const ProcessDescription& processDesc) 
+        {
+            return add(processDesc);
+        }
+
+        Process& add(const ProcessDescription& processDesc)
+        {
+            for (auto etype : processDesc.types)
+                m_processMap[etype].push_back(processDesc.func);
+            return *this;
+        }
+    private:
+        ProcessMap m_processMap;
+    };
 
     FbxImport();
 
     virtual ~FbxImport();
 
     ResultCode importFile(const std::string& filePath) override;
-    ResultCode traverseScene(FbxNode* parentNode, const ElementTypes& types, FbxProcessFunction& func);
-    ResultCode processNode(FbxNode* node, const ElementTypes& types, FbxProcessFunction& func);
+    ResultCode traverseScene(FbxNode* parentNode, const Process& processes);
+    ResultCode processNode(FbxNode* node, const Process& processes);
 
-    ResultCode processMesh(FbxNode* node)
-    {
-        FbxMesh* meshNode = (FbxMesh*) node->GetNodeAttribute();
-
-        const i32 numPolygons = meshNode->GetPolygonCount();
-        i32 vertexId = 0;
-        // Control points is another name for "vertex", with geometric information
-        // of each point in our mesh.
-        FbxVector4* controlPoints = meshNode->GetControlPoints();
-
-        for (i32 polygonIdx = 0; polygonIdx < numPolygons; ++polygonIdx)
-        {
-            for (i32 i = 0 ; i < meshNode->GetElementPolygonGroupCount(); ++i)
-            {
-            }
-
-            const i32 polygonSize       = meshNode->GetPolygonSize(polygonIdx);
-            const i32 startVertexIndex  = meshNode->GetPolygonVertexIndex(polygonIdx);
-
-            for (i32 polygonSizeIdx = 0; polygonSizeIdx < polygonSize; ++polygonSizeIdx)
-            {
-                i32 controlPointIdx = meshNode->GetPolygonVertex(polygonIdx, polygonSizeIdx);
-
-                i32 vertexIndex = meshNode->GetPolygonVertices()[startVertexIndex];
-                if (controlPointIdx < 0)
-                {
-                    R_WARN(FbxChannel, "Invalid control point index found for this mesh. Skipping...");
-                    continue;
-                }
-
-                // Obtain the vertex coordinate, position.
-                const FbxVector4& coordinates = controlPoints[controlPointIdx];
-                
-                // Increment the vertex counter.
-                ++vertexId;
-            }
-        }
-        return RecluseResult_NoImpl;
-    }
+    FbxNode*   getRootNode() const { return m_scene->GetRootNode(); }
 
     ResultCode processLight(FbxNode* node)
     {
@@ -133,5 +142,6 @@ private:
     std::vector<LightDescription> lights;
 };
 } // FBX
+} // Builder
 } // Pipeline
 } // Recluse

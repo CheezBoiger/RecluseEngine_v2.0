@@ -33,10 +33,10 @@ struct D3DVertexInput
 };
 
 
-ResultCode make(DeviceId deviceId, VertexInputLayoutId id, const VertexInputLayout& layout);
-ResultCode unload(DeviceId deviceId, VertexInputLayoutId id);
+ResultCode      make(DeviceId deviceId, VertexInputLayoutId id, const VertexInputLayout& layout);
+ResultCode      unload(DeviceId deviceId, VertexInputLayoutId id);
 D3DVertexInput* obtain(DeviceId deviceId, VertexInputLayoutId id);
-Bool unloadAll(DeviceId deviceId);
+Bool            unloadAll(DeviceId deviceId);
 } // VertexInputs
 
 

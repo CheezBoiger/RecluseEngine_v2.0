@@ -54,7 +54,7 @@ public:
     Texture2D() 
         : m_resource(nullptr) { }
 
-    ResultCode initialize(GraphicsDevice* pDevice, ResourceFormat format, U32 width, U32 height, U32 arrayLevel, U32 mips);
+    ResultCode initialize(GraphicsDevice* pDevice, ResourceFormat format, U32 width, U32 height, U32 arrayLevel, U32 mips, const char* debugName = nullptr);
     void destroy(GraphicsDevice* pDevice);
 
     // Load texture data to this resource handle.

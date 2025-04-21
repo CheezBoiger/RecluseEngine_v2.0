@@ -1,7 +1,7 @@
 //
 #pragma once
 #include "Recluse/Graphics/ShaderProgram.hpp"
-
+#include "Recluse/Pipeline/Graphics/ShaderBuilder.hpp"
 #include "ReclusePipeline_exports.hpp"
 
 
@@ -110,9 +110,9 @@ struct ShaderProgramDescriptionInfo
 };
 
 // Build the shader program definitions. When successful, will store the shader program into the given ShaderProgrmaDatabase. 
-ReclusePipeline_PUBLIC_API ResultCode                     buildShaderPrograms(ShaderProgramDatabase& db, const ShaderProgramDescriptionInfo* descriptions, ShaderIntermediateCode imm);
+ReclusePipeline_PUBLIC_API ResultCode                     buildShaderPrograms(ShaderProgramDatabase& db, const ShaderProgramDescriptionInfo* descriptions, ShaderBuilder* shaderBuilder = nullptr);
 // Build the needed shader program definitions in order to define how the programs should be built in runtime.
-ReclusePipeline_PUBLIC_API ResultCode                     buildShaderProgram(ShaderProgramDatabase& db, const ShaderProgramDescription& description, ShaderProgramId outId, ShaderIntermediateCode imm);
+ReclusePipeline_PUBLIC_API ResultCode                     buildShaderProgram(ShaderProgramDatabase& db, const ShaderProgramDescription& description, ShaderProgramId outId, ShaderBuilder* shaderBuilder = nullptr);
 ReclusePipeline_PUBLIC_API ResultCode                     releaseShaderProgram(ShaderProgramDatabase& db, ShaderProgramId id);
 
 // Function to allow saving program definitions on disk.

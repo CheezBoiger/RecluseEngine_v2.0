@@ -33,7 +33,10 @@ struct AdapterLimits
 
 struct DeviceCreateInfo 
 {
-    U32 reserved0;
+    // Allow asyncronous compute queue if it is available. 
+    // If not available, the graphics context will notify if so.
+    B32 allowAsyncCompute   : 1;
+    B32 reserved0           : 31; //< Reserved for future use.
 };
 
 class GraphicsDevice;

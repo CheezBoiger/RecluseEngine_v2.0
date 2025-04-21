@@ -62,12 +62,13 @@ private:
         ShaderProgramReflection* cachedReflection;
     };
 public:
-    D3D12Context(D3D12Device* pDevice, U32 bufferCount, D3D12Queue* pQueue)
+    D3D12Context(D3D12Device* pDevice, U32 bufferCount, D3D12Queue* pQueue, D3D12Queue* computeQueue = nullptr)
         : m_pDevice(pDevice)
         , m_currentContextFrameIndex(0)
         , m_pPrimaryCommandList(nullptr)
         , m_bufferCount(bufferCount)
-        , m_queue(pQueue)
+        , m_graphicsQueue(pQueue)
+        , m_computeQueue(computeQueue)
     {
 
     }
@@ -154,6 +155,7 @@ public:
     const ContextFrame&                 getContextFrame(U32 idx) const { return m_contextFrames[idx]; }
     void                                setNewFenceValue(U32 idx, U64 value) { m_contextFrames[idx].fenceValue = value; }   
     D3D12Device*                        getNativeDevice() const { return m_pDevice; }
+    Bool                                supportsAsyncCompute() const override;
 
 private:
     typedef U32 ContextDirtyFlags;
@@ -222,7 +224,8 @@ private:
     D3D12PrimaryCommandList*            m_pPrimaryCommandList;
     std::vector<ContextState>           m_contextStates;
     std::vector<D3D12_RESOURCE_BARRIER> m_barrierTransitions;
-    D3D12Queue*                         m_queue;
+    D3D12Queue*                         m_graphicsQueue;
+    D3D12Queue*                         m_computeQueue;
     D3D12ShaderProgramBinder            m_shaderProgramBinder;
 };
 
@@ -277,7 +280,7 @@ public:
     D3D12ResourceAllocationManager*     resourceAllocationManager() { return &m_resourceAllocationManager; }
 
 private:
-    void                                createCommandQueues();
+    void                                createCommandQueues(Bool allowComputeQueue = false);
     void                                destroyCommandQueues();
     // Resource pools.
     D3D12ResourceAllocationManager      m_resourceAllocationManager;

@@ -3,6 +3,7 @@
 
 #include "Recluse/Logger.hpp"
 #include "Recluse/Arch.hpp"
+#include "Recluse/Serialization/Hasher.hpp"
 #include "Recluse/System/DateTime.hpp"
 #include <stdio.h>
 
@@ -22,7 +23,7 @@
 #define R_VERBOSE(chan, format, ...)    do { R_LOG(chan, Recluse::LogType_Verbose, format, __VA_ARGS__); } while (false)
 #define R_TRACE(chan, format, ...)      do { R_LOG(chan, Recluse::LogType_Trace, format, __VA_ARGS__);   } while (false)
 #define R_NOTIFY(chan, format, ...)     do { R_LOG(chan, Recluse::LogType_Notify, format, __VA_ARGS__);  } while (false)
-#define R_DEBUG(chan, str, ...)         do { R_LOG(chan, Recluse::LogType_Debug, str, __VA_ARGS__); } while (false)
+#define R_DEBUG(chan, str, ...)         do { R_LOG(chan, Recluse::LogType_Debug, str, __VA_ARGS__);      } while (false)
  
 #if defined(RECLUSE_DEBUG) || defined(RECLUSE_DEVELOPER)
     namespace Recluse {
@@ -58,21 +59,50 @@
     #define R_ASSERT_LOG()
     #if !defined(R_IGNORE_ASSERT)
         #if defined(RECLUSE_WINDOWS)
-            #define R_ASSERT(expression) do { _set_error_mode(_OUT_TO_MSGBOX); assert(expression); } while (0)
+            RecluseFramework_PUBLIC_API extern void assertHandler(Recluse::Hash64 key, const wchar_t* file, unsigned int line, const wchar_t* assert_cond, bool cond);
+            #define R_ASSERT(expression) do { \
+                if (!(expression)) { \
+                    int lineN = __LINE__; \
+                    Recluse::Hash64 ______k = Recluse::recluseHashFast(__FILE__ ## #expression, sizeof(__FILE__ ## #expression)) ^ Recluse::recluseHashFast(&lineN, sizeof(lineN)); \
+                    assertHandler(______k, _CRT_WIDE(__FILE__), __LINE__, _CRT_WIDE(#expression), (expression)); \
+                } \
+            } while (0)
+            // Static assert friendly.
+            #define R_STATIC_ASSERT(expression) do { _set_error_mode(_OUT_TO_MSGBOX); assert(expression); } while (0)
             #define R_ASSERT_FORMAT(expression, fmt, ...) \
                 do { \
-                    wchar_t werr[512]; { \
-                    char err[512]; \
-                    sprintf(err, #expression ## ", " ## #fmt, __VA_ARGS__); \
-                    MultiByteToWideChar(CP_UTF8, 0, err, 512, werr, 512); \
+                    if (!(expression)) { \
+                        wchar_t werr[512]; \
+                        { \
+                            char err[512]; \
+                            sprintf(err, #expression ## "\n" ## #fmt, __VA_ARGS__); \
+                            MultiByteToWideChar(CP_UTF8, 0, err, 512, werr, 512); \
+                        } \
+                        int lineN = __LINE__; \
+                        Recluse::Hash64 _____k = Recluse::recluseHashFast(__FILE__ ## #expression, sizeof(__FILE__ ## #expression)) ^ Recluse::recluseHashFast(&lineN, sizeof(lineN)); \
+                        assertHandler(_____k, _CRT_WIDE(__FILE__), __LINE__, werr, (expression)); \
                     } \
-                    _set_error_mode(_OUT_TO_MSGBOX); \
-                    (void)((!!(expression)) || (_wassert(werr, _CRT_WIDE(__FILE__), (unsigned)(__LINE__)), 0)); \
+                } while (0)
+            // Static assert friendly.
+            #define R_STATIC_ASSERT_FORMAT(expression, fmt, ...) \
+                do { \
+                    if (!(expression)) { \
+                        wchar_t werr[512]; \
+                        { \
+                            char err[512]; \
+                            sprintf(err, #expression ## ", " ## #fmt, __VA_ARGS__); \
+                            MultiByteToWideChar(CP_UTF8, 0, err, 512, werr, 512); \
+                        } \
+                        _set_error_mode(_OUT_TO_MSGBOX); \
+                        (void)((!!(expression)) || (_wassert(werr, _CRT_WIDE(__FILE__), (unsigned)(__LINE__)), 0)); \
+                    } \
                 } while (0)
         #else
             // TODO: For anything other than windows, we still need to improve this.
             #define R_ASSERT(expression) assert(expression)
             #define R_ASSERT_FORMAT(expression, msg, ...) do { char err[512]; sprintf(err, #msg, __VA_ARGS__); assert(expression && err); } while (0)
+            #define R_STATIC_ASSERT(expression)
+            #define R_STATIC_ASSERT_FORMAT(expression, fmt, ...)
         #endif
     #else
         #undef R_DEBUG_BREAK()
@@ -85,6 +115,8 @@
     #define R_ASSERT_LOG()
     #define R_ASSERT(expression)
     #define R_ASSERT_FORMAT(expression, msg, ...)
+    #define R_STATIC_ASSERT(expression)
+    #define R_STATIC_ASSERT_FORMAT(expression, fmt, ...)
     #define R_DEBUG_WRAP(cond)
 #endif
 

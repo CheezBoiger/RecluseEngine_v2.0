@@ -17,23 +17,24 @@ public:
     D3D12Queue()
         : m_queue(nullptr)
         , pFence(nullptr)
-        , pEvent(nullptr) { }
+        , pEvent(nullptr)
+        , m_type(D3D12_COMMAND_LIST_TYPE_DIRECT) { }
 
-    ResultCode initialize(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type);
+    ResultCode                  initialize(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type);
     
     //ErrType submit(const QueueSubmit* payload);
 
-    void destroy();
-
-    ID3D12CommandQueue*     get() const { return m_queue; }
+    void                        destroy();
+    ID3D12CommandQueue*         get() const { return m_queue; }
 
     // Returns the expected new fence value.
-    U64                     waitForGpu(U64 currentFenceValue);
-    void                    copyResource(D3D12Resource* dst, D3D12Resource* src);
-    void                    copyBufferRegions(D3D12Resource* dst, D3D12Resource* src, const CopyBufferRegion* regions, U32 numRegions);
+    U64                         waitForGpu(U64 currentFenceValue);
+    void                        copyResource(D3D12Resource* dst, D3D12Resource* src);
+    void                        copyBufferRegions(D3D12Resource* dst, D3D12Resource* src, const CopyBufferRegion* regions, U32 numRegions);
 
-    ID3D12Fence* getFence() const { return pFence; }
-    HANDLE getEvent() const { return pEvent; }
+    ID3D12Fence*                getFence() const { return pFence; }
+    HANDLE                      getEvent() const { return pEvent; }
+    D3D12_COMMAND_LIST_TYPE     getType() const { return m_type; }
 
     ID3D12GraphicsCommandList*  createOneTimeCommandList(U32 nodeMask, ID3D12Device* pDevice);
     ResultCode                  endAndSubmitOneTimeCommandList(ID3D12GraphicsCommandList* pList);
@@ -42,6 +43,7 @@ private:
     ID3D12CommandQueue*         m_queue;
     ID3D12Fence*                pFence;
     HANDLE                      pEvent;
+    D3D12_COMMAND_LIST_TYPE     m_type;
 };
 
 

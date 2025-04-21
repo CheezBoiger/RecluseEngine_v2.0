@@ -210,6 +210,17 @@ void createShaderProgram(GraphicsDevice* device)
     File::readFrom(&vsData, vsSource);
     File::readFrom(&fsData, fsSource);
 
+    Pipeline::ShaderBuilder* shaderBuilder = nullptr;
+    if (instance->getApi() == GraphicsApi_Direct3D12)
+    {
+        shaderBuilder = Pipeline::createShaderBuilder("dxc", ShaderIntermediateCode_Dxil);
+    }   
+    else
+    {
+        shaderBuilder = Pipeline::createShaderBuilder("glsl", ShaderIntermediateCode_Spirv);
+    }
+    shaderBuilder->setUp();
+
     Pipeline::Builder::ShaderProgramDescription description;
     description.pipelineType = BindType_Graphics;
     description.language = ShaderLanguage_Hlsl;
@@ -217,7 +228,7 @@ void createShaderProgram(GraphicsDevice* device)
     description.graphics.vsName = "Main";
     description.graphics.ps = fsData.data();
     description.graphics.psName = "psMain";
-    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_Gbuffer, instance->getApi() == GraphicsApi_Direct3D12 ? ShaderIntermediateCode_Dxil : ShaderIntermediateCode_Spirv);
+    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_Gbuffer, shaderBuilder);
     Runtime::buildShaderProgram(device, database, ShaderProgram_Gbuffer);
 
 
@@ -233,9 +244,11 @@ void createShaderProgram(GraphicsDevice* device)
     description.graphics.vsName = "Main";
     description.graphics.ps = fsData.data();
     description.graphics.psName = "psMain";
-    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_LightResolve, instance->getApi() == GraphicsApi_Direct3D12 ? ShaderIntermediateCode_Dxil : ShaderIntermediateCode_Spirv);
+    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_LightResolve, shaderBuilder);
     Runtime::buildShaderProgram(device, database, ShaderProgram_LightResolve);
     database.clearShaderProgramDefinitions();
+    shaderBuilder->tearDown();
+    Pipeline::freeShaderBuilder(shaderBuilder);
 }
 
 
@@ -659,7 +672,7 @@ void createCubes(GraphicsDevice* device, std::vector<MeshDraw>& meshes, U32 widt
         it.meshTransform->map((void**)&buffer, nullptr);
         F32 t = 20.0f * 0;
         t = fmod(t, 360.0f);
-        Math::Matrix44 T = Math::translate(Math::Matrix44::identity(), Math::Float3(i, i, 6));
+        Math::Matrix44 T = Math::translate(Math::Matrix44::identity(), Math::Float3(i, i, 6u));
         Math::Matrix44 R = Math::rotate(Math::Matrix44::identity(), Math::Float3(0.0f, 1.0f, 0.0f), Math::deg2Rad(45.0f));
         Math::Matrix44 R2 = Math::rotate(Math::Matrix44::identity(), Math::Float3(1.0f, 0.0f, 1.0f), Math::deg2Rad(t));
         i += 1;

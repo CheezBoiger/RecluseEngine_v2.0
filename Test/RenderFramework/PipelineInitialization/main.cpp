@@ -284,6 +284,13 @@ int main(int c, char* argv[])
 
         File::readFrom(&vertFileSource, vsSource);
         File::readFrom(&pixelFileSource, fsSource);
+    
+        Pipeline::ShaderBuilder* shaderBuilder = nullptr;
+        if (pInstance->getApi() == GraphicsApi_Direct3D12)
+            shaderBuilder = Pipeline::createShaderBuilder("dxc", ShaderIntermediateCode_Dxil);
+        else
+            shaderBuilder = Pipeline::createShaderBuilder("glsl", ShaderIntermediateCode_Spirv);
+        shaderBuilder->setUp();
 
         Pipeline::Builder::ShaderProgramDescription description = { };
         description.pipelineType = BindType_Graphics;
@@ -298,7 +305,7 @@ int main(int c, char* argv[])
         description.graphics.hs = nullptr;
 
         description.language = ShaderLanguage_Hlsl;
-        Pipeline::Builder::buildShaderProgram(database, description, ShaderKey_SimpleColor, pInstance->getApi() == GraphicsApi_Direct3D12 ? ShaderIntermediateCode_Dxil : ShaderIntermediateCode_Spirv);
+        Pipeline::Builder::buildShaderProgram(database, description, ShaderKey_SimpleColor, shaderBuilder);
         Runtime::buildShaderProgram(pDevice, database, 0);
         database.clearShaderProgramDefinitions();
 
@@ -319,6 +326,8 @@ int main(int c, char* argv[])
         layout.numVertexBindings = 1;
 
         Runtime::buildVertexInputLayout(pDevice, layout, VertexLayoutKey_PositionOnly);
+        shaderBuilder->setUp();
+        Pipeline::freeShaderBuilder(shaderBuilder);
     }
 
     U64 offset = 0;

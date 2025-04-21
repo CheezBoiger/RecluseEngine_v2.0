@@ -20,7 +20,7 @@ namespace D3D12 {
 void D3D12Context::initialize()
 {
     initializeBufferResources(m_bufferCount);
-    createCommandList(&m_pPrimaryCommandList, QUEUE_TYPE_PRESENT | QUEUE_TYPE_GRAPHICS);
+    createCommandList(&m_pPrimaryCommandList, QueueType_Present | QueueType_Graphics);
     D3D12ResourceAllocationManager* manager = m_pDevice->resourceAllocationManager();
     D3D12ResourceAllocationManager::Update update = { };
     update.flags = D3D12ResourceAllocationManager::UpdateFlag_SetFrameIndex | D3D12ResourceAllocationManager::UpdateFlag_ResizeGarbage;
@@ -63,7 +63,7 @@ ResultCode D3D12Context::setFrames(U32 bufferCount)
 
 ResultCode D3D12Context::wait()
 {
-    D3D12Queue* pqueue = m_queue;
+    D3D12Queue* pqueue = m_graphicsQueue;
     pqueue->waitForGpu(getContextFrame(getCurrentFrameIndex()).fenceValue);
     return RecluseResult_Ok;
 }
@@ -71,14 +71,14 @@ ResultCode D3D12Context::wait()
 
 void D3D12Context::begin()
 {
-    ID3D12Fence* fence = m_queue->getFence();
-    HANDLE e = m_queue->getEvent();
+    ID3D12Fence* fence = m_graphicsQueue->getFence();
+    HANDLE e = m_graphicsQueue->getEvent();
     const U64 previousFenceValue = getContextFrame(getCurrentFrameIndex()).fenceValue;
 
     incrementContextFrameIndex();
 
     const U64 currentFrameValue = getContextFrame(getCurrentFrameIndex()).fenceValue;
-    m_queue->get()->Signal(fence, previousFenceValue);
+    m_graphicsQueue->get()->Signal(fence, previousFenceValue);
     const U64 completedValue = fence->GetCompletedValue();
     if (completedValue < currentFrameValue)
     {
@@ -99,7 +99,7 @@ void D3D12Context::begin()
 
 ResultCode D3D12Context::submitPrimaryCommandList(ID3D12GraphicsCommandList* pCommandList)
 {
-    ID3D12CommandQueue* pPresentationQueue = m_queue->get();
+    ID3D12CommandQueue* pPresentationQueue = m_graphicsQueue->get();
     ID3D12CommandList* pLists[] = { pCommandList };
 
     R_ASSERT(pPresentationQueue != NULL);
@@ -271,10 +271,10 @@ void D3D12Context::clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect)
     d3d12Rect.top       = static_cast<LONG>(rect.y);
     d3d12Rect.bottom    = static_cast<LONG>(rect.y + rect.height);
 
-    clearValue[0] = clearColor[0];
-    clearValue[1] = clearColor[1];
-    clearValue[2] = clearColor[2];
-    clearValue[3] = clearColor[3];
+    clearValue[0]       = clearColor[0];
+    clearValue[1]       = clearColor[1];
+    clearValue[2]       = clearColor[2];
+    clearValue[3]       = clearColor[3];
     pList->ClearRenderTargetView(rtvHandle, clearValue, 1, &d3d12Rect);
 }
 
@@ -329,7 +329,7 @@ ResultCode D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo
 
     m_pAdapter = adapter;
 
-    createCommandQueues();
+    createCommandQueues(info.allowAsyncCompute);
 
     DescriptorHeapAllocationManager::DescriptorCoreSize descriptorSizes = { };
     m_descHeapManager.initialize(m_device, descriptorSizes, 0);
@@ -347,10 +347,20 @@ ResultCode D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo
 }
 
 
-void D3D12Device::createCommandQueues()
+void D3D12Device::createCommandQueues(Bool allowComputeQueue)
 {
     D3D12Queue queue = createCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
     m_queues.insert(std::make_pair(D3D12_COMMAND_LIST_TYPE_DIRECT, queue));
+
+    if (allowComputeQueue)
+    {
+        D3D12Queue computeQueue = createCommandQueue(D3D12_COMMAND_LIST_TYPE_COMPUTE);
+        if (computeQueue.get())
+        {
+            // We have compute queue!
+            m_queues.insert(std::make_pair(D3D12_COMMAND_LIST_TYPE_COMPUTE, computeQueue));
+        }
+    }
 }
 
 
@@ -532,12 +542,12 @@ void D3D12Context::initializeBufferResources(U32 buffering)
                                     __uuidof(ID3D12CommandAllocator), 
                                     (void**)&m_contextFrames[i].pAllocator);
         R_ASSERT(result == S_OK);
-        m_contextFrames[i].fenceValue = m_queue->getFence()->GetCompletedValue();
+        m_contextFrames[i].fenceValue = m_graphicsQueue->getFence()->GetCompletedValue();
 
         m_contextFrames[i].timestampQuery.initialize(m_pDevice->get(), 0, D3D12_QUERY_HEAP_TYPE_TIMESTAMP, 128);
         m_contextFrames[i].occlusionQuery.initialize(m_pDevice->get(), 0, D3D12_QUERY_HEAP_TYPE_OCCLUSION, 128);
     }
-    m_contextFrames[m_currentContextFrameIndex].fenceValue = m_queue->waitForGpu(m_contextFrames[m_currentContextFrameIndex].fenceValue);
+    m_contextFrames[m_currentContextFrameIndex].fenceValue = m_graphicsQueue->waitForGpu(m_contextFrames[m_currentContextFrameIndex].fenceValue);
 }
 
 
@@ -678,6 +688,13 @@ void D3D12Context::endLabel()
 }
 
 
+Bool D3D12Context::supportsAsyncCompute() const
+{
+    R_ASSERT(m_graphicsQueue);
+    return (m_computeQueue != nullptr) && (m_computeQueue != m_graphicsQueue);
+}
+
+
 ResultCode D3D12Device::createSampler(GraphicsSampler** sampler, const SamplerDescription& desc)
 {
     D3D12Sampler* d3d12Sampler = DescriptorViews::makeSampler(this, desc);
@@ -761,7 +778,7 @@ Bool D3D12Device::destroyVertexLayout(VertexInputLayoutId id)
 
 GraphicsContext* D3D12Device::createContext()
 {
-    D3D12Context* pContext = new D3D12Context(this, 0, getQueue(D3D12_COMMAND_LIST_TYPE_DIRECT));
+    D3D12Context* pContext = new D3D12Context(this, 0, getQueue(D3D12_COMMAND_LIST_TYPE_DIRECT), getQueue(D3D12_COMMAND_LIST_TYPE_COMPUTE));
     return pContext;
 }
 

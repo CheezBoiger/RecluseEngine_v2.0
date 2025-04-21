@@ -1,6 +1,4 @@
 //
-#pragma once
-
 #include "Recluse/Core/Profile/Profiler.hpp"
 
 #include "Recluse/Serialization/Hasher.hpp"
@@ -8,6 +6,7 @@
 #include "Recluse/Threading/Threading.hpp"
 
 #include <unordered_map>
+#if defined(RECLUSE_DEBUG) || defined(RECLUSE_DEVELOPER)
 
 namespace Recluse {
 namespace CpuProfileDatabase {
@@ -49,3 +48,4 @@ ResultCode queryMeasurement(const std::string& profileName, CpuPerformanceProfil
 }
 } // CpuProfileDatabase
 } // Recluse
+#endif

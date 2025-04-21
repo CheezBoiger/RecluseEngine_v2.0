@@ -9,6 +9,7 @@
 
 namespace Recluse {
 namespace Pipeline {
+namespace Builder {
 namespace FBX {
 
 
@@ -59,37 +60,38 @@ ResultCode FbxImport::importFile(const std::string& filePath)
 }
 
 
-ResultCode FbxImport::traverseScene(FbxNode* parentNode, const ElementTypes& types, FbxProcessFunction& func)
+ResultCode FbxImport::traverseScene(FbxNode* parentNode, const Process& processes)
 {
     // We will traverse recursively for now.
     if (!parentNode) return RecluseResult_Ok;
 
-    processNode(parentNode, types, func);
+    processNode(parentNode, processes);
 
     // Traverse recursively
     for (U32 i = 0; i < parentNode->GetChildCount(); ++i)
     {
         FbxNode* child = parentNode->GetChild(i);
-        traverseScene(child, types, func);
+        traverseScene(child, processes);
     }
 
     return RecluseResult_Ok;
 }
 
 
-ResultCode FbxImport::processNode(FbxNode* node, const ElementTypes& types, FbxProcessFunction& func)
+ResultCode FbxImport::processNode(FbxNode* node, const Process& processes)
 {
     R_ASSERT(node);
     ResultCode result = RecluseResult_Failed;
     if (node->GetNodeAttribute())
     {
         FbxNodeAttribute::EType attribType = node->GetNodeAttribute()->GetAttributeType();
-        for (auto type : types)
+        if (processes.contains(attribType))
         {
-            if (type == attribType)
+            const std::vector<FbxProcessFunction>& functions = processes[attribType];
+            R_ASSERT_FORMAT(!functions.empty(), "Couldn't find processing functions for etype=%d". (i32)attribType);
+            for (auto func : functions)
             {
                 result = func(node);
-                break;
             }
         }
     }
@@ -100,5 +102,6 @@ ResultCode FbxImport::processNode(FbxNode* node, const ElementTypes& types, FbxP
     return result;
 }
 } // FBX
+} // Builder
 } // Pipeline
 } // Recluse

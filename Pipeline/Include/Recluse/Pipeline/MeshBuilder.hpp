@@ -52,8 +52,12 @@ public:
         RGUID                                   guid;
 
         // Engine submeshes.
-        std::map<std::string, Engine::SubMesh>  submeshMap;
-        std::vector<Engine::SubMesh*>           submeshes;
+        // Some information about submeshes.
+        // According to the url: https://download.autodesk.com/us/fbx/SDKdocs/FBX_SDK_Help/files/fbxsdkref/class_k_fbx_mesh.html
+        // Fbx identifies a group of vertices as a Polygon, this can be akin to a submesh, that we identify in Recluse.
+        // 
+        std::map<std::string, Engine::SubMesh*> submeshMap;
+        std::vector<Engine::SubMesh>            submeshes;
 
         // Data related to the mesh is arbitrary, especially if we end up quantizing.
         std::vector<Math::Float3>               positions;
@@ -78,7 +82,7 @@ public:
     };
 
     // Create the mesh builder.
-    static MeshBuilder*         create(Importer* importer);
+    static MeshBuilder*         create(FileFormat format);
     static ResultCode           destroy(MeshBuilder* builder);
 
     MeshBuilder() { }
@@ -89,7 +93,7 @@ public:
 
     virtual ResultCode          serialize(Archive* archive) const override { return RecluseResult_NoImpl; }
     virtual ResultCode          deserialize(Archive* archive) override { return RecluseResult_NoImpl; }
-    ResultCode                  clear() { m_data.clear(); m_dataMap.clear(); }
+    ResultCode                  clear() { m_data.clear(); m_dataMap.clear(); return RecluseResult_Ok; }
 
     Data*                       getData(const RGUID& rguid) { auto it = m_dataMap.find(rguid); if (it != m_dataMap.end()) return &m_data[it->second.index]; }
     u32                         getNumberOfMeshes() const { return m_data.size(); }
