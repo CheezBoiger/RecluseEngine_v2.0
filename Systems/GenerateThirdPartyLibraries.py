@@ -36,11 +36,13 @@ def parse_cmake_commands_from_build_file(build_file_path, build_path, cmake_dire
             if child.tag == "build":
                 build_commands = []
                 install_commands = []
+                build_config = ''
                 for subchild in child:
                     if subchild.tag == "type":
                         config = subchild.text
                         build_commands += ["--config", config]
                         install_commands += ["--config", config]
+                        build_config = config
                     if subchild.tag == "prerun":
                         for prerunChild in subchild:
                             print(prerunChild.tag)
@@ -66,10 +68,13 @@ def parse_cmake_commands_from_build_file(build_file_path, build_path, cmake_dire
                                 prefix_dir = installchild.attrib['path']
                                 if "${RECLUSE_INSTALL_PREFIX}" in prefix_dir:
                                     prefix_dir = prefix_dir.replace("${RECLUSE_INSTALL_PREFIX}", recluse_install_dir)
-                                install_commands = ['--prefix', prefix_dir]
+                                install_commands += ['--prefix', prefix_dir]
+                    if subchild.tag == "target":
+                        target_name = subchild.attrib['name']
+                        build_commands += ['--target', target_name]
                     if subchild.tag == "include":
                         print("Nice")
-                builds.append({ 'build': build_commands, 'install': install_commands })
+                builds.append({ 'build': build_commands, 'install': install_commands, 'config': build_config })
             if child.tag == "param":
                 attrib = child.attrib
                 generate_commands += ['-D', attrib['var'] + "=" + attrib['value']]
@@ -117,12 +122,16 @@ def main():
                     os.chdir(directory)
                     
                     generate_commands, builds = parse_cmake_commands_from_build_file(file_path, thirdparty_build_dir, directory_cmake_path)
+                    #print(directory_cmake_path, generate_commands)
                     subprocess.call(["cmake"] + generate_commands + [f"{directory_cmake_path}"])
-                    print(file_path, generate_commands)
+                    
                     for build in builds:
+                        #print(os.getcwd(), build['build'], build['install'])
+                        build_name = build['config']
+                        print(f'Build Config {build_name} for {directory}')
                         subprocess.call(["cmake", "--build", "."] + build['build'])
                         subprocess.call(["cmake", "--install", "."] + build['install'])
-                        os.chdir("..")
+                    os.chdir("..")
                 
         break
     

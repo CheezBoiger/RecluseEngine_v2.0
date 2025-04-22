@@ -22,6 +22,10 @@
     #define R_FORCE_CRASH(c) do { ExitProcess(c); } while(0)
     #define R_LIKELY(exp) __assume(exp)
     #define R_UNLIKELY(exp) __assume(!(exp))
+
+    #define R_VECTORCALL __vectorcall
+    #define R_FASTCALL __fastcall
+    #define R_CDECL __cdecl
     #if defined(_M_X64) || defined(_M_AMD64)
         #define RECLUSE_64BIT
     #else
@@ -55,6 +59,9 @@
     #define R_FORCE_CRASH(c)
     #define R_LIKELY(exp)
     #define R_UNLIKELY(exp)
+    #define R_VECTORCALL
+    #define R_FASTCALL 
+    #define R_CDECL 
 #else
     #error "Architecture not supported for Recluse!"
 #endif 

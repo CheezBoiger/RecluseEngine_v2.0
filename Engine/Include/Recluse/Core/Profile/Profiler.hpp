@@ -10,8 +10,6 @@
 
 namespace Recluse {
 
-#if defined(RECLUSE_DEBUG) || defined(RECLUSE_DEVELOPER)
-
 // Cpu based profiler.
 class RecluseEngine_PUBLIC_API CpuPerformanceProfile
 {
@@ -47,6 +45,7 @@ public:
 };
 
 
+#if defined(RECLUSE_DEBUG) || defined(RECLUSE_DEVELOPER)
 #define R_BEGIN_CPU_PROFILE(name, color, ...) \
     CpuPerformanceProfile _$Profiler##name(#name, color, #__VA_ARGS__) \
     _$Profiler.begin()

@@ -3,7 +3,6 @@
 #include "Recluse/Time.hpp"
 
 #include "ProfilerManager.hpp"
-#if defined(RECLUSE_DEBUG) || defined(RECLUSE_DEVELOPER)
 
 namespace Recluse {
 
@@ -23,6 +22,7 @@ CpuPerformanceProfile::~CpuPerformanceProfile()
 
 void CpuPerformanceProfile::stop()
 {
+#if defined(RECLUSE_DEBUG) || defined(RECLUSE_DEVELOPER)
     RealtimeStopWatch end;
     RealtimeStopWatch totalTime = end - start;
     RealtimeTick tick = (RealtimeTick)totalTime;
@@ -31,17 +31,20 @@ void CpuPerformanceProfile::stop()
     measurement.color = m_color;
     measurement.milliseconds = tick.delta() * 1000.0f; // need to store milliseconds.
     CpuProfileDatabase::storeMeasurement(profileName, measurement, groupName);
+#endif
 }
 
 
 CpuPerformanceProfile::PerformanceMeasurement CpuPerformanceProfile::query(const std::string& profileName, const std::string& groupName)
 {
     PerformanceMeasurement measurement;
+#if defined(RECLUSE_DEBUG) || defined(RECLUSE_DEVELOPER)
     ResultCode result = CpuProfileDatabase::queryMeasurement(profileName, measurement, groupName);
     if (result != RecluseResult_Ok)
         measurement = { };
+#else
+    measurement = { };
+#endif
     return measurement;
 }
 } // Recluse
-
-#endif

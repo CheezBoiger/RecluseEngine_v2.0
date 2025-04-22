@@ -63,11 +63,8 @@ public:
 
     RecluseFramework_PUBLIC_API void cleanUp();
 
-    RecluseFramework_PUBLIC_API void addReceiver
-                        (
-                            const std::string& nodeName, 
-                            MessageReceiveFunc receiver
-                        );
+    // Add a end point receiver to the message bus.
+    RecluseFramework_PUBLIC_API void addReceiver(const std::string& nodeName, MessageReceiveFunc receiver);
 
     // Push an event
     void pushEvent(EventId eventId) 

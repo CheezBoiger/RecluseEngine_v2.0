@@ -25,7 +25,7 @@ if (NOT WXWIDGETS_DISABLE)
 
 	set(wxWidgets_ROOT_DIR ${CMAKE_INSTALL_PREFIX})
 	set(wxWidgets_LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib/vc_x64_dll)
-	set(wxWidgets_CONFIGURATION mswud)
+	set(wxWidgets_CONFIGURATION mswu)
 	find_package(wxWidgets REQUIRED COMPONENTS net core base)
 
 
