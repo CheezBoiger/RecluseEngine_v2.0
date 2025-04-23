@@ -16,20 +16,31 @@ namespace Pipeline {
 namespace Builder {
 namespace FBX {
 
+// FBX Scene import. Handles and destroys the FBX scene tree when importing.
+// 
 class FbxImport : public Pipeline::Builder::Importer
 {
 public:
+    // The channel for debugging.
     static constexpr const char* FbxChannel = "FBX";
 
     typedef std::vector<FbxNodeAttribute::EType> ElementTypes;
     typedef std::function<ResultCode(FbxNode* node)> FbxProcessFunction;
 
+    static Pipeline::Builder::Importer*     create();
+    static ResultCode                       destroy(Pipeline::Builder::Importer* importer);
+
+    // Process description, is used to describe the process for specific nodes with the given
+    // EType list.
     struct ProcessDescription
     {
         ElementTypes        types;
         FbxProcessFunction  func;
     };
 
+    // Process block used while traversing the FBX scene tree.
+    // ETypes are specified as to what, or how, a node should be processed.
+    // More than one process function can handle a node.
     class Process
     {
     public:
@@ -135,10 +146,17 @@ public:
     }
 
 private:
+
+    // FBX Scene manager.
     FbxManager*     m_manager;
+
+    // The FBX importer object.
     FbxImporter*    m_importer;
+
+    // The FBX scene itself.
     FbxScene*       m_scene;
 
+    // Not sure I want this.
     std::vector<LightDescription> lights;
 };
 } // FBX

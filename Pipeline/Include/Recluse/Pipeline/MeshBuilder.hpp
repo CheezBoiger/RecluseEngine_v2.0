@@ -85,7 +85,7 @@ public:
     static MeshBuilder*         create(FileFormat format);
     static ResultCode           destroy(MeshBuilder* builder);
 
-    MeshBuilder() { }
+    MeshBuilder(FileFormat fileFormat) : m_fileFormat(fileFormat) { }
 
     virtual ~MeshBuilder() { }
 
@@ -99,6 +99,9 @@ public:
     u32                         getNumberOfMeshes() const { return m_data.size(); }
     Data*                       getAll() { return m_data.data(); }
     BoneData*                   getBoneData(i32 boneId) { auto it = m_boneMap.find(boneId); if (it != m_boneMap.end()) return &it->second; }
+
+    FileFormat                  getFileFormat() const { return m_fileFormat; }
+
 protected:
     struct MeshDataInfo
     {
@@ -107,6 +110,9 @@ protected:
     std::map<RGUID, MeshDataInfo, RGUID::Less>          m_dataMap;
     std::map<i32, BoneData>                             m_boneMap;
     std::vector<MeshBuilder::Data>                      m_data;
+
+private:
+    FileFormat  m_fileFormat;
 };
 } // Builder
 } // Pipeline

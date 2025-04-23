@@ -13,24 +13,46 @@ namespace Builder {
 namespace FBX {
 
 
+Pipeline::Builder::Importer* FbxImport::create()
+{
+    return new FbxImport();
+}
+
+
+ResultCode FbxImport::destroy(Pipeline::Builder::Importer* importer)
+{
+    if (!importer)
+        return RecluseResult_NullPtrExcept;
+    if (importer->getFormat() != FileFormat_FBX)
+        return RecluseResult_InvalidArgs;
+
+    delete importer;
+
+    return RecluseResult_Ok;
+}
+
+
 FbxImport::FbxImport()
     : Importer(Pipeline::Builder::FileFormat_FBX)
     , m_manager(nullptr)
     , m_importer(nullptr)
+    , m_scene(nullptr)
 {
     m_manager = FbxManager::Create();
     R_ASSERT_FORMAT(m_manager, "Fbx Manager failed to create");
-    m_importer = FbxImporter::Create(m_manager, ""); 
+    m_importer = FbxImporter::Create(m_manager, "Default Manager");
 }
 
 
 FbxImport::~FbxImport()
 {
     if (m_importer) m_importer->Destroy();
-    if (m_manager) m_manager->Destroy(); 
+    if (m_manager) m_manager->Destroy();
+    if (m_scene) m_scene->Destroy();
 
     m_importer = nullptr;
     m_manager = nullptr;
+    m_scene = nullptr;
 }
 
 
@@ -49,8 +71,8 @@ ResultCode FbxImport::importFile(const std::string& filePath)
             R_DEBUG(FbxChannel, "File version: %d.%d.%d", major, minor, revision);
         }
 
-        FbxScene* scene = nullptr;
-        success = m_importer->Import(scene);   
+        FbxScene* scene = FbxScene::Create(m_manager, "Default Scene");
+        success = m_importer->Import(scene);
 
         // Use as current scene.
         if (success)

@@ -10,6 +10,24 @@ namespace Pipeline {
 namespace Builder {
 namespace FBX {
 
+
+Builder::MeshBuilder* FbxMeshBuilder::create()
+{
+    return new FbxMeshBuilder();
+}
+
+
+ResultCode FbxMeshBuilder::destroy(Builder::MeshBuilder* meshBuilder)
+{
+    if (!meshBuilder)
+        return RecluseResult_NullPtrExcept;
+    
+    delete meshBuilder;
+
+    return RecluseResult_Ok;
+}
+
+
 ResultCode FbxMeshBuilder::build(Builder::Importer* importer, MeshBuilderFlags flags)
 {
     R_ASSERT_FORMAT(importer, "Importer is nullptr!");
@@ -108,6 +126,18 @@ ResultCode FbxMeshBuilder::extractMaterials(MeshBuilder::Data& meshData, FbxNode
 {
     
     return RecluseResult_Ok;
+}
+
+
+ResultCode FbxMeshBuilder::serialize(Archive* archive) const 
+{
+    return RecluseResult_NoImpl;
+}
+
+
+ResultCode FbxMeshBuilder::deserialize(Archive* archive) 
+{
+    return RecluseResult_NoImpl;
 }
 } // FBX
 } // Builder
