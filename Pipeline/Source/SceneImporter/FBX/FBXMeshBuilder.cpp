@@ -53,31 +53,38 @@ ResultCode FbxMeshBuilder::build(Builder::Importer* importer, MeshBuilderFlags f
         FbxVector4* controlPoints   = meshNode->GetControlPoints();
         int* vertexIndices          = meshNode->GetPolygonVertices();
 
-        Data meshData       = { };
+        MeshData meshData   = { };
         meshData.name       = meshNode->GetName();
         meshData.guid       = generateRGUID();
 
         meshData.positions.resize(meshNode->GetControlPointsCount());
+        meshData.normals.resize(meshNode->GetControlPointsCount());
+        meshData.uvs.resize(meshNode->GetControlPointsCount());
         meshData.vertexIndices.resize(meshNode->GetPolygonVertexCount());
-        meshData.submeshes.resize(numPolygons);
+
+        // Insert this node into the nodeGuids structure.
+        nodeGuids.insert(std::make_pair(node, meshData.guid));
 
         // Extract our materials.
         extractMaterials(meshData, node);
 
+        // Load in the vertices to the positions struct first.
+        for (uint vertId = 0; vertId < meshNode->GetControlPointsCount(); ++vertId)
+        {
+            const FbxVector4& coordinates   = controlPoints[vertId];
+            Math::Float3 positionCoords     = Math::Float3(coordinates[0], coordinates[1], coordinates[2]);
+            meshData.positions[vertId]      = positionCoords;
+        }
+
+        // Iterate through each polygon now.
         for (i32 polygonIdx = 0; polygonIdx < numPolygons; ++polygonIdx)
         {
             for (i32 i = 0 ; i < meshNode->GetElementPolygonGroupCount(); ++i)
             {
             }
-
+            
             const i32 polygonSize       = meshNode->GetPolygonSize(polygonIdx);
             const i32 startVertexIndex  = meshNode->GetPolygonVertexIndex(polygonIdx);
-
-            // We are in one polygon, so one submesh.
-            Engine::SubMesh submesh = { };
-
-            submesh.offsetElements = vertexId;          // Starting vertex id.
-            submesh.rangeElements = 0;                  // This is the range
 
             for (i32 polygonSizeIdx = 0; polygonSizeIdx < polygonSize; ++polygonSizeIdx)
             {
@@ -90,29 +97,113 @@ ResultCode FbxMeshBuilder::build(Builder::Importer* importer, MeshBuilderFlags f
                 }
 
                 // Obtain the vertex coordinate, position.
+                const i32 vertexIndex               = vertexIndices[startVertexIndex + polygonSizeIdx];       
+                meshData.vertexIndices[vertexId]    = vertexIndex;
+
+                for (uint l = 0; l < meshNode->GetElementUVCount(); ++l)
                 {
-                    const FbxVector4& coordinates       = controlPoints[controlPointIdx];
-                    const i32 vertexIndex               = vertexIndices[startVertexIndex + polygonSizeIdx];       
+                    FbxGeometryElementUV* elementUv = meshNode->GetElementUV(l);
+                    switch (elementUv->GetMappingMode())
+                    {
+                        case FbxGeometryElement::eByControlPoint:
+                            {
+                                switch (elementUv->GetReferenceMode())
+                                {
+                                    case FbxGeometryElement::eDirect:
+                                        {
+                                            const FbxVector2& UV = elementUv->GetDirectArray().GetAt(controlPointIdx);
+                                            Math::Float2 uv = Math::Float2( UV[0], UV[1] );
+                                            meshData.uvs[controlPointIdx] = uv;
+                                            break;
+                                        }
+                                    case FbxGeometryElement::eIndexToDirect:
+                                        {
+                                            i32 id = elementUv->GetIndexArray().GetAt(controlPointIdx);
+                                            const FbxVector2& UV = elementUv->GetDirectArray().GetAt(id);
+                                            Math::Float2 uv = Math::Float2( UV[0], UV[1] );
+                                            meshData.uvs[controlPointIdx] = uv;
+                                            break;
+                                        }
+                                    default:
+                                        break;
+                                }
+                                break;
+                            }
 
-                    Math::Float3 positionCoords         = Math::Float3(coordinates[0], coordinates[1], coordinates[2]);
-
-                    meshData.positions[vertexId]        = positionCoords;
-                    meshData.vertexIndices[vertexId]    = vertexIndex;
+                        case FbxGeometryElement::eByPolygonVertex:
+                            {
+                                i32 uvIdx = meshNode->GetTextureUVIndex(polygonIdx, polygonSizeIdx);
+                                switch (elementUv->GetReferenceMode())
+                                {
+                                    case FbxGeometryElement::eDirect:
+                                    case FbxGeometryElement::eIndexToDirect:
+                                        {
+                                            const FbxVector2& UV = elementUv->GetDirectArray().GetAt(uvIdx);
+                                            Math::Float2 uv = Math::Float2(UV[0], UV[1]);
+                                            meshData.uvs[controlPointIdx] = uv;
+                                            break;
+                                        }
+                                    default:
+                                        break;
+                                }
+                                break;
+                            }
+                        default:
+                            break;
+                    }
                 }
+
+                for (uint l = 0; l < meshNode->GetElementNormalCount(); ++l)
+                {
+                    FbxGeometryElementNormal* elementNormal = meshNode->GetElementNormal(l);
+                    if (elementNormal->GetMappingMode() == FbxGeometryElement::eByPolygonVertex)
+                    {
+                        switch (elementNormal->GetReferenceMode())
+                        {
+                            case FbxGeometryElement::eDirect:
+                                {
+                                    const FbxVector4& n = elementNormal->GetDirectArray().GetAt(vertexIndex);
+                                    Math::Float3 normal = { n[0], n[1], n[2] };
+                                    meshData.normals[vertexIndex] = normal;
+                                    break;
+                                }
+                            case FbxGeometryElement::eIndexToDirect:
+                                {
+                                    i32 id = elementNormal->GetIndexArray().GetAt(vertexId);
+                                    const FbxVector4& n = elementNormal->GetDirectArray().GetAt(id);
+                                    Math::Float3 normal = { n[0], n[1], n[2] };
+                                    meshData.normals[id] = normal;
+                                    break;
+                                }
+                            default:
+                                break;
+                        }
+                    }
+                }
+
+
                 // Increment the vertex counter.
-                submesh.rangeElements += 1;
                 ++vertexId;
             }
 
-            // End of the polygon, we will store this submesh.
-            if (submesh.rangeElements != 0)
+            if (flags & Triangulate)
             {
-                meshData.submeshes[polygonIdx] = submesh;
+                // Triangulate the polygon that we just stored.
+                // TODO: Try Bowyer-Watson Algorithm? https://en.wikipedia.org/wiki/Bowyer%E2%80%93Watson_algorithm
+                //
+                R_NO_IMPL();
             }
+            else
+                R_ASSERT_FORMAT(polygonSize == 3, "Polygon size is not 3! This indicates it is not a triangle, which will need to be triangulated!");
         }
 
+        // Find the parent, if one exists.
+        auto parentIt = nodeGuids.find(node->GetParent());
+        if (parentIt != nodeGuids.end())
+            meshData.parent = parentIt->second;
+
         // Push the meshdata back.
-        m_data.push_back(meshData);        
+        m_data.push_back(meshData);
 
         return RecluseResult_Ok;
     }});
@@ -122,7 +213,7 @@ ResultCode FbxMeshBuilder::build(Builder::Importer* importer, MeshBuilderFlags f
 }
 
 
-ResultCode FbxMeshBuilder::extractMaterials(MeshBuilder::Data& meshData, FbxNode* node)
+ResultCode FbxMeshBuilder::extractMaterials(MeshBuilder::MeshData& meshData, FbxNode* node)
 {
     
     return RecluseResult_Ok;
@@ -138,6 +229,12 @@ ResultCode FbxMeshBuilder::serialize(Archive* archive) const
 ResultCode FbxMeshBuilder::deserialize(Archive* archive) 
 {
     return RecluseResult_NoImpl;
+}
+
+
+std::vector<Math::Float3> FbxMeshBuilder::triangulatePolygon(const std::vector<Math::Float3>& pointList)
+{
+    return { };
 }
 } // FBX
 } // Builder

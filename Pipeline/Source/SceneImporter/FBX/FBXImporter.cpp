@@ -33,7 +33,7 @@ ResultCode FbxImport::destroy(Pipeline::Builder::Importer* importer)
 
 
 FbxImport::FbxImport()
-    : Importer(Pipeline::Builder::FileFormat_FBX)
+    : Importer(Pipeline::Builder::FileFormat_FBX, ".fbx")
     , m_manager(nullptr)
     , m_importer(nullptr)
     , m_scene(nullptr)
@@ -46,9 +46,9 @@ FbxImport::FbxImport()
 
 FbxImport::~FbxImport()
 {
+    if (m_scene) m_scene->Destroy();
     if (m_importer) m_importer->Destroy();
     if (m_manager) m_manager->Destroy();
-    if (m_scene) m_scene->Destroy();
 
     m_importer = nullptr;
     m_manager = nullptr;

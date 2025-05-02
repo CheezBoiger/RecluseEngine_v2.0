@@ -63,14 +63,17 @@ Matrix44 rotate(const Matrix44& lh, const Float3& ax, F32 radians)
             oneMinusCosine * axis.y * axis.x + axis.z * sine, 
             axis.z * axis.x * oneMinusCosine - axis.y * sine, 
             0,
+
             axis.x * axis.y * oneMinusCosine - axis.z * sine, 
             cosine + (axis.y * axis.y) * oneMinusCosine,      
             axis.z * axis.y * oneMinusCosine + axis.x * sine, 
             0,
+
             axis.x * axis.z * oneMinusCosine + axis.y * sine, 
             axis.y * axis.z * oneMinusCosine - axis.x * sine, 
             cosine + (axis.z * axis.z) * oneMinusCosine,      
             0,
+
             0,                                                
             0,                                                
             0,                                                

@@ -120,7 +120,7 @@
     #define R_DEBUG_WRAP(cond)
 #endif
 
-#if defined(RECLUSE_DEVELOPER)
+#if defined(RECLUSE_DEVELOPER) || defined(RECLUSE_DEBUG)
     #if defined(RECLUSE_DEBUG)
         #define R_ERROR(chan, format, ...) \
             do { \

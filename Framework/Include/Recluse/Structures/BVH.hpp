@@ -33,16 +33,14 @@ class BoundingVolumeHierarchy
 		struct Node*	right;
 
 		// Determine if is leaf. A leaf node is a node that contains no left or right child.
-		bool isLeaf() const { return !left && !right; }
+		bool			isLeaf() const { return !left && !right; }
 	};
 public:
 
-	Bool intersects(const Math::Ray3d& ray);
+	Bool				intersects(const Math::Ray3d& ray);
+	void				build(SplitMethod splitMethod);
 
-	void build(SplitMethod splitMethod);
-
-	void reBuild();
-
+	void				rebuild();
 
 private:
 	U32					m_maxPrimitivesInNode;

@@ -39,6 +39,7 @@ private:
 };
 
 
+// Gpu Based profiler, requires query functionality.
 class GpuPerformanceProfile
 {
 public:

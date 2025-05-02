@@ -41,14 +41,14 @@ struct RecluseFramework_PUBLIC_API Float3
         struct { F32 u, v, w; };
     };
 
-    Float3()
+    inline Float3()
         : x(0.f), y(0.f), z(0.f) { }
 
     template<typename Type>
-    Float3(Type x = static_cast<Type>(0), Type y = static_cast<Type>(0), Type z = static_cast<Type>(0))
+    inline Float3(Type x = static_cast<Type>(0), Type y = static_cast<Type>(0), Type z = static_cast<Type>(0))
         : x(static_cast<F32>(x)), y(static_cast<F32>(y)), z(static_cast<F32>(z)) { }
 
-    Float3(const Float2& xy, F32 z = 0.f)
+    inline Float3(const Float2& xy, F32 z = 0.f)
         : x(xy.x), y(xy.y), z(z) { }
 
     inline F32& operator[](U32 idx) { return (&x)[idx]; }

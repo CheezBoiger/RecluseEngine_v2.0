@@ -28,7 +28,7 @@ enum ShaderLanguage
     ShaderLanguage_Glsl,
     ShaderLanguage_Hlsl,
 
-    // SLang is higher level shader language than GLSL or HLSL, but it combines the capabilities of 
+    // SLang is high level shading language that combines the capabilities of GLSL and
     // HLSL to make a more robust and adaptable syntax that can run on any gpu platform. Ideally, the 
     // language is designed to be portable, hence it's write-shaders-once-run-anywhere motto.
     ShaderLanguage_Slang, //< Currently not supported.

@@ -143,13 +143,23 @@ static U32 isqrt(U32 v)
 }
 
 
-static u32 popcount(u32 num)
+// Popcount used to count the number of 1's in a 32bit integer.
+static u32 popcount32(u32 num)
+{
+    num = num - ((num >> 1) & 0x55555555);
+    num = (num & 0x33333333) + ((num >> 2) & 0x33333333);
+    num = (((num + (num >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;
+	return num;
+}
+
+
+static u32 popcount64(u64 num)
 {
 	return 0;
 }
 
 
-static u32 bitReverse(u32 num)
+static u32 bitReverse32(u32 num)
 {
 	return 0;
 }

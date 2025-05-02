@@ -44,8 +44,17 @@ struct RecluseFramework_PUBLIC_API Float4
         __m128 row;
     };
 
-    inline Float4(F32 x = 0.f, F32 y = 0.f, F32 z = 0.f, F32 w = 0.f)
+    inline Float4()
+        : x(0.f), y(0.f), z(0.f), w(0.f) { }
+
+    template<typename Type>
+    inline Float4(Type x = static_cast<Type>(0), Type y = static_cast<Type>(0), Type z = static_cast<Type>(0), Type w = static_cast<Type>(0))
+        : x(static_cast<F32>(x)), y(static_cast<F32>(y)), z(static_cast<F32>(z)), w(static_cast<F32>(w)) { }
+
+    template<>
+    inline Float4(F32 x, F32 y, F32 z, F32 w)
         : x(x), y(y), z(z), w(w) { }
+
     inline Float4(const Float3& xyz, F32 w = 0.f)
         : x(xyz.x), y(xyz.y), z(xyz.z), w(w) { }
     inline Float4(const Float2& xy, const Float2& zw)

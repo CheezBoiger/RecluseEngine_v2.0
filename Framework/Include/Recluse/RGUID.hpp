@@ -21,7 +21,12 @@ struct RGUID
         , U64 minor = kInvalidValue
 #endif
     )
-        : version{minor, major} { }
+        : version{ major
+#ifndef R_USE_64BIT_IDENTIFIERS
+        , minor
+#endif
+        }
+        { }
 
     union 
     {

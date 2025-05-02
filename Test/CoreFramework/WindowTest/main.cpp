@@ -17,7 +17,7 @@ int main()
     RealtimeTick::initializeWatch(1ull, 0);
     Window* window = Window::create("WindowTest", 0, 0, 800, 600, ScreenMode_Windowed);
     
-    R_ASSERT(window);
+    R_ASSERT(window != nullptr);
 
     window->setToCenter();
     window->show();

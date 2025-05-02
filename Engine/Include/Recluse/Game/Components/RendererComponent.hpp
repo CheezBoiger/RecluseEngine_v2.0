@@ -22,9 +22,10 @@ enum RenderUpdateFlag
 
 enum RenderModel
 {
+    // Object is static, does not move or require consistent updates.
     RenderModel_Static,
-    RenderModel_Dynamic,
-    RenderMode_Skinned
+    // Model is dynamic, requires consistent updates as it moves in the world.
+    RenderModel_Dynamic
 };
 
 
@@ -40,20 +41,25 @@ public:
     RendererComponent(RenderModel renderModel) 
         : m_renderModel(renderModel) { }
 
-    RenderModel getRenderModel() const { return m_renderModel; }
+    RenderModel         getRenderModel() const { return m_renderModel; }
 
     // Sends a request to update the gpu resource, that is responsible for rendering the 
     // model transform of the render object. 
-    void        updateModelData();
+    void                updateModelData();
 
-    Bool        isVisible() const { return m_isVisible; }
-    void        setVisible(Bool visible) { m_isVisible = visible; }
+    Bool                isVisible() const { return m_isVisible; }
+    RenderModel         getModelType() const { return m_renderModel; }
+
+    void                setVisible(Bool visible) { m_isVisible = visible; }
+    void                setModelType(RenderModel model) { m_renderModel = model; }
     
     GraphicsResource*   m_gfxResourceRef;   // Reference to the graphics resource.
-    U32                 m_gfxMeshId;    // Mesh index within an instance.
-    U32                 m_gfxMatId;     // Material index within an instance.
-    RenderUpdateFlags   m_flags;        // Update flags.
-    Bool                m_isVisible;    // Is the mesh visible?
+    U32                 m_gfxMeshId;        // Mesh index within an instance.
+    U32                 m_gfxMatId;         // Material index within an instance.
+    RenderUpdateFlags   m_flags;            // Update flags.
+    Bool                m_isVisible : 1;    // Is the mesh visible?
+    Bool                m_isSkinned : 1;    // Mesh is skinned, requires animation updates and movements.
+    Bool                m_isEnabled : 1;    // If the renderable is enabled for drawing.
 
 private:
     RenderModel m_renderModel;
@@ -65,10 +71,10 @@ class RendererComponentRegistry : public ECS::ComponentRegistry<RendererComponen
 public:
     R_COMPONENT_REGISTRY_DECLARE(RendererComponentRegistry);
 
-    ResultCode          onAllocateComponent(const RGUID& owner) override;
-    ResultCode          onFreeComponent(const RGUID& owner) override;
-    RendererComponent*  getComponent(const RGUID& entityKey) override;
-    std::vector<RendererComponent*> getAllComponents() override;
+    ResultCode                          onAllocateComponent(const RGUID& owner) override;
+    ResultCode                          onFreeComponent(const RGUID& owner) override;
+    RendererComponent*                  getComponent(const RGUID& entityKey) override;
+    std::vector<RendererComponent*>     getAllComponents() override;
 
 private:
     std::map<RGUID, RendererComponent*> m_componentTable;

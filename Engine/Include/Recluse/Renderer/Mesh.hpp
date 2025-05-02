@@ -42,17 +42,27 @@ struct RecluseEngine_PUBLIC_API PerMeshTransform
 };
 
 
+// SubMesh Flags tell the behavior of the submesh, how it should be 
+// drawn, and how to access the contents of it.
 enum SubMeshFlag
 {
+    // No flags.
     SubMeshFlag_None = 0,
-    SubMeshFlag_Indexed = (1 << 0)
+
+    // Submesh is meant to be drawn with indices.
+    SubMeshFlag_Indexed = (1 << 0),
+
+    // Submesh is meant to be indirectly drawn.
+    SubMeshFlag_Indirect = (1 << 1)
 };
 typedef uint SubMeshFlags;
 
 
 
 // A Submesh is a portion of a mesh that has a separate rendering method or technique.
-// Instinctively it will be a part of the mesh with it's own material.
+// Instinctively it will be a part of the mesh with it's own material, to which the renderer
+// will know how to draw. Usually the renderer filters out drawcalls based on the submesh and its
+// materials.
 struct RecluseEngine_PUBLIC_API SubMesh 
 {
     // Name of the submesh.
@@ -67,7 +77,11 @@ struct RecluseEngine_PUBLIC_API SubMesh
     // Number of vertices that correspond to this mesh
     uint            rangeElements;
 
+    // The bounds of the submesh. Usually for collision or whatnot.
     Math::Bounds3d  bounds;
+
+    VertexBuffer*   vertexBuffer;
+    IndexBuffer*    indexBuffer;
 };
 
 
@@ -85,6 +99,10 @@ public:
 };
 
 
+// Mesh is a generalization of a renderable object that we wish to draw on screen.
+// It composes of multiple submeshes, each assigned to separate portions of the vertex buffer and index buffer,
+// and is usually sorted by material. Usually, mesh will be the object to pass to multiple parts of the engine,
+// but ultimately, submeshes are the ones that contain the precise information of the renderable.
 class Mesh : public Serializable, public RecreatableObject
 {
 public:
@@ -131,7 +149,7 @@ typedef GPUBuffer InstancedMeshBuffer;
 typedef U32       InstancedMeshId;          // Instanced Id, this is used to lookup matrix info from buffer.
 
 
-//< 
+// Instanced version of the mesh handler.
 class InstancedMeshHandler
 {
 public:
@@ -165,6 +183,43 @@ public:
 private:
     InstancedMeshHandler* m_instancedMeshHandler;
     PerInstancedMeshBuffer m_perInstancedMeshBuffer;
+};
+
+
+// Mesh Streamer, streams a host visible memory mesh from disk to ram. 
+struct RecluseEngine_PUBLIC_API MeshStreamer
+{
+public:
+    enum { Position, Normal, UV, Binormal, Tangent, BoneIndex, BoneWeight };
+    typedef u32 Attribute;
+
+    // Stream data from the archive.
+    bool streamFrom(Archive* archive);
+
+    // Stream data to the archive.
+    bool streamTo(Archive* archive);
+
+    std::vector<Math::Float4>* operator()(Attribute attrib)
+    {
+        auto it = m_attributes.find(attrib);
+        if (it != m_attributes.end())
+            return &it->second;
+        return nullptr;
+    }
+
+    bool contains(Attribute attrib) const
+    {
+        return (m_attributes.find(attrib) != m_attributes.end());
+    }
+
+    template<typename Type>
+    bool store(Attribute attribute, const std::vector<Type>& attribs)
+    {
+        
+    }
+
+private:
+    std::map<Attribute, std::vector<Math::Float4>> m_attributes;
 };
 } // Engine
 } // Recluse

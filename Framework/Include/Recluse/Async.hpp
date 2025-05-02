@@ -3,6 +3,8 @@
 
 #include "Arch.hpp"
 
+#include <future>
+
 namespace Recluse {
 
 

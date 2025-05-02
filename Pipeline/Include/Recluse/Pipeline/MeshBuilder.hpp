@@ -28,36 +28,26 @@ public:
     {
         Optimize = (1<<0),
         Quantize = (1<<1),
-        Simplify = (1<<2)
+        Simplify = (1<<2),
+
+        // Triangulate the mesh, if there are polygons that are more than 3 vertices.
+        Triangulate = (1<<3)
     };
     typedef U32 MeshBuilderFlags;
 
-    enum 
-    {
-        Position,
-        Normal,
-        UV,
-        Binormal,
-        Tangent,
-        BoneIndex,
-        BoneWeight
-    };
-
     // Mesh information.
-    struct Data
+    struct MeshData
     {
         // Name of the mesh.
         std::string                             name;
         // Id of this mesh.
         RGUID                                   guid;
+        RGUID                                   parent; // Parent guid.
 
-        // Engine submeshes.
-        // Some information about submeshes.
+        // Some information about polygons in a mesh.
         // According to the url: https://download.autodesk.com/us/fbx/SDKdocs/FBX_SDK_Help/files/fbxsdkref/class_k_fbx_mesh.html
-        // Fbx identifies a group of vertices as a Polygon, this can be akin to a submesh, that we identify in Recluse.
+        // Fbx identifies a group of vertices as a Polygon, which needs to be 3 vertices, otherwise will require triangulation.
         // 
-        std::map<std::string, Engine::SubMesh*> submeshMap;
-        std::vector<Engine::SubMesh>            submeshes;
 
         // Data related to the mesh is arbitrary, especially if we end up quantizing.
         std::vector<Math::Float3>               positions;
@@ -85,9 +75,9 @@ public:
     static MeshBuilder*         create(FileFormat format);
     static ResultCode           destroy(MeshBuilder* builder);
 
-    MeshBuilder(FileFormat fileFormat) : m_fileFormat(fileFormat) { }
+                                MeshBuilder(FileFormat fileFormat, const char* ext) : m_fileFormat(fileFormat), m_ext(ext) { }
 
-    virtual ~MeshBuilder() { }
+    virtual                     ~MeshBuilder() { }
 
     virtual ResultCode          build(Importer* importer, MeshBuilderFlags flags) = 0;
 
@@ -95,12 +85,19 @@ public:
     virtual ResultCode          deserialize(Archive* archive) override { return RecluseResult_NoImpl; }
     ResultCode                  clear() { m_data.clear(); m_dataMap.clear(); return RecluseResult_Ok; }
 
-    Data*                       getData(const RGUID& rguid) { auto it = m_dataMap.find(rguid); if (it != m_dataMap.end()) return &m_data[it->second.index]; }
+    // Get the data by rguid.
+    MeshData*                   getData(const RGUID& rguid) { auto it = m_dataMap.find(rguid); if (it != m_dataMap.end()) return &m_data[it->second.index]; }
+
+    // Get the data by index.
+    const MeshData*             getData(uint index) const { return &m_data[index]; }
+    MeshData*                   getData(uint index) { return &m_data[index]; }
+
     u32                         getNumberOfMeshes() const { return m_data.size(); }
-    Data*                       getAll() { return m_data.data(); }
+    MeshData*                   getAll() { return m_data.data(); }
     BoneData*                   getBoneData(i32 boneId) { auto it = m_boneMap.find(boneId); if (it != m_boneMap.end()) return &it->second; }
 
     FileFormat                  getFileFormat() const { return m_fileFormat; }
+    const char*                 getExtension() const { return m_ext; }
 
 protected:
     struct MeshDataInfo
@@ -109,10 +106,11 @@ protected:
     };
     std::map<RGUID, MeshDataInfo, RGUID::Less>          m_dataMap;
     std::map<i32, BoneData>                             m_boneMap;
-    std::vector<MeshBuilder::Data>                      m_data;
+    std::vector<MeshBuilder::MeshData>                  m_data;
 
 private:
     FileFormat  m_fileFormat;
+    const char* m_ext;
 };
 } // Builder
 } // Pipeline
