@@ -928,7 +928,7 @@ static VkPipeline createRayTracingPipeline(VulkanDevice* pDevice, VkPipelineCach
     if (program->raytrace.rayIntersect)
     {
         shaderInfo.pName    = program->raytrace.rayIntersectEntry;
-        shaderInfo.stage    = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
+        shaderInfo.stage    = VK_SHADER_STAGE_INTERSECTION_BIT_KHR;
         shaderInfo.module   = program->raytrace.rayIntersect;
         shaderStages.push_back(shaderInfo);
     }

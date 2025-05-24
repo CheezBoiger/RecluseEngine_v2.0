@@ -26,9 +26,10 @@ public:
     // 
     enum 
     {
-        Optimize = (1<<0),
-        Quantize = (1<<1),
-        Simplify = (1<<2),
+        Optimize            = (1<<0),
+        Quantize            = (1<<1),
+        Simplify            = (1<<2),
+        Optimize_Aggressive = (1<<3),
 
         // Triangulate the mesh, if there are polygons that are more than 3 vertices.
         Triangulate = (1<<3)
@@ -73,6 +74,8 @@ public:
 
     // Create the mesh builder.
     static MeshBuilder*         create(FileFormat format);
+
+    // Destroy the mesh builder.
     static ResultCode           destroy(MeshBuilder* builder);
 
                                 MeshBuilder(FileFormat fileFormat, const char* ext) : m_fileFormat(fileFormat), m_ext(ext) { }
@@ -92,11 +95,17 @@ public:
     const MeshData*             getData(uint index) const { return &m_data[index]; }
     MeshData*                   getData(uint index) { return &m_data[index]; }
 
+    // Get the number of meshes added in this builder.
     u32                         getNumberOfMeshes() const { return m_data.size(); }
+    // Raw gather for the mesh datas.
     MeshData*                   getAll() { return m_data.data(); }
-    BoneData*                   getBoneData(i32 boneId) { auto it = m_boneMap.find(boneId); if (it != m_boneMap.end()) return &it->second; }
 
+    // Obtain the bone data with a mesh id.
+    BoneData*                   getBoneData(i32 meshId) { auto it = m_boneMap.find(meshId); if (it != m_boneMap.end()) return &it->second; }
+
+    // File format.
     FileFormat                  getFileFormat() const { return m_fileFormat; }
+    // Get extension.
     const char*                 getExtension() const { return m_ext; }
 
 protected:
@@ -107,6 +116,11 @@ protected:
     std::map<RGUID, MeshDataInfo, RGUID::Less>          m_dataMap;
     std::map<i32, BoneData>                             m_boneMap;
     std::vector<MeshBuilder::MeshData>                  m_data;
+
+    // Simplify the mesh when possible.
+    void                        performSimplify();
+    // Optimize the mesh where possible.
+    void                        performOptimize();
 
 private:
     FileFormat  m_fileFormat;

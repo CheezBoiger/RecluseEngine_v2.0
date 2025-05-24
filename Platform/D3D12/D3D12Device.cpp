@@ -327,6 +327,15 @@ ResultCode D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo
         return RecluseResult_Failed;
     }
 
+    {
+        // Try to get the device2 as well.
+        result = m_device->QueryInterface<ID3D12Device2>(&m_device2);
+        if (result != S_OK)
+        {   
+            R_WARN(R_CHANNEL_D3D12, "Device2 was not found, do not try to use!");
+        }
+    }
+
     m_pAdapter = adapter;
 
     createCommandQueues(info.allowAsyncCompute);
@@ -395,7 +404,10 @@ void D3D12Device::destroy()
     if (m_device) 
     {
         R_DEBUG(R_CHANNEL_D3D12, "Destroying D3D12 device...");
-
+        if (m_device2) 
+        {
+            m_device2->Release();
+        }
         m_device->Release();
     }
 }

@@ -231,7 +231,7 @@ ID3D12PipelineState* createGraphicsPipelineState(U32 nodeMask, DeviceId deviceId
     }
     desc.DSVFormat = pipelineState.graphics.dsvFormat;
 
-    R_ASSERT(program->graphics.vsBytecode);
+    R_ASSERT_FORMAT(program->graphics.vsBytecode, "Pipeline requires vertex shader to be created!");
     
     desc.VS.pShaderBytecode = program->graphics.vsBytecode->ptr;
     desc.VS.BytecodeLength = program->graphics.vsBytecode->sizeBytes;
@@ -323,7 +323,7 @@ ID3D12PipelineState* createGraphicsPipelineState(U32 nodeMask, DeviceId deviceId
 
 
 R_INTERNAL
-ID3D12PipelineState* createMeshGraphicsPipeline(U32 nodeMask, ID3D12Device* pDevice, const D3D::Cache::D3DShaderProgram* program, const PipelineStateObject& pipelineState)
+ID3D12PipelineState* createMeshGraphicsPipeline(U32 nodeMask, ID3D12Device2* pDevice, const D3D::Cache::D3DShaderProgram* program, const PipelineStateObject& pipelineState)
 {
     R_D3D12_MESH_SHADER_PIPELINE_STATE_DESC desc = { };
     desc.pRootSignature = pipelineState.rootSignature;
@@ -336,7 +336,16 @@ ID3D12PipelineState* createMeshGraphicsPipeline(U32 nodeMask, ID3D12Device* pDev
     }
     desc.DSVFormat = pipelineState.graphics.dsvFormat;
 
-    R_ASSERT(program->graphics.vsBytecode);
+    R_ASSERT_FORMAT(program->graphics.msBytecode, "Mesh shader pipeline requires mesh shader to function!");
+
+    desc.MS.pShaderBytecode = program->graphics.msBytecode->ptr;
+    desc.MS.BytecodeLength = program->graphics.msBytecode->sizeBytes;
+
+    if (program->graphics.asBytecode)
+    {
+        desc.AS.pShaderBytecode = program->graphics.asBytecode->ptr;
+        desc.AS.BytecodeLength = program->graphics.asBytecode->sizeBytes;
+    }
     
     if (program->graphics.psBytecode)
     {
@@ -387,17 +396,12 @@ ID3D12PipelineState* createMeshGraphicsPipeline(U32 nodeMask, ID3D12Device* pDev
     desc.BlendState.AlphaToCoverageEnable = false;
     
     ID3D12PipelineState* pipeline = nullptr;
-    ID3D12Device2* pDevice2 = nullptr;
-    HRESULT result = pDevice->QueryInterface<ID3D12Device2>(&pDevice2);
-    if (SUCCEEDED(result))
-    {
-        RD3D12MeshShaderStreamDescription meshStreamDesc = RD3D12MeshShaderStreamDescription(desc);
-        D3D12_PIPELINE_STATE_STREAM_DESC pipelineDesc = { };
-        pipelineDesc.pPipelineStateSubobjectStream = &meshStreamDesc;
-        pipelineDesc.SizeInBytes = sizeof(meshStreamDesc);
-        result = pDevice2->CreatePipelineState(&pipelineDesc, __uuidof(ID3D12PipelineState), (void**)&pipeline);
-        pDevice2->Release();
-    }
+    
+    RD3D12MeshShaderStreamDescription meshStreamDesc = RD3D12MeshShaderStreamDescription(desc);
+    D3D12_PIPELINE_STATE_STREAM_DESC pipelineDesc = { };
+    pipelineDesc.pPipelineStateSubobjectStream = &meshStreamDesc;
+    pipelineDesc.SizeInBytes = sizeof(meshStreamDesc);
+    HRESULT result = pDevice->CreatePipelineState(&pipelineDesc, __uuidof(ID3D12PipelineState), (void**)&pipeline);
     R_ASSERT(SUCCEEDED(result));
     return pipeline;
 }
@@ -454,7 +458,7 @@ ID3D12PipelineState* createRaytracingPipeline(U32 nodeMask, ID3D12Device* pDevic
 
 
 R_INTERNAL 
-ID3D12PipelineState* createPipelineState(U32 nodeMask, DeviceId deviceId, ID3D12Device* pDevice, D3D::Cache::D3DShaderProgram* program, const PipelineStateObject& pipelineState)
+ID3D12PipelineState* createPipelineState(U32 nodeMask, DeviceId deviceId, D3D12Device* pDevice, D3D::Cache::D3DShaderProgram* program, const PipelineStateObject& pipelineState)
 {
     ID3D12PipelineState* createdPipelineState = nullptr;
     switch (pipelineState.pipelineType)
@@ -462,15 +466,15 @@ ID3D12PipelineState* createPipelineState(U32 nodeMask, DeviceId deviceId, ID3D12
         case BindType_Graphics:
             // A separate pipeline creation function is needed if we plan on creating a pipeline with mesh shaders.
             createdPipelineState = program->graphics.usesMeshShaders 
-                ? createMeshGraphicsPipeline(nodeMask, pDevice, program, pipelineState) 
-                : createGraphicsPipelineState(nodeMask, deviceId, pDevice, program, pipelineState);
+                ? createMeshGraphicsPipeline(nodeMask, pDevice->get2(), program, pipelineState) 
+                : createGraphicsPipelineState(nodeMask, deviceId, pDevice->get(), program, pipelineState);
             break;
         case BindType_RayTrace:
             R_NO_IMPL();
-            createdPipelineState = createRaytracingPipeline(nodeMask, pDevice, program, pipelineState);
+            createdPipelineState = createRaytracingPipeline(nodeMask, pDevice->get(), program, pipelineState);
             break;
         case BindType_Compute:
-            createdPipelineState = createComputePipelineState(nodeMask, pDevice, program, pipelineState);
+            createdPipelineState = createComputePipelineState(nodeMask, pDevice->get(), program, pipelineState);
             break;
         default:
             break;        
@@ -609,13 +613,13 @@ ID3D12PipelineState* makePipelineState(D3D12Context* pContext, const PipelineSta
 {
     ID3D12PipelineState* retrievedPipelineState = nullptr;
     PipelineStateId pipelineId = serializePipelineState(pipelineState);
-    ID3D12Device* pDevice = pContext->getDevice()->castTo<D3D12Device>()->get();
-    DeviceId deviceId = pContext->getDevice()->castTo<D3D12Device>()->getDeviceId();
+    D3D12Device* device = pContext->getDevice()->castTo<D3D12Device>();
+    DeviceId deviceId = device->getDeviceId();
     if (!g_pipelineStateMap[deviceId].inCache(pipelineId))
     {
         // We didn't find a similar pipeline state, need to create a new one.
         D3D::Cache::D3DShaderProgram* program = D3D::Cache::obtainShaderProgram(pipelineState.shaderProgramId, pipelineState.permutation);
-        ID3D12PipelineState* pipeline = createPipelineState(0, deviceId, pDevice, program, pipelineState);
+        ID3D12PipelineState* pipeline = createPipelineState(0, deviceId, device, program, pipelineState);
         retrievedPipelineState = *g_pipelineStateMap[deviceId].insert(pipelineId, std::move(pipeline));
     }
     else

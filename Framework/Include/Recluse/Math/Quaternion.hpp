@@ -55,6 +55,26 @@ struct RecluseFramework_PUBLIC_API Quaternion
     inline Float3 operator*(const Float3& rh) const;
 };
 
+
+// Dual quaternions are a set of quaternions that are coupled with the dual number theory,
+// they represent a real part, and a dual part, both of which are quaternions that, respectfully, 
+// represent both translation and rotation, instead of just rotation alone (which only a single quaternion can do.)
+// 
+class RecluseFramework_PUBLIC_API DualQuaternion
+{
+public:
+    Quaternion realPart;
+    Quaternion dualPart;
+
+    DualQuaternion(const Quaternion& real = Quaternion(), const Quaternion& dual = Quaternion())
+        : realPart(real), dualPart(dual) { }
+
+    inline DualQuaternion operator+(const DualQuaternion& other) const;
+    inline DualQuaternion operator-(const DualQuaternion& other) const;
+    inline DualQuaternion operator*(const DualQuaternion& other) const;
+    inline DualQuaternion operator*(F32 scalar) const; 
+};
+
 // Quaternion normalization.
 RecluseFramework_PUBLIC_API Quaternion normalize(const Quaternion& quat);
 RecluseFramework_PUBLIC_API F32        norm(const Quaternion& quat);

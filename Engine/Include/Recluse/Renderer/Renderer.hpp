@@ -115,7 +115,7 @@ public:
     virtual ~RecreatableObject() { }
 
     virtual Bool isRecreatable() const = 0;
-    virtual ResultCode recreate() = 0;
+    virtual ResultCode recreate(GraphicsContext* context) = 0;
 };
 
 

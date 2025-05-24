@@ -77,20 +77,20 @@ public:
         , m_view(nullptr) { }
 
     // initializes and stores the texture view into the texture database.
-    ResultCode initialize(GraphicsDevice* pDevice, Texture2D* pTexture, ResourceViewDescription& desc);
+    ResultCode              initialize(GraphicsDevice* pDevice, Texture2D* pTexture, ResourceViewDescription& desc);
 
     // destroys this texture view, along with the lookup from the texture database.
-    ResultCode destroy(GraphicsDevice* pDevice);
+    ResultCode              destroy(GraphicsDevice* pDevice);
 
-    Texture2D* getTexture() const { return m_texture; }
-    GraphicsResourceView* getView() const { return m_view; }
+    Texture2D*              getTexture() const { return m_texture; }
+    GraphicsResourceView*   getView() const { return m_view; }
 
 private:
-    GraphicsResourceView* m_view;
-    Texture2D* m_texture;
-    ResourceViewDimension m_viewDim;
-    ResourceViewType m_viewType;
-    ResourceFormat m_viewFormat;
+    GraphicsResourceView*   m_view;
+    Texture2D*              m_texture;
+    ResourceViewDimension   m_viewDim;
+    ResourceViewType        m_viewType;
+    ResourceFormat          m_viewFormat;
 };
 
 

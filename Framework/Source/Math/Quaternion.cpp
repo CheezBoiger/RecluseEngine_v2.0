@@ -150,8 +150,8 @@ Quaternion slerp(const Quaternion& a, const Quaternion& b, F32 t)
 
     return a * cosf(theta) + q1 * sinf(theta);
 #else
-    lowp angle = acosf(dot(a, b));
-    lowp denom = 1.0f / sinf(angle);
+    const mediump angle = acosf(dot(a, b));
+    const mediump denom = 1.0f / sinf(angle);
     return (a * sinf((1 - t) * angle) + b * sinf(t * angle)) * denom;
 #endif
 }
@@ -159,15 +159,15 @@ Quaternion slerp(const Quaternion& a, const Quaternion& b, F32 t)
 
 Matrix44 quatToMat44(const Quaternion& quat)
 {
-    F32 xx = quat.x * quat.x;
-    F32 yy = quat.y * quat.y;
-    F32 zz = quat.z * quat.z;
-    F32 xy = quat.x * quat.y;
-    F32 wz = quat.w * quat.z;
-    F32 xz = quat.x * quat.z;
-    F32 wy = quat.w * quat.y;
-    F32 yz = quat.y * quat.z;
-    F32 wx = quat.w * quat.x;
+    const F32 xx = quat.x * quat.x;
+    const F32 yy = quat.y * quat.y;
+    const F32 zz = quat.z * quat.z;
+    const F32 xy = quat.x * quat.y;
+    const F32 wz = quat.w * quat.z;
+    const F32 xz = quat.x * quat.z;
+    const F32 wy = quat.w * quat.y;
+    const F32 yz = quat.y * quat.z;
+    const F32 wx = quat.w * quat.x;
     return Matrix44
     (
         1.f - 2.f * (yy + zz),  2.f * (xy + wz),        2.f * (xz - wy),        0.f,

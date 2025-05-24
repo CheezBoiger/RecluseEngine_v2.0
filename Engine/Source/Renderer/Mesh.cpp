@@ -1,5 +1,6 @@
 //
 #include "Recluse/Renderer/Mesh.hpp"
+#include "Recluse/Filesystem/Archive.hpp"
 
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 #include "Recluse/Graphics/CommandList.hpp"
@@ -90,6 +91,29 @@ ResultCode Mesh::serialize(Archive* archive) const
 ResultCode Mesh::deserialize(Archive* archive) 
 {
     return RecluseResult_NoImpl;
+}
+
+
+bool MeshStreamer::streamTo(Archive* archive)
+{
+    MeshHeader header = { };
+    header.meshGuid;
+    header.meshVersion = 0;
+
+    archive->write(&header, sizeof(header));
+    
+    for (auto& it : m_attributes)
+    {
+        MeshAttributeHeader attributeHeader = { };
+        archive->write(&attributeHeader, sizeof(attributeHeader));
+    }
+    return false;
+}
+
+
+bool MeshStreamer::streamFrom(Archive* archive, MeshHeader::Version requiredVersion)
+{
+    return false;
 }
 } // Engine
 } // Recluse

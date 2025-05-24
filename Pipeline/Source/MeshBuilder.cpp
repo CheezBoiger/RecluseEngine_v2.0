@@ -11,6 +11,7 @@ namespace Builder {
 MeshBuilder* MeshBuilder::create(FileFormat fileFormat)
 {
     MeshBuilder* meshBuilder = nullptr;
+
     switch (fileFormat)
     {
         case FileFormat_GLTF:
@@ -21,6 +22,7 @@ MeshBuilder* MeshBuilder::create(FileFormat fileFormat)
             meshBuilder = FBX::FbxMeshBuilder::create();
             break;
     }
+
     return meshBuilder;
 }
 
@@ -29,7 +31,9 @@ ResultCode MeshBuilder::destroy(MeshBuilder* builder)
 {
     if (!builder)
         return RecluseResult_NullPtrExcept;
+
     ResultCode result = RecluseResult_Failed;
+
     switch (builder->getFileFormat())
     {
         case FileFormat_GLTF:
@@ -40,7 +44,18 @@ ResultCode MeshBuilder::destroy(MeshBuilder* builder)
             result = FBX::FbxMeshBuilder::destroy(builder);
             break;
     }
+
     return result;
+}
+
+
+void MeshBuilder::performSimplify()
+{
+}
+
+
+void MeshBuilder::performOptimize()
+{
 }
 } // Builder
 } // Pipeline

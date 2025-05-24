@@ -7,5 +7,4 @@
 
 namespace Recluse {
 
-
 } // Recluse

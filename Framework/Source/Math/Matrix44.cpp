@@ -50,14 +50,14 @@ Matrix44::Matrix44
 
 Matrix44 rotate(const Matrix44& lh, const Float3& ax, F32 radians)
 {
-    F32 cosine          = cosf(radians);
-    F32 sine            = sinf(radians);
-    F32 oneMinusCosine  = 1.0f - cosine;
+    const F32 cosine          = cosf(radians);
+    const F32 sine            = sinf(radians);
+    const F32 oneMinusCosine  = 1.0f - cosine;
 
-    Float3 axis         = normalize(ax);
+    const Float3 axis         = normalize(ax);
     
     // Solves Rodrigues' Rotation Formula, applied to the final result. 
-    Matrix44 rotator = 
+    const Matrix44 rotator = 
         {
             cosine + (axis.x * axis.x) * oneMinusCosine,      
             oneMinusCosine * axis.y * axis.x + axis.z * sine, 
@@ -257,14 +257,13 @@ F32 determinant(const Matrix44& lh)
 
 Matrix44 inverse(const Matrix44& lh)
 {
-    F32 det         = determinant(lh);
-    F32 denom       = 0.f;
+    const F32 det       = determinant(lh);
     if (det == 0.f)
         return Matrix44::identity();
 
-    Matrix44 adj = adjugate(lh);
+    const Matrix44 adj  = adjugate(lh);
+    const F32 denom     = 1.f / det;
 
-    denom = 1.f / det;
     return adj * denom;
 }
 
@@ -609,15 +608,15 @@ void Matrix44::operator*=(const Matrix44& rh)
 Matrix44 perspectiveLH_Aspect(F32 fov, F32 aspect, F32 ne, F32 fa)
 {
     Matrix44 persp;
-    F32 tanFoV  = tanf(fov * 0.5f);
-    F32 yS      = 1.0f / tanFoV;
-    F32 xS      = yS / aspect;
+    const F32 tanFoV    = tanf(fov * 0.5f);
+    const F32 yS        = 1.0f / tanFoV;
+    const F32 xS        = yS / aspect;
     
-    persp[0]    = xS;
-    persp[5]    = yS;
-    persp[10]   = fa / (fa - ne);
-    persp[11]   = 1.0f;
-    persp[14]   = -ne * fa / (fa - ne);
+    persp[0]            = xS;
+    persp[5]            = yS;
+    persp[10]           = fa / (fa - ne);
+    persp[11]           = 1.0f;
+    persp[14]           = -ne * fa / (fa - ne);
 
     return persp;
 }
@@ -627,9 +626,9 @@ Matrix44 perspectiveRH_Aspect(F32 fov, F32 aspect, F32 ne, F32 fa)
 {
     Matrix44 persp;
 
-    F32 tanFoV  = tanf(fov * 0.5f);
-    F32 yS      = 1.0f / tanFoV;
-    F32 xS      = yS / aspect;
+    const F32 tanFoV  = tanf(fov * 0.5f);
+    const F32 yS      = 1.0f / tanFoV;
+    const F32 xS      = yS / aspect;
 
     persp[0]    = xS;
     persp[5]    = yS;
@@ -706,9 +705,9 @@ Matrix44::operator Matrix43 () const
 
 Matrix44 lookAtLH(const Float3& pos, const Float3& target, const Float3& up)
 {
-    Float3 z = normalize(target - pos);
-    Float3 x = normalize(cross(up, z));
-    Float3 y = cross(z, x);
+    const Float3 z = normalize(target - pos);
+    const Float3 x = normalize(cross(up, z));
+    const Float3 y = cross(z, x);
 
     return Matrix44
         (
@@ -722,9 +721,9 @@ Matrix44 lookAtLH(const Float3& pos, const Float3& target, const Float3& up)
 
 Matrix44 lookAtRH(const Float3& pos, const Float3& target, const Float3& up)
 {
-    Float3 z = normalize(pos - target);
-    Float3 x = normalize(cross(up, z));
-    Float3 y = cross(z, x);
+    const Float3 z = normalize(pos - target);
+    const Float3 x = normalize(cross(up, z));
+    const Float3 y = cross(z, x);
 
     return Matrix44
         (

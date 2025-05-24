@@ -235,6 +235,7 @@ class D3D12Device : public GraphicsDevice
 public:
     D3D12Device()
         : m_device(nullptr)
+        , m_device2(nullptr)
         , m_debugCookie(0)
         , m_pAdapter(nullptr) { }
 
@@ -242,6 +243,7 @@ public:
     void                                destroy();
 
     ID3D12Device*                       get() const { return m_device; }
+    ID3D12Device2*                      get2() const { return m_device2; }
     D3D12Adapter*                       getAdapter() const { return m_pAdapter; }
 
     ResultCode                          destroySwapchain(GraphicsSwapchain* pSwapchain) override;
@@ -285,6 +287,7 @@ private:
     // Resource pools.
     D3D12ResourceAllocationManager      m_resourceAllocationManager;
     ID3D12Device*                       m_device;
+    ID3D12Device2*                      m_device2;
     D3D12Adapter*                       m_pAdapter;
     DWORD                               m_debugCookie;
 

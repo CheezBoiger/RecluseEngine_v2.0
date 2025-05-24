@@ -37,6 +37,8 @@ ResultCode FbxMeshBuilder::build(Builder::Importer* importer, MeshBuilderFlags f
     
     FbxImport::Process processes;
 
+    // TODO: This needs to handle polygons with more than 3 edges, this means
+    // Find a way to triangulate!!
     processes({ { FbxNodeAttribute::eMesh }, [&] (FbxNode* node) -> ResultCode 
     {
         FbxMesh* meshNode = (FbxMesh*) node->GetNodeAttribute();
@@ -209,6 +211,15 @@ ResultCode FbxMeshBuilder::build(Builder::Importer* importer, MeshBuilderFlags f
     }});
     // Traverse the scene, and build our mesh nodes.
     ResultCode result = fbximporter->traverseScene(fbximporter->getRootNode(), processes);
+
+    // Optimize if flagged as such.
+    if (flags & Optimize)
+        performOptimize();
+
+    // Simplify is flagged as such.
+    if (flags & Simplify)
+        performSimplify();
+
     return result;
 }
 

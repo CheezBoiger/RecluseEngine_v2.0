@@ -31,6 +31,7 @@ using namespace Math;
 typedef Quaternion  MeshRotationData;
 typedef Float3      MeshTranslateData;
 typedef Float3      MeshScaleData;
+typedef U8          MeshLod;
 
 
 // Per mesh information.
@@ -49,11 +50,15 @@ enum SubMeshFlag
     // No flags.
     SubMeshFlag_None = 0,
 
-    // Submesh is meant to be drawn with indices.
+    // Submesh is meant to be drawn with indices. This means that SubMesh::offsetElements and SubMesh::rangeElements
+    // will be read as indices, instead of vertices.
     SubMeshFlag_Indexed = (1 << 0),
 
     // Submesh is meant to be indirectly drawn.
-    SubMeshFlag_Indirect = (1 << 1)
+    SubMeshFlag_Indirect = (1 << 1),
+    
+    // Uses the mesh shader pipeline.
+    SubMeshFlag_MeshShader = (1 << 2),
 };
 typedef uint SubMeshFlags;
 
@@ -66,7 +71,7 @@ typedef uint SubMeshFlags;
 struct RecluseEngine_PUBLIC_API SubMesh 
 {
     // Name of the submesh.
-    std::string     name;
+    const char*     name;
     SubMeshFlags    flags;
 
     // Material Id to query.
@@ -74,28 +79,18 @@ struct RecluseEngine_PUBLIC_API SubMesh
 
     // Submesh vertex offset.
     uint            offsetElements;
-    // Number of vertices that correspond to this mesh
+    // Number of elements that correspond to this submesh
     uint            rangeElements;
 
     // The bounds of the submesh. Usually for collision or whatnot.
+    // Animation should consider updating this as well.
     Math::Bounds3d  bounds;
 
+    // The bound vertex buffer.
     VertexBuffer*   vertexBuffer;
+
+    // The bound index buffer. 
     IndexBuffer*    indexBuffer;
-};
-
-
-struct MeshLod
-{
-    uint offset;
-    uint numVertices;
-};
-
-
-class CpuMesh
-{
-public:
-    
 };
 
 
@@ -106,41 +101,57 @@ public:
 class Mesh : public Serializable, public RecreatableObject
 {
 public:
+
+    enum { Position, Normal, UV0, UV1, Binormal, Tangent, BoneIndex, BoneWeight };
+
+    typedef u32 Attribute;
+
     virtual ~Mesh() { }
 
     RecluseEngine_PUBLIC_API Mesh()
         : m_pVertexBuffer(nullptr)
         , m_pIndexBuffer(nullptr) { }
 
-    RecluseEngine_PUBLIC_API ResultCode initialize(VertexBuffer* pVertexBuffer, IndexBuffer* pIndexBuffer);
+    RecluseEngine_PUBLIC_API ResultCode     initialize(VertexBuffer* pVertexBuffer, IndexBuffer* pIndexBuffer);
 
-    RecluseEngine_PUBLIC_API VertexBuffer* getVertexBuffer() { return m_pVertexBuffer; }
-    RecluseEngine_PUBLIC_API IndexBuffer* getIndexBuffer() { return m_pIndexBuffer; }
+    RecluseEngine_PUBLIC_API VertexBuffer*  getVertexBuffer() { return m_pVertexBuffer; }
+    RecluseEngine_PUBLIC_API IndexBuffer*   getIndexBuffer() { return m_pIndexBuffer; }
 
-    RecluseEngine_PUBLIC_API const std::vector<SubMesh*>& getSubMeshes() { return m_submeshes; };
+    RecluseEngine_PUBLIC_API const std::vector<SubMesh*>& getSubMeshes(U8 lod) { return m_meshArray[lod].submeshes; };
 
-    RecluseEngine_PUBLIC_API void addSubmeshes(U32 numSubmeshes, SubMesh* pSubmeshes) 
+    RecluseEngine_PUBLIC_API void           addSubmeshes(U32 numSubmeshes, SubMesh* pSubmeshes, U8 lod) 
     {
         for (U32 i = 0; i < numSubmeshes; ++i) 
         { 
-            m_subMeshMap[pSubmeshes[i].name] = pSubmeshes[i];
-            m_submeshes.push_back(&m_subMeshMap[pSubmeshes[i].name]);
+            m_meshArray[lod].subMeshMap[pSubmeshes[i].name] = pSubmeshes[i];
+            m_meshArray[lod].submeshes.push_back(&m_meshArray[lod].subMeshMap[pSubmeshes[i].name]);
         }
     }
 
-    RecluseEngine_PUBLIC_API ResultCode serialize(Archive* archive) const override;
-    RecluseEngine_PUBLIC_API ResultCode deserialize(Archive* archive) override;
-    RecluseEngine_PUBLIC_API ResultCode recreate() override { return RecluseResult_NoImpl; }
-    RecluseEngine_PUBLIC_API Bool       isRecreatable() const override { return false; }
+    RecluseEngine_PUBLIC_API ResultCode     serialize(Archive* archive) const override;
+    RecluseEngine_PUBLIC_API ResultCode     deserialize(Archive* archive) override;
+    RecluseEngine_PUBLIC_API ResultCode     recreate(GraphicsContext* context) override { return RecluseResult_NoImpl; }
+    RecluseEngine_PUBLIC_API Bool           isRecreatable() const override { return false; }
 
-    RecluseEngine_PUBLIC_API SubMesh*   getSubMesh(U32 idx) { return m_submeshes[idx]; }
+    RecluseEngine_PUBLIC_API SubMesh*       getSubMesh(U32 idx, U8 lod) { return m_meshArray[lod].submeshes[idx]; }
+
+    RecluseEngine_PUBLIC_API const char*    getDebugName() const { return m_debugName; }
 
 private:
-    std::map<std::string, SubMesh>  m_subMeshMap;
-    std::vector<SubMesh*>           m_submeshes;
+    struct MeshLOD
+    {
+        std::map<std::string, SubMesh>  subMeshMap;
+        std::vector<SubMesh*>           submeshes;  
+    };
+
+    typedef std::vector<MeshLOD> MeshLodArray;
+
+    MeshLodArray                    m_meshArray;
     VertexBuffer*                   m_pVertexBuffer;
     IndexBuffer*                    m_pIndexBuffer;
     RGUID                           m_guid;
+
+    const char*                     m_debugName;
 };
 
 
@@ -189,17 +200,30 @@ private:
 // Mesh Streamer, streams a host visible memory mesh from disk to ram. 
 struct RecluseEngine_PUBLIC_API MeshStreamer
 {
-public:
-    enum { Position, Normal, UV, Binormal, Tangent, BoneIndex, BoneWeight };
-    typedef u32 Attribute;
+private:
+    struct MeshHeader
+    {
+        typedef U32 Version;
+        Version     meshVersion;
+        RGUID       meshGuid;
+        U32         attributeCount;
+    };
 
-    // Stream data from the archive.
-    bool streamFrom(Archive* archive);
+    struct MeshAttributeHeader
+    {
+        Mesh::Attribute attribute;
+        U32             elementCount;
+        U32             bytesPerStride;
+    };
+public:
+
+    // Stream data from the archive. If required version is 0, any version is allowed.
+    bool streamFrom(Archive* archive, MeshHeader::Version requiredVersion = 0);
 
     // Stream data to the archive.
     bool streamTo(Archive* archive);
 
-    std::vector<Math::Float4>* operator()(Attribute attrib)
+    std::vector<Math::Float4>* operator()(Mesh::Attribute attrib)
     {
         auto it = m_attributes.find(attrib);
         if (it != m_attributes.end())
@@ -207,19 +231,21 @@ public:
         return nullptr;
     }
 
-    bool contains(Attribute attrib) const
+    bool contains(Mesh::Attribute attrib) const
     {
         return (m_attributes.find(attrib) != m_attributes.end());
     }
 
     template<typename Type>
-    bool store(Attribute attribute, const std::vector<Type>& attribs)
+    bool store(Mesh::Attribute attribute, const std::vector<Type>& attribs)
     {
-        
+        m_attributes[attribute] = attribs;
+        return true;
     }
 
 private:
-    std::map<Attribute, std::vector<Math::Float4>> m_attributes;
+    // Mesh attribute map loaded, unloaded from the streamer.
+    std::map<Mesh::Attribute, std::vector<Math::Float4>> m_attributes;
 };
 } // Engine
 } // Recluse

@@ -41,19 +41,19 @@ enum ShaderType
     ShaderType_None = -1,
     ShaderType_Vertex = 0,
     ShaderType_Hull,
-    ShaderType_TessellationControl = ShaderType_Hull,
+    ShaderType_TessellationControl      = ShaderType_Hull,
     ShaderType_Domain,
-    ShaderType_TessellationEvaluation = ShaderType_Domain,
+    ShaderType_TessellationEvaluation   = ShaderType_Domain,
     ShaderType_Geometry,
     ShaderType_Pixel,
-    ShaderType_Fragment = ShaderType_Pixel,
+    ShaderType_Fragment                 = ShaderType_Pixel,
     ShaderType_RayGeneration,
     ShaderType_RayClosestHit,
     ShaderType_RayAnyHit,
     ShaderType_RayIntersect,
     ShaderType_RayMiss,
     ShaderType_Amplification,
-    ShaderType_Task = ShaderType_Amplification,
+    ShaderType_Task                     = ShaderType_Amplification,
     ShaderType_Mesh,
     ShaderType_Compute,
     ShaderType_Count
@@ -94,7 +94,9 @@ static ShaderStageFlags shaderTypeToShaderStageFlags(ShaderType type)
 
 typedef U64 ShaderPermutationId;
 
-// Shader is a container that uses the crc. 
+// Shader is a container that encapsulates the IR bytecode to be used for 
+// the rendering abstraction layer. It contains shader code to be run in
+// a graphics API.
 class Shader final : public IReference, public Serializable
 {
 public:
@@ -123,10 +125,10 @@ public:
     ShaderIntermediateCode  getIntermediateCodeType() const { return m_intermediateCode; }
 
     // Load the bytecode data to the shader. This requires that the data be in bytecode, not source!
-    RecluseFramework_PUBLIC_API ResultCode load(const char* entryPoint, const char* byteCode, U64 szBytes, ShaderIntermediateCode imm, ShaderType shaderType);
+    RecluseFramework_PUBLIC_API ResultCode  load(const char* entryPoint, const char* byteCode, U64 szBytes, ShaderIntermediateCode imm, ShaderType shaderType);
 
     // Save the compilation to a file.
-    RecluseFramework_PUBLIC_API ResultCode saveToFile(const char* filePath);
+    RecluseFramework_PUBLIC_API ResultCode  saveToFile(const char* filePath);
 
     RecluseFramework_PUBLIC_API Shader*     convertTo(ShaderIntermediateCode intermediateCode);
     const char*                             getEntryPointName() const { return m_entryPoint.c_str(); }
@@ -139,8 +141,8 @@ public:
     // Sets the name of the shader.
     void                                    setName(const char* name) 
     {
-        m_shaderName = name;
-        m_shaderNameHash = recluseHashFast(m_shaderName.data(), m_shaderName.size());
+        m_shaderName                        = name;
+        m_shaderNameHash                    = recluseHashFast(m_shaderName.data(), m_shaderName.size());
     }
 
     // Obtain the shader hash id, this is usually equal across the same shader with different permutations.
@@ -158,15 +160,15 @@ public:
 
 private:
 
-    ShaderIntermediateCode  m_intermediateCode;
-    ShaderType              m_shaderType;
-    std::vector<char>       m_byteCode;
-    ShaderId                m_shaderNameHash;
-    ShaderId                m_instanceId;
-    Hash64                  m_shaderHashId;
-    std::string             m_entryPoint;
-    std::string             m_shaderName;
-    ShaderPermutationId     m_permutation;
+    ShaderIntermediateCode                  m_intermediateCode;
+    ShaderType                              m_shaderType;
+    std::vector<char>                       m_byteCode;
+    ShaderId                                m_shaderNameHash;
+    ShaderId                                m_instanceId;
+    Hash64                                  m_shaderHashId;
+    std::string                             m_entryPoint;
+    std::string                             m_shaderName;
+    ShaderPermutationId                     m_permutation;
 };
 
 // Shader bind identifier, this is mainly used to identify the slot or index of a 

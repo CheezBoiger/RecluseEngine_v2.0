@@ -39,13 +39,15 @@ typedef double              F64;
 typedef F32                 f32;
 typedef F64                 f64;
 typedef F32                 fsingle;
-typedef F32                 lowp;
-typedef F64                 highp;
 
 typedef half_float::half    Half;
 typedef Half                F16;
 typedef F16                 f16;
 typedef Half                half;
+
+typedef half                lowp;
+typedef F32                 mediump;
+typedef F64                 highp;
 
 typedef struct
 {

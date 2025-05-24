@@ -27,6 +27,7 @@ class GraphicsSampler;
 class RenderPass;
 
 
+// Context behavior flags for context states.
 enum ContextFlag
 {
     // Context push will create a fresh context state.
@@ -152,6 +153,11 @@ public:
     // \param description The resource description that you want to temporarily allocate.
     virtual GraphicsResource*       createTemporaryResource(const GraphicsResourceDescription& description)
         { return nullptr; }
+
+    // Releases a temporary resource for the current context frame. Usually any resources not called by this, will just be destroyed
+    // after the frame is finished.
+    virtual void                    releaseTemporaryResource(const GraphicsResource* resource) 
+        { }
 
     // Submits copy of regions from src resource to dst resource. Source may be a texture.
     virtual void                    copyBufferRegions(
