@@ -135,9 +135,12 @@ public:
     void bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBytes, IndexType type) override;
     void drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 firstIndex, U32 vertexOffset, U32 firstInstance) override;
 
-    void drawInstancedIndirect(GraphicsResource* pParams, U32 offset, U32 drawCount, U32 stride) override;
-    void drawIndexedInstancedIndirect(GraphicsResource* pParams, U32 offset, U32 drawCount, U32 stride) override;
+    void drawInstancedIndirect(GraphicsResource* pParams, U32 offset, U32 drawCount) override;
+    void drawIndexedInstancedIndirect(GraphicsResource* pParams, U32 offset, U32 drawCount) override;
     void dispatchIndirect(GraphicsResource* pParams, U64 offset) override;
+
+    void dispatchMesh(U32 x, U32 y, U32 z) override;
+    void dispatchMeshIndirect(GraphicsResource* indirectBuffer, U32 offset, U32 drawCount) override;
 
     void setViewports(U32 numViewports, Viewport* pViewports) override;
     void setScissors(U32 numScissors, Rect* pRects) override;

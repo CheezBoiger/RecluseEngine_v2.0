@@ -366,6 +366,14 @@ void VulkanInstance::queryFunctions()
             pfn_vkCmdEndDebugUtilsLabelEXT = (PFN_vkCmdEndDebugUtilsLabelEXT)getProcAddr("vkCmdEndDebugUtilsLabelEXT");
     }
 
+    if (supportsLayers(LayerFeatureFlag_MeshShading))
+    {
+        if (!pfn_vkCmdDrawMeshTasksEXT)
+            pfn_vkCmdDrawMeshTasksEXT = (PFN_vkCmdDrawMeshTasksEXT)getProcAddr("vkCmdDrawMeshTasksEXT");
+        if (!pfn_vkCmdDrawMeshTasksIndirectEXT)
+            pfn_vkCmdDrawMeshTasksIndirectEXT = (PFN_vkCmdDrawMeshTasksIndirectEXT)getProcAddr("vkCmdDrawMeshTasksIndirectEXT");
+    }
+
 #if defined(RECLUSE_RAYTRACING_HEADER)
     if (supportsLayers(LayerFeatureFlag_Raytracing))
     {

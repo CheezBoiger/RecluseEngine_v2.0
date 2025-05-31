@@ -191,8 +191,8 @@ public:
     virtual void                    drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 firstIndex, U32 vertexOffset, U32 firstInstance) { }
     virtual void                    drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstVertex, U32 firstInstance) { }
 
-    virtual void                    drawInstancedIndirect(GraphicsResource* pParams, U32 offset, U32 drawCount, U32 stride) { }
-    virtual void                    drawIndexedInstancedIndirect(GraphicsResource* pParams, U32 offset, U32 drawCount, U32 stride) { }
+    virtual void                    drawInstancedIndirect(GraphicsResource* pParams, U32 offset, U32 drawCount) { }
+    virtual void                    drawIndexedInstancedIndirect(GraphicsResource* pParams, U32 offset, U32 drawCount) { }
 
     virtual void                    setScissors(U32 numScissors, Rect* pRects) { }
     virtual void                    setViewports(U32 numViewports, Viewport* pViewports) { }
@@ -219,6 +219,7 @@ public:
 
     // Mesh shader dispatch, only used if mesh shaders are supported!
     virtual void                    dispatchMesh(U32 x, U32 y, U32 z) { }
+    virtual void                    dispatchMeshIndirect(GraphicsResource* indirectBuffer, U32 offset, U32 drawCount) { }
 
     virtual void                    clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) { }
     virtual void                    clearDepthStencil(ClearFlags clearFlags, F32 clearDepth, U8 clearStencil, const Rect& rect) { }

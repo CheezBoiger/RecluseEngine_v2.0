@@ -28,13 +28,14 @@ public:
     void bindDescriptorHeaps(ID3D12DescriptorHeap* const* pHeaps, U32 numHeaps);
 
     ID3D12GraphicsCommandList* get() { return m_currentCmdList; }
+    ID3D12GraphicsCommandList6* get6() { return m_currentCmdList; }
 
     ID3D12CommandSignature* obtainSignature(D3D12_INDIRECT_ARGUMENT_TYPE type);
 
 private:
-    std::vector<ID3D12GraphicsCommandList4*>    m_graphicsCommandLists;
+    std::vector<ID3D12GraphicsCommandList6*>    m_graphicsCommandLists;
     std::vector<ID3D12CommandAllocator*>        m_allocators;
-    ID3D12GraphicsCommandList4*                 m_currentCmdList;
+    ID3D12GraphicsCommandList6*                 m_currentCmdList;
     ID3D12CommandAllocator*                     m_currentAllocator;
     CommandListStatus                           m_status;
     

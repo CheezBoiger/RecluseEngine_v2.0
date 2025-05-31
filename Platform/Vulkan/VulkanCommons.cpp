@@ -6,6 +6,8 @@ PFN_vkSetDebugUtilsObjectNameEXT    pfn_vkSetDebugUtilsObjectNameEXT    = nullpt
 PFN_vkSetDebugUtilsObjectTagEXT     pfn_vkSetDebugUtilsObjectTagEXT     = nullptr;
 PFN_vkCmdBeginDebugUtilsLabelEXT    pfn_vkCmdBeginDebugUtilsLabelEXT    = nullptr;
 PFN_vkCmdEndDebugUtilsLabelEXT      pfn_vkCmdEndDebugUtilsLabelEXT      = nullptr;
+PFN_vkCmdDrawMeshTasksEXT           pfn_vkCmdDrawMeshTasksEXT           = nullptr;
+PFN_vkCmdDrawMeshTasksIndirectEXT   pfn_vkCmdDrawMeshTasksIndirectEXT   = nullptr;
 
 #if defined (RECLUSE_RAYTRACING_HEADER)
 PFN_vkCreateRayTracingPipelinesKHR  pfn_vkCreateRayTracingPipelinesKHR  = nullptr;

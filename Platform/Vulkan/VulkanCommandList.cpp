@@ -478,7 +478,7 @@ void VulkanContext::clearDepthStencil(ClearFlags clearFlags, F32 clearDepth, U8 
 }
 
 
-void VulkanContext::drawIndexedInstancedIndirect(GraphicsResource* pParams, U32 offset, U32 drawCount, U32 stride)
+void VulkanContext::drawIndexedInstancedIndirect(GraphicsResource* pParams, U32 offset, U32 drawCount)
 {
     R_ASSERT(pParams != NULL);
     R_ASSERT(pParams->getApi() == GraphicsApi_Vulkan);
@@ -504,12 +504,12 @@ void VulkanContext::drawIndexedInstancedIndirect(GraphicsResource* pParams, U32 
     }
 
     const VulkanBuffer* pBuffer = pResource->castTo<VulkanBuffer>();
-
+    uint32_t stride = sizeof(VkDrawIndexedIndirectCommand);
     vkCmdDrawIndexedIndirect(m_primaryCommandList.get(), pBuffer->get(), offset, drawCount, stride);
 }
 
 
-void VulkanContext::drawInstancedIndirect(GraphicsResource* pParams, U32 offset, U32 drawCount, U32 stride)
+void VulkanContext::drawInstancedIndirect(GraphicsResource* pParams, U32 offset, U32 drawCount)
 {
     R_ASSERT(pParams != NULL);
     flushBarrierTransitions(m_primaryCommandList.get());
@@ -534,7 +534,7 @@ void VulkanContext::drawInstancedIndirect(GraphicsResource* pParams, U32 offset,
     }
 
     const VulkanBuffer* pBuffer = pResource->castTo<VulkanBuffer>();
-
+    uint32_t stride = sizeof(VkDrawIndirectCommand);
     vkCmdDrawIndirect(m_primaryCommandList.get(), pBuffer->get(), offset, drawCount, stride); 
 }
 
@@ -557,6 +557,54 @@ void VulkanContext::dispatchIndirect(GraphicsResource* pParams, U64 offset)
         VulkanBuffer* pBuffer = pResource->castTo<VulkanBuffer>();
         const VkBuffer buffer = pBuffer->get();
         vkCmdDispatchIndirect(m_primaryCommandList.get(), buffer, offset);
+    }
+    else
+    {
+        R_ERROR("Vulkan", "ERROR: Can not use an image resource as an indirect args resource! Skipping call...");
+    }
+}
+
+void VulkanContext::dispatchMesh(U32 x, U32 y, U32 z)
+{
+    R_ASSERT_FORMAT(pfn_vkCmdDrawMeshTasksEXT != NULL, "Mesh Shader is not enabled for Vulkan!");
+    if (pfn_vkCmdDrawMeshTasksEXT)
+        return;
+
+    flushBarrierTransitions(m_primaryCommandList.get());
+    if (currentState().areResourcesDirty() || currentState().isPipelineDirty())
+    {
+        const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure);
+        bindPipelineState(set);
+        bindDescriptorSet(set);
+    }
+    currentState().proposeClean();
+    pfn_vkCmdDrawMeshTasksEXT(m_primaryCommandList.get(), x, y, z);
+}
+
+
+void VulkanContext::dispatchMeshIndirect(GraphicsResource* indirectBuffer, U32 offset, U32 drawCount)
+{
+    R_ASSERT(indirectBuffer != NULL);
+    R_ASSERT_FORMAT(pfn_vkCmdDrawMeshTasksIndirectEXT != NULL, "Mesh Shader is not enabled for vulkan!");
+    if (pfn_vkCmdDrawMeshTasksIndirectEXT)
+        return;
+
+    flushBarrierTransitions(m_primaryCommandList.get());
+    if (currentState().areResourcesDirty() || currentState().isPipelineDirty())
+    {
+        const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure);
+        bindPipelineState(set); 
+        bindDescriptorSet(set);
+    }
+    currentState().proposeClean();
+    VulkanResource* pResource = indirectBuffer->castTo<VulkanResource>();
+    
+    if (pResource->isBuffer())
+    {
+        VulkanBuffer* pBuffer = pResource->castTo<VulkanBuffer>();
+        const VkBuffer buffer = pBuffer->get();
+        uint32_t stride = sizeof(VkDrawMeshTasksIndirectCommandEXT);
+        pfn_vkCmdDrawMeshTasksIndirectEXT(m_primaryCommandList.get(), buffer, offset, drawCount, stride);
     }
     else
     {

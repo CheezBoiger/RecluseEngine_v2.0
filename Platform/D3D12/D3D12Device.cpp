@@ -349,6 +349,8 @@ ResultCode D3D12Device::initialize(D3D12Adapter* adapter, const DeviceCreateInfo
         m_debugCookie = adapter->getInstance()->registerDebugMessageCallback(m_device);
     }
 
+    createCommandSignatures();
+
     setDeviceId(deviceId);
 
     R_DEBUG(R_CHANNEL_D3D12, "Successfully created D3D12 device!");
@@ -399,6 +401,7 @@ void D3D12Device::destroy()
     DescriptorViews::clearAll(this);
     m_descHeapManager.release();
 
+    destroyCommandSignatures();
     destroyCommandQueues();
 
     if (m_device) 
@@ -834,6 +837,46 @@ void D3D12Device::copyResource(GraphicsResource* dst, GraphicsResource* src)
 void D3D12Device::copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, const CopyBufferRegion* regions, U32 numRegions)
 {
     getQueue(D3D12_COMMAND_LIST_TYPE_DIRECT)->copyBufferRegions(dst->castTo<D3D12Resource>(), src->castTo<D3D12Resource>(), regions, numRegions);
+}
+
+
+void D3D12Device::createCommandSignatures()
+{
+    D3D12_INDIRECT_ARGUMENT_DESC indirectDesc = { };
+
+    D3D12_COMMAND_SIGNATURE_DESC signatureDesc = { };
+    signatureDesc.pArgumentDescs = &indirectDesc;
+    signatureDesc.NumArgumentDescs = 1;
+    signatureDesc.NodeMask = 0;
+
+    indirectDesc.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH;
+    signatureDesc.ByteStride = sizeof(D3D12_DISPATCH_ARGUMENTS);
+    HRESULT result = m_device->CreateCommandSignature(&signatureDesc, nullptr, __uuidof(ID3D12CommandSignature), (void**)&m_dispatchIndirectSignature);
+    R_ASSERT(SUCCEEDED(result));
+
+    indirectDesc.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW;
+    signatureDesc.ByteStride = sizeof(D3D12_DRAW_ARGUMENTS);
+    result = m_device->CreateCommandSignature(&signatureDesc, nullptr, __uuidof(ID3D12CommandSignature), (void**)&m_drawInstancedIndirectSignature);
+    R_ASSERT(SUCCEEDED(result));
+    
+    indirectDesc.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED;
+    signatureDesc.ByteStride = sizeof(D3D12_DRAW_INDEXED_ARGUMENTS);
+    result = m_device->CreateCommandSignature(&signatureDesc, nullptr, __uuidof(ID3D12CommandSignature), (void**)&m_drawIndexedInstancedIndirectSignature);
+    R_ASSERT(SUCCEEDED(result));
+
+    indirectDesc.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_MESH;
+    signatureDesc.ByteStride = sizeof(D3D12_DISPATCH_MESH_ARGUMENTS);
+    result = m_device->CreateCommandSignature(&signatureDesc, nullptr, __uuidof(ID3D12CommandSignature), (void**)&m_drawMeshIndirectSignature);
+    R_ASSERT(SUCCEEDED(result));
+}
+
+
+void D3D12Device::destroyCommandSignatures()
+{
+    if (m_dispatchIndirectSignature) m_dispatchIndirectSignature->Release();
+    if (m_drawIndexedInstancedIndirectSignature) m_drawIndexedInstancedIndirectSignature->Release();
+    if (m_drawInstancedIndirectSignature) m_drawInstancedIndirectSignature->Release();
+    if (m_drawMeshIndirectSignature) m_drawMeshIndirectSignature->Release();
 }
 } // D3D12
 } // Recluse

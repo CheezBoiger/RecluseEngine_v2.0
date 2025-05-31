@@ -122,7 +122,13 @@ public:
     void                                bindRenderTargets(U32 count, ResourceViewId* ppResources, ResourceViewId pDepthStencil = 0) override;
 
     void                                drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstVertex, U32 firstInstance) override;
+    void                                drawInstancedIndirect(GraphicsResource* indirectBuffer, U32 offset, U32 drawCount) override;
     void                                drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 firstIndex, U32 vertexOffset, U32 firstInstance) override;
+    void                                drawIndexedInstancedIndirect(GraphicsResource* indirectBuffer, U32 offset, U32 drawCount) override;
+
+    void                                dispatchMesh(U32 x, U32 y, U32 z) override;
+    void                                dispatchMeshIndirect(GraphicsResource* indirectBuffer, U32 offset, U32 drawCount) override;
+
     void                                bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBytes, IndexType type) override;
     void                                setDepthCompareOp(CompareOp compareOp) override;
     void                                setDepthBiasEnable(Bool enable) override;
@@ -139,6 +145,7 @@ public:
     void                                setTopology(PrimitiveTopology topology) override;
     void                                setFrontFace(FrontFace frontFace) override;
     void                                dispatch(U32 x, U32 y, U32 z) override;
+    void                                dispatchIndirect(GraphicsResource* indirectBuffer, U64 offset) override;
     void                                beginLabel(const char* label, const Math::Float4& color) override;
     void                                endLabel() override;
 
@@ -237,7 +244,11 @@ public:
         : m_device(nullptr)
         , m_device2(nullptr)
         , m_debugCookie(0)
-        , m_pAdapter(nullptr) { }
+        , m_pAdapter(nullptr)
+        , m_dispatchIndirectSignature(nullptr)
+        , m_drawIndexedInstancedIndirectSignature(nullptr)
+        , m_drawInstancedIndirectSignature(nullptr)
+        , m_drawMeshIndirectSignature(nullptr) { }
 
     ResultCode                          initialize(D3D12Adapter* adapter, const DeviceCreateInfo& info, U32 deviceId);
     void                                destroy();
@@ -281,15 +292,29 @@ public:
 
     D3D12ResourceAllocationManager*     resourceAllocationManager() { return &m_resourceAllocationManager; }
 
+    ID3D12CommandSignature*             getDrawInstancedIndirectSignature() const { return m_drawInstancedIndirectSignature; }
+    ID3D12CommandSignature*             getDrawIndexedInstancedIndirectSignature() const { return m_drawIndexedInstancedIndirectSignature; }
+    ID3D12CommandSignature*             getDispatchIndirectSignature() const { return m_dispatchIndirectSignature; }
+    ID3D12CommandSignature*             getDrawMeshIndirectSignature() const { return m_drawMeshIndirectSignature; }
+
 private:
     void                                createCommandQueues(Bool allowComputeQueue = false);
     void                                destroyCommandQueues();
+
+    void                                createCommandSignatures();
+    void                                destroyCommandSignatures();
+
     // Resource pools.
     D3D12ResourceAllocationManager      m_resourceAllocationManager;
     ID3D12Device*                       m_device;
     ID3D12Device2*                      m_device2;
     D3D12Adapter*                       m_pAdapter;
     DWORD                               m_debugCookie;
+
+    ID3D12CommandSignature*             m_dispatchIndirectSignature;
+    ID3D12CommandSignature*             m_drawInstancedIndirectSignature;
+    ID3D12CommandSignature*             m_drawIndexedInstancedIndirectSignature;
+    ID3D12CommandSignature*             m_drawMeshIndirectSignature;
 
     DescriptorHeapAllocationManager     m_descHeapManager;
     std::map<D3D12_COMMAND_LIST_TYPE, D3D12Queue> m_queues;

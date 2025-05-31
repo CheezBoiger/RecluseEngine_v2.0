@@ -32,7 +32,7 @@ ResultCode D3D12PrimaryCommandList::initialize(D3D12Context* pDeviceContext, Gra
                                 D3D12_COMMAND_LIST_TYPE_DIRECT, 
                                 m_allocators[i], 
                                 nullptr, 
-                                __uuidof(ID3D12GraphicsCommandList4), 
+                                __uuidof(ID3D12GraphicsCommandList6), 
                                 (void**)&m_graphicsCommandLists[i]
                             );
 
@@ -176,6 +176,83 @@ void D3D12Context::dispatch(U32 x, U32 y, U32 z)
     bindCurrentResources();
     state.setClean();
     pList->Dispatch(x, y, z);
+}
+
+
+void D3D12Context::drawIndexedInstancedIndirect(GraphicsResource* indirectBuffer, U32 offset, U32 drawCount)
+{
+    ID3D12GraphicsCommandList* list = m_pPrimaryCommandList->get();
+    ContextState& state = currentState();
+    flushBarrierTransitions();
+    bindRootSignature(list, state);
+    bindPipeline(list, state);
+    bindCurrentResources();
+    state.setClean();
+    
+    ID3D12CommandSignature* commandSignature = getNativeDevice()->getDrawIndexedInstancedIndirectSignature();
+    R_ASSERT(commandSignature != NULL);
+    ID3D12Resource* resource = indirectBuffer->castTo<D3D12Resource>()->get();
+    list->ExecuteIndirect(commandSignature, drawCount, resource, offset, nullptr, 0);
+}
+
+
+void D3D12Context::drawInstancedIndirect(GraphicsResource* indirectBuffer, U32 offset, U32 drawCount)
+{
+    ID3D12GraphicsCommandList* list = m_pPrimaryCommandList->get();
+    ContextState& state = currentState();
+    flushBarrierTransitions();
+    bindRootSignature(list, state);
+    bindPipeline(list, state);
+    bindCurrentResources();
+    state.setClean();
+    ID3D12CommandSignature* commandSignature = getNativeDevice()->getDrawInstancedIndirectSignature();
+    R_ASSERT(commandSignature != NULL);
+    ID3D12Resource* resource = indirectBuffer->castTo<D3D12Resource>()->get();
+    list->ExecuteIndirect(commandSignature, drawCount, resource, offset, nullptr, 0);
+}
+
+
+void D3D12Context::dispatchIndirect(GraphicsResource* indirectBuffer, U64 offset)
+{
+    ID3D12GraphicsCommandList* list = m_pPrimaryCommandList->get();
+    ContextState& state = currentState();
+    flushBarrierTransitions();
+    bindRootSignature(list, state);
+    bindPipeline(list, state);
+    bindCurrentResources();
+    state.setClean();
+        ID3D12CommandSignature* commandSignature = getNativeDevice()->getDispatchIndirectSignature();
+    R_ASSERT(commandSignature != NULL);
+    ID3D12Resource* resource = indirectBuffer->castTo<D3D12Resource>()->get();
+    list->ExecuteIndirect(commandSignature, 1, resource, offset, nullptr, 0);
+}
+
+void D3D12Context::dispatchMesh(U32 x, U32 y, U32 z)
+{
+    ID3D12GraphicsCommandList6* list = m_pPrimaryCommandList->get6();
+    ContextState& state = currentState();
+    flushBarrierTransitions();
+    bindRootSignature(list, state);
+    bindPipeline(list, state);
+    bindCurrentResources();
+    state.setClean();
+    list->DispatchMesh(x, y, z);
+}
+
+
+void D3D12Context::dispatchMeshIndirect(GraphicsResource* indirectBuffer, U32 offset, U32 drawCount)
+{
+    ID3D12GraphicsCommandList6* list = m_pPrimaryCommandList->get6();
+    ContextState& state = currentState();
+    flushBarrierTransitions();
+    bindRootSignature(list, state);
+    bindPipeline(list, state);
+    bindCurrentResources();
+    state.setClean();
+        ID3D12CommandSignature* commandSignature = getNativeDevice()->getDrawMeshIndirectSignature();
+    R_ASSERT(commandSignature != NULL);
+    ID3D12Resource* resource = indirectBuffer->castTo<D3D12Resource>()->get();
+    list->ExecuteIndirect(commandSignature, 1, resource, offset, nullptr, 0);
 }
 
 
