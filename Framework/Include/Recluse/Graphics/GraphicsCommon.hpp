@@ -373,6 +373,41 @@ struct SamplerDescription
 };
 
 
+struct DrawIndirectArgument
+{
+    U32 vertexCountPerInstance;
+    U32 instanceCount;
+    U32 startVertexLocation;
+    U32 startInstanceLocation;
+};
+
+
+struct DrawIndexedIndirectArgument
+{
+    U32 indexCountPerInstance;
+    U32 instanceCount;
+    U32 startIndexLocation;
+    I32 baseVertexLocation;
+    U32 startInstanceLocation;
+};
+
+
+struct DispatchIndirectArgument
+{
+    U32 threadGroupCountX;
+    U32 threadGroupCountY;
+    U32 threadGroupCountZ;
+};
+
+
+struct DispatchMeshArgument
+{
+    U32 threadGroupCountX;
+    U32 threadGroupCountY;
+    U32 threadGroupCountZ;
+};
+
+
 struct MemoryReserveDescription 
 {
     //< Memory resource amount, in bytes, per usage index.
