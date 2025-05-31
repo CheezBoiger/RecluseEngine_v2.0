@@ -400,7 +400,7 @@ struct DispatchIndirectArgument
 };
 
 
-struct DispatchMeshArgument
+struct DispatchMeshIndirectArgument
 {
     U32 threadGroupCountX;
     U32 threadGroupCountY;
