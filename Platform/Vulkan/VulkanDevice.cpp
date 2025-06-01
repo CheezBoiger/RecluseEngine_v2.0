@@ -101,7 +101,7 @@ void VulkanContext::begin()
     vkWaitForFences(m_pDevice->get(), 1, &frameFence, VK_TRUE, UINT64_MAX);
     vkResetFences(m_pDevice->get(), 1, &frameFence);
 
-    if (Vulkan::targetApiVersion >= VK_MAKE_API_VERSION(0, 1, 2, 0))
+    if (Vulkan::targetApiVersion >= R_VULKAN_MAKE_API_VERSION(1, 2, 0))
     {
         // Reset our queries.
         contextFrame.timestampQuery.reset(m_pDevice->get());
@@ -114,7 +114,7 @@ void VulkanContext::begin()
     m_primaryCommandList.reset();
     m_primaryCommandList.begin();
 
-    if (Vulkan::targetApiVersion < VK_MAKE_API_VERSION(0, 1, 2, 0))
+    if (Vulkan::targetApiVersion < R_VULKAN_MAKE_API_VERSION(1, 2, 0))
     {
         contextFrame.timestampQuery.resetLegacy(m_primaryCommandList.get());
         contextFrame.occlusionQuery.resetLegacy(m_primaryCommandList.get());

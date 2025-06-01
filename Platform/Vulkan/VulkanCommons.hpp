@@ -18,7 +18,13 @@
 #include <vulkan/vulkan.h>
 
 #define R_CHANNEL_VULKAN "Vulkan"
-#define R_RECLUSE_TARGET_VULKAN_API_VERSION() VK_MAKE_API_VERSION(0, 1, 1, 0)
+#ifndef VK_MAKE_API_VERSION
+#define R_VULKAN_MAKE_API_VERSION(major, minor, patch) VK_MAKE_VERSION(major, minor, patch)
+#else
+#define R_VULKAN_MAKE_API_VERSION(major, minor, patch) VK_MAKE_API_VERSION(0, major, minor, patch)
+#endif
+
+#define R_RECLUSE_TARGET_VULKAN_API_VERSION() R_VULKAN_MAKE_API_VERSION(1, 1, 0)
 
 // VK Version header must be equal, or above, this value, as an interface for ray tracing wasn't officially
 // supported for some time. We might want to use the NVidia provided interface, but that might require some work.
@@ -44,8 +50,16 @@ extern PFN_vkSetDebugUtilsObjectNameEXT    pfn_vkSetDebugUtilsObjectNameEXT;
 extern PFN_vkSetDebugUtilsObjectTagEXT     pfn_vkSetDebugUtilsObjectTagEXT;
 extern PFN_vkCmdBeginDebugUtilsLabelEXT    pfn_vkCmdBeginDebugUtilsLabelEXT;
 extern PFN_vkCmdEndDebugUtilsLabelEXT      pfn_vkCmdEndDebugUtilsLabelEXT;
+
+#if !defined(VK_EXT_mesh_shader) || R_PREFER_VULKAN_NV_MESH_SHADER_EXTENSION
+#define R_MESH_SHADER_EXTENSION            VK_NV_MESH_SHADER_EXTENSION_NAME
+extern PFN_vkCmdDrawMeshTasksNV            pfn_vkCmdDrawMeshTasksNV;
+extern PFN_vkCmdDrawMeshTasksIndirectNV    pfn_vkCmdDrawMeshTasksIndirectNV;
+#else
+#define R_MESH_SHADER_EXTENSION            VK_EXT_MESH_SHADER_EXTENSION_NAME
 extern PFN_vkCmdDrawMeshTasksEXT           pfn_vkCmdDrawMeshTasksEXT;
 extern PFN_vkCmdDrawMeshTasksIndirectEXT   pfn_vkCmdDrawMeshTasksIndirectEXT;
+#endif
 
 #if defined(RECLUSE_RAYTRACING_HEADER)
 extern PFN_vkCreateRayTracingPipelinesKHR  pfn_vkCreateRayTracingPipelinesKHR;

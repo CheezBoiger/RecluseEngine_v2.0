@@ -6,8 +6,14 @@ PFN_vkSetDebugUtilsObjectNameEXT    pfn_vkSetDebugUtilsObjectNameEXT    = nullpt
 PFN_vkSetDebugUtilsObjectTagEXT     pfn_vkSetDebugUtilsObjectTagEXT     = nullptr;
 PFN_vkCmdBeginDebugUtilsLabelEXT    pfn_vkCmdBeginDebugUtilsLabelEXT    = nullptr;
 PFN_vkCmdEndDebugUtilsLabelEXT      pfn_vkCmdEndDebugUtilsLabelEXT      = nullptr;
+
+#if !defined(VK_EXT_mesh_shader) || R_PREFER_VULKAN_NV_MESH_SHADER_EXTENSION
+PFN_vkCmdDrawMeshTasksNV            pfn_vkCmdDrawMeshTasksNV            = nullptr;
+PFN_vkCmdDrawMeshTasksIndirectNV    pfn_vkCmdDrawMeshTasksIndirectNV    = nullptr;
+#else
 PFN_vkCmdDrawMeshTasksEXT           pfn_vkCmdDrawMeshTasksEXT           = nullptr;
 PFN_vkCmdDrawMeshTasksIndirectEXT   pfn_vkCmdDrawMeshTasksIndirectEXT   = nullptr;
+#endif
 
 #if defined (RECLUSE_RAYTRACING_HEADER)
 PFN_vkCreateRayTracingPipelinesKHR  pfn_vkCreateRayTracingPipelinesKHR  = nullptr;

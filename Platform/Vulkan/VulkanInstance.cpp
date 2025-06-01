@@ -368,10 +368,17 @@ void VulkanInstance::queryFunctions()
 
     if (supportsLayers(LayerFeatureFlag_MeshShading))
     {
+#if !defined(VK_EXT_mesh_shader) || R_PREFER_VULKAN_NV_MESH_SHADER_EXTENSION
+        if (!pfn_vkCmdDrawMeshTasksNV)
+            pfn_vkCmdDrawMeshTasksNV = (PFN_vkCmdDrawMeshTasksNV)getProcAddr("vkCmdDrawMeshTasksNV");
+        if (!pfn_vkCmdDrawMeshTasksIndirectNV)
+            pfn_vkCmdDrawMeshTasksIndirectNV = (PFN_vkCmdDrawMeshTasksIndirectNV)getProcAddr("vkCmdDrawMeshTasksIndirectNV");
+#else
         if (!pfn_vkCmdDrawMeshTasksEXT)
             pfn_vkCmdDrawMeshTasksEXT = (PFN_vkCmdDrawMeshTasksEXT)getProcAddr("vkCmdDrawMeshTasksEXT");
         if (!pfn_vkCmdDrawMeshTasksIndirectEXT)
             pfn_vkCmdDrawMeshTasksIndirectEXT = (PFN_vkCmdDrawMeshTasksIndirectEXT)getProcAddr("vkCmdDrawMeshTasksIndirectEXT");
+#endif
     }
 
 #if defined(RECLUSE_RAYTRACING_HEADER)

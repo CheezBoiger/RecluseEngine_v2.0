@@ -566,9 +566,15 @@ void VulkanContext::dispatchIndirect(GraphicsResource* pParams, U64 offset)
 
 void VulkanContext::dispatchMesh(U32 x, U32 y, U32 z)
 {
+#if !defined(VK_EXT_mesh_shader) || R_PREFER_VULKAN_NV_MESH_SHADER_EXTENSION
+    R_ASSERT_FORMAT(pfn_vkCmdDrawMeshTasksNV != NULL, "Mesh Shader is not enabled for Vulkan!");
+    if (pfn_vkCmdDrawMeshTasksNV)
+        return;
+#else
     R_ASSERT_FORMAT(pfn_vkCmdDrawMeshTasksEXT != NULL, "Mesh Shader is not enabled for Vulkan!");
     if (pfn_vkCmdDrawMeshTasksEXT)
         return;
+#endif
 
     flushBarrierTransitions(m_primaryCommandList.get());
     if (currentState().areResourcesDirty() || currentState().isPipelineDirty())
@@ -578,17 +584,26 @@ void VulkanContext::dispatchMesh(U32 x, U32 y, U32 z)
         bindDescriptorSet(set);
     }
     currentState().proposeClean();
+#if !defined(VK_EXT_mesh_shader) || R_PREFER_VULKAN_NV_MESH_SHADER_EXTENSION
+    pfn_vkCmdDrawMeshTasksNV(m_primaryCommandList.get(), x, 0);
+#else
     pfn_vkCmdDrawMeshTasksEXT(m_primaryCommandList.get(), x, y, z);
+#endif
 }
 
 
 void VulkanContext::dispatchMeshIndirect(GraphicsResource* indirectBuffer, U32 offset, U32 drawCount)
 {
     R_ASSERT(indirectBuffer != NULL);
+#if !defined(VK_EXT_mesh_shader) || R_PREFER_VULKAN_NV_MESH_SHADER_EXTENSION
+    R_ASSERT_FORMAT(pfn_vkCmdDrawMeshTasksIndirectNV != NULL, "Mesh Shader is not enabled for vulkan!");
+    if (pfn_vkCmdDrawMeshTasksIndirectNV)
+        return;
+#else
     R_ASSERT_FORMAT(pfn_vkCmdDrawMeshTasksIndirectEXT != NULL, "Mesh Shader is not enabled for vulkan!");
     if (pfn_vkCmdDrawMeshTasksIndirectEXT)
         return;
-
+#endif
     flushBarrierTransitions(m_primaryCommandList.get());
     if (currentState().areResourcesDirty() || currentState().isPipelineDirty())
     {
@@ -603,8 +618,16 @@ void VulkanContext::dispatchMeshIndirect(GraphicsResource* indirectBuffer, U32 o
     {
         VulkanBuffer* pBuffer = pResource->castTo<VulkanBuffer>();
         const VkBuffer buffer = pBuffer->get();
+#if !defined(VK_EXT_mesh_shader) || R_PREFER_VULKAN_NV_MESH_SHADER_EXTENSION
+        // We need to increase the stride by another 4 bytes, as the NV struct is only 8 bytes. The EXT and the 
+        // recluse struct are bouth 12 bytes. Direct3d12 is also the same, so this would align the NV struct.
+        uint32_t stride = sizeof(VkDrawMeshTasksIndirectCommandNV) + sizeof(uint32_t);
+        pfn_vkCmdDrawMeshTasksIndirectNV(m_primaryCommandList.get(), buffer, offset, drawCount, stride);
+#else
         uint32_t stride = sizeof(VkDrawMeshTasksIndirectCommandEXT);
         pfn_vkCmdDrawMeshTasksIndirectEXT(m_primaryCommandList.get(), buffer, offset, drawCount, stride);
+#endif
+
     }
     else
     {
