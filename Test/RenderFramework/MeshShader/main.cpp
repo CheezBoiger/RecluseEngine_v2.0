@@ -449,20 +449,15 @@ void createShaderProgram(GraphicsDevice* device)
     ShaderProgramDatabase database          = ShaderProgramDatabase("PipelineInitialization.D3D12.Database");
 #if COMPILE_SHADER_PROGRAM
     std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
-    std::string vsSource = currDir + "/" + "vertex.hlsl";
-    std::string fsSource = currDir + "/" + "pixel.hlsl";
+    std::string meshShaderSourcePath = currDir + "/" + "MeshShader.hlsl";
 
-    FileBufferData vsData = { };
-    FileBufferData fsData = { };
-    File::readFrom(&vsData, vsSource);
-    File::readFrom(&fsData, fsSource);
+    FileBufferData meshShaderData = { };
+    File::readFrom(&meshShaderData, meshShaderSourcePath);
     Pipeline::Builder::ShaderProgramDescription description;
-    description.pipelineType = BindType_Graphics;
-    description.language = ShaderLanguage_Hlsl;
-    description.graphics.vs = vsData.data();
-    description.graphics.vsName = "Main";
-    description.graphics.ps = fsData.data();
-    description.graphics.psName = "psMain";
+    description.setPipelineType(BindType_Graphics)
+        .setShaderLanguage(ShaderLanguage_Hlsl)
+        .setMeshShader(meshShaderData.data(), "msmain")
+        .setPixelShader(meshShaderData.data(), "psmain");
     
     Pipeline::ShaderBuilder* shaderBuilder = nullptr;
     if (instance->getApi() == GraphicsApi_Direct3D12)

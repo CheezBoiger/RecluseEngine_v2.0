@@ -32,7 +32,7 @@ struct Bounds3d;
 //            +-----------------------+
 struct Frustum 
 {
-    enum FrustumPlane
+    enum Face
     {
         FACE_LEFT,
         FACE_RIGHT,
@@ -45,6 +45,11 @@ struct Frustum
 
     // 
     Plane faces[FACE_PLANES_COUNT];
+
+    const Plane& operator[](Face face) const 
+    {
+        return faces[face];
+    }
 };
 
 

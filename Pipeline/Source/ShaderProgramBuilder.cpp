@@ -387,6 +387,143 @@ ResultCode buildShaderPrograms(ShaderProgramDatabase& db, const ShaderProgramDes
     }
     return result;
 }
+
+
+ShaderProgramDescription& ShaderProgramDescription::setPipelineType(BindType type)
+{
+    pipelineType = type;
+    return (*this);
+}
+
+
+ShaderProgramDescription& ShaderProgramDescription::setShaderLanguage(ShaderLanguage shaderLanguage)
+{
+    language = shaderLanguage;
+    return (*this);
+}
+
+
+ShaderProgramDescription& ShaderProgramDescription::setVertexShader(const char* vsSource, const char* vsEntry)
+{
+    R_ASSERT(vsSource != NULL && vsEntry != NULL);
+    graphics.vs = vsSource;
+    graphics.vsName = vsEntry;
+    return (*this);
+}
+
+
+ShaderProgramDescription& ShaderProgramDescription::setAmplificationShader(const char* asSource, const char* asEntry)
+{
+    R_ASSERT(asEntry != NULL);
+    graphics.asName = asEntry;
+    graphics.as = asSource;
+    graphics.usesMeshShaders = true;
+    return (*this);
+}
+
+
+ShaderProgramDescription& ShaderProgramDescription::setTaskShader(const char* taskSource, const char* taskEntry)
+{
+    return setAmplificationShader(taskSource, taskEntry);
+}
+
+
+ShaderProgramDescription& ShaderProgramDescription::setMeshShader(const char* msSource, const char* msEntry)
+{
+    R_ASSERT(msEntry != NULL);
+    graphics.msName = msEntry;
+    graphics.ms = msSource;
+    graphics.usesMeshShaders = true;
+    return (*this);
+}
+
+
+ShaderProgramDescription& ShaderProgramDescription::setPixelShader(const char* psSource, const char* psEntry)
+{
+    R_ASSERT(psEntry != NULL);
+    graphics.psName = psEntry;
+    graphics.ps = psSource;
+    return (*this);
+}
+
+
+ShaderProgramDescription& ShaderProgramDescription::setFragmentShader(const char* fsSource, const char* fsEntry)
+{
+    return setPixelShader(fsSource, fsEntry);
+}
+
+
+ShaderProgramDescription& ShaderProgramDescription::setComputeShader(const char* csSource, const char* csEntry)
+{
+    R_ASSERT(csEntry != NULL);
+    R_ASSERT(csSource != NULL);
+    compute.cs = csSource;
+    compute.csName = csEntry;
+    return (*this);
+}
+
+
+ShaderProgramDescription& ShaderProgramDescription::setHullShader(const char* hsSource, const char* hsEntry)
+{
+    R_ASSERT(hsSource != NULL && hsEntry != NULL);
+    graphics.hs = hsSource;
+    graphics.hsName = hsEntry;
+    return (*this);
+}
+
+
+ShaderProgramDescription& ShaderProgramDescription::setDomainShader(const char* dsSource, const char* dsEntry)
+{
+    R_ASSERT(dsSource != NULL && dsEntry != NULL);
+    graphics.ds = dsSource;
+    graphics.dsName = dsEntry;
+    return (*this);
+}
+
+
+ShaderProgramDescription& ShaderProgramDescription::setRayGenShader(const char* rgSource, const char* rgEntry)
+{
+    R_ASSERT(rgSource != NULL && rgEntry != NULL);
+    raytrace.rgen = rgEntry;
+    raytrace.rgenName = rgEntry;
+    return (*this);
+}
+
+
+ShaderProgramDescription& ShaderProgramDescription::setRayMissShader(const char* rmSource, const char* rmEntry)
+{
+    R_ASSERT(rmSource != NULL && rmEntry != NULL);
+    raytrace.rmiss = rmSource;
+    raytrace.rmissName = rmEntry;
+    return (*this);
+}
+
+
+ShaderProgramDescription& ShaderProgramDescription::setRayAnyShader(const char* raSource, const char* raEntry)
+{
+    R_ASSERT(raSource != NULL && raEntry != NULL);
+    raytrace.rany = raEntry;
+    raytrace.ranyName = raSource;
+    return (*this);
+}
+
+
+ShaderProgramDescription& ShaderProgramDescription::setRayClosestShader(const char* rcSource, const char* rcEntry)
+{
+    R_ASSERT(rcSource != NULL && rcEntry != NULL);
+    raytrace.rclosest = rcSource;
+    raytrace.rclosestName = rcEntry;
+    return (*this);
+}
+
+
+ShaderProgramDescription& ShaderProgramDescription::setRayIntersectShader(const char* riSource, const char* riEntry)
+{
+    R_ASSERT(riSource != NULL && riEntry != NULL);
+    raytrace.rintersect = riSource;
+    raytrace.rintersectName = riEntry;
+    return (*this);
+}
 } // 
 } // 
 } //

@@ -87,6 +87,27 @@ struct ReclusePipeline_PUBLIC_API ShaderProgramDescription
             const char* rintersectName;             // Ray Intersect Shader entry point name.
         } raytrace;
     };
+
+    ShaderProgramDescription& setVertexShader(const char* vsSource, const char* vsEntry);
+    ShaderProgramDescription& setAmplificationShader(const char* asSource, const char* asEntry);
+    ShaderProgramDescription& setTaskShader(const char* taskSource, const char* taskEntry);
+    ShaderProgramDescription& setMeshShader(const char* msSource, const char* msEntry);
+    ShaderProgramDescription& setPixelShader(const char* psSource, const char* psEntry);
+    ShaderProgramDescription& setFragmentShader(const char* fsSource, const char* fsEntry);
+    ShaderProgramDescription& setHullShader(const char* hsSource, const char* hsEntry);
+    ShaderProgramDescription& setDomainShader(const char* dsSource, const char* dsEntry);
+    ShaderProgramDescription& setComputeShader(const char* csSource, const char* csEntry);
+
+    ShaderProgramDescription& setRayGenShader(const char* rgSource, const char* rgEntry);
+    ShaderProgramDescription& setRayMissShader(const char* rmSource, const char* rmEntry);
+    ShaderProgramDescription& setRayAnyShader(const char* raSource, const char* raEntry);
+    ShaderProgramDescription& setRayClosestShader(const char* rcSource, const char* rcEntry);
+    ShaderProgramDescription& setRayIntersectShader(const char* riSource, const char* riEntry);
+
+    ShaderProgramDescription& setPipelineType(BindType type);
+    ShaderProgramDescription& setShaderLanguage(ShaderLanguage shaderLanguage);
+    
+
     // Each instance in this vector holds contents that define a permutation.
     std::vector<ShaderProgramPermutationDefinitionInstance> permutationDefinitions;
     // The high level language that is used by this program.
