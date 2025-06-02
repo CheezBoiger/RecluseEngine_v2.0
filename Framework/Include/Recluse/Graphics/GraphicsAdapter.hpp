@@ -9,11 +9,12 @@
 
 namespace Recluse {
 
-
 struct AdapterInfo 
 {
+    enum Type { Type_Unknown, Type_Cpu, Type_DiscreteGpu, Type_IntegratedGpu, Type_VirtualGpu };
     char            deviceName[256];
     U32             vendorId;
+    Type            type;
     char*           vendorName;
 };
 

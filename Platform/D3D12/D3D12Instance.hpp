@@ -14,12 +14,14 @@ class D3D12Adapter;
 class D3D12Instance : public GraphicsInstance 
 {
 public:
-    D3D12Instance() : GraphicsInstance(GraphicsApi_Direct3D12) { }
+    D3D12Instance() : GraphicsInstance(GraphicsApi_Direct3D12), m_pCoreFactory(nullptr), m_pFactory(nullptr) { }
     virtual ~D3D12Instance() { }
 
     IDXGIFactory2* get() const { return m_pFactory; }
-    Bool                    hasTearingSupport() const;
-    DWORD            registerDebugMessageCallback(ID3D12Device* pDevice);
+    IDXCoreAdapterFactory* getCore() const { return m_pCoreFactory; }
+
+    Bool            hasTearingSupport() const;
+    DWORD           registerDebugMessageCallback(ID3D12Device* pDevice);
     void            unregisterDebugMessageCallback(ID3D12Device* pDevice, DWORD cookie);
     Bool            isLayerFeatureEnabled(LayerFeatureFlags flags) const { return (m_enabledFlags & flags); }
 private:
@@ -31,6 +33,7 @@ private:
     void enableDebugValidation(Bool enableGpuValidation);
 
     IDXGIFactory2* m_pFactory;
+    IDXCoreAdapterFactory* m_pCoreFactory;
     LayerFeatureFlags m_enabledFlags;
 };
 } // D3D12

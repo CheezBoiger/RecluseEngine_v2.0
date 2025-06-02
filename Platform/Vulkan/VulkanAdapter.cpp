@@ -144,6 +144,15 @@ ResultCode VulkanAdapter::getAdapterInfo(AdapterInfo* out) const
     memcpy(out->deviceName, properties.deviceName, 256);
     out->vendorId = properties.vendorID;
 
+    switch (properties.deviceType)
+    {
+        case VK_PHYSICAL_DEVICE_TYPE_CPU: out->type = AdapterInfo::Type_Cpu; break;
+        case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU: out->type = AdapterInfo::Type_DiscreteGpu; break;
+        case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU: out->type = AdapterInfo::Type_IntegratedGpu; break;
+        case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU: out->type = AdapterInfo::Type_VirtualGpu; break;
+        default: out->type = AdapterInfo::Type_Unknown; break;
+    }
+
     switch (properties.vendorID) 
     {
         case AMD_VENDOR_ID: out->vendorName = "Advanced Micro Devices"; break;
@@ -158,7 +167,7 @@ ResultCode VulkanAdapter::getAdapterInfo(AdapterInfo* out) const
 
         default:
             out->vendorName = "Unknown"; break;
-    }    
+    }
 
     return RecluseResult_Ok;
 }

@@ -25,6 +25,7 @@ public:
     ResultCode getAdapterInfo(AdapterInfo* out) const override;
     
     IDXGIAdapter* get() const { return m_pAdapter; }
+    IDXCoreAdapter* getCore() const { return m_coreAdapter; }
 
     D3D12Instance* getInstance() const { return m_pInstance; }
 
@@ -44,10 +45,11 @@ private:
     ResultCode querySupportedFeatures();
 
     // Supported flags on this adapter.
-    LayerFeatureFlags m_supportedFlags;
+    LayerFeatureFlags   m_supportedFlags;
 
-    IDXGIAdapter* m_pAdapter;
-    D3D12Instance* m_pInstance;
+    IDXGIAdapter*       m_pAdapter;
+    IDXCoreAdapter*     m_coreAdapter;
+    D3D12Instance*      m_pInstance;
     
     std::list<D3D12Device*> m_devices;
 

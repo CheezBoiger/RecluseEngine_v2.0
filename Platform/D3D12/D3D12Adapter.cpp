@@ -11,11 +11,11 @@ namespace D3D12 {
 
 std::vector<IDXGIAdapter*> D3D12Adapter::getAdapters(D3D12Instance* pContext)
 {
+    
     std::vector<IDXGIAdapter*> adapters;
 
     IDXGIFactory1* pFactory = pContext->get();    
     IDXGIAdapter* adapter   = NULL;
-
     for 
         (
             U32 i = 0; 
@@ -33,6 +33,7 @@ std::vector<IDXGIAdapter*> D3D12Adapter::getAdapters(D3D12Instance* pContext)
 D3D12Adapter::D3D12Adapter(IDXGIAdapter* adapter)
     : m_pAdapter(adapter)
     , m_pInstance(NULL)
+    , m_coreAdapter(nullptr)
 {
 }
 
@@ -43,6 +44,12 @@ void D3D12Adapter::destroy()
     {    
         m_pAdapter->Release();
         m_pAdapter = nullptr;
+    }
+    
+    if (m_coreAdapter)
+    {
+        m_coreAdapter->Release();
+        m_coreAdapter = nullptr;
     }
 }
 
@@ -55,8 +62,36 @@ ResultCode D3D12Adapter::getAdapterInfo(AdapterInfo* out) const
     U32 vendorId = desc.VendorId;
     U32 deviceId = desc.DeviceId;
 
-    out->vendorId = vendorId;   
-    
+    out->vendorId = vendorId;
+
+    out->type = AdapterInfo::Type_Unknown;
+
+    if (m_coreAdapter)
+    {
+        bool isIntegrated = false;
+        bool isHardware = false;
+        if (m_coreAdapter->IsPropertySupported(DXCoreAdapterProperty::IsIntegrated) && m_coreAdapter->IsPropertySupported(DXCoreAdapterProperty::IsHardware))
+        {
+            R_ASSERT(SUCCEEDED(m_coreAdapter->GetProperty(DXCoreAdapterProperty::IsIntegrated, &isIntegrated)));
+            R_ASSERT(SUCCEEDED(m_coreAdapter->GetProperty(DXCoreAdapterProperty::IsHardware, &isHardware)));
+
+            if (isIntegrated && isHardware)
+                out->type = AdapterInfo::Type_IntegratedGpu;
+            else if (!isIntegrated && isHardware)
+                out->type = AdapterInfo::Type_DiscreteGpu;
+            else if (!isIntegrated && !isHardware)
+                out->type = AdapterInfo::Type_Cpu;
+        }
+        else
+        {
+            R_WARN(R_CHANNEL_D3D12, "Failed to obtain either integrated or hardware status of the selected core adapter. Likely these are not supported.");
+        }
+    }
+    else
+    {
+        R_WARN(R_CHANNEL_D3D12, "Cant obtain core data for directx adapter, some information may not be present.");
+    }
+
     switch (desc.VendorId) 
     {
         case INTEL_VENDOR_ID: out->vendorName = "Intel Corporation"; break;

@@ -109,13 +109,35 @@ void D3D12Instance::queryGraphicsAdapters()
         R_DEBUG(R_CHANNEL_D3D12, "There is 1 D3D12 device.");
     }
 
+    IDXCoreAdapterFactory* coreFactory = getCore();
+
     for (U32 i = 0; i < m_graphicsAdapters.size(); ++i) 
     {
         D3D12Adapter* pAdapter  = new D3D12Adapter(adapters[i]);
         pAdapter->m_pInstance   = this;
+
+        if (coreFactory)
+        {
+            DXGI_ADAPTER_DESC desc;
+            adapters[i]->GetDesc(&desc);
+
+            IDXCoreAdapter* coreAdapter = nullptr;
+            if (SUCCEEDED(coreFactory->GetAdapterByLuid(desc.AdapterLuid, &coreAdapter)))
+            {
+                pAdapter->m_coreAdapter = coreAdapter;
+            }
+            else
+            {
+                R_WARN(R_CHANNEL_D3D12, "Failed to obtain core adapter info for adapter=%d", i);
+            }
+            
+        }
+
         pAdapter->querySupportedFeatures();
         m_graphicsAdapters[i]   = pAdapter;
     }
+
+    coreFactory->Release();
 }
 
 
@@ -150,6 +172,17 @@ ResultCode D3D12Instance::onInitialize(const ApplicationInfo& appInfo, LayerFeat
         return RecluseResult_Failed;
     }
 
+    IDXCoreAdapterFactory* coreFactory = nullptr;
+
+    if (SUCCEEDED(DXCoreCreateAdapterFactory(&coreFactory)))
+    {
+        m_pCoreFactory = coreFactory;
+    }
+    else
+    {
+        R_WARN(R_CHANNEL_D3D12, "Failed to obtain DxCore Factory for adapter info.");
+    }
+
     m_enabledFlags = flags;
 
     return RecluseResult_Ok;
@@ -164,6 +197,12 @@ void D3D12Instance::onDestroy()
     {
         m_pFactory->Release();
         m_pFactory = nullptr;
+    }
+
+    if (m_pCoreFactory)
+    {
+        m_pCoreFactory->Release();
+        m_pCoreFactory = nullptr;
     }
 
     R_DEBUG(R_CHANNEL_D3D12, "Successfully destroyed context!");

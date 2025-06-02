@@ -27,7 +27,7 @@ endif(R_DEVELOPER)
 
 #if ( RCL_DX12 )
     add_definitions( -DRCL_DX12=1 )
-    set ( RECLUSE_D3D12_LINK_BINARIES ${RECLUSE_D3D12_LINK_BINARIES} d3d12.lib dxgi.lib )
+    set ( RECLUSE_D3D12_LINK_BINARIES ${RECLUSE_D3D12_LINK_BINARIES} d3d12.lib dxgi.lib dxcore.lib )
 	
     set ( RECLUSE_D3D12_DIR .)
     set ( RECLUSE_D3D12_COMPILE_FILES 

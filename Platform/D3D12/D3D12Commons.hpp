@@ -16,6 +16,9 @@
 
 #include <Windows.h>
 
+// Dx Core interop for dxgi adapter querying.
+#include <dxcore.h>
+
 // D3D12 headers.
 #include <d3d12.h>
 #include <dxgi.h>
