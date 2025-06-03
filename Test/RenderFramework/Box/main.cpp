@@ -526,7 +526,7 @@ int main(char* argv[], int c)
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
+    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 
@@ -542,14 +542,29 @@ int main(char* argv[], int c)
         appInfo.appMinor = 0;
         appInfo.appMajor = 0;
         appInfo.appPatch = 0;
-        LayerFeatureFlags flags = 0;//LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation | LayerFeatureFlag_DebugMarking;
+        LayerFeatureFlags flags = LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation | LayerFeatureFlag_DebugMarking;
         instance->initialize(appInfo, flags);
     }
     
-    adapter = instance->getGraphicsAdapters()[0];
+    {
+        auto adapters = instance->getGraphicsAdapters();
+        for (uint i = 0; i < adapters.size(); ++i)
+        {
+            GraphicsAdapter* temp = adapters[i];
+            AdapterInfo adapterInfo = { };
+            temp->getAdapterInfo(&adapterInfo);
+            if (adapterInfo.type == AdapterInfo::Type_DiscreteGpu) 
+            {
+                adapter = adapters[i];
+                break;
+            }
+        }
+    }
     R_ASSERT(adapter);
     
     {
+        AdapterInfo info;
+        adapter->getAdapterInfo(&info);
         DeviceCreateInfo devInfo = { };
         adapter->createDevice(devInfo, &device);
     }

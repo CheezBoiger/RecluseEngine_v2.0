@@ -463,6 +463,7 @@ void createShaderProgram(GraphicsDevice* device)
     if (instance->getApi() == GraphicsApi_Direct3D12)
         // GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
     {
+        GlobalCommands::setValue("DXC.ShaderModel", "6_5");
         shaderBuilder = Pipeline::createShaderBuilder("dxc", ShaderIntermediateCode_Dxil);
     }
     else
@@ -523,9 +524,9 @@ int main(char* argv[], int c)
     RealtimeTick::initializeWatch(1ull, 0);
     instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
-    GraphicsSampler* sampler    = nullptr;
+    //GraphicsSampler* sampler    = nullptr;
 
-    Window* window = Window::create("Box", 0, 0, 1200, 800, ScreenMode_Windowed);
+    Window* window = Window::create("MeshShader", 0, 0, 1200, 800, ScreenMode_Windowed);
     window->show();
     window->setToCenter();
     window->setOnWindowResize(ResizeFunction);
@@ -533,15 +534,28 @@ int main(char* argv[], int c)
     {
         ApplicationInfo appInfo = { };
         appInfo.engineName = "";
-        appInfo.appName = "Box";
+        appInfo.appName = window->getTitle().c_str();
         appInfo.appMinor = 0;
         appInfo.appMajor = 0;
         appInfo.appPatch = 0;
-        LayerFeatureFlags flags = 0;//LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation | LayerFeatureFlag_DebugMarking;
+        LayerFeatureFlags flags = LayerFeatureFlag_MeshShading | LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation | LayerFeatureFlag_DebugMarking;
         instance->initialize(appInfo, flags);
     }
     
-    adapter = instance->getGraphicsAdapters()[0];
+    {
+        auto adapters = instance->getGraphicsAdapters();
+        for (uint i = 0; i < adapters.size(); ++i)
+        {
+            GraphicsAdapter* temp = adapters[i];
+            AdapterInfo adapterInfo = { };
+            temp->getAdapterInfo(&adapterInfo);
+            if (adapterInfo.type == AdapterInfo::Type_DiscreteGpu) 
+            {
+                adapter = adapters[i];
+                break;
+            }
+        }
+    }
     R_ASSERT(adapter);
     
     {
@@ -561,19 +575,19 @@ int main(char* argv[], int c)
     swapchainDescription.renderHeight   = window->getHeight();
     swapchain = device->createSwapchain(swapchainDescription, window->getNativeHandle());
 
-    GraphicsResource* textureResource = nullptr;
-    createTextureResource(&textureResource);
-    sampler = createSampler(device);
+    //GraphicsResource* textureResource = nullptr;
+    //createTextureResource(&textureResource);
+    //sampler = createSampler(device);
 
-    buildVertexLayouts(device);
+    //buildVertexLayouts(device);
     createShaderProgram(device);
 
-    std::vector<Vertex> vertices = createCubeInstance(1.0f);
-    std::vector<U32> indices = createCubeIndicesInstance();
-    MeshBuffer meshStuff = createFbxModel();
-    GraphicsResource* vertexbuffer = buildVertexBuffer(meshStuff.vertices);
-    GraphicsResource* indexBuffer = buildIndexBuffer(meshStuff.indices);
-    GraphicsResource* constantBuffer = buildConstantBuffer(device);
+    //std::vector<Vertex> vertices = createCubeInstance(1.0f);
+    //std::vector<U32> indices = createCubeIndicesInstance();
+    //MeshBuffer meshStuff = createFbxModel();
+    //GraphicsResource* vertexbuffer = buildVertexBuffer(meshStuff.vertices);
+    //GraphicsResource* indexBuffer = buildIndexBuffer(meshStuff.indices);
+    //GraphicsResource* constantBuffer = buildConstantBuffer(device);
 
     depthBuffer = buildDepthBuffer(window->getWidth(), window->getHeight());    
     std::array<F32, 10> lastMs;
@@ -600,10 +614,10 @@ int main(char* argv[], int c)
             pSc->prepare(context);
                 GraphicsResource* swapchainImage = pSc->getFrame(pSc->getCurrentFrameIndex());
                 context->transition(swapchainImage, ResourceState_RenderTarget);
-                context->transition(vertexbuffer, ResourceState_VertexBuffer);
-                context->transition(indexBuffer, ResourceState_IndexBuffer);
+                //context->transition(vertexbuffer, ResourceState_VertexBuffer);
+                //context->transition(indexBuffer, ResourceState_IndexBuffer);
                 context->transition(depthBuffer, ResourceState_DepthStencilWrite);
-                context->transition(textureResource, ResourceState_ShaderResource);
+                //context->transition(textureResource, ResourceState_ShaderResource);
                 ResourceViewDescription viewDescription = { };
                 viewDescription.type = ResourceViewType_RenderTarget;
                 viewDescription.format = pSc->getDesc().format;
@@ -622,15 +636,15 @@ int main(char* argv[], int c)
                 depthDescription.layerCount = 1;
                 depthDescription.mipLevelCount = 1;
                 ResourceViewId depthId = depthBuffer->asView(depthDescription);
-                ResourceViewDescription textureDescription = { };
-                textureDescription.baseArrayLayer = 0;
-                textureDescription.baseMipLevel = 0;
-                textureDescription.format = ResourceFormat_R8G8B8A8_Unorm;
-                textureDescription.dimension = ResourceViewDimension_2d;
-                textureDescription.layerCount = 1;
-                textureDescription.mipLevelCount = 4;
-                textureDescription.type = ResourceViewType_ShaderResource;
-                ResourceViewId textureView = textureResource->asView(textureDescription);
+                //ResourceViewDescription textureDescription = { };
+                //textureDescription.baseArrayLayer = 0;
+                //textureDescription.baseMipLevel = 0;
+                //textureDescription.format = ResourceFormat_R8G8B8A8_Unorm;
+                //textureDescription.dimension = ResourceViewDimension_2d;
+                //textureDescription.layerCount = 1;
+                //textureDescription.mipLevelCount = 4;
+                //textureDescription.type = ResourceViewType_ShaderResource;
+                //ResourceViewId textureView = textureResource->asView(textureDescription);
                 Viewport viewport = { 0, 0, pSc->getDesc().renderWidth, pSc->getDesc().renderHeight, 1, 0 };
                 Rect scissor = { 0, 0, pSc->getDesc().renderWidth, pSc->getDesc().renderHeight };
                 Math::Float4 clearColor = { 0.f, 0.f, 0.f, 1.0f };
@@ -643,26 +657,27 @@ int main(char* argv[], int c)
                 context->setColorWriteMask(0, Color_Rgba);
                 context->beginLabel("Box", { });
                 IShaderProgramBinder& binder = context->bindShaderProgram(ShaderProgram_Box);
-                binder.bindShaderResource(ShaderStage_Pixel, 0, textureView);
-                binder.bindSampler(ShaderStage_Pixel, 0, sampler);
-                updateConstBuffer(binder, constantBuffer, window->getWidth(), window->getHeight(), tick.delta());
+                //binder.bindShaderResource(ShaderStage_Pixel, 0, textureView);
+                //binder.bindSampler(ShaderStage_Pixel, 0, sampler);
+                //updateConstBuffer(binder, constantBuffer, window->getWidth(), window->getHeight(), tick.delta());
                 //context->bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, constantBuffer, 0, sizeof(ConstBuffer));
                 context->enableDepth(true);
                 context->enableDepthWrite(true);
-                context->bindVertexBuffers(1, &vertexbuffer, offset);
-                context->bindIndexBuffer(indexBuffer, 0, IndexType_Unsigned32);
+                //context->bindVertexBuffers(1, &vertexbuffer, offset);
+                //context->bindIndexBuffer(indexBuffer, 0, IndexType_Unsigned32);
                 context->setDepthCompareOp(CompareOp_GreaterOrEqual);
                 context->setTopology(PrimitiveTopology_TriangleList);
                 context->setViewports(1, &viewport);
                 context->setScissors(1, &scissor);
-                GraphicsQuery query = context->beginQuery(GraphicsQueryType_Occlusion);
-                context->drawIndexedInstanced(meshStuff.elementCount, 1, 0, 0, 0);
+                //GraphicsQuery query = context->beginQuery(GraphicsQueryType_Occlusion);
+                //context->drawIndexedInstanced(meshStuff.elementCount, 1, 0, 0, 0);
+                context->dispatchMesh(1, 1, 1);
                 context->endLabel();
-                context->endQuery(query);
+                //context->endQuery(query);
                 context->endLabel();
-                context->transition(textureResource, ResourceState_CopySource);
-                context->transition(swapchainImage, ResourceState_CopyDestination);
-                context->copyResource(swapchainImage, textureResource);
+                //context->transition(textureResource, ResourceState_CopySource);
+                //context->transition(swapchainImage, ResourceState_CopyDestination);
+                //context->copyResource(swapchainImage, textureResource);
                 context->transition(pSc->getFrame(pSc->getCurrentFrameIndex()), ResourceState_Present);
             context->end();
             if (pSc->present(context) == RecluseResult_NeedsUpdate)
@@ -696,12 +711,12 @@ int main(char* argv[], int c)
     context->wait();
 
     device->destroySwapchain(swapchain);
-    device->destroySampler(sampler);
-    device->destroyResource(constantBuffer);
+    //device->destroySampler(sampler);
+    //device->destroyResource(constantBuffer);
     device->destroyResource(depthBuffer);
-    device->destroyResource(vertexbuffer);
-    device->destroyResource(indexBuffer);
-    device->destroyResource(textureResource);
+    //device->destroyResource(vertexbuffer);
+    //device->destroyResource(indexBuffer);
+    //device->destroyResource(textureResource);
     device->releaseContext(context);
     adapter->destroyDevice(device);
     GraphicsInstance::destroyInstance(instance);

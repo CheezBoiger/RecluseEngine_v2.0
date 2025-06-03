@@ -17,7 +17,7 @@
 #include <d3dcompiler.h>
 #endif
 
-R_DECLARE_GLOBAL_STRING(g_shaderModel, "6_0", "DXC.ShaderModel");
+R_DECLARE_GLOBAL_STRING(g_shaderModel, "6_5", "DXC.ShaderModel");
 
 namespace Recluse {
 namespace Pipeline {
@@ -75,12 +75,14 @@ std::wstring getShaderProfile(ShaderType type)
     std::wstring model;
     switch (type) 
     {
-        case ShaderType_Vertex:     model = std::wstring(L"vs_"); break;
-        case ShaderType_Pixel:      model = std::wstring(L"ps_"); break;
-        case ShaderType_Compute:    model = std::wstring(L"cs_"); break; 
-        case ShaderType_Geometry:   model = std::wstring(L"gs_"); break;
-        case ShaderType_Domain:     model = std::wstring(L"ds_"); break;
-        case ShaderType_Hull:       model = std::wstring(L"hs_"); break;
+        case ShaderType_Vertex:         model = std::wstring(L"vs_"); break;
+        case ShaderType_Pixel:          model = std::wstring(L"ps_"); break;
+        case ShaderType_Compute:        model = std::wstring(L"cs_"); break;
+        case ShaderType_Geometry:       model = std::wstring(L"gs_"); break;
+        case ShaderType_Domain:         model = std::wstring(L"ds_"); break;
+        case ShaderType_Hull:           model = std::wstring(L"hs_"); break;
+        case ShaderType_Mesh:           model = std::wstring(L"ms_"); break;
+        case ShaderType_Amplification:  model = std::wstring(L"as_"); break; 
         default: return L"unknown";
     }
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
@@ -153,7 +155,7 @@ public:
         R_ASSERT(m_compiler != NULL);
 
         R_DEBUG("DXC", "Compiling shader...");
-        
+
         struct NativeDefine
         {
             WCHAR* Name;
@@ -194,7 +196,7 @@ public:
 
         UINT32 srcSizeBytes = (UINT32)srcCode.size();
         hr = m_library->CreateBlobWithEncodingFromPinned(srcCode.data(), srcSizeBytes, CP_UTF8, &sourceBlob);
-        
+
         if (FAILED(hr)) 
         {
             R_ERROR("DXC", "Failed to create a blob!!");
@@ -224,7 +226,7 @@ public:
             );
 
         delete wideEntryPoint;
-        
+
         CComPtr<IDxcBlobEncoding> errorBlob;
         result->GetErrorBuffer(&errorBlob);
         R_DEBUG("DXC", "\n%s", (const char*)errorBlob->GetBufferPointer());

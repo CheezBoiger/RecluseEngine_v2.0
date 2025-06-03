@@ -204,6 +204,8 @@ public:
             case ShaderType_Compute:                stage = EShLangCompute; break;
             case ShaderType_TessellationControl:    stage = EShLangTessControl; break;
             case ShaderType_TessellationEvaluation: stage = EShLangTessEvaluation; break;
+            case ShaderType_Task:                   stage = EShLangTaskNV; break;
+            case ShaderType_Mesh:                   stage = EShLangMeshNV; break;
             // TODO: Support more shaders!
         }
 
