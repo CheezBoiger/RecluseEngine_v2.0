@@ -18,6 +18,8 @@
 #endif
 
 R_DECLARE_GLOBAL_STRING(g_shaderModel, "6_5", "DXC.ShaderModel");
+R_DECLARE_GLOBAL_STRING(g_meshShaderModel, "6_5", "DXC.MeshShaderTargetModel");
+R_DECLARE_GLOBAL_STRING(g_ampShaderModel, "6_5", "DXC.AmpShaderTargetModel");
 
 namespace Recluse {
 namespace Pipeline {
@@ -81,6 +83,19 @@ std::wstring getShaderProfile(ShaderType type)
     }
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
     std::wstring version = converter.from_bytes(g_shaderModel);
+
+    switch (type)
+    {
+        case ShaderType_Mesh:
+            version = converter.from_bytes(g_meshShaderModel);
+            break;
+        case ShaderType_Amplification:
+            version = converter.from_bytes(g_ampShaderModel);
+            break;
+        default:
+            break;
+    }
+
     return model + version;
 }
 

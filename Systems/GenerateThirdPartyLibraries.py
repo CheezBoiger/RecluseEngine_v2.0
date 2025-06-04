@@ -78,6 +78,11 @@ def parse_cmake_commands_from_build_file(build_file_path, build_path, cmake_dire
             if child.tag == "param":
                 attrib = child.attrib
                 generate_commands += ['-D', attrib['var'] + "=" + attrib['value']]
+            if child.tag == "cache":
+                attrib = child.attrib
+                cache_path = attrib['path']
+                cache_path = cache_path.replace("${RECLUSE_THIRDPARTY_DIRECTORY}", cmake_directory_path)
+                generate_commands += ['-C', cache_path]
     return generate_commands, builds
 
 def main():
@@ -120,7 +125,7 @@ def main():
                     if not os.path.exists(directory):
                         os.makedirs(directory)
                     os.chdir(directory)
-                    
+                    directory_cmake_path = directory_cmake_path.replace('\\', '/');
                     generate_commands, builds = parse_cmake_commands_from_build_file(file_path, thirdparty_build_dir, directory_cmake_path)
                     #print(directory_cmake_path, generate_commands)
                     subprocess.call(["cmake"] + generate_commands + [f"{directory_cmake_path}"])

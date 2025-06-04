@@ -91,12 +91,13 @@ if ( RCL_DX11 OR RCL_DX12 )
     set ( RECLUSE_PIPELINE_LINK_LIBRARIES ${RECLUSE_PIPELINE_LINK_LIBRARIES} dxgi.lib )
     set ( RECLUSE_PIPELINE_LINK_LIBRARIES ${RECLUSE_PIPELINE_LINK_LIBRARIES} D3DCompiler.lib )
 	if ( RCL_DXC )
-		set ( RECLUSE_PIPELINE_LINK_LIBRARIES ${RECLUSE_PIPELINE_LINK_LIBRARIES} dxcompiler.lib )
+		set( RECLUSE_DXC_DIR ${RECLUSE_THIRDPARTY_DIR}/DirectXShaderCompiler/dxc_2025_05_24 )
+		set ( RECLUSE_PIPELINE_LINK_LIBRARIES ${RECLUSE_PIPELINE_LINK_LIBRARIES} ${RECLUSE_DXC_DIR}/lib/x64/dxcompiler.lib ${RECLUSE_DXC_DIR}/lib/x64/dxil.lib )
         add_definitions( -DRCL_DXC=1 )
         message(WARNING "d3dcompiler.dll and dxil.dll needed with executable, since we are now including dxc...")
 		set ( RECLUSE_PIPELINE_THIRD_PARTY 
 				${RECLUSE_PIPELINE_THIRD_PARTY}
-				${RECLUSE_THIRDPARTY_DIR}/DirectXShaderCompiler/include 
+				${RECLUSE_DXC_DIR}/inc
 			)
     endif()
 endif()
