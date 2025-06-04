@@ -286,10 +286,17 @@ int main(int c, char* argv[])
         File::readFrom(&pixelFileSource, fsSource);
     
         Pipeline::ShaderBuilder* shaderBuilder = nullptr;
+        ShaderIntermediateCode intermediateCode;
         if (pInstance->getApi() == GraphicsApi_Direct3D12)
-            shaderBuilder = Pipeline::createShaderBuilder("dxc", ShaderIntermediateCode_Dxil);
+        {
+            shaderBuilder = Pipeline::createShaderBuilder("dxc");
+            intermediateCode = ShaderIntermediateCode_Dxil;
+        }
         else
-            shaderBuilder = Pipeline::createShaderBuilder("glsl", ShaderIntermediateCode_Spirv);
+        {
+            shaderBuilder = Pipeline::createShaderBuilder("glsl");
+            intermediateCode = ShaderIntermediateCode_Spirv;
+        }
         shaderBuilder->setUp();
 
         Pipeline::Builder::ShaderProgramDescription description = { };
@@ -305,7 +312,7 @@ int main(int c, char* argv[])
         description.graphics.hs = nullptr;
 
         description.language = ShaderLanguage_Hlsl;
-        Pipeline::Builder::buildShaderProgram(database, description, ShaderKey_SimpleColor, shaderBuilder);
+        Pipeline::Builder::buildShaderProgram(database, description, ShaderKey_SimpleColor, intermediateCode, shaderBuilder);
         Runtime::buildShaderProgram(pDevice, database, 0);
         database.clearShaderProgramDefinitions();
 

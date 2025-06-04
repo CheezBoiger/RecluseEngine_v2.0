@@ -7,10 +7,12 @@ PFN_vkSetDebugUtilsObjectTagEXT     pfn_vkSetDebugUtilsObjectTagEXT     = nullpt
 PFN_vkCmdBeginDebugUtilsLabelEXT    pfn_vkCmdBeginDebugUtilsLabelEXT    = nullptr;
 PFN_vkCmdEndDebugUtilsLabelEXT      pfn_vkCmdEndDebugUtilsLabelEXT      = nullptr;
 
-#if !defined(VK_EXT_mesh_shader) || R_PREFER_VULKAN_NV_MESH_SHADER_EXTENSION
+#if defined(VK_NV_mesh_shader)
 PFN_vkCmdDrawMeshTasksNV            pfn_vkCmdDrawMeshTasksNV            = nullptr;
 PFN_vkCmdDrawMeshTasksIndirectNV    pfn_vkCmdDrawMeshTasksIndirectNV    = nullptr;
-#else
+#endif
+
+#if defined(VK_EXT_mesh_shader)
 PFN_vkCmdDrawMeshTasksEXT           pfn_vkCmdDrawMeshTasksEXT           = nullptr;
 PFN_vkCmdDrawMeshTasksIndirectEXT   pfn_vkCmdDrawMeshTasksIndirectEXT   = nullptr;
 #endif

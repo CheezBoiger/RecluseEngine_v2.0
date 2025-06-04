@@ -51,11 +51,13 @@ extern PFN_vkSetDebugUtilsObjectTagEXT     pfn_vkSetDebugUtilsObjectTagEXT;
 extern PFN_vkCmdBeginDebugUtilsLabelEXT    pfn_vkCmdBeginDebugUtilsLabelEXT;
 extern PFN_vkCmdEndDebugUtilsLabelEXT      pfn_vkCmdEndDebugUtilsLabelEXT;
 
-#if !defined(VK_EXT_mesh_shader) || R_PREFER_VULKAN_NV_MESH_SHADER_EXTENSION
+#if defined(VK_NV_mesh_shader)
 #define R_MESH_SHADER_EXTENSION            VK_NV_MESH_SHADER_EXTENSION_NAME
 extern PFN_vkCmdDrawMeshTasksNV            pfn_vkCmdDrawMeshTasksNV;
 extern PFN_vkCmdDrawMeshTasksIndirectNV    pfn_vkCmdDrawMeshTasksIndirectNV;
-#else
+#endif
+
+#if defined(VK_EXT_mesh_shader)
 #define R_MESH_SHADER_EXTENSION            VK_EXT_MESH_SHADER_EXTENSION_NAME
 extern PFN_vkCmdDrawMeshTasksEXT           pfn_vkCmdDrawMeshTasksEXT;
 extern PFN_vkCmdDrawMeshTasksIndirectEXT   pfn_vkCmdDrawMeshTasksIndirectEXT;
@@ -210,21 +212,30 @@ static void unpackVulkanShaderSetBinding(ShaderBind setBinding, U32& set, U32& b
 struct PhysicalDeviceFeaturesInfo
 {
     VkPhysicalDeviceHostQueryResetFeatures  hostQueryResetFeatures;
+#ifdef VK_EXT_mesh_shader
+    VkPhysicalDeviceMeshShaderFeaturesEXT   meshShaderFeaturesEXT;
+#endif
+#ifdef VK_NV_mesh_shader
     VkPhysicalDeviceMeshShaderFeaturesNV    meshShaderFeaturesNV;
+#endif
     VkPhysicalDeviceFeatures2               features2;
 
     PhysicalDeviceFeaturesInfo()
         : features2({VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2})
     {
 
-        hostQueryResetFeatures.sType = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES};
+        hostQueryResetFeatures = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES};
 
         push(hostQueryResetFeatures);
 
-        meshShaderFeaturesNV.sType = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_NV};
-
+#ifdef VK_EXT_mesh_shader
+        meshShaderFeaturesEXT = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT};
+        push(meshShaderFeaturesEXT); 
+#endif
+#ifdef VK_NV_mesh_shader
+        meshShaderFeaturesNV = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_NV};
         push(meshShaderFeaturesNV);
-
+#endif
         //features2.pNext = &hostQueryResetFeatures;
     }
 
@@ -232,12 +243,26 @@ struct PhysicalDeviceFeaturesInfo
     {
         features2 = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
         hostQueryResetFeatures = info.hostQueryResetFeatures;
+
+#ifdef VK_EXT_mesh_shader
+        meshShaderFeaturesEXT = info.meshShaderFeaturesEXT;
+#endif
+
+#ifdef VK_NV_mesh_shader
         meshShaderFeaturesNV = info.meshShaderFeaturesNV;
+#endif
 
         features2.features = info.features2.features;
 
         push(hostQueryResetFeatures);
+
+#ifdef VK_EXT_mesh_shader
+        push(meshShaderFeaturesEXT);
+#endif
+
+#ifdef VK_NV_mesh_shader
         push(meshShaderFeaturesNV);
+#endif
         //features2.pNext = &hostQueryResetFeatures;
     }
 

@@ -102,7 +102,7 @@ VulkanShaderProgram createShaderProgram(VkDevice device, const ShaderProgramDefi
         programOut.graphics.usesMeshShaders = definition.graphics.usesMeshShaders;
         if (programOut.graphics.usesMeshShaders)
         {
-            R_ASSERT_FORMAT(definition.graphics.as && definition.graphics.ms, "Both Task and Mesh shaders must be available when building this shader program for Vulkan!");
+            R_ASSERT_FORMAT(definition.graphics.ms, "Both Mesh shaders must be available when building this shader program for Vulkan!");
             createShaderModule(device, definition.graphics.as, &programOut.graphics.as);
             createShaderModule(device, definition.graphics.ms, &programOut.graphics.ms);
             copyName(programOut.graphics.asEntry, definition.graphics.as);

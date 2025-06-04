@@ -26,6 +26,7 @@ ResultCode ShaderBuilder::compile
         U64 sourceCodeBytes,
         ShaderLanguage lang, 
         ShaderType shaderType,
+        ShaderIntermediateCode intermediateCode,
         const std::vector<PreprocessDefine>& defines
     )
 {
@@ -40,11 +41,11 @@ ResultCode ShaderBuilder::compile
 
     result = preprocessInputResources(lang, srcCodeString);
 
-    result = onCompile(srcCodeString, byteCodeString, entryPoint, lang, shaderType, defines);
+    result = onCompile(srcCodeString, byteCodeString, entryPoint, lang, shaderType, intermediateCode, defines);
 
     if (result == RecluseResult_Ok) 
     {
-        pShader->load(entryPoint, byteCodeString.data(), byteCodeString.size(), getIntermediateCode(), shaderType);
+        pShader->load(entryPoint, byteCodeString.data(), byteCodeString.size(), intermediateCode, shaderType);
         Hash64 permutationId = recluseHashFast(byteCodeString.data(), byteCodeString.size());
         pShader->setPermutationId(permutationId);
     } 
@@ -64,12 +65,12 @@ ResultCode ShaderBuilder::preprocessInputResources(ShaderLanguage lang, std::vec
 }
 
 
-ShaderBuilder* createShaderBuilder(const std::string& nameID, ShaderIntermediateCode intermediateCode)
+ShaderBuilder* createShaderBuilder(const std::string& nameID)
 {
     auto& iter = g_shaderBuilderFuncs.find(nameID);
     if (iter != g_shaderBuilderFuncs.end())
     {
-        ShaderBuilder* builder = iter->second(intermediateCode);
+        ShaderBuilder* builder = iter->second();
         return builder;
     }
     R_WARN("ShaderBuilder", "Failed to create a proper shader builder! Name given = %s", nameID.c_str());

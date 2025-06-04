@@ -568,15 +568,16 @@ void VulkanContext::dispatchMesh(U32 x, U32 y, U32 z)
 {
 #if !defined(VK_EXT_mesh_shader) || R_PREFER_VULKAN_NV_MESH_SHADER_EXTENSION
     R_ASSERT_FORMAT(pfn_vkCmdDrawMeshTasksNV != NULL, "Mesh Shader is not enabled for Vulkan!");
-    if (pfn_vkCmdDrawMeshTasksNV)
+    if (!pfn_vkCmdDrawMeshTasksNV)
         return;
 #else
     R_ASSERT_FORMAT(pfn_vkCmdDrawMeshTasksEXT != NULL, "Mesh Shader is not enabled for Vulkan!");
-    if (pfn_vkCmdDrawMeshTasksEXT)
+    if (!pfn_vkCmdDrawMeshTasksEXT)
         return;
 #endif
 
     flushBarrierTransitions(m_primaryCommandList.get());
+    setRenderPass(m_newRenderPass);
     if (currentState().areResourcesDirty() || currentState().isPipelineDirty())
     {
         const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure);
@@ -597,14 +598,15 @@ void VulkanContext::dispatchMeshIndirect(GraphicsResource* indirectBuffer, U32 o
     R_ASSERT(indirectBuffer != NULL);
 #if !defined(VK_EXT_mesh_shader) || R_PREFER_VULKAN_NV_MESH_SHADER_EXTENSION
     R_ASSERT_FORMAT(pfn_vkCmdDrawMeshTasksIndirectNV != NULL, "Mesh Shader is not enabled for vulkan!");
-    if (pfn_vkCmdDrawMeshTasksIndirectNV)
+    if (!pfn_vkCmdDrawMeshTasksIndirectNV)
         return;
 #else
     R_ASSERT_FORMAT(pfn_vkCmdDrawMeshTasksIndirectEXT != NULL, "Mesh Shader is not enabled for vulkan!");
-    if (pfn_vkCmdDrawMeshTasksIndirectEXT)
+    if (!pfn_vkCmdDrawMeshTasksIndirectEXT)
         return;
 #endif
     flushBarrierTransitions(m_primaryCommandList.get());
+    setRenderPass(m_newRenderPass);
     if (currentState().areResourcesDirty() || currentState().isPipelineDirty())
     {
         const VulkanDescriptorAllocation& set = DescriptorSets::makeDescriptorSet(this, currentState().m_boundDescriptorSetStructure);

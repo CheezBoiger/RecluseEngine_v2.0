@@ -154,7 +154,7 @@ ResultCode Shader::deserialize(Archive* archive)
 }
 
 
-ResultCode ShaderReflection::serialize(Archive* archive) const
+ResultCode ShaderReflectionInformation::serialize(Archive* archive) const
 {
     R_ASSERT(archive);
     archive->write(&metadata, sizeof(metadata));
@@ -166,7 +166,7 @@ ResultCode ShaderReflection::serialize(Archive* archive) const
 }
 
 
-ResultCode ShaderReflection::deserialize(Archive* archive)
+ResultCode ShaderReflectionInformation::deserialize(Archive* archive)
 {
     R_ASSERT(archive);
     archive->read(&metadata, sizeof(metadata));

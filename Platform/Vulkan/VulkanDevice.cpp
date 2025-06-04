@@ -236,11 +236,24 @@ PhysicalDeviceFeaturesInfo checkEnableFeatures(VulkanAdapter* adapter)
         enabledFeatures.hostQueryResetFeatures.hostQueryReset = false;
     }
 
+#ifdef VK_NV_mesh_shader
     if (adapter->checkSupportsDeviceExtension(VK_NV_MESH_SHADER_EXTENSION_NAME) && availableFeatures.meshShaderFeaturesNV.meshShader)
     {
         enabledFeatures.meshShaderFeaturesNV.meshShader = VK_TRUE;
         enabledFeatures.meshShaderFeaturesNV.taskShader = VK_TRUE;
     }
+#endif
+
+#ifdef VK_EXT_mesh_shader
+    if (adapter->checkSupportsDeviceExtension(VK_EXT_MESH_SHADER_EXTENSION_NAME) && availableFeatures.meshShaderFeaturesEXT.meshShader)
+    {
+        enabledFeatures.meshShaderFeaturesEXT.meshShader = VK_TRUE;
+        enabledFeatures.meshShaderFeaturesEXT.taskShader = VK_TRUE;
+        // Disable these for now.
+        enabledFeatures.meshShaderFeaturesEXT.multiviewMeshShader = VK_FALSE;
+        enabledFeatures.meshShaderFeaturesEXT.primitiveFragmentShadingRateMeshShader = VK_FALSE;
+    }
+#endif
 
     return enabledFeatures;
 }
@@ -1211,6 +1224,18 @@ void VulkanContext::VulkanShaderProgramBinder::obtainShaderProgramFromCache()
             currentState().m_boundDescriptorSetStructure.key.value.samplers = (U16)reflectionCache->numSamplers;
         }
     }
+}
+
+
+PFN_vkVoidFunction VulkanDevice::getProcAddr(const char* procName)
+{
+    return (PFN_vkVoidFunction)vkGetDeviceProcAddr(get(), procName);
+}
+
+
+void VulkanDevice::loadFunctions()
+{
+    
 }
 } // Vulkan
 } // Recluse

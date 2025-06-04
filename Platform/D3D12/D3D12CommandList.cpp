@@ -4,6 +4,7 @@
 #include "D3D12Resource.hpp"
 #include "D3D12ResourceView.hpp"
 #include "D3D12ShaderCache.hpp"
+#include "D3D12Adapter.hpp"
 
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Math/MathCommons.hpp"
@@ -229,6 +230,11 @@ void D3D12Context::dispatchIndirect(GraphicsResource* indirectBuffer, U64 offset
 
 void D3D12Context::dispatchMesh(U32 x, U32 y, U32 z)
 {
+    bool hasMeshShadingEnabled = getNativeDevice()->getAdapter()->hasSupportedFeatures(LayerFeatureFlag_MeshShading);
+    R_ASSERT_FORMAT(hasMeshShadingEnabled, "Mesh shading is not supported! Either not enabled, or is not supported by the device!");
+    if (!hasMeshShadingEnabled)
+        return;
+        
     ID3D12GraphicsCommandList6* list = m_pPrimaryCommandList->get6();
     ContextState& state = currentState();
     flushBarrierTransitions();
@@ -242,6 +248,10 @@ void D3D12Context::dispatchMesh(U32 x, U32 y, U32 z)
 
 void D3D12Context::dispatchMeshIndirect(GraphicsResource* indirectBuffer, U32 offset, U32 drawCount)
 {
+    bool hasMeshShadingEnabled = getNativeDevice()->getAdapter()->hasSupportedFeatures(LayerFeatureFlag_MeshShading);
+    R_ASSERT_FORMAT(hasMeshShadingEnabled, "Mesh shading is not supported! Either not enabled, or is not supported by the device!");
+    if (!hasMeshShadingEnabled)
+        return;
     ID3D12GraphicsCommandList6* list = m_pPrimaryCommandList->get6();
     ContextState& state = currentState();
     flushBarrierTransitions();

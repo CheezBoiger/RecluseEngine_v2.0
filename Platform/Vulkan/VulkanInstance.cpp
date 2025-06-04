@@ -82,6 +82,8 @@ static std::vector<const char*> loadExtensions(LayerFeatureFlags flags, std::vec
     if (flags & (LayerFeatureFlag_Raytracing | LayerFeatureFlag_MeshShading))
     {
         extensions.push_back("VK_KHR_device_group_creation");
+        if (flags & LayerFeatureFlag_MeshShading)
+            wantedExtBits.push_back(LayerFeatureFlag_MeshShading);
     }
 
     if (flags & LayerFeatureFlag_DebugMarking)
@@ -368,12 +370,13 @@ void VulkanInstance::queryFunctions()
 
     if (supportsLayers(LayerFeatureFlag_MeshShading))
     {
-#if !defined(VK_EXT_mesh_shader) || R_PREFER_VULKAN_NV_MESH_SHADER_EXTENSION
+#if defined(VK_NV_mesh_shader)
         if (!pfn_vkCmdDrawMeshTasksNV)
             pfn_vkCmdDrawMeshTasksNV = (PFN_vkCmdDrawMeshTasksNV)getProcAddr("vkCmdDrawMeshTasksNV");
         if (!pfn_vkCmdDrawMeshTasksIndirectNV)
             pfn_vkCmdDrawMeshTasksIndirectNV = (PFN_vkCmdDrawMeshTasksIndirectNV)getProcAddr("vkCmdDrawMeshTasksIndirectNV");
-#else
+#endif
+#if defined(VK_EXT_mesh_shader)
         if (!pfn_vkCmdDrawMeshTasksEXT)
             pfn_vkCmdDrawMeshTasksEXT = (PFN_vkCmdDrawMeshTasksEXT)getProcAddr("vkCmdDrawMeshTasksEXT");
         if (!pfn_vkCmdDrawMeshTasksIndirectEXT)

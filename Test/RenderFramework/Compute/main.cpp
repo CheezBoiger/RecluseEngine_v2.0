@@ -125,7 +125,7 @@ int main(int c, char* argv[])
     //enableLogTypes(LogType_Debug);
     RealtimeTick::initializeWatch(1ull, 0);
     LogSystem::enableLogTypes(LogType_Notify);
-    GraphicsInstance* pInstance     = GraphicsInstance::create(GraphicsApi_Direct3D12);
+    GraphicsInstance* pInstance     = GraphicsInstance::create(GraphicsApi_Vulkan);
     GraphicsAdapter* pAdapter       = nullptr;
     GraphicsResource* pData         = nullptr;
     PipelineState* pPipeline        = nullptr;
@@ -241,11 +241,18 @@ int main(int c, char* argv[])
 
     {
         Pipeline::ShaderBuilder* shaderBuilder = nullptr;
+        ShaderIntermediateCode intermediateCode;
         if (pInstance->getApi() == GraphicsApi_Direct3D12)
+        {
             // GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
-            shaderBuilder = Pipeline::createShaderBuilder("dxc", ShaderIntermediateCode_Dxil);
+            shaderBuilder = Pipeline::createShaderBuilder("dxc");
+            intermediateCode = ShaderIntermediateCode_Dxil;
+        }
         else
-            shaderBuilder = Pipeline::createShaderBuilder("glsl", ShaderIntermediateCode_Spirv);
+        {
+            shaderBuilder = Pipeline::createShaderBuilder("glslang");
+            intermediateCode = ShaderIntermediateCode_Spirv;
+        }
         shaderBuilder->setUp();
 
         ShaderProgramDatabase database = ShaderProgramDatabase("Compute.Database");
@@ -260,7 +267,7 @@ int main(int c, char* argv[])
         description.compute.cs = file.data();
         description.compute.csName = "main";
 
-        Pipeline::Builder::buildShaderProgram(database, description, 0, shaderBuilder);
+        Pipeline::Builder::buildShaderProgram(database, description, 0, intermediateCode, shaderBuilder);
         //Runtime::buildShaderProgram(pDevice, database, ProgramId_Mandelbrot);
         Runtime::buildAllShaderPrograms(pDevice, database);
         database.clearShaderProgramDefinitions();

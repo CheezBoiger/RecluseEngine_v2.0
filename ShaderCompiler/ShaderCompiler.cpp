@@ -249,7 +249,7 @@ static std::string generateShaderSceneView(ShaderLanguage lang)
 }
 
 
-Pipeline::ShaderBuilder* createBuilder(Allocator* scratch, ShaderLanguage lang, ShaderIntermediateCode intermediateCode)
+Pipeline::ShaderBuilder* createBuilder(Allocator* scratch, ShaderLanguage lang)
 {
     Pipeline::ShaderBuilder* pBuilder = nullptr;
     
@@ -257,12 +257,12 @@ Pipeline::ShaderBuilder* createBuilder(Allocator* scratch, ShaderLanguage lang, 
     {
         case ShaderLanguage_Hlsl:
         {
-            pBuilder = Pipeline::createShaderBuilder("dxc", intermediateCode);
+            pBuilder = Pipeline::createShaderBuilder("dxc");
             break;
         }
         case ShaderLanguage_Glsl:
         {
-            pBuilder = Pipeline::createShaderBuilder("glslang", intermediateCode);
+            pBuilder = Pipeline::createShaderBuilder("glslang");
             break;
         }
         default:
@@ -291,7 +291,7 @@ ResultCode compileShaders(ShaderLanguage lang)
 
     std::map<ShaderLanguage, Pipeline::ShaderBuilder*> shaderBuilders;
 
-    Pipeline::ShaderBuilder* pBuilder = createBuilder(&linearAllocation, lang, ShaderIntermediateCode_Spirv);
+    Pipeline::ShaderBuilder* pBuilder = createBuilder(&linearAllocation, lang);
 
     R_ASSERT(pBuilder != NULL);
 
@@ -381,8 +381,9 @@ ResultCode compileShaders(ShaderLanguage lang)
                                             shaderMetadata->entryPoint,
                                             str.c_str(), 
                                             str.size(),
-                                            lang, 
-                                            shaderMetadata->shaderType
+                                            lang,
+                                            shaderMetadata->shaderType,
+                                            ShaderIntermediateCode_Spirv
                                         );
 
                 if (result == RecluseResult_Ok) 

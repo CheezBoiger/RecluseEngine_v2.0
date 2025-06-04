@@ -158,8 +158,8 @@ bool ShaderProgramBuilder::Build(ShaderIntermediateLanguage IntermediateLanguage
 {
     // TODO: We need to support a shader compiler for the editor.
     R_ASSERT(DescriptionInfo->descriptions.empty() == false);
-    CSharpToNativeIntermediateLanguage(IntermediateLanguage);
-    ResultCode result = Builder::buildShaderPrograms(*Database, DescriptionInfo);
+    Recluse::ShaderIntermediateCode nativeIntermediateCode = CSharpToNativeIntermediateLanguage(IntermediateLanguage);
+    ResultCode result = Builder::buildShaderPrograms(*Database, DescriptionInfo, nativeIntermediateCode);
     return result == RecluseResult_Ok;
 }
 

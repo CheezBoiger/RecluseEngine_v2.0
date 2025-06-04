@@ -460,19 +460,22 @@ void createShaderProgram(GraphicsDevice* device)
         .setPixelShader(meshShaderData.data(), "psmain");
     
     Pipeline::ShaderBuilder* shaderBuilder = nullptr;
+    ShaderIntermediateCode intermediateCode;
     if (instance->getApi() == GraphicsApi_Direct3D12)
         // GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
     {
         GlobalCommands::setValue("DXC.ShaderModel", "6_5");
-        shaderBuilder = Pipeline::createShaderBuilder("dxc", ShaderIntermediateCode_Dxil);
+        shaderBuilder = Pipeline::createShaderBuilder("dxc");
+        intermediateCode = ShaderIntermediateCode_Dxil;
     }
     else
     {
-        shaderBuilder = Pipeline::createShaderBuilder("glslang", ShaderIntermediateCode_Spirv);
+        shaderBuilder = Pipeline::createShaderBuilder("dxc");
+        intermediateCode = ShaderIntermediateCode_Spirv;
     }
     shaderBuilder->setUp();
 
-    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_Box, shaderBuilder);
+    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_Box, intermediateCode, shaderBuilder);
 #if WRITE_DATABASE
     {
         R_VERBOSE("Database", "Writing database.");
@@ -538,7 +541,7 @@ int main(char* argv[], int c)
         appInfo.appMinor = 0;
         appInfo.appMajor = 0;
         appInfo.appPatch = 0;
-        LayerFeatureFlags flags = LayerFeatureFlag_MeshShading | LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation | LayerFeatureFlag_DebugMarking;
+        LayerFeatureFlags flags = LayerFeatureFlag_MeshShading;// | LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation | LayerFeatureFlag_DebugMarking;
         instance->initialize(appInfo, flags);
     }
     

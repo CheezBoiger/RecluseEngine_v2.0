@@ -219,10 +219,17 @@ void createShaderProgram(GraphicsDevice* device)
     description.graphics.psName = "psMain";
 
     Pipeline::ShaderBuilder* shaderBuilder = nullptr;
+    ShaderIntermediateCode intermediateCode;
     if (instance->getApi() == GraphicsApi_Direct3D12)
-        shaderBuilder = Pipeline::createShaderBuilder("dxc", ShaderIntermediateCode_Dxil);
+    {
+        shaderBuilder = Pipeline::createShaderBuilder("dxc");
+        intermediateCode = ShaderIntermediateCode_Dxil;
+    }
     else
-        shaderBuilder = Pipeline::createShaderBuilder("glsl", ShaderIntermediateCode_Spirv);
+    {
+        shaderBuilder = Pipeline::createShaderBuilder("glsl");
+        intermediateCode = ShaderIntermediateCode_Spirv;
+    }
     shaderBuilder->setUp();
 
     for (U32 i = 0; i < 2; ++i)
@@ -237,7 +244,7 @@ void createShaderProgram(GraphicsDevice* device)
         description.permutationDefinitions.push_back(permutation);
     }
 
-    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_Gbuffer, shaderBuilder);
+    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_Gbuffer, intermediateCode, shaderBuilder);
     Runtime::buildShaderProgram(device, database, ShaderProgram_Gbuffer);
 
     vsSource = currDir + "/" + "quad.vs.hlsl";
@@ -253,7 +260,7 @@ void createShaderProgram(GraphicsDevice* device)
     description.graphics.ps = fsData.data();
     description.graphics.psName = "psMain";
 
-    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_LightResolve, shaderBuilder);
+    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_LightResolve, intermediateCode, shaderBuilder);
     Runtime::buildShaderProgram(device, database, ShaderProgram_LightResolve);
     {
         ArchiveWriter writer("dxil.database");

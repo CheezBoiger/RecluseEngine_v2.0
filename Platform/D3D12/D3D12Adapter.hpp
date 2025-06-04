@@ -40,7 +40,7 @@ public:
 
 private:
 
-    D3D12Adapter(IDXGIAdapter* adapter = NULL);
+    D3D12Adapter(IDXGIAdapter* adapter = NULL, LayerFeatureFlags requestFlags = LayerFeatureFlag_None);
 
     ResultCode querySupportedFeatures();
 

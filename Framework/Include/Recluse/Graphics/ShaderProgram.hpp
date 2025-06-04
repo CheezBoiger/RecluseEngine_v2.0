@@ -100,7 +100,7 @@ public:
         } raytrace;
     };
     // Any Reflection Information that is used by each shader.
-    std::map<ShaderType, ShaderReflection>  shaderReflectionInfo;
+    std::map<ShaderType, ShaderReflectionInformation>  shaderReflectionInfo;
     ShaderProgramReflection                 programReflection;
 
     // Constructors. Any containers need to be initialized here.

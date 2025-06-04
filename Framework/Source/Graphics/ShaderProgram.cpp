@@ -537,7 +537,7 @@ ResultCode ShaderProgramDatabase::serialize(Archive* pArchive) const
             for (const auto& reflectionInfo : definition.shaderReflectionInfo)
             {
                 ShaderType shaderType = reflectionInfo.first;
-                const ShaderReflection* infoPtr = &reflectionInfo.second;
+                const ShaderReflectionInformation* infoPtr = &reflectionInfo.second;
                 pArchive->write(&shaderType, sizeof(ShaderType));
                 infoPtr->serialize(pArchive);
             }
@@ -635,7 +635,7 @@ ResultCode ShaderProgramDatabase::deserialize(Archive* pArchive)
             for (U32 i = 0; i < permHeader.shaderReflectionInfoCount; ++i)
             {
                 ShaderType shaderType = ShaderType_None;
-                ShaderReflection reflectionInfo = { };
+                ShaderReflectionInformation reflectionInfo = { };
                 pArchive->read(&shaderType, sizeof(ShaderType));
                 reflectionInfo.deserialize(pArchive);
                 definition.shaderReflectionInfo[shaderType] = reflectionInfo;

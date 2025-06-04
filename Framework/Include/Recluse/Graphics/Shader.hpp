@@ -176,7 +176,7 @@ private:
 typedef U32 ShaderBind;
 
 // Shader Reflection information.
-class ShaderReflection : public Serializable
+class ShaderReflectionInformation : public Serializable
 {
 public:
     struct 

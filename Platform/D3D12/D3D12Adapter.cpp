@@ -30,10 +30,11 @@ std::vector<IDXGIAdapter*> D3D12Adapter::getAdapters(D3D12Instance* pContext)
 }
 
 
-D3D12Adapter::D3D12Adapter(IDXGIAdapter* adapter)
+D3D12Adapter::D3D12Adapter(IDXGIAdapter* adapter, LayerFeatureFlags requestedFlags)
     : m_pAdapter(adapter)
     , m_pInstance(NULL)
     , m_coreAdapter(nullptr)
+    , m_supportedFlags(requestedFlags)
 {
 }
 
@@ -181,11 +182,12 @@ ResultCode D3D12Adapter::querySupportedFeatures()
         result = tempDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &options, sizeof(options)); 
         if (result == S_OK)
         {
-            if (options.RaytracingTier >= D3D12_RAYTRACING_TIER_1_0)
+            if ((m_supportedFlags & LayerFeatureFlag_Raytracing) && options.RaytracingTier >= D3D12_RAYTRACING_TIER_1_0)
             {
                 R_DEBUG(R_CHANNEL_D3D12, "Supports Raytracing.");
-                m_supportedFlags |= LayerFeatureFlag_Raytracing;
             }
+            else
+                m_supportedFlags = (m_supportedFlags & ~LayerFeatureFlag_Raytracing);
         }
     }
 
@@ -195,16 +197,19 @@ ResultCode D3D12Adapter::querySupportedFeatures()
         result = tempDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &options, sizeof(options));
         if (result == S_OK)
         {
-            if (options.MeshShaderTier >= D3D12_MESH_SHADER_TIER_1)
+            if ((m_supportedFlags & LayerFeatureFlag_MeshShading) && options.MeshShaderTier >= D3D12_MESH_SHADER_TIER_1)
             {
                 R_DEBUG(R_CHANNEL_D3D12, "Supports Mesh Shading.");
-                m_supportedFlags |= LayerFeatureFlag_MeshShading;
-            }
-            if (options.SamplerFeedbackTier >= D3D12_SAMPLER_FEEDBACK_TIER_0_9)
+            }            
+            else
+                m_supportedFlags = (m_supportedFlags & ~LayerFeatureFlag_MeshShading);
+
+            if ((m_supportedFlags & LayerFeatureFlag_SamplerFeedback) && options.SamplerFeedbackTier >= D3D12_SAMPLER_FEEDBACK_TIER_0_9)
             {
                 R_DEBUG(R_CHANNEL_D3D12, "Supports Sampler Feedback.");
-                m_supportedFlags |= LayerFeatureFlag_SamplerFeedback;
             }
+            else
+                m_supportedFlags = (m_supportedFlags & ~LayerFeatureFlag_SamplerFeedback);
         }
     }
 
@@ -214,11 +219,12 @@ ResultCode D3D12Adapter::querySupportedFeatures()
         result = tempDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &options, sizeof(options));
         if (result == S_OK)
         {
-            if (options.VariableShadingRateTier >= D3D12_VARIABLE_SHADING_RATE_TIER_1)
+            if ((m_supportedFlags & LayerFeatureFlag_VariableRateShading) && options.VariableShadingRateTier >= D3D12_VARIABLE_SHADING_RATE_TIER_1)
             {
                 R_DEBUG(R_CHANNEL_D3D12, "Supports Variable Rate Shading.");
-                m_supportedFlags |= LayerFeatureFlag_VariableRateShading;
             }
+            else
+                m_supportedFlags = (m_supportedFlags & ~LayerFeatureFlag_VariableRateShading);
         }
     }
 

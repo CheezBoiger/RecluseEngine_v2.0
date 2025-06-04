@@ -864,10 +864,13 @@ void D3D12Device::createCommandSignatures()
     result = m_device->CreateCommandSignature(&signatureDesc, nullptr, __uuidof(ID3D12CommandSignature), (void**)&m_drawIndexedInstancedIndirectSignature);
     R_ASSERT(SUCCEEDED(result));
 
-    indirectDesc.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_MESH;
-    signatureDesc.ByteStride = sizeof(D3D12_DISPATCH_MESH_ARGUMENTS);
-    result = m_device->CreateCommandSignature(&signatureDesc, nullptr, __uuidof(ID3D12CommandSignature), (void**)&m_drawMeshIndirectSignature);
-    R_ASSERT(SUCCEEDED(result));
+    if (getAdapter()->hasSupportedFeatures(LayerFeatureFlag_MeshShading))
+    {
+        indirectDesc.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_MESH;
+        signatureDesc.ByteStride = sizeof(D3D12_DISPATCH_MESH_ARGUMENTS);
+        result = m_device->CreateCommandSignature(&signatureDesc, nullptr, __uuidof(ID3D12CommandSignature), (void**)&m_drawMeshIndirectSignature);
+        R_ASSERT(SUCCEEDED(result));
+    }
 }
 
 

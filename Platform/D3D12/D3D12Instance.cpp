@@ -113,7 +113,7 @@ void D3D12Instance::queryGraphicsAdapters()
 
     for (U32 i = 0; i < m_graphicsAdapters.size(); ++i) 
     {
-        D3D12Adapter* pAdapter  = new D3D12Adapter(adapters[i]);
+        D3D12Adapter* pAdapter  = new D3D12Adapter(adapters[i], m_enabledFlags);
         pAdapter->m_pInstance   = this;
 
         if (coreFactory)
@@ -136,8 +136,6 @@ void D3D12Instance::queryGraphicsAdapters()
         pAdapter->querySupportedFeatures();
         m_graphicsAdapters[i]   = pAdapter;
     }
-
-    coreFactory->Release();
 }
 
 

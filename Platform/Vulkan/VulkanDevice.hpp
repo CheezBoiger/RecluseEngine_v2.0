@@ -423,6 +423,9 @@ public:
 
 private:
 
+    void                            loadFunctions();
+
+    PFN_vkVoidFunction              getProcAddr(const char* procName);
     void                            allocateMemCache();
     void                            createDescriptorHeap();
     void                            destroyDescriptorHeap();

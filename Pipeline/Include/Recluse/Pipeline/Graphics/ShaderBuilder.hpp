@@ -42,9 +42,8 @@ public:
         Bool                dumpSymbols;
     };
 
-    ShaderBuilder(ShaderIntermediateCode imm)
-        : m_imm(imm)
-        , m_builderConfig({ }) 
+    ShaderBuilder()
+        : m_builderConfig({ }) 
     { }
     virtual ~ShaderBuilder() { }
     
@@ -66,17 +65,13 @@ public:
             const char* entryPoint,
             const char* srcCode, 
             U64 sourceCodeBytes,
-            ShaderLanguage lang, 
+            ShaderLanguage lang,
             ShaderType shaderType,
+            ShaderIntermediateCode intermediateCode,
             const std::vector<PreprocessDefine>& defines = std::vector<PreprocessDefine>()
         );
 
     virtual ResultCode disassemble(std::vector<char>& output) { return RecluseResult_NoImpl; }
-
-    ShaderIntermediateCode getIntermediateCode() const { return m_imm; }
-
-    // Shader reflection function.
-    virtual ResultCode reflect(ShaderReflection& reflectionOutput, const char* bytecode, U64 sizeBytes, ShaderLanguage lang) { return RecluseResult_NoImpl; }
     
     // Is the builder for debug mode.
     Bool isDebugMode() const { return (m_builderConfig.option != Config::Disable); }
@@ -93,18 +88,18 @@ private:
                             const char* entryPoint,
                             ShaderLanguage lang, 
                             ShaderType shaderType,
+                            ShaderIntermediateCode intermediateCode,
                             const std::vector<PreprocessDefine>& defines = std::vector<PreprocessDefine>()
                         ) 
         { return RecluseResult_NoImpl; }
 
     virtual ResultCode preprocessInputResources(ShaderLanguage lang, std::vector<char>& sourceCode);
 
-    ShaderIntermediateCode  m_imm;
     Config                  m_builderConfig;
 };
 
 // Must be newly allocated.
-ReclusePipeline_PUBLIC_API ShaderBuilder* createShaderBuilder(const std::string& nameID, ShaderIntermediateCode intermediateCode);
+ReclusePipeline_PUBLIC_API ShaderBuilder* createShaderBuilder(const std::string& nameID);
 
 // Must call when cleaning up our shader builders.
 static void freeShaderBuilder(ShaderBuilder* pBuilder) 

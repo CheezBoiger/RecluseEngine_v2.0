@@ -5,9 +5,9 @@
 namespace Recluse {
 namespace Pipeline {
 
-typedef ShaderBuilder*(*ShaderBuilderFunc)(ShaderIntermediateCode);
+typedef ShaderBuilder*(*ShaderBuilderFunc)();
 
-ShaderBuilder* createGlslangShaderBuilder(ShaderIntermediateCode imm);
-ShaderBuilder* createDxcShaderBuilder(ShaderIntermediateCode imm);
+ShaderBuilder* createGlslangShaderBuilder();
+ShaderBuilder* createDxcShaderBuilder();
 } // Pipeline
 } // Recluse

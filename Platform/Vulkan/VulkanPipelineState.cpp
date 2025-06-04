@@ -707,7 +707,7 @@ VkPipeline createGraphicsPipeline(VulkanDevice* pDevice, VkPipelineCache pipelin
     VkPipelineTessellationStateCreateInfo tessState             = getTessellationStateInfo(structure.state.graphics.tess);
     VkPipelineMultisampleStateCreateInfo multisampleState       = getMultisampleStateInfo();
 
-    const VertexLayout::VulkanVertexLayout* pLayout = VertexLayout::obtain(deviceId, structure.state.graphics.ia);
+    const VertexLayout::VulkanVertexLayout* pLayout = program->graphics.usesMeshShaders ? nullptr : VertexLayout::obtain(deviceId, structure.state.graphics.ia);
 
     vertInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     if (pLayout)

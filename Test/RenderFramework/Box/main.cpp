@@ -465,18 +465,21 @@ void createShaderProgram(GraphicsDevice* device)
     description.graphics.psName = "psMain";
     
     Pipeline::ShaderBuilder* shaderBuilder = nullptr;
+    ShaderIntermediateCode intermediateCode;
     if (instance->getApi() == GraphicsApi_Direct3D12)
         // GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
     {
-        shaderBuilder = Pipeline::createShaderBuilder("dxc", ShaderIntermediateCode_Dxil);
+        shaderBuilder = Pipeline::createShaderBuilder("dxc");
+        intermediateCode = ShaderIntermediateCode_Dxil;
     }
     else
     {
-        shaderBuilder = Pipeline::createShaderBuilder("glslang", ShaderIntermediateCode_Spirv);
+        shaderBuilder = Pipeline::createShaderBuilder("glslang");
+        intermediateCode = ShaderIntermediateCode_Spirv;
     }
     shaderBuilder->setUp();
 
-    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_Box, shaderBuilder);
+    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_Box, intermediateCode, shaderBuilder);
 #if WRITE_DATABASE
     {
         R_VERBOSE("Database", "Writing database.");
@@ -526,7 +529,7 @@ int main(char* argv[], int c)
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
+    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 

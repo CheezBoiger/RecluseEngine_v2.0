@@ -9,7 +9,10 @@ set (RECLUSE_PIPELINE_INCLUDE_FILES ${RECLUSE_PIPELINE_INCLUDE_FILES}
 									${RECLUSE_PIPE_INCLUDE}/ShaderProgramBuilder.hpp
 									${RECLUSE_PIPE_INCLUDE}/SceneBuilder.hpp
 									${RECLUSE_PIPE_INCLUDE}/Importer.hpp
-									${RECLUSE_PIPE_INCLUDE}/Graphics/ShaderBuilder.hpp)
+									${RECLUSE_PIPE_INCLUDE}/Graphics/ShaderBuilder.hpp
+									${RECLUSE_PIPE_INCLUDE}/Graphics/Reflection/ShaderReflection.hpp
+									${RECLUSE_PIPE_INCLUDE}/Graphics/Reflection/SpirvReflection.hpp
+									${RECLUSE_PIPE_INCLUDE}/Graphics/Reflection/DxilReflection.hpp)
 									
 set(RECLUSE_PIPELINE_COMPILE_FILES ${RECLUSE_PIPELINE_COMPILE_FILES}
 								  ${RECLUSE_PIPELINE_INCLUDE_FILES}
@@ -29,7 +32,10 @@ set(RECLUSE_PIPELINE_COMPILE_FILES ${RECLUSE_PIPELINE_COMPILE_FILES}
 								  ${RECLUSE_PIPE_SOURCE}/Graphics/ShaderBuilderCommon.cpp
 								  ${RECLUSE_PIPE_SOURCE}/Graphics/ShaderBuilderCommon.hpp
 								  ${RECLUSE_PIPE_SOURCE}/Graphics/DXCShaderBuilder.cpp
-								  ${RECLUSE_PIPE_SOURCE}/Graphics/GlslangShaderBuilder.cpp)
+								  ${RECLUSE_PIPE_SOURCE}/Graphics/GlslangShaderBuilder.cpp
+								  ${RECLUSE_PIPE_SOURCE}/Graphics/ShaderReflection.cpp
+								  ${RECLUSE_PIPE_SOURCE}/Graphics/SpirvReflection.cpp
+								  ${RECLUSE_PIPE_SOURCE}/Graphics/DxilReflection.cpp)
 								  
 set ( RECLUSE_PIPELINE_THIRD_PARTY ${RECLUSE_PIPELINE_THIRD_PARTY} ${RECLUSE_THIRDPARTY_DIR}/stb ${RECLUSE_THIRDPARTY_DIR}/tinygltf )
 								  

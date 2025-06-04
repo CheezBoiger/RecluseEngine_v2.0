@@ -211,13 +211,16 @@ void createShaderProgram(GraphicsDevice* device)
     File::readFrom(&fsData, fsSource);
 
     Pipeline::ShaderBuilder* shaderBuilder = nullptr;
+    ShaderIntermediateCode intermediateCode;
     if (instance->getApi() == GraphicsApi_Direct3D12)
     {
-        shaderBuilder = Pipeline::createShaderBuilder("dxc", ShaderIntermediateCode_Dxil);
+        shaderBuilder = Pipeline::createShaderBuilder("dxc");
+        intermediateCode = ShaderIntermediateCode_Dxil;
     }   
     else
     {
-        shaderBuilder = Pipeline::createShaderBuilder("glsl", ShaderIntermediateCode_Spirv);
+        shaderBuilder = Pipeline::createShaderBuilder("glsl");
+        intermediateCode = ShaderIntermediateCode_Spirv;
     }
     shaderBuilder->setUp();
 
@@ -228,7 +231,7 @@ void createShaderProgram(GraphicsDevice* device)
     description.graphics.vsName = "Main";
     description.graphics.ps = fsData.data();
     description.graphics.psName = "psMain";
-    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_Gbuffer, shaderBuilder);
+    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_Gbuffer, intermediateCode, shaderBuilder);
     Runtime::buildShaderProgram(device, database, ShaderProgram_Gbuffer);
 
 
@@ -244,7 +247,7 @@ void createShaderProgram(GraphicsDevice* device)
     description.graphics.vsName = "Main";
     description.graphics.ps = fsData.data();
     description.graphics.psName = "psMain";
-    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_LightResolve, shaderBuilder);
+    Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_LightResolve, intermediateCode, shaderBuilder);
     Runtime::buildShaderProgram(device, database, ShaderProgram_LightResolve);
     database.clearShaderProgramDefinitions();
     shaderBuilder->tearDown();
