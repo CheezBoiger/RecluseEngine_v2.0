@@ -210,30 +210,42 @@ static void unpackVulkanShaderSetBinding(ShaderBind setBinding, U32& set, U32& b
 struct PhysicalDeviceFeaturesInfo
 {
     VkPhysicalDeviceHostQueryResetFeatures  hostQueryResetFeatures;
+    VkPhysicalDeviceMeshShaderFeaturesNV    meshShaderFeaturesNV;
     VkPhysicalDeviceFeatures2               features2;
 
     PhysicalDeviceFeaturesInfo()
-        : features2({ })
+        : features2({VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2})
     {
-        features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 
-        hostQueryResetFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES;
-        hostQueryResetFeatures.pNext = nullptr;
+        hostQueryResetFeatures.sType = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES};
 
+        push(hostQueryResetFeatures);
 
-        features2.pNext = &hostQueryResetFeatures;
+        meshShaderFeaturesNV.sType = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_NV};
+
+        push(meshShaderFeaturesNV);
+
+        //features2.pNext = &hostQueryResetFeatures;
     }
 
     PhysicalDeviceFeaturesInfo(const PhysicalDeviceFeaturesInfo& info)
     {
+        features2 = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
         hostQueryResetFeatures = info.hostQueryResetFeatures;
+        meshShaderFeaturesNV = info.meshShaderFeaturesNV;
+
         features2.features = info.features2.features;
 
-        features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-        hostQueryResetFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES;
-        hostQueryResetFeatures.pNext = nullptr;
+        push(hostQueryResetFeatures);
+        push(meshShaderFeaturesNV);
+        //features2.pNext = &hostQueryResetFeatures;
+    }
 
-        features2.pNext = &hostQueryResetFeatures;
+    template<typename Feature>
+    void push(Feature& f)
+    {
+        f.pNext = features2.pNext;
+        features2.pNext = &f;
     }
 };
 } // Vulkan

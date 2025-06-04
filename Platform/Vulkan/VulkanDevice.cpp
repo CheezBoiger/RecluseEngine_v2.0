@@ -236,6 +236,12 @@ PhysicalDeviceFeaturesInfo checkEnableFeatures(VulkanAdapter* adapter)
         enabledFeatures.hostQueryResetFeatures.hostQueryReset = false;
     }
 
+    if (adapter->checkSupportsDeviceExtension(VK_NV_MESH_SHADER_EXTENSION_NAME) && availableFeatures.meshShaderFeaturesNV.meshShader)
+    {
+        enabledFeatures.meshShaderFeaturesNV.meshShader = VK_TRUE;
+        enabledFeatures.meshShaderFeaturesNV.taskShader = VK_TRUE;
+    }
+
     return enabledFeatures;
 }
 
