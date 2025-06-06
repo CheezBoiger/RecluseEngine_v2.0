@@ -20,12 +20,12 @@ class VulkanContext;
 
 struct VulkanRenderPassDesc
 {
-    ResourceViewId*  ppRenderTargetViews;
+    ResourceView*    ppRenderTargetViews;
     U32              numRenderTargets;
     U32              width;
     U32              height;
     U32              layers;
-    ResourceViewId   pDepthStencil;
+    ResourceView     pDepthStencil;
 };
 
 struct FramebufferObject
@@ -63,7 +63,7 @@ namespace RenderPasses {
 typedef Hash64 RenderPassId;
 typedef Hash64 FrameBufferId;
 
-VulkanRenderPass        makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, ResourceViewId* ppRenderTargetViews, ResourceViewId pDepthStencil);
+VulkanRenderPass        makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, ResourceView* ppRenderTargetViews, ResourceView pDepthStencil);
 void                    clearCache(VulkanDevice* pDevice);
 void                    updateTick(VulkanDevice* pDevice);
 void                    checkLruCache(VulkanDevice* device);
@@ -75,11 +75,11 @@ namespace DescriptorSets {
 
 struct BufferView
 {
-    VulkanBuffer* buffer;
+    VkBuffer buffer;
     U32 offset;
-    U32 sizeBytes;
+    U16 sizeBytes;
     // The actual binding in the shader program.
-    U32 binding;
+    U16 binding;
 };
 
 
@@ -95,7 +95,7 @@ struct Structure
 {
     ShaderResourceBind<VulkanResourceView>* ppShaderResources;
     ShaderResourceBind<VulkanResourceView>* ppUnorderedAccesses;
-    BufferView*                             ppConstantBuffers;
+    DescriptorSets::BufferView*             ppConstantBuffers;
     ShaderResourceBind<VulkanSampler>*      ppSamplers;
     union
     {

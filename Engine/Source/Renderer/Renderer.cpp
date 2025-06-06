@@ -165,8 +165,8 @@ void RendererModule::clearPresentationFrame(GraphicsContext* context, GraphicsRe
         description.layerCount = 1;
         description.type = ResourceViewType_RenderTarget;
         description.dimension = ResourceViewDimension_2d;
-        ResourceViewId swapchainRenderTargetId = swapchainFrame->asView(description);
-        ResourceViewId sp[] = { swapchainRenderTargetId };
+        ResourceView swapchainRenderTargetId = swapchainFrame->asView(description);
+        ResourceView sp[] = { swapchainRenderTargetId };
         F32 clearColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
         if (g_useClearColor)

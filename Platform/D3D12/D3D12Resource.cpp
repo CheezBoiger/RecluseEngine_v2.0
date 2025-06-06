@@ -276,9 +276,9 @@ Bool D3D12Resource::isSupportedTransitionState(ResourceState state)
 }
 
 
-ResourceViewId D3D12Resource::asView(const ResourceViewDescription& description)
+ResourceView D3D12Resource::asView(const ResourceViewDescription& description)
 {
-    ResourceViewId view = 0;
+    ResourceView view = {};
     Hash64 hash = recluseHashFast(&description, sizeof(ResourceViewDescription));
     auto iter = m_viewMap.find(hash);
     if (iter == m_viewMap.end())
@@ -295,9 +295,11 @@ ResourceViewId D3D12Resource::asView(const ResourceViewDescription& description)
 }
 
 
-D3D12_CPU_DESCRIPTOR_HANDLE D3D12Resource::asCbv(U32 offsetBytes, U32 sizeBytes)
+ResourceView D3D12Resource::asCbv(U32 offsetBytes, U32 sizeBytes)
 {
-    ResourceViewId view = 0;
+    // Resource View Id is 64 bytes at the time of this.
+    //static_assert(sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) == sizeof(ResourceView), "ResourceViewId does not equal the same size as D3D12_CPU_DESCRIPTOR_HANLE.");
+
     Hash64 hash = (((U64)sizeBytes << 32) | (U64)offsetBytes);
     auto iter = m_cbvMap.find(hash);
     if (iter == m_cbvMap.end())
@@ -305,11 +307,11 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12Resource::asCbv(U32 offsetBytes, U32 sizeBytes)
         D3D12_GPU_VIRTUAL_ADDRESS address = m_memObj.pResource->GetGPUVirtualAddress() + (D3D12_GPU_VIRTUAL_ADDRESS)offsetBytes;
         D3D12_CPU_DESCRIPTOR_HANDLE handle = DescriptorViews::makeCbv(m_pDevice, address, align(sizeBytes, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT));
         m_cbvMap.insert(std::make_pair(hash, handle));
-        return handle;
+        return { handle.ptr };
     }
     else
     {
-        return iter->second;
+        return { iter->second.ptr };
     }
 }
 

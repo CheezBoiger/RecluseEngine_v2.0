@@ -56,7 +56,7 @@ public:
         return onRelease(pDevice); 
     }
 
-    ResourceViewId              getId() const override { return m_id; }
+    GraphicsId                getId() const override { return m_id; }
     DescriptionId               getDescriptionId() const { return m_descId; }
     VulkanResource*             getResource() const { return m_resource; }
     Bool                        isBufferView() const { return m_isBufferView; }
@@ -66,21 +66,21 @@ protected:
     virtual ResultCode          onRelease(VulkanDevice* pDevice) { return RecluseResult_Ok; }
 
 private:
-    static ResourceViewId       kResourceViewCreationCounter;
+    static U64                  kResourceViewCreationCounter;
     static MutexGuard           kResourceViewCreationMutex;
 
 public:
     void generateId() override 
     {
         ScopedLock _(kResourceViewCreationMutex);
-        m_id = ++kResourceViewCreationCounter;
+        m_id = { ++kResourceViewCreationCounter };
     }
 
 private:
     void generateDescriptionId();
 
     VulkanResource*         m_resource;
-    ResourceViewId          m_id;
+    GraphicsId              m_id;
     DescriptionId           m_descId;
     Bool                    m_isBufferView;
 };
@@ -180,11 +180,11 @@ private:
 };
 
 namespace ResourceViews {
-ResourceViewId      makeResourceView(VulkanDevice* pDevice, VulkanResource* pResource, const ResourceViewDescription& desc);
+ResourceView        makeResourceView(VulkanDevice* pDevice, VulkanResource* pResource, const ResourceViewDescription& desc);
 VulkanSampler*      makeSampler(VulkanDevice* pDevice, const SamplerDescription& desc);
-ResultCode          releaseResourceView(VulkanDevice* pDevice, ResourceViewId id);
+ResultCode          releaseResourceView(VulkanDevice* pDevice, ResourceView id);
 ResultCode          releaseSampler(VulkanDevice* pDevice, SamplerId id);
-VulkanResourceView* obtainResourceView(DeviceId deviceId, ResourceViewId id);
+VulkanResourceView* obtainResourceView(DeviceId deviceId, ResourceView id);
 VulkanSampler*      obtainSampler(DeviceId deviceId, SamplerId sampler);
 void                clearCache(VulkanDevice* pDevice);
 } // ResourceViews

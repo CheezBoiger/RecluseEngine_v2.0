@@ -562,8 +562,8 @@ System::UIntPtr IResource::AsView(CSharp::ResourceViewType ViewType, CSharp::Res
     ViewDesc.dimension = CSharpToDimension(Dim);
     ViewDesc.layerCount = (U32)Layers;
     ViewDesc.mipLevelCount = (U32)Mips;
-    ResourceViewId id = Resource->asView(ViewDesc);
-    return (UIntPtr)id;
+    ResourceView id = Resource->asView(ViewDesc);
+    return (UIntPtr)id.ptr;
 }
 
     
@@ -795,13 +795,13 @@ void IGraphicsContext::Transition(IResource^ resource, CSharp::ResourceState toS
 void IGraphicsContext::BindRenderTargets(array<System::UIntPtr>^ RenderTargetViews, System::UIntPtr DepthStencil)
 {
     U32 NumRenderTargets = RenderTargetViews->Length;
-    std::vector<ResourceViewId> ids(RenderTargetViews->Length);
+    std::vector<ResourceView> ids(RenderTargetViews->Length);
     for (U32 i = 0; i < RenderTargetViews->Length; ++i)
     {
-        ResourceViewId id = static_cast<ResourceViewId>(RenderTargetViews[i]);
+        ResourceView id = { (U64)RenderTargetViews[i] };
         ids[i] = id;
     }
-    ResourceViewId depthStencilId = static_cast<ResourceViewId>(DepthStencil);
+    ResourceView depthStencilId = { (U64)DepthStencil };
     Context->bindRenderTargets(NumRenderTargets, ids.data(), depthStencilId);
 }
 
@@ -1163,14 +1163,14 @@ ShaderProgramBinder::ShaderProgramBinder(IShaderProgramBinder& binder)
 
 ShaderProgramBinder^ ShaderProgramBinder::BindShaderResource(CSharp::ShaderStage Stage, System::UInt32 Slot, System::UIntPtr View)
 {
-    ShaderProgram.bindShaderResource((Recluse::ShaderStageFlags)Stage, (U32)Slot, (ResourceViewId)View);
+    ShaderProgram.bindShaderResource((Recluse::ShaderStageFlags)Stage, (U32)Slot, { (U64)View });
     return this;
 }
 
 
 ShaderProgramBinder^ ShaderProgramBinder::BindUnorderedAccessView(CSharp::ShaderStage Stage, System::UInt32 Slot, System::UIntPtr View)
 {
-    ShaderProgram.bindUnorderedAccessView((Recluse::ShaderStageFlags)Stage, (U32)Slot, (ResourceViewId)View);
+    ShaderProgram.bindUnorderedAccessView((Recluse::ShaderStageFlags)Stage, (U32)Slot, { (U64)View });
     return this;
 }
 

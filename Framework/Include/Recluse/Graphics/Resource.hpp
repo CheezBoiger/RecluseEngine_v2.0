@@ -41,7 +41,10 @@ public:
     Bool                                isInResourceState(ResourceState desiredState) const { return (m_currentState == desiredState); }
 
     // Get the resource as a specific view.
-    virtual ResourceViewId              asView(const ResourceViewDescription& description) { return 0; }
+    virtual ResourceView                asView(const ResourceViewDescription& description) { return {}; }
+
+    // Get the resource as a constant buffer view.
+    virtual ResourceView                asCbv(U32 offsetBytes, U32 sizeBytes) { return {}; }
 
 protected:
     // Probably not recommended to allow public use. This should strictly be used by the given platform.

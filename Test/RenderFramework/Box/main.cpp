@@ -33,7 +33,7 @@
 #define READ_DATABASE 0
 #define COMPILE_SHADER_PROGRAM 1
 #define WRITE_DATABASE 1
-#define MANUAL_PROGRAMING_UPDATE 0
+#define MANUAL_PROGRAMING_UPDATE 1
 
 #if WRITE_DATABASE
 #include "Recluse/Pipeline/ShaderProgramBuilder.hpp"
@@ -438,7 +438,8 @@ void updateConstBuffer(IShaderProgramBinder& binder, GraphicsResource* resource,
     resource->map(&dat, nullptr);
     memcpy(dat, &buf, sizeof(ConstBuffer));
     resource->unmap(nullptr);
-    binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, resource, 0, sizeof(ConstBuffer));
+    //binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, resource, 0, sizeof(ConstBuffer));
+    binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, resource->asCbv(0, sizeof(ConstBuffer)));
 #else
     binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, resource, 0, sizeof(ConstBuffer), &buf);
 #endif
@@ -635,7 +636,7 @@ int main(char* argv[], int c)
                 viewDescription.baseArrayLayer = 0;
                 viewDescription.layerCount = 1;
                 viewDescription.mipLevelCount = 1;
-                ResourceViewId viewId = swapchainImage->asView(viewDescription);
+                ResourceView viewId = swapchainImage->asView(viewDescription);
                 ResourceViewDescription depthDescription = { };
                 depthDescription.type = ResourceViewType_DepthStencil;
                 depthDescription.format = ResourceFormat_D32_Float;
@@ -644,7 +645,7 @@ int main(char* argv[], int c)
                 depthDescription.baseArrayLayer = 0;
                 depthDescription.layerCount = 1;
                 depthDescription.mipLevelCount = 1;
-                ResourceViewId depthId = depthBuffer->asView(depthDescription);
+                ResourceView depthId = depthBuffer->asView(depthDescription);
                 ResourceViewDescription textureDescription = { };
                 textureDescription.baseArrayLayer = 0;
                 textureDescription.baseMipLevel = 0;
@@ -653,7 +654,7 @@ int main(char* argv[], int c)
                 textureDescription.layerCount = 1;
                 textureDescription.mipLevelCount = 4;
                 textureDescription.type = ResourceViewType_ShaderResource;
-                ResourceViewId textureView = textureResource->asView(textureDescription);
+                ResourceView textureView = textureResource->asView(textureDescription);
                 Viewport viewport = { 0, 0, pSc->getDesc().renderWidth, pSc->getDesc().renderHeight, 1, 0 };
                 Rect scissor = { 0, 0, pSc->getDesc().renderWidth, pSc->getDesc().renderHeight };
                 Math::Float4 clearColor = { 0.f, 0.f, 0.f, 1.0f };

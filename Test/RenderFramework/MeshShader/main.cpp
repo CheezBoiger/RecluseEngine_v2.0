@@ -464,7 +464,6 @@ void createShaderProgram(GraphicsDevice* device)
     if (instance->getApi() == GraphicsApi_Direct3D12)
         // GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
     {
-        GlobalCommands::setValue("DXC.ShaderModel", "6_5");
         shaderBuilder = Pipeline::createShaderBuilder("dxc");
         intermediateCode = ShaderIntermediateCode_Dxil;
     }
@@ -525,7 +524,7 @@ int main(char* argv[], int c)
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
+    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
     //GraphicsSampler* sampler    = nullptr;
 
@@ -541,7 +540,7 @@ int main(char* argv[], int c)
         appInfo.appMinor = 0;
         appInfo.appMajor = 0;
         appInfo.appPatch = 0;
-        LayerFeatureFlags flags = LayerFeatureFlag_MeshShading;// | LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation | LayerFeatureFlag_DebugMarking;
+        LayerFeatureFlags flags = LayerFeatureFlag_MeshShading | LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation | LayerFeatureFlag_DebugMarking;
         instance->initialize(appInfo, flags);
     }
     
@@ -629,7 +628,7 @@ int main(char* argv[], int c)
                 viewDescription.baseArrayLayer = 0;
                 viewDescription.layerCount = 1;
                 viewDescription.mipLevelCount = 1;
-                ResourceViewId viewId = swapchainImage->asView(viewDescription);
+                ResourceView viewId = swapchainImage->asView(viewDescription);
                 ResourceViewDescription depthDescription = { };
                 depthDescription.type = ResourceViewType_DepthStencil;
                 depthDescription.format = ResourceFormat_D32_Float;
@@ -638,7 +637,7 @@ int main(char* argv[], int c)
                 depthDescription.baseArrayLayer = 0;
                 depthDescription.layerCount = 1;
                 depthDescription.mipLevelCount = 1;
-                ResourceViewId depthId = depthBuffer->asView(depthDescription);
+                ResourceView depthId = depthBuffer->asView(depthDescription);
                 //ResourceViewDescription textureDescription = { };
                 //textureDescription.baseArrayLayer = 0;
                 //textureDescription.baseMipLevel = 0;

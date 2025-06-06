@@ -379,7 +379,7 @@ int main(int c, char* argv[])
                 rtvDesc.baseMipLevel            = 0;
                 rtvDesc.layerCount              = 1;
                 rtvDesc.mipLevelCount           = 1;
-                ResourceViewId frameRtv = pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex())->asView(rtvDesc);
+                ResourceView frameRtv = pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex())->asView(rtvDesc);
                 context->setColorWriteMask(0, Color_Rgba);
                 context->bindRenderTargets(1, &frameRtv);
                 F32 clear[4] = { 0, 0, 0, 1 };

@@ -9,8 +9,6 @@ namespace Recluse {
 
 class GraphicsResource;
 
-typedef GraphicsId ResourceViewId;
-
 class GraphicsResourceView : public ICastableObject, public IGraphicsObject
 {
 public:

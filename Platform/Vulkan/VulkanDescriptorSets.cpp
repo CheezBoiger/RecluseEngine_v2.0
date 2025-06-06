@@ -78,16 +78,16 @@ VkDescriptorSetLayout createDescriptorSetLayout(VulkanContext* pContext, const D
 
     for (U32 i = 0; i < structure.key.value.constantBuffers; ++i)
     {
-        VulkanBuffer* pBuffer = structure.ppConstantBuffers[i].buffer;
+        DescriptorSets::BufferView& bufferView = structure.ppConstantBuffers[i];
         
         // No pBuffer means no slot occupied.
-        if (!pBuffer)
+        if (!bufferView.buffer)
             continue;
 
         bindings[binding].binding               = structure.ppConstantBuffers[i].binding;
         bindings[binding].descriptorCount       = 1;
         bindings[binding].descriptorType        = getDescriptorType(ResourceViewDimension_Buffer, DescriptorBindType_ConstantBuffer);
-        bindings[binding].stageFlags            = Vulkan::getShaderStages(pContext->obtainConstantBufferShaderFlags(pBuffer->getId()));
+        bindings[binding].stageFlags            = Vulkan::getShaderStages(pContext->obtainConstantBufferShaderFlags(bufferView.buffer));
         bindings[binding].pImmutableSamplers    = nullptr;
         binding++;
     }
@@ -105,7 +105,7 @@ VkDescriptorSetLayout createDescriptorSetLayout(VulkanContext* pContext, const D
         bindings[binding].binding             = resBind.binding;
         bindings[binding].descriptorCount     = 1;
         bindings[binding].descriptorType      = getDescriptorType(description.dimension, DescriptorBindType_ShaderResource);
-        bindings[binding].stageFlags          = Vulkan::getShaderStages(pContext->obtainResourceViewShaderFlags(pView->getId()));
+        bindings[binding].stageFlags          = Vulkan::getShaderStages(pContext->obtainResourceViewShaderFlags({ pView->getId() }));
         bindings[binding].pImmutableSamplers  = nullptr;  // We will eventually...
         binding++;
     }
@@ -123,7 +123,7 @@ VkDescriptorSetLayout createDescriptorSetLayout(VulkanContext* pContext, const D
         bindings[binding].binding             = resBind.binding;
         bindings[binding].descriptorCount     = 1;
         bindings[binding].descriptorType      = getDescriptorType(description.dimension, DescriptorBindType_UnorderedAccess);
-        bindings[binding].stageFlags          = Vulkan::getShaderStages(pContext->obtainResourceViewShaderFlags(pView->getId()));
+        bindings[binding].stageFlags          = Vulkan::getShaderStages(pContext->obtainResourceViewShaderFlags({ pView->getId() }));
         bindings[binding].pImmutableSamplers  = nullptr;
         binding++;
     }
@@ -190,12 +190,12 @@ static ResultCode freeDescriptorSet(VulkanContext* pContext, const VulkanDescrip
 }
 
 
-static VkDescriptorBufferInfo makeDescriptorBufferInfo(VulkanBuffer* pBuffer, VkDeviceSize offsetBytes, VkDeviceSize sizeBytes)
+static VkDescriptorBufferInfo makeDescriptorBufferInfo(VkBuffer buffer, VkDeviceSize offsetBytes, VkDeviceSize sizeBytes)
 {
     VkDescriptorBufferInfo info = { };
     // The actual size of the requested buffer needs to be used, not the actual allocation size, which is usually a 
     // sized aligned to gpu alignment size.
-    info.buffer                 = pBuffer->get();
+    info.buffer                 = buffer;
     info.offset                 = offsetBytes;
     info.range                  = sizeBytes;
     return info;
@@ -244,7 +244,7 @@ public:
                 U32 offsetBytes = description.firstElement * description.byteStride;
                 R_ASSERT(buffer->getBufferSizeBytes() >= sizeBytes);
                 sizeBytes = Math::clamp(sizeBytes, (U32)0, buffer->getBufferSizeBytes());
-                VkDescriptorBufferInfo info = makeDescriptorBufferInfo(buffer, offsetBytes, sizeBytes);
+                VkDescriptorBufferInfo info = makeDescriptorBufferInfo(buffer->get(), offsetBytes, sizeBytes);
                 bufferInfo[bufferCount] = info;
                 writeSet.pBufferInfo = &bufferInfo[bufferCount++];
             }
@@ -275,7 +275,7 @@ public:
     }
 
     // Record the constant buffer.
-    void recordConstantBuffer(VulkanBuffer* buffer, U32 offsetBytes, U32 sizeBytes, VkDescriptorSet set, U32 binding)    
+    void recordConstantBuffer(VkBuffer buffer, U32 offsetBytes, U32 sizeBytes, VkDescriptorSet set, U32 binding)    
     {
         VkWriteDescriptorSet writeSet = { };
         writeSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -351,16 +351,15 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
     // TODO: This needs to support multiple descriptor Counts!!
     for (U32 i = 0; i < structure.key.value.constantBuffers; ++i)
     {
-        VulkanBuffer* pBuffer           = structure.ppConstantBuffers[i].buffer;
+        BufferView bufferView = structure.ppConstantBuffers[i];
 
         // No constant buffer means the slot is unoccupied.
-        if (!pBuffer)
+        if (!bufferView.buffer)
             continue;
-        R_ASSERT_FORMAT(pBuffer->isInResourceState(ResourceState_ConstantBuffer), "Resource must be in constant buffer state!");
 
         VkDeviceSize minUBOAlignOffsetBytes = VulkanAdapter::obtainMinUniformBufferOffsetAlignment(pContext->getDevice()->castTo<VulkanDevice>());
         VkDeviceSize alignedMemoryOffset    = align(structure.ppConstantBuffers[i].offset, minUBOAlignOffsetBytes);
-        writer.recordConstantBuffer(pBuffer, alignedMemoryOffset, structure.ppConstantBuffers[i].sizeBytes, set, structure.ppConstantBuffers[i].binding);
+        writer.recordConstantBuffer(bufferView.buffer, alignedMemoryOffset, structure.ppConstantBuffers[i].sizeBytes, set, structure.ppConstantBuffers[i].binding);
     }
 
     for (U32 i = 0; i < structure.key.value.srvs; ++i)

@@ -272,15 +272,14 @@ D3D12Context::ContextState& D3D12Context::D3D12ShaderProgramBinder::currentState
 }
 
 
-IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindShaderResource(ShaderStageFlags type, U32 slot, ResourceViewId view)
+IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindShaderResource(ShaderStageFlags type, U32 slot, ResourceView view)
 {
     D3D12Context* context = m_pContext;
     DescriptorHeapAllocationManager* manager = context->getNativeDevice()->getDescriptorHeapManager();
     ContextState& current = currentState();
     D3D12GraphicsResourceView* pView = DescriptorViews::findResourceView(view);
-    D3D12_CPU_DESCRIPTOR_HANDLE handle = manager->nullSrvDescriptor();
-    if (pView) handle = pView->getCpuDescriptor();
-
+    D3D12_CPU_DESCRIPTOR_HANDLE handle = { view.ptr };
+    if (handle.ptr == 0) handle = manager->nullSrvDescriptor();
     current.m_srvs[slot] = handle;
     if (!cachedReflection)
         current.m_rootSigLayout.srvCount = Math::maximum(current.m_rootSigLayout.srvCount, static_cast<U16>(slot+1));
@@ -292,14 +291,11 @@ IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindShaderResource
 
 IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data)
 {
-    D3D12Context* context = m_pContext;
-    DescriptorHeapAllocationManager* manager = context->getNativeDevice()->getDescriptorHeapManager();
-    ContextState& current = currentState();
-    D3D12_CPU_DESCRIPTOR_HANDLE cbv = manager->nullCbvDescriptor();
+    ResourceView cbv = {};
     if (pResource)
     {
         D3D12Resource* pNativeResource = pResource->castTo<D3D12Resource>();
-        cbv = pNativeResource->asCbv(offsetBytes, sizeBytes);
+        cbv = { (SIZE_T)pNativeResource->asCbv(offsetBytes, sizeBytes).ptr };
 
         // Copy any data we may want to have in this constant buffer bind. It is actually similar to the vulkan version, so we might
         // want to make this agnostic.
@@ -317,6 +313,19 @@ IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindConstantBuffer
             }
         }
     }
+
+    return bindConstantBuffer(type, slot, cbv);
+}
+
+
+IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindConstantBuffer(ShaderStageFlags type, U32 slot, ResourceView view)
+{
+    D3D12Context* context = m_pContext;
+    DescriptorHeapAllocationManager* manager = context->getNativeDevice()->getDescriptorHeapManager();
+    ContextState& current = currentState();
+    D3D12_CPU_DESCRIPTOR_HANDLE cbv = { view.ptr };
+    if (cbv.ptr == 0) cbv = manager->nullCbvDescriptor();
+
     current.m_cbvs[slot] = cbv;
     
     if (!cachedReflection)
@@ -328,14 +337,13 @@ IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindConstantBuffer
 }
 
 
-IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceViewId view)
+IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceView view)
 {
     D3D12Context* context = m_pContext;
     DescriptorHeapAllocationManager* manager = context->getNativeDevice()->getDescriptorHeapManager();
     ContextState& current = currentState();
-    D3D12GraphicsResourceView* pView = DescriptorViews::findResourceView(view);
-    D3D12_CPU_DESCRIPTOR_HANDLE handle = manager->nullUavDescriptor(); 
-    if (pView) handle = pView->getCpuDescriptor();
+    D3D12_CPU_DESCRIPTOR_HANDLE handle = { view.ptr }; 
+    if(handle.ptr == 0) handle = manager->nullUavDescriptor();
     current.m_uavs[slot] = handle;
     if (!cachedReflection)
         current.m_rootSigLayout.uavCount = Math::maximum(current.m_rootSigLayout.uavCount, static_cast<U16>(slot+1));

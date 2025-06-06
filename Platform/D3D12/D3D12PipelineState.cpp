@@ -433,7 +433,7 @@ ID3D12PipelineState* createRaytracingPipeline(U32 nodeMask, ID3D12Device* pDevic
     D3D12_STATE_OBJECT_DESC pipelineDesc = { };
     pipelineDesc.Type = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
     std::vector<D3D12_STATE_SUBOBJECT> subobjects;
- 
+
     // DXIL Library shader setup.
     D3D12_STATE_SUBOBJECT lib;
     lib.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
@@ -441,7 +441,7 @@ ID3D12PipelineState* createRaytracingPipeline(U32 nodeMask, ID3D12Device* pDevic
     subob.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
     lib.pDesc = nullptr;
     subobjects.push_back(lib);
-    
+
     // Pipeline config.
     D3D12_RAYTRACING_PIPELINE_CONFIG pipelineConfig = { };
     pipelineConfig.MaxTraceRecursionDepth = pipelineState.raytrace.rayRecursionDepth;

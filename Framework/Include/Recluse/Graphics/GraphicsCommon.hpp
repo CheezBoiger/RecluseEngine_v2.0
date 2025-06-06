@@ -10,7 +10,12 @@ namespace Recluse {
 
 class GraphicsResource;
 typedef Hash64 ResourceId;
-typedef Hash64 ResourceViewId;
+
+struct ResourceView
+{
+    U64 ptr;
+    U64 ext;
+};
 
 enum BindType 
 {

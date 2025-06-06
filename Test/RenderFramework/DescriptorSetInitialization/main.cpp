@@ -309,7 +309,7 @@ int main(int c, char* argv[])
             rtvDesc.mipLevelCount = 1;
             rtvDesc.dimension = ResourceViewDimension_2d;
             rtvDesc.format = ResourceFormat_B8G8R8A8_Unorm;
-            ResourceViewId view = pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex())->asView(rtvDesc);
+            ResourceView view = pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex())->asView(rtvDesc);
             context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_RenderTarget);
             context->bindRenderTargets(1, &view);
             context->clearRenderTarget(0, color2, rect2);

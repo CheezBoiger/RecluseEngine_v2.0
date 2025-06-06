@@ -38,7 +38,7 @@ U32 D3D12RenderPass::getNumRenderTargets() const
 }
 
 
-ResultCode D3D12RenderPass::update(D3D12Device* pDevice, U32 numRtvDescriptors, ResourceViewId* rtvDescriptors, ResourceViewId dsvDescriptor)
+ResultCode D3D12RenderPass::update(D3D12Device* pDevice, U32 numRtvDescriptors, ResourceView* rtvDescriptors, ResourceView dsvDescriptor)
 {
     R_ASSERT(pDevice != NULL);
     R_ASSERT_FORMAT(numRtvDescriptors <= D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT, 
@@ -47,7 +47,7 @@ ResultCode D3D12RenderPass::update(D3D12Device* pDevice, U32 numRtvDescriptors, 
     D3D12_CPU_DESCRIPTOR_HANDLE handles[D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT];
     for (U32 i = 0; i < numRtvDescriptors; ++i)
     {
-        if (rtvDescriptors[i] != 0)
+        if (rtvDescriptors[i].ptr != 0)
         {
             D3D12GraphicsResourceView* pView = DescriptorViews::findResourceView(rtvDescriptors[i]);
             m_rtvFormats[i] = Dxgi::getNativeFormat(pView->getDesc().format);
@@ -71,7 +71,7 @@ ResultCode D3D12RenderPass::update(D3D12Device* pDevice, U32 numRtvDescriptors, 
     {
         m_rtvDhAllocation = iter->second;
     }
-    if (dsvDescriptor != 0)
+    if (dsvDescriptor.ptr != 0)
     {
         D3D12GraphicsResourceView* pDsv = DescriptorViews::findResourceView(dsvDescriptor);
         m_dsvFormat = Dxgi::getNativeFormat(pDsv->getDesc().format);
@@ -99,17 +99,17 @@ ResultCode D3D12RenderPass::release(D3D12Device* pDevice)
 
 
 namespace RenderPasses {
-D3D12RenderPass* makeRenderPass(D3D12Device* pDevice, U32 numRtvs, ResourceViewId* rtvs, ResourceViewId dsv)
+D3D12RenderPass* makeRenderPass(D3D12Device* pDevice, U32 numRtvs, ResourceView* rtvs, ResourceView dsv)
 {
     D3D12RenderPass* pass = nullptr;
-    ResourceViewId targets[D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT + 1]; // For the dsv if we have one.
+    ResourceView targets[D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT + 1]; // For the dsv if we have one.
     
     U32 numTargets = numRtvs;
-    memcpy(targets, rtvs, sizeof(ResourceViewId) * numRtvs);
-    if (dsv != 0)
+    memcpy(targets, rtvs, sizeof(U64) * numRtvs);
+    if (dsv.ptr != 0)
         targets[numTargets++] = dsv;
 
-    Hash64 hash = recluseHashFast(targets, sizeof(ResourceViewId) * numTargets);
+    Hash64 hash = recluseHashFast(targets, sizeof(U64) * numTargets);
     if (!g_renderPassMap.inCache(hash))
     {
         D3D12RenderPass renderPass = { };

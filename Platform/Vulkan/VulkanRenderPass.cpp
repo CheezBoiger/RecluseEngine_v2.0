@@ -173,7 +173,7 @@ FramebufferObject* makeFrameBuffer(VulkanDevice* pDevice, VkRenderPass renderPas
         viewAttachments[i] = pView->get();
     }
 
-    if (desc.pDepthStencil)
+    if (desc.pDepthStencil.ptr != 0)
     {
         VulkanImageView* pView = ResourceViews::obtainResourceView(deviceId, desc.pDepthStencil)->castTo<VulkanImageView>();
         viewAttachments[i] = pView->get();
@@ -229,7 +229,7 @@ VkRenderPass createRenderPass(VulkanDevice* pDevice,  const VulkanRenderPassDesc
     VkAttachmentDescription descriptions[9]; // including depthstencil, if possible.
     VkAttachmentReference   references[9];  // references for subpass.
     VkSubpassDependency dependencies[2];    // dependecies between renderpasses.
-    B32 depthStencilIncluded            = desc.pDepthStencil ? true : false;
+    B32 depthStencilIncluded            = (desc.pDepthStencil.ptr != 0) ? true : false;
     VkResult result                     = VK_SUCCESS;
     VkRenderPassCreateInfo  rpIf        = { };
     VkSubpassDescription subpass        = { };
@@ -346,7 +346,7 @@ VkRenderPass internalMakeRenderPass(VulkanDevice* pDevice,  const VulkanRenderPa
 #endif
     {
         VkRenderPass renderPass = createRenderPass(pDevice, desc);
-        U32 references = desc.numRenderTargets + ((desc.pDepthStencil != 0) ? 1 : 0);
+        U32 references = desc.numRenderTargets + ((desc.pDepthStencil.ptr != 0) ? 1 : 0);
         cacheRenderPass(deviceId, renderPassId, renderPass);
 #if defined(USE_STD_LRU_IMPL)
         (*g_rpCache[renderPassId])->rp.addReference(references);
@@ -420,7 +420,7 @@ void checkLruCache(VulkanDevice* pDevice)
 }
 
 
-VulkanRenderPass makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, ResourceViewId* ppRenderTargetViews, ResourceViewId pDepthStencil)
+VulkanRenderPass makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, ResourceView* ppRenderTargetViews, ResourceView pDepthStencil)
 {
     // We never really have a max of 8 render targets in current hardware.
     R_ASSERT(numRenderTargets <= 8);
@@ -445,7 +445,7 @@ VulkanRenderPass makeRenderPass(VulkanDevice* pDevice, U32 numRenderTargets, Res
         targetLayers    = Math::maximum(targetLayers, pImage->getDepthOrArraySize());
     }
 
-    if (pDepthStencil)
+    if (pDepthStencil.ptr != 0)
     {
         VulkanResourceView* pView = ResourceViews::obtainResourceView(deviceId, pDepthStencil);
         R_ASSERT(!pView->getResource()->isBuffer());

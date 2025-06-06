@@ -14,25 +14,26 @@ U64 D3D12GraphicsResourceView::kViewCreationCounter = 0;
 U64 D3D12Sampler::kSamplerCreationCounter = 0;
 MutexGuard D3D12Sampler::kSamplerMutex = MutexGuard("D3D12SamplerMutex");
 MutexGuard D3D12GraphicsResourceView::kViewMutex = MutexGuard("D3D12GraphicsResourceViewMutex");
-std::unordered_map<ResourceViewId, D3D12GraphicsResourceView*> g_resourceViewMap;
+std::unordered_map<U64, D3D12GraphicsResourceView*> g_resourceViewMap;
 std::unordered_map<Hash64, D3D12Sampler> g_samplerMap;
 
 
 namespace DescriptorViews {
 
-ResourceViewId makeResourceView(D3D12Device* pDevice, ID3D12Resource* pResource, const ResourceViewDescription& description)
+ResourceView makeResourceView(D3D12Device* pDevice, ID3D12Resource* pResource, const ResourceViewDescription& description)
 {
-    ResourceViewId resourceViewId = 0;
     D3D12GraphicsResourceView* pView = new D3D12GraphicsResourceView(description);
     pView->initialize(pDevice, pResource);
-    g_resourceViewMap.insert(std::make_pair(pView->getId(), pView));
-    return pView->getId();
+
+    ResourceView resourceViewId = { pView->getCpuDescriptor().ptr };
+    g_resourceViewMap.insert(std::make_pair(resourceViewId.ptr, pView));
+    return resourceViewId;
 }
 
 
-ResultCode destroyResourceView(D3D12Device* pDevice, ResourceViewId resourceId)
+ResultCode destroyResourceView(D3D12Device* pDevice, ResourceView resourceId)
 {
-    auto iter = g_resourceViewMap.find(resourceId);
+    auto iter = g_resourceViewMap.find(resourceId.ptr);
     if (iter != g_resourceViewMap.end())
     {
         iter->second->release(pDevice);
@@ -45,9 +46,9 @@ ResultCode destroyResourceView(D3D12Device* pDevice, ResourceViewId resourceId)
 }
 
 
-D3D12GraphicsResourceView* findResourceView(ResourceViewId id)
+D3D12GraphicsResourceView* findResourceView(ResourceView id)
 {
-    auto iter = g_resourceViewMap.find(id);
+    auto iter = g_resourceViewMap.find(id.ptr);
     if (iter == g_resourceViewMap.end())
     {
         return nullptr;

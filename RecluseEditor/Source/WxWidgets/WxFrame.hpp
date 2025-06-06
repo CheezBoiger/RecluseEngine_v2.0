@@ -67,7 +67,7 @@ public:
         desc.dimension = ResourceViewDimension_2d;
         desc.layerCount = 1;
         desc.mipLevelCount = 1;
-        ResourceViewId id = sf->asView(desc);
+        ResourceView id = sf->asView(desc);
 
         Rect rect = { 0, 0, pSwapchain->getDesc().renderWidth, pSwapchain->getDesc().renderHeight };
         Math::Float4 clearColor = Math::lerp(rgba, rgba2, fabsf(sinf(t)));

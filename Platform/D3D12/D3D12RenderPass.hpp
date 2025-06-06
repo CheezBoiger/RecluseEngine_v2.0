@@ -27,8 +27,8 @@ public:
         (
             D3D12Device* pDevice,
             U32 numRtvDescriptors, 
-            ResourceViewId* rtvDescriptors, 
-            ResourceViewId dsvDescriptor = -1
+            ResourceView* rtvDescriptors, 
+            ResourceView dsvDescriptor = {}
         );
 
     ResultCode                      release(D3D12Device* pDevice);
@@ -53,7 +53,7 @@ private:
 namespace RenderPasses {
 
 void                clearAll(D3D12Device* pDevice);
-D3D12RenderPass*    makeRenderPass(D3D12Device* pDevice, U32 numRtvs, ResourceViewId* rtvs, ResourceViewId dsv = 0);
+D3D12RenderPass*    makeRenderPass(D3D12Device* pDevice, U32 numRtvs, ResourceView* rtvs, ResourceView dsv = {});
 void                clearRenderPassCache();
 void                update();
 void                sweep(D3D12Device* pDevice);

@@ -123,7 +123,7 @@ int main(int c, char* argv[])
                     rtvDescription.format = pSwapchain->getDesc().format;
                     GraphicsResource* swapchainResource = pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex());
                     pContext->transition(swapchainResource, ResourceState_RenderTarget);
-                    ResourceViewId rtv = swapchainResource->asView(rtvDescription);
+                    ResourceView rtv = swapchainResource->asView(rtvDescription);
                     pContext->bindRenderTargets(1, &rtv);
                     Rect rect = { };
                     rect.x = 0;

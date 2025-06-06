@@ -10,7 +10,7 @@ namespace Recluse {
 namespace Vulkan {
 
 // Assert on error.
-R_DECLARE_GLOBAL_BOOLEAN(g_assertOnError, false, "Vulkan:AssertOnError");
+R_DECLARE_GLOBAL_BOOLEAN(g_assertOnError, true, "Vulkan.AssertOnError");
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL recluseDebugCallback
     (
@@ -28,11 +28,8 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL recluseDebugCallback
     if ((flags & VK_DEBUG_REPORT_WARNING_BIT_EXT) || (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)) R_WARN(R_CHANNEL_VULKAN, "Validation layer: %s\n", msg);
     if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) 
     {
-        R_ERROR(R_CHANNEL_VULKAN, "Validation layer: %s\n", msg);
         if (g_assertOnError)
-        {
-            
-        }
+            R_ASSERT_FORMAT(false, "Validation layer: %s", msg);
     }
     return VK_FALSE;
 }

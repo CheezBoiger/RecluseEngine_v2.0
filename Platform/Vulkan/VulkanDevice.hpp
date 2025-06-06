@@ -72,9 +72,10 @@ private:
             , cachedProgram(nullptr)
             , reflectionCache(nullptr)
         { obtainShaderProgramFromCache(); }
-        IShaderProgramBinder&   bindShaderResource(ShaderStageFlags type, U32 slot, ResourceViewId view) override;
-        IShaderProgramBinder&   bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceViewId view) override;
+        IShaderProgramBinder&   bindShaderResource(ShaderStageFlags type, U32 slot, ResourceView view) override;
+        IShaderProgramBinder&   bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceView view) override;
         IShaderProgramBinder&   bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data = nullptr) override;
+        IShaderProgramBinder&   bindConstantBuffer(ShaderStageFlags type, U32 slot, ResourceView view) override;
         IShaderProgramBinder&   bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* ppSampler) override;
         ContextState&           currentState();
         ShaderProgramReflection* getReflection() const { return reflectionCache; }
@@ -171,7 +172,7 @@ public:
     void setStencilReadMask(U8 mask) override { currentState().m_pipelineStructure.state.graphics.depthStencil.stencilReadMask = mask; currentState().markPipelineDirty(); }
     void setStencilWriteMask(U8 mask) override { currentState().m_pipelineStructure.state.graphics.depthStencil.stencilWriteMask = mask; currentState().markPipelineDirty(); }
     void clearResourceBinds() override;
-    void bindRenderTargets(U32 count, ResourceViewId* ppResources, ResourceViewId pDepthStencil) override;
+    void bindRenderTargets(U32 count, ResourceView* ppResources, ResourceView pDepthStencil) override;
     
     void setBlendConstants(F32 blendConstants[4]) override 
     { 
@@ -230,14 +231,14 @@ public:
     void endRenderPass(VkCommandBuffer buffer);
     void resetBinds();
 
-    ShaderStageFlags obtainResourceViewShaderFlags(ResourceViewId id)
+    ShaderStageFlags obtainResourceViewShaderFlags(ResourceView id)
     {
-        return m_resourceViewShaderAccessMap[id];
+        return m_resourceViewShaderAccessMap[id.ptr];
     }
 
-    ShaderStageFlags obtainConstantBufferShaderFlags(ResourceId id)
+    ShaderStageFlags obtainConstantBufferShaderFlags(VkBuffer buffer)
     {
-        return m_constantBufferShaderAccessMap[id];
+        return m_constantBufferShaderAccessMap[buffer];
     }
 
     ShaderStageFlags obtainSamplerShaderFlags(SamplerId id)
@@ -331,8 +332,8 @@ private:
     VulkanPrimaryCommandList                                            m_primaryCommandList;
     Pipelines::PipelineState                                            m_pipelineState;
     PipelineId                                                          m_pipelineId;
-    std::unordered_map<ResourceViewId, ShaderStageFlags>                m_resourceViewShaderAccessMap;
-    std::unordered_map<ResourceId, ShaderStageFlags>                    m_constantBufferShaderAccessMap;
+    std::unordered_map<ResourceId, ShaderStageFlags>                    m_resourceViewShaderAccessMap;
+    std::unordered_map<VkBuffer, ShaderStageFlags>                      m_constantBufferShaderAccessMap;
     std::unordered_map<SamplerId, ShaderStageFlags>                     m_samplerShaderAccessMap;
     std::vector<VkCommandPool>                                          m_commandPools;
     std::vector<ContextState>                                           m_contextStates;
@@ -409,10 +410,12 @@ public:
     VulkanAllocationManager*        getAllocationManager()
         { return m_allocationManager.raw(); }
 
-    // Invalidate resources when reading back from GPU.
+    // Invalidate resources when reading back from GPU. This invalidates memory ranges so that the host (CPU),
+    // will be able to see GPU writes to the memory.
     void                            pushInvalidateMemoryRange(const VkMappedMemoryRange& mappedRange);
 
-    // Flush the resource memory range when writing from CPU to GPU. 
+    // Flush the resource memory range when writing from CPU to GPU. This flushes memory ranges so that the device (GPU)
+    // will be able to see CPU writes to the memory.
     void                            pushFlushMemoryRange(const VkMappedMemoryRange& mappedRange);
 
     void                            flushAllMappedRanges();

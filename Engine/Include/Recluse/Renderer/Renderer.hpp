@@ -318,7 +318,7 @@ private:
     std::vector<BufferCopy>                                 m_frameCopyRegions;
 };
 
-ResourceViewId asView(GraphicsResource* pResource, const ResourceViewDescription& description); 
-ResourceViewId asView(GraphicsResource* pResource, ResourceViewType type, ResourceViewDimension dim);
+ResourceView asView(GraphicsResource* pResource, const ResourceViewDescription& description); 
+ResourceView asView(GraphicsResource* pResource, ResourceViewType type, ResourceViewDimension dim);
 } // Engine
 } // Recluse

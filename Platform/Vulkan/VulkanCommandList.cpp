@@ -663,7 +663,7 @@ void VulkanContext::flushBarrierTransitions(VkCommandBuffer cmdBuffer)
 }
 
 
-void VulkanContext::bindRenderTargets(U32 count, ResourceViewId* ppResourceViews, ResourceViewId pDepthStencil)
+void VulkanContext::bindRenderTargets(U32 count, ResourceView* ppResourceViews, ResourceView pDepthStencil)
 {
     // Obtain the given render pass for the following resources. If one is already available, don't set it again!
     m_newRenderPass = RenderPasses::makeRenderPass(getNativeDevice(), count, ppResourceViews, pDepthStencil);
@@ -706,28 +706,11 @@ VulkanContext::ContextState& VulkanContext::VulkanShaderProgramBinder::currentSt
 
 IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data)
 {
-    VulkanContext* context = m_pContext;
-    R_ASSERT_FORMAT(currentState().m_cbvs.size() > slot, "Maximum of %d constant buffers may be bound simultaneously. Request slot %d is not allowed.", currentState().m_cbvs.size(), slot);
-    ShaderStageFlags shaderFlags = type;
-    U32 binding = slot;
-    if (reflectionCache) 
-    {
-        R_ASSERT(slot < reflectionCache->cbvs.size());
-        binding = unpackVulkanBinding(reflectionCache->cbvs[slot]);
-    }
-    else
-    {
-        currentState().m_boundDescriptorSetStructure.key.value.constantBuffers = Math::maximum(currentState().m_boundDescriptorSetStructure.key.value.constantBuffers, static_cast<U16>(slot+1));
-    }
-
-    DescriptorSets::BufferView bufferView = { nullptr, offsetBytes, sizeBytes, binding };
     if (pResource)
     {
         VulkanResource* pVulkanResource                     = pResource->castTo<VulkanResource>();
         R_ASSERT(pVulkanResource->isBuffer());
         VulkanBuffer* pBuffer                               = pVulkanResource->castTo<VulkanBuffer>();
-        context->m_constantBufferShaderAccessMap[pBuffer->getId()]   |= shaderFlags;
-        bufferView.buffer                                   = pBuffer;
 
         // Copy any data we may want to have in this constant buffer bind. It is actually similar the the d3d12 version, so we might want to make this agnostic.
         if (data)
@@ -744,7 +727,29 @@ IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindConstantBuff
             }
         }
     }
-    currentState().m_cbvs[slot] = bufferView;
+    return bindConstantBuffer(type, slot, pResource->asCbv(offsetBytes, sizeBytes));
+}
+
+
+IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindConstantBuffer(ShaderStageFlags type, U32 slot, ResourceView view)
+{
+    Vulkan::BufferView& bufferView = *(Vulkan::BufferView*)&view;
+    VulkanContext* context = m_pContext;
+    R_ASSERT_FORMAT(currentState().m_cbvs.size() > slot, "Maximum of %d constant buffers may be bound simultaneously. Request slot %d is not allowed.", currentState().m_cbvs.size(), slot);
+    const ShaderStageFlags shaderFlags = type;
+    U32 binding = slot;
+    if (reflectionCache) 
+    {
+        R_ASSERT(slot < reflectionCache->cbvs.size());
+        binding = unpackVulkanBinding(reflectionCache->cbvs[slot]);
+    }
+    else
+    {
+        currentState().m_boundDescriptorSetStructure.key.value.constantBuffers = Math::maximum(currentState().m_boundDescriptorSetStructure.key.value.constantBuffers, static_cast<U16>(slot+1));
+    }
+    DescriptorSets::BufferView dsBufferView = { bufferView.buffer, bufferView.offsetBytes, bufferView.sizeBytes, binding };
+    context->m_constantBufferShaderAccessMap[bufferView.buffer]    |= shaderFlags;
+    currentState().m_cbvs[slot] = dsBufferView;
     currentState().m_boundDescriptorSetStructure.key.value.shaderTypeFlags |= shaderFlags;
     currentState().m_boundDescriptorSetStructure.ppConstantBuffers         = currentState().m_cbvs.data();
     currentState().markResourcesDirty();
@@ -752,7 +757,7 @@ IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindConstantBuff
 }
 
 
-IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindShaderResource(ShaderStageFlags type, U32 slot, ResourceViewId viewId)
+IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindShaderResource(ShaderStageFlags type, U32 slot, ResourceView viewId)
 {
     VulkanContext* context = m_pContext;
     R_ASSERT_FORMAT(currentState().m_srvs.size() > slot, "Maximum of %d shader resource views may be bound simulatenously. Request slot %d is not allowed.", currentState().m_srvs.size(), slot);
@@ -778,7 +783,7 @@ IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindShaderResour
 }
 
 
-IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceViewId view)
+IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceView view)
 {
     VulkanContext* context = m_pContext;
     ShaderStageFlags shaderFlags = type;

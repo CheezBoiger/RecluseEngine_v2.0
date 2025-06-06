@@ -55,7 +55,7 @@ public:
     inline Bool         isBuffer() const { return m_isBuffer; }
     ResourceId          getId() const override { return m_id; }
 
-    ResourceViewId      asView(const ResourceViewDescription& description) override;
+    ResourceView        asView(const ResourceViewDescription& description) override;
     void                setDevice(VulkanDevice* pDevice) { m_pDevice = pDevice; }
     ResourceMemoryUsage getMemoryUsage() const { return m_memoryUsage; }
     ResourceDimension   getDimension() const { return m_dimension; }
@@ -96,7 +96,7 @@ private:
     ResourceMemoryUsage m_memoryUsage;
     ResourceDimension   m_dimension;
 
-    std::map<Hash64, ResourceViewId> m_resourceIds; 
+    std::map<Hash64, ResourceView> m_resourceIds; 
 };
 
 
@@ -118,7 +118,8 @@ private:
     ResultCode      onCreate(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState) override; 
     ResultCode      onGetMemoryRequirements(VulkanDevice* pDevice, VkMemoryRequirements& memRequirements) override;
     ResultCode      onBind(VulkanDevice* pDevice, const GraphicsResourceDescription& description) override;
-    ResultCode      onRelease(VulkanDevice* pDevice) override;    
+    ResultCode      onRelease(VulkanDevice* pDevice) override;   
+    ResourceView    asCbv(U32 offsetBytes, U32 sizeBytes) override; 
     VkBuffer        m_buffer;
     U32             m_bufferSizeBytes;
 };

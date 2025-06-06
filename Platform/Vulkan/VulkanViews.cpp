@@ -10,11 +10,11 @@ namespace Recluse {
 namespace Vulkan {
 namespace ResourceViews {
 
-std::map<DeviceId, std::unordered_map<ResourceViewId, VulkanResourceView*>>     g_resourceViewMap;
+std::map<DeviceId, std::unordered_map<U64, VulkanResourceView*>>     g_resourceViewMap;
 std::map<DeviceId, std::unordered_map<SamplerId, VulkanSampler*>>               g_samplerMap;
 
 
-ResourceViewId makeResourceView(VulkanDevice* pDevice, VulkanResource* pResource, const ResourceViewDescription& desc)
+ResourceView makeResourceView(VulkanDevice* pDevice, VulkanResource* pResource, const ResourceViewDescription& desc)
 {
     
     VulkanResourceView* pView = nullptr;
@@ -26,7 +26,7 @@ ResourceViewId makeResourceView(VulkanDevice* pDevice, VulkanResource* pResource
     pView->initialize(pDevice, pResource);
     pView->generateId();
     g_resourceViewMap[pDevice->getDeviceId()][pView->getId()] = pView;
-    return pView->getId();
+    return { pView->getId() };
 }
 
 
@@ -42,10 +42,10 @@ VulkanSampler* makeSampler(VulkanDevice* pDevice, const SamplerDescription& desc
 }
 
 
-ResultCode releaseResourceView(VulkanDevice* pDevice, ResourceViewId id)
+ResultCode releaseResourceView(VulkanDevice* pDevice, ResourceView id)
 {
     auto& resourceViewMap = g_resourceViewMap[pDevice->getDeviceId()];
-    auto& iter = resourceViewMap.find(id);
+    auto& iter = resourceViewMap.find(id.ptr);
     if (iter == resourceViewMap.end())
         return RecluseResult_NotFound;
     iter->second->release(pDevice);
@@ -68,10 +68,10 @@ ResultCode releaseSampler(VulkanDevice* pDevice, SamplerId id)
 }
 
 
-VulkanResourceView* obtainResourceView(DeviceId deviceId, ResourceViewId id)
+VulkanResourceView* obtainResourceView(DeviceId deviceId, ResourceView id)
 {
     auto& resourceViewMap = g_resourceViewMap[deviceId];
-    auto& iter = resourceViewMap.find(id);
+    auto& iter = resourceViewMap.find(id.ptr);
     if (iter == resourceViewMap.end())
         return nullptr;
     return iter->second;
@@ -114,11 +114,11 @@ void clearCache(VulkanDevice* pDevice)
 }
 } // ResourceViews
 
-ResourceViewId VulkanResourceView::kResourceViewCreationCounter = 0;
+U64 VulkanResourceView::kResourceViewCreationCounter            = 0;
 SamplerId VulkanSampler::kSamplerCreationCounter                = 0;
 
-MutexGuard VulkanResourceView::kResourceViewCreationMutex    = MutexGuard("VulkanResourceViewCreationMutex");
-MutexGuard VulkanSampler::kSamplerCreationMutex              = MutexGuard("VulkanSamplerCreationMutex");
+MutexGuard VulkanResourceView::kResourceViewCreationMutex       = MutexGuard("VulkanResourceViewCreationMutex");
+MutexGuard VulkanSampler::kSamplerCreationMutex                 = MutexGuard("VulkanSamplerCreationMutex");
 
 
 VkImageAspectFlags resolveAspectMaskFromFormat(VkFormat originalFormat, ResourceFormat requestedFormat)

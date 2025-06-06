@@ -53,7 +53,7 @@ public:
     //             order written in the shader for Vulkan (independent of the binding value.)
     // \param view The actual View of the shader resource to bind to the shader program.
     // \return The same ShaderProgramBinder instance.
-    virtual IShaderProgramBinder& bindShaderResource(ShaderStageFlags type, U32 slot, ResourceViewId view) { return (*this); }
+    virtual IShaderProgramBinder& bindShaderResource(ShaderStageFlags type, U32 slot, ResourceView view) { return (*this); }
 
     // Binds an unordered access resource to the currently bound shader program. The Unordered Access must be a view type.
     // \param type The Shader types that this view will be bound to.
@@ -61,7 +61,7 @@ public:
     //             order written in the shader for Vulkan (independent of the binding value.)
     // \param view The actual view of the unordered access resoruce to bind to the shader program.
     // \return The same ShaderProgramBinder instance.
-    virtual IShaderProgramBinder& bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceViewId view) { return (*this); }
+    virtual IShaderProgramBinder& bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceView view) { return (*this); }
 
     // Bind a constant buffer that links to certain shaders in the program. Define the slot in the shader program as well.
     // The pResource is the constant buffer resource to be bound, the offsetBytes is the offset in the pResource, along with the 
@@ -69,6 +69,7 @@ public:
     // they wish to host-device copy to the pResource (pResource must be host copyable.)
     // \return The same ShaderProgramBinder instance.
     virtual IShaderProgramBinder& bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data = nullptr) { return (*this); }
+    virtual IShaderProgramBinder& bindConstantBuffer(ShaderStageFlags type, U32 slot, ResourceView cbv) { return (*this); } 
     
     // Binds a sampler resource to the currently bound shader program. Sampler must be a handle.
     // \param type The Shader types that this sampler will be bound to.
@@ -153,6 +154,12 @@ public:
     // \param description The resource description that you want to temporarily allocate.
     virtual GraphicsResource*       createTemporaryResource(const GraphicsResourceDescription& description)
         { return nullptr; }
+
+    // Allocate a constant buffer struct for the current context frame. This will be destroyed when we come back to this
+    // frame again.
+    // \param cbSizeBytes Size of the constant buffer to allocate, along with the size of the input data.
+    // \param cbInputData The input cpu host data to be copied to the output resource.
+    virtual ResourceView            allocateConstantBuffer(U32 cbSizeBytes, void* cbInputData) { return {}; }
 
     // Releases a temporary resource for the current context frame. Usually any resources not called by this, will just be destroyed
     // after the frame is finished.
@@ -248,7 +255,7 @@ public:
 
     // Sets the shader program, and provides the program binder to bind the necessary resources.
     virtual IShaderProgramBinder&   bindShaderProgram(ShaderProgramId program, U32 permutation = 0u) = 0;    
-    virtual void                    bindRenderTargets(U32 count, ResourceViewId* ppResources, ResourceViewId pDepthStencil = 0) { }
+    virtual void                    bindRenderTargets(U32 count, ResourceView* ppResources, ResourceView pDepthStencil = {}) { }
 
     virtual void                    enableDepth(Bool enable) { }
     virtual void                    enableDepthWrite(Bool enable) { }

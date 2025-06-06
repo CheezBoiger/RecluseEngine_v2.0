@@ -56,7 +56,7 @@ void generate(GraphicsContext* context, Engine::CommandList* pMeshCommandList, U
     dsvDesc.layerCount = 1;
     dsvDesc.mipLevelCount = 1;
     dsvDesc.type = ResourceViewType_DepthStencil;
-    ResourceViewId dsv;
+    ResourceView dsv;
 
     // Set the PreZ pass.
     context->pushState();

@@ -169,7 +169,6 @@ ResultCode D3D12ResourceAllocationManager::allocate(D3D12MemoryObject* pOut, con
     D3D12ResourcePagedAllocator<BuddyAllocationContext>::OutputBlock outputBlock = { };
     ResultCode result = pagedAllocator->allocate(m_pDevice, resourceAllocationInfo, outputBlock);
 
-
     if (result == RecluseResult_OutOfMemory)
     {
         U64 newSizeChunk = Math::maximum(align(resourceAllocationInfo.SizeInBytes, resourceAllocationInfo.Alignment), kAllocationPageSizeBytes);
@@ -300,5 +299,30 @@ ResultCode D3D12ResourceAllocationManager::release()
     m_pagedAllocators.clear();
     return RecluseResult_Ok;
 }
+
+
+ResultCode D3D12TemporaryResourceAllocator::initialize(ID3D12Device* device)
+{
+    m_pDevice = device;
+    
+    return RecluseResult_Ok;
+}
+
+
+
+ResultCode D3D12TemporaryResourceAllocator::clear()
+{
+    for (auto& it : m_pagedAllocators)
+    {
+        for (auto& allocator : it.second)
+        {
+            allocator->clear();
+        } 
+    }
+    return RecluseResult_Ok;
+}
+
+
+
 } // D3D12
 } // Recluse

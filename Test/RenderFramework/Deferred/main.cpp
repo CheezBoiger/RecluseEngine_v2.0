@@ -74,7 +74,7 @@ struct MeshDraw
     GraphicsResource* indexBuffer;
     GraphicsResource* meshTransform;
     GraphicsResource* albedoTexture;
-    ResourceViewId albedoView;
+    ResourceView albedoView;
     U32 numIndices;
 };
 
@@ -441,17 +441,17 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
 
     description.format = ResourceFormat_R8G8B8A8_Unorm;
 
-    ResourceViewId albedoRtv = albedoTexture->asView(description);
+    ResourceView albedoRtv = albedoTexture->asView(description);
 
     description.format = ResourceFormat_R16G16B16A16_Float;
-    ResourceViewId normalRtv = normalTexture->asView(description);
+    ResourceView normalRtv = normalTexture->asView(description);
 
     description.format = ResourceFormat_D32_Float;
     description.type = ResourceViewType_DepthStencil;
 
-    ResourceViewId dsv = depthTexture->asView(description);
+    ResourceView dsv = depthTexture->asView(description);
 
-    ResourceViewId rtvs[] = { albedoRtv, normalRtv };
+    ResourceView rtvs[] = { albedoRtv, normalRtv };
     context->pushState();
     context->bindRenderTargets(2, rtvs, dsv);
     context->setTopology(PrimitiveTopology_TriangleList);
@@ -525,24 +525,24 @@ void resolveLighting(GraphicsContext* context)
     GraphicsResource* finalImage = swapchain->getFrame(swapchain->getCurrentFrameIndex());
 
     description.format = swapchain->getDesc().format;
-    ResourceViewId id = finalImage->asView(description);    
+    ResourceView id = finalImage->asView(description);    
     
     description.format = ResourceFormat_R8G8B8A8_Unorm;
     description.type = ResourceViewType_ShaderResource;
-    ResourceViewId albedoView = albedoTexture->asView(description);
+    ResourceView albedoView = albedoTexture->asView(description);
 
     description.format = ResourceFormat_R16G16B16A16_Float;
-    ResourceViewId normalView = normalTexture->asView(description);
+    ResourceView normalView = normalTexture->asView(description);
 
     description.format = ResourceFormat_R32_Float;
-    ResourceViewId depthView = depthTexture->asView(description);
+    ResourceView depthView = depthTexture->asView(description);
 
     description.dimension = ResourceViewDimension_Buffer;
     description.firstElement = 0;
     description.numElements = 1;
     description.byteStride = sizeof(Light);
     description.format = ResourceFormat_Unknown;
-    ResourceViewId lightBufferView = lightBuffer->asView(description);
+    ResourceView lightBufferView = lightBuffer->asView(description);
 
     Viewport viewport = { 0, 0, swapchain->getDesc().renderWidth, swapchain->getDesc().renderHeight, 1, 0 };
     Rect scissor = { 0, 0, swapchain->getDesc().renderWidth, swapchain->getDesc().renderHeight };

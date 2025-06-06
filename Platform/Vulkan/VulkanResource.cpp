@@ -149,7 +149,7 @@ void VulkanResource::releaseViews()
     // Clear all remaining resource views associated.
     for (auto iter : m_resourceIds)
     {
-        ResourceViewId id = iter.second;
+        ResourceView id = iter.second;
         ResourceViews::releaseResourceView(m_pDevice, id);
     }
 
@@ -572,10 +572,10 @@ VkBufferMemoryBarrier VulkanBuffer::transition(ResourceState dstState)
 }
 
 
-ResourceViewId VulkanResource::asView(const ResourceViewDescription& description)
+ResourceView VulkanResource::asView(const ResourceViewDescription& description)
 {
     Hash64 hash = recluseHashFast(&description, sizeof(ResourceViewDescription));
-    ResourceViewId viewId = 0;
+    ResourceView viewId = {};
     auto iter = m_resourceIds.find(hash);
     if (iter == m_resourceIds.end())
     {
@@ -588,6 +588,19 @@ ResourceViewId VulkanResource::asView(const ResourceViewDescription& description
     }
 
     return viewId;
+}
+
+
+ResourceView VulkanBuffer::asCbv(U32 offsetBytes, U32 sizeBytes)
+{
+    ResourceView view = { };
+    BufferView v;
+    R_ASSERT(isBuffer());
+    v.buffer = get();
+    v.offsetBytes = offsetBytes;
+    v.sizeBytes = sizeBytes;
+    memcpy(&view, &v, sizeof(ResourceView));
+    return view;
 }
 
 

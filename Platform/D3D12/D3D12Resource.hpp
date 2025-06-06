@@ -70,10 +70,10 @@ public:
     ResourceId                  getId() const { return m_id; }
     U16                         getTotalSubResources() const { return m_totalSubresources; }
 
-    ResourceViewId              asView(const ResourceViewDescription& description) override;
+    ResourceView                asView(const ResourceViewDescription& description) override;
 
     void                        generateId() override;
-    D3D12_CPU_DESCRIPTOR_HANDLE asCbv(U32 offsetBytes, U32 sizeBytes);
+    ResourceView                asCbv(U32 offsetBytes, U32 sizeBytes) override;
 
 private:
     Bool                        isSupportedTransitionState(ResourceState state);
@@ -84,7 +84,7 @@ private:
     ResourceTransitionFlags     m_allowedTransitionStates;
     D3D12Device*                m_pDevice;
     ResourceId                  m_id;
-    std::map<Hash64, ResourceViewId>                m_viewMap;
+    std::map<Hash64, ResourceView>                  m_viewMap;
     std::map<Hash64, D3D12_CPU_DESCRIPTOR_HANDLE>   m_cbvMap;
 };
 

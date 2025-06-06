@@ -209,6 +209,15 @@ static void unpackVulkanShaderSetBinding(ShaderBind setBinding, U32& set, U32& b
 }
 
 
+struct BufferView 
+{
+    VkBuffer buffer;
+    U32 offsetBytes;
+    U16 sizeBytes;
+    U16 pad0;
+};
+
+
 struct PhysicalDeviceFeaturesInfo
 {
     VkPhysicalDeviceHostQueryResetFeatures  hostQueryResetFeatures;
