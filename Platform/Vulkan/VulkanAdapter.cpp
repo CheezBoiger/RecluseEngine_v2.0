@@ -369,7 +369,13 @@ void VulkanAdapter::checkAvailableDeviceExtensions()
                                     "VK_KHR_maintenance3",
                                     "VK_KHR_shader_float_controls"}));
     m_supportedDeviceExtensions.push_back(std::make_tuple(LayerFeatureFlag_MeshShading, 
-        std::vector<const char*>{   R_MESH_SHADER_EXTENSION, 
+        std::vector<const char*>{   
+#ifdef VK_NV_mesh_shader
+                                    VK_NV_MESH_SHADER_EXTENSION_NAME,
+#endif
+#ifdef VK_EXT_mesh_shader
+                                    VK_EXT_MESH_SHADER_EXTENSION_NAME,
+#endif
                                     "VK_KHR_spirv_1_4",
                                     "VK_KHR_shader_float_controls"}));
     m_supportedDeviceExtensions.push_back(std::make_tuple(LayerFeatureFlag_SamplerFeedback,

@@ -52,13 +52,11 @@ extern PFN_vkCmdBeginDebugUtilsLabelEXT    pfn_vkCmdBeginDebugUtilsLabelEXT;
 extern PFN_vkCmdEndDebugUtilsLabelEXT      pfn_vkCmdEndDebugUtilsLabelEXT;
 
 #if defined(VK_NV_mesh_shader)
-#define R_MESH_SHADER_EXTENSION            VK_NV_MESH_SHADER_EXTENSION_NAME
 extern PFN_vkCmdDrawMeshTasksNV            pfn_vkCmdDrawMeshTasksNV;
 extern PFN_vkCmdDrawMeshTasksIndirectNV    pfn_vkCmdDrawMeshTasksIndirectNV;
 #endif
 
 #if defined(VK_EXT_mesh_shader)
-#define R_MESH_SHADER_EXTENSION            VK_EXT_MESH_SHADER_EXTENSION_NAME
 extern PFN_vkCmdDrawMeshTasksEXT           pfn_vkCmdDrawMeshTasksEXT;
 extern PFN_vkCmdDrawMeshTasksIndirectEXT   pfn_vkCmdDrawMeshTasksIndirectEXT;
 #endif
