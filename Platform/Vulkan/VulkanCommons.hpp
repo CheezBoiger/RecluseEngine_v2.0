@@ -227,51 +227,8 @@ struct PhysicalDeviceFeaturesInfo
 #endif
     VkPhysicalDeviceFeatures2               features2;
 
-    PhysicalDeviceFeaturesInfo()
-        : features2({VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2})
-    {
-
-        hostQueryResetFeatures = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES};
-
-        push(hostQueryResetFeatures);
-
-#ifdef VK_EXT_mesh_shader
-        meshShaderFeaturesEXT = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT};
-        push(meshShaderFeaturesEXT); 
-#endif
-#ifdef VK_NV_mesh_shader
-        meshShaderFeaturesNV = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_NV};
-        push(meshShaderFeaturesNV);
-#endif
-        //features2.pNext = &hostQueryResetFeatures;
-    }
-
-    PhysicalDeviceFeaturesInfo(const PhysicalDeviceFeaturesInfo& info)
-    {
-        features2 = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
-        hostQueryResetFeatures = info.hostQueryResetFeatures;
-
-#ifdef VK_EXT_mesh_shader
-        meshShaderFeaturesEXT = info.meshShaderFeaturesEXT;
-#endif
-
-#ifdef VK_NV_mesh_shader
-        meshShaderFeaturesNV = info.meshShaderFeaturesNV;
-#endif
-
-        features2.features = info.features2.features;
-
-        push(hostQueryResetFeatures);
-
-#ifdef VK_EXT_mesh_shader
-        push(meshShaderFeaturesEXT);
-#endif
-
-#ifdef VK_NV_mesh_shader
-        push(meshShaderFeaturesNV);
-#endif
-        //features2.pNext = &hostQueryResetFeatures;
-    }
+    PhysicalDeviceFeaturesInfo();
+    PhysicalDeviceFeaturesInfo(const PhysicalDeviceFeaturesInfo&);
 
     template<typename Feature>
     void push(Feature& f)
