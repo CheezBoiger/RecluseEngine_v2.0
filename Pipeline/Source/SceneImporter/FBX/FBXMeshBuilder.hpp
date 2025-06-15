@@ -25,7 +25,7 @@ public:
     ~FbxMeshBuilder() { }
 
 
-    ResultCode                      build(Builder::Importer* importer, MeshBuilderFlags flags) override;
+    ResultCode                      onBuild(Builder::Importer* importer, MeshBuilderFlags flags) override;
     ResultCode                      serialize(Archive* archive) const override;
     ResultCode                      deserialize(Archive* archive) override;
 

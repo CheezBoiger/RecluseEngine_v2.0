@@ -84,7 +84,7 @@ MeshBuffer createFbxModel()
     Pipeline::Builder::Importer* importer = Pipeline::Builder::Importer::create(Pipeline::Builder::FileFormat_FBX);
     if (importer)
     {
-        Pipeline::Builder::MeshBuilder* meshBuilder = Pipeline::Builder::MeshBuilder::create(Pipeline::Builder::FileFormat_FBX);
+        Pipeline::Builder::MeshBuilder* meshBuilder = Pipeline::Builder::MeshBuilder::create(importer->getFormat());
         if (meshBuilder)
         {
             ResultCode result = importer->importFile(//Filesystem::getDirectoryFromPath(__FILE__) + "/box_tri.fbx");

@@ -17,6 +17,13 @@ namespace Recluse {
 namespace Pipeline {
 namespace Builder {
 
+struct MeshletMetadata
+{
+    U32 maxVerticesPerMeshlet;
+    U32 maxPrimitivesPerMeshlet;
+    F32 coneWeight;
+};
+
 
 // Mesh Builder helps in building out meshes and materials,
 // and holds that data for use later.
@@ -31,14 +38,44 @@ public:
         Simplify            = (1<<2),
         Optimize_Aggressive = (1<<3),
 
+        // Generate meshlets for clustered rendering.
+        GenerateMeshlets    = (1<<4),
+
         // Triangulate the mesh, if there are polygons that are more than 3 vertices.
         Triangulate = (1<<3)
     };
     typedef U32 MeshBuilderFlags;
 
+    static const U32 kDefaultVerticesPerMeshlet = 64;
+    static const U32 kDefaultPrimitivesPerMeshlet = 128;
+
+    // Info for constructed meshlet.
+    struct Meshlet
+    {
+        U32                 vertexCount;
+        U32                 vertexOffset;
+        
+        U32                 primCount;
+        U32                 primOffset;
+
+        Math::BoundsSphere  bounds;
+        
+        Math::Float3        coneApex;
+        Math::Float3        coneAxis;
+        F32                 coneCutoff;
+    };
+
     // Mesh information.
     struct MeshData
     {
+        enum 
+        { 
+            None = 0, 
+            Indexed = (1 << 0), 
+            Rigid = (1 << 1), 
+            Skinned = (1 << 2) 
+        };
+        typedef U32 MeshAttributeFlags;
         // Name of the mesh.
         std::string                             name;
         // Id of this mesh.
@@ -59,11 +96,18 @@ public:
 
         // For animation data. If the mesh has bone information
         i32                                     boneId;
+        MeshAttributeFlags                      flags;
 
         // Vertex indices, if the mesh is indexed.
         std::vector<U32>                        vertexIndices;
 
         std::vector<Material*>                  materials;
+
+        // Resize the mesh data attributes.
+        void resizeAttributes(U32 newSize);
+
+        // Resize the indices.
+        void resizeIndices(U32 newSize);
     };
     
     struct BoneData
@@ -72,17 +116,24 @@ public:
         std::vector<Math::UInt4>                boneIndices;
     };
 
+    struct MeshletData
+    {
+        std::vector<Meshlet>                    meshlets;
+        std::vector<U32>                        primitives;
+        std::vector<U32>                        vertices;
+    };
+
     // Create the mesh builder.
     static MeshBuilder*         create(FileFormat format);
 
     // Destroy the mesh builder.
     static ResultCode           destroy(MeshBuilder* builder);
 
-                                MeshBuilder(FileFormat fileFormat, const char* ext) : m_fileFormat(fileFormat), m_ext(ext) { }
+                                MeshBuilder(FileFormat fileFormat, const char* ext);
 
     virtual                     ~MeshBuilder() { }
 
-    virtual ResultCode          build(Importer* importer, MeshBuilderFlags flags) = 0;
+    ResultCode                  build(Importer* importer, MeshBuilderFlags flags);
 
     virtual ResultCode          serialize(Archive* archive) const override { return RecluseResult_NoImpl; }
     virtual ResultCode          deserialize(Archive* archive) override { return RecluseResult_NoImpl; }
@@ -101,30 +152,47 @@ public:
     MeshData*                   getAll() { return m_data.data(); }
 
     // Obtain the bone data with a mesh id.
-    BoneData*                   getBoneData(i32 meshId) { auto it = m_boneMap.find(meshId); if (it != m_boneMap.end()) return &it->second; }
+    BoneData*                   getBoneData(const RGUID& meshId) { auto it = m_boneMap.find(meshId); return (it != m_boneMap.end()) ? &it->second : nullptr; }
+    MeshletData*                getMeshletData(const RGUID& meshId) { auto it = m_meshletMap.find(meshId); return (it != m_meshletMap.end()) ? &it->second : nullptr; }
 
     // File format.
     FileFormat                  getFileFormat() const { return m_fileFormat; }
     // Get extension.
     const char*                 getExtension() const { return m_ext; }
 
+    void                        setMeshletMetadata(const MeshletMetadata& metadata) { m_meshletMetadata = metadata; }
+    MeshletMetadata             getMeshletMetadata() const { return m_meshletMetadata; }
+
 protected:
+
+    virtual ResultCode          onBuild(Importer* importer, MeshBuilderFlags flags) = 0;
+
     struct MeshDataInfo
     {
         u32 index;
     };
+
     std::map<RGUID, MeshDataInfo, RGUID::Less>          m_dataMap;
-    std::map<i32, BoneData>                             m_boneMap;
+    std::map<RGUID, BoneData, RGUID::Less>              m_boneMap;
+    std::map<RGUID, MeshletData, RGUID::Less>           m_meshletMap;
+
+    // The actual meshes.
     std::vector<MeshBuilder::MeshData>                  m_data;
 
     // Simplify the mesh when possible.
-    void                        performSimplify();
+    void                        performSimplify(MeshData& meshData);
     // Optimize the mesh where possible.
-    void                        performOptimize();
+    void                        performOptimize(MeshData& meshData);
+    // Quantize the mesh when possible.
+    void                        performQuantize(MeshData& meshData);
+
+    void                        generateMeshlets(MeshData& meshData);
 
 private:
-    FileFormat  m_fileFormat;
-    const char* m_ext;
+    FileFormat      m_fileFormat;
+    const char*     m_ext;
+
+    MeshletMetadata m_meshletMetadata;
 };
 } // Builder
 } // Pipeline

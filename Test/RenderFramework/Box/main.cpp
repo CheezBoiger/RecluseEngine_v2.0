@@ -91,7 +91,7 @@ MeshBuffer createFbxModel()
                 Filesystem::getDirectoryFromPath(__FILE__) + "/bunny.fbx");
             R_ASSERT_FORMAT(result == RecluseResult_Ok, "Testing cats");
 
-            result = meshBuilder->build(importer, 0);
+            result = meshBuilder->build(importer, Pipeline::Builder::MeshBuilder::Optimize | Pipeline::Builder::MeshBuilder::GenerateMeshlets);
             R_ASSERT_FORMAT(result == RecluseResult_Ok);
 
             Pipeline::Builder::MeshBuilder::MeshData* meshData = meshBuilder->getData(0);
@@ -530,7 +530,7 @@ int main(char* argv[], int c)
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
+    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 

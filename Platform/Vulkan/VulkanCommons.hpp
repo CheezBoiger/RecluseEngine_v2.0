@@ -188,13 +188,13 @@ static VkAccessFlags getDesiredHostMemoryUsageAccess(Recluse::ResourceMemoryUsag
 }
 
 
-static U32 unpackVulkanBinding(ShaderBind setBinding)
+static constexpr U32 unpackVulkanBinding(ShaderBind setBinding)
 {
     return (setBinding & 0x0000ffff);
 }
 
 
-static U32 unpackVulkanSet(ShaderBind setBinding)
+static constexpr U32 unpackVulkanSet(ShaderBind setBinding)
 {
     return (setBinding & 0xffff0000);
 }
@@ -229,6 +229,8 @@ struct PhysicalDeviceFeaturesInfo
 
     PhysicalDeviceFeaturesInfo();
     PhysicalDeviceFeaturesInfo(const PhysicalDeviceFeaturesInfo&);
+
+private:
 
     template<typename Feature>
     void push(Feature& f)

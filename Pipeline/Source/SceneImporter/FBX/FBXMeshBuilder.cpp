@@ -28,7 +28,7 @@ ResultCode FbxMeshBuilder::destroy(Builder::MeshBuilder* meshBuilder)
 }
 
 
-ResultCode FbxMeshBuilder::build(Builder::Importer* importer, MeshBuilderFlags flags)
+ResultCode FbxMeshBuilder::onBuild(Builder::Importer* importer, MeshBuilderFlags flags)
 {
     R_ASSERT_FORMAT(importer, "Importer is nullptr!");
     R_ASSERT_FORMAT(importer->getFormat() == Builder::FileFormat_FBX, "Importer is not using Fbx format handle!!!");
@@ -63,6 +63,10 @@ ResultCode FbxMeshBuilder::build(Builder::Importer* importer, MeshBuilderFlags f
         meshData.normals.resize(meshNode->GetControlPointsCount());
         meshData.uvs.resize(meshNode->GetControlPointsCount());
         meshData.vertexIndices.resize(meshNode->GetPolygonVertexCount());
+
+        // Make it indexed.
+        if (meshNode->GetPolygonVertexCount() > 0)
+            meshData.flags |= MeshData::Indexed;
 
         // Insert this node into the nodeGuids structure.
         nodeGuids.insert(std::make_pair(node, meshData.guid));
@@ -211,14 +215,6 @@ ResultCode FbxMeshBuilder::build(Builder::Importer* importer, MeshBuilderFlags f
     }});
     // Traverse the scene, and build our mesh nodes.
     ResultCode result = fbximporter->traverseScene(fbximporter->getRootNode(), processes);
-
-    // Optimize if flagged as such.
-    if (flags & Optimize)
-        performOptimize();
-
-    // Simplify is flagged as such.
-    if (flags & Simplify)
-        performSimplify();
 
     return result;
 }

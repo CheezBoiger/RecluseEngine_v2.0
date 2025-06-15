@@ -323,6 +323,30 @@ ResultCode D3D12TemporaryResourceAllocator::clear()
 }
 
 
+ResultCode D3D12TemporaryResourceAllocator::release()
+{
+    R_ASSERT(m_pDevice != NULL);
+    
+    for (auto& allocatorList : m_pagedAllocators)
+    {
+        for (auto& allocatorIt : allocatorList.second)
+        {
+            allocatorIt->release();
+        }
+    }
 
+    m_pagedAllocators.clear();
+
+    return RecluseResult_Ok;
+}
+
+
+ResultCode D3D12TemporaryResourceAllocator::allocate(D3D12MemoryObject* pOut, const D3D12_RESOURCE_DESC& desc, ResourceMemoryUsage usage, D3D12_RESOURCE_STATES initialState)
+{
+    D3D12_RESOURCE_ALLOCATION_INFO allocInfo = m_pDevice->GetResourceAllocationInfo(0, 1, &desc);
+    
+
+    return RecluseResult_Ok;
+}
 } // D3D12
 } // Recluse
