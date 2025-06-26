@@ -202,6 +202,7 @@ public:
     // Upload cpu handles to the shader visible descriptor heaps. This must be called when 
     // we have already uploaded to cpu staging descriptor heaps, before submitting the commandlist to the gpu.
     ShaderVisibleDescriptorTable    upload(ID3D12Device* pDevice, GpuHeapType type, const CpuDescriptorTable& table);
+    D3D12_GPU_DESCRIPTOR_HANDLE     upload(ID3D12Device* pDevice, GpuHeapType type, const D3D12_CPU_DESCRIPTOR_HANDLE& handle);
 
     // Update this instance.
     void                            update(DescriptorHeapUpdateFlags updateFlags);
@@ -260,14 +261,14 @@ public:
     ResultCode                                              freeDescriptorTable(CpuHeapType heapType, const CpuDescriptorTable& table);
 
     // Individual persistant descriptors creation.
-    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateShaderResourceView(ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& desc);
+    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateShaderResourceView(ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& desc, bool temporary = false);
 
     // Constant buffer views just take the gpu address as the resource.
-    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateConstantBufferView(const D3D12_CONSTANT_BUFFER_VIEW_DESC& desc);
-    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateUnorderedAccessView(ID3D12Resource* pResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc);
-    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateRenderTargetView(ID3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC& desc);
-    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateDepthStencilView(ID3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& desc);
-    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateSampler(const D3D12_SAMPLER_DESC& desc);
+    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateConstantBufferView(const D3D12_CONSTANT_BUFFER_VIEW_DESC& desc, bool temporary = false);
+    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateUnorderedAccessView(ID3D12Resource* pResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc, bool temporary = false);
+    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateRenderTargetView(ID3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC& desc, bool temporary = false);
+    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateDepthStencilView(ID3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& desc, bool temporary = false);
+    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateSampler(const D3D12_SAMPLER_DESC& desc, bool temporary = false);
     D3D12_CPU_DESCRIPTOR_HANDLE                             nullRtvDescriptor() const { return m_nullRtvDescriptor; }
     D3D12_CPU_DESCRIPTOR_HANDLE                             nullSrvDescriptor() const { return m_nullSrvDescriptor; }
     D3D12_CPU_DESCRIPTOR_HANDLE                             nullUavDescriptor() const { return m_nullUavDescriptor; }
@@ -282,7 +283,7 @@ public:
     ResultCode                                              freeDepthStencilView(D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
 
 private:
-    CpuDescriptorTable                                      internalAllocate(CpuHeapType heapType, U32 numDescriptors);
+    CpuDescriptorTable                                      internalAllocate(CpuHeapType heapType, U32 numDescriptors, bool temporary = false);
     CpuDescriptorHeap*                                      createNewCpuDescriptorTableHeap(CpuHeapType type);
     CpuDescriptorHeap*                                      getCurrentTableHeap(CpuHeapType type, U32 requestCount);
     CpuDescriptorHeap*                                      getCurrentHeap(CpuHeapType type, U32 requestCount);

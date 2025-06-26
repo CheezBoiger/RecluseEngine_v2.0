@@ -9,7 +9,9 @@
 
 namespace Recluse {
 namespace D3D12 {
+
 const U64 D3D12ResourceAllocationManager::kAllocationPageSizeBytes = R_MB(64);
+const U64 D3D12TemporaryBufferAllocator::kTemporaryAllocationPageSizeBytes = R_MB(64);
 
 
 template<typename AllocationContext>
@@ -31,23 +33,23 @@ ResultCode D3D12ResourcePagedAllocator<AllocationContext>::initialize(ID3D12Devi
 
     switch (usage)
     {
-    case ResourceMemoryUsage_CpuVisible:
-        heapType        = D3D12_HEAP_TYPE_UPLOAD;
-        cpuPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-        break;
-    case ResourceMemoryUsage_CpuToGpu:
-        heapType        = D3D12_HEAP_TYPE_UPLOAD;
-        cpuPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-        break;
-    case ResourceMemoryUsage_GpuToCpu:
-        heapType        = D3D12_HEAP_TYPE_READBACK;
-        cpuPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-        break;
-    case ResourceMemoryUsage_GpuOnly:
-    default:
-        heapType        = D3D12_HEAP_TYPE_DEFAULT;
-        cpuPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-        break;
+        case ResourceMemoryUsage_CpuVisible:
+            heapType        = D3D12_HEAP_TYPE_UPLOAD;
+            cpuPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+            break;
+        case ResourceMemoryUsage_CpuToGpu:
+            heapType        = D3D12_HEAP_TYPE_UPLOAD;
+            cpuPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+            break;
+        case ResourceMemoryUsage_GpuToCpu:
+            heapType        = D3D12_HEAP_TYPE_READBACK;
+            cpuPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+            break;
+        case ResourceMemoryUsage_GpuOnly:
+        default:
+            heapType        = D3D12_HEAP_TYPE_DEFAULT;
+            cpuPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+            break;
     }
     
     D3D12_HEAP_DESC heapDesc                = { };
@@ -301,29 +303,30 @@ ResultCode D3D12ResourceAllocationManager::release()
 }
 
 
-ResultCode D3D12TemporaryResourceAllocator::initialize(ID3D12Device* device)
+ResultCode D3D12TemporaryBufferAllocator::initialize(ID3D12Device* device)
 {
     m_pDevice = device;
-    
+    m_cs.initialize();
+
     return RecluseResult_Ok;
 }
 
 
 
-ResultCode D3D12TemporaryResourceAllocator::clear()
+ResultCode D3D12TemporaryBufferAllocator::clear()
 {
     for (auto& it : m_pagedAllocators)
     {
         for (auto& allocator : it.second)
         {
-            allocator->clear();
+            allocator.allocator.reset();
         } 
     }
     return RecluseResult_Ok;
 }
 
 
-ResultCode D3D12TemporaryResourceAllocator::release()
+ResultCode D3D12TemporaryBufferAllocator::release()
 {
     R_ASSERT(m_pDevice != NULL);
     
@@ -331,7 +334,7 @@ ResultCode D3D12TemporaryResourceAllocator::release()
     {
         for (auto& allocatorIt : allocatorList.second)
         {
-            allocatorIt->release();
+            allocatorIt.release();
         }
     }
 
@@ -341,12 +344,39 @@ ResultCode D3D12TemporaryResourceAllocator::release()
 }
 
 
-ResultCode D3D12TemporaryResourceAllocator::allocate(D3D12MemoryObject* pOut, const D3D12_RESOURCE_DESC& desc, ResourceMemoryUsage usage, D3D12_RESOURCE_STATES initialState)
+ResultCode D3D12TemporaryBufferAllocator::allocate(D3D12MemoryObject* pOut, ResourceMemoryUsage usage, U32 cbSizeBytes)
 {
-    D3D12_RESOURCE_ALLOCATION_INFO allocInfo = m_pDevice->GetResourceAllocationInfo(0, 1, &desc);
-    
+    std::vector<BufferAllocatorContext>& allocators = m_pagedAllocators[usage];
+    if (allocators.empty())
+    {
+        allocators.push_back(BufferAllocatorContext(m_pDevice, usage, kTemporaryAllocationPageSizeBytes, allocators.size() + 1));
+    }
 
-    return RecluseResult_Ok;
+    BufferAllocatorContext& context = allocators.back();
+    UPtr addressOffset = context.allocator.allocate(cbSizeBytes, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+    ResultCode result = context.allocator.getLastError();
+    if (result == RecluseResult_OutOfMemory)
+    {
+        // Need to create a new page allocator.
+        allocators.push_back(BufferAllocatorContext(m_pDevice, usage, kTemporaryAllocationPageSizeBytes, allocators.size() + 1));
+        context = allocators.back();
+        addressOffset = context.allocator.allocate(cbSizeBytes, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+        result = context.allocator.getLastError();
+        if (result != RecluseResult_Ok)
+            R_ERROR(R_CHANNEL_D3D12, "Failed to allocate!!");
+    }
+
+    if (result == RecluseResult_Ok)
+    {
+        // We don't need to create a placed resource, just pass the whole id3d12 resource.
+            pOut->basePtr           = addressOffset;
+            pOut->sizeInBytes       = align(cbSizeBytes, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+            pOut->allocatorIndex    = 0;
+            pOut->usage             = usage;
+            pOut->pResource         = context.baseResource;
+    }
+
+    return result;
 }
 } // D3D12
 } // Recluse

@@ -99,25 +99,25 @@
                 } while (0)
         #else
             // TODO: For anything other than windows, we still need to improve this.
-            #define R_ASSERT(expression) assert(expression)
-            #define R_ASSERT_FORMAT(expression, msg, ...) do { char err[512]; sprintf(err, #msg, __VA_ARGS__); assert(expression && err); } while (0)
-            #define R_STATIC_ASSERT(expression)
-            #define R_STATIC_ASSERT_FORMAT(expression, fmt, ...)
+            #define R_ASSERT(expression) assert(expression)         do { } while (0)
+            #define R_ASSERT_FORMAT(expression, msg, ...)           do { char err[512]; sprintf(err, #msg, __VA_ARGS__); assert(expression && err); } while (0)
+            #define R_STATIC_ASSERT(expression)                     do { } while (0)
+            #define R_STATIC_ASSERT_FORMAT(expression, fmt, ...)    do { } while(0)
         #endif
     #else
-        #undef R_DEBUG_BREAK()
-        #define R_DEBUG_BREAK()
-        #define R_ASSERT(expression)
-        #define R_ASSERT_FORMAT(expression, msg, ...)
+        #undef R_DEBUG_BREAK() do { } while (0)
+        #define R_DEBUG_BREAK() do { } while (0)
+        #define R_ASSERT(expression) do { } while (0)
+        #define R_ASSERT_FORMAT(expression, msg, ...) do { } while (0)
     #endif // !defined(R_IGNORE_ASSERT)
     #define R_DEBUG_WRAP(cond) cond
 #else
-    #define R_ASSERT_LOG()
-    #define R_ASSERT(expression)
-    #define R_ASSERT_FORMAT(expression, msg, ...)
-    #define R_STATIC_ASSERT(expression)
-    #define R_STATIC_ASSERT_FORMAT(expression, fmt, ...)
-    #define R_DEBUG_WRAP(cond)
+    #define R_ASSERT_LOG() do { } while (0)
+    #define R_ASSERT(expression) do { } while (0)
+    #define R_ASSERT_FORMAT(expression, msg, ...) do { } while (0)
+    #define R_STATIC_ASSERT(expression) do { } while (0)
+    #define R_STATIC_ASSERT_FORMAT(expression, fmt, ...) do { } while (0)
+    #define R_DEBUG_WRAP(cond) do { } while (0)
 #endif
 
 #if defined(RECLUSE_DEVELOPER) || defined(RECLUSE_DEBUG)

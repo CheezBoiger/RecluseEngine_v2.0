@@ -10,6 +10,137 @@ namespace Pipeline {
 namespace Builder {
 
 
+struct RigidVertex
+{
+    Math::Float3 position;
+    Math::Float3 normal;
+    Math::Float4 uvs;
+    Math::Float3 binormal;
+    Math::Float3 tangent;
+};
+
+
+class RigidVertexEncoder
+{
+public:
+    std::vector<RigidVertex> operator()(MeshBuilder& builder, const MeshBuilder::MeshData& meshData)
+    {
+        std::vector<RigidVertex> dest(meshData.positions.size());
+        for (U32 i = 0; i < dest.size(); ++i)
+        {
+            RigidVertex v{};
+            v.position  = meshData.positions[i];
+            v.normal    = meshData.normals[i];
+            v.uvs       = meshData.uvs[i];
+            v.binormal  = meshData.binormals[i];
+            v.tangent   = meshData.tangents[i];
+            dest[i] = v;
+        }
+        return dest;
+    }
+};
+
+
+class RigidVertexDecoder
+{
+public:
+    bool operator()(MeshBuilder& builder, MeshBuilder::MeshData& meshData, const std::vector<RigidVertex>& srcVertices, const std::vector<U32>& srcIndices)
+    {
+        // Final values should reinitialize the meshData.
+        meshData.resizeAttributes(srcVertices.size());
+        meshData.resizeIndices(srcIndices.size());
+    
+        for (U32 i = 0; i < srcVertices.size(); ++i)
+        {
+            meshData.positions[i]   = srcVertices[i].position;
+            meshData.normals[i]     = srcVertices[i].normal;
+            meshData.uvs[i]         = srcVertices[i].uvs;
+            meshData.binormals[i]   = srcVertices[i].binormal;
+            meshData.tangents[i]    = srcVertices[i].tangent;
+        }
+
+        for (U32 i = 0; i < srcIndices.size(); ++i)
+        {
+            meshData.vertexIndices[i] = srcIndices[i];
+        }
+
+        return true;
+    }
+};
+
+
+struct SkinnedVertex
+{
+    Math::Float3 position;
+    Math::Float3 normal;
+    Math::Float4 uvs;
+    Math::Float3 binormal;
+    Math::Float3 tangent;
+    Math::Float4 boneWeight;
+    Math::UInt4  boneIndices;
+};
+
+
+class SkinnedVertexEncoder
+{
+public:
+    std::vector<SkinnedVertex> operator()(MeshBuilder& builder, const MeshBuilder::MeshData& meshData)
+    {
+        std::vector<SkinnedVertex> dest(meshData.positions.size());
+        MeshBuilder::BoneData* boneData = builder.getBoneData(meshData.boneId);
+
+        R_ASSERT(boneData);
+
+        for (U32 i = 0; i < dest.size(); ++i)
+        {
+            SkinnedVertex v{};
+            v.position  = meshData.positions[i];
+            v.normal    = meshData.normals[i];
+            v.uvs       = meshData.uvs[i];
+            v.binormal  = meshData.binormals[i];
+            v.tangent   = meshData.tangents[i];
+            v.boneWeight = boneData->boneWeights[i];
+            v.boneIndices = boneData->boneIndices[i]; 
+            dest[i] = v;
+        }
+        return dest;
+    }
+};
+
+
+class SkinnedVertexDecoder
+{
+public:
+    bool operator()(MeshBuilder& builder, MeshBuilder::MeshData& meshData, const std::vector<SkinnedVertex>& srcVertices, const std::vector<U32>& srcIndices)
+    {
+        // Final values should reinitialize the meshData.
+        meshData.resizeAttributes(srcVertices.size());
+        meshData.resizeIndices(srcIndices.size());
+        
+        MeshBuilder::BoneData* boneData = builder.getBoneData(meshData.boneId);
+        R_ASSERT(boneData);
+    
+        for (U32 i = 0; i < srcVertices.size(); ++i)
+        {
+            meshData.positions[i]   = srcVertices[i].position;
+            meshData.normals[i]     = srcVertices[i].normal;
+            meshData.uvs[i]         = srcVertices[i].uvs;
+            meshData.binormals[i]   = srcVertices[i].binormal;
+            meshData.tangents[i]    = srcVertices[i].tangent;
+            boneData->boneWeights[i] = srcVertices[i].boneWeight;
+            boneData->boneIndices[i] = srcVertices[i].boneIndices;
+        }
+
+        for (U32 i = 0; i < srcIndices.size(); ++i)
+        {
+            meshData.vertexIndices[i] = srcIndices[i];
+        }
+
+        return true;
+    }
+};
+
+
 void MeshBuilder::MeshData::resizeAttributes(U32 newSize)
 {
     positions.resize(newSize);
@@ -23,6 +154,13 @@ void MeshBuilder::MeshData::resizeAttributes(U32 newSize)
 void MeshBuilder::MeshData::resizeIndices(U32 newSize)
 {
     vertexIndices.resize(newSize);
+}
+
+
+void MeshBuilder::BoneData::resize(U32 newSize)
+{
+    boneWeights.resize(newSize);
+    boneIndices.resize(newSize);
 }
 
 
@@ -86,6 +224,7 @@ void MeshBuilder::performQuantize(MeshData& meshData)
 }
 
 
+template<typename Vertex, typename VertexEncoder, typename VertexDecoder>
 void MeshBuilder::performOptimize(MeshData& meshData)
 {
     R_INFO("Mesh Builder", "Optimizing mesh...");
@@ -95,22 +234,10 @@ void MeshBuilder::performOptimize(MeshData& meshData)
 
     std::vector<U32> remap(unindexedVertexCount);
 
-    struct Vertex {
-        Math::Float3 position;
-        Math::Float3 normal;
-        Math::Float4 uvs;
-    };
+    VertexEncoder encoder;
+    VertexDecoder decoder;
 
-    std::vector<Vertex> unindexedVertices(meshData.positions.size());
-    
-    for (U32 i = 0; i < unindexedVertices.size(); ++i)
-    {
-        Vertex v{};
-        v.position  = meshData.positions[i];
-        v.normal    = meshData.normals[i];
-        v.uvs       = meshData.uvs[i];
-        unindexedVertices[i] = v;
-    }
+    std::vector<Vertex> unindexedVertices = encoder(*this, meshData);
     
     // Start with the indexing.
     size_t vertexCount = meshopt_generateVertexRemap(remap.data(), inputIndices, indexCount, unindexedVertices.data(), unindexedVertexCount, sizeof(Vertex));
@@ -131,20 +258,8 @@ void MeshBuilder::performOptimize(MeshData& meshData)
     meshopt_optimizeVertexFetch(optimizedVertices.data(), optimizedIndices.data(), indexCount, optimizedVertices.data(), vertexCount, sizeof(Vertex));
 
     // Final values should reinitialize the meshData.
-    meshData.resizeAttributes(vertexCount);
-    meshData.resizeIndices(indexCount);
-    
-    for (U32 i = 0; i < vertexCount; ++i)
-    {
-        meshData.positions[i]   = optimizedVertices[i].position;
-        meshData.normals[i]     = optimizedVertices[i].normal;
-        meshData.uvs[i]         = optimizedVertices[i].uvs;
-    }
+    decoder(*this, meshData, optimizedVertices, optimizedIndices);
 
-    for (U32 i = 0; i < indexCount; ++i)
-    {
-        meshData.vertexIndices[i] = optimizedIndices[i];
-    }
     R_INFO("Mesh Builder", "Mesh optimization complete!");
 }
 
@@ -158,7 +273,12 @@ ResultCode MeshBuilder::build(Importer* importer, MeshBuilderFlags flags)
         {
             for (auto& meshData : m_data)
             {
-                performOptimize(meshData);
+                if (meshData.flags & MeshData::Skinned)
+                    performOptimize<SkinnedVertex, SkinnedVertexEncoder, SkinnedVertexDecoder>(meshData);
+                else
+                {
+                    performOptimize<RigidVertex, RigidVertexEncoder, RigidVertexDecoder>(meshData);
+                }
             }
         }
 

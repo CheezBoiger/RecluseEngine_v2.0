@@ -28,10 +28,11 @@ class D3D12Device;
 // frame that can be worked on by the host cpu, will be signaled by the fence value, and allocated command list.
 struct ContextFrame 
 {
-    ID3D12CommandAllocator* pAllocator;
-    U64                     fenceValue;
-    D3D12QueryManager       timestampQuery;
-    D3D12QueryManager       occlusionQuery;
+    ID3D12CommandAllocator*         pAllocator;
+    U64                             fenceValue;
+    D3D12QueryManager               timestampQuery;
+    D3D12QueryManager               occlusionQuery;
+    D3D12TemporaryBufferAllocator   temporaryBufferAllocator;
 };
 
 
@@ -112,7 +113,8 @@ public:
 
     const std::vector<ContextFrame>&    getContextFrames() const { return m_contextFrames; }
     void                                resetCurrentResources();
-   
+
+    ResourceView                        allocateConstantBuffer(U32 cbSizeBytes, void* cbInputData) override;   
 
     void                                clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) override;
     void                                clearDepthStencil(ClearFlags clearFlags, F32 clearDepth, U8 clearStencil, const Rect& rect) override;

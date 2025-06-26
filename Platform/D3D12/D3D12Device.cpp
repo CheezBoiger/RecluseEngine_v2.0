@@ -483,6 +483,8 @@ void D3D12Context::resetCurrentResources()
     // Reset the timestamp query.
     buffer.timestampQuery.reset();
     buffer.occlusionQuery.reset();
+    
+    buffer.temporaryBufferAllocator.clear();
 
     result = buffer.pAllocator->Reset();
 
@@ -561,6 +563,9 @@ void D3D12Context::initializeBufferResources(U32 buffering)
 
         m_contextFrames[i].timestampQuery.initialize(m_pDevice->get(), 0, D3D12_QUERY_HEAP_TYPE_TIMESTAMP, 128);
         m_contextFrames[i].occlusionQuery.initialize(m_pDevice->get(), 0, D3D12_QUERY_HEAP_TYPE_OCCLUSION, 128);
+
+        // Create the temporary allocation system.
+        m_contextFrames[i].temporaryBufferAllocator.initialize(m_pDevice->get());
     }
     m_contextFrames[m_currentContextFrameIndex].fenceValue = m_graphicsQueue->waitForGpu(m_contextFrames[m_currentContextFrameIndex].fenceValue);
 }
@@ -576,6 +581,7 @@ void D3D12Context::destroyBufferResources()
         {
             m_contextFrames[i].timestampQuery.release();
             m_contextFrames[i].occlusionQuery.release();
+            m_contextFrames[i].temporaryBufferAllocator.release();
             m_contextFrames[i].pAllocator->Reset();
             m_contextFrames[i].pAllocator->Release();
             m_contextFrames[i].pAllocator = nullptr;
@@ -880,6 +886,41 @@ void D3D12Device::destroyCommandSignatures()
     if (m_drawIndexedInstancedIndirectSignature) m_drawIndexedInstancedIndirectSignature->Release();
     if (m_drawInstancedIndirectSignature) m_drawInstancedIndirectSignature->Release();
     if (m_drawMeshIndirectSignature) m_drawMeshIndirectSignature->Release();
+}
+
+
+ResourceView D3D12Context::allocateConstantBuffer(U32 cbSizeBytes, void* cbInputData)
+{
+    ContextFrame* contextFrame = getCurrentContextFrame();
+    D3D12MemoryObject object{};
+    contextFrame->temporaryBufferAllocator.allocate(&object, ResourceMemoryUsage_CpuToGpu, cbSizeBytes);
+
+    D3D12_RANGE range{};
+    range.Begin = object.basePtr;
+    range.End = range.Begin + object.sizeInBytes;
+    void* ptr = nullptr;
+
+    HRESULT result = object.pResource->Map(0, &range, &ptr);
+    ptr = (void*)(((UPtr)ptr) + range.Begin);
+    R_ASSERT(SUCCEEDED(result));
+    if (cbInputData)
+        memcpy(ptr, cbInputData, cbSizeBytes);
+    else
+    {
+        R_WARN(R_CHANNEL_D3D12, "No input data for allocation of constant buffer, this will end up as default.");
+        memset(ptr, 0, sizeof(cbSizeBytes));
+    }
+    object.pResource->Unmap(0, &range);
+
+    DescriptorHeapAllocationManager* manager = m_pDevice->getDescriptorHeapManager();
+
+    D3D12_CONSTANT_BUFFER_VIEW_DESC desc{};
+    desc.BufferLocation = object.pResource->GetGPUVirtualAddress() + object.basePtr;
+    desc.SizeInBytes    = object.sizeInBytes;
+
+    D3D12_CPU_DESCRIPTOR_HANDLE handle = manager->allocateConstantBufferView(desc, true);
+
+    return { handle.ptr };
 }
 } // D3D12
 } // Recluse

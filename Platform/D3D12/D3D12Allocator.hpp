@@ -150,28 +150,93 @@ private:
 
 
 // temporary allocator used for temporary allocations!!
-class D3D12TemporaryResourceAllocator
+class D3D12TemporaryBufferAllocator
 {
 public:
+    static const U64 kTemporaryAllocationPageSizeBytes;
+
     ResultCode initialize(ID3D12Device* device);
     ResultCode release();
 
-    ResultCode allocate(D3D12MemoryObject* pOut,
-                    const D3D12_RESOURCE_DESC& desc,
-                    ResourceMemoryUsage usage,
-                    D3D12_RESOURCE_STATES initialState);
+    ResultCode allocate(D3D12MemoryObject* pOut, ResourceMemoryUsage usage, U32 cbSizeBytes);
 
     // Clear out the temporary resources. Starting fresh.
     ResultCode clear();
 
 private:
-    struct LinearAllocatorContext
+    struct LinearAllocationContext
     {
         Allocator* create() { return new LinearAllocator(); }
         void destroy(Allocator* allocator) { delete allocator; }
     };
+
+    struct BufferAllocatorContext
+    {
+        ID3D12Resource*                                                 baseResource;
+        LinearAllocator                                                 allocator;
+
+        BufferAllocatorContext(ID3D12Device* device, ResourceMemoryUsage usage, U64 sizeBytes, U32 allocatorIndex)
+        {
+            D3D12_RESOURCE_DESC resourceDesc    = { };
+
+            D3D12_HEAP_TYPE heapType                = D3D12_HEAP_TYPE_DEFAULT;
+            D3D12_CPU_PAGE_PROPERTY cpuPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+
+            switch (usage)
+            {
+                case ResourceMemoryUsage_CpuVisible:
+                    heapType        = D3D12_HEAP_TYPE_UPLOAD;
+                    cpuPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+                    break;
+                case ResourceMemoryUsage_CpuToGpu:
+                    heapType        = D3D12_HEAP_TYPE_UPLOAD;
+                    cpuPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+                    break;
+                case ResourceMemoryUsage_GpuToCpu:
+                    heapType        = D3D12_HEAP_TYPE_READBACK;
+                    cpuPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+                    break;
+                case ResourceMemoryUsage_GpuOnly:
+                default:
+                    heapType        = D3D12_HEAP_TYPE_DEFAULT;
+                    cpuPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+                    break;
+            }
+            D3D12_HEAP_PROPERTIES properties        = { };
+            properties.Type                = heapType;
+            properties.CPUPageProperty     = cpuPageProperty;
+            properties.CreationNodeMask    = 0;
+            properties.VisibleNodeMask     = 0;
+            properties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+
+            resourceDesc.Width = align(sizeBytes, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+            resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+            resourceDesc.Format = DXGI_FORMAT_UNKNOWN;
+            resourceDesc.MipLevels = 1;
+            resourceDesc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+            resourceDesc.SampleDesc = { 1, 0 };
+            resourceDesc.Height = 1;
+            resourceDesc.DepthOrArraySize = 1;
+            resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+            device->CreateCommittedResource(&properties, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr, __uuidof(ID3D12Resource), (void**)&baseResource);
+            allocator.initialize(0, sizeBytes);
+        }
+
+        ~BufferAllocatorContext()
+        {
+        }
+
+        void release()
+        {
+            if (baseResource)
+                baseResource->Release();
+            baseResource = nullptr;
+            allocator.cleanUp();
+        }
+    };
     ID3D12Device* m_pDevice;
-    std::map<ResourceMemoryUsage, std::vector<SmartPtr<D3D12ResourcePagedAllocator<LinearAllocatorContext>>>> m_pagedAllocators;
+    std::map<ResourceMemoryUsage, std::vector<BufferAllocatorContext>> m_pagedAllocators;
+    CriticalSection m_cs;
 };
 } // D3D12
 } // Recluse

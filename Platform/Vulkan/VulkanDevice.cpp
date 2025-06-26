@@ -1227,6 +1227,12 @@ void VulkanContext::VulkanShaderProgramBinder::obtainShaderProgramFromCache()
 }
 
 
+ResourceView VulkanContext::allocateConstantBuffer(U32 cbSizeBytes, void* dat)
+{
+    return {};
+}
+
+
 PFN_vkVoidFunction VulkanDevice::getProcAddr(const char* procName)
 {
     return (PFN_vkVoidFunction)vkGetDeviceProcAddr(get(), procName);

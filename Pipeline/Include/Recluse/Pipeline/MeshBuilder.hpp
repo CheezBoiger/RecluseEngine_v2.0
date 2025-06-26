@@ -40,11 +40,15 @@ public:
 
         // Generate meshlets for clustered rendering.
         GenerateMeshlets    = (1<<4),
+        
+        // Generate Level of Detail meshes. These are stored inside the meshdata map.
+        GenerateLods        = (1<<5),
 
         // Triangulate the mesh, if there are polygons that are more than 3 vertices.
         Triangulate = (1<<3)
     };
     typedef U32 MeshBuilderFlags;
+    typedef I32 BoneId;
 
     static const U32 kDefaultVerticesPerMeshlet = 64;
     static const U32 kDefaultPrimitivesPerMeshlet = 128;
@@ -76,6 +80,10 @@ public:
             Skinned = (1 << 2) 
         };
         typedef U32 MeshAttributeFlags;
+        
+        static const i32 kInvalidBoneId = ~0;
+        static const i32 kInvalidLodId  = ~0;
+
         // Name of the mesh.
         std::string                             name;
         // Id of this mesh.
@@ -95,8 +103,9 @@ public:
         std::vector<Math::Float3>               tangents;
 
         // For animation data. If the mesh has bone information
-        i32                                     boneId;
-        MeshAttributeFlags                      flags;
+        BoneId                                  boneId  = kInvalidBoneId;
+        i32                                     lodId   = kInvalidLodId;
+        MeshAttributeFlags                      flags   = None;
 
         // Vertex indices, if the mesh is indexed.
         std::vector<U32>                        vertexIndices;
@@ -114,6 +123,8 @@ public:
     {
         std::vector<Math::Float4>               boneWeights;
         std::vector<Math::UInt4>                boneIndices;
+
+        void resize(U32 newSize);
     };
 
     struct MeshletData
@@ -121,6 +132,11 @@ public:
         std::vector<Meshlet>                    meshlets;
         std::vector<U32>                        primitives;
         std::vector<U32>                        vertices;
+    };
+
+    struct LodData
+    {
+        std::vector<RGUID>                      lods;
     };
 
     // Create the mesh builder.
@@ -152,8 +168,9 @@ public:
     MeshData*                   getAll() { return m_data.data(); }
 
     // Obtain the bone data with a mesh id.
-    BoneData*                   getBoneData(const RGUID& meshId) { auto it = m_boneMap.find(meshId); return (it != m_boneMap.end()) ? &it->second : nullptr; }
+    BoneData*                   getBoneData(BoneId boneId) { auto it = m_boneMap.find(boneId); return (it != m_boneMap.end()) ? &it->second : nullptr; }
     MeshletData*                getMeshletData(const RGUID& meshId) { auto it = m_meshletMap.find(meshId); return (it != m_meshletMap.end()) ? &it->second : nullptr; }
+    LodData*                    getLodData(i32 lodId) { auto it = m_lodMap.find(lodId); return (it != m_lodMap.end()) ? &it->second : nullptr; }
 
     // File format.
     FileFormat                  getFileFormat() const { return m_fileFormat; }
@@ -173,7 +190,8 @@ protected:
     };
 
     std::map<RGUID, MeshDataInfo, RGUID::Less>          m_dataMap;
-    std::map<RGUID, BoneData, RGUID::Less>              m_boneMap;
+    std::map<BoneId, BoneData, RGUID::Less>             m_boneMap;
+    std::map<i32, LodData>                              m_lodMap;
     std::map<RGUID, MeshletData, RGUID::Less>           m_meshletMap;
 
     // The actual meshes.
@@ -182,6 +200,7 @@ protected:
     // Simplify the mesh when possible.
     void                        performSimplify(MeshData& meshData);
     // Optimize the mesh where possible.
+    template<typename Vertex, typename VertexEncoder, typename VertexDecoder>
     void                        performOptimize(MeshData& meshData);
     // Quantize the mesh when possible.
     void                        performQuantize(MeshData& meshData);

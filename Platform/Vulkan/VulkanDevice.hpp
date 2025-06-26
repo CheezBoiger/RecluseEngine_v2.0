@@ -113,6 +113,8 @@ public:
     U32                             obtainFrameCount() const override { return getFrameCount(); }
     DescriptorAllocatorInstance*    currentDescriptorAllocator();
 
+    ResourceView                    allocateConstantBuffer(U32 cbSizeBytes, void* dat) override;
+
     // Not recommended, but submits a copy to this queue, and waits until the command has 
     // completed.
     void                            copyResource(GraphicsResource* dst, GraphicsResource* src) override;

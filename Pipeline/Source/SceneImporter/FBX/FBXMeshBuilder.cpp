@@ -59,10 +59,8 @@ ResultCode FbxMeshBuilder::onBuild(Builder::Importer* importer, MeshBuilderFlags
         meshData.name       = meshNode->GetName();
         meshData.guid       = generateRGUID();
 
-        meshData.positions.resize(meshNode->GetControlPointsCount());
-        meshData.normals.resize(meshNode->GetControlPointsCount());
-        meshData.uvs.resize(meshNode->GetControlPointsCount());
-        meshData.vertexIndices.resize(meshNode->GetPolygonVertexCount());
+        meshData.resizeAttributes(meshNode->GetControlPointsCount());
+        meshData.resizeIndices(meshNode->GetPolygonVertexCount());
 
         // Make it indexed.
         if (meshNode->GetPolygonVertexCount() > 0)

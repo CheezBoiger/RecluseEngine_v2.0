@@ -439,7 +439,8 @@ void updateConstBuffer(IShaderProgramBinder& binder, GraphicsResource* resource,
     memcpy(dat, &buf, sizeof(ConstBuffer));
     resource->unmap(nullptr);
     //binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, resource, 0, sizeof(ConstBuffer));
-    binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, resource->asCbv(0, sizeof(ConstBuffer)));
+    ResourceView v = context->allocateConstantBuffer(sizeof(ConstBuffer), &buf);
+    binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, /*resource->asCbv(0, sizeof(ConstBuffer))*/ v);
 #else
     binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, resource, 0, sizeof(ConstBuffer), &buf);
 #endif
