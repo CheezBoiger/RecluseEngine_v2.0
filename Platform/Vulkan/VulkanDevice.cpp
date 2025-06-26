@@ -114,6 +114,9 @@ void VulkanContext::begin()
     m_primaryCommandList.reset();
     m_primaryCommandList.begin();
 
+    // Clear the temporary buffer.
+    contextFrame.temporaryBufferAllocator.clear();
+
     if (Vulkan::targetApiVersion < R_VULKAN_MAKE_API_VERSION(1, 2, 0))
     {
         contextFrame.timestampQuery.resetLegacy(m_primaryCommandList.get());
@@ -779,6 +782,9 @@ void VulkanContext::createContextFrames(U32 buffering)
 
         frame.timestampQuery.initialize(m_pDevice->get(), VK_QUERY_TYPE_TIMESTAMP, 128);
         frame.occlusionQuery.initialize(m_pDevice->get(), VK_QUERY_TYPE_OCCLUSION, 128);
+
+        frame.temporaryBufferAllocator.initialize(m_pDevice);
+
         m_frameResources[i] = frame;
     }
 }
@@ -794,6 +800,8 @@ void VulkanContext::destroyContextFrames()
 
         m_frameResources[i].timestampQuery.release(m_pDevice->get());
         m_frameResources[i].occlusionQuery.release(m_pDevice->get());
+
+        m_frameResources[i].temporaryBufferAllocator.release();
     }
     m_frameResources.clear();
 }
@@ -1210,6 +1218,22 @@ ResultCode VulkanDevice::destroySwapchain(GraphicsSwapchain* pSwapchain)
 }
 
 
+VkMemoryRequirements VulkanDevice::getBufferMemoryRequirements(VkBuffer buffer) const
+{
+    VkMemoryRequirements requirements{};
+    vkGetBufferMemoryRequirements(get(), buffer, &requirements);
+    return requirements;
+}
+
+
+VkMemoryRequirements VulkanDevice::getImageMemoryRequirements(VkImage image) const
+{
+    VkMemoryRequirements requirements{};
+    vkGetImageMemoryRequirements(get(), image, &requirements);
+    return requirements;
+}
+
+
 void VulkanContext::VulkanShaderProgramBinder::obtainShaderProgramFromCache()
 {
     cachedProgram = ShaderPrograms::obtainShaderProgram(getProgramId(), getPermutationId());
@@ -1229,7 +1253,18 @@ void VulkanContext::VulkanShaderProgramBinder::obtainShaderProgramFromCache()
 
 ResourceView VulkanContext::allocateConstantBuffer(U32 cbSizeBytes, void* dat)
 {
-    return {};
+    VulkanContextFrame& contextFrame = getContextFrame(getCurrentFrameIndex());
+    BufferTemporaryAllocator::Result block{};
+    contextFrame.temporaryBufferAllocator.allocate(&block, ResourceMemoryUsage_CpuToGpu, cbSizeBytes);
+    
+    if (dat)
+        memcpy((void*)block.memPtr, dat, cbSizeBytes);
+    else
+        R_WARN(R_CHANNEL_VULKAN, "No data copied to this resource! Will be null.");
+
+    ResourceView view{};
+    memcpy(&view, &block.bufferView, sizeof(ResourceView));
+    return view;
 }
 
 

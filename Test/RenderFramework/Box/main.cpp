@@ -439,6 +439,8 @@ void updateConstBuffer(IShaderProgramBinder& binder, GraphicsResource* resource,
     memcpy(dat, &buf, sizeof(ConstBuffer));
     resource->unmap(nullptr);
     //binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, resource, 0, sizeof(ConstBuffer));
+    context->allocateConstantBuffer(sizeof(ConstBuffer), nullptr);
+    context->allocateConstantBuffer(128, nullptr);
     ResourceView v = context->allocateConstantBuffer(sizeof(ConstBuffer), &buf);
     binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, /*resource->asCbv(0, sizeof(ConstBuffer))*/ v);
 #else
@@ -531,7 +533,7 @@ int main(char* argv[], int c)
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
+    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 

@@ -4,6 +4,7 @@
 #include "VulkanCommons.hpp"
 #include "Recluse/Memory/Allocator.hpp"
 #include "Recluse/Memory/BuddyAllocator.hpp"
+#include "Recluse/Memory/LinearAllocator.hpp"
 #include "Recluse/Graphics/GraphicsDevice.hpp"
 #include "Recluse/Threading/Threading.hpp"
 #include "Recluse/Types.hpp"
@@ -228,6 +229,44 @@ private:
     MemoryReserveDescription                                                    m_maxDedicatedMemoryDesc;
     VkDeviceSize                                                                m_bufferImageGranularityBytes;
     CriticalSection                                                             m_allocationCs;
+};
+
+
+class BufferTemporaryAllocator
+{
+public:
+    static const U64 kTemporaryAllocationPageSizeBytes;
+
+
+    struct Result 
+    {
+        BufferView bufferView;
+        VkDeviceMemory memory;
+        UPtr memPtr;
+    };
+
+    ResultCode initialize(VulkanDevice* device);
+    ResultCode release();
+
+    ResultCode allocate(Result* pOut, ResourceMemoryUsage usage, U32 cbSizeBytes);
+    ResultCode clear();
+
+private:
+    struct BufferAllocationContext 
+    {
+        VkBuffer            m_buffer;
+        VkDeviceMemory      m_bufferRawMemory;
+        LinearAllocator     linearAllocator;
+        UPtr                rawPtr;
+
+        BufferAllocationContext(VulkanDevice* device, ResourceMemoryUsage usage, U64 sizeBytes);
+
+        void release(VkDevice device);
+    };
+
+    std::map<ResourceMemoryUsage, std::vector<BufferAllocationContext>> m_allocators;
+    VulkanDevice* m_device;
+    CriticalSection m_cs;
 };
 } // Vulkan
 } // Recluse

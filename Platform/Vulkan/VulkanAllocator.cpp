@@ -14,6 +14,7 @@ namespace Recluse {
 namespace Vulkan {
 
 VkDeviceSize VulkanAllocationManager::kPerMemoryPageSizeBytes = R_MB(64);
+const U64 BufferTemporaryAllocator::kTemporaryAllocationPageSizeBytes = R_MB(64);
 
 // Understanding buffer-image granularity is one of the pains of Vulkan.
 // Here is a quick visual reference description by akeley98 who describes this well:
@@ -407,6 +408,127 @@ void VulkanAllocationManager::clear()
             allocator->clear();
         }
     }
+}
+
+
+ResultCode BufferTemporaryAllocator::initialize(VulkanDevice* device)
+{
+    m_device = device;
+    return RecluseResult_Ok;
+}
+
+
+ResultCode BufferTemporaryAllocator::release()
+{
+    for (auto& allocators : m_allocators)
+    {
+        for (auto& allocator : allocators.second)
+        {
+            allocator.release(m_device->get());
+        }
+    }
+
+    m_allocators.clear();
+
+    return RecluseResult_Ok;
+}
+
+
+ResultCode BufferTemporaryAllocator::allocate(Result* pOut, ResourceMemoryUsage usage, U32 cbSizeBytes)
+{
+    const U32 alignment = m_device->getAdapter()->constantBufferOffsetAlignmentBytes();
+    std::vector<BufferAllocationContext>& allocators = m_allocators[usage];
+    if (allocators.empty())
+    {
+        allocators.push_back(BufferAllocationContext(m_device, usage, kTemporaryAllocationPageSizeBytes));
+    }
+
+    BufferAllocationContext& context = allocators.back();
+    UPtr addressOffset = context.linearAllocator.allocate(cbSizeBytes, alignment);
+    ResultCode result = context.linearAllocator.getLastError();
+    if (result == RecluseResult_OutOfMemory)
+    {
+        allocators.push_back(BufferAllocationContext(m_device, usage, kTemporaryAllocationPageSizeBytes));
+        context = allocators.back();
+        addressOffset = context.linearAllocator.allocate(cbSizeBytes, alignment);
+        result = context.linearAllocator.getLastError();
+        if (result != RecluseResult_Ok)
+            R_ERROR(R_CHANNEL_VULKAN, "Failed to allocate!");
+    }
+
+    if (result == RecluseResult_Ok)
+    {
+        pOut->bufferView.buffer = context.m_buffer;
+        pOut->bufferView.offsetBytes = align(addressOffset, VulkanAdapter::obtainMinMemoryMapAlignment(m_device));
+        pOut->bufferView.sizeBytes = align(cbSizeBytes, alignment);
+        pOut->memory = context.m_bufferRawMemory;
+        pOut->memPtr = (UPtr)context.rawPtr + pOut->bufferView.offsetBytes; 
+    }
+    return result;
+}
+
+
+ResultCode BufferTemporaryAllocator::clear()
+{
+    for (auto& allocators : m_allocators)
+    {
+        for (auto& allocator : allocators.second)
+        {
+            allocator.linearAllocator.reset();
+        }
+    }
+    return RecluseResult_Ok;
+}
+
+
+void BufferTemporaryAllocator::BufferAllocationContext::release(VkDevice device)
+{
+    linearAllocator.cleanUp();
+
+    if (m_buffer)
+        vkDestroyBuffer(device, m_buffer, nullptr);
+
+    if (m_bufferRawMemory)
+        vkFreeMemory(device, m_bufferRawMemory, nullptr);
+
+    m_buffer = NULL;
+    m_bufferRawMemory = NULL;
+}
+
+
+BufferTemporaryAllocator::BufferAllocationContext::BufferAllocationContext(VulkanDevice* device, ResourceMemoryUsage usage, U64 sizeBytes)
+    : m_buffer(VK_NULL_HANDLE)
+    , m_bufferRawMemory(VK_NULL_HANDLE)
+{
+    VulkanAdapter* adapter = device->getAdapter();
+    const U64 alignedSizeBytes = align(sizeBytes, adapter->constantBufferOffsetAlignmentBytes());
+
+    VkBufferCreateInfo bufferCreateInfo{};
+    bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    bufferCreateInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    bufferCreateInfo.size = alignedSizeBytes;
+    
+    VkResult result = vkCreateBuffer(device->get(), &bufferCreateInfo, nullptr, &m_buffer);
+    R_ASSERT(result == VK_SUCCESS);
+    
+    VkMemoryRequirements requirements = device->getBufferMemoryRequirements(m_buffer);
+    VkMemoryAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.memoryTypeIndex = adapter->findMemoryType(requirements.memoryTypeBits, usage);
+    allocInfo.allocationSize = requirements.size;
+    
+
+    // TODO: We might want to suballocate this temporary scratch memory to the paged memory manager instead??
+    // Otherwise we are using up memory allocation count, which older devices will limit to 4096 on vulkan.
+    result = vkAllocateMemory(device->get(), &allocInfo, nullptr, &m_bufferRawMemory);
+    R_ASSERT(result == VK_SUCCESS);
+
+    vkBindBufferMemory(device->get(), m_buffer, m_bufferRawMemory, 0);
+
+    vkMapMemory(device->get(), m_bufferRawMemory, 0, alignedSizeBytes, 0, (void**)&rawPtr);
+
+    linearAllocator.initialize(0ull, alignedSizeBytes);
 }
 } // Vulkan
 } // Recluse
