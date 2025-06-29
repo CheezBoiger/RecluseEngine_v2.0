@@ -73,15 +73,19 @@ ResultCode D3D12Adapter::getAdapterInfo(AdapterInfo* out) const
         bool isHardware = false;
         if (m_coreAdapter->IsPropertySupported(DXCoreAdapterProperty::IsIntegrated) && m_coreAdapter->IsPropertySupported(DXCoreAdapterProperty::IsHardware))
         {
-            R_ASSERT(SUCCEEDED(m_coreAdapter->GetProperty(DXCoreAdapterProperty::IsIntegrated, &isIntegrated)));
-            R_ASSERT(SUCCEEDED(m_coreAdapter->GetProperty(DXCoreAdapterProperty::IsHardware, &isHardware)));
+            HRESULT integratedResult = m_coreAdapter->GetProperty(DXCoreAdapterProperty::IsIntegrated, &isIntegrated);
+            HRESULT hardwareResult = m_coreAdapter->GetProperty(DXCoreAdapterProperty::IsHardware, &isHardware);
+            R_ASSERT(SUCCEEDED(hardwareResult) && SUCCEEDED(integratedResult));
 
-            if (isIntegrated && isHardware)
-                out->type = AdapterInfo::Type_IntegratedGpu;
-            else if (!isIntegrated && isHardware)
-                out->type = AdapterInfo::Type_DiscreteGpu;
-            else if (!isIntegrated && !isHardware)
-                out->type = AdapterInfo::Type_Cpu;
+            if (SUCCEEDED(integratedResult) && SUCCEEDED(hardwareResult))
+            {
+                if (isIntegrated && isHardware)
+                    out->type = AdapterInfo::Type_IntegratedGpu;
+                else if (!isIntegrated && isHardware)
+                    out->type = AdapterInfo::Type_DiscreteGpu;
+                else if (!isIntegrated && !isHardware)
+                    out->type = AdapterInfo::Type_Cpu;
+            }
         }
         else
         {

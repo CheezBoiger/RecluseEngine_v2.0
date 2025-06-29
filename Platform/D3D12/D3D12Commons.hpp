@@ -62,6 +62,18 @@ struct D3D12MemoryObject
 };
 
 
+static constexpr U32 unpackBindingRegister(U32 shaderBind)
+{
+    return (shaderBind & 0x0000ffff);
+}
+
+
+static constexpr U32 unpackBindingSpace(U32 shaderBind)
+{
+    return (shaderBind & 0xffff0000) >> 16;
+}
+
+
 // Get the native resource state.
 extern D3D12_RESOURCE_STATES                getNativeResourceState(Recluse::ResourceState state);
 extern D3D12_RTV_DIMENSION                  getRtvDimension(Recluse::ResourceViewDimension dimension);

@@ -280,9 +280,16 @@ IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindShaderResource
     D3D12GraphicsResourceView* pView = DescriptorViews::findResourceView(view);
     D3D12_CPU_DESCRIPTOR_HANDLE handle = { view.ptr };
     if (handle.ptr == 0) handle = manager->nullSrvDescriptor();
-    current.m_srvs[slot] = handle;
-    if (!cachedReflection)
+    U32 binding = slot;
+    if (cachedReflection)
+    {
+        binding = unpackBindingRegister(cachedReflection->srvs[slot]);
+    }
+    else
+    {
         current.m_rootSigLayout.srvCount = Math::maximum(current.m_rootSigLayout.srvCount, static_cast<U16>(slot+1));
+    }
+    current.m_srvs[binding] = handle;
     current.m_resourceTable.srvs = current.m_srvs.data();
     current.setDirty(ContextDirty_Descriptors);
     return (*this);
@@ -326,11 +333,17 @@ IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindConstantBuffer
     D3D12_CPU_DESCRIPTOR_HANDLE cbv = { view.ptr };
     if (cbv.ptr == 0) cbv = manager->nullCbvDescriptor();
 
-    current.m_cbvs[slot] = cbv;
-    
-    if (!cachedReflection)
+    U32 binding = slot;
+    if (cachedReflection)
+    {
+        binding = unpackBindingRegister(cachedReflection->cbvs[slot]);
+    }
+    else
+    {
         current.m_rootSigLayout.cbvCount = Math::maximum(current.m_rootSigLayout.cbvCount, static_cast<U16>(slot+1));
-    
+    }
+
+    current.m_cbvs[binding] = cbv;
     current.m_resourceTable.cbvs = current.m_cbvs.data();
     current.setDirty(ContextDirty_Descriptors);
     return (*this);
@@ -344,9 +357,17 @@ IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindUnorderedAcces
     ContextState& current = currentState();
     D3D12_CPU_DESCRIPTOR_HANDLE handle = { view.ptr }; 
     if(handle.ptr == 0) handle = manager->nullUavDescriptor();
-    current.m_uavs[slot] = handle;
-    if (!cachedReflection)
+    U32 binding = slot;
+    if (cachedReflection)
+    {
+        binding = unpackBindingRegister(cachedReflection->uavs[slot]);
+    }
+    else
+    {
         current.m_rootSigLayout.uavCount = Math::maximum(current.m_rootSigLayout.uavCount, static_cast<U16>(slot+1));
+    }
+
+    current.m_uavs[binding] = handle;    
     current.m_resourceTable.uavs = current.m_uavs.data();
     current.setDirty(ContextDirty_Descriptors);
     return (*this);
@@ -360,14 +381,24 @@ IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindSampler(Shader
     ContextState& current = currentState();
     D3D12Sampler* pSampler = nullptr;
     D3D12_CPU_DESCRIPTOR_HANDLE handle = manager->nullSamplerDescriptor();
+    U32 binding = slot;
+
     if (sampler)
     {
         pSampler = sampler->castTo<D3D12Sampler>();
         handle = pSampler->getDescriptor();
     }
-    current.m_samplers[slot] = handle;
-    if (!cachedReflection)
+
+    if (cachedReflection)
+    {
+        binding = unpackBindingRegister(cachedReflection->samplers[slot]);
+    }
+    else
+    {
         current.m_rootSigLayout.samplerCount = Math::maximum(current.m_rootSigLayout.samplerCount, static_cast<U16>(slot+1));
+    }
+
+    current.m_samplers[slot] = handle;
     current.m_resourceTable.samplers = current.m_samplers.data();
     current.setDirty(ContextDirty_SamplerDescriptors);
     return (*this);

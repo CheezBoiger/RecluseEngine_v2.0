@@ -47,6 +47,24 @@ public:
     IShaderProgramBinder(ShaderProgramId programId, ShaderPermutationId permutationId)
         : m_programId(programId), m_permutation(permutationId) { }
 
+#if defined(RECLUSE_EXPERIMENTAL)
+    // Resource table structure.
+    struct ResourceTable
+    {
+        ResourceTable& bindShaderResource(U32 slot, ResourceView view);
+        Resourceable& bindUnorderedAccessView(U32 slot, ResourceView view);
+        ResourceTable& bindConstantBuffer(U32 slot, ResourceView view);
+        ResourceTable& bindSampler(U32 slot, GraphicsSampler* sampler);
+    };
+
+    // Allocate a resource table for binding.
+    ResourceTable makeResourceTable();
+
+    // Binds a resource table to this shader program, to be used for binding.
+    // \param type The shader types that this table will be bound to.
+    // \param parameter The parameter where the resource table should be bound to.
+    virtual IShaderProgramBinder& bindResourceTable(ShaderStageFlags type, U32 parameter, ResourceTable& table);
+#endif
     // Binds a shader resource to the currently bound shader program. Shader Resource must be a view type.
     // \param type The Shader types that this view will be bound to.
     // \param slot The slot that this shader resource will be bound to. This is dependent on the register value for DirectX, or the 
@@ -63,13 +81,21 @@ public:
     // \return The same ShaderProgramBinder instance.
     virtual IShaderProgramBinder& bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceView view) { return (*this); }
 
+
+    // Binds a constant buffer view to the currently bound shader program. The constant buffer must be a view type.
+    // \param type The shader types that this view will be bound to.
+    // \param slot The slot that this constant buffer will be bound to. This is dependent on the register value for DirectX, or the order 
+    //             order written in the shader for vulkan (independent of the binding value.)
+    // \param view The actual view of the constant buffer to bind the shader program.
+    // \return The same ShaderProgramBinder instance.
+    virtual IShaderProgramBinder& bindConstantBuffer(ShaderStageFlags type, U32 slot, ResourceView cbv) { return (*this); } 
+
     // Bind a constant buffer that links to certain shaders in the program. Define the slot in the shader program as well.
     // The pResource is the constant buffer resource to be bound, the offsetBytes is the offset in the pResource, along with the 
     // sizeBytes (the size of the data to read.) The data is optional (must be nullptr,) but programmer may specify local data that 
     // they wish to host-device copy to the pResource (pResource must be host copyable.)
     // \return The same ShaderProgramBinder instance.
     virtual IShaderProgramBinder& bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data = nullptr) { return (*this); }
-    virtual IShaderProgramBinder& bindConstantBuffer(ShaderStageFlags type, U32 slot, ResourceView cbv) { return (*this); } 
     
     // Binds a sampler resource to the currently bound shader program. Sampler must be a handle.
     // \param type The Shader types that this sampler will be bound to.

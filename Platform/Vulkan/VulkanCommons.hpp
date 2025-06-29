@@ -196,7 +196,7 @@ static constexpr U32 unpackVulkanBinding(ShaderBind setBinding)
 
 static constexpr U32 unpackVulkanSet(ShaderBind setBinding)
 {
-    return (setBinding & 0xffff0000);
+    return (setBinding & 0xffff0000) >> 16;
 }
 
 

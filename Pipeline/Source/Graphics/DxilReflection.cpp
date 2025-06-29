@@ -19,6 +19,13 @@ namespace Pipeline {
 
 R_INTERNAL UINT32 DXBC_DXIL = DXBC_FOURCC('D', 'X', 'I', 'L');          // == DFCC_DXIL
 
+
+// Packs the shader binding slot and space slot together into a 32-bit register.
+R_INTERNAL U32 packShaderBind(U16 space, U16 bind)
+{
+    return (U32)bind | ((U32)space << 16);
+}
+
 // Shader reflection.
 ResultCode DxilReflection::reflect(ShaderReflectionInformation& reflectionOutput, const Shader* shader)
 {
@@ -63,7 +70,10 @@ ResultCode DxilReflection::reflect(ShaderReflectionInformation& reflectionOutput
     {
         D3D12_SHADER_INPUT_BIND_DESC shaderInputDesc = { };
         shaderReflection->GetResourceBindingDesc(resourceIdx, &shaderInputDesc);
+
+        U32 space = shaderInputDesc.Space;
         UINT bindRange = shaderInputDesc.BindPoint + shaderInputDesc.BindCount;
+
         // For DXC, we store the register bind. (c<BindPoint>, c<BindPoint+1>, c<BindPoint+2>, c<BindPoint+3> ...)
         // This will store all bind points from HLSL -> D3D12.
         switch (shaderInputDesc.Type)
@@ -72,7 +82,7 @@ ResultCode DxilReflection::reflect(ShaderReflectionInformation& reflectionOutput
             {
                 for (UINT bind = shaderInputDesc.BindPoint; bind < bindRange; ++bind)
                 {
-                    reflectionOutput.cbvs.push_back(static_cast<ShaderBind>(bind));
+                    reflectionOutput.cbvs.push_back(static_cast<ShaderBind>(packShaderBind(space, bind)));
                     reflectionOutput.metadata.numCbvs += 1;
                 }
                 break;
@@ -84,7 +94,7 @@ ResultCode DxilReflection::reflect(ShaderReflectionInformation& reflectionOutput
             {
                 for (UINT bind = shaderInputDesc.BindPoint; bind < bindRange; ++bind)
                 {
-                    reflectionOutput.srvs.push_back(static_cast<ShaderBind>(bind));                    
+                    reflectionOutput.srvs.push_back(static_cast<ShaderBind>(packShaderBind(space, bind)));                    
                     reflectionOutput.metadata.numSrvs += 1;
                 }
                 break;
@@ -93,7 +103,7 @@ ResultCode DxilReflection::reflect(ShaderReflectionInformation& reflectionOutput
             {
                 for (UINT bind = shaderInputDesc.BindPoint; bind < bindRange; ++bind)
                 {
-                    reflectionOutput.samplers.push_back(static_cast<ShaderBind>(bind));                    
+                    reflectionOutput.samplers.push_back(static_cast<ShaderBind>(packShaderBind(space, bind)));                    
                     reflectionOutput.metadata.numSamplers += 1;
                 }
                 break;
@@ -107,7 +117,7 @@ ResultCode DxilReflection::reflect(ShaderReflectionInformation& reflectionOutput
             {
                 for (UINT bind = shaderInputDesc.BindPoint; bind < bindRange; ++bind)
                 {
-                    reflectionOutput.uavs.push_back(static_cast<ShaderBind>(bind));                    
+                    reflectionOutput.uavs.push_back(static_cast<ShaderBind>(packShaderBind(space, bind)));                    
                     reflectionOutput.metadata.numUavs += 1;
                 }
                 break;

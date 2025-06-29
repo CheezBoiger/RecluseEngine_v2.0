@@ -219,7 +219,7 @@ void createShaderProgram(GraphicsDevice* device)
     }   
     else
     {
-        shaderBuilder = Pipeline::createShaderBuilder("glsl");
+        shaderBuilder = Pipeline::createShaderBuilder("glslang");
         intermediateCode = ShaderIntermediateCode_Spirv;
     }
     shaderBuilder->setUp();
@@ -425,8 +425,9 @@ void createLightBuffer(GraphicsDevice* device)
 }
 
 
-void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>& meshes)
+void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>& meshes, U32 width, U32 height, F32 delta)
 {
+    static F32 t = 0.0f;
     context->transition(albedoTexture, ResourceState_RenderTarget);
     context->transition(normalTexture, ResourceState_RenderTarget);
     context->transition(depthTexture, ResourceState_DepthStencilWrite);
@@ -471,13 +472,33 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
     context->setViewports(1, &viewport);
     context->setScissors(1, &scissor);
     context->setInputVertexLayout(VertexLayout_PositionNormalTexCoordColor);
+
+    Math::Matrix44 view = Math::translate(Math::Matrix44::identity(), Math::Float3(0, 0, 0));
+    Math::Matrix44 proj = Math::perspectiveLH_Aspect(Math::deg2Rad(45.0f), (F32)width / (F32)height, 0.001f, 1000.0f);
     IShaderProgramBinder& binder = context->bindShaderProgram(ShaderProgram_Gbuffer, 0);
+
+    t += 20.0f * delta;
+    t = fmod(t, 360.0f);
+
     for (U32 i = 0; i < meshes.size(); ++i)
     {
         U64 offset[] = { 0 };
         GraphicsResource* vb = meshes[i].vertexBuffer;
         context->transition(meshes[i].albedoTexture, ResourceState_ShaderResource);
-        binder.bindConstantBuffer(ShaderStage_Pixel | ShaderStage_Vertex, 0, meshes[i].meshTransform, 0, sizeof(ConstBuffer))
+
+        ConstBuffer constBuffer = {};
+
+        F32 tt = t * (i+1);
+        tt = fmod(tt, 360.0f);
+
+        Math::Matrix44 T = Math::translate(Math::Matrix44::identity(), Math::Float3(i, i, 6u));
+        Math::Matrix44 R = Math::rotate(Math::Matrix44::identity(), Math::Float3(0.0f, 1.0f, 0.0f), Math::deg2Rad(45.0f));
+        Math::Matrix44 R2 = Math::rotate(Math::Matrix44::identity(), Math::Float3(1.0f, 0.0f, 1.0f), Math::deg2Rad(tt));
+        Math::Matrix44 model = R2 * R * T;
+        constBuffer.modelViewProjection = model * view * proj;
+
+        ResourceView cbView = context->allocateConstantBuffer(sizeof(ConstBuffer), &constBuffer);
+        binder.bindConstantBuffer(ShaderStage_Pixel | ShaderStage_Vertex, 0, cbView)
                 .bindShaderResource(ShaderStage_Pixel, 0, meshes[i].albedoView)
                 .bindSampler(ShaderStage_Pixel, 0, gbufferSampler);
         context->bindVertexBuffers(1, &vb, offset);
@@ -723,7 +744,7 @@ int main(char* argv[], int c)
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
+    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
     GraphicsAdapter* adapter    = nullptr;
     std::vector<MeshDraw> meshes;
 
@@ -796,7 +817,7 @@ int main(char* argv[], int c)
             }
             swapchain->prepare(context);
 
-            applyGBufferRendering(context, meshes);
+            applyGBufferRendering(context, meshes, window->getWidth(), window->getHeight(), tick.delta());
             resolveLighting(context);
 
             context->transition(swapchain->getFrame(swapchain->getCurrentFrameIndex()), ResourceState_Present);

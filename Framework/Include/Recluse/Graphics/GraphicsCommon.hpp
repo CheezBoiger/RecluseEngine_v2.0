@@ -113,6 +113,7 @@ typedef U32 ResourceMiscFlags;
 
 enum ResourceViewType 
 {
+    ResourceViewType_ConstantBuffer,
     ResourceViewType_RenderTarget,
     ResourceViewType_ShaderResource,
     ResourceViewType_UnorderedAccess,

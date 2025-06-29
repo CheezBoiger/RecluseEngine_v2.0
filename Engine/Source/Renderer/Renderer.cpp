@@ -670,7 +670,7 @@ void RendererModule::destroyDevice()
             { 
                 R_WARN("Renderer", "No such graphics device exists for this renderer."); 
             }
-        )
+        );
 }
 
 
