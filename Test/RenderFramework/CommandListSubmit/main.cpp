@@ -18,7 +18,7 @@ int main(int c, char* argv[])
     GraphicsSwapchain* pSwapchain   = nullptr;
     GraphicsDevice* pDevice         = nullptr;
     GraphicsContext* pContext       = nullptr;
-    GraphicsInstance* pInstance      = GraphicsInstance::create(GraphicsApi_Vulkan);
+    GraphicsInstance* pInstance      = GraphicsInstance::create(GraphicsApi_Direct3D12);
 
     Window* pWindow = Window::create(u8"CommandListSubmit", 0, 0, 128, 128);
 
@@ -73,6 +73,9 @@ int main(int c, char* argv[])
     }
 
     pSwapchain = pDevice->createSwapchain(swapchainDescription, pWindow->getNativeHandle());
+    pContext = pDevice->createContext();
+
+    pContext->setFrames(2);
     
     if (!pSwapchain) {
     
@@ -89,7 +92,7 @@ int main(int c, char* argv[])
             RealtimeTick tick = RealtimeTick::getTick(0);
             R_TRACE("Graphics", "FPS: %f", 1.f / tick.delta());
             pSwapchain->prepare(pContext);
-            pContext->begin(); 
+            pContext->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_Present);
             pContext->end();
             pSwapchain->present(pContext);
             pollEvents();
