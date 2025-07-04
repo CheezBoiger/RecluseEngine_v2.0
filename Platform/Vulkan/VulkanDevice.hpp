@@ -45,6 +45,13 @@ struct QueueFamily
     VkQueueFlags                            flags;
 };
 
+enum ContextFrameFlag
+{
+    ContextFrameFlag_None = 0,
+    ContextFrameFlag_SwapchainQueued = (1 << 0),
+};
+
+typedef U32 ContextFrameFlags;
 
 // Vulkan Context frame. The gpu could potentially have more than one frame inflight, any available 
 // frame that can be worked on by the host cpu, will be signaled by the fence value, and allocated command buffer.
@@ -56,6 +63,7 @@ struct VulkanContextFrame
     VulkanQueryManager          timestampQuery;
     VulkanQueryManager          occlusionQuery;
     BufferTemporaryAllocator    temporaryBufferAllocator;
+    ContextFrameFlags           flags;
 };
 
 

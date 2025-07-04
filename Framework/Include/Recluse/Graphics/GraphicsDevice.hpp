@@ -161,7 +161,7 @@ public:
     //       not be as prevalent on lower-end hardware than higher-end. This is because the cpu side will be busy working on 
     //       resources, while the gpu is waiting for the next batch. More context frames require more memory, but will lower the possibility of 
     //       gpu stalls due to cpu usage. Keep in mind you can not have more context frames than there are swapchain frames! You need a sweet spot, which is usually
-    //       around 2-3 context frames. 
+    //       aligning the same number of context frames as there are swapchain frames. 
     virtual ResultCode              setFrames(U32 newBufferCount) { return RecluseResult_NoImpl; }
 
     // Obtain the current number of frames for this context.

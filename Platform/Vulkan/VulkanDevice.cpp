@@ -95,6 +95,7 @@ void VulkanContext::begin()
     R_ASSERT(getFrameCount() > 0);
     incrementContextFrameIndex();
     VulkanContextFrame& contextFrame    = getContextFrame(getCurrentFrameIndex());
+    contextFrame.flags                  = ContextFrameFlag_None;
     VkFence frameFence                  = contextFrame.fence;
 
     // We need to wait for our fences, before we can begin to reset resources.
@@ -107,7 +108,7 @@ void VulkanContext::begin()
         contextFrame.timestampQuery.reset(m_pDevice->get());
         contextFrame.occlusionQuery.reset(m_pDevice->get());
     }
-
+    
     prepare();
 
     m_primaryCommandList.use(getCurrentFrameIndex());
@@ -181,15 +182,18 @@ ResultCode VulkanContext::submitFinalCommandBuffer(VkCommandBuffer commandBuffer
 
     R_ASSERT(primaryCmdBuf != NULL);
 
-
     // Push a submittal, in order to signal the semaphores.
+    // If no swapchain image wait, we don't use semaphore signalling.
     VkSubmitInfo submitInfo             = { };
     VkPipelineStageFlags waitStages[]   = { VK_PIPELINE_STAGE_ALL_COMMANDS_BIT };
+
+    const Bool swapchainQueued          = (contextFrame.flags & ContextFrameFlag_SwapchainQueued);
+
     submitInfo.sType                    = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.signalSemaphoreCount     = 1;
     submitInfo.commandBufferCount       = 1;
+    submitInfo.signalSemaphoreCount     = swapchainQueued ? 1 : 0;
     submitInfo.pSignalSemaphores        = &signalSemaphore;
-    submitInfo.waitSemaphoreCount       = 1;
+    submitInfo.waitSemaphoreCount       = swapchainQueued ? 1 : 0;
     submitInfo.pWaitSemaphores          = &waitSemaphore;
     submitInfo.pCommandBuffers          = &primaryCmdBuf;
     submitInfo.pWaitDstStageMask        = waitStages;

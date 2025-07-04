@@ -28,11 +28,12 @@ typedef U32 SurfaceTypeFlags;
 
 enum MaterialType 
 {
-    MATERIAL_TYPE_PBR_ROUGH_METAL,
-    MATERIAL_TYPE_PBR_GLOSS_SPEC,
-    MATERIAL_TYPE_PHONG_DIFFUSE_SPEC,
-    MATERIAL_TYPE_FLAT,
-    MATERIAL_TYPE_OTHER
+    MaterialType_None,
+    MaterialType_PBRRoughMetal,
+    MaterialType_PBRGlossSpecular,
+    MaterialType_PhongDiffuseSpecular,
+    MaterialType_Float,
+    MaterialType_Other
 };
 
 #define R_MAT_ALBEDO        "Albedo"
@@ -50,7 +51,7 @@ class Material
 public:
     virtual ~Material() { }
 
-    ReclusePipeline_PUBLIC_API Material(const std::string& matName, MaterialType type) 
+    ReclusePipeline_PUBLIC_API Material(const std::string& matName = "", MaterialType type = MaterialType_None) 
         : m_matType(type)
         , m_flags(0)
         , m_matName(matName) { }

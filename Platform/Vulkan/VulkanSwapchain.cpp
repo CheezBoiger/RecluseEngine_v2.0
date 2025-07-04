@@ -349,7 +349,10 @@ ResultCode VulkanSwapchain::prepare(GraphicsContext* context)
                 R_WARN(R_CHANNEL_VULKAN, "Swapchain acquire next image was unsuccessfull. This may lead to errors!");
                 break;
         }
-        
+    }
+    else
+    {
+        contextFrame.flags = ContextFrameFlag_SwapchainQueued;
     }
 
     return err;

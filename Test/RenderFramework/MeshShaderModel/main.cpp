@@ -9,11 +9,30 @@
 
 using namespace Recluse;
 
-GraphicsInstance* gInstance = nullptr;
-GraphicsAdapter* gAdapter   = nullptr;
-GraphicsDevice* gDevice     = nullptr;
-GraphicsSwapchain* gSwapchain = nullptr;
-GraphicsContext* gContext   = nullptr;
+GraphicsInstance* gInstance     = nullptr;
+GraphicsAdapter* gAdapter       = nullptr;
+GraphicsDevice* gDevice         = nullptr;
+GraphicsSwapchain* gSwapchain   = nullptr;
+GraphicsContext* gContext       = nullptr;
+
+GraphicsResource* depthBuffer   = nullptr;
+
+void createDepthBuffer(U32 width, U32 height)
+{
+    GraphicsResourceDescription description{};
+    description.height = height;
+    description.width = width;
+    description.memoryUsage = ResourceMemoryUsage_GpuOnly;
+    description.format = ResourceFormat_D32_Float;
+    description.mipLevels = 1;
+    description.depthOrArraySize = 1;
+    description.dimension = ResourceDimension_2d;
+    description.samples = 1;
+    description.usage = ResourceUsage_DepthStencil | ResourceUsage_ShaderResource;
+    description.name = "DepthBuffer";
+    
+    gDevice->createResource(&depthBuffer, description, ResourceState_DepthStencilWrite);
+}
 
 void resizeFunction(U32 x, U32 y, U32 width, U32 height)
 {
@@ -28,7 +47,8 @@ void resizeFunction(U32 x, U32 y, U32 width, U32 height)
 
         // Any new swapchain rebuilds, need to also update the 
         // swapchain resources along with it.
-        
+        gDevice->destroyResource(depthBuffer, true);
+        createDepthBuffer(width, height);
     }
 }
 
@@ -76,6 +96,8 @@ int main(int c, char* argv[])
 
     R_ASSERT(gDevice);
 
+    createDepthBuffer(window->getWidth(), window->getHeight());
+
     SwapchainCreateDescription swapchainCreateInfo{};
     swapchainCreateInfo.buffering = FrameBuffering_Triple;
     swapchainCreateInfo.desiredFrames = 3;
@@ -114,6 +136,7 @@ int main(int c, char* argv[])
 
     gContext->wait();
 
+    gDevice->destroyResource(depthBuffer);
     gDevice->destroySwapchain(gSwapchain);
     gDevice->releaseContext(gContext);
     gAdapter->destroyDevice(gDevice);

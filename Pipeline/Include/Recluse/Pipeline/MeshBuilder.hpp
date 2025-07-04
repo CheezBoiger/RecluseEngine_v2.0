@@ -8,6 +8,7 @@
 #include "Recluse/Math/Vector4.hpp"
 #include "Recluse/Math/Bounds3D.hpp"
 #include "Recluse/Pipeline/Importer.hpp"
+#include "Recluse/Pipeline/Material.hpp"
 
 #include "ReclusePipeline_exports.hpp"
 
@@ -74,15 +75,16 @@ public:
     {
         enum 
         { 
-            None = 0, 
-            Indexed = (1 << 0), 
-            Rigid = (1 << 1), 
-            Skinned = (1 << 2) 
+            None        = 0, 
+            Indexed     = (1 << 0), 
+            Rigid       = (1 << 1), 
+            Skinned     = (1 << 2) 
         };
         typedef U32 MeshAttributeFlags;
         
-        static const i32 kInvalidBoneId = ~0;
-        static const i32 kInvalidLodId  = ~0;
+        static const i32 kInvalidBoneId     = ~0;
+        static const i32 kInvalidLodId      = ~0;
+        static const i32 kInvalidMaterialId = ~0;
 
         // Name of the mesh.
         std::string                             name;
@@ -103,9 +105,10 @@ public:
         std::vector<Math::Float3>               tangents;
 
         // For animation data. If the mesh has bone information
-        BoneId                                  boneId  = kInvalidBoneId;
-        i32                                     lodId   = kInvalidLodId;
-        MeshAttributeFlags                      flags   = None;
+        BoneId                                  boneId      = kInvalidBoneId;
+        i32                                     lodId       = kInvalidLodId;
+        i32                                     materialId  = kInvalidMaterialId;
+        MeshAttributeFlags                      flags       = None;
 
         // Vertex indices, if the mesh is indexed.
         std::vector<U32>                        vertexIndices;
@@ -136,6 +139,7 @@ public:
 
     struct LodData
     {
+        // Each index in the vector corresponds to an lod guid, which the mesh itself is stored in the meshmap.
         std::vector<RGUID>                      lods;
     };
 
@@ -192,6 +196,7 @@ protected:
     std::map<RGUID, MeshDataInfo, RGUID::Less>          m_dataMap;
     std::map<BoneId, BoneData, RGUID::Less>             m_boneMap;
     std::map<i32, LodData>                              m_lodMap;
+    std::map<i32, Material*>                            m_matMap;
     std::map<RGUID, MeshletData, RGUID::Less>           m_meshletMap;
 
     // The actual meshes.

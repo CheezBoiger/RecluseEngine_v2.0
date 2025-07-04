@@ -478,7 +478,7 @@ void createShaderProgram(GraphicsDevice* device)
     }
     else
     {
-        shaderBuilder = Pipeline::createShaderBuilder("glslang");
+        shaderBuilder = Pipeline::createShaderBuilder("dxc");
         intermediateCode = ShaderIntermediateCode_Spirv;
     }
     shaderBuilder->setUp();
@@ -533,7 +533,7 @@ int main(char* argv[], int c)
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
+    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 
