@@ -40,8 +40,8 @@ namespace RecluseEditor
             SetupVertexLayouts(Device);
             InitializeGridShader(ProgramBuilder);
 
-            ProgramBuilder.Build(Imm);
-            return ProgramBuilder.LoadToRuntime(Device);
+            //ProgramBuilder.Build(Imm);
+            return false;// ProgramBuilder.LoadToRuntime(Device);
         }
 
 
@@ -88,7 +88,7 @@ namespace RecluseEditor
                 0));
 
             PositionOnlyLayout.VertexBindings.Add(PosBinding);
-            Device.MakeVertexLayout((ulong)Vertex.PositionOnly, PositionOnlyLayout);
+            //Device.MakeVertexLayout((ulong)Vertex.PositionOnly, PositionOnlyLayout);
             return false;
         }
     }

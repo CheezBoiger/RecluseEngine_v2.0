@@ -39,7 +39,7 @@ namespace RecluseEditor
 
         public static void Initialize(GraphicsApi Api, string AppName, string EngineName)
         {
-            Device = new IGraphicsDevice(Api, AppName, EngineName, true);
+            Device = new IGraphicsDevice(Api, AppName, EngineName, false);
             Context = new IGraphicsContext(Device);
             Database.Initialize(Device);
             Context.SetContextFrame(3);
@@ -167,21 +167,21 @@ namespace RecluseEditor
             }
 
             #region Grid Rendering
-            Context.Transition(SwapchainResource, ResourceState.RenderTarget);
-            Context.EnableDepth(true);
-            Context.EnableDepthWrite(true);
-            Context.EnableStencil(false);
-            Context.BindShaderProgram((ulong)Database.Shaders.Grid, 0)
-                .BindConstantBuffer(ShaderStage.All, 0, CameraView, 0, (uint)Marshal.SizeOf(typeof(CameraViewConst)), null);
-            Context.SetInputVertexLayout(unchecked((uint)IVertexInputLayout.Constants.Null));
-            Recluse.CSharp.Rect RenderBounds = new Recluse.CSharp.Rect(0, 0, Swapchain.GetWidth(), Swapchain.GetHeight());
-            Context.SetViewports(new Viewport[] { new Viewport(0, 0, Swapchain.GetWidth(), Swapchain.GetHeight(), 0.0f, 1.0f) });
-            Context.SetScissors(new Recluse.CSharp.Rect[] { RenderBounds });
-            Context.SetCullMode(CullMode.None);
-            Context.SetFrontFace(FrontFace.CounterClockwise);
-            Context.SetTopology(PrimitiveTopology.TriangleList);
-            Context.SetDepthCompareOp(CompareOp.LessOrEqual);
-            Context.DrawInstanced(6, 1, 0, 0);
+            //Context.Transition(SwapchainResource, ResourceState.RenderTarget);
+            //Context.EnableDepth(true);
+            //Context.EnableDepthWrite(true);
+            //Context.EnableStencil(false);
+            //Context.BindShaderProgram((ulong)Database.Shaders.Grid, 0)
+            //    .BindConstantBuffer(ShaderStage.All, 0, CameraView, 0, (uint)Marshal.SizeOf(typeof(CameraViewConst)), null);
+            //Context.SetInputVertexLayout(unchecked((uint)IVertexInputLayout.Constants.Null));
+            //Recluse.CSharp.Rect RenderBounds = new Recluse.CSharp.Rect(0, 0, Swapchain.GetWidth(), Swapchain.GetHeight());
+            //Context.SetViewports(new Viewport[] { new Viewport(0, 0, Swapchain.GetWidth(), Swapchain.GetHeight(), 0.0f, 1.0f) });
+            //Context.SetScissors(new Recluse.CSharp.Rect[] { RenderBounds });
+            //Context.SetCullMode(CullMode.None);
+            //Context.SetFrontFace(FrontFace.CounterClockwise);
+            //Context.SetTopology(PrimitiveTopology.TriangleList);
+            //Context.SetDepthCompareOp(CompareOp.LessOrEqual);
+            //Context.DrawInstanced(6, 1, 0, 0);
             #endregion
             Context.Transition(SwapchainResource, ResourceState.Present);
             Context.End();

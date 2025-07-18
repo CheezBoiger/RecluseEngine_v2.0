@@ -63,12 +63,11 @@ enum SubMeshFlag
 typedef uint SubMeshFlags;
 
 
-
 // A Submesh is a portion of a mesh that has a separate rendering method or technique.
 // Instinctively it will be a part of the mesh with it's own material, to which the renderer
 // will know how to draw. Usually the renderer filters out drawcalls based on the submesh and its
 // materials.
-struct RecluseEngine_PUBLIC_API SubMesh 
+struct RecluseEngine_PUBLIC_API SubMesh
 {
     // Name of the submesh.
     const char*     name;
@@ -85,7 +84,29 @@ struct RecluseEngine_PUBLIC_API SubMesh
     // The bounds of the submesh. Usually for collision or whatnot.
     // Animation should consider updating this as well.
     Math::Bounds3d  bounds;
+};
 
+
+// Native mesh struct, contains the vertex and index buffers, for the given mesh.
+struct RecluseEngine_PUBLIC_API Mesh 
+{
+    typedef u32 Attribute;
+
+    enum { Position, Normal, UV0, UV1, Binormal, Tangent, BoneIndex, BoneWeight };
+
+    std::vector<SubMesh> submeshes;
+};
+
+
+template<typename GpuBuffers>
+struct MeshType : public Mesh
+{
+    GpuBuffers buffers;
+};
+
+
+struct TraditionalMesh
+{
     // The bound vertex buffer.
     VertexBuffer*   vertexBuffer;
 
@@ -94,61 +115,38 @@ struct RecluseEngine_PUBLIC_API SubMesh
 };
 
 
-// Mesh is a generalization of a renderable object that we wish to draw on screen.
+// MeshObject is a generalization of a renderable object that we wish to draw on screen.
 // It composes of multiple submeshes, each assigned to separate portions of the vertex buffer and index buffer,
 // and is usually sorted by material. Usually, mesh will be the object to pass to multiple parts of the engine,
 // but ultimately, submeshes are the ones that contain the precise information of the renderable.
-class Mesh : public Serializable, public RecreatableObject
+class MeshObject : public Serializable, public RecreatableObject
 {
 public:
 
-    enum { Position, Normal, UV0, UV1, Binormal, Tangent, BoneIndex, BoneWeight };
+    struct MeshLOD
+    {
+        MeshType<TraditionalMesh>* mesh;
+    };
 
-    typedef u32 Attribute;
+    virtual ~MeshObject() { }
 
-    virtual ~Mesh() { }
-
-    RecluseEngine_PUBLIC_API Mesh()
-        : m_pVertexBuffer(nullptr)
-        , m_pIndexBuffer(nullptr) { }
+    RecluseEngine_PUBLIC_API MeshObject() { }
 
     RecluseEngine_PUBLIC_API ResultCode     initialize(VertexBuffer* pVertexBuffer, IndexBuffer* pIndexBuffer);
-
-    RecluseEngine_PUBLIC_API VertexBuffer*  getVertexBuffer() { return m_pVertexBuffer; }
-    RecluseEngine_PUBLIC_API IndexBuffer*   getIndexBuffer() { return m_pIndexBuffer; }
-
-    RecluseEngine_PUBLIC_API const std::vector<SubMesh*>& getSubMeshes(U8 lod) { return m_meshArray[lod].submeshes; };
-
-    RecluseEngine_PUBLIC_API void           addSubmeshes(U32 numSubmeshes, SubMesh* pSubmeshes, U8 lod) 
-    {
-        for (U32 i = 0; i < numSubmeshes; ++i) 
-        { 
-            m_meshArray[lod].subMeshMap[pSubmeshes[i].name] = pSubmeshes[i];
-            m_meshArray[lod].submeshes.push_back(&m_meshArray[lod].subMeshMap[pSubmeshes[i].name]);
-        }
-    }
 
     RecluseEngine_PUBLIC_API ResultCode     serialize(Archive* archive) const override;
     RecluseEngine_PUBLIC_API ResultCode     deserialize(Archive* archive) override;
     RecluseEngine_PUBLIC_API ResultCode     recreate(GraphicsContext* context) override { return RecluseResult_NoImpl; }
     RecluseEngine_PUBLIC_API Bool           isRecreatable() const override { return false; }
-
-    RecluseEngine_PUBLIC_API SubMesh*       getSubMesh(U32 idx, U8 lod) { return m_meshArray[lod].submeshes[idx]; }
-
     RecluseEngine_PUBLIC_API const char*    getDebugName() const { return m_debugName; }
 
+    RecluseEngine_PUBLIC_API MeshLOD*       getLod(uint lodIndex);
+
 private:
-    struct MeshLOD
-    {
-        std::map<std::string, SubMesh>  subMeshMap;
-        std::vector<SubMesh*>           submeshes;  
-    };
 
     typedef std::vector<MeshLOD> MeshLodArray;
 
     MeshLodArray                    m_meshArray;
-    VertexBuffer*                   m_pVertexBuffer;
-    IndexBuffer*                    m_pIndexBuffer;
     RGUID                           m_guid;
 
     const char*                     m_debugName;

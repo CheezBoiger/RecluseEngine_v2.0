@@ -26,24 +26,20 @@ enum SurfaceType
 
 typedef U32 SurfaceTypeFlags;
 
-enum MaterialType 
-{
-    MaterialType_None,
-    MaterialType_PBRRoughMetal,
-    MaterialType_PBRGlossSpecular,
-    MaterialType_PhongDiffuseSpecular,
-    MaterialType_Float,
-    MaterialType_Other
-};
+#define R_MATERIAL_DIFFUSE       "Diffuse"
+#define R_MATERIAL_SPECULAR      "Specular"
+#define R_MATERIAL_ALBEDO        "Albedo"
+#define R_MATERIAL_NORMAL        "Normal"
+#define R_MATERIAL_AO            "AmbientOcclusion"
+#define R_MATERIAL_ROUGHNESS     "Roughness"
+#define R_MATERIAL_ROUGHNESSMAP  "RoughnessMap"
+#define R_MATERIAL_ROUGHMETAL    "RoughMetal"
+#define R_MATERIAL_GLOSSSPEC     "GlossSpec"
+#define R_MATERIAL_HEIGHT        "HeightMap"
+#define R_MATERIAL_LIGHTMAP      "LightMap"
+#define R_MATERIAL_EMISSIVE      "Emissive"
 
-#define R_MAT_ALBEDO        "Albedo"
-#define R_MAT_NORMAL        "Normal"
-#define R_MAT_AO            "AmbientOcclusion"
-#define R_MAT_ROUGHMETAL    "RoughMetal"
-#define R_MAT_GLOSSSPEC     "GlossSpec"
-#define R_MAT_HEIGHT        "HeightMap"
-#define R_MAT_LIGHTMAP      "LightMap"
-#define R_MAT_EMISSIVE      "Emissive"
+#define R_MATERIAL_TYPE_         "Type"
 
 
 class Material 
@@ -51,12 +47,50 @@ class Material
 public:
     virtual ~Material() { }
 
-    ReclusePipeline_PUBLIC_API Material(const std::string& matName = "", MaterialType type = MaterialType_None) 
-        : m_matType(type)
+    enum DataType
+    {
+        DataType_Unknown,
+
+        DataType_Texture1d,
+        DataType_Texture1dArray,
+
+        DataType_Texture2d,
+        DataType_Texture2dArray,
+
+        DataType_Texture3d,
+        DataType_Texture3dArray,
+
+        DataType_TextureCube,
+        DataType_TextureCubeArray,
+
+        DataType_Float,
+        DataType_Float2,
+        DataType_Float3,
+        DataType_Float4,
+
+        DataType_UInt,
+        DataType_UInt2,
+        DataType_UInt3,
+        DataType_UInt4,
+
+        DataType_Int,
+        DataType_Int2,
+        DataType_Int3,
+        DataType_Int4,
+
+        DataType_Double,
+        DataType_Double2,
+        DataType_Double3,
+        DataType_Double4
+    };
+    typedef u8 data_type;
+
+    ReclusePipeline_PUBLIC_API Material(const std::string& matName = "", const std::string& materialTypeName = "") 
+        : m_matType(materialTypeName)
         , m_flags(0)
         , m_matName(matName) { }
 
-    ReclusePipeline_PUBLIC_API MaterialType getMatType() const { return m_matType; }
+    ReclusePipeline_PUBLIC_API std::string getMatType() const { return m_matType; }
 
     ReclusePipeline_PUBLIC_API B32 addTexture(Texture* pTexture, const std::string& attrib) 
     {
@@ -107,7 +141,7 @@ public:
 protected:
 
     SurfaceTypeFlags                        m_flags;
-    MaterialType                            m_matType;
+    std::string                             m_matType;
     std::unordered_map<std::string, U32>    m_matMap;
     std::vector<Texture*>                   m_textures;
     std::string                             m_matName;

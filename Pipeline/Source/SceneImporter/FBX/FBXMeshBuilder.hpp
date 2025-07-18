@@ -25,13 +25,14 @@ public:
     ~FbxMeshBuilder() { }
 
 
-    ResultCode                      onBuild(Builder::Importer* importer, MeshBuilderFlags flags) override;
-    ResultCode                      serialize(Archive* archive) const override;
-    ResultCode                      deserialize(Archive* archive) override;
+    ResultCode                      onBuild(Builder::Importer* importer, const MaterialProperties& properties, MeshBuilderFlags flags) override;
 
 private:
 
     ResultCode                      extractMaterials(MeshBuilder::MeshData& meshData, FbxNode* node);
+
+    // Extract material, returns the new material id to be stored.
+    i32                             extractMaterial(MeshBuilder::MeshData& meshData, FbxSurfaceMaterial* surface, const MaterialProperties& properties);
     std::vector<Math::Float3>       triangulatePolygon(const std::vector<Math::Float3>& pointList);
 
     // Node guids.

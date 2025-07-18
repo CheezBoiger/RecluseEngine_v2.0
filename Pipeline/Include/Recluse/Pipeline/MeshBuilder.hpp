@@ -28,25 +28,25 @@ struct MeshletMetadata
 
 // Mesh Builder helps in building out meshes and materials,
 // and holds that data for use later.
-class ReclusePipeline_PUBLIC_API MeshBuilder : public Serializable
+class ReclusePipeline_PUBLIC_API MeshBuilder
 {
 public:
     // 
     enum 
     {
+        None                = 0,
         Optimize            = (1<<0),
-        Quantize            = (1<<1),
-        Simplify            = (1<<2),
-        Optimize_Aggressive = (1<<3),
+        Simplify            = (1<<1),
+        Optimize_Aggressive = (1<<2),
 
         // Generate meshlets for clustered rendering.
-        GenerateMeshlets    = (1<<4),
+        GenerateMeshlets    = (1<<3),
         
         // Generate Level of Detail meshes. These are stored inside the meshdata map.
-        GenerateLods        = (1<<5),
+        GenerateLods        = (1<<4),
 
         // Triangulate the mesh, if there are polygons that are more than 3 vertices.
-        Triangulate = (1<<3)
+        Triangulate = (1<<5)
     };
     typedef U32 MeshBuilderFlags;
     typedef I32 BoneId;
@@ -70,21 +70,29 @@ public:
         F32                 coneCutoff;
     };
 
+    struct SubMesh
+    {
+        uint                materialId;
+        uint                offsetElements;
+        uint                rangeElements;
+        Math::Bounds3d      bounds;
+    };
+
     // Mesh information.
     struct MeshData
     {
         enum 
         { 
-            None        = 0, 
+            None        = 0,
             Indexed     = (1 << 0), 
             Rigid       = (1 << 1), 
             Skinned     = (1 << 2) 
         };
         typedef U32 MeshAttributeFlags;
         
-        static const i32 kInvalidBoneId     = ~0;
-        static const i32 kInvalidLodId      = ~0;
-        static const i32 kInvalidMaterialId = ~0;
+        static const u32 kInvalidBoneId     = ~0;
+        static const u32 kInvalidLodId      = ~0;
+        static const u32 kInvalidMaterialId = ~0;
 
         // Name of the mesh.
         std::string                             name;
@@ -106,14 +114,23 @@ public:
 
         // For animation data. If the mesh has bone information
         BoneId                                  boneId      = kInvalidBoneId;
-        i32                                     lodId       = kInvalidLodId;
-        i32                                     materialId  = kInvalidMaterialId;
+        u32                                     lodId       = kInvalidLodId;
+        
+        // Global material id for this mesh.
+        u32                                     materialId  = kInvalidMaterialId;
+
+        // Atribute flags that define any special cases of the mesh.
         MeshAttributeFlags                      flags       = None;
 
         // Vertex indices, if the mesh is indexed.
         std::vector<U32>                        vertexIndices;
 
-        std::vector<Material*>                  materials;
+        // Materials within this mesh object. Usually this will only house null materials after export, as these will need to be 
+        // manually set up in the engine editor.
+        std::map<u32, Material*>                materials;
+
+        // Submesh info. This is built per material.
+        std::vector<MeshBuilder::SubMesh>       submeshes;
 
         // Resize the mesh data attributes.
         void resizeAttributes(U32 newSize);
@@ -143,6 +160,17 @@ public:
         std::vector<RGUID>                      lods;
     };
 
+    struct MaterialProperties
+    {
+        struct Parameter
+        {
+            Material::data_type dataType;
+            const char* name;
+        };
+
+        std::vector<Parameter> parameters;
+    };
+
     // Create the mesh builder.
     static MeshBuilder*         create(FileFormat format);
 
@@ -153,10 +181,8 @@ public:
 
     virtual                     ~MeshBuilder() { }
 
-    ResultCode                  build(Importer* importer, MeshBuilderFlags flags);
+    ResultCode                  build(Importer* importer, MeshBuilderFlags flags = MeshBuilder::None, const MaterialProperties& properties={});
 
-    virtual ResultCode          serialize(Archive* archive) const override { return RecluseResult_NoImpl; }
-    virtual ResultCode          deserialize(Archive* archive) override { return RecluseResult_NoImpl; }
     ResultCode                  clear() { m_data.clear(); m_dataMap.clear(); return RecluseResult_Ok; }
 
     // Get the data by rguid.
@@ -186,7 +212,7 @@ public:
 
 protected:
 
-    virtual ResultCode          onBuild(Importer* importer, MeshBuilderFlags flags) = 0;
+    virtual ResultCode          onBuild(Importer* importer, const MaterialProperties& properties, MeshBuilderFlags flags) = 0;
 
     struct MeshDataInfo
     {
@@ -195,8 +221,8 @@ protected:
 
     std::map<RGUID, MeshDataInfo, RGUID::Less>          m_dataMap;
     std::map<BoneId, BoneData, RGUID::Less>             m_boneMap;
-    std::map<i32, LodData>                              m_lodMap;
-    std::map<i32, Material*>                            m_matMap;
+    std::map<u32, LodData>                              m_lodMap;
+    std::map<u32, Material*>                            m_matMap;
     std::map<RGUID, MeshletData, RGUID::Less>           m_meshletMap;
 
     // The actual meshes.
@@ -207,9 +233,8 @@ protected:
     // Optimize the mesh where possible.
     template<typename Vertex, typename VertexEncoder, typename VertexDecoder>
     void                        performOptimize(MeshData& meshData);
-    // Quantize the mesh when possible.
-    void                        performQuantize(MeshData& meshData);
 
+    // Generate meshlets for this mesh data.
     void                        generateMeshlets(MeshData& meshData);
 
 private:
@@ -217,6 +242,21 @@ private:
     const char*     m_ext;
 
     MeshletMetadata m_meshletMetadata;
+};
+
+
+// MeshBuilder to Engine exporter handles exporting the mesh builder content to something engine readable 
+// 
+class MeshBuilderToEngineExporter : public Serializable
+{
+public:
+    MeshBuilderToEngineExporter(const MeshBuilder& builder)
+        : meshBuilder(builder) { }
+
+    virtual ResultCode          serialize(Archive* archive) const override { return RecluseResult_NoImpl; }
+    virtual ResultCode          deserialize(Archive* archive) override { return RecluseResult_NoImpl; }
+private:
+    const MeshBuilder& meshBuilder;
 };
 } // Builder
 } // Pipeline

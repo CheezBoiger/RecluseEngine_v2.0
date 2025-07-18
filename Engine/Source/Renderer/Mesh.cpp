@@ -76,19 +76,19 @@ ResultCode GPUBuffer::destroy()
 }
 
 
-ResultCode Mesh::initialize(VertexBuffer* pVertexBuffer, IndexBuffer* pIndexBuffer)
+ResultCode MeshObject::initialize(VertexBuffer* pVertexBuffer, IndexBuffer* pIndexBuffer)
 {
     return RecluseResult_Ok;
 }
 
 
-ResultCode Mesh::serialize(Archive* archive) const
+ResultCode MeshObject::serialize(Archive* archive) const
 {
     return RecluseResult_NoImpl;
 }
 
 
-ResultCode Mesh::deserialize(Archive* archive) 
+ResultCode MeshObject::deserialize(Archive* archive) 
 {
     return RecluseResult_NoImpl;
 }

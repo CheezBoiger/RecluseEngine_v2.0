@@ -108,6 +108,43 @@ private:
 class Material 
 {
 public:
+    enum DataType 
+    {
+        DataType_Unknown,
+
+        DataType_Texture1d,
+        DataType_Texture1dArray,
+
+        DataType_Texture2d,
+        DataType_Texture2dArray,
+
+        DataType_Texture3d,
+        DataType_Texture3dArray,
+
+        DataType_TextureCube,
+        DataType_TextureCubeArray,
+
+        DataType_Float,
+        DataType_Float2,
+        DataType_Float3,
+        DataType_Float4,
+
+        DataType_UInt,
+        DataType_UInt2,
+        DataType_UInt3,
+        DataType_UInt4,
+
+        DataType_Int,
+        DataType_Int2,
+        DataType_Int3,
+        DataType_Int4,
+
+        DataType_Double,
+        DataType_Double2,
+        DataType_Double3,
+        DataType_Double4
+    };
+
     virtual ~Material() { }
 
     RecluseEngine_PUBLIC_API Material(const std::string& matName)//, MaterialType type) 

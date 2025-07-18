@@ -69,12 +69,19 @@ struct Vertex
     Math::Float4 color;
 };
 
+struct Submesh
+{
+    uint start;
+    uint range;
+};
+
 
 struct MeshBuffer
 {
     std::vector<Vertex> vertices;
     std::vector<U32> indices;
     uint elementCount;
+    std::vector<Submesh> submeshes;
 };
 
 
@@ -89,7 +96,11 @@ MeshBuffer createFbxModel()
         {
             ResultCode result = importer->importFile(//Filesystem::getDirectoryFromPath(__FILE__) + "/box_tri.fbx");
                 Filesystem::getDirectoryFromPath(__FILE__) + "/bunny.fbx");
+                //"C:/Users/MaG/Downloads/210018_open3dmodel.com/210018.fbx");
             R_ASSERT_FORMAT(result == RecluseResult_Ok, "Testing cats");
+
+            Pipeline::Builder::MeshBuilder::MaterialProperties properties = { };
+            properties.parameters = { { Pipeline::Material::DataType_Texture2d, "Roughness" }, { Pipeline::Material::DataType_Float, "Shininess" } };
 
             result = meshBuilder->build(importer, Pipeline::Builder::MeshBuilder::Optimize | Pipeline::Builder::MeshBuilder::GenerateMeshlets);
             R_ASSERT_FORMAT(result == RecluseResult_Ok);
@@ -114,6 +125,14 @@ MeshBuffer createFbxModel()
                     mesh.indices.push_back(meshData->vertexIndices[i]);
 
                 mesh.elementCount = mesh.indices.size();
+
+                for (uint i = 0; i < meshData->submeshes.size(); ++i)
+                {
+                    Submesh submesh{};
+                    submesh.start = meshData->submeshes[i].offsetElements;
+                    submesh.range = meshData->submeshes[i].rangeElements;
+                    mesh.submeshes.push_back(submesh);
+                }
             }
             Pipeline::Builder::MeshBuilder::destroy(meshBuilder);
         }
@@ -413,7 +432,7 @@ void updateConstBuffer(IShaderProgramBinder& binder, GraphicsResource* resource,
     Math::Matrix44 T = Math::translate(Math::Matrix44::identity(), Math::Float3(0, 0, 6));
     Math::Matrix44 R = Math::rotate(Math::Matrix44::identity(), Math::Float3(0.0f, 1.0f, 0.0f), Math::deg2Rad(45.0f));
     //Math::Matrix44 R2 = Math::rotate(Math::Matrix44::identity(), Math::Float3(1.0f, 0.0f, 1.0f), Math::deg2Rad(t));
-    Math::Matrix44 S = Math::scale(Math::Mat44::identity(), Math::Float4(20.0f, 20.0f, 20.0f, 1.0f));
+    Math::Matrix44 S = Math::scale(Math::Mat44::identity(), Math::Float4(20.2f, 20.2f, 20.2f, 1.0f));
     Math::Matrix44 R2 = Math::quatToMat44(q);
     Math::Matrix44 model = S * R2 * R * T;
     Math::Matrix44 view = Math::translate(Math::Matrix44::identity(), Math::Float3(0, 0, 0));
@@ -439,8 +458,6 @@ void updateConstBuffer(IShaderProgramBinder& binder, GraphicsResource* resource,
     memcpy(dat, &buf, sizeof(ConstBuffer));
     resource->unmap(nullptr);
     //binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, resource, 0, sizeof(ConstBuffer));
-    context->allocateConstantBuffer(sizeof(ConstBuffer), nullptr);
-    context->allocateConstantBuffer(128, nullptr);
     ResourceView v = context->allocateConstantBuffer(sizeof(ConstBuffer), &buf);
     binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, /*resource->asCbv(0, sizeof(ConstBuffer))*/ v);
 #else
@@ -533,7 +550,7 @@ int main(char* argv[], int c)
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
+    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 
@@ -683,7 +700,17 @@ int main(char* argv[], int c)
                 context->setViewports(1, &viewport);
                 context->setScissors(1, &scissor);
                 GraphicsQuery query = context->beginQuery(GraphicsQueryType_Occlusion);
-                context->drawIndexedInstanced(meshStuff.elementCount, 1, 0, 0, 0);
+                if (!meshStuff.submeshes.empty())
+                {
+                    for (uint i = 0; i < meshStuff.submeshes.size(); ++i)
+                    {
+                        context->drawIndexedInstanced(meshStuff.submeshes[i].range, 1, meshStuff.submeshes[i].start, 0, 0);
+                    }
+                }
+                else
+                {
+                    context->drawIndexedInstanced(meshStuff.elementCount, 1, 0, 0, 0);
+                }
                 context->endLabel();
                 context->endQuery(query);
                 context->endLabel();
