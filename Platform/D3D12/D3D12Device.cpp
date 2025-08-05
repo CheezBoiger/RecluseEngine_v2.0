@@ -73,12 +73,12 @@ void D3D12Context::begin()
 {
     ID3D12Fence* fence = m_graphicsQueue->getFence();
     HANDLE e = m_graphicsQueue->getEvent();
-    const U64 previousFenceValue = getContextFrame(getCurrentFrameIndex()).fenceValue;
 
+    const U64 previousFenceValue = getContextFrame(getCurrentFrameIndex()).fenceValue;
     incrementContextFrameIndex();
 
     const U64 currentFrameValue = getContextFrame(getCurrentFrameIndex()).fenceValue;
-    m_graphicsQueue->get()->Signal(fence, previousFenceValue);
+
     const U64 completedValue = fence->GetCompletedValue();
     if (completedValue < currentFrameValue)
     {
@@ -101,11 +101,17 @@ ResultCode D3D12Context::submitPrimaryCommandList(ID3D12GraphicsCommandList* pCo
 {
     ID3D12CommandQueue* pPresentationQueue = m_graphicsQueue->get();
     ID3D12CommandList* pLists[] = { pCommandList };
+    ID3D12Fence* fence = m_graphicsQueue->getFence();
 
     R_ASSERT(pPresentationQueue != NULL);
     R_ASSERT(pCommandList != NULL);
 
     pPresentationQueue->ExecuteCommandLists(1, pLists);
+
+    // Signal the queue once the command list is finished.
+    const U64 previousFenceValue = getContextFrame(getCurrentFrameIndex()).fenceValue;
+    m_graphicsQueue->get()->Signal(fence, previousFenceValue);
+
     return RecluseResult_Ok;
 }
 
