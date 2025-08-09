@@ -1,5 +1,5 @@
 # CMake Entry point build
-cmake_minimum_required( VERSION 3.16 )
+cmake_minimum_required( VERSION 3.5 )
 
 set ( RECLUSE_DIRECTORY ${CMAKE_SOURCE_DIR}/Recluse )
 set ( CMAKE_INSTALL_PREFIX ${RECLUSE_DIRECTORY} CACHE PATH "..." FORCE )

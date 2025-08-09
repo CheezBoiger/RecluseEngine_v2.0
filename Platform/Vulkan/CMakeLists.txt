@@ -1,5 +1,5 @@
 # 
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.5)
 project("RecluseVulkan")
 
 set ( RECLUSE_VULKAN_NAME "RecluseVulkan" )

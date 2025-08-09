@@ -1,4 +1,4 @@
-cmake_minimum_required( VERSION 3.16 )
+cmake_minimum_required( VERSION 3.5 )
 project("RecluseEditorBase")
 
 set ( RECLUSE_EDITOR_NAME "RecluseEditorBase" )

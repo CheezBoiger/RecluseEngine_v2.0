@@ -93,7 +93,7 @@ RecluseFramework_PUBLIC_API R_OS_CALL ResultCode    sleep(U64 milliseconds);
 class RecluseFramework_PUBLIC_API ScopedLock 
 {
 public:
-    volatile ScopedLock(Mutex mutex) 
+    ScopedLock(Mutex mutex) 
         : m_mut(mutex)
     {
         lockMutex(m_mut); 

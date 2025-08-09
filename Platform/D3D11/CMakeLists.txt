@@ -1,5 +1,5 @@
 # 
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.5)
 project("RecluseD3D11")
 
 set ( RECLUSE_D3D11_NAME "RecluseD3D11" )

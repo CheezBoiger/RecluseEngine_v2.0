@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 project("TestingFramework")
 
 set( TEST_FRAMEWORK_NAME "TestingFramework" )
