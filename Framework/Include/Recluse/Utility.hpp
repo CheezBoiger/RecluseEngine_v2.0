@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Recluse/Types.hpp"
+#include "Recluse/Serialization/Hasher.hpp"
 #include "RecluseFramework_exports.hpp"
 #include <map>
 
@@ -395,7 +396,6 @@ namespace Internal {
     struct DataListener
     {
         void* value;
-
         RecluseFramework_PUBLIC_API DataListener(const std::string& command, void* globalVariable);
     private:
         void storeData(const std::string& command, DataListener* data);

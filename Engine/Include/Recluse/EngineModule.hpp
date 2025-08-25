@@ -99,7 +99,9 @@ public:
         getMain()->cleanUpMessageBuses();
         return result;
     }
-
+    
+    // Link a message bus to this module. The module will listen on any events
+    // that are fired to the bus.
     ResultCode linkMessageBus(MessageBus* bus)
     {
         auto it = m_messageBusMap.find(bus->getId());
@@ -116,6 +118,8 @@ public:
         return result;
     }
 
+    // Unlink a message bus from this module. Module will no longer hear 
+    // any events from the unlinked bus.
     ResultCode unlinkMessageBus(MessageBus::Id busId)
     {
         ResultCode result = RecluseResult_NotFound;

@@ -116,6 +116,7 @@ enum RecluseResult
     RecluseResult_NotFound,
     RecluseResult_AlreadyExists,
     RecluseResult_OutOfBounds,
+    RecluseResult_Unsupported,
     RecluseResult_InvalidVersion
 };
 } // Recluse

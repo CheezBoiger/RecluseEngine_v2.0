@@ -87,7 +87,7 @@ ResultCode VulkanResource::initialize(VulkanDevice* pDevice, const GraphicsResou
 
     if (result != RecluseResult_Ok) 
     {
-        R_ERROR(R_CHANNEL_VULKAN, "Unable to create resource object!");
+        R_WARN(R_CHANNEL_VULKAN, "Unable to create resource object!");
 
         release();
 
@@ -304,7 +304,8 @@ ResultCode VulkanImage::onCreate(VulkanDevice* pDevice, const GraphicsResourceDe
     } 
     else 
     {
-        R_ERROR(R_CHANNEL_VULKAN, "Could not find a proper tiling scheme for the given format!");
+        R_ERROR(R_CHANNEL_VULKAN, "Could not find a proper tiling scheme for the given format! Likely unsupported format! Format=%d", info.format);
+        return RecluseResult_Unsupported;
     }
 
     switch (info.samples) 

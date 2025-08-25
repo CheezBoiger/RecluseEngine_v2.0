@@ -125,7 +125,6 @@
         #define R_ERROR(chan, format, ...) \
             do { \
                 R_LOG(chan, Recluse::LogType_Error, format, __VA_ARGS__); \
-                R_DEBUG_BREAK(); \
             } while (false)
 
         // Call an interrupt to instruct a fatal error.

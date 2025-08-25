@@ -82,7 +82,7 @@ void RendererModule::initialize()
     }
 
     swapchainDescription.buffering = m_currentRendererConfigs.enableVerticalSyncronization ? FrameBuffering_Double : FrameBuffering_Triple;
-    swapchainDescription.desiredFrames = 8;
+    swapchainDescription.desiredFrames = 3;
     swapchainDescription.renderWidth = m_currentRendererConfigs.renderWidth;
     swapchainDescription.renderHeight = m_currentRendererConfigs.renderHeight;
     swapchainDescription.format = ResourceFormat_R8G8B8A8_Unorm;
@@ -312,12 +312,23 @@ void RendererModule::createDevice(const RendererConfigs& configs)
 void RendererModule::setUpModules()
 {
     m_sceneBuffers.gbuffer[Engine::GBuffer_Depth] = new Texture2D();
-    m_sceneBuffers.gbuffer[Engine::GBuffer_Depth]->initialize(
+    ResultCode result = m_sceneBuffers.gbuffer[Engine::GBuffer_Depth]->initialize(
                                         m_pDevice, 
                                         ResourceFormat_D32_Float_S8_Uint, 
                                         m_currentRendererConfigs.renderWidth, 
                                         m_currentRendererConfigs.renderHeight, 
                                         1, 1, "Gbuffer/Depth");
+
+    if (result != RecluseResult_Ok)
+    {
+        // Try with something that does work.
+        result = m_sceneBuffers.gbuffer[Engine::GBuffer_Depth]->initialize(m_pDevice,
+                                        ResourceFormat_D32_Float,
+                                        m_currentRendererConfigs.renderWidth,
+                                        m_currentRendererConfigs.renderHeight,
+                                        1, 1, "Gbuffer/Depth");
+        R_ASSERT_FORMAT(result == RecluseResult_Ok, "Depth just doesn't work!!");
+    }
 
     //PreZ::initialize(m_pDevice, &m_sceneBuffers);
 
@@ -454,6 +465,10 @@ void RendererModule::allocateSceneBuffers(const RendererConfigs& configs)
     U32 width = configs.renderWidth;
     U32 height = configs.renderHeight;
     m_sceneBuffers.gbuffer[Engine::GBuffer_Depth] = createTexture2D(width, height, 1, 1, ResourceFormat_D24_Unorm_S8_Uint);
+    if (!m_sceneBuffers.gbuffer[Engine::GBuffer_Depth])
+    {
+        m_sceneBuffers.gbuffer[Engine::GBuffer_Depth] = createTexture2D(width, height, 1, 1, ResourceFormat_D32_Float);
+    }
 
     ResourceViewDescription viewDesc = { };
     viewDesc.dimension = ResourceViewDimension_2d;

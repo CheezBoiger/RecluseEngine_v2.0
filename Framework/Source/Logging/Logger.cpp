@@ -3,12 +3,15 @@
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Memory/MemoryCommon.hpp"
 #include "Logging/LogFramework.hpp"
+#include "Recluse/Utility.hpp"
 
 #include "Recluse/Filesystem/Archive.hpp"
 
 #include <set>
 
 namespace Recluse {
+
+R_DECLARE_GLOBAL_BOOLEAN(g_debugBreakOnError, false, "Log.DebugBreakOnError");
 
 static LoggingQueue*            loggingQueue        = nullptr;
 static Thread                   displayThread;
@@ -130,6 +133,12 @@ static Bool isDisabledChannel(const std::string& channel)
 
 Log::~Log()
 {
+    // Trigger debug break just before we flush the log.
+#if defined(RECLUSE_DEBUG)
+    if (g_debugBreakOnError && ((data.type & LogType_Error) || (data.type & LogType_Fatal)))
+        R_DEBUG_BREAK();
+#endif // defined(R_DEBUG)
+
     // Flush only if there is any actual information to flush.
     if (!data.msg.empty())
         flush(true);
