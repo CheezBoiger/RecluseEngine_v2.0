@@ -4,6 +4,7 @@
 #include "D3D12Commons.hpp"
 #include "Recluse/Graphics/CommandList.hpp"
 
+#define R_D3D12_COMMANDLIST_IMPL 1
 namespace Recluse {
 namespace D3D12 {
 class D3D12Device;
@@ -27,15 +28,46 @@ public:
 
     void bindDescriptorHeaps(ID3D12DescriptorHeap* const* pHeaps, U32 numHeaps);
 
-    ID3D12GraphicsCommandList* get() { return m_currentCmdList; }
-    ID3D12GraphicsCommandList6* get6() { return m_currentCmdList; }
+    ID3D12GraphicsCommandList* get() { return m_currentCmdList->get6(); }
+    ID3D12GraphicsCommandList6* get6() { return m_currentCmdList->get6(); }
+
+
+#if defined(__ID3D12WorkGraphProperties_FWD_DEFINED__)
+    ID3D12GraphicsCommandList10* get10() { return m_currentCmdList->get10(); }
+#endif
 
     ID3D12CommandSignature* obtainSignature(D3D12_INDIRECT_ARGUMENT_TYPE type);
 
 private:
+
+    struct CommandListImpl
+    {
+        ID3D12GraphicsCommandList6* list6;
+        
+        ID3D12GraphicsCommandList6* get6() const { return list6; }
+
+#if defined(__ID3D12WorkGraphProperties_FWD_DEFINED__)
+        ID3D12GraphicsCommandList10* list10;
+
+        ID3D12GraphicsCommandList10* get10() const { return list10; }
+#endif
+        CommandListImpl() : list6(nullptr) { }
+
+        HRESULT     initialize(ID3D12Device* device, ID3D12CommandAllocator* commandAllocator);
+        void        release();
+    };
+#if defined(R_D3D12_COMMANDLIST_IMPL)
+    std::vector<CommandListImpl>                m_graphicsCommandLists;
+#else
     std::vector<ID3D12GraphicsCommandList6*>    m_graphicsCommandLists;
+#endif
     std::vector<ID3D12CommandAllocator*>        m_allocators;
+
+#if defined(R_D3D12_COMMANDLIST_IMPL)
+    CommandListImpl*                            m_currentCmdList;
+#else
     ID3D12GraphicsCommandList6*                 m_currentCmdList;
+#endif
     ID3D12CommandAllocator*                     m_currentAllocator;
     CommandListStatus                           m_status;
     

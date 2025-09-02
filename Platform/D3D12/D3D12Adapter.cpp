@@ -232,6 +232,22 @@ ResultCode D3D12Adapter::querySupportedFeatures()
         }
     }
 
+#if defined (__ID3D12WorkGraphProperties_FWD_DEFINED__)
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS21 options;
+        result = tempDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS21, &options, sizeof(options));
+        if (result == S_OK)
+        {
+            if ((m_supportedFlags & LayerFeatureFlag_GpuWorkgraphs) && options.WorkGraphsTier != D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED)
+            {
+                R_DEBUG(R_CHANNEL_D3D12, "Supports Workgraphs.");
+                //ID3D12GraphicsCommandList10::DispatchGraph;
+            }
+            else
+                m_supportedFlags = (m_supportedFlags & ~LayerFeatureFlag_GpuWorkgraphs);
+        }
+    }
+#endif
     tempDevice->Release();
 }
 } // D3D12

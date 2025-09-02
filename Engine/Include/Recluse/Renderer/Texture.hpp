@@ -66,6 +66,14 @@ public:
     // Moves the contents of texture into this texture.
     Texture& operator=(Texture&& texture) noexcept;
 
+    void resize(ResourceFormat pixelFormat, U32 width, U32 height, U32 arrayLayers, U32 mipLevels);
+
+    // Get the initial width of this texture.
+    U32                 getInitialWidth() const { return m_width; }
+    
+    // Get the initial height of this texture.
+    U32                 getInitialHeight() const { return m_height; }
+
     // Get the array layers of the texture.
     U32                 getArrayLayers() const { return m_arrayLayers; }
 
@@ -111,6 +119,9 @@ private:
     std::string                             m_name;
     ResourceFormat                          m_pixelFormat;
     U32                                     m_totalSizeBytes;
+
+    U32                                     m_width;
+    U32                                     m_height;
 };
 } // Engine
 } // Recluse

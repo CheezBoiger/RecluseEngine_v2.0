@@ -26,4 +26,6 @@ public:
 
     std::array<BindingDescription, numResources> bindings;
 };
+
+typedef U64 BindingResourceTableId;
 } // Recluse

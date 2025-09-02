@@ -89,6 +89,10 @@ public:
                             const std::vector<U16>& indices, 
                             const Math::Color4& color,
                             LitType debugType = LitType_Flat) = 0;
+
+    // Render the given debug information that was passed.
+    virtual void        render() = 0;
+
 private:
     RendererModule* renderer;
 };

@@ -62,6 +62,8 @@ Texture::Texture(const std::string& name, U32 initialWidth, U32 initialHeight, U
     , m_name(name)
     , m_rowPitch(0u)
     , m_baseAddressPtr(nullptr)
+    , m_width(initialWidth)
+    , m_height(initialHeight)
 {
     R_ASSERT_FORMAT(initialWidth > 0u && initialHeight > 0u && arrayLayers > 0u && mipLevels > 0u, "Parameters need to be greater than 0!");
     U32 sizeBytes   = 0u;
@@ -192,6 +194,13 @@ Texture& Texture::operator=(Texture&& texture) noexcept
     std::swap(m_totalSizeBytes, texture.m_totalSizeBytes);
     std::swap(m_name, texture.m_name);
     return (*this);
+}
+
+
+void Texture::resize(ResourceFormat pixelFormat, U32 width, U32 height, U32 arrayLayers, U32 mipLevels)
+{
+    // We need to implement this!
+    R_NO_IMPL();
 }
 } // Engine
 } // Recluse

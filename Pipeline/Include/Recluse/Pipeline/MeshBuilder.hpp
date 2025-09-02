@@ -46,13 +46,13 @@ public:
         GenerateLods        = (1<<4),
 
         // Triangulate the mesh, if there are polygons that are more than 3 vertices.
-        Triangulate = (1<<5)
+        Triangulate         = (1<<5)
     };
     typedef U32 MeshBuilderFlags;
     typedef I32 BoneId;
 
-    static const U32 kDefaultVerticesPerMeshlet = 64;
-    static const U32 kDefaultPrimitivesPerMeshlet = 128;
+    static const U32 kDefaultVerticesPerMeshlet     = 64;
+    static const U32 kDefaultPrimitivesPerMeshlet   = 128;
 
     // Info for constructed meshlet.
     struct Meshlet

@@ -22,6 +22,8 @@ enum BindType
     BindType_Graphics,
     BindType_Compute,
     BindType_RayTrace,
+    // Gpu Workgraph
+    BindType_GpuWorkgraph
 };
 
 
@@ -195,6 +197,8 @@ enum LayerFeatureFlag
     LayerFeatureFlag_SamplerFeedback    = (1 << 6),
     // Feature if support for variable rate shading is available.
     LayerFeatureFlag_VariableRateShading = (1 << 7),
+    // Gpu workgraph support for GPU driven rendering.
+    LayerFeatureFlag_GpuWorkgraphs      = (1 << 8),
 };
 
 

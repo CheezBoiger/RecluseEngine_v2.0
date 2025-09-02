@@ -12,6 +12,42 @@
 namespace Recluse {
 namespace D3D12 {
 
+HRESULT D3D12PrimaryCommandList::CommandListImpl::initialize(ID3D12Device* device, ID3D12CommandAllocator* commandAllocator)
+{
+
+    R_ASSERT(device);
+    R_ASSERT(commandAllocator);
+
+    HRESULT result = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator, nullptr, 
+        __uuidof(ID3D12GraphicsCommandList6), 
+        (void**)&list6);
+
+
+    if (SUCCEEDED(result))
+    {
+#if defined(__ID3D12WorkGraphProperties_FWD_DEFINED__)
+        result = list6->QueryInterface<ID3D12GraphicsCommandList10>(&list10);
+#endif
+        // Close first
+        list6->Close();
+    }
+
+    return SUCCEEDED(result);
+}
+
+
+void D3D12PrimaryCommandList::CommandListImpl::release()
+{
+#if defined(__ID3D12WorkGraphProperties_FWD_DEFINED__)
+    if (list10)
+        list10->Release();
+    list10 = nullptr;
+#endif
+    if (list6)
+        list6->Release();
+    list6 = nullptr;
+}
+
 ResultCode D3D12PrimaryCommandList::initialize(D3D12Context* pDeviceContext, GraphicsQueueTypeFlags flags)
 {
     flags;
@@ -27,6 +63,9 @@ ResultCode D3D12PrimaryCommandList::initialize(D3D12Context* pDeviceContext, Gra
     {
         m_allocators[i] = bufferResources[i].pAllocator;
 
+#if defined(R_D3D12_COMMANDLIST_IMPL) 
+        result = m_graphicsCommandLists[i].initialize(device, m_allocators[i]);
+#else
         result = device->CreateCommandList
                             (
                                 0, 
@@ -43,11 +82,11 @@ ResultCode D3D12PrimaryCommandList::initialize(D3D12Context* pDeviceContext, Gra
             
             return destroy();
         }
-
         // Close first.
         m_graphicsCommandLists[i]->Close();
+#endif
     }
-
+    
     D3D12_COMMAND_SIGNATURE_DESC signatureDescription = { };
     D3D12_INDIRECT_ARGUMENT_DESC indirectArgsDescription = { };
     signatureDescription.NumArgumentDescs = 1;
@@ -79,7 +118,11 @@ ResultCode D3D12PrimaryCommandList::destroy()
 {
     for (U32 i = 0; i < m_graphicsCommandLists.size(); ++i)
     {
+#if defined(R_D3D12_COMMANDLIST_IMPL) 
+        m_graphicsCommandLists[i].release();
+#else
         m_graphicsCommandLists[i]->Release();
+#endif
     }
     for (auto& iter : m_signatureMap)
     {
@@ -100,21 +143,21 @@ void D3D12PrimaryCommandList::reset()
 {
     R_ASSERT(!m_graphicsCommandLists.empty());
     R_ASSERT(!m_allocators.empty());
-    m_currentCmdList->Reset(m_currentAllocator, nullptr);
+    get()->Reset(m_currentAllocator, nullptr);
     m_status = CommandList_Reset;
 }
 
 
 void D3D12PrimaryCommandList::end()
 {
-    m_currentCmdList->Close();
+    get()->Close();
 }
 
 
 void D3D12PrimaryCommandList::use(U32 bufferIdx)
 {
     R_ASSERT_FORMAT(bufferIdx < m_graphicsCommandLists.size(), "Commandlist use() requested idx=%d, but max is %d!", bufferIdx, static_cast<U32>(m_graphicsCommandLists.size()));
-    m_currentCmdList = m_graphicsCommandLists[bufferIdx];
+    m_currentCmdList = &m_graphicsCommandLists[bufferIdx];
     m_currentAllocator = m_allocators[bufferIdx];
 }
 

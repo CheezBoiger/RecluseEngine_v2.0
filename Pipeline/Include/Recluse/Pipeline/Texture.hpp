@@ -28,7 +28,8 @@ enum TextureExt
     TextureExt_PNG,
     TextureExt_JPG,
     TextureExt_DDS,
-    TextureExt_TGA
+    TextureExt_TGA,
+    TextureExt_Raw
 };
 
 enum TextureLoadFlag
@@ -46,7 +47,18 @@ enum CompressFlag
 };
 typedef U32 CompressFlags;
 
+namespace TextureUtils {
+
+// Loads a texture from filename, on disk.
+ReclusePipeline_PUBLIC_API Engine::Texture  load(const std::string& fileName, TextureExt ext);
+
+// Stores a texture to filename, on disk in a format that is understood by the engine. Returns Ok if successful.
+ReclusePipeline_PUBLIC_API ResultCode       store(const Engine::Texture& texture, const std::string& fileName);
+
+
 // Compression for the texture. Returns compressed texture handle.
 ReclusePipeline_PUBLIC_API Engine::Texture compress(const Engine::Texture& texture, CompressionFormat compressionFormat, CompressFlags compressFlags);
+
+} // TextureUtils
 } // Pipeline
 } // Recluse
