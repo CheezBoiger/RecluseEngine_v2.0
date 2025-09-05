@@ -67,43 +67,48 @@ public:
 #endif
     // Binds a shader resource to the currently bound shader program. Shader Resource must be a view type.
     // \param type The Shader types that this view will be bound to.
+    // \param space The space that the resource will be bound to, this is the unique set index (in vulkan terms.)
     // \param slot The slot that this shader resource will be bound to. This is dependent on the register value for DirectX, or the 
     //             order written in the shader for Vulkan (independent of the binding value.)
     // \param view The actual View of the shader resource to bind to the shader program.
     // \return The same ShaderProgramBinder instance.
-    virtual IShaderProgramBinder& bindShaderResource(ShaderStageFlags type, U32 slot, ResourceView view) { return (*this); }
+    virtual IShaderProgramBinder& bindShaderResource(ShaderStageFlags type, U32 space, U32 slot, ResourceView view) { return (*this); }
 
     // Binds an unordered access resource to the currently bound shader program. The Unordered Access must be a view type.
     // \param type The Shader types that this view will be bound to.
+    // \param space The space that the resource will be bound to, this is the unique set index (in vulkan terms.)
     // \param slot The slot that this shader resource will be bound to. This is dependent on the register value for DirectX, or the 
     //             order written in the shader for Vulkan (independent of the binding value.)
     // \param view The actual view of the unordered access resoruce to bind to the shader program.
     // \return The same ShaderProgramBinder instance.
-    virtual IShaderProgramBinder& bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceView view) { return (*this); }
+    virtual IShaderProgramBinder& bindUnorderedAccessView(ShaderStageFlags type, U32 space, U32 slot, ResourceView view) { return (*this); }
 
 
     // Binds a constant buffer view to the currently bound shader program. The constant buffer must be a view type.
     // \param type The shader types that this view will be bound to.
+    // \param space The space that the resource will be bound to, this is the unique set index (in vulkan terms.)
     // \param slot The slot that this constant buffer will be bound to. This is dependent on the register value for DirectX, or the order 
     //             order written in the shader for vulkan (independent of the binding value.)
     // \param view The actual view of the constant buffer to bind the shader program.
     // \return The same ShaderProgramBinder instance.
-    virtual IShaderProgramBinder& bindConstantBuffer(ShaderStageFlags type, U32 slot, ResourceView cbv) { return (*this); } 
+    virtual IShaderProgramBinder& bindConstantBuffer(ShaderStageFlags type, U32 space, U32 slot, ResourceView cbv) { return (*this); } 
 
     // Bind a constant buffer that links to certain shaders in the program. Define the slot in the shader program as well.
     // The pResource is the constant buffer resource to be bound, the offsetBytes is the offset in the pResource, along with the 
     // sizeBytes (the size of the data to read.) The data is optional (must be nullptr,) but programmer may specify local data that 
     // they wish to host-device copy to the pResource (pResource must be host copyable.)
+    // \param space The space that the resource will be bound to, this is the unique set index (in vulkan terms.)
     // \return The same ShaderProgramBinder instance.
-    virtual IShaderProgramBinder& bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data = nullptr) { return (*this); }
+    virtual IShaderProgramBinder& bindConstantBuffer(ShaderStageFlags type, U32 space, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data = nullptr) { return (*this); }
     
     // Binds a sampler resource to the currently bound shader program. Sampler must be a handle.
     // \param type The Shader types that this sampler will be bound to.
+    // \param space The space that the resource will be bound to, this is the unique set index (in vulkan terms.)
     // \param slot The slot that this sampler will be bound to. This is dependent on the register value for DirectX, or the 
     //             order written in the shader for Vulkan (independent of the binding value.)
     // \param pSampler The actual sampler handle used to bind to the shader program.
     // \return The same ShaderProgramBinder instance.
-    virtual IShaderProgramBinder& bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* pSampler) { return (*this); }
+    virtual IShaderProgramBinder& bindSampler(ShaderStageFlags type, U32 space, U32 slot, GraphicsSampler* pSampler) { return (*this); }
 
     // Return the currently bound program id.
     ShaderProgramId               getProgramId() const { return m_programId; }

@@ -704,7 +704,7 @@ VulkanContext::ContextState& VulkanContext::VulkanShaderProgramBinder::currentSt
 }
 
 
-IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data)
+IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindConstantBuffer(ShaderStageFlags type, U32 space, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data)
 {
     if (pResource)
     {
@@ -727,11 +727,11 @@ IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindConstantBuff
             }
         }
     }
-    return bindConstantBuffer(type, slot, pResource->asCbv(offsetBytes, sizeBytes));
+    return bindConstantBuffer(type, space, slot, pResource->asCbv(offsetBytes, sizeBytes));
 }
 
 
-IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindConstantBuffer(ShaderStageFlags type, U32 slot, ResourceView view)
+IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindConstantBuffer(ShaderStageFlags type, U32 space, U32 slot, ResourceView view)
 {
     Vulkan::BufferView& bufferView = *(Vulkan::BufferView*)&view;
     VulkanContext* context = m_pContext;
@@ -757,7 +757,7 @@ IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindConstantBuff
 }
 
 
-IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindShaderResource(ShaderStageFlags type, U32 slot, ResourceView viewId)
+IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindShaderResource(ShaderStageFlags type, U32 space, U32 slot, ResourceView viewId)
 {
     VulkanContext* context = m_pContext;
     R_ASSERT_FORMAT(currentState().m_srvs.size() > slot, "Maximum of %d shader resource views may be bound simulatenously. Request slot %d is not allowed.", currentState().m_srvs.size(), slot);
@@ -783,7 +783,7 @@ IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindShaderResour
 }
 
 
-IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceView view)
+IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindUnorderedAccessView(ShaderStageFlags type, U32 space, U32 slot, ResourceView view)
 {
     VulkanContext* context = m_pContext;
     ShaderStageFlags shaderFlags = type;
@@ -808,7 +808,7 @@ IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindUnorderedAcc
 }
 
 
-IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* ppSamplers)
+IShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindSampler(ShaderStageFlags type, U32 space, U32 slot, GraphicsSampler* ppSamplers)
 {
     VulkanContext* context = m_pContext;
     ShaderStageFlags shaderFlags = type;

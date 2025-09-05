@@ -315,7 +315,7 @@ D3D12Context::ContextState& D3D12Context::D3D12ShaderProgramBinder::currentState
 }
 
 
-IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindShaderResource(ShaderStageFlags type, U32 slot, ResourceView view)
+IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindShaderResource(ShaderStageFlags type, U32 space, U32 slot, ResourceView view)
 {
     D3D12Context* context = m_pContext;
     DescriptorHeapAllocationManager* manager = context->getNativeDevice()->getDescriptorHeapManager();
@@ -339,7 +339,7 @@ IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindShaderResource
 }
 
 
-IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindConstantBuffer(ShaderStageFlags type, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data)
+IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindConstantBuffer(ShaderStageFlags type, U32 space, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data)
 {
     ResourceView cbv = {};
     if (pResource)
@@ -364,11 +364,11 @@ IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindConstantBuffer
         }
     }
 
-    return bindConstantBuffer(type, slot, cbv);
+    return bindConstantBuffer(type, space, slot, cbv);
 }
 
 
-IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindConstantBuffer(ShaderStageFlags type, U32 slot, ResourceView view)
+IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindConstantBuffer(ShaderStageFlags type, U32 space, U32 slot, ResourceView view)
 {
     D3D12Context* context = m_pContext;
     DescriptorHeapAllocationManager* manager = context->getNativeDevice()->getDescriptorHeapManager();
@@ -393,7 +393,7 @@ IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindConstantBuffer
 }
 
 
-IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindUnorderedAccessView(ShaderStageFlags type, U32 slot, ResourceView view)
+IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindUnorderedAccessView(ShaderStageFlags type, U32 space, U32 slot, ResourceView view)
 {
     D3D12Context* context = m_pContext;
     DescriptorHeapAllocationManager* manager = context->getNativeDevice()->getDescriptorHeapManager();
@@ -417,7 +417,7 @@ IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindUnorderedAcces
 }
 
 
-IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindSampler(ShaderStageFlags type, U32 slot, GraphicsSampler* sampler)
+IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindSampler(ShaderStageFlags type, U32 space, U32 slot, GraphicsSampler* sampler)
 {
     D3D12Context* context = m_pContext;
     DescriptorHeapAllocationManager* manager = context->getNativeDevice()->getDescriptorHeapManager();

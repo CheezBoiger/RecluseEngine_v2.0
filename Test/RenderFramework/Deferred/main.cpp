@@ -498,9 +498,9 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
         constBuffer.modelViewProjection = model * view * proj;
 
         ResourceView cbView = context->allocateConstantBuffer(sizeof(ConstBuffer), &constBuffer);
-        binder.bindConstantBuffer(ShaderStage_Pixel | ShaderStage_Vertex, 0, cbView)
-                .bindShaderResource(ShaderStage_Pixel, 0, meshes[i].albedoView)
-                .bindSampler(ShaderStage_Pixel, 0, gbufferSampler);
+        binder.bindConstantBuffer(ShaderStage_Pixel | ShaderStage_Vertex, 0, 0, cbView)
+                .bindShaderResource(ShaderStage_Pixel, 0, 0, meshes[i].albedoView)
+                .bindSampler(ShaderStage_Pixel, 0, 0, gbufferSampler);
         context->bindVertexBuffers(1, &vb, offset);
         context->bindIndexBuffer(meshes[i].indexBuffer, 0, IndexType_Unsigned32);
         context->drawIndexedInstanced(meshes[i].numIndices, 1, 0, 0, 0);
@@ -590,13 +590,13 @@ void resolveLighting(GraphicsContext* context)
     context->transition(lightBuffer, ResourceState_ShaderResource);
     context->pushState();
         context->bindShaderProgram(ShaderProgram_LightResolve, 0)
-            .bindShaderResource(ShaderStage_Pixel, 0, albedoView)
-            .bindShaderResource(ShaderStage_Pixel, 1, normalView)
-            .bindShaderResource(ShaderStage_Pixel, 4, lightBufferView)
-            .bindShaderResource(ShaderStage_Pixel, 3, depthView)
-            .bindConstantBuffer(ShaderStage_Pixel, 0, sceneBuffer, 0, sizeof(SceneBuffer))
-            .bindConstantBuffer(ShaderStage_Pixel, 1, lightViewBuffer, 0, sizeof(LightView))
-            .bindSampler(ShaderStage_Pixel, 0, gbufferSampler);
+            .bindShaderResource(ShaderStage_Pixel, 0, 0, albedoView)
+            .bindShaderResource(ShaderStage_Pixel, 0, 1, normalView)
+            .bindShaderResource(ShaderStage_Pixel, 0, 4, lightBufferView)
+            .bindShaderResource(ShaderStage_Pixel, 0, 3, depthView)
+            .bindConstantBuffer(ShaderStage_Pixel, 0, 0, sceneBuffer, 0, sizeof(SceneBuffer))
+            .bindConstantBuffer(ShaderStage_Pixel, 0, 1, lightViewBuffer, 0, sizeof(LightView))
+            .bindSampler(ShaderStage_Pixel, 0, 0, gbufferSampler);
 
         context->bindRenderTargets(1, &id);
         context->setTopology(PrimitiveTopology_TriangleList);
@@ -744,7 +744,7 @@ int main(char* argv[], int c)
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
+    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
     std::vector<MeshDraw> meshes;
 
@@ -774,11 +774,11 @@ int main(char* argv[], int c)
 
     context = device->createContext();
     R_ASSERT(context);
-    context->setFrames(2);
+    context->setFrames(4);
 
     SwapchainCreateDescription swapchainDescription = { };
     swapchainDescription.buffering      = FrameBuffering_Triple;
-    swapchainDescription.desiredFrames  = 3;
+    swapchainDescription.desiredFrames  = 4;
     swapchainDescription.format         = ResourceFormat_R8G8B8A8_Unorm;
     swapchainDescription.renderWidth    = window->getWidth();
     swapchainDescription.renderHeight   = window->getHeight();

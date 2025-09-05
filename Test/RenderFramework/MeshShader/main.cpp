@@ -438,9 +438,9 @@ void updateConstBuffer(IShaderProgramBinder& binder, GraphicsResource* resource,
     resource->map(&dat, nullptr);
     memcpy(dat, &buf, sizeof(ConstBuffer));
     resource->unmap(nullptr);
-    binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, resource, 0, sizeof(ConstBuffer));
+    binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, 0, resource, 0, sizeof(ConstBuffer));
 #else
-    binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, resource, 0, sizeof(ConstBuffer), &buf);
+    binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, 0, resource, 0, sizeof(ConstBuffer), &buf);
 #endif
 }
 
@@ -524,7 +524,7 @@ int main(char* argv[], int c)
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
+    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
     //GraphicsSampler* sampler    = nullptr;
 
@@ -551,7 +551,7 @@ int main(char* argv[], int c)
             GraphicsAdapter* temp = adapters[i];
             AdapterInfo adapterInfo = { };
             temp->getAdapterInfo(&adapterInfo);
-            if (adapterInfo.type == AdapterInfo::Type_DiscreteGpu) 
+            if (adapterInfo.type == AdapterInfo::Type_IntegratedGpu) 
             {
                 adapter = adapters[i];
                 break;

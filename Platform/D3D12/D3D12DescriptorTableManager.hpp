@@ -239,8 +239,8 @@ public:
     static const F32                kNumSamplerDescriptorsPageSize;
     
     DescriptorHeapAllocationManager()
-        : m_currentHeapIndex(0)
-        , m_currentTableHeapIndex(0)
+        : //m_currentHeapIndex(0)
+         m_currentTableHeapIndex(0)
         , m_pDevice(nullptr)
     { }
 
@@ -261,14 +261,14 @@ public:
     ResultCode                                              freeDescriptorTable(CpuHeapType heapType, const CpuDescriptorTable& table);
 
     // Individual persistant descriptors creation.
-    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateShaderResourceView(ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& desc, bool temporary = false);
+    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateShaderResourceView(ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& desc, U32 numDescriptors, bool temporary = false);
 
     // Constant buffer views just take the gpu address as the resource.
-    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateConstantBufferView(const D3D12_CONSTANT_BUFFER_VIEW_DESC& desc, bool temporary = false);
-    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateUnorderedAccessView(ID3D12Resource* pResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc, bool temporary = false);
-    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateRenderTargetView(ID3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC& desc, bool temporary = false);
-    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateDepthStencilView(ID3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& desc, bool temporary = false);
-    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateSampler(const D3D12_SAMPLER_DESC& desc, bool temporary = false);
+    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateConstantBufferView(const D3D12_CONSTANT_BUFFER_VIEW_DESC& desc, U32 numDescriptors, bool temporary = false);
+    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateUnorderedAccessView(ID3D12Resource* pResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc, U32 numDescriptors, bool temporary = false);
+    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateRenderTargetView(ID3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC& desc, U32 numDescriptors, bool temporary = false);
+    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateDepthStencilView(ID3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& desc, U32 numDescriptors, bool temporary = false);
+    D3D12_CPU_DESCRIPTOR_HANDLE                             allocateSampler(const D3D12_SAMPLER_DESC& desc, U32 numSamplers, bool temporary = false);
     D3D12_CPU_DESCRIPTOR_HANDLE                             nullRtvDescriptor() const { return m_nullRtvDescriptor; }
     D3D12_CPU_DESCRIPTOR_HANDLE                             nullSrvDescriptor() const { return m_nullSrvDescriptor; }
     D3D12_CPU_DESCRIPTOR_HANDLE                             nullUavDescriptor() const { return m_nullUavDescriptor; }
@@ -292,8 +292,14 @@ private:
 
     std::vector<ShaderVisibleDescriptorHeapInstance>        m_shaderVisibleDescriptorHeapInstances;
 
+    struct DescriptorHeapMonitor
+    {
+        U32 currentIndex;
+        std::vector<CpuDescriptorHeap> heaps;
+    };
+
     // Cpu persistant descriptor heaps, these will hold onto our views, and will then be stored 
-    std::map<CpuHeapType, std::vector<CpuDescriptorHeap>>   m_cpuDescriptorHeaps;
+    std::map<CpuHeapType, DescriptorHeapMonitor>            m_cpuDescriptorHeaps;
     // Temporary descriptor heaps in the form of tables.
     std::map<CpuHeapType, std::vector<CpuDescriptorHeap>>   m_cpuDescriptorTableHeaps;
     D3D12_CPU_DESCRIPTOR_HANDLE                             m_nullRtvDescriptor;
@@ -304,7 +310,7 @@ private:
     D3D12_CPU_DESCRIPTOR_HANDLE                             m_nullSamplerDescriptor;
     ID3D12Device*                                           m_pDevice;
     U32                                                     m_currentTableHeapIndex;
-    U32                                                     m_currentHeapIndex;
+    //U32                                                     m_currentHeapIndex;
 }; // DescriptorHeapAllocationManager
 
 

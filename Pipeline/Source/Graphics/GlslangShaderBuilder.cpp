@@ -8,7 +8,7 @@
 #define ENABLE_HLSL 1
 #include <vulkan/vulkan_core.h>
 #include "glslang/Public/ShaderLang.h"
-#include "glslang/Include/Types.h"
+//#include "glslang/Include/Types.h"
 #include "glslang/SPIRV/GlslangToSpv.h" 
 #include "glslang/Include/ResourceLimits.h"
 

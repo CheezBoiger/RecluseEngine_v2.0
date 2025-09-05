@@ -156,10 +156,10 @@ VkDescriptorSetLayout createDescriptorSetLayout(VulkanContext* pContext, const D
 }
 
 
-static VulkanDescriptorAllocation allocateDescriptorSet(VulkanContext* pContext, VkDescriptorSetLayout layout)
+static VulkanDescriptorAllocation allocateDescriptorSets(VulkanContext* pContext, U32 layoutCount, VkDescriptorSetLayout* layouts)
 {
     DescriptorAllocatorInstance* instance   = pContext->currentDescriptorAllocator();
-    VulkanDescriptorAllocation allocation   = instance->allocate(1, &layout);
+    VulkanDescriptorAllocation allocation   = instance->allocate(layoutCount, layouts);
     if (!allocation.isValid()) 
     {
         R_ERROR(R_CHANNEL_VULKAN, "Failed to allocate vulkan descriptor set!!");
@@ -222,91 +222,118 @@ public:
         , asCount(0)
     { }
 
-    // Record the vulkan view. 
-    void recordView(VulkanResourceView* pView, DescriptorBindType bindType, VkDescriptorSet set, U32 binding)
+    // Record the vulkan view.
+    void recordViews(VulkanResourceView** pViews, DescriptorBindType bindType, VkDescriptorSet set, U32 binding, U32 count)
     {
-        const ResourceViewDescription& description  = pView->getDesc();
+        // Do not process if no count is set.
+        if (count == 0) return;
+
         VkWriteDescriptorSet writeSet = { };
         writeSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        writeSet.descriptorType = getDescriptorType(description.dimension, bindType);
-        writeSet.descriptorCount = 1;
+        writeSet.descriptorCount = count;
         writeSet.dstBinding = binding;
         writeSet.dstSet = set;
         
-        if (description.dimension != ResourceViewDimension_RayTraceAccelerationStructure)
+        const ResourceViewDescription& description  = pViews[0]->getDesc();
+        U32 prevBufferCount = bufferCount;
+        U32 prevImageCount = imageCount;
+        U32 prevAsCount = asCount;
+        for (U32 i = 0; i < count; ++i)
         {
-            if (pView->isBufferView())
+            const ResourceViewDescription& description = pViews[i]->getDesc();
+            if (description.dimension != ResourceViewDimension_RayTraceAccelerationStructure)
             {
-                VulkanResource* pResource   = pView->getResource()->castTo<VulkanResource>();
-                VulkanBuffer* buffer        = pResource->castTo<VulkanBuffer>();
-                // Number of elements, times the byte stride.
-                U32 sizeBytes = description.numElements * description.byteStride;
-                U32 offsetBytes = description.firstElement * description.byteStride;
-                R_ASSERT(buffer->getBufferSizeBytes() >= sizeBytes);
-                sizeBytes = Math::clamp(sizeBytes, (U32)0, buffer->getBufferSizeBytes());
-                VkDescriptorBufferInfo info = makeDescriptorBufferInfo(buffer->get(), offsetBytes, sizeBytes);
-                bufferInfo[bufferCount] = info;
-                writeSet.pBufferInfo = &bufferInfo[bufferCount++];
+                if (pViews[i]->isBufferView())
+                {
+                    VulkanResource* pResource   = pViews[i]->getResource()->castTo<VulkanResource>();
+                    VulkanBuffer* buffer        = pResource->castTo<VulkanBuffer>();
+                    // Number of elements, times the byte stride.
+                    U32 sizeBytes = description.numElements * description.byteStride;
+                    U32 offsetBytes = description.firstElement * description.byteStride;
+                    R_ASSERT(buffer->getBufferSizeBytes() >= sizeBytes);
+                    sizeBytes = Math::clamp(sizeBytes, (U32)0, buffer->getBufferSizeBytes());
+                    VkDescriptorBufferInfo info = makeDescriptorBufferInfo(buffer->get(), offsetBytes, sizeBytes);
+                    bufferInfo[bufferCount++] = info;
+                    //writeSet.pBufferInfo = &bufferInfo[bufferCount++];
+                }
+                else
+                {
+                    VulkanImageView* pImageView = pViews[i]->castTo<VulkanImageView>();
+                    VkDescriptorImageInfo info = makeDescriptorImageInfo(pImageView);
+                    imageInfo[imageCount++] = info;
+                    //writeSet.pImageInfo = &imageInfo[imageCount++];
+                }
             }
             else
-            {
-                VulkanImageView* pImageView = pView->castTo<VulkanImageView>();
-                VkDescriptorImageInfo info = makeDescriptorImageInfo(pImageView);
-                imageInfo[imageCount] = info;
-                writeSet.pImageInfo = &imageInfo[imageCount++];
-            }
-        }
-        else
 #if defined(RECLUSE_RAYTRACING_HEADER)
-        {
-            VkWriteDescriptorSetAccelerationStructureKHR asWrite = { };
-            asWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
-            // TODO: Still need to create the acceleration structure!
+            { 
+                VkWriteDescriptorSetAccelerationStructureKHR asWrite = { };
+                asWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+                // TODO: Still need to create the acceleration structure!
 
-            asInfo[asCount] = asWrite;
-            writeSet.pNext = &asInfo[asCount++];
-        }
+                asInfo[asCount++] = asWrite;
+                //writeSet.pNext = &asInfo[asCount++];
+            }
 #else
-        {
-            R_ASSERT_FORMAT(description.dimension != ResourceViewDimension_RayTraceAccelerationStructure, "Hardware raytracing is not enabled!");
-        }
+            {
+                R_ASSERT_FORMAT(description.dimension != ResourceViewDimension_RayTraceAccelerationStructure, "Hardware raytracing is not enabled!");
+            }
 #endif
+        }
+        // Should be same.
+        writeSet.descriptorType = getDescriptorType(description.dimension, bindType);
+
+        if (bufferCount - prevBufferCount)  writeSet.pBufferInfo = &bufferInfo[prevBufferCount];
+        if (imageCount - prevImageCount)    writeSet.pImageInfo = &imageInfo[prevImageCount];
+        if (asCount - prevAsCount)          writeSet.pNext = &asInfo[prevAsCount];
         writeSets.push_back(writeSet);
     }
 
     // Record the constant buffer.
-    void recordConstantBuffer(VkBuffer buffer, U32 offsetBytes, U32 sizeBytes, VkDescriptorSet set, U32 binding)    
+    void recordConstantBuffers(VkBuffer* buffers, U32 offsetBytes, U32 sizeBytes, VkDescriptorSet set, U32 binding, U32 count)    
     {
+        if (count == 0) return;
         VkWriteDescriptorSet writeSet = { };
         writeSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         writeSet.descriptorType = getDescriptorType(ResourceViewDimension_Buffer, DescriptorBindType_ConstantBuffer);
-        writeSet.descriptorCount = 1;
+        writeSet.descriptorCount = count;
         writeSet.dstSet = set;
         writeSet.dstBinding = binding;
         
-        VkDescriptorBufferInfo info = makeDescriptorBufferInfo(buffer, offsetBytes, sizeBytes);
-        bufferInfo[bufferCount] = info;
-        writeSet.pBufferInfo = &bufferInfo[bufferCount++];
+        U32 prevBufferCount = bufferCount;
+        for (U32 i = 0; i < count; ++i)
+        {
+            VkDescriptorBufferInfo info = makeDescriptorBufferInfo(buffers[i], offsetBytes, sizeBytes);
+            bufferInfo[bufferCount++] = info;
+            //writeSet.pBufferInfo = &bufferInfo[bufferCount++];
+        }
+        writeSet.pBufferInfo = &bufferInfo[prevBufferCount];
         writeSets.push_back(writeSet);
     }
 
     // Record the sampler.
-    void recordSampler(VulkanSampler* sampler, VkDescriptorSet set, U32 binding)
+    void recordSamplers(VulkanSampler** samplers, VkDescriptorSet set, U32 binding, U32 count)
     {
+        if (count == 0) return;
         VkWriteDescriptorSet writeSet = { };
         writeSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         writeSet.descriptorType = getDescriptorType(ResourceViewDimension_None, DescriptorBindType_Sampler);
         writeSet.dstSet = set;
         writeSet.dstBinding = binding;
-        writeSet.descriptorCount = 1;
+        writeSet.descriptorCount = count;
 
-        VkDescriptorImageInfo info  = { };
-        info.imageLayout            = VK_IMAGE_LAYOUT_UNDEFINED;
-        info.imageView              = nullptr;
-        info.sampler                = sampler->get();
+        U32 prevImageCount = imageCount;
+        for (U32 i = 0; i < count; ++i)
+        {
+            VkDescriptorImageInfo info  = { };
+            info.imageLayout            = VK_IMAGE_LAYOUT_UNDEFINED;
+            info.imageView              = nullptr;
+            info.sampler                = samplers[i]->get();
 
-        imageInfo[imageCount] = info;
-        writeSet.pImageInfo = &imageInfo[imageCount++];
+            imageInfo[imageCount++] = info;
+            //writeSet.pImageInfo = &imageInfo[imageCount++];
+        }
+        writeSet.pImageInfo = &imageInfo[prevImageCount];
         writeSets.push_back(writeSet);
     }
 
@@ -359,7 +386,8 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
 
         VkDeviceSize minUBOAlignOffsetBytes = VulkanAdapter::obtainMinUniformBufferOffsetAlignment(pContext->getDevice()->castTo<VulkanDevice>());
         VkDeviceSize alignedMemoryOffset    = align(structure.ppConstantBuffers[i].offset, minUBOAlignOffsetBytes);
-        writer.recordConstantBuffer(bufferView.buffer, alignedMemoryOffset, structure.ppConstantBuffers[i].sizeBytes, set, structure.ppConstantBuffers[i].binding);
+        VkBuffer buffers[] = { bufferView.buffer };
+        writer.recordConstantBuffers(buffers, alignedMemoryOffset, structure.ppConstantBuffers[i].sizeBytes, set, structure.ppConstantBuffers[i].binding, 1);
     }
 
     for (U32 i = 0; i < structure.key.value.srvs; ++i)
@@ -371,8 +399,8 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
         if (!pView)
             continue;
         R_ASSERT_FORMAT(pView->getResource()->isInResourceState(ResourceState_ShaderResource), "Resource must be in shader resoure state!");
-
-        writer.recordView(pView, DescriptorBindType_ShaderResource, set, resBind.binding);
+        VulkanResourceView* views[] = { pView };
+        writer.recordViews(views, DescriptorBindType_ShaderResource, set, resBind.binding, 1);
     }
 
     for (U32 i = 0; i < structure.key.value.uavs; ++i)
@@ -385,7 +413,8 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
             continue;
         R_ASSERT_FORMAT(pView->getResource()->isInResourceState(ResourceState_UnorderedAccess), "Resource must be in unordered access state!");
 
-        writer.recordView(pView, DescriptorBindType_UnorderedAccess, set, resBind.binding);
+        VulkanResourceView* views[] = { pView };
+        writer.recordViews(views, DescriptorBindType_UnorderedAccess, set, resBind.binding, 1);
     }
 
     for (U32 i = 0; i < structure.key.value.samplers; ++i)
@@ -393,7 +422,8 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
         VkWriteDescriptorSet write = { };
         ShaderResourceBind<VulkanSampler>& resBind = structure.ppSamplers[i];
         VulkanSampler* pSampler = resBind.pResourceView;
-        writer.recordSampler(pSampler, set, resBind.binding);
+        VulkanSampler* samplers[] = { pSampler };
+        writer.recordSamplers(samplers, set, resBind.binding, 1);
     }
 
     return writer.write(device);
@@ -456,7 +486,8 @@ const VulkanDescriptorAllocation& makeDescriptorSet(VulkanContext* pContext, con
     auto& iter              = g_descriptorSetMap.find(id);
     if (iter == g_descriptorSetMap.end())
     {
-        VulkanDescriptorAllocation allocation   = allocateDescriptorSet(pContext, makeLayout(pContext, structure));
+        VkDescriptorSetLayout layouts[] = { makeLayout(pContext, structure) };
+        VulkanDescriptorAllocation allocation   = allocateDescriptorSets(pContext, 1, layouts);
         const VulkanDescriptorAllocation::DescriptorSet set = allocation.getDescriptorSet(0);
         updateDescriptorSet(pContext, set.set, structure);
         g_descriptorSetMap.insert(std::make_pair(id, allocation));

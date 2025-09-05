@@ -581,15 +581,16 @@ public ref class ShaderProgramBinder
 public:
     ShaderProgramBinder(IShaderProgramBinder& binder);
 
-    ShaderProgramBinder^ BindShaderResource(CSharp::ShaderStage Stage, System::UInt32 Slot, System::UIntPtr View);
-    ShaderProgramBinder^ BindUnorderedAccessView(CSharp::ShaderStage Stage, System::UInt32 Slot, System::UIntPtr View);
+    ShaderProgramBinder^ BindShaderResource(CSharp::ShaderStage Stage, System::UInt32 Space, System::UInt32 Slot, System::UIntPtr View);
+    ShaderProgramBinder^ BindUnorderedAccessView(CSharp::ShaderStage Stage, System::UInt32 Space, System::UInt32 Slot, System::UIntPtr View);
     ShaderProgramBinder^ BindConstantBuffer(CSharp::ShaderStage Stage, 
+        System::UInt32 Space,
         System::UInt32 Slot, 
         IResource^ Resource, 
         System::UInt32 OffsetBytes, 
         System::UInt32 SizeBytes, 
         array<System::Byte>^ Data);
-    ShaderProgramBinder^ BindSampler(CSharp::ShaderStage Stage, System::UInt32 Slot, ISampler^ Sampler);
+    ShaderProgramBinder^ BindSampler(CSharp::ShaderStage Stage, System::UInt32 Space, System::UInt32 Slot, ISampler^ Sampler);
 private:
     IShaderProgramBinder& ShaderProgram;
 };

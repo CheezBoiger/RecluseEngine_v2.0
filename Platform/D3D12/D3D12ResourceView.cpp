@@ -112,7 +112,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE makeCbv(D3D12Device* pDevice, D3D12_GPU_VIRTUAL_ADDR
     D3D12_CONSTANT_BUFFER_VIEW_DESC desc = { };
     desc.BufferLocation = address;
     desc.SizeInBytes = sizeBytes;
-    D3D12_CPU_DESCRIPTOR_HANDLE handle = manager->allocateConstantBufferView(desc);
+    D3D12_CPU_DESCRIPTOR_HANDLE handle = manager->allocateConstantBufferView(desc, 1);
     return handle;
 }
 
@@ -352,7 +352,7 @@ ResultCode D3D12GraphicsResourceView::initialize(D3D12Device* pDevice, ID3D12Res
             rtvDescription.ViewDimension = getRtvDimension(resourceViewDescription.dimension);
             rtvDescription.Format = Dxgi::getNativeFormat(resourceViewDescription.format);
             fillRenderTargetViewDescription(rtvDescription, resourceViewDescription);
-            m_handle = heapManager->allocateRenderTargetView(pResource, rtvDescription);
+            m_handle = heapManager->allocateRenderTargetView(pResource, rtvDescription, 1);
             break;
         }
 
@@ -362,7 +362,7 @@ ResultCode D3D12GraphicsResourceView::initialize(D3D12Device* pDevice, ID3D12Res
             dsvDescription.ViewDimension = getDsvDimension(resourceViewDescription.dimension);
             dsvDescription.Format = Dxgi::getNativeFormat(resourceViewDescription.format);
             fillDepthStencilViewDescription(dsvDescription, resourceViewDescription);
-            m_handle = heapManager->allocateDepthStencilView(pResource, dsvDescription);
+            m_handle = heapManager->allocateDepthStencilView(pResource, dsvDescription, 1);
             break;
         }
 
@@ -392,7 +392,7 @@ ResultCode D3D12GraphicsResourceView::initialize(D3D12Device* pDevice, ID3D12Res
                     break;
             }
             fillShaderResourceViewDescription(srvDescription, resourceViewDescription);
-            m_handle = heapManager->allocateShaderResourceView(pResource, srvDescription);
+            m_handle = heapManager->allocateShaderResourceView(pResource, srvDescription, 1);
             
             break;
         }
@@ -403,7 +403,7 @@ ResultCode D3D12GraphicsResourceView::initialize(D3D12Device* pDevice, ID3D12Res
             uavDescription.ViewDimension = getUavDimension(resourceViewDescription.dimension);
             uavDescription.Format = Dxgi::getNativeFormat(resourceViewDescription.format);
             fillUnorderedAccessViewDescription(uavDescription, resourceViewDescription);
-            m_handle = heapManager->allocateUnorderedAccessView(pResource, uavDescription);
+            m_handle = heapManager->allocateUnorderedAccessView(pResource, uavDescription, 1);
             break;
         }
 
@@ -533,7 +533,7 @@ ResultCode D3D12Sampler::initialize(D3D12Device* pDevice, const SamplerDescripti
 
     m_hashId = recluseHashFast(&desc, sizeof(SamplerDescription));
     DescriptorHeapAllocationManager* manager = pDevice->getDescriptorHeapManager();
-    m_handle = manager->allocateSampler(samplerDesc);
+    m_handle = manager->allocateSampler(samplerDesc, 1);
     return RecluseResult_Ok;
 }
 

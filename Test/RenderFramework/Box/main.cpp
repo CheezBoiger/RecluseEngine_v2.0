@@ -459,9 +459,9 @@ void updateConstBuffer(IShaderProgramBinder& binder, GraphicsResource* resource,
     resource->unmap(nullptr);
     //binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, resource, 0, sizeof(ConstBuffer));
     ResourceView v = context->allocateConstantBuffer(sizeof(ConstBuffer), &buf);
-    binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, /*resource->asCbv(0, sizeof(ConstBuffer))*/ v);
+    binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, 0, /*resource->asCbv(0, sizeof(ConstBuffer))*/ v);
 #else
-    binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, resource, 0, sizeof(ConstBuffer), &buf);
+    binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, 0, resource, 0, sizeof(ConstBuffer), &buf);
 #endif
 }
 
@@ -550,7 +550,7 @@ int main(char* argv[], int c)
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
+    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 
@@ -577,7 +577,7 @@ int main(char* argv[], int c)
             GraphicsAdapter* temp = adapters[i];
             AdapterInfo adapterInfo = { };
             temp->getAdapterInfo(&adapterInfo);
-            if (adapterInfo.type == AdapterInfo::Type_DiscreteGpu) 
+            if (adapterInfo.type == AdapterInfo::Type_IntegratedGpu) 
             {
                 adapter = adapters[i];
                 break;
@@ -687,8 +687,8 @@ int main(char* argv[], int c)
                 context->setColorWriteMask(0, Color_Rgba);
                 context->beginLabel("Box", { });
                 IShaderProgramBinder& binder = context->bindShaderProgram(ShaderProgram_Box);
-                binder.bindShaderResource(ShaderStage_Pixel, 0, textureView);
-                binder.bindSampler(ShaderStage_Pixel, 0, sampler);
+                binder.bindShaderResource(ShaderStage_Pixel, 0, 0, textureView);
+                binder.bindSampler(ShaderStage_Pixel, 0, 0, sampler);
                 updateConstBuffer(binder, constantBuffer, window->getWidth(), window->getHeight(), tick.delta());
                 //context->bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, constantBuffer, 0, sizeof(ConstBuffer));
                 context->enableDepth(true);

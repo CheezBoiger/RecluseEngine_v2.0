@@ -509,9 +509,9 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
         U64 offset[] = { 0 };
         GraphicsResource* vb = meshes[i].vertexBuffer;
         context->transition(meshes[i].albedoTexture, ResourceState_ShaderResource);
-        binder.bindConstantBuffer(ShaderStage_Pixel | ShaderStage_Vertex, 0, meshes[i].meshTransform, 0, sizeof(ConstBuffer))
-                .bindShaderResource(ShaderStage_Pixel, 0, meshes[i].albedoView)
-                .bindSampler(ShaderStage_Pixel, 0, gbufferSampler);
+        binder.bindConstantBuffer(ShaderStage_Pixel | ShaderStage_Vertex, 0, 0, meshes[i].meshTransform, 0, sizeof(ConstBuffer))
+                .bindShaderResource(ShaderStage_Pixel, 0, 0, meshes[i].albedoView)
+                .bindSampler(ShaderStage_Pixel, 0, 0, gbufferSampler);
         context->bindVertexBuffers(1, &vb, offset);
         context->bindIndexBuffer(meshes[i].indexBuffer, 0, IndexType_Unsigned32);
         context->drawIndexedInstanced(meshes[i].numIndices, 1, 0, 0, 0);
@@ -601,13 +601,13 @@ void resolveLighting(GraphicsContext* context)
     context->transition(lightBuffer, ResourceState_ShaderResource);
     context->pushState();
         context->bindShaderProgram(ShaderProgram_LightResolve, 0)
-            .bindShaderResource(ShaderStage_Pixel, 0, albedoView)
-            .bindShaderResource(ShaderStage_Pixel, 1, normalView)
-            .bindShaderResource(ShaderStage_Pixel, 4, lightBufferView)
-            .bindShaderResource(ShaderStage_Pixel, 3, depthView)
-            .bindConstantBuffer(ShaderStage_Pixel, 0, sceneBuffer, 0, sizeof(SceneBuffer))
-            .bindConstantBuffer(ShaderStage_Pixel, 1, lightViewBuffer, 0, sizeof(LightView))
-            .bindSampler(ShaderStage_Pixel, 0, gbufferSampler);
+            .bindShaderResource(ShaderStage_Pixel, 0, 0, albedoView)
+            .bindShaderResource(ShaderStage_Pixel, 0, 1, normalView)
+            .bindShaderResource(ShaderStage_Pixel, 0, 4, lightBufferView)
+            .bindShaderResource(ShaderStage_Pixel, 0, 3, depthView)
+            .bindConstantBuffer(ShaderStage_Pixel, 0, 0, sceneBuffer, 0, sizeof(SceneBuffer))
+            .bindConstantBuffer(ShaderStage_Pixel, 0, 1, lightViewBuffer, 0, sizeof(LightView))
+            .bindSampler(ShaderStage_Pixel, 0, 0, gbufferSampler);
 
         context->bindRenderTargets(1, &id);
         context->setTopology(PrimitiveTopology_TriangleList);

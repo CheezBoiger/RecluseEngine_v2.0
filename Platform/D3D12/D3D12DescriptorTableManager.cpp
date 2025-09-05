@@ -276,27 +276,27 @@ ResultCode DescriptorHeapAllocationManager::initialize(ID3D12Device* pDevice, co
     // initialize a null descriptor for each cpu heap type.
     {
         D3D12_RENDER_TARGET_VIEW_DESC desc = makeNullRenderTargetViewDescriptor();
-        m_nullRtvDescriptor = allocateRenderTargetView(nullptr, desc);
+        m_nullRtvDescriptor = allocateRenderTargetView(nullptr, desc, 1);
     }
 
     {
         D3D12_SHADER_RESOURCE_VIEW_DESC desc = makeNullShaderResourceViewDescriptor();
-        m_nullSrvDescriptor = allocateShaderResourceView(nullptr, desc);
+        m_nullSrvDescriptor = allocateShaderResourceView(nullptr, desc, 1);
     }
 
     {
         D3D12_UNORDERED_ACCESS_VIEW_DESC desc = makeNullUnorderedAccessViewDescriptor();
-        m_nullUavDescriptor = allocateUnorderedAccessView(nullptr, desc);
+        m_nullUavDescriptor = allocateUnorderedAccessView(nullptr, desc, 1);
     }
 
     {
         D3D12_CONSTANT_BUFFER_VIEW_DESC desc = makeNullConstantBufferViewDescriptor();
-        m_nullCbvDescriptor = allocateConstantBufferView(desc);
+        m_nullCbvDescriptor = allocateConstantBufferView(desc, 1);
     }
 
     {
         D3D12_SAMPLER_DESC desc = makeNullSamplerDescriptor();
-        m_nullSamplerDescriptor = allocateSampler(desc);
+        m_nullSamplerDescriptor = allocateSampler(desc, 1);
     }
 
     {
@@ -305,7 +305,7 @@ ResultCode DescriptorHeapAllocationManager::initialize(ID3D12Device* pDevice, co
         desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE1D;
         desc.Texture1D.MipSlice = 0;
         desc.Flags = D3D12_DSV_FLAG_NONE;
-        m_nullDsvDescriptor = allocateDepthStencilView(nullptr, desc);
+        m_nullDsvDescriptor = allocateDepthStencilView(nullptr, desc, 1);
     }
     return RecluseResult_Ok;
 }
@@ -484,20 +484,22 @@ CpuDescriptorHeap* DescriptorHeapAllocationManager::createNewCpuDescriptorTableH
 CpuDescriptorHeap* DescriptorHeapAllocationManager::getCurrentHeap(CpuHeapType type, U32 descriptorCount)
 {
     CpuDescriptorHeap* heap = nullptr;
-    if (m_cpuDescriptorHeaps[type].empty())
+    DescriptorHeapMonitor& monitor = m_cpuDescriptorHeaps[type];
+
+    if (monitor.heaps.empty())
     {
-        m_currentHeapIndex = 0;
+        monitor.currentIndex = 0;
     }
     else
     {
-        CpuDescriptorHeap* tempHeap = &m_cpuDescriptorHeaps[type][m_currentHeapIndex];
+        CpuDescriptorHeap* tempHeap = &monitor.heaps[monitor.currentIndex];
         if (tempHeap->hasAvailableSpaceForRequest(descriptorCount))
         {
             heap = tempHeap;
         }
         else
         {
-            ++m_currentHeapIndex;   
+            ++monitor.currentIndex;   
         }
     }
 
@@ -512,7 +514,8 @@ CpuDescriptorHeap* DescriptorHeapAllocationManager::getCurrentHeap(CpuHeapType t
 
 CpuDescriptorHeap* DescriptorHeapAllocationManager::createNewCpuDescriptorHeap(CpuHeapType type)
 {
-    auto& heapVector = m_cpuDescriptorHeaps[type];
+    DescriptorHeapMonitor& monitor = m_cpuDescriptorHeaps[type];
+    auto& heapVector = monitor.heaps;
     heapVector.push_back(CpuDescriptorHeap());
     auto& newHeap = heapVector.back();
     newHeap.initialize(m_pDevice, 0, kNumDescriptorsPageSize, getNativeFromCpuHeapType(type));
@@ -537,49 +540,49 @@ CpuDescriptorTable DescriptorHeapAllocationManager::internalAllocate(CpuHeapType
 }
 
 
-D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapAllocationManager::allocateRenderTargetView(ID3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC& desc, bool temporary)
+D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapAllocationManager::allocateRenderTargetView(ID3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC& desc, U32 numDescriptors, bool temporary)
 {
-    CpuDescriptorTable handle = internalAllocate(CpuHeapType_Rtv, 1, temporary);
+    CpuDescriptorTable handle = internalAllocate(CpuHeapType_Rtv, numDescriptors, temporary);
     m_pDevice->CreateRenderTargetView(pResource, &desc, handle.baseCpuDescriptorHandle);
     return handle.baseCpuDescriptorHandle;
 }
 
 
-D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapAllocationManager::allocateShaderResourceView(ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& desc, bool temporary)
+D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapAllocationManager::allocateShaderResourceView(ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& desc, U32 numDescriptors, bool temporary)
 {
-    CpuDescriptorTable handle = internalAllocate(CpuHeapType_CbvSrvUav, 1, temporary);
+    CpuDescriptorTable handle = internalAllocate(CpuHeapType_CbvSrvUav, numDescriptors, temporary);
     m_pDevice->CreateShaderResourceView(pResource, &desc, handle.baseCpuDescriptorHandle);
     return handle.baseCpuDescriptorHandle;
 }
 
 
-D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapAllocationManager::allocateUnorderedAccessView(ID3D12Resource* pResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc, bool temporary)
+D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapAllocationManager::allocateUnorderedAccessView(ID3D12Resource* pResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc, U32 numDescriptors, bool temporary)
 {
-    CpuDescriptorTable handle = internalAllocate(CpuHeapType_CbvSrvUav, 1, temporary);
+    CpuDescriptorTable handle = internalAllocate(CpuHeapType_CbvSrvUav, numDescriptors, temporary);
     m_pDevice->CreateUnorderedAccessView(pResource, nullptr, &desc, handle.baseCpuDescriptorHandle);
     return handle.baseCpuDescriptorHandle;
 }
 
 
-D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapAllocationManager::allocateDepthStencilView(ID3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& desc, bool temporary)
+D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapAllocationManager::allocateDepthStencilView(ID3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& desc, U32 numDescriptors, bool temporary)
 {
-    CpuDescriptorTable handle = internalAllocate(CpuHeapType_Dsv, 1, temporary);
+    CpuDescriptorTable handle = internalAllocate(CpuHeapType_Dsv, numDescriptors, temporary);
     m_pDevice->CreateDepthStencilView(pResource, &desc, handle.baseCpuDescriptorHandle);
     return handle.baseCpuDescriptorHandle;
 }
 
 
-D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapAllocationManager::allocateConstantBufferView(const D3D12_CONSTANT_BUFFER_VIEW_DESC& desc, bool temporary)
+D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapAllocationManager::allocateConstantBufferView(const D3D12_CONSTANT_BUFFER_VIEW_DESC& desc, U32 numDescriptors, bool temporary)
 {
-    CpuDescriptorTable handle = internalAllocate(CpuHeapType_CbvSrvUav, 1, temporary);
+    CpuDescriptorTable handle = internalAllocate(CpuHeapType_CbvSrvUav, numDescriptors, temporary);
     m_pDevice->CreateConstantBufferView(&desc, handle.baseCpuDescriptorHandle);
     return handle.baseCpuDescriptorHandle;
 }
 
 
-D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapAllocationManager::allocateSampler(const D3D12_SAMPLER_DESC& desc, bool temporary)
+D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapAllocationManager::allocateSampler(const D3D12_SAMPLER_DESC& desc, U32 numSamplers, bool temporary)
 {
-    CpuDescriptorTable handle = internalAllocate(CpuHeapType_Sampler, 1, temporary);
+    CpuDescriptorTable handle = internalAllocate(CpuHeapType_Sampler, numSamplers, temporary);
     m_pDevice->CreateSampler(&desc, handle.baseCpuDescriptorHandle);
     return handle.baseCpuDescriptorHandle;
 }
@@ -638,9 +641,10 @@ ResultCode DescriptorHeapAllocationManager::internalFree(D3D12_CPU_DESCRIPTOR_HA
 {
     if (descriptor.ptr == DescriptorTable::invalidCpuAddress.ptr)
         return RecluseResult_InvalidArgs;
-    for (U32 i = 0; i < m_cpuDescriptorHeaps[heapType].size(); ++i)
+    DescriptorHeapMonitor& monitor = m_cpuDescriptorHeaps[heapType];
+    for (U32 i = 0; i < monitor.heaps.size(); ++i)
     {
-        CpuDescriptorHeap& heap = m_cpuDescriptorHeaps[heapType][i];
+        CpuDescriptorHeap& heap = monitor.heaps[i];
         if (heap.contains(descriptor))
         {
             CpuDescriptorTable makeShiftTable       = { };
@@ -660,10 +664,11 @@ ResultCode DescriptorHeapAllocationManager::release()
     resizeShaderVisibleHeapInstances(0);
     for (auto iter : m_cpuDescriptorHeaps)
     {
-        for (auto heap : iter.second)
+        for (auto heap : iter.second.heaps)
         {
             heap.release();
         }
+        iter.second.currentIndex = 0;
     }
 
     for (auto iter : m_cpuDescriptorTableHeaps)
@@ -674,7 +679,7 @@ ResultCode DescriptorHeapAllocationManager::release()
         }
     }
     m_currentTableHeapIndex = 0;
-    m_currentHeapIndex = 0;
+    //m_currentHeapIndex = 0;
     return RecluseResult_Ok;
 }
 

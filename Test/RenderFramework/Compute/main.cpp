@@ -306,8 +306,8 @@ int main(int c, char* argv[])
                 context->transition(output, ResourceState_UnorderedAccess);
 
                 context->bindShaderProgram(ProgramId_Mandelbrot)
-                    .bindConstantBuffer(ShaderStage_Compute, 0, pData, 0, sizeof(ConstData))
-                    .bindUnorderedAccessView(ShaderStage_Compute, 0, uavView);
+                    .bindConstantBuffer(ShaderStage_Compute, 0, 0, pData, 0, sizeof(ConstData))
+                    .bindUnorderedAccessView(ShaderStage_Compute, 0, 0, uavView);
 
                 context->dispatch(Math::divUp(pWindow->getWidth(), 8u), Math::divUp(pWindow->getHeight(), 8u), 1);
 

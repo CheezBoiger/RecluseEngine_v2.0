@@ -392,12 +392,12 @@ int main(int c, char* argv[])
                 
                 if (pMouse->getButtonState(1) == InputState_Down)
                 {
-                    binder.bindConstantBuffer(ShaderStage_Fragment | ShaderStage_Vertex, 0, pData, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentFrameIndex(), sizeof(ConstData));                 
+                    binder.bindConstantBuffer(ShaderStage_Fragment | ShaderStage_Vertex, 0, 0, pData, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentFrameIndex(), sizeof(ConstData));                 
                     context->drawInstanced(3, 1, 0, 0);
                 }
                 if (pMouse->getButtonState(0) == InputState_Down)
                 {
-                    binder.bindConstantBuffer(ShaderStage_Fragment | ShaderStage_Vertex, 0, pData2, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentFrameIndex(), sizeof(ConstData));
+                    binder.bindConstantBuffer(ShaderStage_Fragment | ShaderStage_Vertex, 0, 0, pData2, pAdapter->constantBufferOffsetAlignmentBytes() * pContext->obtainCurrentFrameIndex(), sizeof(ConstData));
                     context->drawInstanced(3, 1, 0, 0);
                 }
 
