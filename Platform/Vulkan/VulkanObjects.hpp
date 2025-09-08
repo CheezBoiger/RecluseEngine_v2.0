@@ -126,6 +126,14 @@ struct Structure
     }
 };
 
+struct VulkanSet
+{
+    std::array<DescriptorSets::ShaderResourceBind<VulkanResourceView>,  64> srvs;
+    std::array<DescriptorSets::ShaderResourceBind<VulkanResourceView>,  8>  uavs;
+    std::array<DescriptorSets::BufferView,                              16> cbvs;
+    std::array<DescriptorSets::ShaderResourceBind<VulkanSampler>,       16> samplers;
+};
+
 enum ClearCacheFlag
 {
     ClearCacheFlag_DescriptorPoolFastClear,
@@ -136,7 +144,7 @@ typedef Hash64 DescriptorSetLayoutId;
 typedef Hash64 DescriptorSetId;
 
 VkDescriptorSetLayout               makeLayout(VulkanContext* pContext, const Structure& structure);
-const VulkanDescriptorAllocation&   makeDescriptorSet(VulkanContext* pContext, const Structure& structure);
+const VulkanDescriptorAllocation&   makeDescriptorSets(VulkanContext* pContext, const Structure* structures, U32 count);
 ResultCode                          releaseLayout(VulkanContext* pContext, const Structure& structure);
 ResultCode                          releaseDescriptorSet(VulkanContext* pContext, const Structure& structure);
 DescriptorSetLayoutId               obtainDescriptorLayoutKey(const Structure& structure);

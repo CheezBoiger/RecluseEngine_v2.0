@@ -51,7 +51,7 @@ ResultCode SpirvReflection::reflect(ShaderReflectionInformation& reflectionOutpu
 
                 // TODO(): This packing is specific to SPIRV GLSL, so we will need to have some way to properly make this universal to the framework, and
                 // Vulkan.
-                const ShaderBind shaderBind = (U32)dstBinding | ((U32)dstSet << 16);
+                const ShaderBind shaderBind = ShaderReflectionInformation::packShaderBinding(dstSet, dstBinding);
 
                 switch (descriptorBind->descriptor_type)
                 {

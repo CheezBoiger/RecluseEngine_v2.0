@@ -70,8 +70,8 @@ if ( RCL_VULKAN )
 									 debug $ENV{VULKAN_SDK}/Lib/shaderc_utild.lib
 									 debug $ENV{VULKAN_SDK}/Lib/GenericCodeGend.lib
 									 debug $ENV{VULKAN_SDK}/Lib/SPIRVd.lib
-                                     #debug $ENV{VULKAN_SDK}/Lib/HLSLd.lib
-                                     #debug $ENV{VULKAN_SDK}/Lib/OGLCompilerd.lib
+                                     debug $ENV{VULKAN_SDK}/Lib/HLSLd.lib
+                                     debug $ENV{VULKAN_SDK}/Lib/OGLCompilerd.lib
                                      debug $ENV{VULKAN_SDK}/Lib/OSDependentd.lib
                                      debug $ENV{VULKAN_SDK}/Lib/SPIRV-Toolsd.lib
                                      debug $ENV{VULKAN_SDK}/Lib/SPIRV-Tools-linkd.lib

@@ -326,14 +326,15 @@ IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindShaderResource
     U32 binding = slot;
     if (cachedReflection)
     {
-        binding = unpackBindingRegister(cachedReflection->srvs[slot]);
+        binding = unpackBindingRegister(cachedReflection->sets[space].srvs[slot]);
+        R_ASSERT(binding != 0xFFFF);
+        if (binding == 0xFFFF) return (*this);
     }
     else
     {
-        current.m_rootSigLayout.srvCount = Math::maximum(current.m_rootSigLayout.srvCount, static_cast<U16>(slot+1));
+        current.m_rootSigLayout.sets[space].srvCount = Math::maximum(current.m_rootSigLayout.sets[space].srvCount, static_cast<U8>(slot+1));
     }
-    current.m_srvs[binding] = handle;
-    current.m_resourceTable.srvs = current.m_srvs.data();
+    current.m_resourceTable.sets[space].srvs[binding] = handle;
     current.setDirty(ContextDirty_Descriptors);
     return (*this);
 }
@@ -379,15 +380,16 @@ IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindConstantBuffer
     U32 binding = slot;
     if (cachedReflection)
     {
-        binding = unpackBindingRegister(cachedReflection->cbvs[slot]);
+        binding = unpackBindingRegister(cachedReflection->sets[space].cbvs[slot]);
+        R_ASSERT(binding != 0xFFFF);
+        if (binding == 0xFFFF) return (*this);
     }
     else
     {
-        current.m_rootSigLayout.cbvCount = Math::maximum(current.m_rootSigLayout.cbvCount, static_cast<U16>(slot+1));
+        current.m_rootSigLayout.sets[space].cbvCount = Math::maximum(current.m_rootSigLayout.sets[space].cbvCount, static_cast<U8>(slot+1));
     }
 
-    current.m_cbvs[binding] = cbv;
-    current.m_resourceTable.cbvs = current.m_cbvs.data();
+    current.m_resourceTable.sets[space].cbvs[binding] = cbv;
     current.setDirty(ContextDirty_Descriptors);
     return (*this);
 }
@@ -403,15 +405,16 @@ IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindUnorderedAcces
     U32 binding = slot;
     if (cachedReflection)
     {
-        binding = unpackBindingRegister(cachedReflection->uavs[slot]);
+        binding = unpackBindingRegister(cachedReflection->sets[space].uavs[slot]);
+        R_ASSERT(binding != 0xFFFF);
+        if (binding == 0xFFFF) return (*this);
     }
     else
     {
-        current.m_rootSigLayout.uavCount = Math::maximum(current.m_rootSigLayout.uavCount, static_cast<U16>(slot+1));
+        current.m_rootSigLayout.sets[space].uavCount = Math::maximum(current.m_rootSigLayout.sets[space].uavCount, static_cast<U8>(slot+1));
     }
 
-    current.m_uavs[binding] = handle;    
-    current.m_resourceTable.uavs = current.m_uavs.data();
+    current.m_resourceTable.sets[space].uavs[binding] = handle;
     current.setDirty(ContextDirty_Descriptors);
     return (*this);
 }
@@ -434,15 +437,16 @@ IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindSampler(Shader
 
     if (cachedReflection)
     {
-        binding = unpackBindingRegister(cachedReflection->samplers[slot]);
+        binding = unpackBindingRegister(cachedReflection->sets[space].samplers[slot]);
+        R_ASSERT(binding != 0xFFFF);
+        if (binding == 0xFFFF) return (*this);
     }
     else
     {
-        current.m_rootSigLayout.samplerCount = Math::maximum(current.m_rootSigLayout.samplerCount, static_cast<U16>(slot+1));
+        current.m_rootSigLayout.sets[space].samplerCount = Math::maximum(current.m_rootSigLayout.sets[space].samplerCount, static_cast<U8>(slot+1));
     }
 
-    current.m_samplers[slot] = handle;
-    current.m_resourceTable.samplers = current.m_samplers.data();
+    current.m_resourceTable.sets[space].samplers[binding] = handle;
     current.setDirty(ContextDirty_SamplerDescriptors);
     return (*this);
 }
@@ -451,10 +455,13 @@ IShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindSampler(Shader
 void D3D12Context::clearResourceBinds()
 {
     ContextState& contextState = m_contextStates.back();
-    memset(contextState.m_cbvs.data(), 0, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) * contextState.m_cbvs.size());
-    memset(contextState.m_srvs.data(), 0, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) * contextState.m_srvs.size());
-    memset(contextState.m_uavs.data(), 0, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) * contextState.m_uavs.size());
-    memset(contextState.m_samplers.data(), 0, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) * contextState.m_samplers.size());
+    for (U32 space = 0; space < contextState.m_resourceTable.sets.size(); ++space)
+    {
+        memset(contextState.m_resourceTable.sets[space].cbvs.data(), 0, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) * contextState.m_resourceTable.sets[space].cbvs.size());
+        memset(contextState.m_resourceTable.sets[space].srvs.data(), 0, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) * contextState.m_resourceTable.sets[space].srvs.size());
+        memset(contextState.m_resourceTable.sets[space].uavs.data(), 0, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) * contextState.m_resourceTable.sets[space].uavs.size());
+        memset(contextState.m_resourceTable.sets[space].samplers.data(), 0, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) * contextState.m_resourceTable.sets[space].samplers.size());
+    }
     if (m_shaderProgramBinder.getReflection())
     {
         // We don't necessarily need to clear out the layout info, since we are currently bound to a program with reflection.
@@ -529,17 +536,27 @@ void D3D12Context::bindCurrentResources()
 {
     ContextState& state = currentState();
     ID3D12GraphicsCommandList* currentList = m_pPrimaryCommandList->get();
-    if (state.isDirty(ContextDirty_Descriptors))
+
+    if (state.isDirty(ContextDirty_Descriptors) || state.isDirty(ContextDirty_SamplerDescriptors))
     {
-        CpuDescriptorTable table = Pipelines::makeDescriptorSrvCbvUavTable(m_pDevice, state.m_rootSigLayout, state.m_resourceTable);
-        ShaderVisibleDescriptorTable shaderVisibleTable = uploadToShaderVisible(table, GpuHeapType_CbvSrvUav);
-        bindResourceTable(currentList, state.m_pipelineStateObject.pipelineType, 0, shaderVisibleTable.baseGpuDescriptorHandle);
-    }
-    if (state.isDirty(ContextDirty_SamplerDescriptors))
-    {
-        CpuDescriptorTable table = Pipelines::makeDescriptorSamplertable(m_pDevice, state.m_rootSigLayout, state.m_resourceTable);
-        ShaderVisibleDescriptorTable shaderVisibleTable = uploadToShaderVisible(table, GpuHeapType_Sampler);
-        bindResourceTable(currentList, state.m_pipelineStateObject.pipelineType, 1, shaderVisibleTable.baseGpuDescriptorHandle);
+        U32 rootIndex = 0;
+        for (U32 set = 0; set < state.m_rootSigLayout.sets.size(); ++set)
+        {
+            const Pipelines::RootSigLayout::Set& space = state.m_rootSigLayout.sets[set];
+            const U32 dcount = (space.cbvCount + space.srvCount + space.uavCount);
+            if (state.isDirty(ContextDirty_Descriptors) && (dcount > 0))
+            {
+                CpuDescriptorTable table = Pipelines::makeDescriptorSrvCbvUavTable(m_pDevice, set, state.m_rootSigLayout, state.m_resourceTable);
+                ShaderVisibleDescriptorTable shaderVisibleTable = uploadToShaderVisible(table, GpuHeapType_CbvSrvUav);
+                bindResourceTable(currentList, state.m_pipelineStateObject.pipelineType, rootIndex++, shaderVisibleTable.baseGpuDescriptorHandle);
+            }
+            if (state.isDirty(ContextDirty_SamplerDescriptors) && (space.samplerCount > 0))
+            {
+                CpuDescriptorTable table = Pipelines::makeDescriptorSamplertable(m_pDevice, set, state.m_rootSigLayout, state.m_resourceTable);
+                ShaderVisibleDescriptorTable shaderVisibleTable = uploadToShaderVisible(table, GpuHeapType_Sampler);
+                bindResourceTable(currentList, state.m_pipelineStateObject.pipelineType, rootIndex++, shaderVisibleTable.baseGpuDescriptorHandle);
+            }
+        }
     }
 }
 
@@ -762,11 +779,25 @@ void D3D12Context::D3D12ShaderProgramBinder::obtainShaderProgramFromCache()
     {
         cachedReflection = D3D::Cache::obtainShaderProgramReflection(getProgramId(), getPermutationId());
         if (cachedReflection)
-        {
-            currentState().m_rootSigLayout.cbvCount = (U16)cachedReflection->numCbvs;
-            currentState().m_rootSigLayout.srvCount = (U16)cachedReflection->numSrvs;
-            currentState().m_rootSigLayout.uavCount = (U16)cachedReflection->numUavs;
-            currentState().m_rootSigLayout.samplerCount = (U16)cachedReflection->numSamplers;
+        {   
+            currentState().m_rootSigLayout.sets.resize(cachedReflection->sets.size());
+            currentState().m_resourceTable.sets.resize(cachedReflection->sets.size());
+            for (u32 set = 0; set < currentState().m_rootSigLayout.sets.size(); ++set)
+            {
+                currentState().m_rootSigLayout.sets[set].cbvCount = (U16)cachedReflection->sets[set].numCbvs;
+                currentState().m_rootSigLayout.sets[set].baseCbv = cachedReflection->sets[set].baseCbv;
+
+                currentState().m_rootSigLayout.sets[set].srvCount = (U16)cachedReflection->sets[set].numSrvs;
+                currentState().m_rootSigLayout.sets[set].baseSrv = cachedReflection->sets[set].baseSrv;
+
+                currentState().m_rootSigLayout.sets[set].uavCount = (U16)cachedReflection->sets[set].numUavs;
+                currentState().m_rootSigLayout.sets[set].baseUav = cachedReflection->sets[set].baseUav;
+
+                currentState().m_rootSigLayout.sets[set].samplerCount = (U16)cachedReflection->sets[set].numSamplers;
+                currentState().m_rootSigLayout.sets[set].baseSampler = cachedReflection->sets[set].baseSampler;
+            }
+
+            currentState().m_rootSigLayout.makeHash();
         }
     }
 }

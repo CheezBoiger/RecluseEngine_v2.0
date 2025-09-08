@@ -479,17 +479,32 @@ VkDescriptorSetLayout makeLayout(VulkanContext* pContext, const Structure& struc
 }
 
 
-const VulkanDescriptorAllocation& makeDescriptorSet(VulkanContext* pContext, const Structure& structure)
+const VulkanDescriptorAllocation& makeDescriptorSets(VulkanContext* pContext, const Structure* structures, U32 count)
 {
-    DescriptorSetId id      = DescriptorSetKeyHasher()(structure);
+    DescriptorSetId id      = 0;
+    for (U32 i = 0; i < count; ++i)
+    {
+        id ^= DescriptorSetKeyHasher()(structures[i]);
+    }
     // TODO: Need to create a customary hash.
-    auto& iter              = g_descriptorSetMap.find(id);
+    auto& iter              = g_descriptorSetMap.find(id);  
+
     if (iter == g_descriptorSetMap.end())
     {
-        VkDescriptorSetLayout layouts[] = { makeLayout(pContext, structure) };
-        VulkanDescriptorAllocation allocation   = allocateDescriptorSets(pContext, 1, layouts);
-        const VulkanDescriptorAllocation::DescriptorSet set = allocation.getDescriptorSet(0);
-        updateDescriptorSet(pContext, set.set, structure);
+        // make the layouts for the descriptor sets.
+        std::vector<VkDescriptorSetLayout> layouts(count);
+        for (U32 i = 0; i < layouts.size(); ++i)
+            layouts[i] = makeLayout(pContext, structures[i]);
+
+        // Allocate the descriptor set.
+        VulkanDescriptorAllocation allocation   = allocateDescriptorSets(pContext, count, layouts.data());
+
+        // Now update it.
+        for (U32 i = 0; i < count; ++i)
+        {
+            const VulkanDescriptorAllocation::DescriptorSet set = allocation.getDescriptorSet(i);
+            updateDescriptorSet(pContext, set.set, structures[i]);
+        }
         g_descriptorSetMap.insert(std::make_pair(id, allocation));
         return g_descriptorSetMap[id];
     }

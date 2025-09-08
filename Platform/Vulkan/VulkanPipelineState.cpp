@@ -19,7 +19,7 @@ namespace Vulkan {
 namespace Pipelines {
 
 std::map<DeviceId, LifetimeCache<PipelineId, PipelineState>>                        g_pipelineMap;
-std::map<DeviceId, std::unordered_map<VkDescriptorSetLayout, SharedReferenceObject<VkPipelineLayout>>>  g_pipelineLayoutMap;
+std::map<DeviceId, std::unordered_map<Hash64, SharedReferenceObject<VkPipelineLayout>>>  g_pipelineLayoutMap;
 R_DECLARE_GLOBAL_BOOLEAN(g_allowPipelineCaching, false, "Vulkan.EnablePipelineCache");
 R_DECLARE_GLOBAL_STRING(g_pipelineCacheDir, "VulkanCache", "Vulkan.PipelineCacheDir");
 R_DECLARE_GLOBAL_U32(g_vulkanPipelineMaxAge, 256, "Vulkan.PipelineMaxAge");
@@ -658,16 +658,19 @@ Bool unloadAll(DeviceId deviceId)
 }
 } // VertexLayout
 
-VkPipelineLayout makeLayout(VulkanDevice* pDevice, VkDescriptorSetLayout descriptorLayout)
+VkPipelineLayout makeLayout(VulkanDevice* pDevice, const VkDescriptorSetLayout* descriptorLayouts, U32 layoutCount)
 {
     VkPipelineLayout layout = VK_NULL_HANDLE;
     auto& pipelineLayoutMap = g_pipelineLayoutMap[pDevice->getDeviceId()];
-    auto iter = pipelineLayoutMap.find(descriptorLayout);
+
+    Hash64 layoutHash = recluseHashFast(descriptorLayouts, sizeof(VkDescriptorSetLayout) * layoutCount);
+
+    auto iter = pipelineLayoutMap.find(layoutHash);
     if (iter == pipelineLayoutMap.end())
     {
-        if (layout = createPipelineLayout(pDevice, &descriptorLayout, 1))
+        if (layout = createPipelineLayout(pDevice, descriptorLayouts, layoutCount))
         {
-            pipelineLayoutMap.insert(std::make_pair(descriptorLayout, layout));
+            pipelineLayoutMap.insert(std::make_pair(layoutHash, layout));
         }
     }
     else
@@ -682,7 +685,7 @@ VkPipeline createGraphicsPipeline(VulkanDevice* pDevice, VkPipelineCache pipelin
     VkPipeline pipeline                             = VK_NULL_HANDLE;
     VkDevice device                                 = pDevice->get();
     VkGraphicsPipelineCreateInfo ci                 = { };
-    const VkRenderPass renderPass                   = structure.state.graphics.renderPass;
+    const VkRenderPass renderPass                   = structure.state.pipeline.graphics.renderPass;
     VkResult result                                 = VK_SUCCESS;   
     DeviceId deviceId                               = pDevice->getDeviceId();
     VkPipelineShaderStageCreateInfo shaderStages[16];
@@ -697,17 +700,17 @@ VkPipeline createGraphicsPipeline(VulkanDevice* pDevice, VkPipelineCache pipelin
     std::vector<VkVertexInputBindingDescription> bindings;
     std::vector<VkPipelineColorBlendAttachmentState> blendAttachments;
 
-    VkPipelineRasterizationStateCreateInfo rasterState          = getRasterInfo(pDevice, structure.state.graphics.raster);
-    VkPipelineDepthStencilStateCreateInfo depthStencilState     = getDepthStencilInfo(structure.state.graphics.depthStencil);
+    VkPipelineRasterizationStateCreateInfo rasterState          = getRasterInfo(pDevice, structure.state.pipeline.graphics.raster);
+    VkPipelineDepthStencilStateCreateInfo depthStencilState     = getDepthStencilInfo(structure.state.pipeline.graphics.depthStencil);
     VkPipelineViewportStateCreateInfo viewportState             = getViewportInfo();
-    VkPipelineColorBlendStateCreateInfo blendState              = getBlendInfo(structure.state.graphics.blendState, blendAttachments, structure.state.graphics.numRenderTargets);
+    VkPipelineColorBlendStateCreateInfo blendState              = getBlendInfo(structure.state.pipeline.graphics.blendState, blendAttachments, structure.state.pipeline.graphics.numRenderTargets);
     VkPipelineVertexInputStateCreateInfo vertInputState         = { };
-    VkPipelineInputAssemblyStateCreateInfo inputAssemblyState   = getAssemblyInfo(structure.state.graphics.primitiveTopology);
+    VkPipelineInputAssemblyStateCreateInfo inputAssemblyState   = getAssemblyInfo(structure.state.pipeline.graphics.primitiveTopology);
     VkPipelineDynamicStateCreateInfo dynamicState               = getDynamicStates();
-    VkPipelineTessellationStateCreateInfo tessState             = getTessellationStateInfo(structure.state.graphics.tess);
+    VkPipelineTessellationStateCreateInfo tessState             = getTessellationStateInfo(structure.state.pipeline.graphics.tess);
     VkPipelineMultisampleStateCreateInfo multisampleState       = getMultisampleStateInfo();
 
-    const VertexLayout::VulkanVertexLayout* pLayout = program->graphics.usesMeshShaders ? nullptr : VertexLayout::obtain(deviceId, structure.state.graphics.ia);
+    const VertexLayout::VulkanVertexLayout* pLayout = program->graphics.usesMeshShaders ? nullptr : VertexLayout::obtain(deviceId, structure.state.pipeline.graphics.ia);
 
     vertInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     if (pLayout)
@@ -718,7 +721,7 @@ VkPipeline createGraphicsPipeline(VulkanDevice* pDevice, VkPipelineCache pipelin
         vertInputState.pVertexBindingDescriptions = pLayout->bindings.data();
     }
 
-    VkPipelineLayout pipelineLayout = makeLayout(pDevice, structure.state.descriptorLayout);
+    VkPipelineLayout pipelineLayout = makeLayout(pDevice, structure.state.descriptorSetLayouts.data(), structure.state.descriptorSetLayouts.size());
     
     if (result != VK_SUCCESS) 
     {
@@ -840,7 +843,8 @@ VkPipeline createComputePipeline(VulkanDevice* pDevice, VkPipelineCache pipeline
     VkDevice device                         = pDevice->get();
     VkResult result                         = VK_SUCCESS;
     VkPipeline pipeline = VK_NULL_HANDLE;
-    VkPipelineLayout pipelineLayout         = makeLayout(pDevice, structure.state.descriptorLayout);
+
+    VkPipelineLayout pipelineLayout         = makeLayout(pDevice, structure.state.descriptorSetLayouts.data(), structure.state.descriptorSetLayouts.size());
 
     if (result != VK_SUCCESS) 
     {
@@ -876,7 +880,7 @@ VkPipeline createComputePipeline(VulkanDevice* pDevice, VkPipelineCache pipeline
 
 PipelineId makePipelineId(const Structure& structure)
 {
-    return recluseHashFast(&structure, sizeof(Structure));
+    return structure.hash();
 }
 
 
@@ -892,10 +896,10 @@ static VkPipeline createRayTracingPipeline(VulkanDevice* pDevice, VkPipelineCach
 #if defined(RECLUSE_RAYTRACING_HEADER)
     std::vector<VkRayTracingShaderGroupCreateInfoKHR> shaderGroups;
     std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
-    VkPipelineLayout pipelineLayout = makeLayout(pDevice, structure.state.descriptorLayout);
+    VkPipelineLayout pipelineLayout = makeLayout(pDevice, structure.state.descriptorSetLayouts.data(), structure.state.descriptorSetLayouts.size());
     VkRayTracingPipelineCreateInfoKHR rayTracingInfo    = { };
     rayTracingInfo.sType                                = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR;
-    rayTracingInfo.maxPipelineRayRecursionDepth         = structure.state.raytrace.rayRecursionDepth;
+    rayTracingInfo.maxPipelineRayRecursionDepth         = structure.state.pipeline.raytrace.rayRecursionDepth;
     rayTracingInfo.layout                               = pipelineLayout;
     rayTracingInfo.stageCount                           = 0;
 
@@ -1039,6 +1043,16 @@ ResultCode releasePipeline(VulkanDevice* pDevice, PipelineId pipelineId)
 void Structure::nullify()
 {
     memset(&state, 0, sizeof(state));
+}
+
+
+Hash64 Structure::hash() const
+{
+    Hash64 h = 0;
+    h ^= recluseHashFast(&state.pipeline, sizeof(state.pipeline));
+    h ^= state.shaderPermutation;
+    h ^ state.shaderProgramId;
+    return h;
 }
 
 

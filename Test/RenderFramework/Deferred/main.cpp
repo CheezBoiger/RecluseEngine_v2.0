@@ -591,11 +591,11 @@ void resolveLighting(GraphicsContext* context)
     context->pushState();
         context->bindShaderProgram(ShaderProgram_LightResolve, 0)
             .bindShaderResource(ShaderStage_Pixel, 0, 0, albedoView)
-            .bindShaderResource(ShaderStage_Pixel, 0, 1, normalView)
-            .bindShaderResource(ShaderStage_Pixel, 0, 4, lightBufferView)
-            .bindShaderResource(ShaderStage_Pixel, 0, 3, depthView)
-            .bindConstantBuffer(ShaderStage_Pixel, 0, 0, sceneBuffer, 0, sizeof(SceneBuffer))
-            .bindConstantBuffer(ShaderStage_Pixel, 0, 1, lightViewBuffer, 0, sizeof(LightView))
+            //.bindShaderResource(ShaderStage_Pixel, 0, 1, normalView)
+            .bindShaderResource(ShaderStage_Pixel, 0, 1, lightBufferView)
+            //.bindShaderResource(ShaderStage_Pixel, 0, 3, depthView)
+            //.bindConstantBuffer(ShaderStage_Pixel, 0, 0, sceneBuffer, 0, sizeof(SceneBuffer))
+            .bindConstantBuffer(ShaderStage_Pixel, 0, 0, lightViewBuffer, 0, sizeof(LightView))
             .bindSampler(ShaderStage_Pixel, 0, 0, gbufferSampler);
 
         context->bindRenderTargets(1, &id);
@@ -744,7 +744,7 @@ int main(char* argv[], int c)
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
+    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
     GraphicsAdapter* adapter    = nullptr;
     std::vector<MeshDraw> meshes;
 

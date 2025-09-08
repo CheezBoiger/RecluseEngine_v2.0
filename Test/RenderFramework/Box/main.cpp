@@ -459,7 +459,7 @@ void updateConstBuffer(IShaderProgramBinder& binder, GraphicsResource* resource,
     resource->unmap(nullptr);
     //binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, resource, 0, sizeof(ConstBuffer));
     ResourceView v = context->allocateConstantBuffer(sizeof(ConstBuffer), &buf);
-    binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, 0, /*resource->asCbv(0, sizeof(ConstBuffer))*/ v);
+    binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 1, 0, /*resource->asCbv(0, sizeof(ConstBuffer))*/ v);
 #else
     binder.bindConstantBuffer(ShaderStage_Vertex | ShaderStage_Pixel, 0, 0, resource, 0, sizeof(ConstBuffer), &buf);
 #endif
@@ -519,8 +519,10 @@ void createShaderProgram(GraphicsDevice* device)
 #endif
     Runtime::buildShaderProgram(device, database, ShaderProgram_Box);
     database.clearShaderProgramDefinitions();
+#if COMPILE_SHADER_PROGRAM
     shaderBuilder->tearDown();
     Pipeline::freeShaderBuilder(shaderBuilder);
+#endif
 }
 
 
@@ -550,7 +552,7 @@ int main(char* argv[], int c)
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
+    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 
@@ -577,7 +579,7 @@ int main(char* argv[], int c)
             GraphicsAdapter* temp = adapters[i];
             AdapterInfo adapterInfo = { };
             temp->getAdapterInfo(&adapterInfo);
-            if (adapterInfo.type == AdapterInfo::Type_IntegratedGpu) 
+            if (adapterInfo.type == AdapterInfo::Type_DiscreteGpu) 
             {
                 adapter = adapters[i];
                 break;

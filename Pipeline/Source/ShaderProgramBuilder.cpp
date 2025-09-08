@@ -7,6 +7,7 @@
 
 #include "Recluse/Filesystem/Filesystem.hpp"
 #include "Recluse/Messaging.hpp"
+#include "Recluse/Math/MathCommons.hpp"
 #include <unordered_map>
 #include <unordered_set>
 #include <set>
@@ -296,47 +297,98 @@ ShaderProgramDefinition makeShaderProgramDefinition(ShaderProgramDatabase& db, c
     {
         // Work the shaders to create shader program reflection data.
         ShaderProgramReflection& programReflection = definition.programReflection;
-        std::set<ShaderBind> cbvSet;
-        std::set<ShaderBind> srvSet;
-        std::set<ShaderBind> uavSet;
-        std::set<ShaderBind> samplerSet;
+        struct ReflectionSet 
+        {
+            std::set<ShaderBind> cbvSet;
+            std::set<ShaderBind> srvSet;
+            std::set<ShaderBind> uavSet;
+            std::set<ShaderBind> samplerSet;
+
+            U8 baseCbv = 0xffff;
+            U8 baseSrv = 0xffff;
+            U8 baseUav = 0xffff;
+            U8 baseSampler = 0xffff;
+        };
+
+        std::map<U32, ReflectionSet> reflectionSets;
+
         // Flip through each shader associated with this program, and determine the slots that it reflects.
         for (auto it : definition.shaderReflectionInfo)
         {
             ShaderReflectionInformation& reflection = it.second;
+                
             for (U32 index = 0; index < reflection.cbvs.size(); ++index)
             {
                 ShaderBind cbv = reflection.cbvs[index];
-                auto result = cbvSet.insert(cbv);
-                if (result.second)
-                    programReflection.cbvs[index] = cbv;
+                U32 set = ShaderReflectionInformation::unpackShaderSet(cbv);
+                auto result = reflectionSets[set].cbvSet.insert(cbv);
+                reflectionSets[set].baseCbv = Math::minimum(reflectionSets[set].baseCbv, reflection.metadata.baseCbv);
             }
             for (U32 index = 0; index < reflection.srvs.size(); ++index)
             {
                 ShaderBind srv = reflection.srvs[index];
-                auto result = srvSet.insert(srv);
-                if (result.second)
-                    programReflection.srvs[index] = srv;
+                U32 set = ShaderReflectionInformation::unpackShaderSet(srv);
+                auto result = reflectionSets[set].srvSet.insert(srv);
+                reflectionSets[set].baseSrv = Math::minimum(reflectionSets[set].baseSrv, reflection.metadata.baseSrv);
             }
             for (U32 index = 0; index < reflection.uavs.size(); ++index)
             {
                 ShaderBind uav = reflection.uavs[index];
-                auto result = uavSet.insert(uav);
-                if (result.second)
-                    programReflection.uavs[index] = uav;
+                U32 set = ShaderReflectionInformation::unpackShaderSet(uav);
+                auto result = reflectionSets[set].uavSet.insert(uav);
+                reflectionSets[set].baseUav = Math::minimum(reflectionSets[set].baseUav, reflection.metadata.baseUav);
             }
             for (U32 index = 0; index < reflection.samplers.size(); ++index)
             {
                 ShaderBind sampler = reflection.samplers[index];
-                auto result = samplerSet.insert(sampler);
-                if (result.second)
-                    programReflection.samplers[index] = sampler;
+                U32 set = ShaderReflectionInformation::unpackShaderSet(sampler);
+                auto result = reflectionSets[set].samplerSet.insert(sampler);
+                reflectionSets[set].baseSampler = Math::minimum(reflectionSets[set].baseSampler, reflection.metadata.baseSampler);
             }
         }
-        programReflection.numCbvs       = static_cast<U8>(cbvSet.size());
-        programReflection.numSrvs       = static_cast<U8>(srvSet.size());
-        programReflection.numUavs       = static_cast<U8>(uavSet.size());
-        programReflection.numSamplers   = static_cast<U8>(samplerSet.size());
+
+        // After we have all the shader sets and bindings laid out, we store into the program reflection.
+        programReflection.sets.resize(reflectionSets.size());
+
+        for (const auto& set : reflectionSets)
+        {
+            u32 i = 0;
+            for (ShaderBind shaderBind : set.second.cbvSet)
+            {
+                U32 space = ShaderReflectionInformation::unpackShaderSet(shaderBind);
+                //U32 bind = ShaderReflectionInformation::unpackShaderBind(shaderBind);
+                programReflection.sets[space].cbvs[i++] = shaderBind;
+            }
+            i = 0;
+            for (ShaderBind shaderBind : set.second.srvSet)
+            {
+                U32 space = ShaderReflectionInformation::unpackShaderSet(shaderBind);
+                //U32 bind = ShaderReflectionInformation::unpackShaderBind(shaderBind);
+                programReflection.sets[space].srvs[i++] = shaderBind;
+            }
+            i = 0;
+            for (ShaderBind shaderBind : set.second.uavSet)
+            {
+                U32 space = ShaderReflectionInformation::unpackShaderSet(shaderBind);
+                //U32 bind = ShaderReflectionInformation::unpackShaderBind(shaderBind);
+                programReflection.sets[space].uavs[i++] = shaderBind;
+            }
+            i = 0;
+            for (ShaderBind shaderBind : set.second.samplerSet)
+            {
+                U32 space = ShaderReflectionInformation::unpackShaderSet(shaderBind);
+                //U32 bind = ShaderReflectionInformation::unpackShaderBind(shaderBind);
+                programReflection.sets[space].samplers[i++] = shaderBind;
+            }
+            programReflection.sets[set.first].numCbvs = static_cast<U8>(set.second.cbvSet.size());
+            programReflection.sets[set.first].numSrvs = static_cast<U8>(set.second.srvSet.size());
+            programReflection.sets[set.first].numUavs = static_cast<U8>(set.second.uavSet.size());
+            programReflection.sets[set.first].numSamplers = static_cast<U8>(set.second.samplerSet.size());
+            programReflection.sets[set.first].baseCbv = set.second.baseCbv;
+            programReflection.sets[set.first].baseSrv = set.second.baseSrv;
+            programReflection.sets[set.first].baseUav = set.second.baseUav;
+            programReflection.sets[set.first].baseSampler = set.second.baseSampler;
+        }
     }
 
     return definition;

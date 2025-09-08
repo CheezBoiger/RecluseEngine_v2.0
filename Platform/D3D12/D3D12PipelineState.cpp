@@ -498,81 +498,115 @@ R_INTERNAL
 ID3D12RootSignature* internalCreateRootSignatureWithTable(ID3D12Device* pDevice, const RootSigLayout& layout)
 {
     ID3D12RootSignature* pRootSig = nullptr;
-    const U32 totalDescriptors = layout.cbvCount + layout.samplerCount + layout.srvCount + layout.uavCount;
+
+    U32 parameterCount = 0;
+    U32 descriptorRangesCount = 0;
+    for (u32 set = 0; set < layout.sets.size(); ++set)
+    {
+        const Pipelines::RootSigLayout::Set& space = layout.sets[set];
+        // One parameter for cbv/srv/uav heaps.
+        U32 rdescriptors = (space.cbvCount + space.srvCount + space.uavCount);
+        parameterCount += (rdescriptors > 0) ? 1 : 0;
+        // Other parameter for sampler heaps.
+        parameterCount += space.samplerCount > 0 ? 1 : 0;
+
+        descriptorRangesCount += rdescriptors + space.samplerCount;
+    }
+
+    if (parameterCount == 0)
+        return pRootSig;
 
     D3D12_ROOT_SIGNATURE_DESC desc = { };
     // For CbvSrvUavs and Samplers.
-    D3D12_ROOT_PARAMETER tableParameters[2] = { };
-    std::array<D3D12_DESCRIPTOR_RANGE, 4> ranges = { };
-    const Bool hasSamplers = (layout.samplerCount > 0);
-    U32 cbvSrvUavRangeIdx = 0;
-    U32 offsetInDescriptors = 0;
-    if (layout.cbvCount > 0)
+    std::vector<D3D12_ROOT_PARAMETER> resourceParameters(parameterCount);
+    std::vector<D3D12_DESCRIPTOR_RANGE> descriptorRanges(descriptorRangesCount);
+
+    U32 rangeOffset = 0;
+    U32 paramOffset = 0;
+
+    for (u32 set = 0; set < layout.sets.size(); ++set)
     {
-        D3D12_DESCRIPTOR_RANGE& range = ranges[cbvSrvUavRangeIdx++];
-        range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-        range.NumDescriptors = layout.cbvCount;
-        range.BaseShaderRegister = 0;
-        range.RegisterSpace = 0;
-        range.OffsetInDescriptorsFromTableStart = offsetInDescriptors;
-        offsetInDescriptors += layout.cbvCount;
-    }
-    if (layout.srvCount > 0)
-    {
-        D3D12_DESCRIPTOR_RANGE& range = ranges[cbvSrvUavRangeIdx++];
-        range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        range.NumDescriptors = layout.srvCount;
-        range.BaseShaderRegister = 0;
-        range.RegisterSpace = 0;
-        range.OffsetInDescriptorsFromTableStart = offsetInDescriptors;
-        offsetInDescriptors += layout.srvCount;
-    }
-    if (layout.uavCount > 0)
-    {
-        D3D12_DESCRIPTOR_RANGE& range = ranges[cbvSrvUavRangeIdx++];
-        range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-        range.NumDescriptors = layout.uavCount;
-        range.BaseShaderRegister = 0;
-        range.RegisterSpace = 0;
-        range.OffsetInDescriptorsFromTableStart = offsetInDescriptors;
-        offsetInDescriptors += layout.uavCount;
-    }
-    if (layout.samplerCount > 0)
-    {
-        D3D12_DESCRIPTOR_RANGE& range = ranges[cbvSrvUavRangeIdx];
-        range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
-        range.NumDescriptors = layout.samplerCount;
-        range.BaseShaderRegister = 0;
-        range.RegisterSpace = 0;
-        range.OffsetInDescriptorsFromTableStart = 0; // Doesn't need to have an offset, since samplers will be in their own table.
-        offsetInDescriptors += layout.samplerCount;
+        const Pipelines::RootSigLayout::Set& space = layout.sets[set];
+        const U32 totalDescriptors = space.cbvCount + space.samplerCount + space.srvCount + space.uavCount;
+
+        R_ASSERT(totalDescriptors != 0);
+        if (totalDescriptors == 0)
+            continue;
+
+        U32 offsetInDescriptors = 0;
+        U32 rangeCount = 0;
+        U32 prevRangeOffset = rangeOffset;
+
+        if (space.cbvCount > 0)
+        {
+            D3D12_DESCRIPTOR_RANGE range = { };
+            range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+            range.NumDescriptors = space.cbvCount;
+            range.BaseShaderRegister = space.baseCbv;
+            range.RegisterSpace = set;
+            range.OffsetInDescriptorsFromTableStart = offsetInDescriptors;
+            offsetInDescriptors += space.cbvCount;
+            descriptorRanges[rangeOffset++] = range;
+            ++rangeCount;
+        }
+        if (space.srvCount > 0)
+        {
+            D3D12_DESCRIPTOR_RANGE range = { };
+            range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+            range.NumDescriptors = space.srvCount;
+            range.BaseShaderRegister = space.baseSrv;
+            range.RegisterSpace = set;
+            range.OffsetInDescriptorsFromTableStart = offsetInDescriptors;
+            offsetInDescriptors += space.srvCount;
+            descriptorRanges[rangeOffset++] = range;
+            ++rangeCount;
+        }
+        if (space.uavCount > 0)
+        {
+            D3D12_DESCRIPTOR_RANGE range = { };
+            range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+            range.NumDescriptors = space.uavCount;
+            range.BaseShaderRegister = space.baseUav;
+            range.RegisterSpace = set;
+            range.OffsetInDescriptorsFromTableStart = offsetInDescriptors;
+            offsetInDescriptors += space.uavCount;
+            descriptorRanges[rangeOffset++] = range;
+            ++rangeCount;
+        }
+
+        {
+            D3D12_ROOT_PARAMETER parameter = { };
+            parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+            parameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+            parameter.DescriptorTable.NumDescriptorRanges = rangeCount;
+            parameter.DescriptorTable.pDescriptorRanges = &descriptorRanges[prevRangeOffset];
+        
+            resourceParameters[paramOffset++] = parameter;
+        }
+
+        if (space.samplerCount > 0)
+        {
+            D3D12_DESCRIPTOR_RANGE range = { };
+            range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+            range.NumDescriptors = space.samplerCount;
+            range.BaseShaderRegister = space.baseSampler;
+            range.RegisterSpace = set;
+            range.OffsetInDescriptorsFromTableStart = 0; // Doesn't need to have an offset, since samplers will be in their own table.
+            U32 samplerRangeOffset = rangeOffset;
+            descriptorRanges[rangeOffset++] = range;
+
+            D3D12_ROOT_PARAMETER sparameter = { };
+            sparameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+            sparameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+            sparameter.DescriptorTable.NumDescriptorRanges = 1;
+            sparameter.DescriptorTable.pDescriptorRanges = &descriptorRanges[samplerRangeOffset];
+            resourceParameters[paramOffset++] = sparameter;
+        }
     }
 
-    tableParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-    tableParameters[0].DescriptorTable.NumDescriptorRanges = cbvSrvUavRangeIdx;
-    tableParameters[0].DescriptorTable.pDescriptorRanges = ranges.data();
-    tableParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-    if (hasSamplers)
-    {    
-        tableParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-        tableParameters[1].DescriptorTable.NumDescriptorRanges = 1;
-        tableParameters[1].DescriptorTable.pDescriptorRanges = &ranges[Math::clamp(cbvSrvUavRangeIdx, (U32)0, (U32)ranges.size())];
-        tableParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-    }
-
-    U32 numParameters = 0;
-    if (totalDescriptors)
-    {
-        numParameters += 1;
-    }
-    if (hasSamplers)
-    {
-        numParameters += 1;
-    }
-    desc.NumParameters = numParameters;
+    desc.NumParameters = resourceParameters.size();
     desc.NumStaticSamplers = 0;
-    desc.pParameters = tableParameters;
+    desc.pParameters = resourceParameters.data();
     desc.pStaticSamplers = nullptr;
     desc.Flags = layout.flags; // TODO: None for now, but we might want to try and optimize this?
 
@@ -633,7 +667,7 @@ ID3D12PipelineState* makePipelineState(D3D12Context* pContext, const PipelineSta
 ID3D12RootSignature* makeRootSignature(D3D12Device* pDevice, const RootSigLayout& layout)
 {
     ID3D12RootSignature* rootSignature = nullptr;
-    Hash64 hash = recluseHashFast(&layout, sizeof(RootSigLayout));
+    Hash64 hash = layout.hash0;
     DeviceId deviceId = pDevice->getDeviceId();
     auto iter = m_rootSignatures[deviceId].find(hash);
     if (iter == m_rootSignatures[deviceId].end())
@@ -649,38 +683,44 @@ ID3D12RootSignature* makeRootSignature(D3D12Device* pDevice, const RootSigLayout
 }
 
 
-CpuDescriptorTable makeDescriptorSrvCbvUavTable(D3D12Device* pDevice, const RootSigLayout& layout, const RootSigResourceTable& resourceTable)
+CpuDescriptorTable makeDescriptorSrvCbvUavTable(D3D12Device* pDevice, U32 space, const RootSigLayout& layout, const RootSigResourceTable& resourceTable)
 {
     DescriptorHeapAllocationManager* pManager = pDevice->getDescriptorHeapManager();
-    Hash64 hash = 0;
-    const U32 descriptorCount = layout.cbvCount + layout.srvCount + layout.uavCount;
+
+    const Pipelines::RootSigLayout::Set& set = layout.sets[space];
+    const U32 descriptorCount = set.cbvCount + set.srvCount + set.uavCount;
+
     std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> handles(descriptorCount);
     U32 i = 0;
-    for (U32 j = 0; j < layout.cbvCount; ++j)
+
+    const Pipelines::RootSigResourceTable::Set& resources = resourceTable.sets[space];
+
+    for (U32 j = 0; j < set.cbvCount; ++j)
     {
-        D3D12_CPU_DESCRIPTOR_HANDLE handle = resourceTable.cbvs[j];
+        D3D12_CPU_DESCRIPTOR_HANDLE handle = resources.cbvs[j];
         if (handle.ptr != DescriptorTable::invalidCpuAddress.ptr)
-            handles[i++] = resourceTable.cbvs[j];
+            handles[i++] = resources.cbvs[j];
         else
             handles[i++] = pManager->nullCbvDescriptor();
     }
-    for (U32 j = 0; j < layout.srvCount; ++j)
+    for (U32 j = 0; j < set.srvCount; ++j)
     {
-        D3D12_CPU_DESCRIPTOR_HANDLE handle = resourceTable.srvs[j];
+        D3D12_CPU_DESCRIPTOR_HANDLE handle = resources.srvs[j];
         if (handle.ptr != DescriptorTable::invalidCpuAddress.ptr)
-            handles[i++] = resourceTable.srvs[j];
+            handles[i++] = resources.srvs[j];
         else
             handles[i++] = pManager->nullSrvDescriptor();
     }
-    for (U32 j = 0; j < layout.uavCount; ++j)
+    for (U32 j = 0; j < set.uavCount; ++j)
     {
-        D3D12_CPU_DESCRIPTOR_HANDLE handle = resourceTable.uavs[j];
+        D3D12_CPU_DESCRIPTOR_HANDLE handle = resources.uavs[j];
         if (handle.ptr != DescriptorTable::invalidCpuAddress.ptr)
-            handles[i++] = resourceTable.uavs[j];
+            handles[i++] = resources.uavs[j];
         else
             handles[i++] = pManager->nullUavDescriptor();
     }
-    hash = recluseHashFast(handles.data(), sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) * handles.size());
+
+    Hash64 hash = recluseHashFast(handles.data(), sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) * handles.size());
     DeviceId deviceId = pDevice->getDeviceId();
     
     // We are essentially searching if there are already the same batched descriptor tables. We don't want to create duplicates,
@@ -700,16 +740,27 @@ CpuDescriptorTable makeDescriptorSrvCbvUavTable(D3D12Device* pDevice, const Root
 }
 
 
-CpuDescriptorTable              makeDescriptorSamplertable(D3D12Device* pDevice, const RootSigLayout& layout, const RootSigResourceTable& resourceTable)
+CpuDescriptorTable              makeDescriptorSamplertable(D3D12Device* pDevice, U32 space, const RootSigLayout& layout, const RootSigResourceTable& resourceTable)
 {
     DescriptorHeapAllocationManager* pManager = pDevice->getDescriptorHeapManager();
-    const U32 descriptorCount = layout.samplerCount;
-    Hash64 hash = recluseHashFast(resourceTable.samplers, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) * descriptorCount);
+
+    const U32 descriptorCount = layout.sets[space].samplerCount;
+
+    std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> handles(descriptorCount);
+    U32 offset = 0; 
+
+    const Pipelines::RootSigResourceTable::Set& set = resourceTable.sets[space];
+    for (U32 i = 0; i < layout.sets[space].samplerCount; ++ i)
+    {
+        handles[offset++] = set.samplers[i];
+    }
+
+    Hash64 hash = recluseHashFast(handles.data(), sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) * descriptorCount);
     DeviceId deviceId = pDevice->getDeviceId();
     auto iter = m_cachedSamplerTables[deviceId].find(hash);
     if (iter == m_cachedSamplerTables[deviceId].end())
     {
-        CpuDescriptorTable table = pManager->copyDescriptorsToTable(CpuHeapType_Sampler, resourceTable.samplers, descriptorCount);
+        CpuDescriptorTable table = pManager->copyDescriptorsToTable(CpuHeapType_Sampler, handles.data(), descriptorCount);
         m_cachedSamplerTables[deviceId].insert(std::make_pair(hash, table));
         return table; 
     }
@@ -767,6 +818,18 @@ void checkPipelines(D3D12Device* pDevice)
             R_DEBUG(R_CHANNEL_D3D12, "Destroying pipeline.");
             pipelineState->Release();
         });
+}
+
+
+void RootSigLayout::makeHash()
+{
+    hash0 = 0;
+    for (U32 i = 0; i < sets.size(); ++i)
+    {
+        hash0 ^= recluseHashFast(&sets[i], sizeof(Set));
+    }
+    hash0 ^= shaderVisibility;
+    hash0 ^= flags;
 }
 } // Pipelines
 } // D3D12 

@@ -59,13 +59,14 @@ struct Structure
                 U32 rayRecursionDepth;
                 
             } raytrace;
-        };
-        VkDescriptorSetLayout       descriptorLayout;
-        ShaderProgramPermutation    shaderPermutation;
-        ShaderProgramId             shaderProgramId;
+        } pipeline;
+        std::vector<VkDescriptorSetLayout>  descriptorSetLayouts;
+        ShaderProgramPermutation            shaderPermutation;
+        ShaderProgramId                     shaderProgramId;
     } state;
 
     void nullify();
+    Hash64 hash() const;
 };
 
 
@@ -88,7 +89,7 @@ ResultCode              clearPipelineCache(VulkanDevice* pDevice);
 ResultCode              releasePipeline(VulkanDevice* pDevice, PipelineId pipelineId);
 
 // Creates a pipeline layout if one does not exist. Otherwise, returns an existing pipeline layout.
-VkPipelineLayout        makeLayout(VulkanDevice* pDevice, VkDescriptorSetLayout layout);
+VkPipelineLayout        makeLayout(VulkanDevice* pDevice, const VkDescriptorSetLayout* layouts, U32 layoutCount);
 void                    update(DeviceId id);
 void                    clean(VulkanDevice* device);
 } // PipelineManager

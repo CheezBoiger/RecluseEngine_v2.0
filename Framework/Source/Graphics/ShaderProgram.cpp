@@ -655,22 +655,29 @@ ResultCode ShaderProgramDatabase::deserialize(Archive* pArchive)
 
 ResultCode ShaderProgramReflection::serialize(Archive* archive) const
 {
-    archive->write(cbvs.data(), sizeof(ShaderBind) * cbvs.size());
-    archive->write(srvs.data(), sizeof(ShaderBind) * srvs.size());
-    archive->write(uavs.data(), sizeof(ShaderBind) * uavs.size());
-    archive->write(samplers.data(), sizeof(ShaderBind) * samplers.size());
-    archive->write(&packed32, sizeof(U32));
+    size_t numSets = sets.size();
+    archive->write(&numSets, sizeof(size_t));
+    archive->write(sets.data(), sizeof(ShaderProgramReflection::Set) * sets.size());
+    //archive->write(cbvs.data(), sizeof(ShaderBind) * cbvs.size());
+    //archive->write(srvs.data(), sizeof(ShaderBind) * srvs.size());
+    //archive->write(uavs.data(), sizeof(ShaderBind) * uavs.size());
+    //archive->write(samplers.data(), sizeof(ShaderBind) * samplers.size());
+    //archive->write(&packed32, sizeof(U32));
     return RecluseResult_Ok;
 }
 
 
 ResultCode ShaderProgramReflection::deserialize(Archive* archive) 
 {
-    archive->read(cbvs.data(), sizeof(ShaderBind) * cbvs.size());
-    archive->read(srvs.data(), sizeof(ShaderBind) * srvs.size());
-    archive->read(uavs.data(), sizeof(ShaderBind) * uavs.size());
-    archive->read(samplers.data(), sizeof(ShaderBind) * samplers.size());
-    archive->read(&packed32, sizeof(U32));
+    size_t numSets = 0;
+    archive->read(&numSets, sizeof(size_t));
+    sets.resize(numSets);
+    archive->read(sets.data(), sizeof(ShaderProgramReflection::Set) * numSets); 
+    //archive->read(cbvs.data(), sizeof(ShaderBind) * cbvs.size());
+    //archive->read(srvs.data(), sizeof(ShaderBind) * srvs.size());
+    //archive->read(uavs.data(), sizeof(ShaderBind) * uavs.size());
+    //archive->read(samplers.data(), sizeof(ShaderBind) * samplers.size());
+    //archive->read(&packed32, sizeof(U32));
     return RecluseResult_Ok;
 }
 

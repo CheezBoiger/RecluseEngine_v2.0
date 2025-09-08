@@ -1246,10 +1246,16 @@ void VulkanContext::VulkanShaderProgramBinder::obtainShaderProgramFromCache()
         reflectionCache = ShaderPrograms::obtainProgramReflection(getProgramId(), getPermutationId());
         if (reflectionCache)
         {
-            currentState().m_boundDescriptorSetStructure.key.value.constantBuffers = (U16)reflectionCache->numCbvs;
-            currentState().m_boundDescriptorSetStructure.key.value.srvs = (U16)reflectionCache->numSrvs;
-            currentState().m_boundDescriptorSetStructure.key.value.uavs = (U16)reflectionCache->numUavs;
-            currentState().m_boundDescriptorSetStructure.key.value.samplers = (U16)reflectionCache->numSamplers;
+            // Reserve the needed size of the shader program.
+            currentState().m_boundDescriptorSetStructures.resize(reflectionCache->sets.size());
+            currentState().m_boundPerSet.resize(reflectionCache->sets.size());
+            for (U32 set = 0; set < reflectionCache->sets.size(); ++set)
+            {
+                currentState().m_boundDescriptorSetStructures[set].key.value.constantBuffers    = (U16)reflectionCache->sets[set].numCbvs;
+                currentState().m_boundDescriptorSetStructures[set].key.value.srvs               = (U16)reflectionCache->sets[set].numSrvs;
+                currentState().m_boundDescriptorSetStructures[set].key.value.uavs               = (U16)reflectionCache->sets[set].numUavs;
+                currentState().m_boundDescriptorSetStructures[set].key.value.samplers           = (U16)reflectionCache->sets[set].numSamplers;
+            }
         }
     }
 }

@@ -179,12 +179,22 @@ typedef U32 ShaderBind;
 class ShaderReflectionInformation : public Serializable
 {
 public:
+    static RecluseFramework_PUBLIC_API U32 unpackShaderBind(ShaderBind shaderBind);
+    static RecluseFramework_PUBLIC_API U32 unpackShaderSet(ShaderBind shaderBind);
+
+    static RecluseFramework_PUBLIC_API ShaderBind packShaderBinding(U16 space, U16 bind);
+    static constexpr U32 kInvalidBindValue = 0xFFFFFFFF;
+    
     struct 
     {
         U8  numCbvs;                //< Number of constant buffer views.
+        U8  baseCbv;
         U8  numSrvs;                //< Number of shader resource views.
+        U8  baseSrv;
         U8  numUavs;                //< Number of unordered access views.
+        U8  baseUav;
         U8  numSamplers;            //< Number of samplers.
+        U8  baseSampler;
         U8  numInputParameters;     //< Number of input parameters.
         U8  numOutputParameters;    //< Number of output parameters.
         U16 pad0;

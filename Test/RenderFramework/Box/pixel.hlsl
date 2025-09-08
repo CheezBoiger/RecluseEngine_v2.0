@@ -11,7 +11,7 @@ struct PSIn
 [[vk::binding(0)]] Texture2D<float4> g_texture 		: register(t0);
 [[vk::binding(1)]] SamplerState g_sampler 			: register(s0);
 
-[[vk::binding(5)]] cbuffer PerVert : register(b0)
+[[vk::binding(0, 1)]] cbuffer PerVert : register(b0, space1)
 {
 	float4x4 mModelViewProjection;
 	float4x4 mNormal;

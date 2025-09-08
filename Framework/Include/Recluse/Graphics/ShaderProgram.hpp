@@ -25,32 +25,51 @@ class GraphicsDevice;
 
 struct RecluseFramework_PUBLIC_API ShaderProgramReflection : public Serializable
 {
-    std::array<ShaderBind, 16>  cbvs;
-    std::array<ShaderBind, 64>  srvs;
-    std::array<ShaderBind, 8>   uavs;
-    std::array<ShaderBind, 16>  samplers;
-    union
+    struct Set 
     {
-        struct
+        std::array<ShaderBind, 16>  cbvs;
+        std::array<ShaderBind, 64>  srvs;
+        std::array<ShaderBind, 8>   uavs;
+        std::array<ShaderBind, 16>  samplers;
+        union
         {
-            U8 numCbvs;
-            U8 numSrvs;
-            U8 numUavs;
-            U8 numSamplers;
+            struct
+            {
+                U8 numCbvs;
+                U8 baseCbv;
+
+                U8 numSrvs;
+                U8 baseSrv;    
+
+                U8 numUavs;
+                U8 baseUav;
+
+                U8 numSamplers;
+                U8 baseSampler;
+            };
+            U64 packed64;
         };
-        U32 packed32;
+
+        Set()
+        {
+            memset(cbvs.data(), (ShaderBind)-1, sizeof(ShaderBind) * cbvs.size());
+            memset(srvs.data(), (ShaderBind)-1, sizeof(ShaderBind) * srvs.size());
+            memset(uavs.data(), (ShaderBind)-1, sizeof(ShaderBind) * uavs.size());
+            memset(samplers.data(), (ShaderBind)-1, sizeof(ShaderBind) * samplers.size());
+            numCbvs = numUavs = numSrvs = numSamplers = 0;
+            baseCbv = baseSrv = baseUav = baseSampler = 0;
+        }
     };
+
     ShaderProgramReflection()
     {
-        memset(cbvs.data(), (ShaderBind)-1, sizeof(ShaderBind) * cbvs.size());
-        memset(srvs.data(), (ShaderBind)-1, sizeof(ShaderBind) * srvs.size());
-        memset(uavs.data(), (ShaderBind)-1, sizeof(ShaderBind) * uavs.size());
-        memset(samplers.data(), (ShaderBind)-1, sizeof(ShaderBind) * samplers.size());
-        numCbvs = numUavs = numSrvs = numSamplers = 0;
+
     }
 
     ResultCode serialize(Archive* archive) const override;
     ResultCode deserialize(Archive* archive) override;
+
+    std::vector<Set> sets;
 };
 
 

@@ -187,10 +187,6 @@ private:
         Pipelines::PipelineStateObject                  m_pipelineStateObject;
         Pipelines::RootSigLayout                        m_rootSigLayout;
         Pipelines::RootSigResourceTable                 m_resourceTable;
-        std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 64>     m_srvs;
-        std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 8>      m_uavs;
-        std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 16>     m_cbvs;
-        std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 16>     m_samplers;
         std::array<D3D12_VERTEX_BUFFER_VIEW,    16>     m_vertexBuffers;
         D3D12_INDEX_BUFFER_VIEW                         m_indexBufferView;
         PrimitiveTopology                               m_primitiveTopology;

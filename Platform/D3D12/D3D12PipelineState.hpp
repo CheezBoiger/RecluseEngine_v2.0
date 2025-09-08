@@ -86,27 +86,44 @@ struct ConstantBufferView
 
 struct RootSigLayout
 {
-    U16                         cbvCount;
-    U16                         srvCount;
-    U16                         uavCount;
-    U16                         samplerCount;
+    struct Set
+    {
+        U8                         cbvCount;
+        U8                         baseCbv;
+        U8                         srvCount;
+        U8                         baseSrv;
+        U8                         uavCount;
+        U8                         baseUav;
+        U8                         samplerCount;
+        U8                         baseSampler;
+    };
+
+    std::vector<Set>            sets;
     ShaderStageFlags            shaderVisibility;
     D3D12_ROOT_SIGNATURE_FLAGS  flags;
+
+    Hash64                      hash0;
+
+    void makeHash();
 };
 
 
 struct RootSigResourceTable
 {   
-    D3D12_CPU_DESCRIPTOR_HANDLE*    cbvs;
-    D3D12_CPU_DESCRIPTOR_HANDLE*    srvs;
-    D3D12_CPU_DESCRIPTOR_HANDLE*    uavs;
-    D3D12_CPU_DESCRIPTOR_HANDLE*    samplers;   
+    struct Set 
+    {
+        std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 64>     srvs;
+        std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 8>      uavs;
+        std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 16>     cbvs;
+        std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 16>     samplers;
+    };
+    std::vector<Set> sets;
 };
 
 ID3D12PipelineState*            makePipelineState(D3D12Context* pContext, const PipelineStateObject& pipelineState);
 ID3D12RootSignature*            makeRootSignature(D3D12Device* pDevice, const RootSigLayout& layout);
-CpuDescriptorTable              makeDescriptorSrvCbvUavTable(D3D12Device* pDevice, const RootSigLayout& layout, const RootSigResourceTable& resourceTable);
-CpuDescriptorTable              makeDescriptorSamplertable(D3D12Device* pDevice, const RootSigLayout& layout, const RootSigResourceTable& resourceTable);
+CpuDescriptorTable              makeDescriptorSrvCbvUavTable(D3D12Device* pDevice, U32 space, const RootSigLayout& layout, const RootSigResourceTable& resourceTable);
+CpuDescriptorTable              makeDescriptorSamplertable(D3D12Device* pDevice, U32 space, const RootSigLayout& layout, const RootSigResourceTable& resourceTable);
 void                            cleanUpRootSigs(DeviceId deviceId);
 void                            cleanUpPipelines(DeviceId deviceId);
 void                            resetTableHeaps(D3D12Device* pDevice);

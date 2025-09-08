@@ -261,9 +261,9 @@ ResultCode loadNativeShaderProgramPermutation(ShaderProgramId shaderProgram, Sha
     {
         return RecluseResult_AlreadyExists;
     }
-    Bool result = internalMakeShaderProgram(shaderProgram, permutation, definition);
+    Bool succeeded = internalMakeShaderProgram(shaderProgram, permutation, definition);
 
-    if (result == RecluseResult_Ok)
+    if (succeeded)
     {
         auto& table = g_shaderProgramReflectionMap[shaderProgram];
         auto it = table.find(permutation);
@@ -273,7 +273,7 @@ ResultCode loadNativeShaderProgramPermutation(ShaderProgramId shaderProgram, Sha
         }
     }
 
-    return result ? RecluseResult_Ok : RecluseResult_Failed;
+    return succeeded ? RecluseResult_Ok : RecluseResult_Failed;
 }
 
 

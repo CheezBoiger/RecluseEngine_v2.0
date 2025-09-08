@@ -112,7 +112,7 @@ int main(int c, char* argv[])
     RealtimeTick::initializeWatch(1ull, 0);
     LogSystem::enableLogTypes(LogType_Debug);
     LogSystem::disableLogTypes(LogType_Warn);
-    GraphicsInstance* pInstance             = GraphicsInstance::create(GraphicsApi_Vulkan);
+    GraphicsInstance* pInstance             = GraphicsInstance::create(GraphicsApi_Direct3D12);
     GraphicsAdapter* pAdapter               = nullptr;
     GraphicsResource* pData                 = nullptr;
     GraphicsResource* pData2                = nullptr;
@@ -294,7 +294,7 @@ int main(int c, char* argv[])
         }
         else
         {
-            shaderBuilder = Pipeline::createShaderBuilder("glsl");
+            shaderBuilder = Pipeline::createShaderBuilder("glslang");
             intermediateCode = ShaderIntermediateCode_Spirv;
         }
         shaderBuilder->setUp();
@@ -333,7 +333,7 @@ int main(int c, char* argv[])
         layout.numVertexBindings = 1;
 
         Runtime::buildVertexInputLayout(pDevice, layout, VertexLayoutKey_PositionOnly);
-        shaderBuilder->setUp();
+        shaderBuilder->tearDown();
         Pipeline::freeShaderBuilder(shaderBuilder);
     }
 

@@ -183,4 +183,20 @@ ResultCode ShaderReflectionInformation::deserialize(Archive* archive)
     
     return RecluseResult_Ok;
 }
+
+
+U32 ShaderReflectionInformation::unpackShaderBind(ShaderBind shaderBind)
+{
+    return (shaderBind & 0x0000ffff);
+}
+
+U32 ShaderReflectionInformation::unpackShaderSet(ShaderBind shaderBind)
+{
+    return (shaderBind & 0xffff0000) >> 16;
+}
+
+ShaderBind ShaderReflectionInformation::packShaderBinding(U16 space, U16 bind)
+{
+    return (U32)bind | ((U32)space << 16);   
+}
 } // Recluse
