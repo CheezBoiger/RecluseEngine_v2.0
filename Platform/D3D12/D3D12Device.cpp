@@ -899,7 +899,13 @@ ResourceView D3D12Context::allocateConstantBuffer(U32 cbSizeBytes, void* cbInput
 {
     ContextFrame* contextFrame = getCurrentContextFrame();
     D3D12MemoryObject object{};
-    contextFrame->temporaryBufferAllocator.allocate(&object, ResourceMemoryUsage_CpuToGpu, cbSizeBytes);
+    ResultCode err = contextFrame->temporaryBufferAllocator.allocate(&object, ResourceMemoryUsage_CpuToGpu, cbSizeBytes);
+
+    if (err == RecluseResult_OutOfMemory)
+    {
+        R_ASSERT("Out of constant buffer memory!!");
+        return {};
+    }
 
     D3D12_RANGE range{};
     range.Begin = object.basePtr;

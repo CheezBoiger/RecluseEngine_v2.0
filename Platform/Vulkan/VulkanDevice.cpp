@@ -1265,7 +1265,13 @@ ResourceView VulkanContext::allocateConstantBuffer(U32 cbSizeBytes, void* dat)
 {
     VulkanContextFrame& contextFrame = getContextFrame(getCurrentFrameIndex());
     BufferTemporaryAllocator::Result block{};
-    contextFrame.temporaryBufferAllocator.allocate(&block, ResourceMemoryUsage_CpuToGpu, cbSizeBytes);
+    ResultCode result = contextFrame.temporaryBufferAllocator.allocate(&block, ResourceMemoryUsage_CpuToGpu, cbSizeBytes);
+
+    if (result == RecluseResult_OutOfMemory)
+    {
+        R_ASSERT("Out of constant buffer memory!!");
+        return {};
+    }
     
     if (dat)
         memcpy((void*)block.memPtr, dat, cbSizeBytes);
