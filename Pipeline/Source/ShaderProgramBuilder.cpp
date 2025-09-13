@@ -221,12 +221,18 @@ R_INTERNAL Shader* compileShader
                             reflectError = RecluseResult_NotFound;
                             break;
                     }
+
                     if (reflectError == RecluseResult_Ok)
                     {
-                        R_DEBUG("ShaderBuilder", "ShaderName: %s \nCBVs: %d\nSRVs:%d\nUAVs:%d\nSamplers: %d", 
-                            shader->getName(), reflectionData.metadata.numCbvs, reflectionData.metadata.numSrvs, 
-                            reflectionData.metadata.numUavs, reflectionData.metadata.numSamplers);
-                            reflectionOut.insert(std::make_pair(shaderType, reflectionData));
+                        for (U32 i = 0; i < reflectionData.perSetMetadata.size(); ++i)
+                        {
+                            ShaderReflectionInformation::Metadata& metadata = reflectionData.perSetMetadata[i];
+                            R_DEBUG("ShaderBuilder", "ShaderName: %s - Space %d \nCBVs: %d\nSRVs:%d\nUAVs:%d\nSamplers: %d", 
+                                shader->getName(), i, metadata.numCbvs, metadata.numSrvs, 
+                                metadata.numUavs, metadata.numSamplers);
+                        }
+
+                        reflectionOut.insert(std::make_pair(shaderType, reflectionData));
                     }
                 }
             }
@@ -321,29 +327,33 @@ ShaderProgramDefinition makeShaderProgramDefinition(ShaderProgramDatabase& db, c
             {
                 ShaderBind cbv = reflection.cbvs[index];
                 U32 set = ShaderReflectionInformation::unpackShaderSet(cbv);
+                ShaderReflectionInformation::Metadata& metadata = reflection.perSetMetadata[set];
                 auto result = reflectionSets[set].cbvSet.insert(cbv);
-                reflectionSets[set].baseCbv = Math::minimum(reflectionSets[set].baseCbv, reflection.metadata.baseCbv);
+                reflectionSets[set].baseCbv = Math::minimum(reflectionSets[set].baseCbv, metadata.baseCbv);
             }
             for (U32 index = 0; index < reflection.srvs.size(); ++index)
             {
                 ShaderBind srv = reflection.srvs[index];
                 U32 set = ShaderReflectionInformation::unpackShaderSet(srv);
+                ShaderReflectionInformation::Metadata& metadata = reflection.perSetMetadata[set];
                 auto result = reflectionSets[set].srvSet.insert(srv);
-                reflectionSets[set].baseSrv = Math::minimum(reflectionSets[set].baseSrv, reflection.metadata.baseSrv);
+                reflectionSets[set].baseSrv = Math::minimum(reflectionSets[set].baseSrv, metadata.baseSrv);
             }
             for (U32 index = 0; index < reflection.uavs.size(); ++index)
             {
                 ShaderBind uav = reflection.uavs[index];
                 U32 set = ShaderReflectionInformation::unpackShaderSet(uav);
+                ShaderReflectionInformation::Metadata& metadata = reflection.perSetMetadata[set];
                 auto result = reflectionSets[set].uavSet.insert(uav);
-                reflectionSets[set].baseUav = Math::minimum(reflectionSets[set].baseUav, reflection.metadata.baseUav);
+                reflectionSets[set].baseUav = Math::minimum(reflectionSets[set].baseUav, metadata.baseUav);
             }
             for (U32 index = 0; index < reflection.samplers.size(); ++index)
             {
                 ShaderBind sampler = reflection.samplers[index];
                 U32 set = ShaderReflectionInformation::unpackShaderSet(sampler);
+                ShaderReflectionInformation::Metadata& metadata = reflection.perSetMetadata[set];
                 auto result = reflectionSets[set].samplerSet.insert(sampler);
-                reflectionSets[set].baseSampler = Math::minimum(reflectionSets[set].baseSampler, reflection.metadata.baseSampler);
+                reflectionSets[set].baseSampler = Math::minimum(reflectionSets[set].baseSampler, metadata.baseSampler);
             }
         }
 

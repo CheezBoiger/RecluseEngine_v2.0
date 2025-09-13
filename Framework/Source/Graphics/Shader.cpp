@@ -4,6 +4,7 @@
 #include "Recluse/Filesystem/Filesystem.hpp"
 #include "Recluse/Filesystem/Archive.hpp"
 
+#include "Recluse/Math/Vector4.hpp"
 #include "Recluse/Messaging.hpp"
 
 #include "Recluse/Threading/Threading.hpp"
@@ -157,11 +158,22 @@ ResultCode Shader::deserialize(Archive* archive)
 ResultCode ShaderReflectionInformation::serialize(Archive* archive) const
 {
     R_ASSERT(archive);
-    archive->write(&metadata, sizeof(metadata));
-    archive->write(cbvs.data(), sizeof(ShaderBind) * metadata.numCbvs);
-    archive->write(srvs.data(), sizeof(ShaderBind) * metadata.numSrvs);
-    archive->write(uavs.data(), sizeof(ShaderBind) * metadata.numUavs);
-    archive->write(samplers.data(), sizeof(ShaderBind) * metadata.numSamplers);
+    U32 numSets = static_cast<U32>(perSetMetadata.size());
+    archive->write(&numSets, sizeof(U32));
+    archive->write(perSetMetadata.data(), sizeof(Metadata) * perSetMetadata.size());
+
+    U32 numCbvs     = static_cast<U32>(cbvs.size());
+    U32 numSrvs     = static_cast<U32>(srvs.size());
+    U32 numUavs     = static_cast<U32>(uavs.size());
+    U32 numSamplers = static_cast<U32>(samplers.size());
+
+    Math::UInt4 value = { numCbvs, numSrvs, numUavs, numSamplers };
+    archive->write(&value, sizeof(Math::UInt4));
+
+    archive->write(cbvs.data(), sizeof(ShaderBind) * cbvs.size());
+    archive->write(srvs.data(), sizeof(ShaderBind) * srvs.size());
+    archive->write(uavs.data(), sizeof(ShaderBind) * uavs.size());
+    archive->write(samplers.data(), sizeof(ShaderBind) * samplers.size());
     return RecluseResult_Ok;
 }
 
@@ -169,17 +181,24 @@ ResultCode ShaderReflectionInformation::serialize(Archive* archive) const
 ResultCode ShaderReflectionInformation::deserialize(Archive* archive)
 {
     R_ASSERT(archive);
-    archive->read(&metadata, sizeof(metadata));
+    U32 numSets = 0;
+    archive->read(&numSets, sizeof(U32));
     
-    cbvs.resize(metadata.numCbvs);
-    srvs.resize(metadata.numSrvs);
-    uavs.resize(metadata.numUavs);
-    samplers.resize(metadata.numSamplers);
+    perSetMetadata.resize(numSets);
+    archive->read(perSetMetadata.data(), sizeof(Metadata) * perSetMetadata.size());
 
-    archive->read(cbvs.data(), sizeof(ShaderBind) * metadata.numCbvs);
-    archive->read(srvs.data(), sizeof(ShaderBind) * metadata.numSrvs);
-    archive->read(uavs.data(), sizeof(ShaderBind) * metadata.numUavs);
-    archive->read(samplers.data(), sizeof(ShaderBind) * metadata.numSamplers);
+    Math::UInt4 values = { };
+    archive->read(&values, sizeof(Math::UInt4));
+
+    cbvs.resize(values[0]);
+    srvs.resize(values[1]);
+    uavs.resize(values[2]);
+    samplers.resize(values[3]);
+
+    archive->read(cbvs.data(), sizeof(ShaderBind) * cbvs.size());
+    archive->read(srvs.data(), sizeof(ShaderBind) * srvs.size());
+    archive->read(uavs.data(), sizeof(ShaderBind) * uavs.size());
+    archive->read(samplers.data(), sizeof(ShaderBind) * samplers.size());
     
     return RecluseResult_Ok;
 }

@@ -46,6 +46,10 @@ ResultCode SpirvReflection::reflect(ShaderReflectionInformation& reflectionOutpu
                 const U16 dstBinding = descriptorBind->binding;
                 const U16 dstSet = descriptorBind->set;
 
+                if (dstSet >= reflectionOutput.perSetMetadata.size())
+                    reflectionOutput.perSetMetadata.resize(dstSet + 1);
+                ShaderReflectionInformation::Metadata& metadata = reflectionOutput.perSetMetadata[dstSet];
+
                 // We want to ensure they fit in an unsigned short.
                 R_ASSERT_FORMAT(dstBinding < 65535 && dstSet < 65535, "The shader destination set or binding exceeds the expected registers to be properly reflected!");
 
@@ -59,7 +63,7 @@ ResultCode SpirvReflection::reflect(ShaderReflectionInformation& reflectionOutpu
                     {
                         if (descriptorBind->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_SAMPLER)
                         {
-                            reflectionOutput.metadata.numSamplers += 1;
+                            metadata.numSamplers += 1;
                             reflectionOutput.samplers.push_back(shaderBind);
                         }
                         break;
@@ -71,12 +75,12 @@ ResultCode SpirvReflection::reflect(ShaderReflectionInformation& reflectionOutpu
                         // their access in shader code.
                         if (descriptorBind->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_UAV)
                         {
-                            reflectionOutput.metadata.numUavs += 1;
+                            metadata.numUavs += 1;
                             reflectionOutput.uavs.push_back(shaderBind);
                         }
                         if (descriptorBind->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_SRV)
                         {
-                            reflectionOutput.metadata.numSrvs += 1;
+                            metadata.numSrvs += 1;
                             reflectionOutput.srvs.push_back(shaderBind);
                         }
                         break;
@@ -86,7 +90,7 @@ ResultCode SpirvReflection::reflect(ShaderReflectionInformation& reflectionOutpu
                     {
                         if (descriptorBind->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_SRV)
                         {
-                            reflectionOutput.metadata.numSrvs += 1;
+                            metadata.numSrvs += 1;
                             reflectionOutput.srvs.push_back(shaderBind);
                         }
                         break;
@@ -95,7 +99,7 @@ ResultCode SpirvReflection::reflect(ShaderReflectionInformation& reflectionOutpu
                     {
                         if (descriptorBind->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_CBV)
                         {
-                            reflectionOutput.metadata.numCbvs += 1;
+                            metadata.numCbvs += 1;
                             reflectionOutput.cbvs.push_back(shaderBind);
                         }
                         break;
