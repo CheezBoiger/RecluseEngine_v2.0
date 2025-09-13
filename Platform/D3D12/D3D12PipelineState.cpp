@@ -513,8 +513,8 @@ ID3D12RootSignature* internalCreateRootSignatureWithTable(ID3D12Device* pDevice,
         descriptorRangesCount += rdescriptors + space.samplerCount;
     }
 
-    if (parameterCount == 0)
-        return pRootSig;
+    //if (parameterCount == 0)
+    //    return pRootSig;
 
     D3D12_ROOT_SIGNATURE_DESC desc = { };
     // For CbvSrvUavs and Samplers.
