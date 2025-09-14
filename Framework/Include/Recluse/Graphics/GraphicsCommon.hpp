@@ -208,11 +208,17 @@ typedef U32 LayerFeatureFlags;
 enum GraphicsAPI 
 {
     GraphicsApi_Unknown,
+    // A software based rasterizer, all done with no dedicated hardware.
     GraphicsApi_SoftwareRasterizer,
+    // A software based ray tracer, all done with no dedicated hardware.
     GraphicsApi_SoftwareRaytracer,
+    // Vulkan runtime and api.
     GraphicsApi_Vulkan,
+    // OpenGL runtime and api.
     GraphicsApi_OpenGL,
+    // Direct3D11 runtime and api.
     GraphicsApi_Direct3D11,
+    // Direct3D12 runtime and api.
     GraphicsApi_Direct3D12
 };
 

@@ -104,6 +104,9 @@ VkDescriptorPool DescriptorAllocatorInstance::createDescriptorPool(const Descrip
 
 VulkanDescriptorAllocation DescriptorAllocatorInstance::allocate(U32 numberSetsToAlloc, VkDescriptorSetLayout* layouts)
 {
+    if (numberSetsToAlloc == 0)
+        return { };
+
     VkResult result                             = VK_SUCCESS;
     VkDescriptorSetAllocateInfo allocateInfo    = { };
     VulkanDescriptorAllocation allocation       = { };

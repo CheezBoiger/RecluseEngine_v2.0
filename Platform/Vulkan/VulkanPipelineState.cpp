@@ -661,6 +661,11 @@ Bool unloadAll(DeviceId deviceId)
 VkPipelineLayout makeLayout(VulkanDevice* pDevice, const VkDescriptorSetLayout* descriptorLayouts, U32 layoutCount)
 {
     VkPipelineLayout layout = VK_NULL_HANDLE;
+
+    // no layout, return null.
+    //if (layoutCount == 0)
+    //    return layout;
+
     auto& pipelineLayoutMap = g_pipelineLayoutMap[pDevice->getDeviceId()];
 
     Hash64 layoutHash = recluseHashFast(descriptorLayouts, sizeof(VkDescriptorSetLayout) * layoutCount);

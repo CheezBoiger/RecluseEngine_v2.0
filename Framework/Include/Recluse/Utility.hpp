@@ -11,6 +11,8 @@
 
 namespace Recluse {
 
+#define R_TEXT(d) #d
+
 // Macro used to deprecate any functionality within the framework api.
 #define R_DEPRECATED_FUNCTION(str) [[deprecated(str)]]
 

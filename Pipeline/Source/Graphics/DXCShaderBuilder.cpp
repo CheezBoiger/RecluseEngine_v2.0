@@ -20,6 +20,7 @@
 R_DECLARE_GLOBAL_STRING(g_shaderModel, "6_5", "DXC.ShaderModel");
 R_DECLARE_GLOBAL_STRING(g_meshShaderModel, "6_5", "DXC.MeshShaderTargetModel");
 R_DECLARE_GLOBAL_STRING(g_ampShaderModel, "6_5", "DXC.AmpShaderTargetModel");
+R_DECLARE_GLOBAL_BOOLEAN(g_meshShaderSpirvUseNV, false, "DXC.SpirvUseNVExtension");
 
 namespace Recluse {
 namespace Pipeline {
@@ -198,7 +199,7 @@ public:
 
         HRESULT hr                      = S_OK;
         std::wstring targetProfile      = getShaderProfile(shaderType);
-        const wchar_t* arguments[16]    = { };
+        const wchar_t* arguments[32]    = { };
         U32 argCount                    = 0;
 
         // NOTE(): This doesn't work on older dxc compiler versions.
@@ -215,6 +216,15 @@ public:
         if (intermediateCode == ShaderIntermediateCode_Spirv) 
         {
             arguments[argCount++] = L"-spirv";
+            if (shaderType == ShaderType_Mesh || shaderType == ShaderType_Amplification)
+            {
+                if (!g_meshShaderSpirvUseNV)
+                {
+                    // SPIRV 1.4 is required to use SPV_EXT_mesh_shader.
+                    arguments[argCount++] = L"-fspv-target-env=vulkan1.1spirv1.4";
+                    arguments[argCount++] = L"-fspv-extension=SPV_EXT_mesh_shader";
+                }
+            }
         }
 
         // Optimization settings

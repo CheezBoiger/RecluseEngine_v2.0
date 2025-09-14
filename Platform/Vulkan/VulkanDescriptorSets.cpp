@@ -162,7 +162,7 @@ static VulkanDescriptorAllocation allocateDescriptorSets(VulkanContext* pContext
     VulkanDescriptorAllocation allocation   = instance->allocate(layoutCount, layouts);
     if (!allocation.isValid()) 
     {
-        R_ERROR(R_CHANNEL_VULKAN, "Failed to allocate vulkan descriptor set!!");
+        R_WARN(R_CHANNEL_VULKAN, "No allocation of descriptor set!! This may indicate a shader program that has no bound resources.");
     }
     return allocation;
 }

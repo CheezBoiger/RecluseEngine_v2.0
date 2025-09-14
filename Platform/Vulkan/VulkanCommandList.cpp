@@ -266,17 +266,20 @@ void VulkanContext::bindDescriptorSet(const VulkanDescriptorAllocation& set)
     VkPipelineLayout layout                 = Pipelines::makeLayout(getNativeDevice(), set.getNativeDescriptorSetLayout(), set.getNumberAllocations());
     const VkPipelineBindPoint bindPoint     = m_pipelineState.bindPoint;
 
-    vkCmdBindDescriptorSets
-        (
-            m_primaryCommandList.get(),
-            bindPoint, 
-            layout, 
-            0, 
-            set.getNumberAllocations(),
-            set.getNativeDescriptorSets(), 
-            0, 
-            nullptr
-        );
+    if (set.isValid())
+    {
+        vkCmdBindDescriptorSets
+            (
+                m_primaryCommandList.get(),
+                bindPoint, 
+                layout, 
+                0, 
+                set.getNumberAllocations(),
+                set.getNativeDescriptorSets(), 
+                0, 
+                nullptr
+            );
+    }
 }
 
 

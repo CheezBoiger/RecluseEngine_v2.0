@@ -10,6 +10,29 @@
 namespace Recluse {
 namespace Vulkan { 
 
+#define R_CASE_TO_STRING(ff) case ff: return #ff; break
+
+R_INTERNAL
+const char* toString(LayerFeatureFlag flag)
+{
+    switch (flag)
+    {
+        R_CASE_TO_STRING(LayerFeatureFlag_ApiDump);
+        R_CASE_TO_STRING(LayerFeatureFlag_DebugMarking);
+        R_CASE_TO_STRING(LayerFeatureFlag_DebugValidation);
+        R_CASE_TO_STRING(LayerFeatureFlag_GpuDebugValidation);
+        R_CASE_TO_STRING(LayerFeatureFlag_GpuWorkgraphs);
+        R_CASE_TO_STRING(LayerFeatureFlag_MeshShading);
+        R_CASE_TO_STRING(LayerFeatureFlag_Raytracing);
+        R_CASE_TO_STRING(LayerFeatureFlag_SamplerFeedback);
+        R_CASE_TO_STRING(LayerFeatureFlag_VariableRateShading);
+        default:
+            R_CASE_TO_STRING(LayerFeatureFlag_None);
+    }
+
+    return "";
+}
+
 std::vector<VulkanAdapter> VulkanAdapter::getAvailablePhysicalDevices(VulkanInstance* ctx)
 {
     std::vector<VulkanAdapter> physicalDevices;
@@ -352,40 +375,41 @@ void VulkanAdapter::checkAvailableDeviceExtensions()
 {
     std::vector<VkExtensionProperties> deviceExtensions = getDeviceExtensionProperties();
 
+    // required - optional
     // TODO: Need to find a better way to query extensions. Some of these have dependencies between device and instance extensions.
     //       We could create a config that has an extension, and its dependency, than create some kind of DAG?
     m_supportedDeviceExtensions.push_back(std::make_tuple(LayerFeatureFlag_None, 
-        std::vector<const char*>{   "VK_EXT_host_query_reset", // Cpu side query reset
-                                    "VK_KHR_maintenance1" }));  // This is required for fixes on vulkan 1.1.0
+        std::vector<const char*>{   "VK_EXT_host_query_reset", "required", // Cpu side query reset
+                                    "VK_KHR_maintenance1", "required" }));  // This is required for fixes on vulkan 1.1.0
     m_supportedDeviceExtensions.push_back(std::make_tuple(LayerFeatureFlag_Raytracing, 
-        std::vector<const char*>{   "VK_KHR_ray_tracing_pipeline", 
-                                    "VK_KHR_acceleration_structure", 
-                                    "VK_KHR_ray_query", 
-                                    "VK_KHR_spirv_1_4",
-                                    "VK_KHR_buffer_device_address",
-                                    "VK_KHR_deferred_host_operations",
-                                    "VK_EXT_descriptor_indexing",
-                                    "VK_KHR_device_group",
-                                    "VK_KHR_maintenance3",
-                                    "VK_KHR_shader_float_controls"}));
+        std::vector<const char*>{   "VK_KHR_ray_tracing_pipeline", "required",
+                                    "VK_KHR_acceleration_structure", "required",
+                                    "VK_KHR_ray_query", "required",
+                                    "VK_KHR_spirv_1_4","required",
+                                    "VK_KHR_buffer_device_address", "required",
+                                    "VK_KHR_deferred_host_operations", "required",
+                                    "VK_EXT_descriptor_indexing", "required",
+                                    "VK_KHR_device_group", "required",
+                                    "VK_KHR_maintenance3", "required",
+                                    "VK_KHR_shader_float_controls", "required",}));
     m_supportedDeviceExtensions.push_back(std::make_tuple(LayerFeatureFlag_MeshShading, 
         std::vector<const char*>{   
 #ifdef VK_NV_mesh_shader
-                                    VK_NV_MESH_SHADER_EXTENSION_NAME,
+                                    VK_NV_MESH_SHADER_EXTENSION_NAME, "optional",
 #endif
 #ifdef VK_EXT_mesh_shader
-                                    VK_EXT_MESH_SHADER_EXTENSION_NAME,
+                                    VK_EXT_MESH_SHADER_EXTENSION_NAME, "required",
 #endif
-                                    "VK_KHR_spirv_1_4",
-                                    "VK_KHR_shader_float_controls"}));
+                                    "VK_KHR_spirv_1_4", "required",
+                                    "VK_KHR_shader_float_controls", "required"}));
     m_supportedDeviceExtensions.push_back(std::make_tuple(LayerFeatureFlag_SamplerFeedback,
-        std::vector<const char*>{   "VK_NV_shader_image_footprint" }));
+        std::vector<const char*>{   "VK_NV_shader_image_footprint", "required", }));
     m_supportedDeviceExtensions.push_back(std::make_tuple(LayerFeatureFlag_VariableRateShading,
-        std::vector<const char*>{   "VK_KHR_fragment_shading_rate", 
-                                    "VK_KHR_create_renderpass2",
-                                    "VK_KHR_multiview",
-                                    "VK_KHR_maintenance2",
-                                    "VK_KHR_get_physical_device_properties2" }));
+        std::vector<const char*>{   "VK_KHR_fragment_shading_rate", "required",
+                                    "VK_KHR_create_renderpass2", "required",
+                                    "VK_KHR_multiview", "required",
+                                    "VK_KHR_maintenance2", "required",
+                                    "VK_KHR_get_physical_device_properties2", "required" }));
     
     m_supportedDeviceExtensionFlags =   LayerFeatureFlag_MeshShading | 
                                         LayerFeatureFlag_Raytracing | 
@@ -396,9 +420,10 @@ void VulkanAdapter::checkAvailableDeviceExtensions()
     for (U32 i = 0; i < m_supportedDeviceExtensions.size(); ++i) 
     {
         B32 found = false;
-        for (U32 extI = 0; extI < std::get<1>(m_supportedDeviceExtensions[i]).size(); ++extI)
+        for (U32 extI = 0; extI < std::get<1>(m_supportedDeviceExtensions[i]).size(); extI += 2)
         {
             const char* extensionStr = std::get<1>(m_supportedDeviceExtensions[i])[extI];
+            const char* requisite = std::get<1>(m_supportedDeviceExtensions[i])[extI + 1];
             for (U32 j = 0; j < deviceExtensions.size(); ++j) 
             { 
                 if (strcmp(deviceExtensions[j].extensionName, extensionStr) == 0) 
@@ -418,19 +443,35 @@ void VulkanAdapter::checkAvailableDeviceExtensions()
     
             }
 
-            if (!found) 
+            if (!found && (strncmp("required", requisite, 9) == 0)) 
             {
                 R_WARN
                     (
                         R_CHANNEL_VULKAN, 
-                        "%s not found for device (id=%d). Removing extension.", 
+                        "%s not found for device (id=%d). Removing extension %s", 
                         std::get<1>(m_supportedDeviceExtensions[i])[extI],
-                        m_id
+                        m_id,
+                        toString(std::get<0>(m_supportedDeviceExtensions[i]))
                     );
                 m_supportedDeviceExtensionFlags &= ~(std::get<0>(m_supportedDeviceExtensions[i]));
                 m_supportedDeviceExtensions.erase(m_supportedDeviceExtensions.begin() + i);
                 --i;
                 break;
+            }
+            else if (!found && (strncmp("optional", requisite, 9) == 0))
+            {
+                // Remove the extension and its requisite from the requested list.
+                auto& extensions = std::get<1>(m_supportedDeviceExtensions[i]);
+                R_WARN
+                    (
+                        R_CHANNEL_VULKAN,
+                        "%s was not found, but was optional for device (id=%d). Removing this extension only, as it should not interfere with feature %s",
+                        extensions[extI],
+                        m_id,
+                        toString(std::get<0>(m_supportedDeviceExtensions[i]))
+                    );
+                extensions.erase(extensions.begin() + extI + 1);
+                extensions.erase(extensions.begin() + extI);
             }
         }
     }
@@ -458,7 +499,8 @@ std::vector<const char*> VulkanAdapter::queryAvailableDeviceExtensions(LayerFeat
             {
                 if (bit & std::get<0>(m_supportedDeviceExtensions[i]))
                 {
-                    for (U32 j = 0; j < std::get<1>(m_supportedDeviceExtensions[i]).size(); ++j)
+                    // Need to iterate +2, since we now have requisites.
+                    for (U32 j = 0; j < std::get<1>(m_supportedDeviceExtensions[i]).size(); j += 2)
                     {
                         supportedExtensions.insert(std::get<1>(m_supportedDeviceExtensions[i])[j]);
                     }
