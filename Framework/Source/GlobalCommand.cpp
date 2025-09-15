@@ -13,6 +13,24 @@ static CriticalSectionGuard                 g_commandCs = { };
 static std::unique_ptr<std::map<Hash64, DataListener*>> g_commandMap;
 static Bool g_isInitialized = false;
 
+
+R_INTERNAL
+void checkInitializeCommandDatabase()
+{
+    if (!g_commandCs.isInitialized())
+    {
+        g_commandCs.initialize();
+    }
+
+    ScopedCriticalSection _(g_commandCs);
+
+    if (!g_isInitialized)
+    {
+        g_commandMap = std::make_unique<std::map<Hash64, DataListener*>>();
+        g_isInitialized = true;
+    }
+}
+
 DataListener::DataListener(const std::string& command, void* globalVariable)
     : value(globalVariable)
 {
@@ -23,17 +41,7 @@ DataListener::DataListener(const std::string& command, void* globalVariable)
 
 void DataListener::storeData(const std::string& command, DataListener* data)
 {
-    if (!g_commandCs.isInitialized())
-    {
-        g_commandCs.initialize();
-    }
-    ScopedCriticalSection _(g_commandCs);
-
-    if (!g_isInitialized)
-    {
-        g_commandMap = std::make_unique<std::map<Hash64, DataListener*>>();
-        g_isInitialized = true;
-    }
+    checkInitializeCommandDatabase();
 
     Hash64 h = recluseHashFast(command.data(), command.size() * sizeof(char));
     //g_commandMap.insert(std::make_pair(h, data)); // try g_commandMap[h] = data instead.
@@ -43,6 +51,9 @@ void DataListener::storeData(const std::string& command, DataListener* data)
 
 DataListener* obtainData(const std::string& command)
 {
+    if (!g_isInitialized)
+        return nullptr;
+
     Hash64 h = recluseHashFast(command.data(), command.size() * sizeof(char));
     auto iter = Internal::g_commandMap->find(h);
     if (iter != Internal::g_commandMap->end())
@@ -55,7 +66,8 @@ DataListener* obtainData(const std::string& command)
 
 Bool setData(const std::string& command, const void* value, size_t sizeBytesToWrite)
 {
-    ScopedCriticalSection _(g_commandCs);
+    checkInitializeCommandDatabase();
+
     Hash64 h = recluseHashFast(command.data(), command.size() * sizeof(char));
 
     auto iter = Internal::g_commandMap->find(h);
@@ -71,7 +83,8 @@ Bool setData(const std::string& command, const void* value, size_t sizeBytesToWr
 
 Bool setDataAsString(const std::string& command, const char* value)
 {
-    ScopedCriticalSection _(g_commandCs);
+    checkInitializeCommandDatabase();
+
     Hash64 h = recluseHashFast(command.data(), command.size() * sizeof(char));
 
     auto iter = Internal::g_commandMap->find(h);
