@@ -13,8 +13,8 @@ namespace Recluse {
 namespace Engine {
 
 
-// This structure describes the subresource within a texture. Should be used to read from
-// a texture, for each of its subresource. 
+// This structure describes the subcontents within a texture. Should be used to read from
+// a texture.
 class RecluseEngine_PUBLIC_API Subresource
 {
 public:

@@ -271,7 +271,7 @@ public:
     // Helper descriptor creators for the device.
     ResultCode                          createSampler(GraphicsSampler** sampler, const SamplerDescription& desc) override;
     ResultCode                          destroySampler(GraphicsSampler* sampler) override;
-    ResultCode                          createResource(GraphicsResource** ppResource, const GraphicsResourceDescription& description, ResourceState initState) override;
+    ResultCode                          createResource(GraphicsResource** ppResource, const GraphicsResourceDescription& description, ResourceState initState, GraphicsClearColor* clearColor) override;
     ResultCode                          destroyResource(GraphicsResource* pResource, Bool immediate) override;
     void                                copyBufferRegions(GraphicsResource* dst, GraphicsResource* src, const CopyBufferRegion* regions, U32 numRegions) override;
     void                                copyResource(GraphicsResource* dst, GraphicsResource* src) override;

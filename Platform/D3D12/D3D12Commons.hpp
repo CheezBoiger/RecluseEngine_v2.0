@@ -106,6 +106,7 @@ extern SIZE_T getNativeFormatSize(DXGI_FORMAT format);
 
 // Get the native format.
 extern DXGI_FORMAT getNativeFormat(Recluse::ResourceFormat format);
+extern DXGI_FORMAT                          getProperClearColorFormat(DXGI_FORMAT format);
 } // Dxgi
 
 

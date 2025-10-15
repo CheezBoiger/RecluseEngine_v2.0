@@ -20,7 +20,7 @@ enum Stencil
 
     Stencil_Mask        = (0xFF)
 
-    // Extended will be for 32 bit render targets.
+    // Any additional bit values will be extended for 32 bit render targets.
 };
 
 typedef U32 StencilFlags;

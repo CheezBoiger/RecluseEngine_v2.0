@@ -188,13 +188,13 @@ public:
     struct Metadata
     {
         U8  numCbvs;                //< Number of constant buffer views.
-        U8  baseCbv = 0xff;
+        U8  baseCbv         = 0xff;
         U8  numSrvs;                //< Number of shader resource views.
-        U8  baseSrv = 0xff;
+        U8  baseSrv         = 0xff;
         U8  numUavs;                //< Number of unordered access views.
-        U8  baseUav = 0xff;
+        U8  baseUav         = 0xff;
         U8  numSamplers;            //< Number of samplers.
-        U8  baseSampler = 0xff;
+        U8  baseSampler     = 0xff;
         U8  numInputParameters;     //< Number of input parameters.
         U8  numOutputParameters;    //< Number of output parameters.
         U16 pad0;

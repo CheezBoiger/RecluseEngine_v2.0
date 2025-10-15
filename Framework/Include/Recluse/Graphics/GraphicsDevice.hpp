@@ -259,6 +259,10 @@ public:
     virtual void                    dispatchMesh(U32 x, U32 y, U32 z) { }
     virtual void                    dispatchMeshIndirect(GraphicsResource* indirectBuffer, U32 offset, U32 drawCount) { }
 
+#if defined(R_EXPERIMENTAL_WORKGRAPHS)
+    virtual void                    dispatchGraph(const GraphicsWorkgraph& workgraph) { }
+#endif
+
     virtual void                    clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) { }
     virtual void                    clearDepthStencil(ClearFlags clearFlags, F32 clearDepth, U8 clearStencil, const Rect& rect) { }
 
@@ -362,7 +366,7 @@ public:
 
     //< Create graphics resource.
     //<
-    virtual ResultCode              createResource(GraphicsResource** ppResource, const GraphicsResourceDescription& pDesc, ResourceState initState) 
+    virtual ResultCode              createResource(GraphicsResource** ppResource, const GraphicsResourceDescription& pDesc, ResourceState initState, GraphicsClearColor* clearValue = nullptr) 
         { return RecluseResult_NoImpl; }
 
     virtual ResultCode              createSampler(GraphicsSampler** ppSampler, const SamplerDescription& desc) 
@@ -412,6 +416,11 @@ public:
         { }
 
     DeviceId                        getDeviceId() const { return m_deviceId; }
+
+#if defined(R_EXPERIMENTAL_WORKGRAPHS)
+    virtual GraphicsWorkgraph*      createWorkgraph() { }
+    virtual void                    destroyWorkgraph(const GraphicsWorkgraph* workgraph) { }
+#endif
 
 protected:
     // Implementation should set this flag in order to be queried by users. This checks if the device is capable of 

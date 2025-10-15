@@ -192,41 +192,6 @@ public:
         return onCleanUp();
     }
 
-
-    // Available functions to query from the given system.
-    U32     getTotalComponents() const { return m_numberOfComponentsAllocated; }
-
-protected:
-
-    // Allows initializing the system before on intialize().
-    virtual ResultCode      onInitialize()                  { return RecluseResult_NoImpl; }
-
-    // Allows cleaning up the system before releasing.
-    virtual ResultCode      onCleanUp()                     { return RecluseResult_NoImpl; }
-
-    // Intended to clear all components from the game world.
-    virtual void            onClearAll()                       { }
-
-    U32             m_numberOfComponentsAllocated;
-};
-
-
-// Component Registry handles the management of components. 
-// This helps let the programmer manage component allocations and access.
-//! Registry is the required definition for the given component management, which is to 
-//! define how to allocate, free, and update all components when the application interacts 
-//! with. Do not inherit directly from components, instead inherit from this!
-template<typename TypeComponent>
-class ComponentRegistry : public AbstractRegistry
-{
-public:
-    virtual ~ComponentRegistry() { }
-
-    static ComponentUUID componentGUID()
-    {
-        return TypeComponent::classGUID();
-    }
-
     // Allocates a component from the system pool.
     // Returns R_RESULT_OK if the system successfully allocated the component instance.
     ResultCode allocateComponent(const RGUID& owner)  
@@ -248,6 +213,49 @@ public:
         return err;
     }
 
+
+    // Available functions to query from the given system.
+    U32     getTotalComponents() const { return m_numberOfComponentsAllocated; }
+
+protected:
+
+    // Allows initializing the system before on intialize().
+    virtual ResultCode      onInitialize()                  { return RecluseResult_NoImpl; }
+
+    // Allows cleaning up the system before releasing.
+    virtual ResultCode      onCleanUp()                     { return RecluseResult_NoImpl; }
+
+    // Intended to clear all components from the game world.
+    virtual void            onClearAll()                       { }
+
+    // Allocation calls. These must be overridden, as they will be called by external systems,
+    // when required. 
+    virtual ResultCode onAllocateComponent(const RGUID& owner) = 0;
+
+    // Free calls. These must be overridden, as they will be called by external systems when
+    // required.
+    virtual ResultCode onFreeComponent(const RGUID& owner) = 0;
+
+    U32             m_numberOfComponentsAllocated;
+};
+
+
+// Component Registry handles the management of components. 
+// This helps let the programmer manage component allocations and access.
+//! Registry is the required definition for the given component management, which is to 
+//! define how to allocate, free, and update all components when the application interacts 
+//! with. Do not inherit directly from components, instead inherit from this!
+template<typename TypeComponent>
+class ComponentRegistry : public AbstractRegistry
+{
+public:
+    virtual ~ComponentRegistry() { }
+
+    static ComponentUUID componentGUID()
+    {
+        return TypeComponent::classGUID();
+    }
+
     // Get all components handled by the system. This is required, as systems must use this to 
     // iterate for all of their components.
     virtual std::vector<TypeComponent*> getAllComponents() { return { }; }
@@ -259,15 +267,6 @@ public:
     virtual ResultCode serialize(Archive* pArchive) const override { return RecluseResult_NoImpl; }
 
     virtual ResultCode deserialize(Archive* pArchive) override { return RecluseResult_NoImpl; }
-
-protected:
-    // Allocation calls. These must be overridden, as they will be called by external systems,
-    // when required. 
-    virtual ResultCode onAllocateComponent(const RGUID& owner) = 0;
-
-    // Free calls. These must be overridden, as they will be called by external systems when
-    // required.
-    virtual ResultCode onFreeComponent(const RGUID& owner) = 0;
 };
 
 
@@ -354,6 +353,20 @@ public:
         }
         m_records.clear();
     }
+
+    // Removes all components associated with a given entity. This call should only be done 
+    // when no systems are interacting with the entity's components.
+    ResultCode removeAllComponentsFromEntity(const RGUID& guid)
+    {
+        for (auto& record : m_records)
+        {
+            ResultCode result = record.second->freeComponent(guid);
+            if (result == RecluseResult_Failed)
+                return result;
+        }
+        return RecluseResult_NoImpl;
+    }
+
 private:
     // Records kept, that hold Component registries.
     std::map<ComponentUUID, ECS::AbstractRegistry*> m_records;

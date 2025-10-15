@@ -17,7 +17,7 @@ namespace Resources {
 
 std::map<DeviceId, std::unordered_map<ResourceId, std::unique_ptr<VulkanResource>>> g_resourcesMap;
 
-VulkanResource* makeResource(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState)
+VulkanResource* makeResource(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState, GraphicsClearColor* clearColor)
 {
     R_ASSERT_FORMAT(desc.width > 0 && desc.height > 0 && desc.depthOrArraySize > 0 && desc.mipLevels > 0, "Description width/height/arraySize/mipLevels should at least be 1 or greater!");
     DeviceId deviceId = pDevice->getDeviceId();
@@ -34,7 +34,7 @@ VulkanResource* makeResource(VulkanDevice* pDevice, const GraphicsResourceDescri
 
     if (ptr)
     {
-        ptr->initialize(pDevice, desc, initState);
+        ptr->initialize(pDevice, desc, initState, clearColor);
         ptr->generateId();
         ResourceId id = ptr->getId();
         g_resourcesMap[deviceId][id] = std::move(ptr);
@@ -73,8 +73,10 @@ VulkanResource* obtainResource(DeviceId deviceId, ResourceId id)
 ResourceId VulkanResource::kResourceCreationCounter = 0;
 MutexGuard VulkanResource::kResourceCreationMutex        = MutexGuard("VulkanCreationMutex");
 
-ResultCode VulkanResource::initialize(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState)
+ResultCode VulkanResource::initialize(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState, GraphicsClearColor* clearColor)
 {
+    R_UNUSED_PARAMETER(clearColor);
+
     VkMemoryRequirements memoryRequirements = { };
     VulkanAllocationManager* allocator      = pDevice->getAllocationManager();
     ResultCode result                          = RecluseResult_Ok;

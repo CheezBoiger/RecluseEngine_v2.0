@@ -30,4 +30,5 @@ namespace Recluse {
 		BufferRenderId_Decals,
 		BufferRenderId_Particles
 	};
+	
 };

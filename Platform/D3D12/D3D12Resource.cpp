@@ -44,6 +44,7 @@ ResultCode D3D12Resource::initialize
                                 D3D12Device* pDevice, 
                                 const GraphicsResourceDescription& desc, 
                                 ResourceState initialState,
+                                GraphicsClearColor* clearColor,
                                 Bool makeCommitted
                             )
 {
@@ -92,7 +93,18 @@ ResultCode D3D12Resource::initialize
 
     if ((d3d12desc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER) && (d3d12desc.Flags & (D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET)))
     {
-        optimizedClearValue.Format = d3d12desc.Format;
+        optimizedClearValue.Format = Dxgi::getProperClearColorFormat(d3d12desc.Format);
+        if (clearColor)
+        {
+            R_ASSERT(clearColor != NULL);
+            optimizedClearValue.Color[0]                = clearColor->color[0];
+            optimizedClearValue.Color[1]                = clearColor->color[1];
+            optimizedClearValue.Color[2]                = clearColor->color[2];
+            optimizedClearValue.Color[3]                = clearColor->color[3];
+
+            optimizedClearValue.DepthStencil.Depth      = clearColor->depth;
+            optimizedClearValue.DepthStencil.Stencil    = clearColor->stencil;
+        }
         clearValue = &optimizedClearValue;
     }
 
@@ -322,11 +334,11 @@ void D3D12Resource::generateId()
 }
 
 
-D3D12Resource* makeResource(D3D12Device* pDevice, const GraphicsResourceDescription& description, ResourceState initialState)
+D3D12Resource* makeResource(D3D12Device* pDevice, const GraphicsResourceDescription& description, ResourceState initialState, GraphicsClearColor* clearColor)
 {
     R_ASSERT_FORMAT(description.width > 0 && description.height > 0 && description.depthOrArraySize > 0 && description.mipLevels > 0, "Description width/height/arraySize/mipLevels should at least be 1 or greater!");
     std::unique_ptr<D3D12Resource> pResource = std::make_unique<D3D12Resource>();
-    ResultCode result = pResource->initialize(pDevice, description, initialState);
+    ResultCode result = pResource->initialize(pDevice, description, initialState, clearColor);
     if (result != RecluseResult_Ok)
     {
         pResource.reset();

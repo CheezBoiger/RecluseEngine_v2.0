@@ -222,6 +222,7 @@ void createTextureResource(GraphicsResource** textureResource)
     textureDesc.miscFlags = 0;
     textureDesc.samples = 1;
     textureDesc.usage = ResourceUsage_ShaderResource | ResourceUsage_CopyDestination | ResourceUsage_CopySource;
+    textureDesc.name = "SampleTexture";
     result = device->createResource(textureResource, textureDesc, ResourceState_CopyDestination);
 
     R_ASSERT(result == RecluseResult_Ok);
@@ -400,6 +401,7 @@ GraphicsResource* buildDepthBuffer(U32 width, U32 height)
     desc.usage = ResourceUsage_DepthStencil;
     desc.dimension = ResourceDimension_2d;
     desc.format = ResourceFormat_D32_Float;
+    desc.name = "Depth";
     device->createResource(&depthBuffer, desc, ResourceState_DepthStencilWrite);
     return depthBuffer;
 }

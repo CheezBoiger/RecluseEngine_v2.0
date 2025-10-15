@@ -510,6 +510,28 @@ SIZE_T getNativeFormatSize(DXGI_FORMAT format)
 }
 
 
+DXGI_FORMAT                          getProperClearColorFormat(DXGI_FORMAT format)
+{
+    switch (format)
+    {
+        case DXGI_FORMAT_R32_TYPELESS:
+            return DXGI_FORMAT_R32_FLOAT;
+        case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
+            return DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
+        case DXGI_FORMAT_R32G32_TYPELESS:
+            return DXGI_FORMAT_R32G32_FLOAT;
+        case DXGI_FORMAT_R32G32B32_TYPELESS:
+            return DXGI_FORMAT_R32G32B32_FLOAT;
+        case DXGI_FORMAT_R32G8X24_TYPELESS:
+            return DXGI_FORMAT_D24_UNORM_S8_UINT;
+        case DXGI_FORMAT_R16_TYPELESS:
+            return DXGI_FORMAT_R16_FLOAT;
+        default:
+            return format;
+    }
+}
+
+
 D3D12_SHADER_VISIBILITY getShaderVisibilityFlags(Recluse::ShaderStageFlags shaderStageFlags)
 {
     return D3D12_SHADER_VISIBILITY_ALL;

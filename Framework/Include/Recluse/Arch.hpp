@@ -90,6 +90,8 @@
 #define R_INTERNAL static
 #define R_GLOBAL static
 
+#define R_UNUSED_PARAMETER(p) (void)(p)
+
 #if defined(R_DEVELOPER)
     #define RECLUSE_DEVELOPER 1
 #endif

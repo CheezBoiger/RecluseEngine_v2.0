@@ -41,7 +41,9 @@ public:
                                     // resource description.
                                     const GraphicsResourceDescription& desc, 
                                     // the initial state of the resource.
-                                    ResourceState initialState, 
+                                    ResourceState initialState,
+                                    // Graphics clear color
+                                    GraphicsClearColor* clearColor,
                                     // Making this resource committed, we will not be sub allocating from a fixed
                                     // memory heap. Instead, we will allocate a separate gpu heap, and allocate there.
                                     Bool makeCommitted = false
@@ -89,7 +91,7 @@ private:
 };
 
 
-D3D12Resource* makeResource(D3D12Device* pDevice, const GraphicsResourceDescription& description, ResourceState initialState);
+D3D12Resource* makeResource(D3D12Device* pDevice, const GraphicsResourceDescription& description, ResourceState initialState, GraphicsClearColor* clearColor);
 ResultCode     releaseResource(D3D12Resource* pResource, Bool immediate);
 } // D3D12
 } // Recluse

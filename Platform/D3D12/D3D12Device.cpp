@@ -820,9 +820,9 @@ ResultCode D3D12Device::releaseContext(GraphicsContext* pContext)
 }
 
 
-ResultCode D3D12Device::createResource(GraphicsResource** ppResource, const GraphicsResourceDescription& description, ResourceState initState)
+ResultCode D3D12Device::createResource(GraphicsResource** ppResource, const GraphicsResourceDescription& description, ResourceState initState, GraphicsClearColor* clearColor)
 {
-    D3D12Resource* pResource = makeResource(this, description, initState);
+    D3D12Resource* pResource = makeResource(this, description, initState, clearColor);
     if (!pResource)
     {
         return RecluseResult_Failed;

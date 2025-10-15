@@ -27,7 +27,7 @@ public:
 
     virtual ~VulkanResource() { }
     
-    ResultCode          initialize(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState);
+    ResultCode          initialize(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState, GraphicsClearColor* clearColor);
 
     // Destroy native handle that is managed by this resource object.
     // Must be called before deleting this object.
@@ -179,7 +179,7 @@ private:
 
 namespace Resources {
 
-VulkanResource*     makeResource(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState);
+VulkanResource*     makeResource(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState, GraphicsClearColor* clearColor);
 ResultCode          releaseResource(VulkanDevice* pDevice, ResourceId id, Bool immediate);
 VulkanResource*     obtainResource(DeviceId deviceId, ResourceId id);
 } // Resources

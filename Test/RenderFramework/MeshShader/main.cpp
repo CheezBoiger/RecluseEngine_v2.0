@@ -551,7 +551,7 @@ int main(char* argv[], int c)
             GraphicsAdapter* temp = adapters[i];
             AdapterInfo adapterInfo = { };
             temp->getAdapterInfo(&adapterInfo);
-            if (adapterInfo.type == AdapterInfo::Type_IntegratedGpu) 
+            if (adapterInfo.type == AdapterInfo::Type_DiscreteGpu) 
             {
                 adapter = adapters[i];
                 break;

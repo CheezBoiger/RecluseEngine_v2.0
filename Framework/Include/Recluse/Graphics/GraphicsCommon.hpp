@@ -480,6 +480,18 @@ struct GraphicsResourceDescription
     ResourceUsageFlags  usage;
     ResourceMiscFlags   miscFlags;
     const char*         name; // for debug purposes.
+
+    // Color value used as fast clear.
+};
+
+
+struct GraphicsClearColor
+{
+    union
+    {
+        struct { F32 color[4]; };
+        struct { F32 depth; U8 stencil; };
+    };
 };
 
 
@@ -558,4 +570,16 @@ protected:
     U32 index;
     GraphicsQueryType type;
 };
+
+
+#if defined(R_EXPERIMENTAL_WORKGRAPHS)
+class GraphicsWorkgraph
+{
+public:
+    GraphicsWorkgraph() { }
+    
+private:
+    
+};
+#endif
 } // Recluse
