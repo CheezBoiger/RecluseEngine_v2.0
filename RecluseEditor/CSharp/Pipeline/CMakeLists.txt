@@ -38,5 +38,22 @@ set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} " /sdl-")
 set_property(TARGET ${RECLUSE_CSHARP_NAME} PROPERTY COMMON_LANGUAGE_RUNTIME "")
 string(REPLACE "/EHsc" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 if (MSVC)
-	target_compile_options(${RECLUSE_CSHARP_NAME} PRIVATE $<$<BOOL:${MSVC}>:/AI${CMAKE_SOURCE_DIR}/Recluse/bin>)
+	target_compile_options(${RECLUSE_CSHARP_NAME} PRIVATE /AI"${CMAKE_SOURCE_DIR}/Recluse/bin")
+    # path to the generated props file
+    set(RECLUSE_USING_PROPS "${CMAKE_BINARY_DIR}/RecluseAdditionalUsing.props")
+
+    # write the props file (overwrites if exists)
+    file(WRITE "${RECLUSE_USING_PROPS}"
+"<Project ToolsVersion=\"4.0\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">
+  <PropertyGroup>
+    <!-- Add your folder(s) and keep the inherited values -->
+    <AdditionalUsingDirectories>$(ProjectDir)Recluse\\bin;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+  </PropertyGroup>
+</Project>
+")
+
+    # attach it to your target (do this AFTER add_library/target creation + find_package calls)
+    set_target_properties(${RECLUSE_CSHARP_NAME} PROPERTIES
+        VS_USER_PROPS ${RECLUSE_USING_PROPS}
+    )
 endif()

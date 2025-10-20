@@ -79,6 +79,7 @@ public:
 
 private:
     Bool                        isSupportedTransitionState(ResourceState state);
+    HRESULT                     createAsCommitted(ID3D12Device* device, const D3D12_RESOURCE_DESC& desc, D3D12_RESOURCE_STATES initialState, D3D12_CLEAR_VALUE* clearValue);
 
     D3D12MemoryObject           m_memObj;
     Bool                        m_isCommitted;

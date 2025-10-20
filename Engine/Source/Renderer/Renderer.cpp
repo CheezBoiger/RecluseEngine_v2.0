@@ -312,23 +312,20 @@ void RendererModule::createDevice(const RendererConfigs& configs)
 void RendererModule::setUpModules()
 {
     m_sceneBuffers.gbuffer[Engine::GBuffer_Depth] = new Texture2D();
+    ResourceFormat depthFormat = ResourceFormat_D24_Unorm_S8_Uint;
+
+    if (!m_pDevice->isResourceFormatSupported(depthFormat))
+    {
+        depthFormat = ResourceFormat_D32_Float;
+    }
+    
     ResultCode result = m_sceneBuffers.gbuffer[Engine::GBuffer_Depth]->initialize(
                                         m_pDevice, 
-                                        ResourceFormat_D32_Float_S8_Uint, 
+                                        depthFormat, 
                                         m_currentRendererConfigs.renderWidth, 
                                         m_currentRendererConfigs.renderHeight, 
                                         1, 1, "Gbuffer/Depth");
-
-    if (result != RecluseResult_Ok)
-    {
-        // Try with something that does work.
-        result = m_sceneBuffers.gbuffer[Engine::GBuffer_Depth]->initialize(m_pDevice,
-                                        ResourceFormat_D32_Float,
-                                        m_currentRendererConfigs.renderWidth,
-                                        m_currentRendererConfigs.renderHeight,
-                                        1, 1, "Gbuffer/Depth");
-        R_ASSERT_FORMAT(result == RecluseResult_Ok, "Depth just doesn't work!!");
-    }
+    R_ASSERT_FORMAT(result == RecluseResult_Ok, "Depth failed to create!!");
 
     //PreZ::initialize(m_pDevice, &m_sceneBuffers);
 

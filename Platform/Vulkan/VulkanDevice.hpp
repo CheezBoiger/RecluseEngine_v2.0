@@ -397,6 +397,7 @@ public:
     VulkanQueue*            getPresentableQueue(VkSurfaceKHR surface);
     VkMemoryRequirements    getBufferMemoryRequirements(VkBuffer buffer) const;
     VkMemoryRequirements    getImageMemoryRequirements(VkImage image) const;
+    Bool                    isResourceFormatSupported(ResourceFormat format) override;
 
     DescriptorAllocatorInstance*    getDescriptorAllocatorInstance(U32 bufferIndex)
     {

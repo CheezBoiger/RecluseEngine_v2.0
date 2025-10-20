@@ -43,7 +43,7 @@ set ( RECLUSE_PIPELINE_THIRD_PARTY ${RECLUSE_PIPELINE_THIRD_PARTY} ${RECLUSE_THI
 set ( RECLUSE_PIPELINE_LINK_LIBRARIES ${RECLUSE_PIPELINE_LINK_LIBRARIES} ${RECLUSE_LIB_DIRECTORY}/meshoptimizer.lib )
 								  
 if ( RCL_VULKAN )
-	find_package( Vulkan )
+	find_package( Vulkan COMPONENTS glslang SPIRV-Tools glslangValidator )
 	if ( Vulkan_FOUND )
 		if ( RCL_GLSLANG OR R_GLSLANG_LEGACY_API )
 			add_definitions ( -DRCL_GLSLANG=1 )
@@ -52,37 +52,46 @@ if ( RCL_VULKAN )
 			else()
 				add_definitions( -DR_GLSLANG_LEGACY_API=0 )
 			endif()
-			set ( RECLUSE_PIPELINE_LINK_LIBRARIES ${RECLUSE_PIPELINE_LINK_LIBRARIES} ${Vulkan_LIBRARIES} )
+			set ( RECLUSE_PIPELINE_LINK_LIBRARIES ${RECLUSE_PIPELINE_LINK_LIBRARIES} Vulkan::Vulkan )
 			set ( RECLUSE_PIPELINE_THIRD_PARTY ${RECLUSE_PIPELINE_THIRD_PARTY} ${Vulkan_INCLUDE_DIRS} ${RECLUSE_THIRDPARTY_DIR}/SPIRV-Reflect )
-			set ( VULKAN_GLSLANG_LIBRARY_RELEASE optimized $ENV{VULKAN_SDK}/Lib/glslang.lib 
-									 optimized $ENV{VULKAN_SDK}/Lib/shaderc.lib
-									 optimized $ENV{VULKAN_SDK}/Lib/shaderc_util.lib
-                                     optimized $ENV{VULKAN_SDK}/Lib/SPIRV.lib
-                                     optimized $ENV{VULKAN_SDK}/Lib/HLSL.lib
-                                     optimized $ENV{VULKAN_SDK}/Lib/OGLCompiler.lib
-                                     optimized $ENV{VULKAN_SDK}/Lib/OSDependent.lib
-                                     optimized $ENV{VULKAN_SDK}/Lib/SPIRV-Tools.lib
-                                     optimized $ENV{VULKAN_SDK}/Lib/SPIRV-Tools-link.lib
-                                     optimized $ENV{VULKAN_SDK}/Lib/SPIRV-Tools-opt.lib)
-			message ( WARNING "Windows: you will need to also Download Vulkan SDK DebugShaderLibs in order to use glslang debug libs")
-			set ( VULKAN_GLSLANG_LIBRARY_DEBUG debug $ENV{VULKAN_SDK}/Lib/glslangd.lib 
-                                     debug $ENV{VULKAN_SDK}/Lib/shadercd.lib
-									 debug $ENV{VULKAN_SDK}/Lib/shaderc_utild.lib
-									 debug $ENV{VULKAN_SDK}/Lib/GenericCodeGend.lib
-									 debug $ENV{VULKAN_SDK}/Lib/SPIRVd.lib
-                                     debug $ENV{VULKAN_SDK}/Lib/HLSLd.lib
-                                     debug $ENV{VULKAN_SDK}/Lib/OGLCompilerd.lib
-                                     debug $ENV{VULKAN_SDK}/Lib/OSDependentd.lib
-                                     debug $ENV{VULKAN_SDK}/Lib/SPIRV-Toolsd.lib
-                                     debug $ENV{VULKAN_SDK}/Lib/SPIRV-Tools-linkd.lib
-                                     debug $ENV{VULKAN_SDK}/Lib/SPIRV-Tools-optd.lib)
-			if ( NOT R_GLSLANG_LEGACY_API )
-				set ( VULKAN_GLSLANG_LIBRARY_DEBUG ${VULKAN_GLSLANG_LIBRARY_DEBUG} debug $ENV{VULKAN_SDK}/Lib/MachineIndependentd.lib)
+			# set ( VULKAN_GLSLANG_LIBRARY_RELEASE optimized $ENV{VULKAN_SDK}/Lib/glslang.lib 
+									 # optimized $ENV{VULKAN_SDK}/Lib/shaderc.lib
+									 # optimized $ENV{VULKAN_SDK}/Lib/shaderc_util.lib
+                                     # optimized $ENV{VULKAN_SDK}/Lib/SPIRV.lib
+                                     # optimized $ENV{VULKAN_SDK}/Lib/HLSL.lib
+                                     # optimized $ENV{VULKAN_SDK}/Lib/OGLCompiler.lib
+                                     # optimized $ENV{VULKAN_SDK}/Lib/OSDependent.lib
+                                     # optimized $ENV{VULKAN_SDK}/Lib/SPIRV-Tools.lib
+                                     # optimized $ENV{VULKAN_SDK}/Lib/SPIRV-Tools-link.lib
+                                     # optimized $ENV{VULKAN_SDK}/Lib/SPIRV-Tools-opt.lib)
+			# message ( WARNING "Windows: you will need to also Download Vulkan SDK DebugShaderLibs in order to use glslang debug libs")
+			# set ( VULKAN_GLSLANG_LIBRARY_DEBUG debug $ENV{VULKAN_SDK}/Lib/glslangd.lib 
+                                     # debug $ENV{VULKAN_SDK}/Lib/shadercd.lib
+									 # debug $ENV{VULKAN_SDK}/Lib/shaderc_utild.lib
+									 # debug $ENV{VULKAN_SDK}/Lib/GenericCodeGend.lib
+									 # debug $ENV{VULKAN_SDK}/Lib/SPIRVd.lib
+                                     # debug $ENV{VULKAN_SDK}/Lib/HLSLd.lib
+                                     # debug $ENV{VULKAN_SDK}/Lib/OGLCompilerd.lib
+                                     # debug $ENV{VULKAN_SDK}/Lib/OSDependentd.lib
+                                     # debug $ENV{VULKAN_SDK}/Lib/SPIRV-Toolsd.lib
+                                     # debug $ENV{VULKAN_SDK}/Lib/SPIRV-Tools-linkd.lib
+                                     # debug $ENV{VULKAN_SDK}/Lib/SPIRV-Tools-optd.lib)
+			set ( VULKAN_GLSLANG_LIBRARY Vulkan::SPIRV-Tools Vulkan::glslang )
+			if ( R_GLSLANG_LEGACY_API )
+				set ( VULKAN_GLSLANG_LIBRARY_DEBUG ${VULKAN_GLSLANG_LIBRARY_DEBUG} 
+						debug $ENV{VULKAN_SDK}/Lib/MachineIndependentd.lib 
+						debug $ENV{VULKAN_SDK}/Lib/SPIRV-Tools-linkd.lib 
+						debug $ENV{VULKAN_SDK}/Lib/SPIRV-Tools-optd.lib
+						debug $ENV{VULKAN_SDK}/Lib/HLSLd.lib )
 				set ( VULKAN_GLSLANG_LIBRARY_RELEASE ${VULKAN_GLSLANG_LIBRARY_RELEASE} 
 						optimized $ENV{VULKAN_SDK}/Lib/MachineIndependent.lib 
-						optimized $ENV{VULKAN_SDK}/Lib/GenericCodeGen.lib)
+						optimized $ENV{VULKAN_SDK}/Lib/GenericCodeGen.lib
+						optimized $ENV{VULKAN_SDK}/Lib/SPIRV-Tools-link.lib
+                        optimized $ENV{VULKAN_SDK}/Lib/SPIRV-Tools-opt.lib
+						optimized $ENV{VULKAN_SDK}/Lib/HLSL.lib )
+				set ( VULKAN_GLSLANG_LIBRARY ${VULKAN_GLSLANG_LIBRARY} ${VULKAN_GLSLANG_LIBRARY_DEBUG} ${VULKAN_GLSLANG_LIBRARY_RELEASE} )
 			endif()
-			set ( VULKAN_GLSLANG_LIBRARIES ${VULKAN_GLSLANG_LIBRARY_RELEASE} ${VULKAN_GLSLANG_LIBRARY_DEBUG} )
+			set ( VULKAN_GLSLANG_LIBRARIES ${VULKAN_GLSLANG_LIBRARY} )
 			set ( RECLUSE_PIPELINE_LINK_LIBRARIES ${RECLUSE_PIPELINE_LINK_LIBRARIES} 
 				${VULKAN_GLSLANG_LIBRARIES} 
 				${RECLUSE_LIB_DIRECTORY}/spirv-reflect-static.lib )

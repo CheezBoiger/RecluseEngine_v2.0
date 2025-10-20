@@ -39,6 +39,22 @@ D3D12_RESOURCE_DIMENSION getDimension(ResourceDimension dim)
 }
 
 
+HRESULT D3D12Resource::createAsCommitted(ID3D12Device* device, const D3D12_RESOURCE_DESC& desc, D3D12_RESOURCE_STATES initialState, D3D12_CLEAR_VALUE* clearValue)
+{
+    D3D12_HEAP_PROPERTIES heapProps = { };
+    D3D12_HEAP_FLAGS flags          = D3D12_HEAP_FLAG_NONE;
+
+    heapProps.Type                  = D3D12_HEAP_TYPE_DEFAULT;
+    heapProps.CPUPageProperty       = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    heapProps.CreationNodeMask      = 0;
+    heapProps.MemoryPoolPreference  = D3D12_MEMORY_POOL_UNKNOWN;
+    heapProps.VisibleNodeMask       = 0;
+
+    return device->CreateCommittedResource(&heapProps, flags, &desc, initialState, 
+        clearValue, __uuidof(ID3D12Resource), (void**)&m_memObj.pResource);
+}
+
+
 ResultCode D3D12Resource::initialize
                             (
                                 D3D12Device* pDevice, 
@@ -118,17 +134,7 @@ ResultCode D3D12Resource::initialize
 
     if (makeCommitted == true) 
     {
-        D3D12_HEAP_PROPERTIES heapProps = { };
-        D3D12_HEAP_FLAGS flags          = D3D12_HEAP_FLAG_NONE;
-
-        heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
-        heapProps.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-        heapProps.CreationNodeMask = 0;
-        heapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-        heapProps.VisibleNodeMask = 0;
-
-        sResult = device->CreateCommittedResource(&heapProps, flags, &d3d12desc, state, 
-            clearValue, __uuidof(ID3D12Resource), (void**)&m_memObj.pResource);
+        sResult = createAsCommitted(device, d3d12desc, state, clearValue);
     } 
     else 
     {   
@@ -145,17 +151,8 @@ ResultCode D3D12Resource::initialize
             // We will have to do a committed resource allocation instead!
             R_WARN(R_CHANNEL_D3D12, "Failed to perform a sub-allocation for the given resource request, resorting to committed allocation...");
             makeCommitted = true;
-            D3D12_HEAP_PROPERTIES heapProps = { };
-            D3D12_HEAP_FLAGS flags          = D3D12_HEAP_FLAG_NONE;
 
-            heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
-            heapProps.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-            heapProps.CreationNodeMask = 0;
-            heapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-            heapProps.VisibleNodeMask = 0;
-
-            sResult = device->CreateCommittedResource(&heapProps, flags, &d3d12desc, state, 
-                clearValue, __uuidof(ID3D12Resource), (void**)&m_memObj.pResource);
+            sResult = createAsCommitted(device, d3d12desc, state, clearValue);
         }
     }
 

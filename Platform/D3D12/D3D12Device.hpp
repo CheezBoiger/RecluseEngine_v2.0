@@ -278,6 +278,7 @@ public:
 
     D3D12_FEATURE_DATA_FORMAT_SUPPORT   checkFormatSupport(ResourceFormat format);
     DescriptorHeapAllocationManager*    getDescriptorHeapManager() { return &m_descHeapManager; }
+    Bool                                isResourceFormatSupported(ResourceFormat format) override;
 
     ResultCode                          loadShaderProgram(ShaderProgramId program,
                                                           ShaderProgramPermutation permutation,

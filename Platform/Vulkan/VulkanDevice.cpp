@@ -1294,5 +1294,14 @@ void VulkanDevice::loadFunctions()
 {
     
 }
+
+Bool VulkanDevice::isResourceFormatSupported(ResourceFormat format)
+{
+    VkFormatProperties properties = getAdapter()->getFormatProperties(Vulkan::getVulkanFormat(format));
+    // Check if any features are supported on the format.
+    if (properties.linearTilingFeatures || properties.optimalTilingFeatures)
+        return true;
+    return false;
+}
 } // Vulkan
 } // Recluse

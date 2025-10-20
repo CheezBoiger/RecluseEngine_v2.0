@@ -934,5 +934,14 @@ ResourceView D3D12Context::allocateConstantBuffer(U32 cbSizeBytes, void* cbInput
 
     return { handle.ptr };
 }
+
+Bool D3D12Device::isResourceFormatSupported(ResourceFormat format)
+{
+    D3D12_FEATURE_DATA_FORMAT_INFO info = { Dxgi::getNativeFormat(format) };
+    HRESULT result = m_device->CheckFeatureSupport(D3D12_FEATURE_FORMAT_INFO, &info, sizeof(info));
+    if (FAILED(result))
+        return false;
+    return true;
+}
 } // D3D12
 } // Recluse

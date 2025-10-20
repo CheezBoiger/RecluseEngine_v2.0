@@ -422,6 +422,9 @@ public:
     virtual void                    destroyWorkgraph(const GraphicsWorkgraph* workgraph) { }
 #endif
 
+    // Check if the format is supported on this device.
+    virtual Bool                    isResourceFormatSupported(ResourceFormat format) { return false; }
+
 protected:
     // Implementation should set this flag in order to be queried by users. This checks if the device is capable of 
     // supporting features requested.

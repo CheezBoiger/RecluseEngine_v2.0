@@ -107,7 +107,7 @@ const TBuiltInResource DefaultTBuiltInResource = {
     /* .maxTaskWorkGroupSizeY_NV = */ 1,
     /* .maxTaskWorkGroupSizeZ_NV = */ 1,
     /* .maxMeshViewCountNV = */ 4,
-#if !R_GLSLANG_LEGACY_API
+#if R_GLSLANG_LEGACY_API
     /* .maxMeshOutputVerticesEXT */ 256,
     /* .maxMeshOutputPrimitivesEXT */ 512,
     /* .maxMeshWorkGroupSizeX_EXT */ 32,
