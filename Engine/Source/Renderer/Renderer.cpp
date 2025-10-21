@@ -311,21 +311,21 @@ void RendererModule::createDevice(const RendererConfigs& configs)
 
 void RendererModule::setUpModules()
 {
-    m_sceneBuffers.gbuffer[Engine::GBuffer_Depth] = new Texture2D();
-    ResourceFormat depthFormat = ResourceFormat_D24_Unorm_S8_Uint;
+    //m_sceneBuffers.gbuffer[Engine::GBuffer_Depth] = new Texture2D();
+    //ResourceFormat depthFormat = ResourceFormat_D24_Unorm_S8_Uint;
 
-    if (!m_pDevice->isResourceFormatSupported(depthFormat))
-    {
-        depthFormat = ResourceFormat_D32_Float;
-    }
-    
-    ResultCode result = m_sceneBuffers.gbuffer[Engine::GBuffer_Depth]->initialize(
-                                        m_pDevice, 
-                                        depthFormat, 
-                                        m_currentRendererConfigs.renderWidth, 
-                                        m_currentRendererConfigs.renderHeight, 
-                                        1, 1, "Gbuffer/Depth");
-    R_ASSERT_FORMAT(result == RecluseResult_Ok, "Depth failed to create!!");
+    //if (!m_pDevice->isResourceFormatSupported(depthFormat))
+    //{
+    //    depthFormat = ResourceFormat_D32_Float;
+    //}
+    //
+    //ResultCode result = m_sceneBuffers.gbuffer[Engine::GBuffer_Depth]->initialize(
+    //                                    m_pDevice, 
+    //                                    depthFormat, 
+    //                                    m_currentRendererConfigs.renderWidth, 
+    //                                    m_currentRendererConfigs.renderHeight, 
+    //                                    1, 1, "Gbuffer/Depth");
+    //R_ASSERT_FORMAT(result == RecluseResult_Ok, "Depth failed to create!!");
 
     //PreZ::initialize(m_pDevice, &m_sceneBuffers);
 
@@ -461,11 +461,13 @@ void RendererModule::allocateSceneBuffers(const RendererConfigs& configs)
 {
     U32 width = configs.renderWidth;
     U32 height = configs.renderHeight;
-    m_sceneBuffers.gbuffer[Engine::GBuffer_Depth] = createTexture2D(width, height, 1, 1, ResourceFormat_D24_Unorm_S8_Uint);
-    if (!m_sceneBuffers.gbuffer[Engine::GBuffer_Depth])
+    ResourceFormat depthFormat = ResourceFormat_D24_Unorm_S8_Uint;
+    if (!m_pDevice->isResourceFormatSupported(depthFormat))
     {
-        m_sceneBuffers.gbuffer[Engine::GBuffer_Depth] = createTexture2D(width, height, 1, 1, ResourceFormat_D32_Float);
+        depthFormat = ResourceFormat_D32_Float;
     }
+
+    m_sceneBuffers.gbuffer[Engine::GBuffer_Depth] = createTexture2D(width, height, 1, 1, depthFormat);
 
     ResourceViewDescription viewDesc = { };
     viewDesc.dimension = ResourceViewDimension_2d;

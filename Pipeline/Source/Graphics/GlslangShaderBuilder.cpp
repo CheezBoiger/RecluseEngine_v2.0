@@ -8,7 +8,9 @@
 #define ENABLE_HLSL 1
 #include <vulkan/vulkan_core.h>
 #include "glslang/Public/ShaderLang.h"
+#if R_GLSLANG_LEGACY_API 
 #include "glslang/Include/Types.h"
+#endif
 #include "glslang/SPIRV/GlslangToSpv.h" 
 #include "glslang/Include/ResourceLimits.h"
 
@@ -107,7 +109,6 @@ const TBuiltInResource DefaultTBuiltInResource = {
     /* .maxTaskWorkGroupSizeY_NV = */ 1,
     /* .maxTaskWorkGroupSizeZ_NV = */ 1,
     /* .maxMeshViewCountNV = */ 4,
-#if R_GLSLANG_LEGACY_API
     /* .maxMeshOutputVerticesEXT */ 256,
     /* .maxMeshOutputPrimitivesEXT */ 512,
     /* .maxMeshWorkGroupSizeX_EXT */ 32,
@@ -118,7 +119,6 @@ const TBuiltInResource DefaultTBuiltInResource = {
     /* .maxTaskWorkGroupSizeZ_EXT */ 1,
     /* .maxMeshViewCountEXT */  4,
     /* .maxDualSourceDrawBuffersEXT */ 1,
-#endif
     /* .limits = */ {
         /* .nonInductiveForLoops = */ 1,
         /* .whileLoops = */ 1,
