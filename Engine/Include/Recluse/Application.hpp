@@ -169,7 +169,6 @@ public:
     Application(const std::string& appName = "")
         : m_appName(appName)
         , m_pScene(nullptr)
-        , m_pMessageBusRef(nullptr)
         , m_initialized(false)
         , m_isRunning(false)
     { }
@@ -180,10 +179,30 @@ public:
     void                    update();
 
     ResultCode              cleanUp();
-    ResultCode              init(MessageBus* pMessageBus);
+    ResultCode              init();
 
     Engine::Scene*          getScene() { return m_pScene; }
-    MessageBus*             getMessageBus() { return m_pMessageBusRef; }
+
+
+    Bool                    hasMessageBus(MessageBus::Id id) const { return m_messageBusMap.find(id) != m_messageBusMap.end(); }
+    MessageBus*             getMessageBus(MessageBus::Id id) { return m_messageBusMap[id]; }
+
+    Bool                    unregisterMessageBus(MessageBus::Id id)
+    {
+        if (hasMessageBus(id))
+        {
+            m_messageBusMap.erase(id);
+            return true;
+        }
+        return false;
+    }
+
+    Bool                    registerMessageBus(MessageBus::Id id, MessageBus* bus) 
+    { 
+        if (!hasMessageBus(id)) return false; 
+        m_messageBusMap[id] = bus;
+        return true;
+    }
 
     inline Bool             isInitialized() const { return m_initialized; }
     inline Bool             isRunning() const { return m_isRunning; }
@@ -228,10 +247,9 @@ private:
     void                    flushNewRequests();
 
     TaskManager                             m_taskManager;
-    MessageBus*                             m_pMessageBusRef;
     Engine::Scene*                          m_pScene;
     std::map<ProcessId, TaskProcess>        m_taskProcesses;
-    std::map<Hash64, MessageBus*>           m_messageBusMap;
+    std::map<MessageBus::Id, MessageBus*>   m_messageBusMap;
     Bool                                    m_initialized;
     Bool                                    m_isRunning;
     ThreadPool                              m_workerPool;

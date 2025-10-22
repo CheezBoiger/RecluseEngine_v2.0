@@ -27,9 +27,12 @@ using namespace Recluse::Engine;
 class TestApplication : public Application
 {
 public:
+    MessageBus m_renderBus;
 
     virtual ResultCode onUpdate(TaskManager& manager) override
     {
+        // Need to fix this, since without calling this before any simlock, will cause crash.
+        m_renderBus.notifyAll();
         DrawBatch rcmd = {};
         //pRenderer->pushRenderCommand(rcmd, RENDER_PREZ);
 
@@ -40,7 +43,7 @@ public:
 
         if (m_window->shouldClose())
         {
-            MessageBus::fireEvent(getMessageBus(), RenderEvent_Pause);
+            MessageBus::fireEvent(&m_renderBus, RenderEvent_Pause);
             stop();
         }
         
@@ -72,6 +75,8 @@ public:
 
     virtual ResultCode onInit() override
     {
+        m_renderBus.initialize();
+
         RendererModule::initializeModule(this);
         GlobalCommands::setValue("Log.DebugBreakOnError", false);
         m_window = Window::create("", 0, 0, 1200, 800);
@@ -84,7 +89,7 @@ public:
         LogSystem::setLogChannel("Application", true);
 
         RendererConfigs config = { };
-        config.api = GraphicsApi_Direct3D12;
+        config.api = GraphicsApi_Vulkan;
         config.enableGpuValidation = true;
         config.buffering = 3;
         config.maxFrameRate = 60.0f;
@@ -92,10 +97,10 @@ public:
         config.renderWidth = m_window->getWidth();
         config.renderHeight = m_window->getHeight();
         RendererModule::getMain()->setNewConfigurations(config);
-        RendererModule::getMain()->linkMessageBus(getMessageBus());
+        RendererModule::getMain()->linkMessageBus(&m_renderBus);
 
-        MessageBus::fireEvent(getMessageBus(), RenderEvent_Initialize);
-        MessageBus::fireEvent(getMessageBus(), RenderEvent_Resume);
+        MessageBus::fireEvent(&m_renderBus, RenderEvent_Initialize);
+        MessageBus::fireEvent(&m_renderBus, RenderEvent_Resume);
         GlobalCommands::setValue("Renderer.ClearColor", Math::Color4(255, 0, 0, 0));
         // Make task process for the renderer.
         m_renderProcessId = makeTaskProcess(RendererModule::kRendererProcessTask, "Renderer");
@@ -140,11 +145,13 @@ public:
         }
     virtual ResultCode onCleanUp() override
     {
-        MessageBus::fireEvent(getMessageBus(), RenderEvent_Shutdown);
+        MessageBus::fireEvent(&m_renderBus, RenderEvent_Shutdown);
 
-        getMessageBus()->notifyAll();
+        m_renderBus.notifyAll();
 
         Window::destroy(m_window);
+
+        m_renderBus.cleanUp();
         return RecluseResult_Ok;
     }
 

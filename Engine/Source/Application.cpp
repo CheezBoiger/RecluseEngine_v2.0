@@ -156,9 +156,8 @@ ResultCode Application::requestStopProcess(ProcessId processId)
 }
 
 
-ResultCode Application::init(MessageBus* pMessageBus)
+ResultCode Application::init()
 {
-    m_pMessageBusRef    = pMessageBus;
     m_taskManager.initialize();
     ResultCode result = onInit();
     if (result == RecluseResult_Ok)
@@ -387,8 +386,7 @@ namespace MainThreadLoop {
 
 Application* k_pApp         = nullptr;
 ThreadPool* k_pThreadPool   = nullptr;
-MessageBus* k_pMessageBus   = nullptr;
-Mutex k_pMessageMutex       = MutexValue::kNull;
+
 F32 k_fixedTickRateSeconds  = 1.0f / 60.0f;
 Bool k_mainLoopInitialized  = false;
 
@@ -403,7 +401,7 @@ ResultCode loadApp(Application* pApp)
     ResultCode result = RecluseResult_Ok;
 
     if (!pApp->isInitialized())
-        result = pApp->init(k_pMessageBus);
+        result = pApp->init();
 
     if (result == RecluseResult_Ok)
         k_pApp = pApp;
@@ -414,11 +412,6 @@ ResultCode loadApp(Application* pApp)
 
 ResultCode initialize() 
 {
-    R_ASSERT(k_pMessageMutex == MutexValue::kNull);
-
-    k_pMessageMutex = createMutex();
-    k_pMessageBus = new MessageBus();
-    k_pMessageBus->initialize();
     k_mainLoopInitialized = true;
 
     return RecluseResult_Ok;
@@ -427,19 +420,8 @@ ResultCode initialize()
 
 ResultCode MainThreadLoop::run()
 {
-    R_ASSERT(k_pMessageBus      != NULL);
-    R_ASSERT(k_pMessageMutex    != MutexValue::kNull);
-
     while (k_pApp->isRunning()) 
     {
-        // All messaging receivers are handled internally by the engine systems.
-        // Notify all message receivers.
-        {
-            ScopedLock lck(k_pMessageMutex);
-            k_pMessageBus->notifyAll();
-            // Be sure to clear up the bus memory when we finish processing our messages.
-            k_pMessageBus->clearQueue();
-        }
         // Application update logic is usually here.
         // The application is responsible for handling input, game logic, rendering, physics and whatnot.
         // 
@@ -459,13 +441,6 @@ ResultCode cleanUp()
         result = k_pApp->cleanUp();
     }
 
-    destroyMutex(k_pMessageMutex);
-    k_pMessageMutex = MutexValue::kNull;
-
-    // Clean up the message bus.
-    k_pMessageBus->cleanUp();
-    delete k_pMessageBus;
-
     k_mainLoopInitialized = false;
     return result;
 }
@@ -480,13 +455,6 @@ Application* getApp()
 Bool isMainThread()
 {
     return getMainThreadId() == getCurrentThreadId();
-}
-
-
-MessageBus* getMessageBus()
-{
-    R_ASSERT_FORMAT(k_pMessageBus, "No message bus was initialized! NULL!!");
-    return k_pMessageBus;
 }
 
 

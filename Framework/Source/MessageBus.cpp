@@ -40,6 +40,7 @@ void MessageBus::cleanUp()
     notifyAll();
     if (m_pMessageAllocator) 
     {
+        // For this case, we don't need to delete the allocator, as it was allocated inside the memory pool.
         m_pMessageAllocator->cleanUp();
     }
 
