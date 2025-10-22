@@ -461,7 +461,7 @@ void RendererModule::allocateSceneBuffers(const RendererConfigs& configs)
 {
     U32 width = configs.renderWidth;
     U32 height = configs.renderHeight;
-    ResourceFormat depthFormat = ResourceFormat_D24_Unorm_S8_Uint;
+    ResourceFormat depthFormat = ResourceFormat_D32_Float_S8_Uint;
     if (!m_pDevice->isResourceFormatSupported(depthFormat))
     {
         depthFormat = ResourceFormat_D32_Float;

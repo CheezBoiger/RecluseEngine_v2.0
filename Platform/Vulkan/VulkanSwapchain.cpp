@@ -345,8 +345,15 @@ ResultCode VulkanSwapchain::prepare(GraphicsContext* context)
                 R_DEBUG(R_CHANNEL_VULKAN, "Swapchain is out of date, needs to be recreated...");    
                 err = RecluseResult_NeedsUpdate;
                 break;
+            
+            case VK_SUBOPTIMAL_KHR:
+                contextFrame.flags = ContextFrameFlag_SwapchainQueued;
+                err = RecluseResult_NeedsUpdate;
+                R_DEBUG(R_CHANNEL_VULKAN, "Swapchain is suboptimal, shoule be recreated unless we okay...");
+                break;
             default:
                 R_WARN(R_CHANNEL_VULKAN, "Swapchain acquire next image was unsuccessfull. This may lead to errors!");
+                err = RecluseResult_Failed;
                 break;
         }
     }
