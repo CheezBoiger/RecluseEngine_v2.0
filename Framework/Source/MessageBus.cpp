@@ -72,5 +72,28 @@ void MessageBus::notifyOne(const std::string& nodeName)
         // TODO: Handle result.
         m_messages.pop();    
     }
+
+    m_pMessageAllocator->reset();
+}
+
+
+void MessageBus::notifyAll()
+{
+    R_ASSERT(m_messageMemPool.isAllocated(), "This message bus was not initialized.");
+    // Notify all message receivers.
+    while (!m_messages.empty()) 
+    {
+        // Must lock the mutex and read at a time.
+        ScopedLock _(m_messageQueueMutex);
+        for (MessageReceiveFunc func : m_messageReceivers) 
+        {
+            ResultCode result = func(*m_messages.front());
+            // TODO: Proper message handling.
+        }
+            
+        m_messages.pop();
+    }
+
+    m_pMessageAllocator->reset();
 }
 } // Recluse

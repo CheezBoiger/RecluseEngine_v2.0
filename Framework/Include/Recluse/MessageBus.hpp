@@ -59,7 +59,7 @@ public:
     ~MessageBus() {} 
 
     // Initialize the messaging bus system.
-    RecluseFramework_PUBLIC_API void initialize(SizeT eventCacheSzBytes = R_MB(2ull));
+    RecluseFramework_PUBLIC_API void initialize(SizeT eventCacheSzBytes = R_KB(64ull));
 
     RecluseFramework_PUBLIC_API void cleanUp();
 
@@ -76,22 +76,7 @@ public:
 
     // Notify all message receivers of the given fired events. This is a syncronous call,
     // so unless you need to call this asyncronously, be sure to call this on a separate thread.
-    void notifyAll() 
-    {
-        // Notify all message receivers.
-        while (!m_messages.empty()) 
-        {
-            // Must lock the mutex and read at a time.
-            ScopedLock _(m_messageQueueMutex);
-            for (MessageReceiveFunc func : m_messageReceivers) 
-            {
-                ResultCode result = func(*m_messages.front());
-                // TODO: Proper message handling.
-            }
-            
-            m_messages.pop();
-        }
-    }
+    void notifyAll();
 
     // Only notify one message receiver of the fired events. This is a syncronous call,
     // so unless you need to call this asyncronously, be sure to call this on a separate thread.
