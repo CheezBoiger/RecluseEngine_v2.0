@@ -35,7 +35,7 @@ void cullLights(GraphicsContext* context)
 }
 
 
-void combineForward(GraphicsContext* context, U64* keys, U64 sz)
+void combineForward(GraphicsContext* context, Engine::KeyId* keys, U64 sz)
 {
 }
 

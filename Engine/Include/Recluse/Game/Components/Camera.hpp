@@ -59,7 +59,7 @@ typedef U32 CameraPostProcessFlags;
 class RecluseEngine_PUBLIC_API Camera : public ECS::Component
 {
 public:
-    R_COMPONENT_DECLARE(Camera);
+    R_DECLARE_COMPONENT(Camera);
 
     // Update the camera transformations. Usually the camera will
     // just need the transform in order to apply it's works.
@@ -155,7 +155,7 @@ private:
 class CameraRegistry : public ECS::ComponentRegistry<Camera>
 {
 public:
-    R_COMPONENT_REGISTRY_DECLARE(CameraRegistry);
+    R_DECLARE_COMPONENT_REGISTRY(CameraRegistry);
 
     // Get the main view camera.
     Camera*             getMain() { return mainCamera; }

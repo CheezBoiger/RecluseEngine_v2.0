@@ -117,6 +117,11 @@ void RendererModule::initialize()
 
     allocateSceneBuffers(m_currentRendererConfigs);
 
+    Window* window = Window::findWindowReference(m_windowHandle);
+    R_ASSERT(window != NULL);
+
+    
+
     setUpModules();
 }
 
@@ -210,9 +215,9 @@ void RendererModule::render()
 
         PreZ::generate(
                     context, 
-                    m_currentRenderCommands, 
-                    m_currentCommandKeys[Render_PreZ].data(), 
-                    m_currentCommandKeys[Render_PreZ].size());
+                    m_currentRenderCommands,
+                    findKeys(Render_PreZ).data(), 
+                    findKeys(Render_PreZ).size());
 
         context->transition(pSceneDepth, ResourceState_DepthStencilReadOnly);
 
@@ -234,21 +239,15 @@ void RendererModule::render()
                             m_currentCommandKeys[Render_ForwardCustom].data(), 
                             m_currentCommandKeys[Render_ForwardCustom].size());
 #endif
-    // Check if any debug draw functions exist.
-    if (!m_debugDrawFunctions.empty())
+    // By this state, the debug pass should render on top of the final render target.
+    for (uint i = 0; i < getPluginCount(RendererPluginID_DebugRenderer); ++i)
     {
-        // By this state, the debug pass should render on top of the final render target.
-        for (uint i = 0; i < getPluginCount(RendererPluginID_DebugRenderer); ++i)
+        DebugRenderer* plugin = getPlugin<DebugRenderer>(RendererPluginID_DebugRenderer, i);
+        if (plugin)
         {
-            DebugRenderer* plugin = getPlugin<DebugRenderer>(RendererPluginID_DebugRenderer, i);
-            if (plugin)
-            {
-                DebugRenderer* debugRenderer = dynamic_cast<DebugRenderer*>(plugin);
-                for (auto func : m_debugDrawFunctions)
-                {
-                    func(debugRenderer);
-                }
-            }
+            DebugRenderer* debugRenderer = dynamic_cast<DebugRenderer*>(plugin);
+            if (debugRenderer)
+                debugRenderer->render();
         }
     }
 
@@ -422,7 +421,7 @@ void RendererModule::sortCommandKeys()
 
     struct Cmp 
     { 
-        bool operator()(const U64 a, const U64 b) const 
+        bool operator()(const U32 a, const U32 b) const 
         { 
             return a < b;
         }
@@ -430,7 +429,7 @@ void RendererModule::sortCommandKeys()
 
     for (auto& cmdLists : m_currentCommandKeys.get()) 
     {
-        std::vector<U64>& list = cmdLists.second;
+        std::vector<U32>& list = cmdLists.second;
         std::sort(list.begin(), list.end(), pred);
     }
 }
@@ -569,7 +568,20 @@ void RendererModule::simUnlock()
 {
     Mutex frameMutex = m_perFrameMutex[m_currentSimFrameIndex];
     unlockMutex(frameMutex);
+}
+
+void RendererModule::finalize()
+{
+    // spin-lock until we are finished.
+    ///while (!isSimLocked()) { }
+
     m_currentSimFrameIndex = (m_currentSimFrameIndex + 1) % m_maxBufferCount;
+}
+
+Bool RendererModule::isSimLocked()
+{
+    Mutex frameMutex = m_perFrameMutex[m_currentFrameIndex];
+    return false;
 }
 
 
@@ -733,6 +745,24 @@ void RendererModule::update(F32 currentTime, F32 deltaTime)
     }
 
     m_renderState.currentTick = interpTick;
+
+    // Check if any debug draw functions exist.
+    if (!m_debugDrawFunctions.empty())
+    {
+        // By this state, the debug pass should render on top of the final render target.
+        for (uint i = 0; i < getPluginCount(RendererPluginID_DebugRenderer); ++i)
+        {
+            DebugRenderer* plugin = getPlugin<DebugRenderer>(RendererPluginID_DebugRenderer, i);
+            if (plugin)
+            {
+                DebugRenderer* debugRenderer = dynamic_cast<DebugRenderer*>(plugin);
+                for (auto func : m_debugDrawFunctions)
+                {
+                    func(debugRenderer);
+                }
+            }
+        }
+    }
 }
 
 

@@ -21,7 +21,7 @@ using namespace Math;
 class RecluseEngine_PUBLIC_API Transform : public ECS::Component
 {
 public:
-    R_COMPONENT_DECLARE(Transform);
+    R_DECLARE_COMPONENT(Transform);
 
     virtual ~Transform() { }
     Transform() { }
@@ -67,7 +67,7 @@ private:
 class RecluseEngine_PUBLIC_API TransformRegistry : public ECS::ComponentRegistry<Transform>
 {
 public:
-    R_COMPONENT_REGISTRY_DECLARE(TransformRegistry);
+    R_DECLARE_COMPONENT_REGISTRY(TransformRegistry);
 
     virtual ResultCode              onAllocateComponent(const RGUID& owner)     override;
     virtual ResultCode              onFreeComponent(const RGUID& owner)         override;

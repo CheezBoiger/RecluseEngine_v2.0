@@ -76,7 +76,7 @@ public:
 
     // Notify all message receivers of the given fired events. This is a syncronous call,
     // so unless you need to call this asyncronously, be sure to call this on a separate thread.
-    void notifyAll();
+    RecluseFramework_PUBLIC_API void notifyAll();
 
     // Only notify one message receiver of the fired events. This is a syncronous call,
     // so unless you need to call this asyncronously, be sure to call this on a separate thread.

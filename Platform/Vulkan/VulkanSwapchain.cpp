@@ -242,7 +242,7 @@ ResultCode VulkanSwapchain::present(GraphicsContext* context)
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) 
     {
-        R_DEBUG(R_CHANNEL_VULKAN, "Swapchain is out of date, needs to be recreated...");    
+        R_DEBUG(R_CHANNEL_VULKAN, "Swapchain is out of date on present, needs to be recreated...");    
         err = RecluseResult_NeedsUpdate;
     }
 
@@ -342,17 +342,18 @@ ResultCode VulkanSwapchain::prepare(GraphicsContext* context)
         switch (result)
         {
             case VK_ERROR_OUT_OF_DATE_KHR:
-                R_DEBUG(R_CHANNEL_VULKAN, "Swapchain is out of date, needs to be recreated...");    
+                R_DEBUG(R_CHANNEL_VULKAN, "Swapchain is out of date on acquire, needs to be recreated...");    
                 err = RecluseResult_NeedsUpdate;
+                contextFrame.flags = ContextFrameFlag_SwapchainQueued;
                 break;
             
             case VK_SUBOPTIMAL_KHR:
                 contextFrame.flags = ContextFrameFlag_SwapchainQueued;
                 err = RecluseResult_NeedsUpdate;
-                R_DEBUG(R_CHANNEL_VULKAN, "Swapchain is suboptimal, shoule be recreated unless we okay...");
+                R_DEBUG(R_CHANNEL_VULKAN, "Swapchain is suboptimal on acquire, should be recreated unless we are okay...");
                 break;
             default:
-                R_WARN(R_CHANNEL_VULKAN, "Swapchain acquire next image was unsuccessfull. This may lead to errors!");
+                R_WARN(R_CHANNEL_VULKAN, "Swapchain acquire next image was unsuccessful. This may lead to errors!");
                 err = RecluseResult_Failed;
                 break;
         }

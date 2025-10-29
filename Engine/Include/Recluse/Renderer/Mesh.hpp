@@ -34,15 +34,6 @@ typedef Float3      MeshScaleData;
 typedef U8          MeshLod;
 
 
-// Per mesh information.
-struct RecluseEngine_PUBLIC_API PerMeshTransform 
-{
-    Matrix44 world;
-    Matrix44 worldToViewClip;
-    Matrix44 n;
-};
-
-
 // SubMesh Flags tell the behavior of the submesh, how it should be 
 // drawn, and how to access the contents of it.
 enum SubMeshFlag
@@ -139,7 +130,6 @@ public:
     RecluseEngine_PUBLIC_API ResultCode     recreate(GraphicsContext* context) override { return RecluseResult_NoImpl; }
     RecluseEngine_PUBLIC_API Bool           isRecreatable() const override { return false; }
     RecluseEngine_PUBLIC_API const char*    getDebugName() const { return m_debugName; }
-
     RecluseEngine_PUBLIC_API MeshLOD*       getLod(uint lodIndex);
 
 private:

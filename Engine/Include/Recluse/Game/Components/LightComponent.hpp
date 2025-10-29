@@ -13,7 +13,7 @@ namespace Engine {
 class Light : public ECS::Component
 {
 public:
-    R_COMPONENT_DECLARE(Light);
+    R_DECLARE_COMPONENT(Light);
 
     // Need to manually write the default constructor as LightDescription has unions,
     // no way for C++ to know how to automagically construct that.
@@ -31,7 +31,7 @@ public:
 class LightRegistry : public ECS::ComponentRegistry<Light>
 {
 public:
-    R_COMPONENT_REGISTRY_DECLARE(LightRegistry);
+    R_DECLARE_COMPONENT_REGISTRY(LightRegistry);
     
     ResultCode onAllocateComponent(const RGUID& owner) override;
     ResultCode onFreeComponent(const RGUID& owner) override;

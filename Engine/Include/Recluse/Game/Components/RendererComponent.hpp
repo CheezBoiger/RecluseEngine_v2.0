@@ -35,7 +35,7 @@ typedef U32 RenderUpdateFlags;
 class RendererComponent : public ECS::Component
 {
 public:
-    R_COMPONENT_DECLARE(RendererComponent);
+    R_DECLARE_COMPONENT(RendererComponent);
 
     virtual ~RendererComponent() { }
     RendererComponent(RenderModel renderModel) 
@@ -69,7 +69,7 @@ private:
 class RendererComponentRegistry : public ECS::ComponentRegistry<RendererComponent>
 {
 public:
-    R_COMPONENT_REGISTRY_DECLARE(RendererComponentRegistry);
+    R_DECLARE_COMPONENT_REGISTRY(RendererComponentRegistry);
 
     ResultCode                          onAllocateComponent(const RGUID& owner) override;
     ResultCode                          onFreeComponent(const RGUID& owner) override;

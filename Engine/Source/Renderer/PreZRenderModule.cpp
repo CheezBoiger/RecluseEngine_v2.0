@@ -36,7 +36,7 @@ void destroy(GraphicsDevice* pDevice)
 }
 
 
-void generate(GraphicsContext* context, Engine::CommandList* pMeshCommandList, U64* keys, U64 sz)
+void generate(GraphicsContext* context, Engine::CommandList* pMeshCommandList, Engine::KeyId* keys, U64 sz)
 {
     Engine::RenderCommand* pRenderCommands     = pMeshCommandList->getRenderCommands();
     Rect depthRect                              = { };

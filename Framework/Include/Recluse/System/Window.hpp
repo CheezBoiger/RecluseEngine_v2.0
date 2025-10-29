@@ -22,6 +22,8 @@ class Mouse;
 typedef void(*WindowMouseFunction)();
 typedef void(*WindowKeyFunction)();
 typedef void(*OnWindowResizeFunction)(U32, U32, U32, U32);
+typedef void(*OnWindowMinimizeFunction)();
+typedef void(*OnWindowEnableFunction)();
 typedef void(*OnWindowRelocateFunction)();
 
 // Monitor description information, usually handled when querying multiple monitors from 
@@ -57,6 +59,8 @@ RecluseFramework_PUBLIC_API R_OS_CALL extern MonitorDesc      getActiveMonitor()
 class R_OS_CALL Window 
 {
 public:
+    typedef void* Handle;
+
     Window()
         : m_shouldClose(false)
         , m_handle(NULL)
@@ -86,13 +90,14 @@ public:
     // Destroy the window.
     static R_OS_CALL RecluseFramework_PUBLIC_API ResultCode    destroy(Window* pWindow);
     static R_OS_CALL RecluseFramework_PUBLIC_API Window*       getActiveFocusedWindow();
+    static R_OS_CALL RecluseFramework_PUBLIC_API Window*       findWindowReference(Handle nativeWindowHandle);
 
     // close the window.
     R_OS_CALL RecluseFramework_PUBLIC_API void close();
     // Show the window,
     R_OS_CALL RecluseFramework_PUBLIC_API void show();
     // obtain the native window handle.
-    void*                       getNativeHandle() { return m_handle; }
+    Handle                      getNativeHandle() { return m_handle; }
     // Set the title of the window.
     void                        setTitle(const std::string& title);
     // Programmatically resize the window.
@@ -191,7 +196,7 @@ private:
 
     // Title of the window.
     std::string                 m_title;
-    void*                       m_handle;
+    Handle                      m_handle;
     U32                         m_monitorIndex;
 
     WindowKeyFunction           m_keyCallback;

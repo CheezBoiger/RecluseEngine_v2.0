@@ -418,4 +418,9 @@ Window* getWindowAssociatedWithHwnd(HWND hwnd)
     }
     return nullptr;
 }
+
+Window* Window::findWindowReference(Handle handle)
+{
+    return getWindowAssociatedWithHwnd((HWND)handle);
+}
 } // Recluse

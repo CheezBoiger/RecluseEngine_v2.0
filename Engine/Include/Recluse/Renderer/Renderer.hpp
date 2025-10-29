@@ -16,8 +16,10 @@
 #include "Recluse/Generated/RendererPrograms.hpp"
 #include "Recluse/Generated/Common/Common.hpp"
 
+#include "Recluse/System/Window.hpp"
 #include "Recluse/System/DLLLoader.hpp"
 #include "Recluse/Threading/Threading.hpp"
+#include "Recluse/Renderer/RenderCommand.hpp"
 
 #include "RecluseEngine_exports.hpp"
 
@@ -118,9 +120,6 @@ public:
     virtual ResultCode recreate(GraphicsContext* context) = 0;
 };
 
-
-typedef MapContainer<U32, std::vector<U64>> CommandKeyContainer;
-
 // Top level rendering engine. Implements Render Hardware Interface, and 
 // manages all resources and states created in game graphics. This will usually
 // implement any render passes and stages of the graphics pipeline.
@@ -152,6 +151,10 @@ public:
     // Be sure to unlock once ready to have renderer submit commands.
     void                        simUnlock();
 
+    // Finalize the sim side command list requests.
+    void                        finalize();
+    Bool                        isSimLocked();
+
     // Push the render command to the rendering engine. This will store the command for the drawing frame.
     void                        pushRenderCommand(const RenderCommand& renderCommand, RenderPassTypeFlags renderFlags);
     void                        pushDebugDraw(DebugDrawFunction debugDrawFunction);
@@ -159,11 +162,18 @@ public:
     // Push a light to the renderer. Used throughout renderer. Must be called each frame.
     void                        pushLight(const LightDescription& lightDescription) { m_lightDescriptions.push_back(lightDescription); }
 
+
+private:
     // Start submitting rendering to draw onto the screen.
     void                        render();
 
     // Present to the screen.
     void                        present(Bool delayPresent = false);
+
+    // Update the frame from the render thread side.
+    void                        update(F32 currentTime, F32 deltaTime);
+
+public:
 
     // Reads the current configs back to the caller. This must not be modified.
     const RendererConfigs&      getCurrentConfigs() const { return m_currentRendererConfigs; }
@@ -197,8 +207,6 @@ public:
     ResultCode                  destroyTexture2D(Texture2D* pTexture);
     ResultCode                  destroyGPUBuffer(GPUBuffer* pBuffer);
 
-    void                        update(F32 currentTime, F32 deltaTime);
-
     ResultCode                  onEvent(const EventMessage& message) override;
 
 private:
@@ -229,6 +237,8 @@ private:
     ResultCode                  pushCopyCommands(GraphicsContext* context);
     ResultCode                  clearCopyCommands();
 
+    KeyArray&                   findKeys(U32 keyType) { return m_currentCommandKeys[keyType]; }
+
     //  Lock the current frame, so that it prevents automatic transition of the frame.
     // DO NOT CALL THIS IN SIM CODE.
     void                        lock();
@@ -246,7 +256,7 @@ private:
     Mutex                               m_configLock;
     RendererConfigs                     m_currentRendererConfigs;
     RendererConfigs                     m_newRendererConfigs;
-    void*                               m_windowHandle;
+    Window::Handle                      m_windowHandle;
 
     // Scene buffer objects.
     SceneBufferDefinitions              m_sceneBuffers;
@@ -290,15 +300,8 @@ private:
         std::vector<Allocator*> PerFrameAllocator;
     };
 
-    // Draw filter filters out draws that pertain to certain passes.
-    struct DrawFilter
-    {
-        U32 passFilter;
-        std::vector<U64> drawKey; // DrawKey pertains to the drawcall that works with it.
-    };
-
     // command keys identify the index within the render command, to begin rendering for.
-    std::vector<std::unordered_map<U32, std::vector<U64>>>  m_commandKeys;
+    std::vector<std::unordered_map<U32, KeyArray>>          m_commandKeys;
     Mutex                                                   m_commandMx;
     CommandList*                                            m_currentRenderCommands;
     CommandKeyContainer                                     m_currentCommandKeys;

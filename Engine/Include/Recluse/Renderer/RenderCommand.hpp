@@ -5,16 +5,26 @@
 #include "Recluse/Math/Bounds3D.hpp"
 
 #include "Recluse/Renderer/SceneView.hpp"
-#include "Recluse/Renderer/Mesh.hpp"
 #include "Recluse/Renderer/Material.hpp"
 
 #include "Recluse/Memory/Allocator.hpp"
 #include "Recluse/Memory/MemoryPool.hpp"
+#include "Recluse/Structures/HashMap.hpp"
 
 #include "RecluseEngine_exports.hpp"
 
+#include <vector>
+
 namespace Recluse {
 namespace Engine {
+
+// Per mesh information.
+struct RecluseEngine_PUBLIC_API PerMeshTransform 
+{
+    Matrix44 world;
+    Matrix44 worldToViewClip;
+    Matrix44 n;
+};
 
 enum CommandOp 
 {
@@ -50,6 +60,10 @@ enum VertexAttribFlag
 typedef U32 VertexAttribFlags;
 typedef U32 RenderPassTypeFlags;
 typedef U32 ResourceBindOpFlags;
+
+typedef U32                                 KeyId;
+typedef std::vector<KeyId>                  KeyArray;
+typedef MapContainer<U32, KeyArray>         CommandKeyContainer;
 
 struct RenderCommand 
 {
@@ -120,6 +134,14 @@ struct DrawInstancedBatch : public DrawBatch
     InstancedSubMesh*   pSubMeshes;             // 56 B
     U32                 numSubMeshes;           // 60 B
                                                 // 64 B
+};
+
+
+// Draw filter filters out draws that pertain to certain passes.
+struct DrawFilter
+{
+    U32         passFilter;
+    KeyArray    drawKey; // DrawKey pertains to the drawcall that works with it.
 };
 
 
