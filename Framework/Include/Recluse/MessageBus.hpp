@@ -23,6 +23,10 @@ typedef Hash64 EventId;
 typedef U64 GroupId;
 
 
+// Event message used to handle basic events to send to decoupled modules.
+// Can be inherited to create custom event messages for certain modules, but 
+// it is recommended send as basic a message as possible, to avoid potential 
+// compile time increases, and overall binary size.
 class EventMessage 
 {
 public:
@@ -48,10 +52,11 @@ public:
     friend class    Recluse::EventMessage;
     typedef U32     Id;
 
-    // Helper to fire an event.
-    static void fireEvent(MessageBus* pBus, EventId id)
+    // Helper to send an event.
+    template<typename EventClass = EventMessage, typename... Args>
+    static void sendEvent(MessageBus* pBus, EventId id, Args... args)
     {
-        pBus->pushEvent(id);
+        pBus->pushEvent<EventClass>(id, args...);
     }
 
     RecluseFramework_PUBLIC_API MessageBus();
@@ -67,10 +72,11 @@ public:
     RecluseFramework_PUBLIC_API void addReceiver(const std::string& nodeName, MessageReceiveFunc receiver);
 
     // Push an event
-    void pushEvent(EventId eventId) 
+    template<typename EventClass = EventMessage, typename... Args>
+    void pushEvent(EventId eventId, Args... args) 
     {   
         ScopedLock _(m_messageQueueMutex);
-        EventMessage* pMessage   = new (m_pMessageAllocator) EventMessage(eventId);
+        EventMessage* pMessage   = new (m_pMessageAllocator) EventClass(eventId, args...);
         m_messages.push(pMessage);
     }
 
