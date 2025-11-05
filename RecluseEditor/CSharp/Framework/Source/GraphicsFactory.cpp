@@ -1147,34 +1147,34 @@ void IGraphicsContext::SetBlend(System::UInt32 RtIndex, BlendFactor SrcColorFact
 }
 
 
-ShaderProgramBinder^ IGraphicsContext::BindShaderProgram(System::UInt64 ProgramId, System::UInt32 Permutation)
+CShaderProgramBinder^ IGraphicsContext::BindShaderProgram(System::UInt64 ProgramId, System::UInt32 Permutation)
 {
-    IShaderProgramBinder& binder = Context->bindShaderProgram((ShaderProgramId)ProgramId, (U32)Permutation);
-    ShaderProgramBinder^ ProgramBinder = gcnew ShaderProgramBinder(binder);
+    ShaderProgramBinder& binder = Context->bindShaderProgram((ShaderProgramId)ProgramId, (U32)Permutation);
+    CShaderProgramBinder^ ProgramBinder = gcnew CShaderProgramBinder(binder);
     return ProgramBinder;
 }
 
 
-ShaderProgramBinder::ShaderProgramBinder(IShaderProgramBinder& binder)
+CShaderProgramBinder::CShaderProgramBinder(ShaderProgramBinder& binder)
     : ShaderProgram(binder)
 {
 }
 
 
-ShaderProgramBinder^ ShaderProgramBinder::BindShaderResource(CSharp::ShaderStage Stage, System::UInt32 Space, System::UInt32 Slot, System::UIntPtr View)
+CShaderProgramBinder^ CShaderProgramBinder::BindShaderResource(CSharp::ShaderStage Stage, System::UInt32 Space, System::UInt32 Slot, System::UIntPtr View)
 {
     ShaderProgram.bindShaderResource((Recluse::ShaderStageFlags)Stage, (U32)Space, (U32)Slot, { (U64)View });
     return this;
 }
 
 
-ShaderProgramBinder^ ShaderProgramBinder::BindUnorderedAccessView(CSharp::ShaderStage Stage, System::UInt32 Space, System::UInt32 Slot, System::UIntPtr View)
+CShaderProgramBinder^ CShaderProgramBinder::BindUnorderedAccessView(CSharp::ShaderStage Stage, System::UInt32 Space, System::UInt32 Slot, System::UIntPtr View)
 {
     ShaderProgram.bindUnorderedAccessView((Recluse::ShaderStageFlags)Stage, (U32)Space, (U32)Slot, { (U64)View });
     return this;
 }
 
-ShaderProgramBinder^ ShaderProgramBinder::BindConstantBuffer(CSharp::ShaderStage Stage, System::UInt32 Space, System::UInt32 Slot, IResource^ Resource, System::UInt32 OffsetBytes, System::UInt32 SizeBytes, array<System::Byte>^ Data)
+CShaderProgramBinder^ CShaderProgramBinder::BindConstantBuffer(CSharp::ShaderStage Stage, System::UInt32 Space, System::UInt32 Slot, IResource^ Resource, System::UInt32 OffsetBytes, System::UInt32 SizeBytes, array<System::Byte>^ Data)
 {
     std::vector<U8> nativeData;
     void* ptr = nullptr;
@@ -1189,7 +1189,7 @@ ShaderProgramBinder^ ShaderProgramBinder::BindConstantBuffer(CSharp::ShaderStage
 }
 
 
-ShaderProgramBinder^ ShaderProgramBinder::BindSampler(CSharp::ShaderStage Stage, System::UInt32 Space, System::UInt32 Slot, ISampler^ Sampler)
+CShaderProgramBinder^ CShaderProgramBinder::BindSampler(CSharp::ShaderStage Stage, System::UInt32 Space, System::UInt32 Slot, ISampler^ Sampler)
 {
     ShaderProgram.bindSampler((ShaderStageFlags)Stage, (U32)Space, (U32)Slot, Sampler());
     return this;

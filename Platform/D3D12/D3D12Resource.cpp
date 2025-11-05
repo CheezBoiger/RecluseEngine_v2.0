@@ -320,7 +320,7 @@ ResourceView D3D12Resource::asCbv(U32 offsetBytes, U32 sizeBytes)
     }
     else
     {
-        return { iter->second.ptr };
+        return { iter->second.ptr, ResourceViewType_ConstantBuffer };
     }
 }
 

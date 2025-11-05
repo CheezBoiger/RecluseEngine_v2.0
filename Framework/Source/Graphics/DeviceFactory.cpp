@@ -1,5 +1,6 @@
 //
 #include "Recluse/Graphics/GraphicsInstance.hpp"
+
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Memory/MemoryPool.hpp"
 #include "Recluse/System/DLLLoader.hpp"

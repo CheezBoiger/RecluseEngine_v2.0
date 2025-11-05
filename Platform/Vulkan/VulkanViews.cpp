@@ -26,7 +26,7 @@ ResourceView makeResourceView(VulkanDevice* pDevice, VulkanResource* pResource, 
     pView->initialize(pDevice, pResource);
     pView->generateId();
     g_resourceViewMap[pDevice->getDeviceId()][pView->getId()] = pView;
-    return { pView->getId() };
+    return { pView->getId(), (U64)desc.type }; // this might go wrong...
 }
 
 

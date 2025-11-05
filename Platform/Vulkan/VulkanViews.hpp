@@ -159,6 +159,11 @@ public:
     VkSamplerCreateInfo getCopyInfo() const { return m_info; }
     SamplerId getId() const override { return m_id; }
     SamplerDescriptionId getDescriptionId() const { return m_descId; }
+
+    SamplerState state() override 
+    {
+        return {}; 
+    }
 private:
     static SamplerId kSamplerCreationCounter;
     static MutexGuard kSamplerCreationMutex;

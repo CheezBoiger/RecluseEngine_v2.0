@@ -38,5 +38,8 @@ public:
     // Get a copy.
     virtual SamplerDescription   getDesc() = 0;
 
+    // Get the sampler state.
+    virtual SamplerState        state() = 0;
+
 };
 } // Recluse

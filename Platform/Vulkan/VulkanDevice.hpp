@@ -72,20 +72,26 @@ class RecluseVulkan_PUBLIC_API VulkanContext : public GraphicsContext
 {
 private:
     struct ContextState;
-    class VulkanShaderProgramBinder : public IShaderProgramBinder
+    class VulkanShaderProgramBinder : public ShaderProgramBinder
     {
     public:
         VulkanShaderProgramBinder(VulkanContext* context = nullptr, ShaderProgramId programId = ~0, ShaderPermutationId permutationId = ~0)
-            : IShaderProgramBinder(programId, permutationId)
+            : ShaderProgramBinder(programId, permutationId)
             , m_pContext(context) 
             , cachedProgram(nullptr)
             , reflectionCache(nullptr)
         { obtainShaderProgramFromCache(); }
-        IShaderProgramBinder&   bindShaderResource(ShaderStageFlags type, U32 space, U32 slot, ResourceView view) override;
-        IShaderProgramBinder&   bindUnorderedAccessView(ShaderStageFlags type, U32 space, U32 slot, ResourceView view) override;
-        IShaderProgramBinder&   bindConstantBuffer(ShaderStageFlags type, U32 space, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data = nullptr) override;
-        IShaderProgramBinder&   bindConstantBuffer(ShaderStageFlags type, U32 space, U32 slot, ResourceView view) override;
-        IShaderProgramBinder&   bindSampler(ShaderStageFlags type, U32 space, U32 slot, GraphicsSampler* ppSampler) override;
+        ShaderProgramBinder&   bindShaderResource(ShaderStageFlags type, U32 space, U32 slot, ResourceView view) override;
+        ShaderProgramBinder&   bindUnorderedAccessView(ShaderStageFlags type, U32 space, U32 slot, ResourceView view) override;
+        ShaderProgramBinder&   bindConstantBuffer(ShaderStageFlags type, U32 space, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data = nullptr) override;
+        ShaderProgramBinder&   bindConstantBuffer(ShaderStageFlags type, U32 space, U32 slot, ResourceView view) override;
+        ShaderProgramBinder&   bindSampler(ShaderStageFlags type, U32 space, U32 slot, GraphicsSampler* ppSampler) override;
+
+#if defined(RECLUSE_EXPERIMENTAL)
+        ShaderProgramBinder&   bindResourceTable(ShaderStageFlags type, U32 space, void* table) override;
+        ShaderProgramBinder&   bindSamplerTable(ShaderStageFlags type, U32 space, void* table) override;
+#endif
+
         ContextState&           currentState();
         ShaderProgramReflection* getReflection() const { return reflectionCache; }
     private:
@@ -219,7 +225,7 @@ public:
         currentState().markPipelineDirty();
     }
     
-    IShaderProgramBinder& bindShaderProgram(ShaderProgramId program, U32 permutation) override 
+    ShaderProgramBinder& bindShaderProgram(ShaderProgramId program, U32 permutation) override 
     { 
         currentState().m_pipelineStructure.state.shaderProgramId = program; 
         currentState().m_pipelineStructure.state.shaderPermutation = permutation; 
@@ -351,6 +357,8 @@ private:
     VulkanQueue*                                                        m_graphicsQueue;
     VulkanQueue*                                                        m_computeQueue;
     VulkanShaderProgramBinder                                           m_shaderProgramBinder;
+
+    MemoryArena                                                         m_tableArena;
 };
 
 

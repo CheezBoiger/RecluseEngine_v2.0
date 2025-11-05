@@ -54,10 +54,15 @@ struct D3D12MemoryPool
 
 struct D3D12MemoryObject 
 {
+    // The native handle from the api.
     ID3D12Resource*         pResource;
+    // Size of the object, in bytes.
     U64                     sizeInBytes;
+    // The base address of this object, where it resides in the memory heap.
     UPtr                    basePtr;
+    // The index to the allocator list that this object was allocated from.
     U32                     allocatorIndex;
+    // The memory usage by this object.
     ResourceMemoryUsage     usage;
 };
 

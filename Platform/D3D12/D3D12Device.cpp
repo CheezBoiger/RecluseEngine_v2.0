@@ -29,6 +29,13 @@ void D3D12Context::initialize()
     manager->update(update);    
     // Preallocate to 256 possible barriers in a sitting.
     m_barrierTransitions.reserve(256);
+
+    m_tableArena.preAllocate(sizeof(LinearAllocator) + R_MB(1));
+#if defined(RECLUSE_EXPERIMENTAL)
+    m_tableAllocator = new (reinterpret_cast<void*>(m_tableArena.getBaseAddress())) LinearAllocator();
+    m_tableAllocator->initialize(m_tableArena.getPtrAddressAt(sizeof(LinearAllocator)),
+        m_tableArena.getTotalSizeBytes() - sizeof(LinearAllocator));
+#endif
 }
 
 
@@ -39,6 +46,8 @@ void D3D12Context::release()
         destroyCommandList(m_pPrimaryCommandList);
         m_pPrimaryCommandList = nullptr;
     }
+
+    m_tableArena.release();
 
     destroyBufferResources();
 }
@@ -305,6 +314,11 @@ void D3D12Context::prepare()
     pHeaps[0] = shaderVisibleHeap->get(GpuHeapType_CbvSrvUav).getNative();
     pHeaps[1] = shaderVisibleHeap->get(GpuHeapType_Sampler).getNative();
     m_pPrimaryCommandList->bindDescriptorHeaps(pHeaps, 2);
+
+#if defined(RECLUSE_EXPERIMENTAL)
+    // Reset the allocator.
+    m_tableAllocator->reset();
+#endif
 }
 
 

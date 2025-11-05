@@ -56,6 +56,13 @@ void VulkanContext::initialize(U32 bufferCount)
     config.garbageBufferCount = bufferCount;
     config.frameIndex = m_currentContextFrameIndex;
     allocManager->update(config);
+
+    m_tableArena.preAllocate(sizeof(LinearAllocator) + R_MB(1));
+#if defined(RECLUSE_EXPERIMENTAL)
+    m_tableAllocator = new (reinterpret_cast<void*>(m_tableArena.getBaseAddress())) LinearAllocator();
+    m_tableAllocator->initialize(m_tableArena.getPtrAddressAt(sizeof(LinearAllocator)),
+        m_tableArena.getTotalSizeBytes() - sizeof(LinearAllocator));
+#endif
 }
 
 
@@ -72,6 +79,9 @@ void VulkanContext::release()
     destroyPrimaryCommandList();
     destroyCommandPools();
     destroyContextFrames();
+
+    m_tableArena.release();
+
     // Ensure we no longer have any buffers.
     m_bufferCount = 0;
     m_currentContextFrameIndex = 0;
@@ -762,6 +772,10 @@ void VulkanContext::prepare()
     resetBinds();
     RenderPasses::updateTick(m_pDevice);
     Pipelines::update(m_pDevice->getDeviceId());
+
+#if defined(RECLUSE_EXPERIMENTAL)
+    m_tableAllocator->reset();
+#endif
 }
 
 

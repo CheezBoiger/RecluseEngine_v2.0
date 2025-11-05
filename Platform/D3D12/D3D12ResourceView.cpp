@@ -25,7 +25,7 @@ ResourceView makeResourceView(D3D12Device* pDevice, ID3D12Resource* pResource, c
     D3D12GraphicsResourceView* pView = new D3D12GraphicsResourceView(description);
     pView->initialize(pDevice, pResource);
 
-    ResourceView resourceViewId = { pView->getCpuDescriptor().ptr };
+    ResourceView resourceViewId = { pView->getCpuDescriptor().ptr, description.type };
     g_resourceViewMap.insert(std::make_pair(resourceViewId.ptr, pView));
     return resourceViewId;
 }

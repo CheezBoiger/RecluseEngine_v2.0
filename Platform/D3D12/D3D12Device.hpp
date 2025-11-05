@@ -41,20 +41,24 @@ class D3D12Context : public GraphicsContext
 {
 private:
     struct ContextState;
-    class D3D12ShaderProgramBinder : public IShaderProgramBinder
+    class D3D12ShaderProgramBinder : public ShaderProgramBinder
     {
     public:
         D3D12ShaderProgramBinder(D3D12Context* context = nullptr, ShaderProgramId programId = ~0, ShaderPermutationId permutationId = ~0)
-            : IShaderProgramBinder(programId, permutationId)
+            : ShaderProgramBinder(programId, permutationId)
             , m_pContext(context)
             , cachedProgram(nullptr)
             , cachedReflection(nullptr)
         { obtainShaderProgramFromCache(); }
-        IShaderProgramBinder& bindShaderResource(ShaderStageFlags type, U32 space, U32 slot, ResourceView view) override;
-        IShaderProgramBinder& bindUnorderedAccessView(ShaderStageFlags type, U32 space, U32 slot, ResourceView view) override;
-        IShaderProgramBinder& bindConstantBuffer(ShaderStageFlags type, U32 space, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data = nullptr) override;
-        IShaderProgramBinder& bindConstantBuffer(ShaderStageFlags type, U32 space, U32 slot, ResourceView view) override;
-        IShaderProgramBinder& bindSampler(ShaderStageFlags type, U32 space, U32 slot, GraphicsSampler* pSampler) override;
+        ShaderProgramBinder& bindShaderResource(ShaderStageFlags type, U32 space, U32 slot, ResourceView view) override;
+        ShaderProgramBinder& bindUnorderedAccessView(ShaderStageFlags type, U32 space, U32 slot, ResourceView view) override;
+        ShaderProgramBinder& bindConstantBuffer(ShaderStageFlags type, U32 space, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data = nullptr) override;
+        ShaderProgramBinder& bindConstantBuffer(ShaderStageFlags type, U32 space, U32 slot, ResourceView view) override;
+        ShaderProgramBinder& bindSampler(ShaderStageFlags type, U32 space, U32 slot, GraphicsSampler* pSampler) override;
+#if defined(RECLUSE_EXPERIMENTAL)
+        ShaderProgramBinder& bindResourceTable(ShaderStageFlags type, U32 space, void* table) override;
+        ShaderProgramBinder& bindSamplerTable(ShaderStageFlags type, U32 space, void* table) override;
+#endif
         ContextState& currentState();
         ShaderProgramReflection* getReflection() const { return cachedReflection; }
     private:
@@ -121,7 +125,7 @@ public:
     void                                setScissors(U32 numScissors, Rect* pRects) override;
     void                                setViewports(U32 numViewports, Viewport* pViewports) override;
 
-    IShaderProgramBinder&               bindShaderProgram(ShaderProgramId program, U32 permutation) override;
+    ShaderProgramBinder&                bindShaderProgram(ShaderProgramId program, U32 permutation) override;
     void                                bindRenderTargets(U32 count, ResourceView* ppResources, ResourceView pDepthStencil = {}) override;
 
     void                                drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstVertex, U32 firstInstance) override;
@@ -233,6 +237,8 @@ private:
     D3D12Queue*                         m_graphicsQueue;
     D3D12Queue*                         m_computeQueue;
     D3D12ShaderProgramBinder            m_shaderProgramBinder;
+
+    MemoryArena                         m_tableArena;
 };
 
 // Direct3D12 Device.

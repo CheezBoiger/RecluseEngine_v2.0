@@ -66,6 +66,22 @@ public:
 
     D3D12_CPU_DESCRIPTOR_HANDLE getDescriptor() const { return m_handle; }
 
+    SamplerState state() override 
+    {
+        struct NativeSamplerState {
+            D3D12_CPU_DESCRIPTOR_HANDLE handle;
+            U64 type;
+        } samplerState;
+          
+        static_assert(sizeof(samplerState) == sizeof(SamplerState), "Native sampler state does not match the api sampler state size.");
+
+        SamplerState state = {};
+        NativeSamplerState* native = (NativeSamplerState*)&state;
+        native->handle  = m_handle;
+        native->type    = 1;
+        return state;
+    }
+
 private:
 
     static U64 kSamplerCreationCounter;

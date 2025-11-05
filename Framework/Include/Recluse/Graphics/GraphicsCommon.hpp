@@ -17,6 +17,9 @@ struct ResourceView
     U64 ext;
 };
 
+// Similar to sampler state.
+typedef ResourceView SamplerState;
+
 enum BindType 
 {
     BindType_Graphics,

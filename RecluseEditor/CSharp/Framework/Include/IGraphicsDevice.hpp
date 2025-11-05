@@ -576,23 +576,23 @@ private:
 };
 
 
-public ref class ShaderProgramBinder
+public ref class CShaderProgramBinder
 {
 public:
-    ShaderProgramBinder(IShaderProgramBinder& binder);
+    CShaderProgramBinder(ShaderProgramBinder& binder);
 
-    ShaderProgramBinder^ BindShaderResource(CSharp::ShaderStage Stage, System::UInt32 Space, System::UInt32 Slot, System::UIntPtr View);
-    ShaderProgramBinder^ BindUnorderedAccessView(CSharp::ShaderStage Stage, System::UInt32 Space, System::UInt32 Slot, System::UIntPtr View);
-    ShaderProgramBinder^ BindConstantBuffer(CSharp::ShaderStage Stage, 
+    CShaderProgramBinder^ BindShaderResource(CSharp::ShaderStage Stage, System::UInt32 Space, System::UInt32 Slot, System::UIntPtr View);
+    CShaderProgramBinder^ BindUnorderedAccessView(CSharp::ShaderStage Stage, System::UInt32 Space, System::UInt32 Slot, System::UIntPtr View);
+    CShaderProgramBinder^ BindConstantBuffer(CSharp::ShaderStage Stage, 
         System::UInt32 Space,
         System::UInt32 Slot, 
         IResource^ Resource, 
         System::UInt32 OffsetBytes, 
         System::UInt32 SizeBytes, 
         array<System::Byte>^ Data);
-    ShaderProgramBinder^ BindSampler(CSharp::ShaderStage Stage, System::UInt32 Space, System::UInt32 Slot, ISampler^ Sampler);
+    CShaderProgramBinder^ BindSampler(CSharp::ShaderStage Stage, System::UInt32 Space, System::UInt32 Slot, ISampler^ Sampler);
 private:
-    IShaderProgramBinder& ShaderProgram;
+    ShaderProgramBinder& ShaderProgram;
 };
 
 
@@ -644,7 +644,7 @@ public:
     void DrawIndexedInstanced(System::Int32 IndexCount, System::Int32 InstanceCount, System::Int32 FirstIndex, System::Int32 VertexOffset, System::Int32 FirstInstance);
     void DrawInstanced(System::Int32 VertexCount, System::Int32 InstanceCount, System::Int32 FirstVertex, System::Int32 FirstInstance);
     void Dispatch(System::Int32 X, System::Int32 Y, System::Int32 Z);
-    ShaderProgramBinder^ BindShaderProgram(System::UInt64 ProgramId, System::UInt32 Permutation);
+    CShaderProgramBinder^ BindShaderProgram(System::UInt64 ProgramId, System::UInt32 Permutation);
 
     void SetScissors(array<CSharp::Rect^>^ Rects);
     void SetViewports(array<CSharp::Viewport^>^ Viewports);

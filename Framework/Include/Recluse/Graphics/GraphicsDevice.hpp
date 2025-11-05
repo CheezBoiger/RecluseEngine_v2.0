@@ -11,6 +11,8 @@
 #include "Recluse/Graphics/ShaderProgram.hpp"
 #include "Recluse/Math/Vector4.hpp"
 
+#include "Recluse/Memory/Allocator.hpp"
+
 #include "RecluseFramework_exports.hpp"
 
 namespace Recluse {
@@ -36,34 +38,46 @@ enum ContextFlag
     ContextFlag_InheritPipelineState = (1 << 0)
 };
 
-
 // Shader program binder stores the current bound shader program that will be used for the upcoming drawcalls.
 // It will also check any new binds, and create/manage any descriptor sets accordingly. Usually called when 
 // user binds a ShaderProgram during graphics recording.
-class IShaderProgramBinder
+class ShaderProgramBinder
 {
 public:
-    virtual ~IShaderProgramBinder() { }
-    IShaderProgramBinder(ShaderProgramId programId, ShaderPermutationId permutationId)
+    virtual ~ShaderProgramBinder() { }
+    ShaderProgramBinder(ShaderProgramId programId, ShaderPermutationId permutationId)
         : m_programId(programId), m_permutation(permutationId) { }
 
-#if defined(RECLUSE_EXPERIMENTAL)
-    // Resource table structure.
-    struct ResourceTable
+    explicit ShaderProgramBinder(ShaderProgramBinder& binder) 
+        : m_programId(binder.m_programId), m_permutation(binder.m_permutation){ }
+
+    explicit ShaderProgramBinder(ShaderProgramBinder&& binder) noexcept 
+        : m_programId(binder.m_programId), m_permutation(binder.m_permutation){ }
+
+    virtual ShaderProgramBinder& operator=(ShaderProgramBinder& binder)
     {
-        ResourceTable& bindShaderResource(U32 slot, ResourceView view);
-        Resourceable& bindUnorderedAccessView(U32 slot, ResourceView view);
-        ResourceTable& bindConstantBuffer(U32 slot, ResourceView view);
-        ResourceTable& bindSampler(U32 slot, GraphicsSampler* sampler);
-    };
+        m_programId = binder.m_programId;
+        m_permutation = binder.m_permutation;
+        return (*this);
+    }
 
-    // Allocate a resource table for binding.
-    ResourceTable makeResourceTable();
+    virtual ShaderProgramBinder& operator=(ShaderProgramBinder&& binder) noexcept
+    {
+        m_programId = binder.m_programId;
+        m_permutation = binder.m_permutation;
+        return (*this);
+    }
 
+#if defined(RECLUSE_EXPERIMENTAL)
     // Binds a resource table to this shader program, to be used for binding.
     // \param type The shader types that this table will be bound to.
-    // \param parameter The parameter where the resource table should be bound to.
-    virtual IShaderProgramBinder& bindResourceTable(ShaderStageFlags type, U32 parameter, ResourceTable& table);
+    // \param space The space where the resource table should be bound to.
+    virtual ShaderProgramBinder& bindResourceTable(ShaderStageFlags type, U32 space, void* table) { return (*this); }
+
+    // Binds a sampler table to this shader program, to be used for binding.
+    // \param type The shader types that this table will be bound to.
+    // \param space The space where the samplertable should be bound to.
+    virtual ShaderProgramBinder& bindSamplerTable(ShaderStageFlags type, U32 space, void* table) { return (*this); }
 #endif
     // Binds a shader resource to the currently bound shader program. Shader Resource must be a view type.
     // \param type The Shader types that this view will be bound to.
@@ -72,7 +86,7 @@ public:
     //             order written in the shader for Vulkan (independent of the binding value.)
     // \param view The actual View of the shader resource to bind to the shader program.
     // \return The same ShaderProgramBinder instance.
-    virtual IShaderProgramBinder& bindShaderResource(ShaderStageFlags type, U32 space, U32 slot, ResourceView view) { return (*this); }
+    virtual ShaderProgramBinder& bindShaderResource(ShaderStageFlags type, U32 space, U32 slot, ResourceView view) { return (*this); }
 
     // Binds an unordered access resource to the currently bound shader program. The Unordered Access must be a view type.
     // \param type The Shader types that this view will be bound to.
@@ -81,7 +95,7 @@ public:
     //             order written in the shader for Vulkan (independent of the binding value.)
     // \param view The actual view of the unordered access resoruce to bind to the shader program.
     // \return The same ShaderProgramBinder instance.
-    virtual IShaderProgramBinder& bindUnorderedAccessView(ShaderStageFlags type, U32 space, U32 slot, ResourceView view) { return (*this); }
+    virtual ShaderProgramBinder& bindUnorderedAccessView(ShaderStageFlags type, U32 space, U32 slot, ResourceView view) { return (*this); }
 
 
     // Binds a constant buffer view to the currently bound shader program. The constant buffer must be a view type.
@@ -91,7 +105,7 @@ public:
     //             order written in the shader for vulkan (independent of the binding value.)
     // \param view The actual view of the constant buffer to bind the shader program.
     // \return The same ShaderProgramBinder instance.
-    virtual IShaderProgramBinder& bindConstantBuffer(ShaderStageFlags type, U32 space, U32 slot, ResourceView cbv) { return (*this); } 
+    virtual ShaderProgramBinder& bindConstantBuffer(ShaderStageFlags type, U32 space, U32 slot, ResourceView cbv) { return (*this); } 
 
     // Bind a constant buffer that links to certain shaders in the program. Define the slot in the shader program as well.
     // The pResource is the constant buffer resource to be bound, the offsetBytes is the offset in the pResource, along with the 
@@ -99,7 +113,7 @@ public:
     // they wish to host-device copy to the pResource (pResource must be host copyable.)
     // \param space The space that the resource will be bound to, this is the unique set index (in vulkan terms.)
     // \return The same ShaderProgramBinder instance.
-    virtual IShaderProgramBinder& bindConstantBuffer(ShaderStageFlags type, U32 space, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data = nullptr) { return (*this); }
+    virtual ShaderProgramBinder& bindConstantBuffer(ShaderStageFlags type, U32 space, U32 slot, GraphicsResource* pResource, U32 offsetBytes, U32 sizeBytes, void* data = nullptr) { return (*this); }
     
     // Binds a sampler resource to the currently bound shader program. Sampler must be a handle.
     // \param type The Shader types that this sampler will be bound to.
@@ -108,7 +122,7 @@ public:
     //             order written in the shader for Vulkan (independent of the binding value.)
     // \param pSampler The actual sampler handle used to bind to the shader program.
     // \return The same ShaderProgramBinder instance.
-    virtual IShaderProgramBinder& bindSampler(ShaderStageFlags type, U32 space, U32 slot, GraphicsSampler* pSampler) { return (*this); }
+    virtual ShaderProgramBinder& bindSampler(ShaderStageFlags type, U32 space, U32 slot, GraphicsSampler* pSampler) { return (*this); }
 
     // Return the currently bound program id.
     ShaderProgramId               getProgramId() const { return m_programId; }
@@ -145,6 +159,12 @@ class GraphicsContext : public ICastableObject
 {
 public:
     virtual ~GraphicsContext() { }
+
+    GraphicsContext() 
+#if defined(RECLUSE_EXPERIMENTAL)
+        : m_tableAllocator(nullptr) 
+#endif
+    { }
 
     // Begin the rendering context recording. This must be called before you conduct drawcalls.
     // Once finished, be sure to call end().
@@ -289,7 +309,7 @@ public:
     virtual void                    setTopology(PrimitiveTopology topology) { }
 
     // Sets the shader program, and provides the program binder to bind the necessary resources.
-    virtual IShaderProgramBinder&   bindShaderProgram(ShaderProgramId program, U32 permutation = 0u) = 0;    
+    virtual ShaderProgramBinder&    bindShaderProgram(ShaderProgramId program, U32 permutation = 0u) = 0;    
     virtual void                    bindRenderTargets(U32 count, ResourceView* ppResources, ResourceView pDepthStencil = {}) { }
 
     virtual void                    enableDepth(Bool enable) { }
@@ -351,6 +371,32 @@ public:
 
     // Ends a query capture. Should be called after every beginQuery() call.
     virtual void                    endQuery(const GraphicsQuery& query) { }
+
+#if defined(RECLUSE_EXPERIMENTAL)
+    // Allocate a resource table for binding.
+    template<typename ResourceTable>
+    ResourceTable* allocateResourceTable()
+    {
+        R_ASSERT(m_tableAllocator);
+        UPtr ptr = m_tableAllocator->allocate(sizeof(ResourceTable) + sizeof(ResourceView), 1);
+        *(ResourceView*)(ptr + sizeof(ResourceTable)) = { 0, 0 };
+        return new ((void*)ptr) ResourceTable();
+    }
+
+    // Allocate a sampler table for binding.
+    template<typename SamplerTable>
+    SamplerTable* allocateSamplerTable()
+    {
+        R_ASSERT(m_tableAllocator);
+        UPtr ptr = m_tableAllocator->allocate(sizeof(SamplerTable) + sizeof(GraphicsSampler), 1);
+        *(GraphicsSampler**)(ptr + sizeof(SamplerTable)) = nullptr;
+        return new (ptr) SamplerTable();
+    }
+protected:
+    // Unprotected allocator, this is a reference.
+    Allocator*                    m_tableAllocator;
+
+#endif
 };
 
 
