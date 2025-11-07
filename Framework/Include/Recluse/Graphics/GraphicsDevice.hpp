@@ -38,6 +38,28 @@ enum ContextFlag
     ContextFlag_InheritPipelineState = (1 << 0)
 };
 
+struct LayoutBindRange
+{
+    // t# is used for srvs
+    // u# is used for uavs
+    // b# is used for cbuffers.
+    DescriptorBindType bindType;
+    U32 range;
+};
+
+struct ResourceTable
+{
+    LayoutBindRange range0[2] = {  
+        { DescriptorBindType_ConstantBuffer, 12 },
+        { DescriptorBindType_ShaderResource, 12 }
+    };
+
+    LayoutBindRange range1[2] = {
+        { DescriptorBindType_ConstantBuffer, 1 },
+        { DescriptorBindType_UnorderedAccess, 2 }
+    };
+};
+
 // Shader program binder stores the current bound shader program that will be used for the upcoming drawcalls.
 // It will also check any new binds, and create/manage any descriptor sets accordingly. Usually called when 
 // user binds a ShaderProgram during graphics recording.

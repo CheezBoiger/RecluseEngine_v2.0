@@ -74,7 +74,7 @@ ResultCode DxilReflection::reflect(ShaderReflectionInformation& reflectionOutput
         shaderReflection->GetResourceBindingDesc(resourceIdx, &shaderInputDesc);
 
         U32 space = shaderInputDesc.Space;
-        UINT bindRange = shaderInputDesc.BindPoint + shaderInputDesc.BindCount;
+        UINT bindRange = shaderInputDesc.BindCount;
             
         if (space >= reflectionOutput.perSetMetadata.size())
             reflectionOutput.perSetMetadata.resize(space + 1);
@@ -87,8 +87,9 @@ ResultCode DxilReflection::reflect(ShaderReflectionInformation& reflectionOutput
             case D3D_SHADER_INPUT_TYPE::D3D_SIT_CBUFFER:
             {
                 metadata.baseCbv = Math::minimum(metadata.baseCbv, static_cast<U8>(shaderInputDesc.BindPoint));
-                for (UINT bind = shaderInputDesc.BindPoint; bind < bindRange; ++bind)
+                for (UINT bindIdx = 0; bindIdx < bindRange; ++bindIdx)
                 {
+                    UINT bind = shaderInputDesc.BindPoint + bindIdx;
                     reflectionOutput.cbvs.push_back(static_cast<ShaderBind>(packShaderBind(space, bind)));
                     metadata.numCbvs += 1;
                 }
@@ -100,8 +101,9 @@ ResultCode DxilReflection::reflect(ShaderReflectionInformation& reflectionOutput
             case D3D_SHADER_INPUT_TYPE::D3D_SIT_TEXTURE:
             {
                 metadata.baseSrv = Math::minimum(metadata.baseSrv, static_cast<U8>(shaderInputDesc.BindPoint));
-                for (UINT bind = shaderInputDesc.BindPoint; bind < bindRange; ++bind)
+                for (UINT bindIdx = 0; bindIdx < bindRange; ++bindIdx)
                 {
+                    UINT bind = shaderInputDesc.BindPoint + bindIdx;
                     reflectionOutput.srvs.push_back(static_cast<ShaderBind>(packShaderBind(space, bind)));                    
                     metadata.numSrvs += 1;
                 }
@@ -110,8 +112,9 @@ ResultCode DxilReflection::reflect(ShaderReflectionInformation& reflectionOutput
             case D3D_SHADER_INPUT_TYPE::D3D_SIT_SAMPLER:
             {
                 metadata.baseSampler = Math::minimum(metadata.baseSampler, static_cast<U8>(shaderInputDesc.BindPoint));
-                for (UINT bind = shaderInputDesc.BindPoint; bind < bindRange; ++bind)
+                for (UINT bindIdx = 0; bindIdx < bindRange; ++bindIdx)
                 {
+                    UINT bind = shaderInputDesc.BindPoint + bindIdx;
                     reflectionOutput.samplers.push_back(static_cast<ShaderBind>(packShaderBind(space, bind)));                    
                     metadata.numSamplers += 1;
                 }
@@ -125,8 +128,9 @@ ResultCode DxilReflection::reflect(ShaderReflectionInformation& reflectionOutput
             case D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_RWTYPED:
             {
                 metadata.baseUav = Math::minimum(metadata.baseUav, static_cast<U8>(shaderInputDesc.BindPoint));
-                for (UINT bind = shaderInputDesc.BindPoint; bind < bindRange; ++bind)
+                for (UINT bindIdx = 0; bindIdx < bindRange; ++bindIdx)
                 {
+                    UINT bind = shaderInputDesc.BindPoint + bindIdx;
                     reflectionOutput.uavs.push_back(static_cast<ShaderBind>(packShaderBind(space, bind)));                    
                     metadata.numUavs += 1;
                 }

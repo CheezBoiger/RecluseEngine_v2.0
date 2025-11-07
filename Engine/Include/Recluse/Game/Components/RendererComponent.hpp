@@ -22,6 +22,10 @@ enum RenderUpdateFlag
 
 enum RenderModel
 {
+    // Object is persistently static, meaning it should not update at all, regardless if 
+    // it should be dynamic in the future. This configuration is permanent until the 
+    // end of the lifetime of the object.
+    RenderModel_StaticPersistant,
     // Object is static, does not move or require consistent updates.
     RenderModel_Static,
     // Model is dynamic, requires consistent updates as it moves in the world.

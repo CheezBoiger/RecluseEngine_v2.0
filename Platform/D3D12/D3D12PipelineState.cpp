@@ -36,7 +36,7 @@ namespace Pipelines {
 
 
 std::map<DeviceId, LifetimeCache<PipelineStateId, ID3D12PipelineState*>> g_pipelineStateMap;
-std::map<DeviceId, std::unordered_map<Hash64, ID3D12RootSignature*>> m_rootSignatures;
+std::map<DeviceId, LifetimeCache<Hash64, ID3D12RootSignature*>>          g_rootSignatures;
 
 
 R_DECLARE_GLOBAL_U32(g_d3d12MaxPipelineAge, 256, "D3D12.MaxPipelineAge");
@@ -669,15 +669,14 @@ ID3D12RootSignature* makeRootSignature(D3D12Device* pDevice, const RootSigLayout
     ID3D12RootSignature* rootSignature = nullptr;
     Hash64 hash = layout.hash0;
     DeviceId deviceId = pDevice->getDeviceId();
-    auto iter = m_rootSignatures[deviceId].find(hash);
-    if (iter == m_rootSignatures[deviceId].end())
+    if (!g_rootSignatures[deviceId].inCache(hash))
     {
         rootSignature = internalCreateRootSignatureWithTable(pDevice->get(), layout);
-        m_rootSignatures[deviceId].insert(std::make_pair(hash, rootSignature));
+        g_rootSignatures[deviceId].insert(hash, std::move(rootSignature));
     }
     else
     {
-        rootSignature = iter->second;
+        rootSignature = *g_rootSignatures[deviceId].refer(hash);
     }
     return rootSignature;
 }
@@ -773,12 +772,16 @@ CpuDescriptorTable              makeDescriptorSamplertable(D3D12Device* pDevice,
 
 void cleanUpRootSigs(DeviceId deviceId)
 {
-    for (auto rootsig : m_rootSignatures[deviceId])
-    {
-        rootsig.second->Release();
-    }
 
-    m_rootSignatures[deviceId].clear();
+    g_rootSignatures[deviceId].forEach(
+        [] (Hash64, ID3D12RootSignature* rootSignature) -> void 
+        {
+            R_DEBUG(R_CHANNEL_D3D12, "Destroying root signature.");
+            rootSignature->Release();
+        }
+    );
+
+    g_rootSignatures[deviceId].clear();
 }
 
 
@@ -808,6 +811,7 @@ void cleanUpPipelines(DeviceId deviceId)
 void updateT(D3D12Device* pDevice)
 {
     g_pipelineStateMap[pDevice->getDeviceId()].updateTick();
+    g_rootSignatures[pDevice->getDeviceId()].updateTick();
 }
 
 
@@ -817,6 +821,12 @@ void checkPipelines(D3D12Device* pDevice)
         {
             R_DEBUG(R_CHANNEL_D3D12, "Destroying pipeline.");
             pipelineState->Release();
+        });
+
+    g_rootSignatures[pDevice->getDeviceId()].check(g_d3d12MaxPipelineAge, [] (Hash64, ID3D12RootSignature* rootSignature) -> void 
+        {
+            R_DEBUG(R_CHANNEL_D3D12, "Destroying root signature");
+            rootSignature->Release();
         });
 }
 
