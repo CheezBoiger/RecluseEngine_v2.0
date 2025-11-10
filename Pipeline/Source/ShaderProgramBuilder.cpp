@@ -363,37 +363,46 @@ ShaderProgramDefinition makeShaderProgramDefinition(ShaderProgramDatabase& db, c
         for (const auto& set : reflectionSets)
         {
             u32 i = 0;
+            U8 srvCount = 0;
+            U8 cbvCount = 0;
+            U8 uavCount = 0;
+            U8 samplerCount = 0;
+
             for (ShaderBind shaderBind : set.second.cbvSet)
             {
                 U32 space = ShaderReflectionInformation::unpackShaderSet(shaderBind);
-                //U32 bind = ShaderReflectionInformation::unpackShaderBind(shaderBind);
-                programReflection.sets[space].cbvs[i++] = shaderBind;
+                U32 bind = ShaderReflectionInformation::unpackShaderBind(shaderBind);
+                programReflection.sets[space].cbvs[bind] = bind;
+                cbvCount = Math::maximum<U8>(cbvCount, bind+1);
             }
             i = 0;
             for (ShaderBind shaderBind : set.second.srvSet)
             {
                 U32 space = ShaderReflectionInformation::unpackShaderSet(shaderBind);
-                //U32 bind = ShaderReflectionInformation::unpackShaderBind(shaderBind);
-                programReflection.sets[space].srvs[i++] = shaderBind;
+                U32 bind = ShaderReflectionInformation::unpackShaderBind(shaderBind);
+                programReflection.sets[space].srvs[bind] = bind;
+               srvCount = Math::maximum<U8>(srvCount, bind+1);
             }
             i = 0;
             for (ShaderBind shaderBind : set.second.uavSet)
             {
                 U32 space = ShaderReflectionInformation::unpackShaderSet(shaderBind);
-                //U32 bind = ShaderReflectionInformation::unpackShaderBind(shaderBind);
-                programReflection.sets[space].uavs[i++] = shaderBind;
+                U32 bind = ShaderReflectionInformation::unpackShaderBind(shaderBind);
+                programReflection.sets[space].uavs[bind] = bind;
+                uavCount = Math::maximum<U8>(uavCount, bind+1);
             }
             i = 0;
             for (ShaderBind shaderBind : set.second.samplerSet)
             {
                 U32 space = ShaderReflectionInformation::unpackShaderSet(shaderBind);
-                //U32 bind = ShaderReflectionInformation::unpackShaderBind(shaderBind);
-                programReflection.sets[space].samplers[i++] = shaderBind;
+                U32 bind = ShaderReflectionInformation::unpackShaderBind(shaderBind);
+                programReflection.sets[space].samplers[bind] = bind;
+                samplerCount = Math::maximum<U8>(samplerCount, bind+1);
             }
-            programReflection.sets[set.first].numCbvs = static_cast<U8>(set.second.cbvSet.size());
-            programReflection.sets[set.first].numSrvs = static_cast<U8>(set.second.srvSet.size());
-            programReflection.sets[set.first].numUavs = static_cast<U8>(set.second.uavSet.size());
-            programReflection.sets[set.first].numSamplers = static_cast<U8>(set.second.samplerSet.size());
+            programReflection.sets[set.first].numCbvs = cbvCount;
+            programReflection.sets[set.first].numSrvs = srvCount;
+            programReflection.sets[set.first].numUavs = uavCount;
+            programReflection.sets[set.first].numSamplers = samplerCount;
             programReflection.sets[set.first].baseCbv = set.second.baseCbv;
             programReflection.sets[set.first].baseSrv = set.second.baseSrv;
             programReflection.sets[set.first].baseUav = set.second.baseUav;

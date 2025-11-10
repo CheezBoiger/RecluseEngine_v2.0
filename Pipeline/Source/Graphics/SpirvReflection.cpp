@@ -1,5 +1,6 @@
 //
 #include "Recluse/Pipeline/Graphics/Reflection/SpirvReflection.hpp"
+#include "Recluse/Math/MathCommons.hpp"
 
 #include "Recluse/Messaging.hpp"
 #include "SPIRV-Reflect/spirv_reflect.h"
@@ -38,6 +39,14 @@ ResultCode SpirvReflection::reflect(ShaderReflectionInformation& reflectionOutpu
         {
             SpvReflectDescriptorSet* set = descriptorSets[descriptorSetIdx];
             uint32_t bindingCount = set->binding_count;
+            std::vector<ShaderBind> cbvBindings;
+            std::vector<ShaderBind> srvsBindings;
+            std::vector<ShaderBind> uavBindings;
+            std::vector<ShaderBind> samplerBindings;
+            uint cbvOffset = 0xff;
+            uint srvOffset = 0xff;
+            uint uavOffset = 0xff;
+            uint samplerOffset = 0xff;
             for (uint32_t bindingIdx = 0; bindingIdx < bindingCount; ++bindingIdx)
             {
                 // Binds for GLSL is based on binding locations. This can vary, and is not in a table, so 
@@ -63,8 +72,10 @@ ResultCode SpirvReflection::reflect(ShaderReflectionInformation& reflectionOutpu
                     {
                         if (descriptorBind->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_SAMPLER)
                         {
+                            //reflectionOutput.samplers.push_back(shaderBind);
+                            samplerBindings.push_back(shaderBind);
+                            samplerOffset = Math::minimum((uint)dstBinding, samplerOffset);
                             metadata.numSamplers += 1;
-                            reflectionOutput.samplers.push_back(shaderBind);
                         }
                         break;
                     }
@@ -75,13 +86,17 @@ ResultCode SpirvReflection::reflect(ShaderReflectionInformation& reflectionOutpu
                         // their access in shader code.
                         if (descriptorBind->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_UAV)
                         {
+                            //reflectionOutput.uavs.push_back(shaderBind);
+                            uavBindings.push_back(dstBinding);
+                            uavOffset = Math::minimum((uint)dstBinding, (uint)uavOffset);
                             metadata.numUavs += 1;
-                            reflectionOutput.uavs.push_back(shaderBind);
                         }
                         if (descriptorBind->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_SRV)
                         {
+                            //reflectionOutput.srvs.push_back(shaderBind);
+                            srvsBindings.push_back(shaderBind);
+                            srvOffset = Math::minimum((uint)dstBinding, (uint)srvOffset);
                             metadata.numSrvs += 1;
-                            reflectionOutput.srvs.push_back(shaderBind);
                         }
                         break;
                     }
@@ -90,8 +105,10 @@ ResultCode SpirvReflection::reflect(ShaderReflectionInformation& reflectionOutpu
                     {
                         if (descriptorBind->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_SRV)
                         {
+                            //reflectionOutput.srvs.push_back(shaderBind);
+                            srvsBindings.push_back(shaderBind);
+                            srvOffset = Math::minimum((uint)dstBinding, (uint)srvOffset);
                             metadata.numSrvs += 1;
-                            reflectionOutput.srvs.push_back(shaderBind);
                         }
                         break;
                     }
@@ -99,13 +116,54 @@ ResultCode SpirvReflection::reflect(ShaderReflectionInformation& reflectionOutpu
                     {
                         if (descriptorBind->resource_type & SpvReflectResourceType::SPV_REFLECT_RESOURCE_FLAG_CBV)
                         {
+                            //reflectionOutput.cbvs.push_back(shaderBind);
+                            cbvBindings.push_back(shaderBind);
+                            cbvOffset = Math::minimum((uint)dstBinding, (uint)cbvOffset);
                             metadata.numCbvs += 1;
-                            reflectionOutput.cbvs.push_back(shaderBind);
                         }
                         break;
                     }
                 }
-                    
+            }
+            
+            // use the base factors as the offset.
+            ShaderReflectionInformation::Metadata& metadata = reflectionOutput.perSetMetadata[descriptorSetIdx];
+            metadata.baseCbv = cbvOffset;
+            metadata.baseSrv = metadata.numSrvs != 0 ? srvOffset : 0;
+            metadata.baseUav = metadata.numUavs != 0 ? uavOffset : 0;
+            metadata.baseSampler = metadata.numSamplers ? samplerOffset : 0;
+            
+            // Last pass is to add all bindings as a virtual offset.
+            for (U32 binding : cbvBindings)
+            {
+                U16 registerIdx = binding - metadata.baseCbv;
+                U16 space = ShaderReflectionInformation::unpackShaderSet(binding);
+                ShaderBind bind = ShaderReflectionInformation::packShaderBinding(space, registerIdx);
+                reflectionOutput.cbvs.push_back(bind);
+            }
+
+            for (U32 binding : srvsBindings)
+            {
+                U16 registerIdx = binding - metadata.baseSrv;
+                U16 space = ShaderReflectionInformation::unpackShaderSet(binding);
+                ShaderBind bind = ShaderReflectionInformation::packShaderBinding(space, registerIdx);
+                reflectionOutput.srvs.push_back(bind);
+            }
+
+            for (U32 binding : uavBindings)
+            {
+                U16 registerIdx = binding - metadata.baseUav;
+                U16 space = ShaderReflectionInformation::unpackShaderSet(binding);
+                ShaderBind bind = ShaderReflectionInformation::packShaderBinding(space, registerIdx);
+                reflectionOutput.uavs.push_back(bind);
+            }
+
+            for (U32 binding : samplerBindings)
+            {
+                U16 registerIdx = binding - metadata.baseSampler;
+                U16 space = ShaderReflectionInformation::unpackShaderSet(binding);
+                ShaderBind bind = ShaderReflectionInformation::packShaderBinding(space, registerIdx);
+                reflectionOutput.samplers.push_back(bind);
             }
         }
         spvReflectDestroyShaderModule(&reflectModule);

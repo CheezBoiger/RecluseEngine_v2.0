@@ -137,6 +137,24 @@ namespace Pipeline {
 
 #if defined RCL_GLSLANG
 
+class GlslIncluder : public glslang::TShader::Includer
+{
+public:
+    IncludeResult* includeLocal(const char* headerName, const char* includerName, size_t inclusionDepth) override
+    {
+        return nullptr;
+    }   
+
+    IncludeResult* includeSystem(const char* headerName, const char* includeName, size_t inclusionDepth) override
+    {
+        return nullptr;
+    }
+
+    void releaseInclude(IncludeResult* result) override
+    {
+    }
+};
+
 class GlslangShaderBuilder : public ShaderBuilder 
 {
 public:

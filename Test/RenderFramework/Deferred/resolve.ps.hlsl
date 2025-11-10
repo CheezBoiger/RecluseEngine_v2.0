@@ -27,20 +27,20 @@ struct Light
 //	float4x4 View;
 //};
 
-[[vk::binding(1)]] cbuffer LightView : register(b1)
+cbuffer LightView : register(b1)
 {
 	uint numLights;
 	float3 pad0;
 };
 
-[[vk::binding(2)]] Texture2D<float4> AlbedoTexture 		: register(t0);
-//[[vk::binding(3)]] Texture2D<float4> NormalTexture 		: register(t1);
-//[[vk::binding(4)]] Texture2D<float4> MaterialTexture 	: register(t2);
-//[[vk::binding(5)]] Texture2D<float4> DepthTexture  		: register(t3);
+Texture2D<float4> AlbedoTexture 		: register(t0);
+Texture2D<float4> NormalTexture 		: register(t1);
+Texture2D<float4> MaterialTexture 		: register(t2);
+Texture2D<float4> DepthTexture  		: register(t3);
 
-[[vk::binding(6)]] StructuredBuffer<Light> LightBuffer 	: register(t1);
+StructuredBuffer<Light> LightBuffer 	: register(t4);
 
-[[vk::binding(7)]] SamplerState g_sampler : register(s0);
+SamplerState g_sampler : register(s0);
 
 float4 psMain(PSIn pixIn) : SV_TARGET0
 {

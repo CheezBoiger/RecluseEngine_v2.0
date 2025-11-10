@@ -759,7 +759,9 @@ ShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindConstantBuffe
     if (reflectionCache) 
     {
         R_ASSERT(slot < reflectionCache->sets[space].cbvs.size());
-        binding = unpackVulkanBinding(reflectionCache->sets[space].cbvs[slot]);
+        U8 baseCbv = reflectionCache->sets[space].baseCbv;
+        U32 virtualBind = unpackVulkanBinding(reflectionCache->sets[space].cbvs[slot]); // This is a virtual bind now.
+        binding = baseCbv + virtualBind;
     }
     else
     {
@@ -788,7 +790,9 @@ ShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindShaderResourc
     if (reflectionCache)
     {
         R_ASSERT(slot < reflectionCache->sets[space].srvs.size());
-        binding = unpackVulkanBinding(reflectionCache->sets[space].srvs[slot]);
+        U32 virtualBind = unpackVulkanBinding(reflectionCache->sets[space].srvs[slot]);
+        U8 baseSrv = reflectionCache->sets[space].baseSrv;
+        binding = baseSrv + virtualBind;
     }
     else
     {
@@ -813,7 +817,9 @@ ShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindUnorderedAcce
     if (reflectionCache)
     {
         R_ASSERT(slot < reflectionCache->sets[space].uavs.size());
-        binding = unpackVulkanBinding(reflectionCache->sets[space].uavs[slot]);
+        U32 virtualBinding = unpackVulkanBinding(reflectionCache->sets[space].uavs[slot]);
+        U8 baseUav = reflectionCache->sets[space].baseUav;
+        binding = baseUav + virtualBinding;
     }
     else
     {
@@ -841,7 +847,9 @@ ShaderProgramBinder& VulkanContext::VulkanShaderProgramBinder::bindSampler(Shade
     if (reflectionCache)
     {
         R_ASSERT(slot < reflectionCache->sets[space].samplers.size());
-        binding = unpackVulkanBinding(reflectionCache->sets[space].samplers[slot]);
+        U32 virtualBinding = unpackVulkanBinding(reflectionCache->sets[space].samplers[slot]);
+        U8 baseSampler = reflectionCache->sets[space].baseSampler;
+        binding = baseSampler + virtualBinding;
     }
     else
     {

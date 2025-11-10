@@ -18,6 +18,52 @@ struct PreprocessDefine
 };
 
 
+class ReclusePipeline_PUBLIC_API ShaderPreprocessor
+{
+public:
+    ResultCode process(const char* sourceCodeData, U32 sourceCodeSizeBytes);
+
+    ShaderPreprocessor& addConstantDefine(const std::string& variableName, const std::string& value)
+    {
+        m_defines.push_back(PreprocessDefine{variableName, value});
+        return (*this);
+    }
+
+    const std::vector<char>& getOutput() {  return m_output; }
+
+    const std::vector<PreprocessDefine>& getDefines() const { return m_defines; }
+
+    void release() { m_output.clear(); m_output.resize(0); }
+
+protected:
+
+    virtual ResultCode onProcess(std::vector<char>& out, const char* sourceCodeString, U32 sourceCodeSizeBytes) = 0;
+
+    // Defines may be added by this preprocesor to append to the original source code.
+    // Maybe an overwrite function to replace something in the shader code.
+    std::vector<PreprocessDefine> m_defines;
+
+private:
+    std::vector<char> m_output;
+};
+
+
+// Handles processing of hlsl to glsl conversions.
+class ReclusePipeline_PUBLIC_API HlslToGlslPreprocessor : public ShaderPreprocessor
+{
+public:
+    ResultCode onProcess(std::vector<char>& out, const char* sourceCodeString, U32 sourceCodeSizeBytes) override;
+};
+
+
+// Handles processoing of glsl to hlsl conversions.
+class ReclusePipeline_PUBLIC_API GlslToHlslPreprocessor : public ShaderPreprocessor
+{
+public:
+    ResultCode onProcess(std::vector<char>& out, const char* sourceCodeString, U32 sourceCodeSizeBytes) override;
+};
+
+
 // ShaderBuilder, handles high level shading languages, and transforms them into
 // bytecode to be read to the gpu.
 class ReclusePipeline_PUBLIC_API ShaderBuilder 
@@ -72,11 +118,22 @@ public:
         );
 
     virtual ResultCode disassemble(std::vector<char>& output) { return RecluseResult_NoImpl; }
+
+    ResultCode  addSystemPath(const std::string& path);
+    ResultCode  addLocalPath(const std::string& path);
+
+    ResultCode  removeSystemPath(const std::string& path);
+    ResultCode  removeLocalPath(const std::string& path);
+
+    void        clearSystemPaths();
+    void        clearLocalPaths();
+
+    void        addPreprocessor(ShaderPreprocessor* preprocessor) { m_preprocessors.push_back(preprocessor); }
     
     // Is the builder for debug mode.
     Bool isDebugMode() const { return (m_builderConfig.option != Config::Disable); }
 
-    Config::OptimizationOption getOptimizationOption() const { return m_builderConfig.option; }
+    Config::OptimizationOption getOptimizationOption() const { return m_builderConfig .option; }
 
 private:
 
@@ -96,6 +153,11 @@ private:
     virtual ResultCode preprocessInputResources(ShaderLanguage lang, std::vector<char>& sourceCode);
 
     Config                  m_builderConfig;
+
+    std::map<Hash64, std::string> m_systemHeaderPaths;
+    std::map<Hash64, std::string> m_localHeaderPaths;
+
+    std::vector<ShaderPreprocessor*> m_preprocessors;
 };
 
 // Must be newly allocated.

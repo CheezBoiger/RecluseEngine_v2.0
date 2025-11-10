@@ -21,6 +21,7 @@ R_DECLARE_GLOBAL_STRING(g_shaderModel, "6_5", "DXC.ShaderModel");
 R_DECLARE_GLOBAL_STRING(g_meshShaderModel, "6_5", "DXC.MeshShaderTargetModel");
 R_DECLARE_GLOBAL_STRING(g_ampShaderModel, "6_5", "DXC.AmpShaderTargetModel");
 R_DECLARE_GLOBAL_BOOLEAN(g_meshShaderSpirvUseNV, false, "DXC.SpirvUseNVExtension");
+R_DECLARE_GLOBAL_BOOLEAN(g_useLegacyResourceReservation, true, "DXC.LegacyResourceReservation");
 
 namespace Recluse {
 namespace Pipeline {
@@ -109,7 +110,7 @@ public:
     {
         m_optimizationMap = { 
             { Config::Default, L"-O3" },
-            { Config::Disable, L"-O0" }
+            { Config::Disable, L"-Od" }
         }; 
     }
 
@@ -225,6 +226,12 @@ public:
                     arguments[argCount++] = L"-fspv-extension=SPV_EXT_mesh_shader";
                 }
             }
+        }
+
+        if (g_useLegacyResourceReservation)
+        {
+            // Maintain legacy resource binding, to prevent stripping if the resource is unused.
+            arguments[argCount++] = L"-flegacy-resource-reservation";
         }
 
         // Optimization settings
