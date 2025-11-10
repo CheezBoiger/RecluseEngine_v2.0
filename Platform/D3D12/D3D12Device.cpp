@@ -944,7 +944,7 @@ ResourceView D3D12Context::allocateConstantBuffer(U32 cbSizeBytes, void* cbInput
     desc.BufferLocation = object.pResource->GetGPUVirtualAddress() + object.basePtr;
     desc.SizeInBytes    = object.sizeInBytes;
 
-    D3D12_CPU_DESCRIPTOR_HANDLE handle = manager->allocateConstantBufferView(desc, true);
+    D3D12_CPU_DESCRIPTOR_HANDLE handle = manager->allocateConstantBufferView(desc, 1, true);
 
     return { handle.ptr };
 }

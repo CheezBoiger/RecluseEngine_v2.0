@@ -327,7 +327,7 @@ ShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindShaderResource(
     if (cachedReflection)
     {
         binding = unpackBindingRegister(cachedReflection->sets[space].srvs[slot]);
-        R_ASSERT_FORMAT(binding != 0xFFFF, "Binding not valid, would indicate this register is unused or not bound correctly (space%d, register=t%d", space, slot);
+        R_ASSERT_FORMAT(binding != 0xFFFF, "Binding not valid, would indicate this register is unused or not bound correctly (space%d, register=t%d)", space, slot);
         if (binding == 0xFFFF) return (*this);
     }
     else
@@ -381,7 +381,7 @@ ShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindConstantBuffer(
     if (cachedReflection)
     {
         binding = unpackBindingRegister(cachedReflection->sets[space].cbvs[slot]);
-        R_ASSERT_FORMAT(binding != 0xFFFF, "Binding not valid, would indicate this register is unused or not bound correctly (space%d, register=b%d", space, slot);
+        R_ASSERT_FORMAT(binding != 0xFFFF, "Binding not valid, would indicate this register is unused or not bound correctly (space%d, register=b%d)", space, slot);
         if (binding == 0xFFFF) return (*this);
     }
     else
@@ -406,7 +406,7 @@ ShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindUnorderedAccess
     if (cachedReflection)
     {
         binding = unpackBindingRegister(cachedReflection->sets[space].uavs[slot]);
-        R_ASSERT_FORMAT(binding != 0xFFFF, "Binding not valid, would indicate this register is unused or not bound correctly (space%d, register=u%d", space, slot);
+        R_ASSERT_FORMAT(binding != 0xFFFF, "Binding not valid, would indicate this register is unused or not bound correctly (space%d, register=u%d)", space, slot);
         if (binding == 0xFFFF) return (*this);
     }
     else
@@ -438,7 +438,7 @@ ShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindSampler(ShaderS
     if (cachedReflection)
     {
         binding = unpackBindingRegister(cachedReflection->sets[space].samplers[slot]);
-        R_ASSERT_FORMAT(binding != 0xFFFF, "Binding not valid, would indicate this register is unused or not bound correctly (space%d, register=s%d", space, slot);
+        R_ASSERT_FORMAT(binding != 0xFFFF, "Binding not valid, would indicate this register is unused or not bound correctly (space%d, register=s%d)", space, slot);
         if (binding == 0xFFFF) return (*this);
     }
     else
