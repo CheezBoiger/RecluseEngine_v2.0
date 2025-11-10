@@ -271,7 +271,11 @@ ResultCode HlslToGlslPreprocessor::onProcess(std::vector<char>& output, const ch
     for (uint i = 0; i < sourceCodeLines.size(); ++i)
     {
 
-        R_NOTIFY("HLSL To GLSL", "%s", sourceCodeLines[i].c_str());
+        if (m_debug)
+        {
+            R_NOTIFY("HLSL To GLSL", "%s", sourceCodeLines[i].c_str());
+        }
+
         for (char c : sourceCodeLines[i])
         {
             output.push_back(c);

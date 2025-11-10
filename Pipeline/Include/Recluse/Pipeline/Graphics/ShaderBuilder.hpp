@@ -34,7 +34,8 @@ public:
     const std::vector<PreprocessDefine>& getDefines() const { return m_defines; }
 
     void release() { m_output.clear(); m_output.resize(0); }
-
+    void setDebug(Bool enable) { m_debug = enable; }
+    Bool isDebugging() const { return m_debug; }
 protected:
 
     virtual ResultCode onProcess(std::vector<char>& out, const char* sourceCodeString, U32 sourceCodeSizeBytes) = 0;
@@ -42,6 +43,7 @@ protected:
     // Defines may be added by this preprocesor to append to the original source code.
     // Maybe an overwrite function to replace something in the shader code.
     std::vector<PreprocessDefine> m_defines;
+    Bool                            m_debug = false;
 
 private:
     std::vector<char> m_output;
