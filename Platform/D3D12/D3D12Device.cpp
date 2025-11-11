@@ -221,25 +221,25 @@ void D3D12Context::bindRenderTargets(U32 count, ResourceView* ppResources, Resou
         pList->OMSetRenderTargets(count, &rtvHandle, true, dsvHandle.ptr == DescriptorTable::invalidCpuAddress.ptr ? nullptr : &dsvHandle);
     
         currentState().m_currentRenderPass = pRenderPass;
-        currentState().m_pipelineStateObject.graphics.numRenderTargets = count;
+        currentState().m_pipelineStateObject.state.graphics.numRenderTargets = count;
 
         Bool shouldConfigPipeline = false;
         for (U32 i = 0; i < count; ++i)
         {
             DXGI_FORMAT format = pRenderPass->getRtvFormat(i);
-            if (format != currentState().m_pipelineStateObject.graphics.rtvFormats[i])
+            if (format != currentState().m_pipelineStateObject.state.graphics.rtvFormats[i])
                 shouldConfigPipeline = true;
-            currentState().m_pipelineStateObject.graphics.rtvFormats[i] = format;
+            currentState().m_pipelineStateObject.state.graphics.rtvFormats[i] = format;
         }
 
         if (dsvHandle.ptr != DescriptorTable::invalidCpuAddress.ptr)
         {
             DXGI_FORMAT format = pRenderPass->getDsvFormat();
-            if (format != currentState().m_pipelineStateObject.graphics.dsvFormat)
+            if (format != currentState().m_pipelineStateObject.state.graphics.dsvFormat)
             {
                 shouldConfigPipeline = true;
             }
-            currentState().m_pipelineStateObject.graphics.dsvFormat = format;
+            currentState().m_pipelineStateObject.state.graphics.dsvFormat = format;
         }
 
         if (shouldConfigPipeline)
@@ -515,6 +515,7 @@ void D3D12Context::resetCurrentResources()
 
     // Must always start with one main context state.
     m_contextStates.clear();
+    m_contextStates.resize(0);
     m_contextStates.push_back({ });
     clearResourceBinds();
 

@@ -39,9 +39,9 @@ Bool unloadAll(DeviceId deviceId);
 //      We need a better way to identify these structures.
 struct Structure
 {
-    struct 
+    struct State
     {
-        union 
+        union PipelineState
         {
             struct 
             {
@@ -59,10 +59,14 @@ struct Structure
                 U32 rayRecursionDepth;
                 
             } raytrace;
+
+            PipelineState() { graphics = { }; }
         } pipeline;
         std::vector<VkDescriptorSetLayout>  descriptorSetLayouts;
         ShaderProgramPermutation            shaderPermutation;
         ShaderProgramId                     shaderProgramId;
+
+        State() { }
     } state;
 
     void nullify();

@@ -200,6 +200,8 @@ private:
         // differrent render target views, but only care about the dxgi formats.
         D3D12RenderPass*                                m_currentRenderPass;
 
+        ContextState() { }
+
         void                                            setDirty(ContextDirtyFlags flags) { m_dirtyFlags |= flags; }
         void                                            setClean() { m_dirtyFlags = ContextDirty_Clean; }
         Bool                                            isDirty(ContextDirtyFlags flagsToCheck) { return (m_dirtyFlags & flagsToCheck); }

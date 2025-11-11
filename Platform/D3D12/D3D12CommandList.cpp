@@ -623,7 +623,7 @@ ShaderProgramBinder& D3D12Context::bindShaderProgram(ShaderProgramId program, U3
 
 void D3D12Context::bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBytes, IndexType type) 
 {
-    D3D12_INDEX_BUFFER_STRIP_CUT_VALUE currentStripValue = currentState().m_pipelineStateObject.graphics.indexStripCut;
+    D3D12_INDEX_BUFFER_STRIP_CUT_VALUE currentStripValue = currentState().m_pipelineStateObject.state.graphics.indexStripCut;
     D3D12_INDEX_BUFFER_STRIP_CUT_VALUE boundStripValue = getNativeStripCutValue(type);
     if (currentStripValue != boundStripValue)
     {
@@ -643,35 +643,35 @@ void D3D12Context::bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetByt
 
 void D3D12Context::setDepthClampEnable(Bool enable)
 {
-    currentState().m_pipelineStateObject.graphics.depthClampEnable = enable;
+    currentState().m_pipelineStateObject.state.graphics.depthClampEnable = enable;
     currentState().setDirty(ContextDirty_Pipeline);
 }
 
 
 void D3D12Context::setDepthBiasEnable(Bool enable)
 {
-    currentState().m_pipelineStateObject.graphics.depthBiasEnable = enable;
+    currentState().m_pipelineStateObject.state.graphics.depthBiasEnable = enable;
     currentState().setDirty(ContextDirty_Pipeline);
 }
 
 
 void D3D12Context::setDepthCompareOp(CompareOp compare)
 {
-    currentState().m_pipelineStateObject.graphics.depthStencil.depthCompareOp = compare;
+    currentState().m_pipelineStateObject.state.graphics.depthStencil.depthCompareOp = compare;
     currentState().setDirty(ContextDirty_Pipeline);
 }
 
 
 void D3D12Context::enableDepthWrite(Bool enable)
 {
-    currentState().m_pipelineStateObject.graphics.depthStencil.depthWriteEnable = enable;
+    currentState().m_pipelineStateObject.state.graphics.depthStencil.depthWriteEnable = enable;
     currentState().setDirty(ContextDirty_Pipeline);
 }
 
 
 void D3D12Context::setStencilReadMask(U8 mask)
 {
-    currentState().m_pipelineStateObject.graphics.depthStencil.stencilReadMask = mask;
+    currentState().m_pipelineStateObject.state.graphics.depthStencil.stencilReadMask = mask;
     currentState().setDirty(ContextDirty_Pipeline);
 }
 
@@ -679,9 +679,9 @@ void D3D12Context::setStencilReadMask(U8 mask)
 void D3D12Context::setTopology(PrimitiveTopology topology)
 {
     D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType = getPrimitiveTopologyType(topology);
-    if (currentState().m_pipelineStateObject.graphics.topologyType != topologyType)
+    if (currentState().m_pipelineStateObject.state.graphics.topologyType != topologyType)
     {
-        currentState().m_pipelineStateObject.graphics.topologyType = topologyType;
+        currentState().m_pipelineStateObject.state.graphics.topologyType = topologyType;
         currentState().setDirty(ContextDirty_Pipeline);
     }
     currentState().m_primitiveTopology = topology;
@@ -691,31 +691,31 @@ void D3D12Context::setTopology(PrimitiveTopology topology)
 
 void D3D12Context::setStencilWriteMask(U8 mask)
 {
-    currentState().m_pipelineStateObject.graphics.depthStencil.stencilWriteMask = mask;
+    currentState().m_pipelineStateObject.state.graphics.depthStencil.stencilWriteMask = mask;
     currentState().setDirty(ContextDirty_Pipeline);
 }
 
 
 void D3D12Context::setStencilReference(U8 ref)
 {
-    currentState().m_pipelineStateObject.graphics.depthStencil.stencilReference = ref;
+    currentState().m_pipelineStateObject.state.graphics.depthStencil.stencilReference = ref;
     currentState().setDirty(ContextDirty_StencilRef);
 }
 
 
 void D3D12Context::setColorWriteMask(U32 rtIndex, ColorComponentMaskFlags writeMask)
 {
-    currentState().m_pipelineStateObject.graphics.blendState.attachments[rtIndex].colorWriteMask = writeMask;
+    currentState().m_pipelineStateObject.state.graphics.blendState.attachments[rtIndex].colorWriteMask = writeMask;
     currentState().setDirty(ContextDirty_Pipeline);
 }
 
 
 void D3D12Context::setInputVertexLayout(VertexInputLayoutId vertexLayout)
 {
-    VertexInputLayoutId currentId = currentState().m_pipelineStateObject.graphics.inputLayoutId;
+    VertexInputLayoutId currentId = currentState().m_pipelineStateObject.state.graphics.inputLayoutId;
     if (currentId != vertexLayout)
     {
-        currentState().m_pipelineStateObject.graphics.inputLayoutId = vertexLayout;
+        currentState().m_pipelineStateObject.state.graphics.inputLayoutId = vertexLayout;
         currentState().setDirty(ContextDirty_Pipeline);
     }
 }
@@ -723,21 +723,21 @@ void D3D12Context::setInputVertexLayout(VertexInputLayoutId vertexLayout)
 
 void D3D12Context::setFrontFace(FrontFace frontFace)
 {
-    currentState().m_pipelineStateObject.graphics.frontFace = frontFace;
+    currentState().m_pipelineStateObject.state.graphics.frontFace = frontFace;
     currentState().setDirty(ContextDirty_Pipeline);
 }
 
 
 void D3D12Context::enableDepth(Bool enable)
 {
-    currentState().m_pipelineStateObject.graphics.depthStencil.depthTestEnable = enable;
+    currentState().m_pipelineStateObject.state.graphics.depthStencil.depthTestEnable = enable;
     currentState().setDirty(ContextDirty_Pipeline);
 }
 
 
 void D3D12Context::enableStencil(Bool enable)
 {
-    currentState().m_pipelineStateObject.graphics.depthStencil.stencilTestEnable = enable;
+    currentState().m_pipelineStateObject.state.graphics.depthStencil.stencilTestEnable = enable;
     currentState().setDirty(ContextDirty_Pipeline);
 }
 
@@ -772,7 +772,7 @@ void D3D12Context::internalBindVertexBuffersAndIndexBuffer(ID3D12GraphicsCommand
         {
             D3D12_VERTEX_BUFFER_VIEW& bufferView = state.m_vertexBuffers[i];
             DeviceId deviceId = getDevice()->castTo<D3D12Device>()->getDeviceId();
-            Pipelines::VertexInputs::D3DVertexInput* vertexLayout = Pipelines::VertexInputs::obtain(deviceId, currentState().m_pipelineStateObject.graphics.inputLayoutId);
+            Pipelines::VertexInputs::D3DVertexInput* vertexLayout = Pipelines::VertexInputs::obtain(deviceId, currentState().m_pipelineStateObject.state.graphics.inputLayoutId);
             R_ASSERT_FORMAT(vertexLayout, "Vertex Layout is required in order to know the stride of the vertex buffer!!");
             bufferView.StrideInBytes = vertexLayout->vertexByteStrides[i];
         }
@@ -795,7 +795,7 @@ void D3D12Context::bindPipeline(ID3D12GraphicsCommandList* list, ContextState& s
     }
     if (state.isDirty(ContextDirty_StencilRef))
     {
-        list->OMSetStencilRef(static_cast<UINT>(state.m_pipelineStateObject.graphics.depthStencil.stencilReference));
+        list->OMSetStencilRef(static_cast<UINT>(state.m_pipelineStateObject.state.graphics.depthStencil.stencilReference));
     }
     if (state.isDirty(ContextDirty_Topology))
     {

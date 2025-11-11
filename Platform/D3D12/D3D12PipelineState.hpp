@@ -43,7 +43,7 @@ Bool            unloadAll(DeviceId deviceId);
 struct PipelineStateObject
 {
     BindType                        pipelineType;
-    union 
+    union PipelineState
     {
         struct 
         {
@@ -70,10 +70,14 @@ struct PipelineStateObject
             Bool                    usingLocalRootSignature;               //< If using local root signature, otherwise use global.
             U32                     rayRecursionDepth;
         } raytrace;
-    };
+        PipelineState() { graphics = { }; }
+    } state;
     ShaderProgramId                 shaderProgramId;
     ShaderProgramPermutation        permutation;
-    ID3D12RootSignature*            rootSignature; 
+    ID3D12RootSignature*            rootSignature;
+
+    PipelineStateObject() { }
+    
 };
 
 

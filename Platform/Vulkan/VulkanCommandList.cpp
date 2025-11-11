@@ -176,6 +176,7 @@ void VulkanContext::resetBinds()
 {
     // Make sure we have at least one context state (this is our primary context state.)
     m_contextStates.clear();
+    m_contextStates.resize(0);
     m_contextStates.push_back({ });
 
     clearResourceBinds();

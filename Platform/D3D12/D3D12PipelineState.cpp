@@ -222,14 +222,14 @@ ID3D12PipelineState* createGraphicsPipelineState(U32 nodeMask, DeviceId deviceId
     D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = { };
     desc.pRootSignature = pipelineState.rootSignature;
     desc.NodeMask = 0;
-    desc.NumRenderTargets = pipelineState.graphics.numRenderTargets;
-    desc.IBStripCutValue = pipelineState.graphics.indexStripCut;
-    desc.PrimitiveTopologyType = pipelineState.graphics.topologyType;
-    for (U32 i = 0; i < pipelineState.graphics.numRenderTargets; ++i)
+    desc.NumRenderTargets = pipelineState.state.graphics.numRenderTargets;
+    desc.IBStripCutValue = pipelineState.state.graphics.indexStripCut;
+    desc.PrimitiveTopologyType = pipelineState.state.graphics.topologyType;
+    for (U32 i = 0; i < pipelineState.state.graphics.numRenderTargets; ++i)
     {
-        desc.RTVFormats[i] = pipelineState.graphics.rtvFormats[i];
+        desc.RTVFormats[i] = pipelineState.state.graphics.rtvFormats[i];
     }
-    desc.DSVFormat = pipelineState.graphics.dsvFormat;
+    desc.DSVFormat = pipelineState.state.graphics.dsvFormat;
 
     R_ASSERT_FORMAT(program->graphics.vsBytecode, "Pipeline requires vertex shader to be created!");
     
@@ -264,34 +264,34 @@ ID3D12PipelineState* createGraphicsPipelineState(U32 nodeMask, DeviceId deviceId
     desc.SampleDesc.Quality = 0;
 
     desc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
-    desc.RasterizerState.AntialiasedLineEnable = pipelineState.graphics.antiAliasedLineEnable;
-    desc.RasterizerState.FillMode = getFillMode(pipelineState.graphics.polygonMode);
-    desc.RasterizerState.CullMode = getCullMode(pipelineState.graphics.cullMode);
-    desc.RasterizerState.DepthClipEnable = pipelineState.graphics.depthClampEnable;
-    desc.RasterizerState.DepthBias  = pipelineState.graphics.depthBiasEnable ? 1 : 0;
-    desc.RasterizerState.FrontCounterClockwise = (pipelineState.graphics.frontFace == FrontFace_CounterClockwise ? true : false);
+    desc.RasterizerState.AntialiasedLineEnable = pipelineState.state.graphics.antiAliasedLineEnable;
+    desc.RasterizerState.FillMode = getFillMode(pipelineState.state.graphics.polygonMode);
+    desc.RasterizerState.CullMode = getCullMode(pipelineState.state.graphics.cullMode);
+    desc.RasterizerState.DepthClipEnable = pipelineState.state.graphics.depthClampEnable;
+    desc.RasterizerState.DepthBias  = pipelineState.state.graphics.depthBiasEnable ? 1 : 0;
+    desc.RasterizerState.FrontCounterClockwise = (pipelineState.state.graphics.frontFace == FrontFace_CounterClockwise ? true : false);
     desc.RasterizerState.MultisampleEnable = false;
     desc.RasterizerState.AntialiasedLineEnable = false;
     desc.RasterizerState.SlopeScaledDepthBias = 0.0f;
 
-    desc.DepthStencilState.DepthEnable = pipelineState.graphics.depthStencil.depthTestEnable;
-    desc.DepthStencilState.StencilEnable = pipelineState.graphics.depthStencil.stencilTestEnable;
-    desc.DepthStencilState.DepthWriteMask = pipelineState.graphics.depthStencil.depthWriteEnable ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
-    desc.DepthStencilState.DepthFunc = getNativeComparisonFunction(pipelineState.graphics.depthStencil.depthCompareOp);
-    desc.DepthStencilState.StencilReadMask = pipelineState.graphics.depthStencil.stencilReadMask;
-    desc.DepthStencilState.StencilWriteMask = pipelineState.graphics.depthStencil.stencilWriteMask;
-    desc.DepthStencilState.FrontFace = fillStencilState(pipelineState.graphics.depthStencil.front);
-    desc.DepthStencilState.BackFace = fillStencilState(pipelineState.graphics.depthStencil.back);
+    desc.DepthStencilState.DepthEnable = pipelineState.state.graphics.depthStencil.depthTestEnable;
+    desc.DepthStencilState.StencilEnable = pipelineState.state.graphics.depthStencil.stencilTestEnable;
+    desc.DepthStencilState.DepthWriteMask = pipelineState.state.graphics.depthStencil.depthWriteEnable ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
+    desc.DepthStencilState.DepthFunc = getNativeComparisonFunction(pipelineState.state.graphics.depthStencil.depthCompareOp);
+    desc.DepthStencilState.StencilReadMask = pipelineState.state.graphics.depthStencil.stencilReadMask;
+    desc.DepthStencilState.StencilWriteMask = pipelineState.state.graphics.depthStencil.stencilWriteMask;
+    desc.DepthStencilState.FrontFace = fillStencilState(pipelineState.state.graphics.depthStencil.front);
+    desc.DepthStencilState.BackFace = fillStencilState(pipelineState.state.graphics.depthStencil.back);
     Bool independentBlendEnable = false;
-    for (U32 i = 0; i < pipelineState.graphics.numRenderTargets; ++i)
+    for (U32 i = 0; i < pipelineState.state.graphics.numRenderTargets; ++i)
     {
         D3D12_RENDER_TARGET_BLEND_DESC& rtBlend     = desc.BlendState.RenderTarget[i];
-        const RenderTargetBlendState& rtBlendState  = pipelineState.graphics.blendState.attachments[i];
+        const RenderTargetBlendState& rtBlendState  = pipelineState.state.graphics.blendState.attachments[i];
         rtBlend.RenderTargetWriteMask               = rtBlendState.colorWriteMask;
         rtBlend.BlendEnable                         = rtBlendState.blendEnable;
         rtBlend.BlendOp                             = getBlendOp(rtBlendState.colorBlendOp);
         rtBlend.BlendOpAlpha                        = getBlendOp(rtBlendState.alphaBlendOp);
-        rtBlend.LogicOp                             = getLogicOp(pipelineState.graphics.blendState.logicOp);
+        rtBlend.LogicOp                             = getLogicOp(pipelineState.state.graphics.blendState.logicOp);
         rtBlend.DestBlend                           = getBlendFactor(rtBlendState.dstColorBlendFactor);
         rtBlend.DestBlendAlpha                      = getBlendFactor(rtBlendState.dstAlphaBlendFactor);
         rtBlend.SrcBlend                            = getBlendFactor(rtBlendState.srcColorBlendFactor);
@@ -306,7 +306,7 @@ ID3D12PipelineState* createGraphicsPipelineState(U32 nodeMask, DeviceId deviceId
     inputDesc.NumElements = 0;
     inputDesc.pInputElementDescs = nullptr;
     {
-        VertexInputs::D3DVertexInput* layout = VertexInputs::obtain(deviceId, pipelineState.graphics.inputLayoutId);
+        VertexInputs::D3DVertexInput* layout = VertexInputs::obtain(deviceId, pipelineState.state.graphics.inputLayoutId);
         if (layout)
         {
             inputDesc.NumElements = static_cast<U32>(layout->elements.size());
@@ -328,13 +328,13 @@ ID3D12PipelineState* createMeshGraphicsPipeline(U32 nodeMask, ID3D12Device2* pDe
     R_D3D12_MESH_SHADER_PIPELINE_STATE_DESC desc = { };
     desc.pRootSignature = pipelineState.rootSignature;
     desc.NodeMask = 0;
-    desc.NumRenderTargets = pipelineState.graphics.numRenderTargets;
-    desc.PrimitiveTopologyType = pipelineState.graphics.topologyType;
-    for (U32 i = 0; i < pipelineState.graphics.numRenderTargets; ++i)
+    desc.NumRenderTargets = pipelineState.state.graphics.numRenderTargets;
+    desc.PrimitiveTopologyType = pipelineState.state.graphics.topologyType;
+    for (U32 i = 0; i < pipelineState.state.graphics.numRenderTargets; ++i)
     {
-        desc.RTVFormats[i] = pipelineState.graphics.rtvFormats[i];
+        desc.RTVFormats[i] = pipelineState.state.graphics.rtvFormats[i];
     }
-    desc.DSVFormat = pipelineState.graphics.dsvFormat;
+    desc.DSVFormat = pipelineState.state.graphics.dsvFormat;
 
     R_ASSERT_FORMAT(program->graphics.msBytecode, "Mesh shader pipeline requires mesh shader to function!");
 
@@ -357,34 +357,34 @@ ID3D12PipelineState* createMeshGraphicsPipeline(U32 nodeMask, ID3D12Device2* pDe
     desc.SampleDesc.Quality = 0;
 
     desc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
-    desc.RasterizerState.AntialiasedLineEnable = pipelineState.graphics.antiAliasedLineEnable;
-    desc.RasterizerState.FillMode = getFillMode(pipelineState.graphics.polygonMode);
-    desc.RasterizerState.CullMode = getCullMode(pipelineState.graphics.cullMode);
-    desc.RasterizerState.DepthClipEnable = pipelineState.graphics.depthClampEnable;
-    desc.RasterizerState.DepthBias  = pipelineState.graphics.depthBiasEnable ? 1 : 0;
-    desc.RasterizerState.FrontCounterClockwise = (pipelineState.graphics.frontFace == FrontFace_CounterClockwise ? true : false);
+    desc.RasterizerState.AntialiasedLineEnable = pipelineState.state.graphics.antiAliasedLineEnable;
+    desc.RasterizerState.FillMode = getFillMode(pipelineState.state.graphics.polygonMode);
+    desc.RasterizerState.CullMode = getCullMode(pipelineState.state.graphics.cullMode);
+    desc.RasterizerState.DepthClipEnable = pipelineState.state.graphics.depthClampEnable;
+    desc.RasterizerState.DepthBias  = pipelineState.state.graphics.depthBiasEnable ? 1 : 0;
+    desc.RasterizerState.FrontCounterClockwise = (pipelineState.state.graphics.frontFace == FrontFace_CounterClockwise ? true : false);
     desc.RasterizerState.MultisampleEnable = false;
     desc.RasterizerState.AntialiasedLineEnable = false;
     desc.RasterizerState.SlopeScaledDepthBias = 0.0f;
 
-    desc.DepthStencilState.DepthEnable = pipelineState.graphics.depthStencil.depthTestEnable;
-    desc.DepthStencilState.StencilEnable = pipelineState.graphics.depthStencil.stencilTestEnable;
-    desc.DepthStencilState.DepthWriteMask = pipelineState.graphics.depthStencil.depthWriteEnable ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
-    desc.DepthStencilState.DepthFunc = getNativeComparisonFunction(pipelineState.graphics.depthStencil.depthCompareOp);
-    desc.DepthStencilState.StencilReadMask = pipelineState.graphics.depthStencil.stencilReadMask;
-    desc.DepthStencilState.StencilWriteMask = pipelineState.graphics.depthStencil.stencilWriteMask;
-    desc.DepthStencilState.FrontFace = fillStencilState(pipelineState.graphics.depthStencil.front);
-    desc.DepthStencilState.BackFace = fillStencilState(pipelineState.graphics.depthStencil.back);
+    desc.DepthStencilState.DepthEnable = pipelineState.state.graphics.depthStencil.depthTestEnable;
+    desc.DepthStencilState.StencilEnable = pipelineState.state.graphics.depthStencil.stencilTestEnable;
+    desc.DepthStencilState.DepthWriteMask = pipelineState.state.graphics.depthStencil.depthWriteEnable ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
+    desc.DepthStencilState.DepthFunc = getNativeComparisonFunction(pipelineState.state.graphics.depthStencil.depthCompareOp);
+    desc.DepthStencilState.StencilReadMask = pipelineState.state.graphics.depthStencil.stencilReadMask;
+    desc.DepthStencilState.StencilWriteMask = pipelineState.state.graphics.depthStencil.stencilWriteMask;
+    desc.DepthStencilState.FrontFace = fillStencilState(pipelineState.state.graphics.depthStencil.front);
+    desc.DepthStencilState.BackFace = fillStencilState(pipelineState.state.graphics.depthStencil.back);
     Bool independentBlendEnable = false;
-    for (U32 i = 0; i < pipelineState.graphics.numRenderTargets; ++i)
+    for (U32 i = 0; i < pipelineState.state.graphics.numRenderTargets; ++i)
     {
         D3D12_RENDER_TARGET_BLEND_DESC& rtBlend     = desc.BlendState.RenderTarget[i];
-        const RenderTargetBlendState& rtBlendState  = pipelineState.graphics.blendState.attachments[i];
+        const RenderTargetBlendState& rtBlendState  = pipelineState.state.graphics.blendState.attachments[i];
         rtBlend.RenderTargetWriteMask               = rtBlendState.colorWriteMask;
         rtBlend.BlendEnable                         = rtBlendState.blendEnable;
         rtBlend.BlendOp                             = getBlendOp(rtBlendState.colorBlendOp);
         rtBlend.BlendOpAlpha                        = getBlendOp(rtBlendState.alphaBlendOp);
-        rtBlend.LogicOp                             = getLogicOp(pipelineState.graphics.blendState.logicOp);
+        rtBlend.LogicOp                             = getLogicOp(pipelineState.state.graphics.blendState.logicOp);
         rtBlend.DestBlend                           = getBlendFactor(rtBlendState.dstColorBlendFactor);
         rtBlend.DestBlendAlpha                      = getBlendFactor(rtBlendState.dstAlphaBlendFactor);
         rtBlend.SrcBlend                            = getBlendFactor(rtBlendState.srcColorBlendFactor);
@@ -444,7 +444,7 @@ ID3D12PipelineState* createRaytracingPipeline(U32 nodeMask, ID3D12Device* pDevic
 
     // Pipeline config.
     D3D12_RAYTRACING_PIPELINE_CONFIG pipelineConfig = { };
-    pipelineConfig.MaxTraceRecursionDepth = pipelineState.raytrace.rayRecursionDepth;
+    pipelineConfig.MaxTraceRecursionDepth = pipelineState.state.raytrace.rayRecursionDepth;
     D3D12_STATE_SUBOBJECT pipeConfigObj = {};
     pipeConfigObj.Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG;
     pipeConfigObj.pDesc = &pipelineConfig;
