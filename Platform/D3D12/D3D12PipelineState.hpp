@@ -104,7 +104,7 @@ struct RootSigLayout
 
     std::vector<Set>            sets;
     ShaderStageFlags            shaderVisibility;
-    D3D12_ROOT_SIGNATURE_FLAGS  flags;
+    D3D12_ROOT_SIGNATURE_FLAGS  flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
 
     Hash64                      hash0;
 
