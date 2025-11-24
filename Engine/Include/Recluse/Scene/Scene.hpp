@@ -43,6 +43,8 @@ public:
     ECS::GameEntity*               findEntity(const RGUID& guid);
     ECS::GameEntity*               getEntity(U32 idx);
 
+    ECS::EntityHierarchy*           getHierarchy() { return &m_hierarchy; }
+
     void                           setName(const std::string& name);
     const std::string&             getName() const { return m_name; }
 
@@ -88,6 +90,7 @@ private:
     // Game objects in the scene.
     std::vector<ECS::GameEntity*>       m_entities;
     std::string                         m_name;
+    ECS::EntityHierarchy                m_hierarchy;
 
     // cameras set in scene.
     // the index 0 is always the main camera.

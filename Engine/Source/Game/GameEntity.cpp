@@ -309,7 +309,7 @@ ResultCode EntityHierarchy::removeAsChildrenForEntity(const RGUID& parent, const
 }
 
 
-ResultCode EntityHierarchy::remove(const RGUID& node)
+ResultCode EntityHierarchy::remove(const RGUID& node, RemovalOptionFlags removalOptions)
 {
     if (!node.isValid())
     {

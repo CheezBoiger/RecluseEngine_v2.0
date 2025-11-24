@@ -83,7 +83,8 @@ struct GameEntityAllocationCall
 // Game entity, which holds all components associated with it.
 // Kept as native C++.
 // Essentially, this is our entity that contains the given 
-// general purpose info that identifies it in the world.
+// general purpose info that identifies it in the world. It does not hold any information
+// about parent or children that it may be linked to. The EntityHierarchy should be holding this info.
 class GameEntity : public Serializable 
 {
 public:
@@ -94,13 +95,11 @@ public:
                 const GameEntityAllocation& allocation,
                 const RGUID& uuid,
                 const std::string& tag = std::string(), 
-                const std::string& name = std::string(), 
-                RGUID parent = RGUID::kInvalidValue
+                const std::string& name = std::string()
             )
         : m_allocation(allocation)
         , m_guuid(uuid)
         , m_status(GameEntityStatus_Unused)
-        , m_parent(parent)
         , m_name(name)
         , m_tag(tag)
     {}
@@ -173,9 +172,6 @@ public:
     // Check if the game entity is ready or active.
     RecluseEngine_PUBLIC_API Bool                   isReady() const { return (m_status == GameEntityStatus_Initialized) || (m_status == GameEntityStatus_Active); }
 
-    // Get the game object parent.
-    RecluseEngine_PUBLIC_API RGUID                  getParent() const { return m_parent; }
-
     RecluseEngine_PUBLIC_API RGUID                  getGUID() const { return m_guuid; }
 
     void setName(const std::string& newName) { m_name = newName; }
@@ -183,62 +179,6 @@ public:
 
     // Obtain the object allocation.
     RecluseEngine_PUBLIC_API GameEntityAllocation   getAllocation() const { return m_allocation; }
-
-    // Add a node to this game object. This game object becomes the 
-    // parent of pNode. Any game objects that are similar to this one,
-    // will not be added as a child.
-    RecluseEngine_PUBLIC_API void                   addChild(RGUID node) 
-    { 
-        // No need to do anything if this node already exists in this game object.
-        GameEntity* entity = GameEntity::findEntity(node);
-        if (!entity) return;
-        if (entity->getParent() == m_guuid) return;
-
-        // Check if there is not already a parent node. If so, we will
-        // remove it from it's original parent, and replace with this.
-        if (entity->getParent() != RGUID::kInvalidValue) 
-        {
-            GameEntity::findEntity(entity->getParent())->removeChild(node);
-        }
- 
-        entity->m_parent = m_guuid;
-    
-        auto iter = std::find(m_children.begin(), m_children.end(), node);
-
-        if (iter == m_children.end()) 
-        {
-            m_children.push_back(node);
-        }
-    }
-
-    // Removes a child from this game object.
-    RecluseEngine_PUBLIC_API void removeChild(RGUID node) 
-    {
-        GameEntity* entity = GameEntity::findEntity(node);
-        if (!entity) return;
-
-        if (entity->getParent() != m_guuid) 
-        {
-            // Can not remove this node if it doesn't belong to 
-            // this game object.
-            return;
-        }
-
-        auto iter = std::find(m_children.begin(), m_children.end(), node);
-        if (iter != m_children.end()) 
-        {
-            m_children.erase(iter);
-            entity->m_parent = RGUID::kInvalidValue;
-        }
-    }
-
-    RecluseEngine_PUBLIC_API std::vector<RGUID>&  getChildren() { return m_children; }
-
-    RecluseEngine_PUBLIC_API B32                        isParent(RGUID child) const 
-    {
-        auto iter = std::find(m_children.begin(), m_children.end(), child);
-        return (iter != m_children.end());
-    }
 
     // Get the component that is associated with this entity, from the given scene.
     // Many registries may hold components of the same entity, but may actually be from another registry.
@@ -280,14 +220,6 @@ private:
 
     GameEntityStatus                                        m_status;
 
-    // The Parent node that this game object may be associated to.
-    RGUID                                                   m_parent;
-
-    // All children game object nodes associated with this game object.
-    // Keep in mind that any object children must also inherit the world transform from the 
-    // game object parent.
-    std::vector<RGUID>                                      m_children;
-
     // Game Object uuid.
     RGUID                                                   m_guuid;
 
@@ -302,12 +234,24 @@ private:
 class RecluseEngine_PUBLIC_API EntityHierarchy : public Serializable
 {
 public:
+    enum RemovalOption
+    {
+        // Removes only the node, maintains the subtree by adding children to the grandfather node.
+        RemovalOption_RemoveOnlyNode         = (1 << 0),
+        // Removes all the subtree, including children. Turns them parentless if they are not meant to be deleted.
+        RemovalOption_RemoveAllSubtree      = (1 << 1),
+        // Keeps the children, moves them over to childless root.
+        RemovalOption_DeleteChildren          = (1 << 2),
+    };
+    typedef U32 RemovalOptionFlags;
 
     EntityHierarchy() { }
     ~EntityHierarchy() { }
 
     ResultCode          addAsChildrenForEntity(const RGUID& parent, const RGUID* children, U32 numChildren);
     ResultCode          removeAsChildrenForEntity(const RGUID& parent, const RGUID* children, U32 numChildren);
+
+    ResultCode          addChild(const RGUID& parent, const RGUID& child);
 
     U32                 getNumberOfChildrenOfEntity(const RGUID& parent);
     ResultCode          getChildrenOfEntity(const RGUID& parent, RGUID* childrenOut);
@@ -326,7 +270,7 @@ public:
 
     // Removes a node and any associated parent/children involved with it. Be sure to call this function if an entity
     // is going to be completely destroyed! Otherwise record will still be kept...
-    ResultCode          remove(const RGUID& node);
+    ResultCode          remove(const RGUID& node, RemovalOptionFlags removalOption = RemovalOption_RemoveAllSubtree);
 
     // Adds a node to the hierarchy, this would check if the node is already a child, or parent of other children.
     // If not, will be a root node that is parentless.
