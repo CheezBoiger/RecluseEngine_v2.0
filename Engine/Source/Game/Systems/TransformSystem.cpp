@@ -21,7 +21,7 @@ ResultCode TransformSystem::onInitialize()
 }
 
 
-void TransformSystem::onUpdate(ECS::Registry* registry, const RealtimeTick& tick, Scene* scene)
+void TransformSystem::onUpdate(ECS::Registry* registry, const RealtimeTick& tick, ECS::EntityHierarchy* hierarchy)
 {
     if (m_doUpdate)
     {
@@ -36,7 +36,8 @@ void TransformSystem::onUpdate(ECS::Registry* registry, const RealtimeTick& tick
 
             ECS::GameEntity* entity = ECS::GameEntity::findEntity(transform->getOwner());
             // Get the parent transform and transform locally on it.
-            Transform* parentTransform = std::get<Transform*>(obtainTuple<Transform>(registry, entity->getParent()));
+            RGUID parentGuid = hierarchy->getParent(entity->getGUID());
+            Transform* parentTransform = std::get<Transform*>(obtainTuple<Transform>(registry, parentGuid));
             transform->updateMatrices(parentTransform);
             if (g_enableTransformLogging)
             {

@@ -8,7 +8,7 @@ namespace Recluse {
 namespace Engine {
 
 
-void LightSystem::onUpdate(ECS::Registry* registry, const RealtimeTick& tick, Scene* scene)
+void LightSystem::onUpdate(ECS::Registry* registry, const RealtimeTick& tick, ECS::EntityHierarchy* hierarchy)
 {
     std::vector<Light*> lights = obtainComponents(registry);
     RendererModule* renderer = RendererModule::getMain();

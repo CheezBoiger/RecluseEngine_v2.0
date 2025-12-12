@@ -35,7 +35,7 @@ enum MovementEventId
 class MoverComponent : public ECS::Component
 {
 public:
-    R_COMPONENT_DECLARE(MoverComponent);
+    R_DECLARE_COMPONENT(MoverComponent);
     Math::Float3 direction;
 };
 
@@ -43,7 +43,7 @@ public:
 class MoverRegistry : public ECS::ComponentRegistry<MoverComponent>
 {
 public:
-    R_COMPONENT_REGISTRY_DECLARE(MoverRegistry);
+    R_DECLARE_COMPONENT_REGISTRY(MoverRegistry);
     
     ResultCode onAllocateComponent(const RGUID& owner) override
     {
@@ -107,7 +107,6 @@ private:
     std::unordered_map<RGUID, MoverComponent*, RGUID::Hash> m_map;
 };
 
-
 class MoverSystem : public ECS::System<MoverComponent>
 {
 public:
@@ -118,7 +117,7 @@ public:
         return RecluseResult_Ok;
     }
 
-    void onUpdate(ECS::Registry* registry, const RealtimeTick& tick, Engine::Scene* scene) override
+    void onUpdate(ECS::Registry* registry, const RealtimeTick& tick, ECS::EntityHierarchy* hierarchy) override
     {
         std::vector<MoverComponent*> movers = obtainComponents(registry);
         for (U64 i = 0; i < movers.size(); ++i)
@@ -131,7 +130,21 @@ public:
                 transform->position = transform->position + mover->direction * tick.delta();
             }
         }
-        MessageBus::fireEvent(&g_bus, TransformEvent_Update);
+        MessageBus::sendEvent(&g_bus, TransformEvent_Update);
+    }
+
+    ResultCode onEvent(const EventMessage& message) override
+    {
+        switch (message.getEvent())
+        {
+            case MovementEventId_DoMovement:
+            {
+                
+                break;
+            }
+        }
+
+        return RecluseResult_Ok;
     }
 
     ResultCode onCleanUp() override
@@ -155,8 +168,8 @@ void addEntities(Scene* pScene, ECS::Registry* registry)
     entity2->setName("Alice");
     entity2->activate();
 
-    pScene->addEntity(entity);
-    pScene->addEntity(entity2);
+    pScene->addEntity(entity->getGUID());
+    pScene->addEntity(entity2->getGUID());
 
     registry->makeComponent<Transform>(entity->getGUID(), true);
     registry->makeComponent<Transform>(entity2->getGUID(), true);
@@ -196,8 +209,8 @@ int main(int c, char* argv[])
     {
         RealtimeTick::updateWatch(1ull, 0);
         RealtimeTick tick = RealtimeTick::getTick(0);
-        moverSystem->update(&registry, tick);
-        transformSystem->update(&registry, tick);
+        moverSystem->update(&registry, tick, pScene->getHierarchy());
+        transformSystem->update(&registry, tick, pScene->getHierarchy());
         g_bus.notifyAll();
         g_bus.clearQueue();
         counter += tick.delta() * 1.0f;

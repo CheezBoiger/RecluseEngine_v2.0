@@ -14,6 +14,10 @@
 #include "Recluse/Renderer/Material.hpp"
 #include "Recluse/Core/Profile/Profiler.hpp"
 
+#include "Recluse/MessageBus.hpp"
+#include "Recluse/Game/Component.hpp"
+#include "Recluse/Game/GameEntity.hpp"
+
 #include "Recluse/System/Window.hpp"
 #include "Recluse/Generated/RendererResources.hpp"
 
@@ -23,7 +27,6 @@
 using namespace Recluse;
 using namespace Recluse::Engine;
 
-
 class TestApplication : public Application
 {
 public:
@@ -31,8 +34,6 @@ public:
 
     virtual ResultCode onUpdate(TaskManager& manager) override
     {
-        // Need to fix this, since without calling this before any simlock, will cause crash.
-        m_renderBus.notifyAll();
         DrawBatch rcmd = {};
         //pRenderer->pushRenderCommand(rcmd, RENDER_PREZ);
 
@@ -41,9 +42,17 @@ public:
         
         pollEvents();
 
+        if (m_window->isMinimized())
+        {
+            MessageBus::sendEvent(&m_renderBus, RenderEvent_Pause);
+            m_renderBus.notifyAll();
+        }
+
         if (m_window->shouldClose())
         {
-            MessageBus::fireEvent(&m_renderBus, RenderEvent_Pause);
+            MessageBus::sendEvent(&m_renderBus, RenderEvent_Shutdown);
+            
+            m_renderBus.notifyOne(RendererModule::getModuleName());
             stop();
         }
         
@@ -70,6 +79,9 @@ public:
         //CpuPerformanceProfile::PerformanceMeasurement measure = CpuPerformanceProfile::query("RandomTask", "Main");
         //R_NOTIFY("Main", "RandomTask: %f ms", measure.milliseconds);
 
+        RendererModule::getMain()->finalize();
+
+        m_renderBus.notifyAll();
         return RecluseResult_Ok;
     }
 
@@ -99,8 +111,8 @@ public:
         RendererModule::getMain()->setNewConfigurations(config);
         RendererModule::getMain()->linkMessageBus(&m_renderBus);
 
-        MessageBus::fireEvent(&m_renderBus, RenderEvent_Initialize);
-        MessageBus::fireEvent(&m_renderBus, RenderEvent_Resume);
+        MessageBus::sendEvent(&m_renderBus, RenderEvent_Initialize);
+        MessageBus::sendEvent(&m_renderBus, RenderEvent_Resume);
         GlobalCommands::setValue("Renderer.ClearColor", Math::Color4(255, 0, 0, 0));
         // Make task process for the renderer.
         m_renderProcessId = makeTaskProcess(RendererModule::kRendererProcessTask, "Renderer");
@@ -141,11 +153,14 @@ public:
                 return RecluseResult_Ok;
             }, "RandomTask");
  #endif
+
+            m_renderBus.notifyAll();
+
             return RecluseResult_Ok;
         }
     virtual ResultCode onCleanUp() override
     {
-        MessageBus::fireEvent(&m_renderBus, RenderEvent_Shutdown);
+        MessageBus::sendEvent(&m_renderBus, RenderEvent_Shutdown);
 
         m_renderBus.notifyAll();
 

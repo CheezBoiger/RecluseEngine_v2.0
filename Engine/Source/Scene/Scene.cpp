@@ -17,11 +17,11 @@ struct SceneHeaderInfo
     U64     numLights;
 };
 
-ResultCode Scene::addEntity(ECS::GameEntity* obj)
+ResultCode Scene::addEntity(const RGUID& entity, const RGUID& parent)
 {
-    if (!obj) return RecluseResult_NullPtrExcept;
+    if (!entity.isValid()) return RecluseResult_NullPtrExcept;
     
-    auto iter = std::find(m_entities.begin(), m_entities.end(), obj);
+    auto iter = std::find(m_entities.begin(), m_entities.end(), entity);
     if (iter != m_entities.end()) 
     {
         R_WARN("Scene", "Game object already exists in scene! Ignoring %s", __FUNCTION__);
@@ -30,7 +30,9 @@ ResultCode Scene::addEntity(ECS::GameEntity* obj)
     
     // Add in the object, otherwise.
     
-    m_entities.push_back(obj);
+    m_entities.push_back(entity);
+
+    m_hierarchy.add(entity, parent);
 
     return RecluseResult_Ok;
 }
@@ -43,14 +45,10 @@ void Scene::initialize()
 
 void Scene::destroy()
 {
-    for (U32 i = 0; i < m_entities.size(); ++i)
-    {
-        ECS::GameEntity::free(m_entities[i]);
-    }
 }
 
 
-ECS::GameEntity* Scene::getEntity(U32 idx)
+RGUID Scene::getEntity(U32 idx)
 {
     return m_entities[idx];
 }
@@ -58,8 +56,10 @@ ECS::GameEntity* Scene::getEntity(U32 idx)
 
 ECS::GameEntity* Scene::findEntity(const std::string& name)
 {
-    for (auto* entity : m_entities) 
+    for (const auto& entityRGUID : m_entities) 
     {
+        ECS::GameEntity* entity = ECS::GameEntity::findEntity(entityRGUID);
+
         if (entity->getName() == name) 
         {
             return entity;
@@ -76,6 +76,13 @@ ResultCode Scene::removeEntity(U32 idx)
     {   
         R_ASSERT_FORMAT(idx >= m_entities.size(), "Attempting to access entity array with idx=%d, which is out of bounds! (size=%d)", idx, static_cast<U32>(m_entities.size()));
         return RecluseResult_OutOfBounds;
+    }
+
+    RGUID entity = m_entities[idx];
+    ResultCode result = m_hierarchy.remove(entity);
+    
+    if (result == RecluseResult_Ok)
+    {
     }
 
     m_entities.erase(m_entities.begin() + idx);

@@ -212,6 +212,8 @@ void createShaderProgram(GraphicsDevice* device)
 
     Pipeline::ShaderBuilder* shaderBuilder = nullptr;
     ShaderIntermediateCode intermediateCode;
+    Pipeline::HlslToGlslPreprocessor preprocessor;
+    preprocessor.setDebug(true);
     if (instance->getApi() == GraphicsApi_Direct3D12)
     {
         shaderBuilder = Pipeline::createShaderBuilder("dxc");
@@ -221,6 +223,7 @@ void createShaderProgram(GraphicsDevice* device)
     {
         shaderBuilder = Pipeline::createShaderBuilder("glslang");
         intermediateCode = ShaderIntermediateCode_Spirv;
+        shaderBuilder->addPreprocessor(&preprocessor);
     }
     shaderBuilder->setUp();
 
@@ -232,7 +235,6 @@ void createShaderProgram(GraphicsDevice* device)
     description.graphics.ps = fsData.data();
     description.graphics.psName = "psMain";
     Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_Gbuffer, intermediateCode, shaderBuilder);
-    Runtime::buildShaderProgram(device, database, ShaderProgram_Gbuffer);
 
 
     vsSource = currDir + "/" + "quad.vs.hlsl";
@@ -248,10 +250,13 @@ void createShaderProgram(GraphicsDevice* device)
     description.graphics.ps = fsData.data();
     description.graphics.psName = "psMain";
     Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_LightResolve, intermediateCode, shaderBuilder);
-    Runtime::buildShaderProgram(device, database, ShaderProgram_LightResolve);
-    database.clearShaderProgramDefinitions();
     shaderBuilder->tearDown();
     Pipeline::freeShaderBuilder(shaderBuilder);
+
+
+    Runtime::loadShaderProgram(device, database, ShaderProgram_LightResolve);
+    Runtime::loadShaderProgram(device, database, ShaderProgram_Gbuffer);
+    database.clearShaderProgramDefinitions();
 }
 
 
@@ -475,7 +480,7 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
 
     Math::Matrix44 view = Math::translate(Math::Matrix44::identity(), Math::Float3(0, 0, 0));
     Math::Matrix44 proj = Math::perspectiveLH_Aspect(Math::deg2Rad(45.0f), (F32)width / (F32)height, 0.001f, 1000.0f);
-    IShaderProgramBinder& binder = context->bindShaderProgram(ShaderProgram_Gbuffer, 0);
+    ShaderProgramBinder& binder = context->bindShaderProgram(ShaderProgram_Gbuffer, 0);
 
     t += 20.0f * delta;
     t = fmod(t, 360.0f);
@@ -591,11 +596,11 @@ void resolveLighting(GraphicsContext* context)
     context->pushState();
         context->bindShaderProgram(ShaderProgram_LightResolve, 0)
             .bindShaderResource(ShaderStage_Pixel, 0, 0, albedoView)
-            //.bindShaderResource(ShaderStage_Pixel, 0, 1, normalView)
+            .bindShaderResource(ShaderStage_Pixel, 0, 2, normalView)
             .bindShaderResource(ShaderStage_Pixel, 0, 1, lightBufferView)
-            //.bindShaderResource(ShaderStage_Pixel, 0, 3, depthView)
-            //.bindConstantBuffer(ShaderStage_Pixel, 0, 0, sceneBuffer, 0, sizeof(SceneBuffer))
-            .bindConstantBuffer(ShaderStage_Pixel, 0, 0, lightViewBuffer, 0, sizeof(LightView))
+            .bindShaderResource(ShaderStage_Pixel, 0, 4, depthView)
+            .bindConstantBuffer(ShaderStage_Pixel, 0, 0, sceneBuffer, 0, sizeof(SceneBuffer))
+            .bindConstantBuffer(ShaderStage_Pixel, 0, 1, lightViewBuffer, 0, sizeof(LightView))
             .bindSampler(ShaderStage_Pixel, 0, 0, gbufferSampler);
 
         context->bindRenderTargets(1, &id);
@@ -744,7 +749,7 @@ int main(char* argv[], int c)
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
+    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
     std::vector<MeshDraw> meshes;
 

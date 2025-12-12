@@ -17,7 +17,7 @@ public:
 
     virtual ResultCode onCleanUp() override;
     virtual ResultCode onInitialize() override;
-    virtual void onUpdate(ECS::Registry* registry, const RealtimeTick& tick, Scene* scene) override;
+    virtual void onUpdate(ECS::Registry* registry, const RealtimeTick& tick, ECS::EntityHierarchy* hierarchy) override;
 
 private:
 

@@ -8,9 +8,16 @@
 namespace Recluse {
 namespace ECS {
 
-std::unordered_map<RGUID, GameEntity*, RGUID::Hash, RGUID::Equal> kEntityMap;
 
-static GameEntity* defaultAlloc(U64 szBytes, GameEntityMemoryAllocationType type)
+struct EntityAllocation
+{
+    GameEntity*             entity;
+    GameEntityAllocation    memory;
+};
+
+std::unordered_map<RGUID, EntityAllocation, RGUID::Hash, RGUID::Equal> kEntityMap;
+
+static GameEntity* defaultAlloc(U64 szBytes, GameEntityMemoryAllocationType type, const Recluse::RGUID& rguid)
 {
     GameEntityAllocation allocation = { };
 
@@ -22,16 +29,22 @@ static GameEntity* defaultAlloc(U64 szBytes, GameEntityMemoryAllocationType type
         allocation.szBytes          = szBytes;
         allocation.allocType        = type;
 
-        // A probably not so good way of keeping the allocation, but it is indeed default.
-        RGUID guid      = { };
-        guid.ss.hash0   = (U32)((allocation.offsetAddress & 0x00000000FFFFFFFF)      );
-        guid.ss.hash1   = (U32)((allocation.offsetAddress & 0xFFFFFFFF00000000) >> 32);
-    
+        // Generate a rguid for this entity.
+        
+        RGUID guid      = rguid; 
+        
+        R_ASSERT_FORMAT(kEntityMap.find(rguid) == kEntityMap.end(), "Newly allocated entity can not have a similar RGUID identifer as another entity! Setting to default...");
+        
+        if (!rguid.isValid() || (kEntityMap.find(rguid) != kEntityMap.end())) 
+        {
+            guid = generateRGUID();
+        }
+
         void* ptr       = reinterpret_cast<void*>(allocation.offsetAddress);
         
-        GameEntity* entity = new (ptr) GameEntity(allocation, guid);
+        GameEntity* entity = new (ptr) GameEntity(guid);
     
-        kEntityMap.insert(std::make_pair(guid, entity));
+        kEntityMap.insert(std::make_pair(guid, EntityAllocation{ entity, allocation }));
         return entity;
     }
     else
@@ -46,16 +59,13 @@ static GameEntity* defaultAlloc(U64 szBytes, GameEntityMemoryAllocationType type
 static void defaultFree(GameEntity* pEntity)
 {
     R_ASSERT(pEntity != NULL);
-
-    GameEntityAllocation allocation = pEntity->getAllocation();
-
     auto it = kEntityMap.find(pEntity->getGUID());
     if (it != kEntityMap.end())
     {
+        GameEntityAllocation& allocation = it->second.memory;
+        free((void*)allocation.offsetAddress);
         kEntityMap.erase(it);
     }
-    
-    free((void*)allocation.offsetAddress);
 }
 
 
@@ -66,9 +76,12 @@ static GameEntity* defaultGetEntity(const RGUID& rguid)
         return nullptr;
 
     // Get the rguid hash.
-    SizeT address = U64(rguid.ss.hash0) | (U64(rguid.ss.hash1) << 32);
-    GameEntity* pEntity = reinterpret_cast<GameEntity*>(address);
-    return pEntity;
+    auto it = kEntityMap.find(rguid);
+    if (it != kEntityMap.end())
+    {
+        return it->second.entity;
+    }
+    return nullptr;
 }
 
 
@@ -78,9 +91,9 @@ R_INTERNAL void defaultCleanUpEntities()
     {
         for (auto& it : kEntityMap)
         {
-            GameEntity* entity = it.second;
-            R_ASSERT(entity);
-            GameEntityAllocation allocation = entity->getAllocation();
+            EntityAllocation& entity = it.second;
+            R_ASSERT(entity.entity);
+            GameEntityAllocation allocation = entity.memory;
             free((void*)allocation.offsetAddress);
         }
 
@@ -92,9 +105,9 @@ R_INTERNAL void defaultCleanUpEntities()
 GameEntityAllocationCall gameEntityAllocator { defaultCleanUpEntities, nullptr, defaultAlloc, defaultFree, defaultGetEntity };
 
 
-GameEntity* GameEntity::instantiate(U64 szBytes, GameEntityMemoryAllocationType allocType)
+GameEntity* GameEntity::instantiate(U64 szBytes, GameEntityMemoryAllocationType allocType, const RGUID& rguid)
 {
-    return gameEntityAllocator.onAllocationFn(szBytes, allocType);
+    return gameEntityAllocator.onAllocationFn(szBytes, allocType, rguid);
 }
 
 
@@ -316,8 +329,12 @@ ResultCode EntityHierarchy::remove(const RGUID& node, RemovalOptionFlags removal
         return RecluseResult_InvalidArgs;
     }
 
+    ResultCode result = RecluseResult_Failed;
+
     if (exists(node))
     {
+        // If we are intending to remove, we shouldn't have his option.
+        if (removalOptions != RemovalOption_JustCheck)
         {
             Relation& relation = m_hierarchy[node];
             RGUID parent = relation.parent;
@@ -330,16 +347,6 @@ ResultCode EntityHierarchy::remove(const RGUID& node, RemovalOptionFlags removal
                 parentChildren.erase(childIt);
             }
 
-            // Remove all children associations to this parent, if it is a parent.
-            ChildrenDataStructure& children = relation.children;
-            for (auto& child : children)
-            {
-                Relation& childRelation = m_hierarchy[child];
-                childRelation.parent = RGUID();
-                // Since they are childless, they will end up at root.
-                m_roots.insert(child);
-            }
-
             // Finally, remove the entity from the hierarchy.
             {
                 // Remove if node was a root node.
@@ -349,13 +356,44 @@ ResultCode EntityHierarchy::remove(const RGUID& node, RemovalOptionFlags removal
                     m_roots.erase(rootIt);
                 }
             }
+
+            auto it = m_hierarchy.find(node);
+            m_hierarchy.erase(it);
+
+            if (removalOptions & RemovalOption_RemoveAllSubtree)
+            {
+                ChildrenDataStructure& children = m_hierarchy[node].children;
+                for (const auto& child : children)
+                {
+                    remove(child, removalOptions);
+                }
+            }
+            else
+            {
+                // Add to the existing parent.
+                if (parent.isValid())
+                {
+                    ChildrenDataStructure& children = m_hierarchy[node].children;
+                    for (const auto& child : children)
+                    {
+                        add(child, parent);
+                    }
+                }
+                else
+                {
+                    ChildrenDataStructure& children = m_hierarchy[node].children;
+                    for (const auto& child : children)
+                    {
+                        add(child, RGUID());
+                    }
+                }
+            }
         }
 
-        auto it = m_hierarchy.find(node);
-        m_hierarchy.erase(it);
+        result = RecluseResult_Ok;
     }
 
-    return RecluseResult_Ok;
+    return result;
 }
 
 

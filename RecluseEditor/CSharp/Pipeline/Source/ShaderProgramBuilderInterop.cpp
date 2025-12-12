@@ -287,7 +287,7 @@ ShaderProgramDescription::!ShaderProgramDescription()
 bool ShaderProgramBuilder::LoadToRuntime(CSharp::IGraphicsDevice^ Device)
 {
     GraphicsDevice* device = Device->GetNative();
-    ResultCode result = Runtime::buildAllShaderPrograms(device, *Database);
+    ResultCode result = Runtime::loadAllShaderPrograms(device, *Database);
     return (result == RecluseResult_Ok);
 }
 } // Pipeline

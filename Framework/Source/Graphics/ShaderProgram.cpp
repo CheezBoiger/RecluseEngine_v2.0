@@ -684,7 +684,7 @@ ResultCode ShaderProgramReflection::deserialize(Archive* archive)
 
 namespace Runtime {
 
-ResultCode buildShaderProgram(GraphicsDevice* pDevice, const ShaderProgramDatabase& db, ShaderProgramId shaderProgram)
+ResultCode loadShaderProgram(GraphicsDevice* pDevice, const ShaderProgramDatabase& db, ShaderProgramId shaderProgram)
 {
     ResultCode e = RecluseResult_Ok;
     const ShaderProgramDatabase::PermutationMap* dbmap = db.obtainShaderProgramPermutations(shaderProgram);
@@ -701,7 +701,7 @@ ResultCode buildShaderProgram(GraphicsDevice* pDevice, const ShaderProgramDataba
 }
 
 
-ResultCode buildAllShaderPrograms(GraphicsDevice* pDevice, const ShaderProgramDatabase& db)
+ResultCode loadAllShaderPrograms(GraphicsDevice* pDevice, const ShaderProgramDatabase& db)
 {
     ResultCode e = RecluseResult_Ok;
     const ShaderProgramDatabase::MetaMap& metamap = db.obtainMetaMap();
@@ -709,7 +709,7 @@ ResultCode buildAllShaderPrograms(GraphicsDevice* pDevice, const ShaderProgramDa
     for (auto& definitions : metamap)
     {
         R_DEBUG("ShaderProgram", "Loading ShaderProgram: %d", definitions.first);
-        e = buildShaderProgram(pDevice, db, definitions.first);
+        e = loadShaderProgram(pDevice, db, definitions.first);
         if (e == RecluseResult_NeedsUpdate)
             continue;
         else if (e != RecluseResult_Ok)
@@ -731,7 +731,7 @@ ResultCode releaseAllShaderPrograms(GraphicsDevice* pDevice)
 }
 
 
-ResultCode buildVertexInputLayout(GraphicsDevice* pDevice, const VertexInputLayout& layout, VertexInputLayoutId inputLayoutId)
+ResultCode loadVertexInputLayout(GraphicsDevice* pDevice, const VertexInputLayout& layout, VertexInputLayoutId inputLayoutId)
 {
     auto it = g_vertexLayoutIds.find(inputLayoutId);
     if (it != g_vertexLayoutIds.end())

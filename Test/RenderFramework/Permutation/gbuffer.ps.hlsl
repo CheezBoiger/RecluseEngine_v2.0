@@ -8,7 +8,7 @@ struct PSIn
 	float4 color 		: TEXCOORD2;
 };
 
-[[vk::binding(0)]] cbuffer PerVert : register(b0)
+cbuffer PerVert : register(b0)
 {
 	float4x4 mModelViewProjection;
 	float4x4 mNormal;
@@ -16,8 +16,8 @@ struct PSIn
 	uint3	 pad0;
 };
 
-[[vk::binding(1)]] Texture2D<float4> colorTexture : register(t0);
-[[vk::binding(2)]] SamplerState colorSampler : register(s0);
+Texture2D<float4> colorTexture 	: register(t0);
+SamplerState colorSampler 		: register(s0);
 
 struct PSOut 
 {

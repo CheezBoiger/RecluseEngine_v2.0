@@ -304,7 +304,7 @@ private:
     std::vector<std::unordered_map<U32, KeyArray>>          m_commandKeys;
     Mutex                                                   m_commandMx;
     CommandList*                                            m_currentRenderCommands;
-    CommandKeyContainer                                     m_currentCommandKeys;
+    CommandKeyMap                                           m_currentCommandKeys;
     std::vector<DebugDrawFunction>                          m_debugDrawFunctions;
     // Lights in the scene.
     std::vector<LightDescription>                           m_lightDescriptions;

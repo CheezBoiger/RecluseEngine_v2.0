@@ -424,7 +424,7 @@ GraphicsResource* buildConstantBuffer(GraphicsDevice* device)
 }
 
 
-void updateConstBuffer(IShaderProgramBinder& binder, GraphicsResource* resource, U32 width, U32 height, F32 delta)
+void updateConstBuffer(ShaderProgramBinder& binder, GraphicsResource* resource, U32 width, U32 height, F32 delta)
 {
     static F32 t = 0;
     static Bool isTexturing = false;
@@ -489,6 +489,7 @@ void createShaderProgram(GraphicsDevice* device)
     
     Pipeline::ShaderBuilder* shaderBuilder = nullptr;
     ShaderIntermediateCode intermediateCode;
+    Pipeline::HlslToGlslPreprocessor preprocessor;
     if (instance->getApi() == GraphicsApi_Direct3D12)
         // GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
     {
@@ -499,6 +500,7 @@ void createShaderProgram(GraphicsDevice* device)
     {
         shaderBuilder = Pipeline::createShaderBuilder("dxc");
         intermediateCode = ShaderIntermediateCode_Spirv;
+        shaderBuilder->addPreprocessor(&preprocessor);
     }
     shaderBuilder->setUp();
 
@@ -519,7 +521,7 @@ void createShaderProgram(GraphicsDevice* device)
         database.deserialize(&reader);
     }
 #endif
-    Runtime::buildShaderProgram(device, database, ShaderProgram_Box);
+    Runtime::loadShaderProgram(device, database, ShaderProgram_Box);
     database.clearShaderProgramDefinitions();
 #if COMPILE_SHADER_PROGRAM
     shaderBuilder->tearDown();
@@ -554,7 +556,7 @@ int main(char* argv[], int c)
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
+    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 
@@ -690,7 +692,7 @@ int main(char* argv[], int c)
                 context->setInputVertexLayout(VertexLayout_PositionNormalTexCoordColor);
                 context->setColorWriteMask(0, Color_Rgba);
                 context->beginLabel("Box", { });
-                IShaderProgramBinder& binder = context->bindShaderProgram(ShaderProgram_Box);
+                ShaderProgramBinder& binder = context->bindShaderProgram(ShaderProgram_Box);
                 binder.bindShaderResource(ShaderStage_Pixel, 0, 0, textureView);
                 binder.bindSampler(ShaderStage_Pixel, 0, 0, sampler);
                 updateConstBuffer(binder, constantBuffer, window->getWidth(), window->getHeight(), tick.delta());

@@ -65,7 +65,7 @@ struct GameEntityAllocation
 };
 
 // Game entity manager calls that need to be overridden if you plan to override the manager!
-typedef GameEntity* (*OnAllocationCallback)         (U64, GameEntityMemoryAllocationType);
+typedef GameEntity* (*OnAllocationCallback)         (U64, GameEntityMemoryAllocationType, const Recluse::RGUID& rguid);
 typedef void        (*OnFreeCallback)               (GameEntity*);
 typedef GameEntity* (*OnFindEntityByRguidCallback)   (const Recluse::RGUID&);
 typedef void        (*OnCleanUpCallback)            ();
@@ -92,20 +92,18 @@ public:
 
     RecluseEngine_PUBLIC_API GameEntity
             (
-                const GameEntityAllocation& allocation,
                 const RGUID& uuid,
                 const std::string& tag = std::string(), 
                 const std::string& name = std::string()
             )
-        : m_allocation(allocation)
-        , m_guuid(uuid)
+        : m_guuid(uuid)
         , m_status(GameEntityStatus_Unused)
         , m_name(name)
         , m_tag(tag)
     {}
 
     // Instantiates a game object into the pool
-    static RecluseEngine_PUBLIC_API GameEntity* instantiate(U64 szBytes, GameEntityMemoryAllocationType allocType = GameEntityMemoryAllocationType_Dynamic);
+    static RecluseEngine_PUBLIC_API GameEntity* instantiate(U64 szBytes, GameEntityMemoryAllocationType allocType = GameEntityMemoryAllocationType_Dynamic, const RGUID& rguid = RGUID());
     
     // Frees a game object from the pool.
     static RecluseEngine_PUBLIC_API void        free(GameEntity* gameObject);
@@ -177,9 +175,6 @@ public:
     void setName(const std::string& newName) { m_name = newName; }
     void setTag(const std::string& newTag) { m_tag = newTag; }
 
-    // Obtain the object allocation.
-    RecluseEngine_PUBLIC_API GameEntityAllocation   getAllocation() const { return m_allocation; }
-
     // Get the component that is associated with this entity, from the given scene.
     // Many registries may hold components of the same entity, but may actually be from another registry.
     // Therefore, components of the same type will end up having different possible values from other registries.
@@ -222,9 +217,6 @@ private:
 
     // Game Object uuid.
     RGUID                                                   m_guuid;
-
-    // The actual game object allocation.
-    GameEntityAllocation                                    m_allocation;
 };
 
 
@@ -236,12 +228,12 @@ class RecluseEngine_PUBLIC_API EntityHierarchy : public Serializable
 public:
     enum RemovalOption
     {
-        // Removes only the node, maintains the subtree by adding children to the grandfather node.
-        RemovalOption_RemoveOnlyNode         = (1 << 0),
+        // Just check if the node exists there.
+        RemovalOption_JustCheck                 = 0,
         // Removes all the subtree, including children. Turns them parentless if they are not meant to be deleted.
-        RemovalOption_RemoveAllSubtree      = (1 << 1),
+        RemovalOption_RemoveAllSubtree          = (1 << 0),
         // Keeps the children, moves them over to childless root.
-        RemovalOption_DeleteChildren          = (1 << 2),
+        RemovalOption_DeleteChildren            = (1 << 1),
     };
     typedef U32 RemovalOptionFlags;
 
@@ -288,11 +280,10 @@ private:
     // Children data structure.
     typedef std::set<RGUID, RGUID::Less> ChildrenDataStructure;
 
-
     struct Relation
     {
-        ChildrenDataStructure   children;
-        RGUID                   parent;  
+        ChildrenDataStructure               children;
+        RGUID                               parent;  
     };
 
     std::map<RGUID, Relation, RGUID::Less>  m_hierarchy;

@@ -18,9 +18,15 @@ struct PreprocessDefine
 };
 
 
+// Shader preprocessor object, used to handle shader source code files, and 
+// modify if need be.
 class ReclusePipeline_PUBLIC_API ShaderPreprocessor
 {
 public:
+    // Process the source code, the result is stored and must be obtained through getOutput().
+    // \param sourceCodeData the pointer to the source code.
+    // \param sourceCodeSizeBytes the length of the source code pointer, in bytes.
+    // \return the result code, Ok if successful.
     ResultCode process(const char* sourceCodeData, U32 sourceCodeSizeBytes);
 
     ShaderPreprocessor& addConstantDefine(const std::string& variableName, const std::string& value)
@@ -29,6 +35,7 @@ public:
         return (*this);
     }
 
+    // Get the output of the preprocessor. This is usually if the process() call is successful.
     const std::vector<char>& getOutput() {  return m_output; }
 
     const std::vector<PreprocessDefine>& getDefines() const { return m_defines; }

@@ -36,12 +36,19 @@ public:
     void initialize();
     void destroy();
 
-    ResultCode                     addEntity(ECS::GameEntity* pGameObject);
+    // Adds an entity to this scene, only adds as a reference! Ensure the entity itself is 
+    // cleaned up, if there is no scene referencing it.
+    ResultCode                     addEntity(const RGUID& entity, const RGUID& parent = RGUID());
+
+    // Removes an entity from the scene, this does not delete!
     ResultCode                     removeEntity(U32 idx);
+
+    // Removes an entity from the scene, this does not delete!
     ResultCode                     removeEntity(const RGUID& guid);
+
     ECS::GameEntity*               findEntity(const std::string& name);
     ECS::GameEntity*               findEntity(const RGUID& guid);
-    ECS::GameEntity*               getEntity(U32 idx);
+    RGUID                          getEntity(U32 idx);
 
     ECS::EntityHierarchy*           getHierarchy() { return &m_hierarchy; }
 
@@ -50,7 +57,7 @@ public:
 
     // Get game objects inside this scene.
     //
-    const std::vector<ECS::GameEntity*>& getEntities() const { return m_entities; }
+    const std::vector<RGUID>& getEntities() const { return m_entities; }
 
     // Serialize the scene.
     ResultCode                     save(Archive* pArchive);
@@ -59,36 +66,36 @@ public:
     ResultCode                     load(Archive* pArchive);
 
     // add a camera to the scene.
-    void                                        addCamera(Camera* camera) { m_cameras.emplace_back(camera); }
+    void                           addCamera(Camera* camera) { m_cameras.emplace_back(camera); }
 
     // Get the main camera in the scene.
-    Camera*                                     getMainCamera() const { return m_cameras[0]; }
-    Camera*                                     getCamera(U32 index) { return m_cameras[index]; }
+    Camera*                        getMainCamera() const { return m_cameras[0]; }
+    Camera*                        getCamera(U32 index) { return m_cameras[index]; }
 
-    void                                        drawDebug(ECS::Registry* registry, DebugRenderer* debugRenderer);
+    void                           drawDebug(ECS::Registry* registry, DebugRenderer* debugRenderer);
 
 protected:
 
     // Serialize the given scene. This should be used for 
     // custom scenes.
-    virtual ResultCode                serialize(Archive* pArchive) const override;
+    virtual ResultCode             serialize(Archive* pArchive) const override;
 
     // Deserialize the scene from the given archive.
     //
-    virtual ResultCode                deserialize(Archive* pArchive) override;
+    virtual ResultCode             deserialize(Archive* pArchive) override;
 
     // Set up the scene. Usually should be called if the scene is new, and 
     // needs setting up.
-    virtual ResultCode                setUp() { return RecluseResult_NoImpl; }
+    virtual ResultCode             setUp() { return RecluseResult_NoImpl; }
 
     // Teardown the scene, for when any objects initialized, should be cleaned up 
     // by the scene.
-    virtual ResultCode                tearDown() { return RecluseResult_NoImpl; }
+    virtual ResultCode             tearDown() { return RecluseResult_NoImpl; }
 
 private:
 
     // Game objects in the scene.
-    std::vector<ECS::GameEntity*>       m_entities;
+    std::vector<RGUID>                  m_entities;
     std::string                         m_name;
     ECS::EntityHierarchy                m_hierarchy;
 

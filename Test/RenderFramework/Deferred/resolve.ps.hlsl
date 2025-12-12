@@ -34,11 +34,11 @@ cbuffer LightView : register(b1)
 };
 
 Texture2D<float4> AlbedoTexture 		: register(t0);
-Texture2D<float4> NormalTexture 		: register(t1);
-Texture2D<float4> MaterialTexture 		: register(t2);
-Texture2D<float4> DepthTexture  		: register(t3);
+Texture2D<float4> NormalTexture 		: register(t2);
+Texture2D<float4> MaterialTexture 		: register(t3);
+Texture2D<float4> DepthTexture  		: register(t4);
 
-StructuredBuffer<Light> LightBuffer 	: register(t4);
+StructuredBuffer<Light> LightBuffer 	: register(t1);
 
 SamplerState g_sampler : register(s0);
 

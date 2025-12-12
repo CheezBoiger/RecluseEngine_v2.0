@@ -7,7 +7,7 @@ namespace Recluse {
 namespace Engine {
 
 
-void CameraSystem::onUpdate(ECS::Registry* registry, const RealtimeTick& tick, Scene* scene)
+void CameraSystem::onUpdate(ECS::Registry* registry, const RealtimeTick& tick, ECS::EntityHierarchy* hierarchy)
 {
     // To iterate for all components in the scene, obtain all components from the registry.
     std::vector<Camera*> cameras = obtainComponents(registry);

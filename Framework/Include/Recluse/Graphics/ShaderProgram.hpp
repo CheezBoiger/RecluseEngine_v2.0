@@ -211,12 +211,12 @@ private:
 
 namespace Runtime {
 // Build the actual shader program. This is the realtime runner that requires building the shaders and their respective permutations.
-RecluseFramework_PUBLIC_API ResultCode                     buildShaderProgram(GraphicsDevice* pDevice, const ShaderProgramDatabase& db, ShaderProgramId shaderProgram);
-RecluseFramework_PUBLIC_API ResultCode                     buildAllShaderPrograms(GraphicsDevice* pDevice, const ShaderProgramDatabase& db);
+RecluseFramework_PUBLIC_API ResultCode                     loadShaderProgram(GraphicsDevice* pDevice, const ShaderProgramDatabase& db, ShaderProgramId shaderProgram);
+RecluseFramework_PUBLIC_API ResultCode                     loadAllShaderPrograms(GraphicsDevice* pDevice, const ShaderProgramDatabase& db);
 RecluseFramework_PUBLIC_API ResultCode                     releaseShaderProgram(GraphicsDevice* pDevice, ShaderProgramId shaderProgram);
 RecluseFramework_PUBLIC_API ResultCode                     releaseAllShaderPrograms(GraphicsDevice* pDevice);
 // Build all vertex input layouts, stores in their own register.
-RecluseFramework_PUBLIC_API ResultCode                     buildVertexInputLayout(GraphicsDevice* pDevice, const VertexInputLayout& layout, VertexInputLayoutId inputLayoutId);
+RecluseFramework_PUBLIC_API ResultCode                     loadVertexInputLayout(GraphicsDevice* pDevice, const VertexInputLayout& layout, VertexInputLayoutId inputLayoutId);
 RecluseFramework_PUBLIC_API ResultCode                     releaseVertexInputLayout(GraphicsDevice* pDevice, VertexInputLayoutId inputLayoutId);
 RecluseFramework_PUBLIC_API ResultCode                     releaseAllVertexInputLayouts(GraphicsDevice* pDevice);
 } // Runtime

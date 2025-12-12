@@ -20,7 +20,6 @@ class MessageBus;
 namespace Engine {
 class Renderer;
 class DebugRenderer;
-class Scene;
 } // Engine
 } // Recluse
 
@@ -33,6 +32,7 @@ typedef Hash64 GameUUID;
 // Forward declare game object.
 class GameEntity;
 class Registry;
+class EntityHierarchy;
 
 
 #define R_CLASS_PUBLIC_DEFINE public:
@@ -97,7 +97,7 @@ public:
     // \param Registry
     // \param tick
     // \param scene (Optional) 
-    void                                update(Registry* registry, const RealtimeTick& tick, Engine::Scene* scene = nullptr) { onUpdate(registry, tick); }
+    void                                update(Registry* registry, const RealtimeTick& tick, EntityHierarchy* hierarchy = nullptr) { onUpdate(registry, tick, hierarchy); }
 
     // Initializes this system. Returns Ok if the system was properly initialized.
     ResultCode                          initialize()
@@ -171,7 +171,7 @@ protected:
 
     // To update all components in the world. 
     // \param scene The scene instance that we are updating on.
-    virtual void            onUpdate(Registry* registry, const RealtimeTick& tick, Engine::Scene* scene = nullptr) { }
+    virtual void            onUpdate(Registry* registry, const RealtimeTick& tick, EntityHierarchy* hierarchy = nullptr) { }
 
     // Updates all component in the world after onUpdate() calls have been made.
     virtual void            onPostUpdate(Registry* registry, const RealtimeTick& tick) { }
@@ -255,7 +255,7 @@ protected:
 
     // To update all components in the world. 
     // \param scene The scene instance that we are updating on.
-    virtual void            onUpdate(Registry* registry, const RealtimeTick& tick, Engine::Scene* scene = nullptr) override { }
+    virtual void            onUpdate(Registry* registry, const RealtimeTick& tick, EntityHierarchy* hierarchy = nullptr) override { }
 
     // Updates all component in the world after onUpdate() calls have been made.
     virtual void            onPostUpdate(Registry* registry, const RealtimeTick& tick) override { }

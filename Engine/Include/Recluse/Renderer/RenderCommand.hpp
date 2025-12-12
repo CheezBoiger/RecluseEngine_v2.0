@@ -63,7 +63,17 @@ typedef U32 ResourceBindOpFlags;
 
 typedef U32                                 KeyId;
 typedef std::vector<KeyId>                  KeyArray;
-typedef MapContainer<U32, KeyArray>         CommandKeyContainer;
+typedef MapContainer<U32, KeyArray>         CommandKeyMap;
+
+
+class CommandKeyContainer
+{
+public:
+    
+private:
+    CommandKeyMap                                   m_commandKeyMap;
+    std::vector<std::unordered_map<U32, KeyArray>>  m_commandKeys; 
+};
 
 struct RenderCommand 
 {
@@ -173,7 +183,7 @@ public:
 
 private:
     
-    void resize();
+    void                resize();
 
     // Memory allocation that is used to iterate through commands.
     Allocator*  m_pAllocator;
@@ -182,6 +192,13 @@ private:
     // Scratch memory used for rendering command information.
     MemoryPool* m_scratch;
     Allocator*  m_scratchAllocator;
+};
+
+
+class CommandListSorter
+{
+public:
+private:
 };
 } // Engine
 } // Recluse

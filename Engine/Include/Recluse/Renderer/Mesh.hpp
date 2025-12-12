@@ -235,5 +235,23 @@ private:
     // Mesh attribute map loaded, unloaded from the streamer.
     std::map<Mesh::Attribute, std::vector<Math::Float4>> m_attributes;
 };
+
+
+class RecluseEngine_PUBLIC_API VertexLayoutAsset : public Serializable
+{
+public:
+    VertexLayoutAsset(VertexInputLayoutId layoutId)
+        : m_inputId(layoutId) { }
+
+    ResultCode serialize(Archive* archive) const override { return RecluseResult_NoImpl; }
+    ResultCode deserialize(Archive* archive) override { return RecluseResult_NoImpl; }
+
+    void addAttribute(const VertexAttribute& attribute);
+    
+private:
+    std::vector<VertexAttribute>    m_attributes;
+    VertexInputLayout               m_vertexLayoutData;
+    VertexInputLayoutId             m_inputId;
+};
 } // Engine
 } // Recluse

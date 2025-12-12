@@ -27,7 +27,7 @@ void initialize(GraphicsDevice* pDevice, Engine::SceneBufferDefinitions* pBuffer
     R_DEBUG("PreZ", "Initializing preZ render pass...");
 
     VertexInputLayout layout = { };
-    Runtime::buildVertexInputLayout(pDevice, layout, VertexLayout_PositionOnly);
+    Runtime::loadVertexInputLayout(pDevice, layout, VertexLayout_PositionOnly);
 }
 
 

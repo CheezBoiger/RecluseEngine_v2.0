@@ -9,7 +9,7 @@ struct VSOut
 };
 
 
-[[vk::binding(0)]] cbuffer PerVert : register(b0)
+cbuffer PerVert : register(b0)
 {
 	float4x4 mModelViewProjection;
 	float4x4 mNormal;

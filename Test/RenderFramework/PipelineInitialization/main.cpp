@@ -112,7 +112,7 @@ int main(int c, char* argv[])
     RealtimeTick::initializeWatch(1ull, 0);
     LogSystem::enableLogTypes(LogType_Debug);
     LogSystem::disableLogTypes(LogType_Warn);
-    GraphicsInstance* pInstance             = GraphicsInstance::create(GraphicsApi_Direct3D12);
+    GraphicsInstance* pInstance             = GraphicsInstance::create(GraphicsApi_Vulkan);
     GraphicsAdapter* pAdapter               = nullptr;
     GraphicsResource* pData                 = nullptr;
     GraphicsResource* pData2                = nullptr;
@@ -313,7 +313,7 @@ int main(int c, char* argv[])
 
         description.language = ShaderLanguage_Hlsl;
         Pipeline::Builder::buildShaderProgram(database, description, ShaderKey_SimpleColor, intermediateCode, shaderBuilder);
-        Runtime::buildShaderProgram(pDevice, database, 0);
+        Runtime::loadShaderProgram(pDevice, database, 0);
         database.clearShaderProgramDefinitions();
 
         VertexInputLayout layout    = { };
@@ -332,7 +332,7 @@ int main(int c, char* argv[])
 
         layout.numVertexBindings = 1;
 
-        Runtime::buildVertexInputLayout(pDevice, layout, VertexLayoutKey_PositionOnly);
+        Runtime::loadVertexInputLayout(pDevice, layout, VertexLayoutKey_PositionOnly);
         shaderBuilder->tearDown();
         Pipeline::freeShaderBuilder(shaderBuilder);
     }
@@ -369,7 +369,7 @@ int main(int c, char* argv[])
                 context->setViewports(1, &viewport);
                 context->setScissors(1, &scissor);
                 context->setInputVertexLayout(VertexLayoutKey_PositionOnly);
-                IShaderProgramBinder& binder = context->bindShaderProgram(ShaderKey_SimpleColor);
+                ShaderProgramBinder& binder = context->bindShaderProgram(ShaderKey_SimpleColor);
             
                 ResourceViewDescription rtvDesc = { };
                 rtvDesc.type                    = ResourceViewType_RenderTarget;

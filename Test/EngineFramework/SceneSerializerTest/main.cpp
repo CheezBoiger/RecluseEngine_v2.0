@@ -20,18 +20,19 @@ using namespace Recluse::Engine;
 class GameWorldScene : public Engine::Scene {
 public:
     ResultCode serialize(Archive* pArchive) const override {
-        std::queue<ECS::GameEntity*> objects;
-        const std::vector<ECS::GameEntity*>& gameObjects = getEntities();
-        for (auto gameObject : gameObjects) {
+        std::queue<RGUID> objects;
+        const std::vector<RGUID>& gameObjects = getEntities();
+        for (auto gameObject : gameObjects) 
+        {
             objects.push(gameObject);
         } 
 
-        while (!objects.empty()) {
-            ECS::GameEntity* pObject = objects.front();
+        while (!objects.empty()) 
+        {
+            RGUID rguid                                 = objects.front();
             objects.pop();
-            
-            RGUID rguid                                 = pObject->getGUID();
-            const std::vector<RGUID>& children          = pObject->getChildren();
+
+            const std::vector<RGUID>& children          = {};//pObject->getChildren();
             U32 numChildren                                     = (U32)children.size();
             const char* name                                    = "cats";
             U32 nameSz                                          = strlen(name);
@@ -39,9 +40,7 @@ public:
             pArchive->write(&rguid, sizeof(RGUID));
             pArchive->write(&numChildren, 4);
             pArchive->write(&nameSz, sizeof(U32));
-            pArchive->write((void*)name, nameSz);
-            
-            pObject->serialize(pArchive);
+            pArchive->write((void*)name, nameSz);            
         }
 
         return RecluseResult_Ok;

@@ -64,6 +64,7 @@
                 if (!(expression)) { \
                     int lineN = __LINE__; \
                     Recluse::Hash64 ______k = Recluse::recluseHashFast(__FILE__ ## #expression, sizeof(__FILE__ ## #expression)) ^ Recluse::recluseHashFast(&lineN, sizeof(lineN)); \
+                    R_WARN("Assert", "%s", #expression); \
                     assertHandler(______k, _CRT_WIDE(__FILE__), __LINE__, _CRT_WIDE(#expression), (expression)); \
                 } \
             } while (0)
@@ -76,6 +77,7 @@
                         { \
                             char err[512]; \
                             sprintf(err, #expression ## "\n" ## #fmt, __VA_ARGS__); \
+                            R_WARN("Assert", "%s", err); \
                             MultiByteToWideChar(CP_UTF8, 0, err, 512, werr, 512); \
                         } \
                         int lineN = __LINE__; \

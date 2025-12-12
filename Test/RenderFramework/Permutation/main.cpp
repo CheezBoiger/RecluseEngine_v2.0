@@ -245,7 +245,7 @@ void createShaderProgram(GraphicsDevice* device)
     }
 
     Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_Gbuffer, intermediateCode, shaderBuilder);
-    Runtime::buildShaderProgram(device, database, ShaderProgram_Gbuffer);
+    Runtime::loadShaderProgram(device, database, ShaderProgram_Gbuffer);
 
     vsSource = currDir + "/" + "quad.vs.hlsl";
     fsSource = currDir + "/" + "resolve.ps.hlsl";
@@ -261,7 +261,7 @@ void createShaderProgram(GraphicsDevice* device)
     description.graphics.psName = "psMain";
 
     Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_LightResolve, intermediateCode, shaderBuilder);
-    Runtime::buildShaderProgram(device, database, ShaderProgram_LightResolve);
+    Runtime::loadShaderProgram(device, database, ShaderProgram_LightResolve);
     {
         ArchiveWriter writer("dxil.database");
         database.serialize(&writer);
@@ -502,7 +502,7 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
     {
         permutation = makeBitset32(0, 1, 1);
     }
-    IShaderProgramBinder& binder = context->bindShaderProgram(ShaderProgram_Gbuffer, permutation);
+    ShaderProgramBinder& binder = context->bindShaderProgram(ShaderProgram_Gbuffer, permutation);
 
     for (U32 i = 0; i < meshes.size(); ++i)
     {
@@ -512,6 +512,7 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
         binder.bindConstantBuffer(ShaderStage_Pixel | ShaderStage_Vertex, 0, 0, meshes[i].meshTransform, 0, sizeof(ConstBuffer))
                 .bindShaderResource(ShaderStage_Pixel, 0, 0, meshes[i].albedoView)
                 .bindSampler(ShaderStage_Pixel, 0, 0, gbufferSampler);
+
         context->bindVertexBuffers(1, &vb, offset);
         context->bindIndexBuffer(meshes[i].indexBuffer, 0, IndexType_Unsigned32);
         context->drawIndexedInstanced(meshes[i].numIndices, 1, 0, 0, 0);
@@ -606,8 +607,9 @@ void resolveLighting(GraphicsContext* context)
             .bindShaderResource(ShaderStage_Pixel, 0, 4, lightBufferView)
             .bindShaderResource(ShaderStage_Pixel, 0, 3, depthView)
             .bindConstantBuffer(ShaderStage_Pixel, 0, 0, sceneBuffer, 0, sizeof(SceneBuffer))
-            .bindConstantBuffer(ShaderStage_Pixel, 0, 1, lightViewBuffer, 0, sizeof(LightView))
-            .bindSampler(ShaderStage_Pixel, 0, 0, gbufferSampler);
+            .bindConstantBuffer(ShaderStage_Pixel, 0, 0, lightViewBuffer, 0, sizeof(LightView))
+            .bindSampler(ShaderStage_Pixel, 0, 0, gbufferSampler)
+;
 
         context->bindRenderTargets(1, &id);
         context->setTopology(PrimitiveTopology_TriangleList);

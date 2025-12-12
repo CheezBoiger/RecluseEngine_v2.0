@@ -403,7 +403,7 @@ void RendererModule::resetCommandKeys()
 {
     m_currentFrameIndex = (m_currentFrameIndex + 1) % m_maxBufferCount;
     
-    m_currentCommandKeys = CommandKeyContainer(&m_commandKeys[m_currentFrameIndex]);
+    //m_currentCommandKeys = CommandKeyContainer(&m_commandKeys[m_currentFrameIndex]);
     m_currentRenderCommands = m_renderCommands[m_currentFrameIndex];
     
     R_ASSERT(m_currentCommandKeys.isValid());
@@ -491,7 +491,7 @@ void RendererModule::allocateSceneBuffers(const RendererConfigs& configs)
     m_commandKeys.resize(m_maxBufferCount);
 
     m_currentRenderCommands = m_renderCommands[0];
-    m_currentCommandKeys = CommandKeyContainer(&m_commandKeys[0]);
+    //m_currentCommandKeys = CommandKeyContainer(&m_commandKeys[0]);
 }
 
 

@@ -129,7 +129,7 @@ int main(int c, char* argv[])
     GraphicsAdapter* pAdapter       = nullptr;
     GraphicsResource* pData         = nullptr;
     PipelineState* pPipeline        = nullptr;
-    Window* pWindow                 = Window::create("Compute", 0, 0, 1024, 1024, ScreenMode_Fullscreen);
+    Window* pWindow                 = Window::create("Compute", 0, 0, 1024, 1024, ScreenMode_Windowed);
     ResultCode result               = RecluseResult_Ok;
 
     pWindow->setOnWindowResize(ResizeFunction);
@@ -242,6 +242,7 @@ int main(int c, char* argv[])
     {
         Pipeline::ShaderBuilder* shaderBuilder = nullptr;
         ShaderIntermediateCode intermediateCode;
+        Pipeline::HlslToGlslPreprocessor preprocessor;
         if (pInstance->getApi() == GraphicsApi_Direct3D12)
         {
             // GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
@@ -252,6 +253,7 @@ int main(int c, char* argv[])
         {
             shaderBuilder = Pipeline::createShaderBuilder("glslang");
             intermediateCode = ShaderIntermediateCode_Spirv;
+            shaderBuilder->addPreprocessor(&preprocessor);
         }
         shaderBuilder->setUp();
 
@@ -269,7 +271,7 @@ int main(int c, char* argv[])
 
         Pipeline::Builder::buildShaderProgram(database, description, 0, intermediateCode, shaderBuilder);
         //Runtime::buildShaderProgram(pDevice, database, ProgramId_Mandelbrot);
-        Runtime::buildAllShaderPrograms(pDevice, database);
+        Runtime::loadAllShaderPrograms(pDevice, database);
         database.clearShaderProgramDefinitions();
         shaderBuilder->tearDown();
         Pipeline::freeShaderBuilder(shaderBuilder);
