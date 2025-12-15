@@ -102,11 +102,12 @@ struct RootSigLayout
         U8                         baseSampler;
     };
 
-    std::vector<Set>            sets;
+    std::array<Set, 8>          sets;
     ShaderStageFlags            shaderVisibility;
     D3D12_ROOT_SIGNATURE_FLAGS  flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
 
     Hash64                      hash0;
+    U8                          numSets = 0;
 
     void makeHash();
 };
@@ -121,7 +122,7 @@ struct RootSigResourceTable
         std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 16>     cbvs;
         std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 16>     samplers;
     };
-    std::vector<Set> sets;
+    std::array<Set, 8> sets;
 };
 
 ID3D12PipelineState*            makePipelineState(D3D12Context* pContext, const PipelineStateObject& pipelineState);

@@ -62,9 +62,10 @@ struct Structure
 
             PipelineState() { graphics = { }; }
         } pipeline;
-        std::vector<VkDescriptorSetLayout>  descriptorSetLayouts;
+        std::array<VkDescriptorSetLayout, 8>  descriptorSetLayouts;
         ShaderProgramPermutation            shaderPermutation;
         ShaderProgramId                     shaderProgramId;
+        U8                                  numSets;
 
         State() { }
     } state;

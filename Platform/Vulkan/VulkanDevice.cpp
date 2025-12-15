@@ -1261,8 +1261,9 @@ void VulkanContext::VulkanShaderProgramBinder::obtainShaderProgramFromCache()
         if (reflectionCache)
         {
             // Reserve the needed size of the shader program.
-            currentState().m_boundDescriptorSetStructures.resize(reflectionCache->sets.size());
-            currentState().m_boundPerSet.resize(reflectionCache->sets.size());
+            R_ASSERT(currentState().m_boundDescriptorSetStructures.size() >= reflectionCache->sets.size());
+            R_ASSERT(currentState().m_boundPerSet.size() >= reflectionCache->sets.size());
+            currentState().m_numSets = reflectionCache->sets.size();
             for (U32 set = 0; set < reflectionCache->sets.size(); ++set)
             {
                 currentState().m_boundDescriptorSetStructures[set].key.value.constantBuffers    = (U16)reflectionCache->sets[set].numCbvs;

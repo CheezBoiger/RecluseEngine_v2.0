@@ -145,6 +145,8 @@ DescriptorHeap::DescriptorHeap()
     , m_allocator(nullptr)
     , m_baseCpuHandle(DescriptorTable::invalidCpuAddress)
     , m_baseGpuHandle(DescriptorTable::invalidGpuAddress)
+    , m_currentTotalEntries(0)
+    , m_descriptorSize(0)
 {
 }
 
@@ -195,12 +197,13 @@ ResultCode DescriptorHeap::initialize(ID3D12Device* pDevice, U32 nodeMask, U32 n
 
     m_allocator = makeAllocator(m_pHeap, numDescriptors, m_descriptorSize);
 
-    return RecluseResult_Ok;
+    return onInitialize(numDescriptors);
 }
 
 
 ResultCode DescriptorHeap::release()
 {
+    ResultCode result = onCleanUp();
     if (m_allocator)
     {
         m_allocator->cleanUp();
@@ -211,7 +214,7 @@ ResultCode DescriptorHeap::release()
         m_pHeap = nullptr;
     }
     m_freeAllocations.clear();
-    return RecluseResult_Ok;
+    return result;
 }
 
 
@@ -244,6 +247,20 @@ CpuDescriptorTable CpuDescriptorHeap::allocate(U32 numberDescriptors)
 void CpuDescriptorHeap::free(const CpuDescriptorTable& descriptorTable)
 {
     m_freeAllocations.push_back(descriptorTable);
+}
+
+ResultCode CpuDescriptorHeap::onInitialize(U32 numDescriptor)
+{
+    // 1024 uints.
+    m_scratchPad.preAllocate(4096); 
+    return RecluseResult_Ok;
+}
+
+
+ResultCode CpuDescriptorHeap::onCleanUp()
+{
+    m_scratchPad.release();
+    return RecluseResult_Ok;
 }
 
 
@@ -433,10 +450,10 @@ CpuDescriptorTable DescriptorHeapAllocationManager::copyDescriptorsToTable(CpuHe
     CpuDescriptorTable table = heap->allocate(descriptorCount);
     D3D12_CPU_DESCRIPTOR_HANDLE destHandleStart = table.baseCpuDescriptorHandle;
     UINT destDescriptorRange = table.numberDescriptors;
-    std::vector<UINT> srcRangeSizes(descriptorCount);
+    UINT* srcRangeSizes = heap->getScratchPad();
     for (U32 i = 0; i < descriptorCount; ++i)
         srcRangeSizes[i] = 1;
-    m_pDevice->CopyDescriptors(1, &destHandleStart, &destDescriptorRange, descriptorCount, handles, srcRangeSizes.data(), getNativeFromCpuHeapType(type));
+    m_pDevice->CopyDescriptors(1, &destHandleStart, &destDescriptorRange, descriptorCount, handles, srcRangeSizes, getNativeFromCpuHeapType(type));
     return table;
 }
 
@@ -662,18 +679,18 @@ ResultCode DescriptorHeapAllocationManager::internalFree(D3D12_CPU_DESCRIPTOR_HA
 ResultCode DescriptorHeapAllocationManager::release()
 {
     resizeShaderVisibleHeapInstances(0);
-    for (auto iter : m_cpuDescriptorHeaps)
+    for (auto& iter : m_cpuDescriptorHeaps)
     {
-        for (auto heap : iter.second.heaps)
+        for (auto& heap : iter.second.heaps)
         {
             heap.release();
         }
         iter.second.currentIndex = 0;
     }
 
-    for (auto iter : m_cpuDescriptorTableHeaps)
+    for (auto& iter : m_cpuDescriptorTableHeaps)
     {
-        for (auto heap : iter.second)
+        for (auto& heap : iter.second)
         {
             heap.release();
         }

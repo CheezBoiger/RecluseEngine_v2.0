@@ -501,7 +501,7 @@ ID3D12RootSignature* internalCreateRootSignatureWithTable(ID3D12Device* pDevice,
 
     U32 parameterCount = 0;
     U32 descriptorRangesCount = 0;
-    for (u32 set = 0; set < layout.sets.size(); ++set)
+    for (u32 set = 0; set < layout.numSets; ++set)
     {
         const Pipelines::RootSigLayout::Set& space = layout.sets[set];
         // One parameter for cbv/srv/uav heaps.
@@ -524,7 +524,7 @@ ID3D12RootSignature* internalCreateRootSignatureWithTable(ID3D12Device* pDevice,
     U32 rangeOffset = 0;
     U32 paramOffset = 0;
 
-    for (u32 set = 0; set < layout.sets.size(); ++set)
+    for (u32 set = 0; set < layout.numSets; ++set)
     {
         const Pipelines::RootSigLayout::Set& space = layout.sets[set];
         const U32 totalDescriptors = space.cbvCount + space.samplerCount + space.srvCount + space.uavCount;
@@ -834,12 +834,13 @@ void checkPipelines(D3D12Device* pDevice)
 void RootSigLayout::makeHash()
 {
     hash0 = 0;
-    for (U32 i = 0; i < sets.size(); ++i)
+    for (U32 i = 0; i < numSets; ++i)
     {
         hash0 ^= recluseHashFast(&sets[i], sizeof(Set));
     }
     hash0 ^= shaderVisibility;
     hash0 ^= flags;
+    hash0 ^= numSets;
 }
 } // Pipelines
 } // D3D12 

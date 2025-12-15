@@ -287,14 +287,15 @@ private:
     struct ContextState
     {
         Pipelines::Structure                                                    m_pipelineStructure;
-        std::vector<DescriptorSets::Structure>                                  m_boundDescriptorSetStructures;
+        std::array<DescriptorSets::Structure, 8>                                m_boundDescriptorSetStructures;
         // Need to set this on their own sets.
-        std::vector<DescriptorSets::VulkanSet>                                  m_boundPerSet;
+        std::array<DescriptorSets::VulkanSet, 8>                                m_boundPerSet;
         std::array<VkBuffer, 16>                                                m_vertexBuffers;
         std::array<U64, 16>                                                     m_vbOffsets;
         VkBuffer                                                                m_indexBuffer;
         ContextDirtyFlags                                                       m_dirtyFlags;
         U8                                                                      m_numBoundVBs;
+        U8                                                                      m_numSets;
         VkIndexType                                                             m_ibType;
         VkDeviceSize                                                            m_ibOffsetBytes;
 

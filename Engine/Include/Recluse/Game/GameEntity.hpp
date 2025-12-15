@@ -230,12 +230,11 @@ public:
     {
         // Just check if the node exists there.
         RemovalOption_JustCheck                 = 0,
-        // Removes all the subtree, including children. Turns them parentless if they are not meant to be deleted.
-        RemovalOption_RemoveAllSubtree          = (1 << 0),
-        // Keeps the children, moves them over to childless root.
-        RemovalOption_DeleteChildren            = (1 << 1),
+        // Removes all the subtree, including children. Turns children parentless in the hierarchy.
+        RemovalOption_RemoveAllSubtree          = 1,
+        // Destroys the node and the whole subtree of children.
+        RemovalOption_DestroyWithChildren       = 2,
     };
-    typedef U32 RemovalOptionFlags;
 
     EntityHierarchy() { }
     ~EntityHierarchy() { }
@@ -262,7 +261,7 @@ public:
 
     // Removes a node and any associated parent/children involved with it. Be sure to call this function if an entity
     // is going to be completely destroyed! Otherwise record will still be kept...
-    ResultCode          remove(const RGUID& node, RemovalOptionFlags removalOption = RemovalOption_RemoveAllSubtree);
+    ResultCode          remove(const RGUID& node, RemovalOption removalOption = RemovalOption_RemoveAllSubtree);
 
     // Adds a node to the hierarchy, this would check if the node is already a child, or parent of other children.
     // If not, will be a root node that is parentless.

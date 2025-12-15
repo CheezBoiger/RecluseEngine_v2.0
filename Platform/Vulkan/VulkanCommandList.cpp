@@ -228,7 +228,8 @@ void VulkanContext::clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect
 
 void VulkanContext::bindPipelineState(const VulkanDescriptorAllocation& set)
 {
-    currentState().m_pipelineStructure.state.descriptorSetLayouts.resize(set.getNumberAllocations());
+    R_ASSERT(currentState().m_pipelineStructure.state.descriptorSetLayouts.size() >= set.getNumberAllocations());
+    currentState().m_pipelineStructure.state.numSets = set.getNumberAllocations();
     for (U32 i = 0; i < set.getNumberAllocations(); ++i)
         currentState().m_pipelineStructure.state.descriptorSetLayouts[i] = set.getDescriptorSet(i).layout;
 
@@ -315,7 +316,7 @@ void VulkanContext::drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstV
     if (currentState().areResourcesDirty() || currentState().isPipelineDirty())
     {
         const VulkanDescriptorAllocation& descriptorSets = DescriptorSets::makeDescriptorSets(this, 
-            currentState().m_boundDescriptorSetStructures.data(), currentState().m_boundDescriptorSetStructures.size());
+            currentState().m_boundDescriptorSetStructures.data(), currentState().m_numSets);
     
         bindPipelineState(descriptorSets);
         bindDescriptorSet(descriptorSets);
@@ -376,7 +377,7 @@ void VulkanContext::dispatch(U32 x, U32 y, U32 z)
     if (currentState().areResourcesDirty() || currentState().isPipelineDirty())
     {
         const VulkanDescriptorAllocation& descriptorSets = DescriptorSets::makeDescriptorSets(this, 
-            currentState().m_boundDescriptorSetStructures.data(), currentState().m_boundDescriptorSetStructures.size());
+            currentState().m_boundDescriptorSetStructures.data(), currentState().m_numSets);
     
         bindPipelineState(descriptorSets);
         bindDescriptorSet(descriptorSets);
@@ -441,7 +442,7 @@ void VulkanContext::drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 
     if (currentState().areResourcesDirty() || currentState().isPipelineDirty())
     {
         const VulkanDescriptorAllocation& descriptorSets = DescriptorSets::makeDescriptorSets(this, 
-            currentState().m_boundDescriptorSetStructures.data(), currentState().m_boundDescriptorSetStructures.size());
+            currentState().m_boundDescriptorSetStructures.data(), currentState().m_numSets);
     
         bindPipelineState(descriptorSets);
         bindDescriptorSet(descriptorSets);
@@ -496,7 +497,7 @@ void VulkanContext::drawIndexedInstancedIndirect(GraphicsResource* pParams, U32 
     if (currentState().areResourcesDirty() || currentState().isPipelineDirty())
     {
         const VulkanDescriptorAllocation& descriptorSets = DescriptorSets::makeDescriptorSets(this, 
-            currentState().m_boundDescriptorSetStructures.data(), currentState().m_boundDescriptorSetStructures.size());
+            currentState().m_boundDescriptorSetStructures.data(), currentState().m_numSets);
     
         bindPipelineState(descriptorSets);
         bindDescriptorSet(descriptorSets);
@@ -528,7 +529,7 @@ void VulkanContext::drawInstancedIndirect(GraphicsResource* pParams, U32 offset,
     if (currentState().areResourcesDirty() || currentState().isPipelineDirty())
     {
         const VulkanDescriptorAllocation& descriptorSets = DescriptorSets::makeDescriptorSets(this, 
-            currentState().m_boundDescriptorSetStructures.data(), currentState().m_boundDescriptorSetStructures.size());
+            currentState().m_boundDescriptorSetStructures.data(), currentState().m_numSets);
     
         bindPipelineState(descriptorSets);
         bindDescriptorSet(descriptorSets);
@@ -559,7 +560,7 @@ void VulkanContext::dispatchIndirect(GraphicsResource* pParams, U64 offset)
     if (currentState().areResourcesDirty() || currentState().isPipelineDirty())
     {
         const VulkanDescriptorAllocation& descriptorSets = DescriptorSets::makeDescriptorSets(this, 
-            currentState().m_boundDescriptorSetStructures.data(), currentState().m_boundDescriptorSetStructures.size());
+            currentState().m_boundDescriptorSetStructures.data(), currentState().m_numSets);
     
         bindPipelineState(descriptorSets);
         bindDescriptorSet(descriptorSets);
@@ -596,7 +597,7 @@ void VulkanContext::dispatchMesh(U32 x, U32 y, U32 z)
     if (currentState().areResourcesDirty() || currentState().isPipelineDirty())
     {
         const VulkanDescriptorAllocation& descriptorSets = DescriptorSets::makeDescriptorSets(this, 
-            currentState().m_boundDescriptorSetStructures.data(), currentState().m_boundDescriptorSetStructures.size());
+            currentState().m_boundDescriptorSetStructures.data(), currentState().m_numSets);
     
         bindPipelineState(descriptorSets);
         bindDescriptorSet(descriptorSets);
@@ -627,7 +628,7 @@ void VulkanContext::dispatchMeshIndirect(GraphicsResource* indirectBuffer, U32 o
     if (currentState().areResourcesDirty() || currentState().isPipelineDirty())
     {
         const VulkanDescriptorAllocation& descriptorSets = DescriptorSets::makeDescriptorSets(this, 
-            currentState().m_boundDescriptorSetStructures.data(), currentState().m_boundDescriptorSetStructures.size());
+            currentState().m_boundDescriptorSetStructures.data(), currentState().m_numSets);
     
         bindPipelineState(descriptorSets);
         bindDescriptorSet(descriptorSets);

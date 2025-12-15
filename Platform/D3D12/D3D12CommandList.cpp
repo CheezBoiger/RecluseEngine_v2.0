@@ -505,14 +505,12 @@ void D3D12Context::clearResourceBinds()
         memset(contextState.m_resourceTable.sets[space].uavs.data(), 0, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) * contextState.m_resourceTable.sets[space].uavs.size());
         memset(contextState.m_resourceTable.sets[space].samplers.data(), 0, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) * contextState.m_resourceTable.sets[space].samplers.size());
     }
+
     if (m_shaderProgramBinder.getReflection())
     {
         // We don't necessarily need to clear out the layout info, since we are currently bound to a program with reflection.
         memset(&contextState.m_rootSigLayout, 0, sizeof(Pipelines::RootSigLayout));
     }
-    contextState.m_currentRenderPass = nullptr;
-    // contextState.m_currentRootSig = nullptr;
-    // contextState.setDirty(ContextDirty_CbvSrvUav);
 }
 
 
@@ -583,7 +581,7 @@ void D3D12Context::bindCurrentResources()
     if (state.isDirty(ContextDirty_Descriptors) || state.isDirty(ContextDirty_SamplerDescriptors))
     {
         U32 rootIndex = 0;
-        for (U32 set = 0; set < state.m_rootSigLayout.sets.size(); ++set)
+        for (U32 set = 0; set < state.m_rootSigLayout.numSets; ++set)
         {
             const Pipelines::RootSigLayout::Set& space = state.m_rootSigLayout.sets[set];
             const U32 dcount = (space.cbvCount + space.srvCount + space.uavCount);
@@ -610,6 +608,8 @@ ShaderProgramBinder& D3D12Context::bindShaderProgram(ShaderProgramId program, U3
     R_ASSERT_FORMAT(shaderProgram, "No shader program found by the given id=%d, and permutation=%d", program, permutation);
     if (shaderProgram)
     {
+        clearResourceBinds();
+
         currentState().m_pipelineStateObject.shaderProgramId = program;
         currentState().m_pipelineStateObject.permutation = permutation;
         currentState().m_pipelineStateObject.pipelineType = shaderProgram->bindType;
@@ -823,9 +823,11 @@ void D3D12Context::D3D12ShaderProgramBinder::obtainShaderProgramFromCache()
         cachedReflection = D3D::Cache::obtainShaderProgramReflection(getProgramId(), getPermutationId());
         if (cachedReflection)
         {   
-            currentState().m_rootSigLayout.sets.resize(cachedReflection->sets.size());
-            currentState().m_resourceTable.sets.resize(cachedReflection->sets.size());
-            for (u32 set = 0; set < currentState().m_rootSigLayout.sets.size(); ++set)
+            //currentState().m_rootSigLayout.sets.resize(cachedReflection->sets.size());
+            R_ASSERT(currentState().m_rootSigLayout.sets.size() >= cachedReflection->sets.size());
+            R_ASSERT(currentState().m_resourceTable.sets.size() >= cachedReflection->sets.size());
+            currentState().m_rootSigLayout.numSets = cachedReflection->sets.size();
+            for (u32 set = 0; set < cachedReflection->sets.size(); ++set)
             {
                 currentState().m_rootSigLayout.sets[set].cbvCount = (U16)cachedReflection->sets[set].numCbvs;
                 currentState().m_rootSigLayout.sets[set].baseCbv = cachedReflection->sets[set].baseCbv;

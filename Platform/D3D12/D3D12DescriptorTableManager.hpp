@@ -4,6 +4,7 @@
 #include "Recluse/Types.hpp"
 #include "Recluse/Utility.hpp"
 #include "Recluse/Memory/Allocator.hpp"
+#include "Recluse/Memory/MemoryPool.hpp"
 #include "D3D12Commons.hpp"
 
 #include "Recluse/Graphics/DescriptorSet.hpp"
@@ -70,6 +71,8 @@ struct CpuDescriptorTable : public DescriptorTable
         , DescriptorTable(numberDescriptors) { }
     D3D12_CPU_DESCRIPTOR_HANDLE getAddress(U32 idx) const { return { baseCpuDescriptorHandle.ptr + idx * descriptorAtomSize }; }
     void invalidate() { baseCpuDescriptorHandle = DescriptorTable::invalidCpuAddress; }
+
+    bool isValid() const { return (baseCpuDescriptorHandle.ptr != DescriptorTable::invalidCpuAddress.ptr); }
 };
 
 
@@ -81,6 +84,8 @@ struct ShaderVisibleDescriptorTable : public DescriptorTable
         : baseGpuDescriptorHandle(gpuHandle)
         , DescriptorTable(numberDescriptors) { }
     D3D12_GPU_DESCRIPTOR_HANDLE getAddress(U32 idx) const { return { baseGpuDescriptorHandle.ptr + idx * descriptorAtomSize }; }
+    void invalidate() { baseGpuDescriptorHandle = DescriptorTable::invalidGpuAddress; }
+    bool isValid() const { return (baseGpuDescriptorHandle.ptr != DescriptorTable::invalidGpuAddress.ptr); }
 };
 
 
@@ -134,6 +139,9 @@ public:
 
 protected:
 
+    virtual ResultCode                      onInitialize(U32 numDescriptors) { return RecluseResult_Ok; }
+    virtual ResultCode                      onCleanUp() { return RecluseResult_Ok; }
+
     virtual D3D12_DESCRIPTOR_HEAP_DESC      makeDescriptorHeapDescription(U32 nodeMask, U32 numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE)
     {
         D3D12_DESCRIPTOR_HEAP_DESC desc = { };
@@ -162,8 +170,20 @@ protected:
 class CpuDescriptorHeap : public DescriptorHeap
 {
 public:
+    CpuDescriptorHeap() { }
+    ~CpuDescriptorHeap() { }
+
     virtual CpuDescriptorTable              allocate(U32 numDescriptors) override;
     virtual void                            free(const CpuDescriptorTable& descriptorTable) override;
+
+    virtual ResultCode                      onInitialize(U32 numDescriptors) override;
+    virtual ResultCode                      onCleanUp() override;
+
+    UINT*                                   getScratchPad() const { return (UINT*)m_scratchPad.getBaseAddress(); }
+
+private:
+
+    MemoryArena                             m_scratchPad;
 };
 
 

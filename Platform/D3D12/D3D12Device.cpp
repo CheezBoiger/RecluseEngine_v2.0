@@ -518,6 +518,9 @@ void D3D12Context::resetCurrentResources()
     m_contextStates.resize(0);
     m_contextStates.push_back({ });
     clearResourceBinds();
+    currentState().m_currentRenderPass = nullptr;
+    // contextState().m_currentRootSig = nullptr;
+    // contextState().setDirty(ContextDirty_CbvSrvUav);
 
     Pipelines::resetTableHeaps(m_pDevice);
     RenderPasses::clearRenderPassCache();

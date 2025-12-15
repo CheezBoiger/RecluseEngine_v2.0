@@ -128,7 +128,8 @@ void MemoryPool::release()
         // Free the base address, and since it is malloc'ed, we need to point the address back to zero, to let the pool know
         // we no longer have memory attached.
         free((void*)m_baseAddr);
-        m_baseAddr = 0;
     }
+
+    m_baseAddr = 0;
 }
 } // Recluse

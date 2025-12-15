@@ -209,9 +209,10 @@ Bool EntityHierarchy::isParentOf(const RGUID& node, const RGUID& child)
 
 ResultCode EntityHierarchy::add(const RGUID& node, const RGUID& parent)
 {
+    // Don't re-add if it already exists in the hierarchy.
     if (!exists(node))
         m_hierarchy.insert(std::make_pair(node, Relation()));
-
+    
     if (node == parent)
         return RecluseResult_Failed;
 
@@ -322,7 +323,7 @@ ResultCode EntityHierarchy::removeAsChildrenForEntity(const RGUID& parent, const
 }
 
 
-ResultCode EntityHierarchy::remove(const RGUID& node, RemovalOptionFlags removalOptions)
+ResultCode EntityHierarchy::remove(const RGUID& node, RemovalOption removalOption)
 {
     if (!node.isValid())
     {
@@ -334,10 +335,41 @@ ResultCode EntityHierarchy::remove(const RGUID& node, RemovalOptionFlags removal
     if (exists(node))
     {
         // If we are intending to remove, we shouldn't have his option.
-        if (removalOptions != RemovalOption_JustCheck)
+        if (removalOption != RemovalOption_JustCheck)
         {
             Relation& relation = m_hierarchy[node];
             RGUID parent = relation.parent;
+
+            if (removalOption == RemovalOption_DestroyWithChildren)
+            {
+                ChildrenDataStructure& children = m_hierarchy[node].children;
+                for (const auto& child : children)
+                {
+                    remove(child, removalOption);
+                }
+            }
+            else if (removalOption == RemovalOption_RemoveAllSubtree)
+            {
+                // Add children to the root.
+                ChildrenDataStructure& children = m_hierarchy[node].children;
+                for (const auto& child : children)
+                {
+                    add(child, RGUID());
+                }
+            }
+            else
+            {
+                // Add to the existing parent.
+                if (parent.isValid())
+                {
+                    ChildrenDataStructure& children = m_hierarchy[node].children;
+                    for (const auto& child : children)
+                    {
+                        add(child, parent);
+                    }
+                }
+            }
+
             // Remove the node parent child association.
             if (parent.isValid())
             {
@@ -359,35 +391,6 @@ ResultCode EntityHierarchy::remove(const RGUID& node, RemovalOptionFlags removal
 
             auto it = m_hierarchy.find(node);
             m_hierarchy.erase(it);
-
-            if (removalOptions & RemovalOption_RemoveAllSubtree)
-            {
-                ChildrenDataStructure& children = m_hierarchy[node].children;
-                for (const auto& child : children)
-                {
-                    remove(child, removalOptions);
-                }
-            }
-            else
-            {
-                // Add to the existing parent.
-                if (parent.isValid())
-                {
-                    ChildrenDataStructure& children = m_hierarchy[node].children;
-                    for (const auto& child : children)
-                    {
-                        add(child, parent);
-                    }
-                }
-                else
-                {
-                    ChildrenDataStructure& children = m_hierarchy[node].children;
-                    for (const auto& child : children)
-                    {
-                        add(child, RGUID());
-                    }
-                }
-            }
         }
 
         result = RecluseResult_Ok;

@@ -726,7 +726,7 @@ VkPipeline createGraphicsPipeline(VulkanDevice* pDevice, VkPipelineCache pipelin
         vertInputState.pVertexBindingDescriptions = pLayout->bindings.data();
     }
 
-    VkPipelineLayout pipelineLayout = makeLayout(pDevice, structure.state.descriptorSetLayouts.data(), structure.state.descriptorSetLayouts.size());
+    VkPipelineLayout pipelineLayout = makeLayout(pDevice, structure.state.descriptorSetLayouts.data(), structure.state.numSets);
     
     if (result != VK_SUCCESS) 
     {
@@ -849,7 +849,7 @@ VkPipeline createComputePipeline(VulkanDevice* pDevice, VkPipelineCache pipeline
     VkResult result                         = VK_SUCCESS;
     VkPipeline pipeline = VK_NULL_HANDLE;
 
-    VkPipelineLayout pipelineLayout         = makeLayout(pDevice, structure.state.descriptorSetLayouts.data(), structure.state.descriptorSetLayouts.size());
+    VkPipelineLayout pipelineLayout         = makeLayout(pDevice, structure.state.descriptorSetLayouts.data(), structure.state.numSets);
 
     if (result != VK_SUCCESS) 
     {
@@ -901,7 +901,7 @@ static VkPipeline createRayTracingPipeline(VulkanDevice* pDevice, VkPipelineCach
 #if defined(RECLUSE_RAYTRACING_HEADER)
     std::vector<VkRayTracingShaderGroupCreateInfoKHR> shaderGroups;
     std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
-    VkPipelineLayout pipelineLayout = makeLayout(pDevice, structure.state.descriptorSetLayouts.data(), structure.state.descriptorSetLayouts.size());
+    VkPipelineLayout pipelineLayout = makeLayout(pDevice, structure.state.descriptorSetLayouts.data(), structure.state.numSets);
     VkRayTracingPipelineCreateInfoKHR rayTracingInfo    = { };
     rayTracingInfo.sType                                = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR;
     rayTracingInfo.maxPipelineRayRecursionDepth         = structure.state.pipeline.raytrace.rayRecursionDepth;

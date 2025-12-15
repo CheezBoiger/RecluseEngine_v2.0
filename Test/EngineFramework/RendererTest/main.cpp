@@ -153,11 +153,11 @@ public:
                 return RecluseResult_Ok;
             }, "RandomTask");
  #endif
+        m_renderBus.notifyAll();
 
-            m_renderBus.notifyAll();
+        return RecluseResult_Ok;
+    }
 
-            return RecluseResult_Ok;
-        }
     virtual ResultCode onCleanUp() override
     {
         MessageBus::sendEvent(&m_renderBus, RenderEvent_Shutdown);

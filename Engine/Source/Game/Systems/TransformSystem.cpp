@@ -35,6 +35,9 @@ void TransformSystem::onUpdate(ECS::Registry* registry, const RealtimeTick& tick
                 continue;
 
             ECS::GameEntity* entity = ECS::GameEntity::findEntity(transform->getOwner());
+            // Check if the entity is active. Otherwise, don't need to update.
+            if (!entity->isActive())
+                continue;
             // Get the parent transform and transform locally on it.
             RGUID parentGuid = hierarchy->getParent(entity->getGUID());
             Transform* parentTransform = std::get<Transform*>(obtainTuple<Transform>(registry, parentGuid));

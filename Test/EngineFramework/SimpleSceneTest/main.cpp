@@ -171,6 +171,9 @@ void addEntities(Scene* pScene, ECS::Registry* registry)
     pScene->addEntity(entity->getGUID());
     pScene->addEntity(entity2->getGUID());
 
+    pScene->getHierarchy()->add(entity->getGUID());
+    pScene->getHierarchy()->add(entity2->getGUID(), entity->getGUID());
+
     registry->makeComponent<Transform>(entity->getGUID(), true);
     registry->makeComponent<Transform>(entity2->getGUID(), true);
 
