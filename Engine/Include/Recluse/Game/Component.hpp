@@ -40,17 +40,20 @@ enum ComponentUpdateFlag
     R_COMPONENT_GUID_DECLARE(_class, Recluse::ECS::ComponentUUID) \
     virtual Recluse::ECS::ComponentUUID getClassGUID() const override { return _class::classGUID(); }
 
+#define R_COMPONENT_TYPE_DECLARE(_class, _typeName) \
+    typedef _class* Pointer; \
+    typedef _class& Reference;
+
 // Call this macro when declareing a component. This will be used by the engine to determine 
 // the proper calls to be made to the GameObject.
 #define R_DECLARE_COMPONENT(_class) \
     R_COMPONENT_PUBLIC \
-    R_COMPONENT_CLASS_DECLARE(_class)
-
+    R_COMPONENT_CLASS_DECLARE(_class) \
+    R_COMPONENT_TYPE_DECLARE(_class, _class)
 
 #define R_DECLARE_COMPONENT_REGISTRY(_class) \
     R_COMPONENT_PUBLIC \
     R_COMPONENT_GUID_DECLARE(_class, Recluse::ECS::RegistryUUID)
-
 
 class AbstractComponent : public Serializable
 {
@@ -257,16 +260,17 @@ public:
     }
 
     // Get all components handled by the system. This is required, as systems must use this to 
-    // iterate for all of their components.
-    virtual std::vector<TypeComponent*> getAllComponents() { return { }; }
+    // iterate for all of their components. If nullptr is passed as outComponents, no query is made, 
+    // but must still return the total number of components in the registry.
+    virtual U32                         queryComponents(TypeComponent** outComponents, U32 count) { return 0; }
 
-    // Get a component from the system. Return nullptr, if the component doesn't match the given 
-    // game entity key.
+    // Query a component from the system. Return nullptr, if the component doesn't match the given 
+    // game entity key. This is a get function.
     virtual TypeComponent*              getComponent(const RGUID& entityKey) { return nullptr; }
 
-    virtual ResultCode serialize(Archive* pArchive) const override { return RecluseResult_NoImpl; }
+    virtual ResultCode                  serialize(Archive* pArchive) const override { return RecluseResult_NoImpl; }
 
-    virtual ResultCode deserialize(Archive* pArchive) override { return RecluseResult_NoImpl; }
+    virtual ResultCode                  deserialize(Archive* pArchive) override { return RecluseResult_NoImpl; }
 };
 
 

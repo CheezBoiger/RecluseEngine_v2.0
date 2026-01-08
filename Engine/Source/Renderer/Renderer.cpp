@@ -94,7 +94,7 @@ void RendererModule::initialize()
     createDevice(m_currentRendererConfigs);
     m_pContext = m_pDevice->createContext();
     m_pContext->setFrames(m_currentRendererConfigs.buffering);
-    m_pSwapchain = m_pDevice->createSwapchain(swapchainDescription, m_currentRendererConfigs.windowHandle);
+    m_pDevice->createSwapchain(swapchainDescription, m_currentRendererConfigs.windowHandle, &m_pSwapchain);
 
     {
         MemoryReserveDescription reserveDesc = { };

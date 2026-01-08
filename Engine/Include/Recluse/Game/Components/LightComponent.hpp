@@ -35,7 +35,7 @@ public:
     
     ResultCode onAllocateComponent(const RGUID& owner) override;
     ResultCode onFreeComponent(const RGUID& owner) override;
-    std::vector<Light*> getAllComponents() override;
+    U32 queryComponents(Light::Pointer* lights, U32 count) override;
     Light* getComponent(const RGUID& owner) override;
 private:
     std::map<RGUID, U32, RGUID::Less> map;

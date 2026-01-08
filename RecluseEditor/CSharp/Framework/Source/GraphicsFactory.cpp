@@ -837,9 +837,12 @@ void IGraphicsContext::ClearRenderTarget(System::UInt32 RenderTargetIndex, array
 
 void ISwapchain::CreateSwapchain(GraphicsDevice* DeviceRef, void* WindowPtr, const SwapchainCreateDescription& Description)
 {
-    Swapchain = DeviceRef->createSwapchain(Description, WindowPtr);
+    GraphicsSwapchain* swapchain = nullptr;
+    DeviceRef->createSwapchain(Description, WindowPtr, &swapchain);
+    Swapchain = swapchain;
     R_ASSERT(Swapchain);
     QuerySwapchainFrames();
+    
 }
 
 

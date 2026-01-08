@@ -544,6 +544,10 @@ void D3D12Context::bindRootSignature(ID3D12GraphicsCommandList* pList, ContextSt
         {
             state.m_rootSigLayout.flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
         }
+        else 
+        {
+            state.m_rootSigLayout.flags = (state.m_rootSigLayout.flags & ~D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+        }
         ID3D12RootSignature* rootSig = Pipelines::makeRootSignature(m_pDevice, state.m_rootSigLayout);
     
         if (state.m_pipelineStateObject.rootSignature != rootSig)

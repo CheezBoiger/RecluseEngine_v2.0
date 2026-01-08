@@ -179,7 +179,7 @@ void LoggingQueue::store(const Log& log)
         new (m_head) LogNode;
 
         m_tail              = m_head;
-        m_head->logMessage  = std::move(log.data);
+        m_head->logMessage  = log.data;
         m_head->pNext       = nullptr;
 
         // Cursor should be after tail.
@@ -202,7 +202,7 @@ void LoggingQueue::store(const Log& log)
             newNode->~LogNode();
             new (newNode) LogNode;
   
-            newNode->logMessage = std::move(log.data);
+            newNode->logMessage = log.data;
             newNode->pNext      = nullptr;
 
             m_tail->pNext       = newNode;

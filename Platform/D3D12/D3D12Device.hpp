@@ -274,7 +274,7 @@ public:
     ResultCode                          releaseContext(GraphicsContext* pContext) override;
 
     ResultCode                          reserveMemory(const MemoryReserveDescription& desc) override;
-    GraphicsSwapchain*                  createSwapchain(const SwapchainCreateDescription& desciption, void* windowHandle) override;
+    ResultCode                          createSwapchain(const SwapchainCreateDescription& desciption, void* windowHandle, GraphicsSwapchain** outSwapchain) override;
 
     // Helper descriptor creators for the device.
     ResultCode                          createSampler(GraphicsSampler** sampler, const SamplerDescription& desc) override;

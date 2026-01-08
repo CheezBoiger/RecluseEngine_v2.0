@@ -82,15 +82,18 @@ Transform* TransformRegistry::getComponent(const RGUID& entityKey)
 }
 
 
-std::vector<Transform*> TransformRegistry::getAllComponents()
+U32 TransformRegistry::queryComponents(Transform::Pointer* transforms, U32 count)
 {
-    std::vector<Transform*> transforms(m_table.size());
-    U32 i = 0;
-    for (std::map<RGUID, Transform, RGUID::Less>::iterator it = m_table.begin(); it != m_table.end(); ++it)
+    if (transforms)
     {
-        transforms[i++] = &it->second;
+        U32 i = 0;
+        for (std::map<RGUID, Transform, RGUID::Less>::iterator it = m_table.begin(); it != m_table.end(); ++it)
+        {
+            transforms[i++] = &it->second;
+        }
     }
-    return transforms;
+
+    return static_cast<U32>(m_table.size());
 }
 
 

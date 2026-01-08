@@ -749,7 +749,7 @@ int main(char* argv[], int c)
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
+    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
     GraphicsAdapter* adapter    = nullptr;
     std::vector<MeshDraw> meshes;
 
@@ -787,7 +787,7 @@ int main(char* argv[], int c)
     swapchainDescription.format         = ResourceFormat_R8G8B8A8_Unorm;
     swapchainDescription.renderWidth    = window->getWidth();
     swapchainDescription.renderHeight   = window->getHeight();
-    swapchain = device->createSwapchain(swapchainDescription, window->getNativeHandle()); 
+    device->createSwapchain(swapchainDescription, window->getNativeHandle(), &swapchain); 
 
     GraphicsResource* textureResource = nullptr;
     createTextureResource(&textureResource);

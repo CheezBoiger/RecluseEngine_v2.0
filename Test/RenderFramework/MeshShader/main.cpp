@@ -574,7 +574,7 @@ int main(char* argv[], int c)
     swapchainDescription.format         = ResourceFormat_R8G8B8A8_Unorm;
     swapchainDescription.renderWidth    = window->getWidth();
     swapchainDescription.renderHeight   = window->getHeight();
-    swapchain = device->createSwapchain(swapchainDescription, window->getNativeHandle());
+    device->createSwapchain(swapchainDescription, window->getNativeHandle(), &swapchain);
 
     createShaderProgram(device);
 

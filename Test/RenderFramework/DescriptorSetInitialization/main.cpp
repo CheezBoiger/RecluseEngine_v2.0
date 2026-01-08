@@ -250,7 +250,7 @@ int main(int c, char* argv[])
     swapchainDescription.renderWidth = 1024;
     swapchainDescription.renderHeight = 1024;
     swapchainDescription.format = ResourceFormat_B8G8R8A8_Unorm;
-    pSwapchain = pDevice->createSwapchain(swapchainDescription, pWindow->getNativeHandle());
+    pDevice->createSwapchain(swapchainDescription, pWindow->getNativeHandle(), &pSwapchain);
     context = pContext;
     context->setFrames(2);
     F32 index = 200;

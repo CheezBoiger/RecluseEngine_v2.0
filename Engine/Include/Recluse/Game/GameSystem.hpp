@@ -229,7 +229,10 @@ public:
     std::vector<TypeComponent*> obtainComponents(Registry* registry)
     {
         ECS::ComponentRegistry<TypeComponent>* componentRegistry = registry->getComponentRegistry<TypeComponent>();
-        return componentRegistry->getAllComponents();
+        U32 count = componentRegistry->queryComponents(nullptr, 0);
+        std::vector<TypeComponent*> components(count);
+        componentRegistry->queryComponents(components.data(), count);
+        return components;
     }
 
     // Serialize the system and its components.

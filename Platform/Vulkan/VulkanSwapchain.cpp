@@ -352,6 +352,7 @@ ResultCode VulkanSwapchain::prepare(GraphicsContext* context)
                 err = RecluseResult_NeedsUpdate;
                 R_DEBUG(R_CHANNEL_VULKAN, "Swapchain is suboptimal on acquire, should be recreated unless we are okay...");
                 break;
+
             default:
                 R_WARN(R_CHANNEL_VULKAN, "Swapchain acquire next image was unsuccessful. This may lead to errors!");
                 err = RecluseResult_Failed;

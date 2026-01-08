@@ -72,7 +72,7 @@ int main(int c, char* argv[])
 
     }
 
-    pSwapchain = pDevice->createSwapchain(swapchainDescription, pWindow->getNativeHandle());
+    pDevice->createSwapchain(swapchainDescription, pWindow->getNativeHandle(), &pSwapchain);
     pContext = pDevice->createContext();
 
     pContext->setFrames(2);

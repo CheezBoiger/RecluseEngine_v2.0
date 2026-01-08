@@ -125,7 +125,7 @@ int main(int c, char* argv[])
     //enableLogTypes(LogType_Debug);
     RealtimeTick::initializeWatch(1ull, 0);
     LogSystem::enableLogTypes(LogType_Notify);
-    GraphicsInstance* pInstance     = GraphicsInstance::create(GraphicsApi_Vulkan);
+    GraphicsInstance* pInstance     = GraphicsInstance::create(GraphicsApi_Direct3D12);
     GraphicsAdapter* pAdapter       = nullptr;
     GraphicsResource* pData         = nullptr;
     PipelineState* pPipeline        = nullptr;
@@ -173,7 +173,7 @@ int main(int c, char* argv[])
     swapchainDescription.renderWidth = pWindow->getWidth();
     swapchainDescription.renderHeight = pWindow->getHeight();
     swapchainDescription.format = ResourceFormat_R8G8B8A8_Unorm;
-    pSwapchain = pDevice->createSwapchain(swapchainDescription, pWindow->getNativeHandle());
+    pDevice->createSwapchain(swapchainDescription, pWindow->getNativeHandle(), &pSwapchain);
 
     if (result != RecluseResult_Ok) 
     {
@@ -269,7 +269,7 @@ int main(int c, char* argv[])
         description.compute.cs = file.data();
         description.compute.csName = "main";
 
-        Pipeline::Builder::buildShaderProgram(database, description, 0, intermediateCode, shaderBuilder);
+        Pipeline::Builder::buildShaderProgram(database, description, ProgramId_Mandelbrot, intermediateCode, shaderBuilder);
         //Runtime::buildShaderProgram(pDevice, database, ProgramId_Mandelbrot);
         Runtime::loadAllShaderPrograms(pDevice, database);
         database.clearShaderProgramDefinitions();

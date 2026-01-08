@@ -425,10 +425,11 @@ VkDeviceSize VulkanDevice::getNonCoherentSize() const
 }
 
 
-GraphicsSwapchain* VulkanDevice::createSwapchain
+ResultCode VulkanDevice::createSwapchain
     (
         const SwapchainCreateDescription& pDesc,
-        void* windowHandle
+        void* windowHandle,
+        GraphicsSwapchain** outSwapchain
     )
 {
     R_ASSERT_FORMAT(m_supportsSwapchainCreation, "This device does not support swapchain creation. Be sure to use a physical device that does!!");
@@ -443,10 +444,10 @@ GraphicsSwapchain* VulkanDevice::createSwapchain
     {
         R_ERROR(R_CHANNEL_VULKAN, "Swapchain failed to create");
         delete pSwapchain;
-        return nullptr;
+        return result;
     }
-
-    return pSwapchain;
+    *outSwapchain = pSwapchain;
+    return result;
 }
 
 

@@ -73,7 +73,7 @@ public:
     virtual ResultCode              onFreeComponent(const RGUID& owner)         override;
 
     virtual Transform*              getComponent(const RGUID& entityKey)        override;
-    virtual std::vector<Transform*> getAllComponents()                          override;
+    virtual U32                     queryComponents(Transform::Pointer* transforms, U32 count)  override;
 
     virtual ResultCode              onInitialize()                              override { return RecluseResult_NoImpl; }
     virtual ResultCode              onCleanUp()                                 override;

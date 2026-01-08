@@ -172,7 +172,15 @@ public:
     virtual ResultCode  onFreeComponent(const RGUID& owner) override;
     virtual Camera*     getComponent(const RGUID& entityKey) override;
 
-    virtual std::vector<Camera*> getAllComponents() override { return std::vector<Camera*>(activeCameras); }
+    virtual U32 queryComponents(Camera::Pointer* cameras, U32 count) override 
+    {
+        if (cameras)
+        {
+            for (U32 i = 0; (i < count) || (i < activeCameras.size()); ++i)
+                cameras[i] = activeCameras[i];
+        } 
+        return static_cast<U32>(activeCameras.size()); 
+    }
 
 private:
     Camera* mainCamera;

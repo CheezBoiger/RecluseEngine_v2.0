@@ -112,7 +112,7 @@ int main(int c, char* argv[])
     RealtimeTick::initializeWatch(1ull, 0);
     LogSystem::enableLogTypes(LogType_Debug);
     LogSystem::disableLogTypes(LogType_Warn);
-    GraphicsInstance* pInstance             = GraphicsInstance::create(GraphicsApi_Vulkan);
+    GraphicsInstance* pInstance             = GraphicsInstance::create(GraphicsApi_Direct3D12);
     GraphicsAdapter* pAdapter               = nullptr;
     GraphicsResource* pData                 = nullptr;
     GraphicsResource* pData2                = nullptr;
@@ -196,7 +196,7 @@ int main(int c, char* argv[])
     swapchainDescription.format            = ResourceFormat_R8G8B8A8_Unorm;
     swapchainDescription.renderWidth       = pWindow->getWidth();
     swapchainDescription.renderHeight      = pWindow->getHeight();
-    pSwapchain = pDevice->createSwapchain(swapchainDescription, pWindow->getNativeHandle());
+    pDevice->createSwapchain(swapchainDescription, pWindow->getNativeHandle(), &pSwapchain);
    
     {
         GraphicsResourceDescription desc = { };

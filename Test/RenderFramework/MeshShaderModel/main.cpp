@@ -106,7 +106,7 @@ int main(int c, char* argv[])
     swapchainCreateInfo.renderWidth = window->getWidth();
     swapchainCreateInfo.renderHeight = window->getHeight();
 
-    gSwapchain = gDevice->createSwapchain(swapchainCreateInfo, window->getNativeHandle());
+    gDevice->createSwapchain(swapchainCreateInfo, window->getNativeHandle(), &gSwapchain);
 
     gContext = gDevice->createContext();
 

@@ -40,6 +40,15 @@ public:
 };
 
 
+class MoverEvent : public EventMessage
+{
+public:
+    U32 component;
+    MoverEvent(EventId eventId, U32 componentId)
+        : component(component) { }
+};
+
+
 class MoverRegistry : public ECS::ComponentRegistry<MoverComponent>
 {
 public:
@@ -86,10 +95,14 @@ public:
         return RecluseResult_NotFound;
     }
 
-    std::vector<MoverComponent*> getAllComponents() override
+    U32 queryComponents(MoverComponent::Pointer* outComponents, U32 count) override
     {
-        std::vector<MoverComponent*> components(components);
-        return components;
+        if (outComponents)
+        {
+            for (U32 i = 0; i < components.size(); ++i)
+                outComponents[i] = components[i];
+        }
+        return static_cast<U32>(components.size());
     }
 
     MoverComponent* getComponent(const RGUID& owner) override
@@ -131,6 +144,7 @@ public:
             }
         }
         MessageBus::sendEvent(&g_bus, TransformEvent_Update);
+        MessageBus::sendEvent<MoverEvent>(&g_bus, MovementEventId_DoMovement, 12);
     }
 
     ResultCode onEvent(const EventMessage& message) override
@@ -139,7 +153,7 @@ public:
         {
             case MovementEventId_DoMovement:
             {
-                
+                const MoverEvent& event = EventMessage::castTo<MoverEvent>(message);
                 break;
             }
         }

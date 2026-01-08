@@ -436,7 +436,7 @@ void D3D12Device::destroy()
 }
 
 
-GraphicsSwapchain* D3D12Device::createSwapchain(const SwapchainCreateDescription& desc, void* windowHandle)
+ResultCode D3D12Device::createSwapchain(const SwapchainCreateDescription& desc, void* windowHandle, GraphicsSwapchain** outSwapchain)
 {
     ResultCode result = RecluseResult_Ok;
     D3D12Swapchain* pSwapchain = new D3D12Swapchain(desc, getQueue(D3D12_COMMAND_LIST_TYPE_DIRECT));
@@ -451,7 +451,8 @@ GraphicsSwapchain* D3D12Device::createSwapchain(const SwapchainCreateDescription
         delete pSwapchain;
     }
 
-    return pSwapchain;
+    *outSwapchain = pSwapchain;
+    return result;
 }
 
 

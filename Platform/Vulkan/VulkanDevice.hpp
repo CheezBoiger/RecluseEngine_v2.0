@@ -383,7 +383,7 @@ public:
     VulkanQueue             makeQueue(VkQueueFlags flags, Bool reuse = false, VkSurfaceKHR surfaceToPresent = VK_NULL_HANDLE);
     ResultCode              destroyQueues();
     
-    GraphicsSwapchain*      createSwapchain(const SwapchainCreateDescription& description, void* windowHandle) override;
+    ResultCode              createSwapchain(const SwapchainCreateDescription& description, void* windowHandle, GraphicsSwapchain** outSwapchain) override;
     ResultCode              destroySwapchain(GraphicsSwapchain* pSwapchain) override;
 
     GraphicsContext*        createContext() override;

@@ -36,8 +36,11 @@ struct DeviceCreateInfo
 {
     // Allow asyncronous compute queue if it is available. 
     // If not available, the graphics context will notify if so.
-    B32 allowAsyncCompute   : 1;
-    B32 reserved0           : 31; //< Reserved for future use.
+    B32 allowAsyncCompute           : 1;
+    // Enable descriptor caching, to reduce the performance cost of descriptor allocation
+    // per render frame. This will likely incur a memory cost, however.
+    B32 enableDescriptorCaching     : 1;
+    B32 reserved0                   : 30; //< Reserved for future use.
 };
 
 class GraphicsDevice;

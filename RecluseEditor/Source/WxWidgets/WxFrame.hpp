@@ -45,7 +45,7 @@ public:
             swapchainDescription.renderWidth = width;
             swapchainDescription.renderHeight = height;
             swapchainDescription.preferHDR = false;
-            pSwapchain = pDevice->createSwapchain(swapchainDescription, GetHandle());
+            pDevice->createSwapchain(swapchainDescription, GetHandle(), &pSwapchain);
             pContext = pDevice->createContext();
             pContext->setFrames(3);
         }

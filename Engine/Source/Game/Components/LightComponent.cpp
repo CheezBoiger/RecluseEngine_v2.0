@@ -34,9 +34,14 @@ ResultCode LightRegistry::onFreeComponent(const RGUID& owner)
 }
 
 
-std::vector<Light*> LightRegistry::getAllComponents()
+U32 LightRegistry::queryComponents(Light::Pointer* lights, U32 count)
 {
-    return { lights };
+    if (lights)
+    {
+        for (U32 i = 0; i < this->lights.size(); ++i)
+            lights[i] = this->lights[i];
+    }
+    return static_cast<U32>(this->lights.size());
 }
 
 

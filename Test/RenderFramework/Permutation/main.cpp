@@ -218,6 +218,8 @@ void createShaderProgram(GraphicsDevice* device)
     description.graphics.ps = fsData.data();
     description.graphics.psName = "psMain";
 
+    Pipeline::HlslToGlslPreprocessor preprocessor;
+
     Pipeline::ShaderBuilder* shaderBuilder = nullptr;
     ShaderIntermediateCode intermediateCode;
     if (instance->getApi() == GraphicsApi_Direct3D12)
@@ -228,6 +230,7 @@ void createShaderProgram(GraphicsDevice* device)
     else
     {
         shaderBuilder = Pipeline::createShaderBuilder("glslang");
+        shaderBuilder->addPreprocessor(&preprocessor);
         intermediateCode = ShaderIntermediateCode_Spirv;
     }
     shaderBuilder->setUp();
@@ -603,11 +606,11 @@ void resolveLighting(GraphicsContext* context)
     context->pushState();
         context->bindShaderProgram(ShaderProgram_LightResolve, 0)
             .bindShaderResource(ShaderStage_Pixel, 0, 0, albedoView)
-            .bindShaderResource(ShaderStage_Pixel, 0, 1, normalView)
-            .bindShaderResource(ShaderStage_Pixel, 0, 4, lightBufferView)
-            .bindShaderResource(ShaderStage_Pixel, 0, 3, depthView)
+            .bindShaderResource(ShaderStage_Pixel, 0, 2, normalView)
+            .bindShaderResource(ShaderStage_Pixel, 0, 1, lightBufferView)
+            .bindShaderResource(ShaderStage_Pixel, 0, 4, depthView)
             .bindConstantBuffer(ShaderStage_Pixel, 0, 0, sceneBuffer, 0, sizeof(SceneBuffer))
-            .bindConstantBuffer(ShaderStage_Pixel, 0, 0, lightViewBuffer, 0, sizeof(LightView))
+            .bindConstantBuffer(ShaderStage_Pixel, 0, 1, lightViewBuffer, 0, sizeof(LightView))
             .bindSampler(ShaderStage_Pixel, 0, 0, gbufferSampler)
 ;
 
@@ -759,7 +762,7 @@ int main(char* argv[], int c)
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
+    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
     GraphicsAdapter* adapter    = nullptr;
     std::vector<MeshDraw> meshes;
 
@@ -797,7 +800,7 @@ int main(char* argv[], int c)
     swapchainDescription.format         = ResourceFormat_R8G8B8A8_Unorm;
     swapchainDescription.renderWidth    = window->getWidth();
     swapchainDescription.renderHeight   = window->getHeight();
-    swapchain = device->createSwapchain(swapchainDescription, window->getNativeHandle()); 
+    device->createSwapchain(swapchainDescription, window->getNativeHandle(), &swapchain); 
 
     GraphicsResource* textureResource = nullptr;
     createTextureResource(&textureResource);

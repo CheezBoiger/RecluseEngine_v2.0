@@ -455,7 +455,7 @@ public:
     virtual GraphicsContext*        createContext() { return nullptr; }
     virtual ResultCode              releaseContext(GraphicsContext* pContext) { return RecluseResult_NoImpl; }
     
-    virtual GraphicsSwapchain*      createSwapchain(const SwapchainCreateDescription& description, void* windowHandle) { return nullptr; }
+    virtual ResultCode              createSwapchain(const SwapchainCreateDescription& description, void* windowHandle, GraphicsSwapchain** outSwapchain) { return RecluseResult_NoImpl; }
     virtual ResultCode              destroySwapchain(GraphicsSwapchain* pSwapchain) { return RecluseResult_NoImpl; }
 
     // Load up shader programs to be created on the native api.

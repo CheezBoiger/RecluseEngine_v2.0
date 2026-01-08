@@ -64,6 +64,7 @@ int main(int c, char* argv[])
     pContext->setFrames(2);
     GraphicsContext* context = nullptr;
     
+    uint i = 0;
     if (result != RecluseResult_Ok) {
     
         R_ERROR("Graphics", "Failed to create command list!!");
@@ -72,8 +73,11 @@ int main(int c, char* argv[])
     
         R_TRACE("Graphics", "Successfully created command list!");
         context = pContext;
-        context->begin();
-        context->end();
+        while (i < 2050) {
+            context->begin();
+            context->end();
+            i++;
+        }
 
     }
 

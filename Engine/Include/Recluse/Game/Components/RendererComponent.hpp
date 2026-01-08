@@ -78,7 +78,7 @@ public:
     ResultCode                          onAllocateComponent(const RGUID& owner) override;
     ResultCode                          onFreeComponent(const RGUID& owner) override;
     RendererComponent*                  getComponent(const RGUID& entityKey) override;
-    std::vector<RendererComponent*>     getAllComponents() override;
+    U32                                 queryComponents(RendererComponent::Pointer* components, U32 count) override;
 
 private:
     std::map<RGUID, RendererComponent*> m_componentTable;

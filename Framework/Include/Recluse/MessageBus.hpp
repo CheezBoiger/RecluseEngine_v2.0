@@ -31,10 +31,19 @@ class EventMessage
 {
 public:
     static const EventId kBadEventId = ~0;
-    ~EventMessage() { }
+    virtual ~EventMessage() { }
     EventMessage(EventId eventId = kBadEventId) : m_eventId(eventId) { }
 
     EventId getEvent() const { return m_eventId; }
+
+    // Cast an event message to a specific message that was created,
+    // that is inherited by EventMessage!
+    template<typename EventType>
+    static const EventType& castTo(const EventMessage& message)
+    {
+        static_assert(std::is_base_of<EventMessage, EventType>::value);
+        return dynamic_cast<const EventType&>(message);
+    }
 
 private:
     EventId m_eventId;

@@ -93,7 +93,7 @@ int main(int c, char* argv[])
     pContext->setFrames(3);
     pWindow->setToCenter();
 
-    pSwapchain = pDevice->createSwapchain(swapchainDescription, pWindow->getNativeHandle());
+    pDevice->createSwapchain(swapchainDescription, pWindow->getNativeHandle(), &pSwapchain);
     
     if (!pSwapchain) {
     
