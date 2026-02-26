@@ -8,6 +8,9 @@
 #include "VulkanViews.hpp"
 #include "Recluse/Math/MathCommons.hpp"
 
+#include "Recluse/Memory/LinearAllocator.hpp"
+#include "Recluse/Memory/MemoryPool.hpp"
+
 #include "Recluse/Messaging.hpp"
 
 #include <unordered_map>
@@ -210,17 +213,97 @@ static VkDescriptorImageInfo makeDescriptorImageInfo(VulkanImageView* pView)
     return info;
 }
 
+struct Batcher 
+{
+    static MemoryArena     kDescriptorWriteScratch;
+    static LinearAllocator kDescriptorWritesAllocator;
+
+    static LinearAllocator kDescriptorBindAllocator;
+    static MemoryArena     kDescriptorBindScratch;
+
+    static U32 getMaxRequests() { return 32; }
+
+    static void initialize()
+    {
+        if (!kDescriptorWriteScratch.isAllocated())
+        {
+            kDescriptorWriteScratch.preAllocate(sizeof(VkWriteDescriptorSet) * getMaxRequests());
+            kDescriptorWritesAllocator.initialize(kDescriptorWriteScratch.getBaseAddress(), kDescriptorWriteScratch.getTotalSizeBytes());
+        }
+
+        if (!kDescriptorBindScratch.isAllocated())
+        {
+            kDescriptorBindScratch.preAllocate(R_MB(2));
+            kDescriptorBindAllocator.initialize(kDescriptorBindScratch.getBaseAddress(), kDescriptorBindScratch.getTotalSizeBytes());
+        }
+    }
+
+    static void free()
+    {
+        kDescriptorBindAllocator.cleanUp();
+        kDescriptorWritesAllocator.cleanUp();
+
+        kDescriptorBindScratch.release();
+        kDescriptorWriteScratch.release();
+    }
+
+    static void flush(VkDevice device)
+    {
+        if (kDescriptorWritesAllocator.getTotalAllocations() != 0)
+        {
+            VkWriteDescriptorSet* handle = (VkWriteDescriptorSet*)kDescriptorWritesAllocator.getBaseAddr();
+            U32 totalWriteRequests = kDescriptorWritesAllocator.getTotalAllocations();
+
+            vkUpdateDescriptorSets(device, totalWriteRequests, handle, 0, nullptr);
+
+            kDescriptorWritesAllocator.reset();
+            kDescriptorBindAllocator.reset();
+        }
+    }
+
+    static VkDescriptorBufferInfo& allocateDescriptorBufferInfo() 
+    {
+        VkDescriptorBufferInfo* p = (VkDescriptorBufferInfo*)kDescriptorBindAllocator.allocate(sizeof(VkDescriptorBufferInfo), 1);
+        return *p;
+    }
+
+    static VkDescriptorImageInfo& allocateDescriptorImageInfo()
+    {
+        VkDescriptorImageInfo* p = (VkDescriptorImageInfo*)kDescriptorBindAllocator.allocate(sizeof(VkDescriptorImageInfo), 1);
+        return *p;
+    }
+
+    static VkWriteDescriptorSet& allocateWriteRequest()
+    {
+        VkWriteDescriptorSet* p = new (&kDescriptorWritesAllocator) VkWriteDescriptorSet();
+        p->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        return *p;
+    }
+
+    static Bool isFull()
+    {
+        return (kDescriptorWritesAllocator.getTotalAllocations() >= getMaxRequests());
+    }
+};
+
+MemoryArena     Batcher::kDescriptorWriteScratch;
+LinearAllocator Batcher::kDescriptorWritesAllocator;
+
+LinearAllocator Batcher::kDescriptorBindAllocator;
+MemoryArena     Batcher::kDescriptorBindScratch;
 
 // Vulkan descriptor writer, handles holding onto the record of resource views, buffers, and samplers.
-template<U32 BufferExpectedCount, U32 ImageExpectedCount, U32 AccelerationStructureExpected = 0u>
 class VulkanDescriptorWriter
 {
 public:
+
     VulkanDescriptorWriter()
         : bufferCount(0)
         , imageCount(0)
         , asCount(0)
-    { }
+    {
+        Batcher::initialize();
+    }
 
     // Record the vulkan view.
     void recordViews(VulkanResourceView** pViews, DescriptorBindType bindType, VkDescriptorSet set, U32 binding, U32 count)
@@ -228,7 +311,7 @@ public:
         // Do not process if no count is set.
         if (count == 0) return;
 
-        VkWriteDescriptorSet writeSet = { };
+        VkWriteDescriptorSet& writeSet = Batcher::allocateWriteRequest();
         writeSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         writeSet.descriptorCount = count;
         writeSet.dstBinding = binding;
@@ -252,16 +335,16 @@ public:
                     U32 offsetBytes = description.firstElement * description.byteStride;
                     R_ASSERT(buffer->getBufferSizeBytes() >= sizeBytes);
                     sizeBytes = Math::clamp(sizeBytes, (U32)0, buffer->getBufferSizeBytes());
-                    VkDescriptorBufferInfo info = makeDescriptorBufferInfo(buffer->get(), offsetBytes, sizeBytes);
-                    bufferInfo[bufferCount++] = info;
-                    //writeSet.pBufferInfo = &bufferInfo[bufferCount++];
+                    VkDescriptorBufferInfo& info = Batcher::allocateDescriptorBufferInfo();
+                    info = makeDescriptorBufferInfo(buffer->get(), offsetBytes, sizeBytes);
+                    writeSet.pBufferInfo = &info;
                 }
                 else
                 {
                     VulkanImageView* pImageView = pViews[i]->castTo<VulkanImageView>();
-                    VkDescriptorImageInfo info = makeDescriptorImageInfo(pImageView);
-                    imageInfo[imageCount++] = info;
-                    //writeSet.pImageInfo = &imageInfo[imageCount++];
+                    VkDescriptorImageInfo& info = Batcher::allocateDescriptorImageInfo();
+                    info = makeDescriptorImageInfo(pImageView);
+                    writeSet.pImageInfo = &info;
                 }
             }
             else
@@ -271,7 +354,7 @@ public:
                 asWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
                 // TODO: Still need to create the acceleration structure!
 
-                asInfo[asCount++] = asWrite;
+                //asInfo[asCount++] = asWrite;
                 //writeSet.pNext = &asInfo[asCount++];
             }
 #else
@@ -282,18 +365,13 @@ public:
         }
         // Should be same.
         writeSet.descriptorType = getDescriptorType(description.dimension, bindType);
-
-        if (bufferCount - prevBufferCount)  writeSet.pBufferInfo = &bufferInfo[prevBufferCount];
-        if (imageCount - prevImageCount)    writeSet.pImageInfo = &imageInfo[prevImageCount];
-        if (asCount - prevAsCount)          writeSet.pNext = &asInfo[prevAsCount];
-        writeSets.push_back(writeSet);
     }
 
     // Record the constant buffer.
     void recordConstantBuffers(VkBuffer* buffers, U32 offsetBytes, U32 sizeBytes, VkDescriptorSet set, U32 binding, U32 count)    
     {
         if (count == 0) return;
-        VkWriteDescriptorSet writeSet = { };
+        VkWriteDescriptorSet& writeSet = Batcher::allocateWriteRequest();
         writeSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         writeSet.descriptorType = getDescriptorType(ResourceViewDimension_Buffer, DescriptorBindType_ConstantBuffer);
         writeSet.descriptorCount = count;
@@ -303,19 +381,18 @@ public:
         U32 prevBufferCount = bufferCount;
         for (U32 i = 0; i < count; ++i)
         {
-            VkDescriptorBufferInfo info = makeDescriptorBufferInfo(buffers[i], offsetBytes, sizeBytes);
-            bufferInfo[bufferCount++] = info;
+            VkDescriptorBufferInfo& info = Batcher::allocateDescriptorBufferInfo();
+            info = makeDescriptorBufferInfo(buffers[i], offsetBytes, sizeBytes);
+            writeSet.pBufferInfo = &info;
             //writeSet.pBufferInfo = &bufferInfo[bufferCount++];
         }
-        writeSet.pBufferInfo = &bufferInfo[prevBufferCount];
-        writeSets.push_back(writeSet);
     }
 
     // Record the sampler.
     void recordSamplers(VulkanSampler** samplers, VkDescriptorSet set, U32 binding, U32 count)
     {
         if (count == 0) return;
-        VkWriteDescriptorSet writeSet = { };
+        VkWriteDescriptorSet& writeSet = Batcher::allocateWriteRequest();
         writeSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         writeSet.descriptorType = getDescriptorType(ResourceViewDimension_None, DescriptorBindType_Sampler);
         writeSet.dstSet = set;
@@ -325,32 +402,23 @@ public:
         U32 prevImageCount = imageCount;
         for (U32 i = 0; i < count; ++i)
         {
-            VkDescriptorImageInfo info  = { };
+            VkDescriptorImageInfo& info  = Batcher::allocateDescriptorImageInfo();
             info.imageLayout            = VK_IMAGE_LAYOUT_UNDEFINED;
             info.imageView              = nullptr;
             info.sampler                = samplers[i]->get();
 
-            imageInfo[imageCount++] = info;
-            //writeSet.pImageInfo = &imageInfo[imageCount++];
+            writeSet.pImageInfo = &info;
         }
-        writeSet.pImageInfo = &imageInfo[prevImageCount];
-        writeSets.push_back(writeSet);
     }
 
     // Do the write. Requires the device that is responsible for owning the write operation.
     RecluseResult write(VkDevice device)
     {
-        const U32 sz = static_cast<U32>(writeSets.size());
-        vkUpdateDescriptorSets(device, sz, writeSets.data(), 0, nullptr);
+        Batcher::flush(device);
         return RecluseResult_Ok;
     }
 
 private:
-    std::array<VkDescriptorBufferInfo, BufferExpectedCount> bufferInfo;
-    std::array<VkDescriptorImageInfo, ImageExpectedCount> imageInfo;
-    std::array<VkWriteDescriptorSetAccelerationStructureKHR, AccelerationStructureExpected> asInfo;
-
-    std::vector<VkWriteDescriptorSet> writeSets;
 
     U32 bufferCount;
     U32 imageCount;
@@ -368,9 +436,8 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
                         + structure.key.value.uavs;
 
     U32 binding = 0;
-    std::vector<VkWriteDescriptorSet> writeSet;
 
-    VulkanDescriptorWriter<R_MAX_WRITE_BUFFER_INFO_COUNT, R_MAX_WRITE_IMAGE_INFO_COUNT, R_MAX_EXPECTED_ACCELERATION_STRUCTURE_COUNT> writer;
+    VulkanDescriptorWriter writer;
 
     // NOTE(): This algorithm needs to be aligned with the makeDescriptorSetLayout function!
     //         Since most descriptor sets will likely need to be created with the same format.

@@ -44,6 +44,11 @@ public:
         allocator->reset();
     }
 
+    U32 getTotalAllocations() const 
+    {
+        return allocator->getTotalAllocations();
+    }
+
 private:
     MemoryArena memArena;
     LinearAllocator* allocator;
