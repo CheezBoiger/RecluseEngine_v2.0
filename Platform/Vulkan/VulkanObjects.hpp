@@ -150,6 +150,10 @@ ResultCode                          releaseDescriptorSet(VulkanContext* pContext
 DescriptorSetLayoutId               obtainDescriptorLayoutKey(const Structure& structure);
 void                                clearDescriptorSetCache(VulkanContext* pContext, ClearCacheFlag flag = ClearCacheFlag_DescriptorPoolFastClear);
 void                                clearDescriptorLayoutCache(VulkanDevice* pContext);
+
+namespace Batch {
+void                                flushWriteRequests(VulkanDevice* deviceContext);
+} // Batch
 } // DescriptorSet
 } // Vulkan
 } // Recluse

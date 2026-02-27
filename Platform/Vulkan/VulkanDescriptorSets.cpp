@@ -221,7 +221,7 @@ struct Batcher
     static LinearAllocator kDescriptorBindAllocator;
     static MemoryArena     kDescriptorBindScratch;
 
-    static U32 getMaxRequests() { return 32; }
+    static U32 getMaxRequests() { return 64; }
 
     static void initialize()
     {
@@ -263,13 +263,13 @@ struct Batcher
 
     static VkDescriptorBufferInfo& allocateDescriptorBufferInfo() 
     {
-        VkDescriptorBufferInfo* p = (VkDescriptorBufferInfo*)kDescriptorBindAllocator.allocate(sizeof(VkDescriptorBufferInfo), 1);
+        VkDescriptorBufferInfo* p = new (&kDescriptorBindAllocator) VkDescriptorBufferInfo();
         return *p;
     }
 
     static VkDescriptorImageInfo& allocateDescriptorImageInfo()
     {
-        VkDescriptorImageInfo* p = (VkDescriptorImageInfo*)kDescriptorBindAllocator.allocate(sizeof(VkDescriptorImageInfo), 1);
+        VkDescriptorImageInfo* p = new (&kDescriptorBindAllocator) VkDescriptorImageInfo();
         return *p;
     }
 
@@ -297,10 +297,8 @@ class VulkanDescriptorWriter
 {
 public:
 
-    VulkanDescriptorWriter()
-        : bufferCount(0)
-        , imageCount(0)
-        , asCount(0)
+    VulkanDescriptorWriter(VkDevice device)
+        : device(device)
     {
         Batcher::initialize();
     }
@@ -311,6 +309,9 @@ public:
         // Do not process if no count is set.
         if (count == 0) return;
 
+        if (Batcher::isFull())
+            Batcher::flush(device);
+
         VkWriteDescriptorSet& writeSet = Batcher::allocateWriteRequest();
         writeSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         writeSet.descriptorCount = count;
@@ -318,9 +319,6 @@ public:
         writeSet.dstSet = set;
         
         const ResourceViewDescription& description  = pViews[0]->getDesc();
-        U32 prevBufferCount = bufferCount;
-        U32 prevImageCount = imageCount;
-        U32 prevAsCount = asCount;
         for (U32 i = 0; i < count; ++i)
         {
             const ResourceViewDescription& description = pViews[i]->getDesc();
@@ -371,6 +369,10 @@ public:
     void recordConstantBuffers(VkBuffer* buffers, U32 offsetBytes, U32 sizeBytes, VkDescriptorSet set, U32 binding, U32 count)    
     {
         if (count == 0) return;
+
+        if (Batcher::isFull())
+            Batcher::flush(device);
+
         VkWriteDescriptorSet& writeSet = Batcher::allocateWriteRequest();
         writeSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         writeSet.descriptorType = getDescriptorType(ResourceViewDimension_Buffer, DescriptorBindType_ConstantBuffer);
@@ -378,7 +380,6 @@ public:
         writeSet.dstSet = set;
         writeSet.dstBinding = binding;
         
-        U32 prevBufferCount = bufferCount;
         for (U32 i = 0; i < count; ++i)
         {
             VkDescriptorBufferInfo& info = Batcher::allocateDescriptorBufferInfo();
@@ -399,7 +400,6 @@ public:
         writeSet.dstBinding = binding;
         writeSet.descriptorCount = count;
 
-        U32 prevImageCount = imageCount;
         for (U32 i = 0; i < count; ++i)
         {
             VkDescriptorImageInfo& info  = Batcher::allocateDescriptorImageInfo();
@@ -414,15 +414,13 @@ public:
     // Do the write. Requires the device that is responsible for owning the write operation.
     RecluseResult write(VkDevice device)
     {
-        Batcher::flush(device);
+        if (Batcher::isFull())
+            Batcher::flush(device);
         return RecluseResult_Ok;
     }
 
 private:
-
-    U32 bufferCount;
-    U32 imageCount;
-    U32 asCount;
+    VkDevice device;
 };
 
 
@@ -437,7 +435,7 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
 
     U32 binding = 0;
 
-    VulkanDescriptorWriter writer;
+    VulkanDescriptorWriter writer(device);
 
     // NOTE(): This algorithm needs to be aligned with the makeDescriptorSetLayout function!
     //         Since most descriptor sets will likely need to be created with the same format.
@@ -667,6 +665,16 @@ void clearDescriptorLayoutCache(VulkanDevice* pDevice)
     }
     g_layoutMap.clear();
 }
+
+
+namespace Batch {
+void flushWriteRequests(VulkanDevice* deviceContext)
+{
+    VkDevice device = deviceContext->get();
+    Batcher::initialize();
+    Batcher::flush(device);
+}
+} // Batch
 } // DescriptorSet
 } // Vulkan
 } // Recluse

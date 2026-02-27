@@ -325,6 +325,8 @@ void VulkanContext::drawInstanced(U32 vertexCount, U32 instanceCount, U32 firstV
     {
         internalBindVertexBuffersAndIndexBuffer();
     }
+
+    DescriptorSets::Batch::flushWriteRequests(m_pDevice);
     currentState().proposeClean();
     vkCmdDraw(m_primaryCommandList.get(), vertexCount, instanceCount, firstVertex, firstInstance);
 }
@@ -382,6 +384,7 @@ void VulkanContext::dispatch(U32 x, U32 y, U32 z)
         bindPipelineState(descriptorSets);
         bindDescriptorSet(descriptorSets);
     }
+    DescriptorSets::Batch::flushWriteRequests(m_pDevice);
     currentState().proposeClean();
     vkCmdDispatch(m_primaryCommandList.get(), x, y, z);
 }
@@ -451,6 +454,7 @@ void VulkanContext::drawIndexedInstanced(U32 indexCount, U32 instanceCount, U32 
     {
         internalBindVertexBuffersAndIndexBuffer();
     }
+    DescriptorSets::Batch::flushWriteRequests(m_pDevice);
     currentState().proposeClean();
     vkCmdDrawIndexed(m_primaryCommandList.get(), indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
 }
@@ -506,6 +510,7 @@ void VulkanContext::drawIndexedInstancedIndirect(GraphicsResource* pParams, U32 
     {
         internalBindVertexBuffersAndIndexBuffer();
     }
+    DescriptorSets::Batch::flushWriteRequests(m_pDevice);
     currentState().proposeClean();
     VulkanResource* pResource = pParams->castTo<VulkanResource>();
 
@@ -538,9 +543,11 @@ void VulkanContext::drawInstancedIndirect(GraphicsResource* pParams, U32 offset,
     {
         internalBindVertexBuffersAndIndexBuffer();
     }
-    VulkanResource* pResource = static_cast<VulkanResource*>(pParams);
+    DescriptorSets::Batch::flushWriteRequests(m_pDevice);
     currentState().proposeClean();
 
+
+    VulkanResource* pResource = static_cast<VulkanResource*>(pParams);
     if (!pResource->isBuffer())
     {
         R_ERROR("Vulkan", "Can not submit an indirect draw call if the resource is not a buffer! Ignoring call...");
@@ -565,6 +572,7 @@ void VulkanContext::dispatchIndirect(GraphicsResource* pParams, U64 offset)
         bindPipelineState(descriptorSets);
         bindDescriptorSet(descriptorSets);
     }
+    DescriptorSets::Batch::flushWriteRequests(m_pDevice);
     currentState().proposeClean();
     VulkanResource* pResource = pParams->castTo<VulkanResource>();
     
@@ -602,6 +610,7 @@ void VulkanContext::dispatchMesh(U32 x, U32 y, U32 z)
         bindPipelineState(descriptorSets);
         bindDescriptorSet(descriptorSets);
     }
+    DescriptorSets::Batch::flushWriteRequests(m_pDevice);
     currentState().proposeClean();
 #if !defined(VK_EXT_mesh_shader) || R_PREFER_VULKAN_NV_MESH_SHADER_EXTENSION
     pfn_vkCmdDrawMeshTasksNV(m_primaryCommandList.get(), x, 0);
@@ -633,6 +642,7 @@ void VulkanContext::dispatchMeshIndirect(GraphicsResource* indirectBuffer, U32 o
         bindPipelineState(descriptorSets);
         bindDescriptorSet(descriptorSets);
     }
+    DescriptorSets::Batch::flushWriteRequests(m_pDevice);
     currentState().proposeClean();
     VulkanResource* pResource = indirectBuffer->castTo<VulkanResource>();
     
