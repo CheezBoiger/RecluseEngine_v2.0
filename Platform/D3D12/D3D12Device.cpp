@@ -165,10 +165,15 @@ void D3D12Context::popState()
 
 void D3D12Context::transition(GraphicsResource* pResource, ResourceState newState, U16 baseMip, U16 mipCount, U16 baseLayer, U16 layerCount)
 {
+    D3D12Resource* d3d12Resource = pResource->castTo<D3D12Resource>();
+
+    if (d3d12Resource->shouldDiscard() && (newState != ResourceState_Common))
+    {
+        m_discardingResources.push_back(d3d12Resource);
+    }
+
     if (!pResource->isInResourceState(newState))
     {
-        D3D12Resource* d3d12Resource = pResource->castTo<D3D12Resource>();
-
         if (mipCount == 0 && layerCount == 0)
         {
             D3D12_RESOURCE_BARRIER barrier = d3d12Resource->transition(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, newState);
@@ -205,6 +210,15 @@ void D3D12Context::flushBarrierTransitions()
         ID3D12GraphicsCommandList* pList = m_pPrimaryCommandList->get();
         pList->ResourceBarrier(static_cast<UINT>(m_barrierTransitions.size()), m_barrierTransitions.data());
         m_barrierTransitions.clear();
+    }
+
+    if (!m_discardingResources.empty())
+    {
+        for (uint i = 0; i < m_discardingResources.size(); ++i)
+        {
+            m_discardingResources[i]->discard(m_pPrimaryCommandList->get(), nullptr);
+        }
+        m_discardingResources.clear();
     }
 }
 
@@ -254,6 +268,8 @@ void D3D12Context::clearDepthStencil(ClearFlags clearFlags, F32 clearDepth, U8 c
     R_ASSERT_FORMAT(currentState().m_currentRenderPass, "No render pass was set for clear! Be sure to call bindRenderTargets() to set up a render pass!");
     D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = currentState().m_currentRenderPass->getDsvDescriptor();
     R_ASSERT_FORMAT(dsvHandle.ptr != 0, "Null depth descriptor handle passed to clearDepthStencil()!");
+
+    flushBarrierTransitions();
 
     D3D12_CLEAR_FLAGS flags = (D3D12_CLEAR_FLAGS)0;
     if (clearFlags & ClearFlag_Depth)

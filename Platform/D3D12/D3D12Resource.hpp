@@ -21,6 +21,7 @@ public:
         : GraphicsResource()
         , m_memObj({})
         , m_isCommitted(false)
+        , m_shouldDiscard(false)
         , m_totalSubresources(0)
         , m_pDevice(pDevice)
     {
@@ -58,6 +59,7 @@ public:
 
     // Is the resource committed.
     Bool                        isCommitted() const { return m_isCommitted; }
+    Bool                        shouldDiscard() const { return m_shouldDiscard; }
 
     // Obtain struct that is used to make the actual transition on the GPU.
     D3D12_RESOURCE_BARRIER      transition(U32 subresource, ResourceState newState);
@@ -77,12 +79,18 @@ public:
     void                        generateId() override;
     ResourceView                asCbv(U32 offsetBytes, U32 sizeBytes) override;
 
+    // Discard the resource if needed. This tells the gpu to not care about the previous contents.
+    void                        discard(ID3D12GraphicsCommandList* commandList, const D3D12_DISCARD_REGION* discardRegion);
+
 private:
     Bool                        isSupportedTransitionState(ResourceState state);
     HRESULT                     createAsCommitted(ID3D12Device* device, const D3D12_RESOURCE_DESC& desc, D3D12_RESOURCE_STATES initialState, D3D12_CLEAR_VALUE* clearValue);
 
     D3D12MemoryObject           m_memObj;
-    Bool                        m_isCommitted;
+
+    Bool                        m_isCommitted : 1;
+    Bool                        m_shouldDiscard : 1;
+
     U16                         m_totalSubresources;
     ResourceTransitionFlags     m_allowedTransitionStates;
     D3D12Device*                m_pDevice;

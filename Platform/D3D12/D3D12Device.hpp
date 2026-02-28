@@ -236,6 +236,8 @@ private:
     D3D12PrimaryCommandList*            m_pPrimaryCommandList;
     std::vector<ContextState>           m_contextStates;
     std::vector<D3D12_RESOURCE_BARRIER> m_barrierTransitions;
+    std::vector<D3D12Resource*>         m_discardingResources;
+
     D3D12Queue*                         m_graphicsQueue;
     D3D12Queue*                         m_computeQueue;
     D3D12ShaderProgramBinder            m_shaderProgramBinder;

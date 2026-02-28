@@ -197,6 +197,9 @@ ResultCode D3D12Resource::initialize
         pQueue->endAndSubmitOneTimeCommandList(list);
     }
 
+    // Fist time discard is required.
+    m_shouldDiscard = true;
+
     return RecluseResult_Ok;
 }
 
@@ -412,6 +415,13 @@ ResultCode D3D12Resource::unmap(MapRange* pWriteRange)
         m_memObj.pResource->Unmap(0, nullptr);
     }
     return RecluseResult_Ok;
+}
+
+
+void D3D12Resource::discard(ID3D12GraphicsCommandList* commandlist, const D3D12_DISCARD_REGION* discardRegion)
+{
+    commandlist->DiscardResource(m_memObj.pResource, discardRegion);
+    m_shouldDiscard = false;
 }
 } // D3D12
 } // Recluse

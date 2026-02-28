@@ -25,6 +25,7 @@ HRESULT D3D12PrimaryCommandList::CommandListImpl::initialize(ID3D12Device* devic
 
     if (SUCCEEDED(result))
     {
+        list6->SetName(L"PrimaryCommandList");
 #if defined(__ID3D12WorkGraphProperties_FWD_DEFINED__)
         result = list6->QueryInterface<ID3D12GraphicsCommandList10>(&list10);
 #endif
