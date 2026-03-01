@@ -319,14 +319,17 @@ void fillUnorderedAccessViewDescription(D3D12_UNORDERED_ACCESS_VIEW_DESC& native
             switch (description.bufferFlag)
             {
                 case ResourceBufferFlag_ByteAddressBuffer:
-                    nativeDesc.Buffer.StructureByteStride = 0;
-                    nativeDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_RAW;
+                    nativeDesc.Buffer.StructureByteStride   = 0;
+                    nativeDesc.Buffer.Flags                 = D3D12_BUFFER_UAV_FLAG_RAW;
+                    nativeDesc.Format                       = DXGI_FORMAT_R32_TYPELESS;
                     break;
                 case ResourceBufferFlag_TypedBuffer:
                     nativeDesc.Buffer.StructureByteStride = 0;
+                    R_ASSERT_FORMAT(description.format != ResourceFormat_Unknown, "Typed buffers require a native typed format! Format=%d", Dxgi::getNativeFormat(description.format));
                     break;
                 case ResourceBufferFlag_StructuredBuffer:
-                    R_ASSERT_FORMAT(description.byteStride > 0, "Buffer View structured byte stride should be defined for UAV structured buffers. ByteStride=%d", description.byteStride);
+                    R_ASSERT_FORMAT(description.byteStride > 0, "Buffer View structured byte stride should be defined for SRV structured buffers. ByteStride=%d", description.byteStride);
+                    R_ASSERT_FORMAT(description.format == ResourceFormat_Unknown, "Structured buffers require unknown format! Format=%d", Dxgi::getNativeFormat(description.format));
                     break;
                 default:
                     break;
