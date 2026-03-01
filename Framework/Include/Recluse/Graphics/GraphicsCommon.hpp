@@ -104,16 +104,19 @@ enum ResourceUsage
 // Additional miscelleneous flags that might be API specific.
 // Some of these flags may not be supported on different APIs, so 
 // Use them sparingly.
-enum ResourceMiscFlag
+enum ResourceBufferFlag
 {
-    ResourceMiscFlag_None               = (0),
-    ResourceMiscFlag_StructuredBuffer   = (1 << 0), 
-    ResourceMiscFlag_RawBuffer          = (1 << 1)
+    ResourceBufferFlag_None               = (0),
+    ResourceBufferFlag_StructuredBuffer   = (1 << 0), //< This value is default if bytestride is defined.
+    ResourceBufferFlag_TypedBuffer        = (1 << 1),
+    ResourceBufferFlag_RawBuffer          = (1 << 2),
+    ResourceBufferFlag_ByteAddressBuffer   = ResourceBufferFlag_RawBuffer,
 };
 
 
 typedef U32 ResourceUsageFlags;
 typedef U32 ResourceMiscFlags;
+typedef U32 ResourceBufferFlags;
 
 
 enum ResourceViewType 
@@ -481,7 +484,7 @@ struct GraphicsResourceDescription
     U32                 samples;
     ResourceMemoryUsage memoryUsage;
     ResourceUsageFlags  usage;
-    ResourceMiscFlags   miscFlags;
+    ResourceMiscFlags   miscFlags; // Miscellaneous flags, that shouldn't be used unless for d3d11 compatibility.
     const char*         name; // for debug purposes.
 
     // Color value used as fast clear.
@@ -518,9 +521,17 @@ struct ResourceViewDescription
         };
         struct
         {
-            U32             firstElement;
-            U32             numElements;
-            U32             byteStride;  
+            // First element of a buffer view.
+            U32                 firstElement;
+
+            // Number of elements for the buffer view.
+            U32                 numElements;
+
+            // Buffer view size for each struct.
+            U32                 byteStride;
+
+            // Type of buffer view this should be.
+            ResourceBufferFlag bufferFlag;
         };
     };
 };

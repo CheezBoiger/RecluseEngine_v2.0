@@ -175,6 +175,7 @@ R_INTERNAL
 void fillDepthStencilViewDescription(D3D12_DEPTH_STENCIL_VIEW_DESC& nativeDesc, const ResourceViewDescription& description)
 {
     nativeDesc.Flags = D3D12_DSV_FLAG_NONE;
+
     switch (nativeDesc.ViewDimension)
     {
         case D3D12_DSV_DIMENSION_TEXTURE1D:
@@ -219,6 +220,26 @@ void fillShaderResourceViewDescription(D3D12_SHADER_RESOURCE_VIEW_DESC& nativeDe
             nativeDesc.Buffer.NumElements = description.numElements;
             nativeDesc.Buffer.StructureByteStride = description.byteStride;
             nativeDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+
+            switch (description.bufferFlag)
+            {
+                case ResourceBufferFlag_ByteAddressBuffer:
+                    nativeDesc.Buffer.StructureByteStride   = 0;
+                    nativeDesc.Buffer.Flags                 = D3D12_BUFFER_SRV_FLAG_RAW;
+                    nativeDesc.Format                       = DXGI_FORMAT_R32_TYPELESS;
+                    break;
+                case ResourceBufferFlag_TypedBuffer:
+                    nativeDesc.Buffer.StructureByteStride = 0;
+                    R_ASSERT_FORMAT(description.format != ResourceFormat_Unknown, "Typed buffers require a native typed format! Format=%d", Dxgi::getNativeFormat(description.format));
+                    break;
+                case ResourceBufferFlag_StructuredBuffer:
+                    R_ASSERT_FORMAT(description.byteStride > 0, "Buffer View structured byte stride should be defined for SRV structured buffers. ByteStride=%d", description.byteStride);
+                    R_ASSERT_FORMAT(description.format == ResourceFormat_Unknown, "Structured buffers require unknown format! Format=%d", Dxgi::getNativeFormat(description.format));
+                    break;
+                default:
+                    break;
+            }
+
             break;
         }
         case D3D12_SRV_DIMENSION_TEXTURE1D:
@@ -294,6 +315,23 @@ void fillUnorderedAccessViewDescription(D3D12_UNORDERED_ACCESS_VIEW_DESC& native
             nativeDesc.Buffer.NumElements = description.numElements;
             nativeDesc.Buffer.StructureByteStride = description.byteStride;
             nativeDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+
+            switch (description.bufferFlag)
+            {
+                case ResourceBufferFlag_ByteAddressBuffer:
+                    nativeDesc.Buffer.StructureByteStride = 0;
+                    nativeDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_RAW;
+                    break;
+                case ResourceBufferFlag_TypedBuffer:
+                    nativeDesc.Buffer.StructureByteStride = 0;
+                    break;
+                case ResourceBufferFlag_StructuredBuffer:
+                    R_ASSERT_FORMAT(description.byteStride > 0, "Buffer View structured byte stride should be defined for UAV structured buffers. ByteStride=%d", description.byteStride);
+                    break;
+                default:
+                    break;
+            }
+
             break;
         }
         case D3D12_UAV_DIMENSION_TEXTURE1D:

@@ -328,9 +328,31 @@ public:
                 {
                     VulkanResource* pResource   = pViews[i]->getResource()->castTo<VulkanResource>();
                     VulkanBuffer* buffer        = pResource->castTo<VulkanBuffer>();
+
+                    U32 typeByteStride = description.byteStride;
                     // Number of elements, times the byte stride.
-                    U32 sizeBytes = description.numElements * description.byteStride;
-                    U32 offsetBytes = description.firstElement * description.byteStride;
+                    U32 sizeBytes = 0; 
+                    U32 offsetBytes = 0; 
+                    
+                    switch (description.bufferFlag)
+                    {
+                        case ResourceBufferFlag_ByteAddressBuffer:
+                            // Even with a typeless format required, it still must be Float32 byte sized.
+                            sizeBytes = Vulkan::getFormatSizeBytes(VK_FORMAT_R32_UINT) * description.numElements;
+                            offsetBytes = Vulkan::getFormatSizeBytes(VK_FORMAT_R32_UINT) * description.firstElement;
+                            break;
+                        case ResourceBufferFlag_TypedBuffer:
+                            R_ASSERT_FORMAT(description.format != ResourceFormat_Unknown, "Format should not be unknown for a vulkan buffer!");
+                            sizeBytes = Vulkan::getFormatSizeBytes(Vulkan::getVulkanFormat(description.format)) * description.numElements;
+                            offsetBytes = Vulkan::getFormatSizeBytes(Vulkan::getVulkanFormat(description.format)) * description.firstElement;
+                            break;
+                        default:
+                            R_ASSERT_FORMAT(description.format == ResourceFormat_Unknown, "Format should be unknown for structured buffers.");
+                            sizeBytes = description.numElements * typeByteStride;
+                            offsetBytes = description.firstElement * typeByteStride;  
+                            break;
+                    }
+
                     R_ASSERT(buffer->getBufferSizeBytes() >= sizeBytes);
                     sizeBytes = Math::clamp(sizeBytes, (U32)0, buffer->getBufferSizeBytes());
                     VkDescriptorBufferInfo& info = Batcher::allocateDescriptorBufferInfo();

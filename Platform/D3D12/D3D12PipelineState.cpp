@@ -14,6 +14,8 @@
 #include <unordered_map>
 #include <array>
 
+#include <wrl.h>
+
 namespace Recluse {
 namespace D3D12 {
 
@@ -40,6 +42,7 @@ std::map<DeviceId, LifetimeCache<Hash64, ID3D12RootSignature*>>          g_rootS
 
 
 R_DECLARE_GLOBAL_U32(g_d3d12MaxPipelineAge, 256, "D3D12.MaxPipelineAge");
+R_DECLARE_GLOBAL_BOOLEAN(g_allowPipelineCaching, false, "D3D12.EnablePipelineCache");
 
 
 namespace VertexInputs {
@@ -169,6 +172,32 @@ D3DVertexInput* obtain(DeviceId deviceId, VertexInputLayoutId layoutId)
     }
 }
 } // VertexInputs
+
+typedef struct Direct3DPipelineCacheHeader
+{
+    U32 headerLength;
+    UINT headerVersion;
+    UINT deviceId;
+    UINT uuid;
+} Direct3DPipelineCacheHeader;
+
+
+Bool cachePipeline(D3D12Device* device, PipelineStateId pipelineId, ID3D12PipelineState* pipelineState)
+{
+    if (!g_allowPipelineCaching)
+        return false;
+    if (!pipelineState)
+        return false;
+
+    using namespace Microsoft::WRL;
+    ComPtr<ID3DBlob> cachedBlob;
+    pipelineState->GetCachedBlob(&cachedBlob);
+    
+    SIZE_T bufferSizeBytes = cachedBlob->GetBufferSize();
+    LPVOID ptr = cachedBlob->GetBufferPointer();
+    
+    return true;
+}
 
 
 R_INTERNAL

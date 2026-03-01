@@ -977,16 +977,16 @@ PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure, Pi
         pipeline.bindPoint = program->bindPoint;
         switch (program->bindPoint)
         {
-        case VK_PIPELINE_BIND_POINT_GRAPHICS:
-            pipeline.pipeline = createGraphicsPipeline(pDevice, pipeline.pipelineCache, structure, program);
-            break;
-        case VK_PIPELINE_BIND_POINT_COMPUTE:
-            pipeline.pipeline = createComputePipeline(pDevice, pipeline.pipelineCache, structure, program);
-            break;
-        case VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR:
-            R_ERROR(R_CHANNEL_VULKAN, "Ray tracing pipelines are not supported currently!");
-            pipeline.pipeline = createRayTracingPipeline(pDevice, pipeline.pipelineCache, structure, program);
-            break;
+            case VK_PIPELINE_BIND_POINT_GRAPHICS:
+                pipeline.pipeline = createGraphicsPipeline(pDevice, pipeline.pipelineCache, structure, program);
+                break;
+            case VK_PIPELINE_BIND_POINT_COMPUTE:
+                pipeline.pipeline = createComputePipeline(pDevice, pipeline.pipelineCache, structure, program);
+                break;
+            case VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR:
+                R_ERROR(R_CHANNEL_VULKAN, "Ray tracing pipelines are not supported currently!");
+                pipeline.pipeline = createRayTracingPipeline(pDevice, pipeline.pipelineCache, structure, program);
+                break;
         }
 
         if (pipeline.pipeline)
