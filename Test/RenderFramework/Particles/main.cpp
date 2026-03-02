@@ -10,6 +10,29 @@
 
 using namespace Recluse;
 
+enum ProgramId
+{
+    ProgramId_ParticleCompute = 1,
+    ProgramId_ParticleRender
+};
+
+static void createShaderPrograms(GraphicsDevice* graphicsDevice)
+{
+    R_ASSERT(graphicsDevice);
+    
+    ShaderProgramDatabase database;
+    
+    // Descriptions are used for pipeline building.
+    Pipeline::Builder::ShaderProgramDescription description;
+
+    // Particle Compute.
+    description.pipelineType = BindType_Compute;
+    
+
+    // Particle Render
+    description.pipelineType = BindType_Graphics;
+}
+
 int main(int c, char* argv[])
 {
     GraphicsInstance* instance = GraphicsInstance::create(GraphicsApi_Direct3D12);
