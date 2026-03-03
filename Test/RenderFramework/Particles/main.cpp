@@ -78,7 +78,7 @@ int main(int c, char* argv[])
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
 
-    Window* window = Window::create("Nigger", 0, 0, 1920, 1080, ScreenMode_Windowed);
+    Window* window = Window::create("Particles", 0, 0, 1920, 1080, ScreenMode_Windowed);
     window->setToCenter();
     window->show();
 
@@ -129,8 +129,8 @@ int main(int c, char* argv[])
     swapchainInfo.desiredFrames = 3;
     swapchainInfo.format = ResourceFormat_R8G8B8A8_Unorm;
     swapchainInfo.preferHDR = false;
-    swapchainInfo.renderWidth = 1920;
-    swapchainInfo.renderHeight = 1080;
+    swapchainInfo.renderWidth = window->getWidth();
+    swapchainInfo.renderHeight = window->getHeight();
 
     device->createSwapchain(swapchainInfo, window->getNativeHandle(), &swapchain);
 
