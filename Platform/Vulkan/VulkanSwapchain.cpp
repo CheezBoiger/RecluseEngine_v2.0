@@ -23,6 +23,11 @@ GraphicsResource* VulkanSwapchain::getFrame(U32 idx)
 
 ResultCode VulkanSwapchain::build(VulkanDevice* pDevice, void* windowHandle)
 {
+    if (!windowHandle)
+    {
+        return RecluseResult_NullPtrExcept;
+    }
+
     VkSwapchainCreateInfoKHR createInfo         = { };
     const SwapchainCreateDescription& pDesc     = getDesc();
     VkResult result                             = VK_SUCCESS;

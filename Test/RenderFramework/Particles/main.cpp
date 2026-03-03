@@ -8,33 +8,80 @@
 #include "Recluse/Pipeline/Graphics/ShaderBuilder.hpp"
 #include "Recluse/Pipeline/Graphics/ShaderPreprocessor.hpp"
 
+#include "Recluse/Filesystem/Filesystem.hpp"
+#include "Recluse/System/Input.hpp"
 using namespace Recluse;
 
 enum ProgramId
 {
-    ProgramId_ParticleCompute = 1,
+    ProgramId_ParticleComputeSimple = 1,
     ProgramId_ParticleRender
 };
 
-static void createShaderPrograms(GraphicsDevice* graphicsDevice)
-{
-    R_ASSERT(graphicsDevice);
-    
+static void createShaderPrograms(GraphicsAPI api)
+{   
     ShaderProgramDatabase database;
+    Pipeline::ShaderBuilder* shaderBuilder = nullptr;
+    ShaderIntermediateCode intermediateCode = ShaderIntermediateCode_Unknown;
+    Pipeline::HlslToGlslPreprocessor preprocessor;
+    preprocessor.setDebug(true);
+
+    if (api == GraphicsApi_Direct3D12)
+    {
+        shaderBuilder = Pipeline::createShaderBuilder("dxc");
+        intermediateCode = ShaderIntermediateCode_Dxil;
+    }
+    else
+    {        
+        shaderBuilder = Pipeline::createShaderBuilder("dxc");
+        intermediateCode = ShaderIntermediateCode_Spirv;
+        shaderBuilder->addPreprocessor(&preprocessor);   
+    }
+
+    shaderBuilder->setUp();
     
     // Descriptions are used for pipeline building.
     Pipeline::Builder::ShaderProgramDescription description;
+    description.language = ShaderLanguage_Hlsl;
+
+    FileBufferData source;
+
+    std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
+    std::string shaderFile = currDir + "/" + "particles.hlsl";
+
+    File::readFrom(&source, shaderFile);
 
     // Particle Compute.
     description.pipelineType = BindType_Compute;
-    
+    description.compute.cs = source.data();
+    description.compute.csName = "ParticleComputeSimpleMain";
+   
+    // Build compute
+    Pipeline::Builder::buildShaderProgram(database, description, ProgramId_ParticleComputeSimple, intermediateCode, shaderBuilder);
 
     // Particle Render
     description.pipelineType = BindType_Graphics;
+    description.graphics.vs = source.data();
+    description.graphics.vsName = "ParticleVertexMain";
+    description.graphics.ps = source.data();
+    description.graphics.psName = "ParticlePixelMain";
+
+    // build render.
+    Pipeline::Builder::buildShaderProgram(database, description, ProgramId_ParticleRender, intermediateCode, shaderBuilder);
+
+    shaderBuilder->tearDown();
+    Pipeline::freeShaderBuilder(shaderBuilder);
 }
 
 int main(int c, char* argv[])
 {
+    LogSystem::initializeLoggingSystem();
+    LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
+
+    Window* window = Window::create("Nigger", 0, 0, 1920, 1080, ScreenMode_Windowed);
+    window->setToCenter();
+    window->show();
+
     GraphicsInstance* instance = GraphicsInstance::create(GraphicsApi_Direct3D12);
     ResultCode result = RecluseResult_Ok;
 
@@ -65,6 +112,8 @@ int main(int c, char* argv[])
     }
     
     R_ASSERT(adapter != NULL);
+
+    createShaderPrograms(instance->getApi());
     
     DeviceCreateInfo createInfo         = { };
     createInfo.allowAsyncCompute        = false;
@@ -83,7 +132,7 @@ int main(int c, char* argv[])
     swapchainInfo.renderWidth = 1920;
     swapchainInfo.renderHeight = 1080;
 
-    device->createSwapchain(swapchainInfo, nullptr, &swapchain);
+    device->createSwapchain(swapchainInfo, window->getNativeHandle(), &swapchain);
 
     R_ASSERT(swapchain != NULL);
 
@@ -91,17 +140,23 @@ int main(int c, char* argv[])
 
     context->setFrames(3);
 
-    swapchain->prepare(context);
+    while (!window->shouldClose())
+    {
         
-
-    context->end();
-    
+        swapchain->prepare(context);
+        GraphicsResource* swapchainFrame = swapchain->getFrame(swapchain->getCurrentFrameIndex());
+        context->transition(swapchainFrame, ResourceState_Present);
+        context->end();
+        swapchain->present(context);
+        pollEvents();
+    }
     context->wait();
-    swapchain->present(context);
 
     device->releaseContext(context);
     device->destroySwapchain(swapchain);
     adapter->destroyDevice(device);
     GraphicsInstance::destroyInstance(instance);
+    Window::destroy(window);
+    LogSystem::destroyLoggingSystem();
     return 0;
 }

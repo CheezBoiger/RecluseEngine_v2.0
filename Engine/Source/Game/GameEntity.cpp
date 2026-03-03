@@ -2,6 +2,7 @@
 #include "Recluse/Game/GameEntity.hpp"
 #include "Recluse/Messaging.hpp"
 #include "Recluse/Filesystem/Archive.hpp"
+#include "Recluse/Threading/Threading.hpp"
 
 #include <unordered_map>
 
@@ -15,7 +16,8 @@ struct EntityAllocation
     GameEntityAllocation    memory;
 };
 
-std::unordered_map<RGUID, EntityAllocation, RGUID::Hash, RGUID::Equal> kEntityMap;
+static MutexGuard kEntityMutex = MutexGuard("EntitySync");
+static std::unordered_map<RGUID, EntityAllocation, RGUID::Hash, RGUID::Equal> kEntityMap;
 
 static GameEntity* defaultAlloc(U64 szBytes, GameEntityMemoryAllocationType type, const Recluse::RGUID& rguid)
 {
@@ -43,6 +45,8 @@ static GameEntity* defaultAlloc(U64 szBytes, GameEntityMemoryAllocationType type
         void* ptr       = reinterpret_cast<void*>(allocation.offsetAddress);
         
         GameEntity* entity = new (ptr) GameEntity(guid);
+
+        ScopedLock lock(kEntityMutex);
     
         kEntityMap.insert(std::make_pair(guid, EntityAllocation{ entity, allocation }));
         return entity;
@@ -64,6 +68,8 @@ static void defaultFree(GameEntity* pEntity)
     {
         GameEntityAllocation& allocation = it->second.memory;
         free((void*)allocation.offsetAddress);
+
+        ScopedLock lock(kEntityMutex);
         kEntityMap.erase(it);
     }
 }

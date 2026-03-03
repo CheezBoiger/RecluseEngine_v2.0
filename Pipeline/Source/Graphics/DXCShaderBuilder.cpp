@@ -237,9 +237,11 @@ public:
         // Optimization settings
         arguments[argCount++] = m_optimizationMap[getOptimizationOption()];
 
-        int count = MultiByteToWideChar(CP_UTF8, 0, entryPoint, sizeof(entryPoint), nullptr, 0);
-        WCHAR* wideEntryPoint = new WCHAR[count];
-        MultiByteToWideChar(CP_UTF8, 0, entryPoint, sizeof(entryPoint), wideEntryPoint, count);
+        int count = MultiByteToWideChar(CP_UTF8, 0, entryPoint, strlen(entryPoint), nullptr, 0);
+        WCHAR* wideEntryPoint = new WCHAR[count+1];
+        MultiByteToWideChar(CP_UTF8, 0, entryPoint, count, wideEntryPoint, count);
+
+        wideEntryPoint[count] = L'\0';
 
         hr = m_compiler->Compile
             (
@@ -252,7 +254,7 @@ public:
                 NULL, (IDxcOperationResult**)&result
             );
 
-        delete wideEntryPoint;
+        delete[] wideEntryPoint;
 
         CComPtr<IDxcBlobEncoding> errorBlob;
         result->GetErrorBuffer(&errorBlob);

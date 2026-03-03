@@ -432,8 +432,14 @@ ResultCode VulkanDevice::createSwapchain
         GraphicsSwapchain** outSwapchain
     )
 {
+    R_ASSERT_FORMAT(windowHandle != NULL, "Window handle was null when creating swapchain!");
     R_ASSERT_FORMAT(m_supportsSwapchainCreation, "This device does not support swapchain creation. Be sure to use a physical device that does!!");
+
     VkSurfaceKHR surface                = getAdapter()->getInstance()->makeSurface(windowHandle); 
+
+    if (surface == VK_NULL_HANDLE)
+        return RecluseResult_Failed;
+
     VulkanQueue* pQueue                 = getPresentableQueue(surface);
     VulkanSwapchain* pSwapchain         = new VulkanSwapchain(pDesc, pQueue);
     VulkanInstance*   pNativeContext    = m_adapter->getInstance();
@@ -1230,6 +1236,8 @@ void VulkanDevice::copyResource(GraphicsResource* dst, GraphicsResource* src)
 
 ResultCode VulkanDevice::destroySwapchain(GraphicsSwapchain* pSwapchain)
 {
+    if (!pSwapchain)
+        return RecluseResult_NullPtrExcept;
     VulkanSwapchain* vulkanSwapchain = pSwapchain->castTo<VulkanSwapchain>();
     vulkanSwapchain->release();
     delete pSwapchain;
