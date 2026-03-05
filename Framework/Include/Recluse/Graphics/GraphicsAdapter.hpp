@@ -45,7 +45,7 @@ struct DeviceCreateInfo
 
 class GraphicsDevice;
 
-class GraphicsAdapter 
+class RecluseFramework_PUBLIC_API GraphicsAdapter 
 {
 public:
     virtual ~GraphicsAdapter() { }

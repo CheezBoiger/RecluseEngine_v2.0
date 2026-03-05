@@ -17,7 +17,7 @@ class VulkanDevice;
 class RecluseVulkan_PUBLIC_API VulkanAdapter : public GraphicsAdapter 
 {
 public:
-    ~VulkanAdapter();
+    virtual ~VulkanAdapter();
 
     VulkanAdapter(VulkanAdapter&& a) noexcept
     { 

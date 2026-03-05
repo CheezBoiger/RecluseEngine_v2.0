@@ -21,6 +21,10 @@ void D3D12Context::initialize()
 {
     initializeBufferResources(m_bufferCount);
     createCommandList(&m_pPrimaryCommandList, QueueType_Present | QueueType_Graphics);
+
+    if (supportsAsyncCompute())
+        createCommandList(&m_pComputeCommandList, QueueType_Compute | QueueType_Copy);
+
     D3D12ResourceAllocationManager* manager = m_pDevice->resourceAllocationManager();
     D3D12ResourceAllocationManager::Update update = { };
     update.flags = D3D12ResourceAllocationManager::UpdateFlag_SetFrameIndex | D3D12ResourceAllocationManager::UpdateFlag_ResizeGarbage;
@@ -45,6 +49,12 @@ void D3D12Context::release()
     {
         destroyCommandList(m_pPrimaryCommandList);
         m_pPrimaryCommandList = nullptr;
+    }
+
+    if (supportsAsyncCompute() && m_pComputeCommandList)
+    {
+        destroyCommandList(m_pComputeCommandList);
+        m_pComputeCommandList = nullptr;
     }
 
     m_tableArena.release();

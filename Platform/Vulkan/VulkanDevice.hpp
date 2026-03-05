@@ -142,7 +142,7 @@ public:
     GraphicsDevice*                 getDevice() override;
     VulkanPrimaryCommandList*       getPrimaryCommandList() { return &m_primaryCommandList; }
     ResultCode                      wait() override;
-    VkRenderPass                    getRenderPass();
+    //VkRenderPass                  getRenderPass();
     Bool                            supportsAsyncCompute() const override;
 
     void clearRenderTarget(U32 idx, F32* clearColor, const Rect& rect) override;

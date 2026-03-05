@@ -57,7 +57,7 @@ private:
     void                setDebugCallback();
     void                destroyDebugCallback();
     void                queryFunctions();
-    void                releaseFunctions();
+    //void              releaseFunctions();
     void                setRequestedDeviceExtensions(LayerFeatureFlags flags);
     
     LayerFeatureFlags   m_enabledLayers;

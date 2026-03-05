@@ -30,8 +30,7 @@ public:
 
     ID3D12GraphicsCommandList* get() { return m_currentCmdList->get6(); }
     ID3D12GraphicsCommandList6* get6() { return m_currentCmdList->get6(); }
-
-
+    
 #if defined(__ID3D12WorkGraphProperties_FWD_DEFINED__)
     ID3D12GraphicsCommandList10* get10() { return m_currentCmdList->get10(); }
 #endif

@@ -72,6 +72,7 @@ public:
         : m_pDevice(pDevice)
         , m_currentContextFrameIndex(0)
         , m_pPrimaryCommandList(nullptr)
+        , m_pComputeCommandList(nullptr)
         , m_bufferCount(bufferCount)
         , m_graphicsQueue(pQueue)
         , m_computeQueue(computeQueue)
@@ -234,6 +235,7 @@ private:
     U32                                 m_bufferCount;
     ContextDirtyFlags                   m_dirtyFlags;    
     D3D12PrimaryCommandList*            m_pPrimaryCommandList;
+    D3D12PrimaryCommandList*            m_pComputeCommandList;
     std::vector<ContextState>           m_contextStates;
     std::vector<D3D12_RESOURCE_BARRIER> m_barrierTransitions;
     std::vector<D3D12Resource*>         m_discardingResources;

@@ -177,7 +177,7 @@ struct ResourceTransitionDescription
 
 // The context of the rendering api, this will describe the rendering frame work to be sent to the GPU.
 // This consists of drawcalls, dispatches, copies, and other gpu related activities.
-class GraphicsContext : public ICastableObject
+class RecluseFramework_PUBLIC_API GraphicsContext : public ICastableObject
 {
 public:
     virtual ~GraphicsContext() { }
@@ -422,7 +422,7 @@ protected:
 };
 
 
-class GraphicsDevice : public ICastableObject
+class RecluseFramework_PUBLIC_API GraphicsDevice : public ICastableObject
 {
 public:
     static const U32 kMaxGraphicsContexts = 4;

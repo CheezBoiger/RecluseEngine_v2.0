@@ -3,11 +3,13 @@
 
 #include "Recluse/Types.hpp"
 
+#include "RecluseFramework_exports.hpp"
+
 namespace Recluse {
 
 class Archive;
 
-class Serializable 
+class RecluseFramework_PUBLIC_API Serializable 
 {
 public:
     virtual ~Serializable() { }
