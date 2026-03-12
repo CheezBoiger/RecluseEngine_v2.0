@@ -55,7 +55,15 @@ struct ConstBuffer
     Math::Mat44 normal;
     U32             useTexturing;
     U32             pad0[3];
-     
+};
+
+
+struct SceneConst
+{
+    F32             time;
+    F32             deltaTime;
+    U32             moveLeft;
+    U32             moveUp;
 };
 
 
@@ -237,14 +245,24 @@ void createShaderProgram(GraphicsDevice* device)
 
     for (U32 i = 0; i < 2; ++i)
     {
-        Pipeline::Builder::ShaderProgramPermutationDefinitionInstance permutation;
-        Pipeline::Builder::ShaderProgramPermutationDefinition definition;
-        definition.name = "USE_TEXTURE";
-        definition.offset = 0;
-        definition.size = 1;
-        definition.value = i;
-        permutation.push_back(definition);
-        description.permutationDefinitions.push_back(permutation);
+        for (uint j = 0; j < 2; ++j)
+        {
+            Pipeline::Builder::ShaderProgramPermutationDefinitionInstance permutation;
+            Pipeline::Builder::ShaderProgramPermutationDefinition definition;
+            definition.name = "USE_TEXTURE";
+            definition.offset = 0;
+            definition.size = 1;
+            definition.value = i;
+            permutation.push_back(definition);
+
+            Pipeline::Builder::ShaderProgramPermutationDefinition definition2;
+            definition2.name = "MOVING_TEXTURE";
+            definition2.offset = 1;
+            definition2.size = 1;
+            definition2.value = j;
+            permutation.push_back(definition2);
+            description.permutationDefinitions.push_back(permutation);
+        }
     }
 
     Pipeline::Builder::buildShaderProgram(database, description, ShaderProgram_Gbuffer, intermediateCode, shaderBuilder);
@@ -433,7 +451,6 @@ void createLightBuffer(GraphicsDevice* device)
     description.width = sizeof(Light) * 1;
     description.usage = ResourceUsage_ShaderResource | ResourceUsage_CopyDestination;
     description.mipLevels = 1;
-    description.miscFlags = ResourceMiscFlag_StructuredBuffer;
     description.memoryUsage = ResourceMemoryUsage_GpuOnly;
 
     ResultCode result = device->createResource(&lightBuffer, description, ResourceState_Common);
@@ -504,6 +521,8 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
     if (listener.isKeyDown(KeyCode_A))
     {
         permutation = makeBitset32(0, 1, 1);
+        if (listener.isKeyDown(KeyCode_B))
+            permutation |= makeBitset32(1, 2, 1);
     }
     ShaderProgramBinder& binder = context->bindShaderProgram(ShaderProgram_Gbuffer, permutation);
 
@@ -512,7 +531,20 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
         U64 offset[] = { 0 };
         GraphicsResource* vb = meshes[i].vertexBuffer;
         context->transition(meshes[i].albedoTexture, ResourceState_ShaderResource);
+
+        SceneConst scene;
+        RealtimeTick tick = RealtimeTick::getTick(0);
+        static F32 t = 0.0;
+        t += tick.delta();
+        scene.time = t;
+        scene.deltaTime = tick.delta();
+        scene.moveLeft = listener.isKeyDown(KeyCode_B) ? 1 : 0;
+        scene.moveUp = listener.isKeyDown(KeyCode_V) ? 1 : 0;
+
+        ResourceView sceneConst = context->allocateConstantBuffer(sizeof(SceneConst), &scene);
+
         binder.bindConstantBuffer(ShaderStage_Pixel | ShaderStage_Vertex, 0, 0, meshes[i].meshTransform, 0, sizeof(ConstBuffer))
+                .bindConstantBuffer(ShaderStage_Pixel, 0, 1, sceneConst)
                 .bindShaderResource(ShaderStage_Pixel, 0, 0, meshes[i].albedoView)
                 .bindSampler(ShaderStage_Pixel, 0, 0, gbufferSampler);
 
@@ -541,7 +573,6 @@ void createSceneBuffer(GraphicsDevice* device)
     description.width = sizeof(SceneBuffer);
     description.usage = ResourceUsage_ConstantBuffer;
     description.mipLevels = 1;
-    description.miscFlags = ResourceMiscFlag_StructuredBuffer;
     description.memoryUsage = ResourceMemoryUsage_CpuToGpu;
 
     ResultCode result = device->createResource(&sceneBuffer, description, ResourceState_ConstantBuffer);
@@ -578,6 +609,7 @@ void resolveLighting(GraphicsContext* context)
     description.numElements = 1;
     description.byteStride = sizeof(Light);
     description.format = ResourceFormat_Unknown;
+    description.bufferFlag = ResourceBufferFlag_StructuredBuffer;
     ResourceView lightBufferView = lightBuffer->asView(description);
 
     Viewport viewport = { 0, 0, swapchain->getDesc().renderWidth, swapchain->getDesc().renderHeight, 1, 0 };
@@ -720,6 +752,7 @@ void createCubes(GraphicsDevice* device, std::vector<MeshDraw>& meshes, U32 widt
         model(3, 1) = 0.f;
         model(3, 2) = 0.f;
         buffer->normal = Math::transpose(Math::inverse(model));
+
         it.meshTransform->unmap(nullptr);
         
         it.numIndices = (U32)indices.size();

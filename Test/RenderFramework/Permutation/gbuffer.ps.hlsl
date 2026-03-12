@@ -13,7 +13,15 @@ cbuffer PerVert : register(b0)
 	float4x4 mModelViewProjection;
 	float4x4 mNormal;
 	uint   	 useTexturing;
-	uint3	 pad0;
+	uint 	 pad0[3];
+};
+
+cbuffer Scene : register(b1)
+{
+	float	 time;
+	float    deltaTime;
+	uint 	 moveLeft;
+	uint     moveUp;
 };
 
 Texture2D<float4> colorTexture 	: register(t0);
@@ -31,7 +39,15 @@ PSOut psMain(PSIn pixIn)
 {
 	PSOut Output;
 #if USE_TEXTURE
-		Output.albedo = colorTexture.Sample(colorSampler, pixIn.vTexCoord0);
+	float2 texcoord = pixIn.vTexCoord0;
+#if MOVING_TEXTURE
+	if (moveLeft == 1)
+		texcoord.x += time;
+	if (moveUp == 1)
+		texcoord.y += time;
+	texcoord = frac(texcoord);
+#endif
+	Output.albedo = colorTexture.Sample(colorSampler, texcoord);
 #else
 		Output.albedo = pixIn.color;
 #endif
