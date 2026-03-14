@@ -247,21 +247,32 @@ void createShaderProgram(GraphicsDevice* device)
     {
         for (uint j = 0; j < 2; ++j)
         {
-            Pipeline::Builder::ShaderProgramPermutationDefinitionInstance permutation;
-            Pipeline::Builder::ShaderProgramPermutationDefinition definition;
-            definition.name = "USE_TEXTURE";
-            definition.offset = 0;
-            definition.size = 1;
-            definition.value = i;
-            permutation.push_back(definition);
+            for (uint k = 0; k < 2; ++k)
+            {
+                Pipeline::Builder::ShaderProgramPermutationDefinitionInstance permutation;
+                Pipeline::Builder::ShaderProgramPermutationDefinition definition;
+                definition.name = "USE_TEXTURE";
+                definition.offset = 0;
+                definition.size = 1;
+                definition.value = i;
+                permutation.push_back(definition);
 
-            Pipeline::Builder::ShaderProgramPermutationDefinition definition2;
-            definition2.name = "MOVING_TEXTURE";
-            definition2.offset = 1;
-            definition2.size = 1;
-            definition2.value = j;
-            permutation.push_back(definition2);
-            description.permutationDefinitions.push_back(permutation);
+                Pipeline::Builder::ShaderProgramPermutationDefinition definition2;
+                definition2.name = "MOVING_TEXTURE_X";
+                definition2.offset = 1;
+                definition2.size = 1;
+                definition2.value = j;
+                permutation.push_back(definition2);
+
+                Pipeline::Builder::ShaderProgramPermutationDefinition definition3;
+                definition3.name = "MOVING_TEXTURE_Y";
+                definition3.offset = 2;
+                definition3.size = 1;
+                definition3.value = k;
+                permutation.push_back(definition3);
+
+                description.permutationDefinitions.push_back(permutation);
+            }
         }
     }
 
@@ -522,7 +533,9 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
     {
         permutation = makeBitset32(0, 1, 1);
         if (listener.isKeyDown(KeyCode_B))
-            permutation |= makeBitset32(1, 2, 1);
+            permutation |= makeBitset32(1, 1, 1);
+        if (listener.isKeyDown(KeyCode_V))
+            permutation += makeBitset32(2, 1, 1);
     }
     ShaderProgramBinder& binder = context->bindShaderProgram(ShaderProgram_Gbuffer, permutation);
 
@@ -795,7 +808,7 @@ int main(char* argv[], int c)
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
+    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
     GraphicsAdapter* adapter    = nullptr;
     std::vector<MeshDraw> meshes;
 

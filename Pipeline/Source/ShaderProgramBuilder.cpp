@@ -260,7 +260,7 @@ ShaderProgramDefinition makeShaderProgramDefinition(ShaderProgramDatabase& db, c
     for (U32 i = 0; i < preprocessDefines.size(); ++i)
     {
         preprocessDefines[i].variable = permutationDefinition[i].name;
-        preprocessDefines[i].value = std::to_string(makeBitset32(permutationDefinition[i].offset, permutationDefinition[i].size, permutationDefinition[i].value));
+        preprocessDefines[i].value = std::to_string(permutationDefinition[i].value);
     }
 
     switch (definition.pipelineType)
