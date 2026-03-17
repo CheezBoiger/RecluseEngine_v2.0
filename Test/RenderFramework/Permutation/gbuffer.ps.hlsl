@@ -40,13 +40,15 @@ PSOut psMain(PSIn pixIn)
 	PSOut Output;
 #if USE_TEXTURE
 	float2 texcoord = pixIn.vTexCoord0;
-#if MOVING_TEXTURE
+#if (MOVING_TEXTURE_X == 1)
 	if (moveLeft == 1)
 		texcoord.x += time;
+#endif
+#if (MOVING_TEXTURE_Y == 1)
 	if (moveUp == 1)
 		texcoord.y += time;
-	texcoord = frac(texcoord);
 #endif
+	texcoord = frac(texcoord);
 	Output.albedo = colorTexture.Sample(colorSampler, texcoord);
 #else
 		Output.albedo = pixIn.color;
