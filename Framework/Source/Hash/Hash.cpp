@@ -77,4 +77,15 @@ Hash32 hashJenkins(const void* dat, U32 szBytes)
     hash += hash << 15;
     return hash;
 }
+
+Hash64 combineHash64(Hash64 seed, Hash64 h)
+{
+    return seed ^ (h + 0x9e3779b97f4a7c15ULL + (seed << 6) + (seed >> 2));
+}
+
+
+Hash32 combineHash32(Hash32 seed, Hash64 h)
+{
+    return (Hash32)combineHash64((Hash64)seed, (Hash64)h);
+}
 } // Recluse

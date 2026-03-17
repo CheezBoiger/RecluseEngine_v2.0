@@ -250,6 +250,7 @@ void D3D12Context::drawInstancedIndirect(GraphicsResource* indirectBuffer, U32 o
     bindPipeline(list, state);
     bindCurrentResources();
     state.setClean();
+    
     ID3D12CommandSignature* commandSignature = getNativeDevice()->getDrawInstancedIndirectSignature();
     R_ASSERT(commandSignature != NULL);
     ID3D12Resource* resource = indirectBuffer->castTo<D3D12Resource>()->get();

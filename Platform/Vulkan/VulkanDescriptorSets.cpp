@@ -526,10 +526,10 @@ public:
     size_t operator()(const Structure& key) const
     {
         Hash64 hh   = recluseHashFast(&key.key.hash, sizeof(U64) * 2u);
-        hh          ^= recluseHashFast(key.ppShaderResources, sizeof(VulkanResourceView*) * key.key.value.srvs);
-        hh          ^= recluseHashFast(key.ppConstantBuffers, sizeof(BufferView*) * key.key.value.constantBuffers);
-        hh          ^= recluseHashFast(key.ppUnorderedAccesses, sizeof(VulkanResourceView*) * key.key.value.uavs);
-        hh          ^= recluseHashFast(key.ppSamplers, sizeof(VulkanSampler*) * key.key.value.samplers);
+        hh          = combineHash64(hh, recluseHashFast(key.ppShaderResources, sizeof(VulkanResourceView*) * key.key.value.srvs));
+        hh          = combineHash64(hh, recluseHashFast(key.ppConstantBuffers, sizeof(BufferView*) * key.key.value.constantBuffers));
+        hh          = combineHash64(hh, recluseHashFast(key.ppUnorderedAccesses, sizeof(VulkanResourceView*) * key.key.value.uavs));
+        hh          = combineHash64(hh, recluseHashFast(key.ppSamplers, sizeof(VulkanSampler*) * key.key.value.samplers));
         return staticCast<size_t>(hh);
     }
 };
