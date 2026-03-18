@@ -610,7 +610,7 @@ void D3D12Context::bindCurrentResources()
 ShaderProgramBinder& D3D12Context::bindShaderProgram(ShaderProgramId program, U32 permutation)
 {
     D3D::Cache::D3DShaderProgram* shaderProgram = D3D::Cache::obtainShaderProgram(program, permutation);
-    R_ASSERT_FORMAT(shaderProgram, "No shader program found by the given id=%d, and permutation=%d", program, permutation);
+    R_ASSERT_FORMAT(shaderProgram, "No shader program found by the given id=%llu, and permutation=%d", program, permutation);
     if (shaderProgram)
     {
         clearResourceBinds();
