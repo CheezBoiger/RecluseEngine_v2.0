@@ -865,11 +865,11 @@ void RootSigLayout::makeHash()
     hash0 = 0;
     for (U32 i = 0; i < numSets; ++i)
     {
-        hash0 ^= recluseHashFast(&sets[i], sizeof(Set));
+        hash0 = combineHash64(hash0, recluseHashFast(&sets[i], sizeof(Set)));
     }
-    hash0 ^= shaderVisibility;
-    hash0 ^= flags;
-    hash0 ^= numSets;
+    hash0 = combineHash64(hash0, shaderVisibility);
+    hash0 = combineHash64(hash0, flags);
+    hash0 = combineHash64(hash0, numSets);
 }
 } // Pipelines
 } // D3D12 

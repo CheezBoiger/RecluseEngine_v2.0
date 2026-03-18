@@ -21,4 +21,7 @@ RecluseFramework_PUBLIC_API Hash32 recluseHash32(const void* dat, U64 szBytes);
 
 // Quick jenkin's hash for speed and integrity balance.
 RecluseFramework_PUBLIC_API Hash32 hashJenkins(const void* dat, U32 szBytes);
+
+RecluseFramework_PUBLIC_API Hash32 combineHash32(Hash32 seed, Hash32 h);
+RecluseFramework_PUBLIC_API Hash64 combineHash64(Hash64 seed, Hash64 h);
 } // Recluse

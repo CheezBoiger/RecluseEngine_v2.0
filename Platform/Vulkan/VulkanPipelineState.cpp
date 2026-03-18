@@ -1054,9 +1054,9 @@ void Structure::nullify()
 Hash64 Structure::hash() const
 {
     Hash64 h = 0;
-    h ^= recluseHashFast(&state.pipeline, sizeof(state.pipeline));
-    h ^= state.shaderPermutation;
-    h ^ state.shaderProgramId;
+    h = combineHash64(h, recluseHashFast(&state.pipeline, sizeof(state.pipeline)));
+    h = combineHash64(h, state.shaderPermutation);
+    h = combineHash64(h, state.shaderProgramId);
     return h;
 }
 
