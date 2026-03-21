@@ -410,7 +410,6 @@ void createLightBuffer(GraphicsDevice* device)
     description.width = sizeof(Light) * 1;
     description.usage = ResourceUsage_ShaderResource | ResourceUsage_CopyDestination;
     description.mipLevels = 1;
-    description.miscFlags = ResourceMiscFlag_StructuredBuffer;
     description.memoryUsage = ResourceMemoryUsage_GpuOnly;
 
     ResultCode result = device->createResource(&lightBuffer, description, ResourceState_Common);
@@ -531,7 +530,6 @@ void createSceneBuffer(GraphicsDevice* device)
     description.width = sizeof(SceneBuffer);
     description.usage = ResourceUsage_ConstantBuffer;
     description.mipLevels = 1;
-    description.miscFlags = ResourceMiscFlag_StructuredBuffer;
     description.memoryUsage = ResourceMemoryUsage_CpuToGpu;
 
     ResultCode result = device->createResource(&sceneBuffer, description, ResourceState_ConstantBuffer);
