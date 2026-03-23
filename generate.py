@@ -15,6 +15,12 @@ generate_3rdparty_libs = build_systems_dir + "/GenerateThirdPartyLibraries.py"
 
 parsed_commands = None
 
+cmake_generators = {
+    "auto": "latest",
+    "2022": "Visual Studio 17 2022",
+    "2026": "Visual Studio 18 2026"
+}
+
 
 def parse_arguments():
     global parsed_commands
@@ -32,6 +38,7 @@ def parse_arguments():
     parser.add_argument("-update", dest="ft", action="store_true", help="Run update set up, which sets up submodules and/or updates them.", default=False)
     parser.add_argument("-config", dest="config", help="Path and name of configuration file.", type=str, default=None)
     parser.add_argument("-initlib", dest="initlib", help="Init the third party libraries.", action="store_true", default=False)
+    parser.add_argument("-generator", dest="g", help="The specific generator that cmake should use when creating the build sln", type=str, default="auto")
     args = parser.parse_args()
     parsed_commands = args
     
@@ -122,7 +129,11 @@ def main():
     
     additional_cmake_commands = add_additional_cmake_commands()
     
-    cmake_commands = ["cmake", "-G Visual Studio 17 2022"]
+    
+    cmake_commands = ["cmake"]
+    
+    if cmake_generators[parsed_commands.g] != cmake_generators["auto"]:
+            cmake_commands.append([ "-G", f"{cmake_generators[parsed_commands.g]}"])
     
     cmake_commands.extend(additional_cmake_commands)
     cmake_commands.append('..')
