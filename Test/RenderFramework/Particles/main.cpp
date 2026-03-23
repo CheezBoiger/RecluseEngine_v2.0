@@ -18,6 +18,9 @@ enum ProgramId
     ProgramId_ParticleRender
 };
 
+GraphicsResource* particlePositionsBuffer = nullptr;
+GraphicsResource* particleVelocityBuffer = nullptr;
+
 static void createShaderPrograms(GraphicsAPI api)
 {   
     ShaderProgramDatabase database;
@@ -142,10 +145,17 @@ int main(int c, char* argv[])
 
     while (!window->shouldClose())
     {
-        
         swapchain->prepare(context);
         GraphicsResource* swapchainFrame = swapchain->getFrame(swapchain->getCurrentFrameIndex());
         context->transition(swapchainFrame, ResourceState_Present);
+
+        ShaderProgramBinder& binder = context->bindShaderProgram(ProgramId_ParticleComputeSimple, 0);
+        binder.bindShaderResource(ShaderStage_All, 0, 0, ResourceView{0});
+        context->dispatch(Math::divUp(64, 1), 1, 1);
+
+        binder = context->bindShaderProgram(ProgramId_ParticleRender, 0);
+        context->drawIndexedInstanced(3, 1, 0, 0, 0);
+
         context->end();
         swapchain->present(context);
         pollEvents();

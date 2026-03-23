@@ -392,6 +392,8 @@ ResultCode createGBuffer(GraphicsDevice* device, U32 width, U32 height)
     description.format = ResourceFormat_R16G16B16A16_Float;
     description.name = "GBufferNormal";
     code = device->createResource(&normalTexture, description, ResourceState_Common);
+
+    code = device->createResource(&materialTexture, description, ResourceState_Common);
     
     description.format = ResourceFormat_D32_Float;
     description.name = "GBufferDepth";
@@ -413,6 +415,12 @@ ResultCode destroyGBuffer(GraphicsDevice* device, Bool immediate = false)
     {
         device->destroyResource(normalTexture, immediate);
         normalTexture = nullptr;
+    }
+
+    if (materialTexture)
+    {
+        device->destroyResource(materialTexture, immediate);
+        materialTexture = nullptr;
     }
 
     if (depthTexture)
@@ -485,6 +493,7 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
 {
     context->transition(albedoTexture, ResourceState_RenderTarget);
     context->transition(normalTexture, ResourceState_RenderTarget);
+    context->transition(materialTexture, ResourceState_RenderTarget);
     context->transition(depthTexture, ResourceState_DepthStencilWrite);
     
     ResourceViewDescription description = { };
@@ -501,20 +510,22 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
 
     description.format = ResourceFormat_R16G16B16A16_Float;
     ResourceView normalRtv = normalTexture->asView(description);
+    ResourceView matRtv = materialTexture->asView(description);
 
     description.format = ResourceFormat_D32_Float;
     description.type = ResourceViewType_DepthStencil;
 
     ResourceView dsv = depthTexture->asView(description);
 
-    ResourceView rtvs[] = { albedoRtv, normalRtv };
+    ResourceView rtvs[] = { albedoRtv, normalRtv, matRtv };
     context->pushState();
-    context->bindRenderTargets(2, rtvs, dsv);
+    context->bindRenderTargets(3, rtvs, dsv);
     context->setTopology(PrimitiveTopology_TriangleList);
     context->enableDepth(true);
     context->enableDepthWrite(true);
     context->setColorWriteMask(0, Color_Rgba);
     context->setColorWriteMask(1, Color_Rgba);
+    context->setColorWriteMask(2, Color_Rgba);
     context->setDepthCompareOp(CompareOp_GreaterOrEqual);
 
     Viewport viewport = { 0, 0, swapchain->getDesc().renderWidth, swapchain->getDesc().renderHeight, 1, 0 };
@@ -646,6 +657,7 @@ void resolveLighting(GraphicsContext* context)
     context->transition(lightViewBuffer, ResourceState_ConstantBuffer);
     context->transition(albedoTexture, ResourceState_ShaderResource);
     context->transition(normalTexture, ResourceState_ShaderResource);
+    context->transition(materialTexture, ResourceState_ShaderResource);
     context->transition(depthTexture, ResourceState_ShaderResource);
     context->transition(lightBuffer, ResourceState_ShaderResource);
     context->pushState();
@@ -808,7 +820,7 @@ int main(char* argv[], int c)
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
+    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
     GraphicsAdapter* adapter    = nullptr;
     std::vector<MeshDraw> meshes;
 

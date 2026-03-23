@@ -47,13 +47,13 @@ R_DECLARE_GLOBAL_U32(g_frameBufferMaxAge, 12, "Vulkan.FramebufferMaxAge");
 R_INTERNAL 
 U64 serialize(const VkFramebufferCreateInfo& info)
 {
-    Hash64 uniqueId = 0ull;
-
-    uniqueId += static_cast<Hash64>( info.attachmentCount ^ info.width ^ info.height );
-    uniqueId += static_cast<Hash64>( info.layers ^ info.flags );
-
-    uniqueId =  recluseHashFast(&uniqueId, sizeof(Hash64));
-    uniqueId ^= recluseHashFast(info.pAttachments, sizeof(VkImageView) * info.attachmentCount);
+    Hash64 uniqueId = recluseHashFast(&uniqueId, sizeof(Hash64));
+    uniqueId = combineHash64(uniqueId, recluseHashFast(info.pAttachments, sizeof(VkImageView) * info.attachmentCount));
+    uniqueId = combineHash64(uniqueId, info.attachmentCount);
+    uniqueId = combineHash64(uniqueId, info.width);
+    uniqueId = combineHash64(uniqueId, info.height);
+    uniqueId = combineHash64(uniqueId, info.layers);
+    uniqueId = combineHash64(uniqueId, info.flags);
     return uniqueId;
 }
 

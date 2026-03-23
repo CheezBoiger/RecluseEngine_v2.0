@@ -28,7 +28,7 @@ struct D3DVertexInput
 
     Hash64 hash() const 
     {
-        return recluseHashFast(elements.data(), elements.size()) ^ recluseHashFast(vertexByteStrides.data(), vertexByteStrides.size());
+        return combineHash64(recluseHashFast(elements.data(), elements.size()), recluseHashFast(vertexByteStrides.data(), vertexByteStrides.size()));
     }
 };
 

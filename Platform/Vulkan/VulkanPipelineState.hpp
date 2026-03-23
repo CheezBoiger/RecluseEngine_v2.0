@@ -24,7 +24,7 @@ struct VulkanVertexLayout
 
     Hash64 hash() const
     {
-        return recluseHashFast(descriptions.data(), descriptions.size()) ^ recluseHashFast(bindings.data(), bindings.size());
+        return combineHash64(recluseHashFast(descriptions.data(), descriptions.size()), recluseHashFast(bindings.data(), bindings.size()));
     }
 };
 
