@@ -219,7 +219,8 @@ void D3D12Instance::enableDebugValidation(Bool enableGpuValidation)
 
     if (FAILED(result)) 
     {
-        R_ERROR(R_CHANNEL_D3D12, "Failed to enable gpu validation!");    
+        R_ERROR(R_CHANNEL_D3D12, "Failed to enable gpu validation!");
+        return;
     }
 
     spDebugController0->EnableDebugLayer();
@@ -261,9 +262,13 @@ DWORD D3D12Instance::registerDebugMessageCallback(ID3D12Device* pDevice)
     DWORD cookie = 0u;
 #if defined(__ID3D12InfoQueue1_FWD_DEFINED__)
     ID3D12InfoQueue1* infoQueue = nullptr;
-    pDevice->QueryInterface<ID3D12InfoQueue1>(&infoQueue);
-    infoQueue->RegisterMessageCallback(pfnD3D12MessageFunc, D3D12_MESSAGE_CALLBACK_FLAG_NONE, nullptr, &cookie);
-    infoQueue->Release();
+    HRESULT result = pDevice->QueryInterface<ID3D12InfoQueue1>(&infoQueue);
+    R_ASSERT_FORMAT(SUCCEEDED(result), "Failed to register for gpu debug validation.");
+    if (SUCCEEDED(result))
+    {
+        infoQueue->RegisterMessageCallback(pfnD3D12MessageFunc, D3D12_MESSAGE_CALLBACK_FLAG_NONE, nullptr, &cookie);
+        infoQueue->Release();
+    }
 #else
     // I honestly don't know what this is for...
     static DWORD cookei = 0;
@@ -284,9 +289,12 @@ void D3D12Instance::unregisterDebugMessageCallback(ID3D12Device* pDevice, DWORD 
 {
 #if defined(__ID3D12InfoQueue1_FWD_DEFINED__)
     ID3D12InfoQueue1* infoQueue = nullptr;
-    pDevice->QueryInterface<ID3D12InfoQueue1>(&infoQueue);
-    infoQueue->UnregisterMessageCallback(cookie);
-    infoQueue->Release();
+    HRESULT result = pDevice->QueryInterface<ID3D12InfoQueue1>(&infoQueue);
+    if (SUCCEEDED(result))
+    {
+        infoQueue->UnregisterMessageCallback(cookie);
+        infoQueue->Release();
+    }
 #else
     ThreadInfo& info = g_threadFinish[cookie];
     info.closed = true;
