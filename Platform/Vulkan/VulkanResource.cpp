@@ -524,6 +524,7 @@ VkImageMemoryBarrier VulkanImage::transition(ResourceState dstState, VkImageSubr
     
     setCurrentResourceState(dstState);
     setCurrentAccessMask(barrier.dstAccessMask);
+    setCurrentPipelineStageAccess(Vulkan::getDestinationPipelineStage(getCurrentAccessMask()));
 
     return barrier;
 }
@@ -570,6 +571,7 @@ VkBufferMemoryBarrier VulkanBuffer::transition(ResourceState dstState)
     
     setCurrentResourceState(dstState);
     setCurrentAccessMask(barrier.dstAccessMask);
+    setCurrentPipelineStageAccess(Vulkan::getDestinationPipelineStage(getCurrentAccessMask()));
 
     return barrier;
 }
@@ -623,7 +625,7 @@ void VulkanImage::performInitialLayout(VulkanDevice* pDevice, ResourceState init
     vkCmdPipelineBarrier
         (
             transitionCmd, 
-            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_DEPENDENCY_BY_REGION_BIT, 
+            getCurrentPipelineStageAccess(), getCurrentPipelineStageAccess(), VK_DEPENDENCY_BY_REGION_BIT,
             0, nullptr, 0, nullptr, 
             1, &barrier
         );
@@ -640,7 +642,7 @@ void VulkanBuffer::performInitialLayout(VulkanDevice* pDevice, ResourceState ini
     vkCmdPipelineBarrier
         (
             transitionCmd, 
-            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_DEPENDENCY_BY_REGION_BIT, 
+            getCurrentPipelineStageAccess(), getCurrentPipelineStageAccess(), VK_DEPENDENCY_BY_REGION_BIT,
             0, nullptr, 
             1, &barrier, 
             0, nullptr

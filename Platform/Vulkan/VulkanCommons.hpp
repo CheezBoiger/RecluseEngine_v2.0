@@ -106,6 +106,7 @@ static VkSampleCountFlagBits getSamples(Recluse::U32 count)
 
 
 extern VkShaderStageFlags getShaderStages(Recluse::ShaderStageFlags flags);
+extern VkPipelineStageFlags getDestinationPipelineStage(VkAccessFlags access);
 
 
 static VkCompareOp getNativeCompareOp(Recluse::CompareOp op) 

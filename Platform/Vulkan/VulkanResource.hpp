@@ -22,8 +22,13 @@ public:
         , m_memory({})
         , m_isBuffer(isBuffer)
         , m_currentAccessMask(currentAccessMask)
+        , m_currentPipelineStageAccess(VK_PIPELINE_STAGE_NONE)
         , m_pDevice(nullptr)
-        , m_id(~0) { m_memory.deviceMemory = VK_NULL_HANDLE; }
+        , m_id(~0) 
+    { 
+        m_memory.deviceMemory = VK_NULL_HANDLE; 
+        m_currentPipelineStageAccess = Vulkan::getDestinationPipelineStage(getCurrentAccessMask());
+    }
 
     virtual ~VulkanResource() { }
     
@@ -60,10 +65,13 @@ public:
     ResourceMemoryUsage getMemoryUsage() const { return m_memoryUsage; }
     ResourceDimension   getDimension() const { return m_dimension; }
 
+    VkAccessFlags       getCurrentAccessMask() const { return m_currentAccessMask; }
+    VkPipelineStageFlags getCurrentPipelineStageAccess() const { return m_currentPipelineStageAccess; }
+
     //GraphicsAPI getApi() const override { return VulkanGraphicsObject::getApi(); }
 protected:
     void                setCurrentAccessMask(VkAccessFlags flags) { m_currentAccessMask = flags; }
-    VkAccessFlags       getCurrentAccessMask() const { return m_currentAccessMask; }
+    void                setCurrentPipelineStageAccess(VkPipelineStageFlags flags) { m_currentPipelineStageAccess = flags;  }
     virtual void        performInitialLayout(VulkanDevice* pDevice, ResourceState initState) { }
     virtual void        initializeMetadata(const GraphicsResourceDescription& description);
 private:
@@ -90,6 +98,7 @@ private:
     VulkanMemory        m_memory;
     VulkanDevice*       m_pDevice;
     VkAccessFlags       m_currentAccessMask;
+    VkPipelineStageFlags m_currentPipelineStageAccess;
     VkDeviceSize        m_alignmentRequirement;
     Bool                m_isBuffer;
     ResourceId          m_id;

@@ -52,7 +52,7 @@ void VulkanContext::initialize(U32 bufferCount)
     descriptorAllocator->initialize(pDevice, bufferCount);
 
     VulkanAllocationManager::UpdateConfig config = { };
-    config.flags = VulkanAllocationManager::Flag_GarbageResize | VulkanAllocationManager::Flag_SetFrameIndex;
+    config.flags = VulkanAllocationManager::Flag_GarbageResize;
     config.garbageBufferCount = bufferCount;
     config.frameIndex = m_currentContextFrameIndex;
     allocManager->update(config);
@@ -180,7 +180,7 @@ void VulkanContext::end()
 
 ResultCode VulkanContext::submitFinalCommandBuffer(VkCommandBuffer commandBuffer)
 {
-    U32 currentFrameIndex               = getCurrentFrameIndex();
+    FrameIndex currentFrameIndex        = getCurrentFrameIndex();
     VkDevice device                     = m_pDevice->get();
     VulkanContextFrame& contextFrame    = getContextFrame(currentFrameIndex);
     VkImageMemoryBarrier imgBarrier     = { };
@@ -742,7 +742,7 @@ ResultCode VulkanContext::destroyPrimaryCommandList()
 }
 
 
-void VulkanContext::resetCommandPool(U32 bufferIdx, Bool resetAllResources)
+void VulkanContext::resetCommandPool(FrameIndex bufferIdx, Bool resetAllResources)
 {
     VkCommandPool commandPool = m_commandPools[bufferIdx];
     VkCommandPoolResetFlags flags = 0;
@@ -758,7 +758,7 @@ void VulkanContext::prepare()
 {
     // NOTE(): Get the current buffer index, this is usually the buffer that we recently have 
     // access to.
-    U32 currentBufferIndex = getCurrentFrameIndex();
+    FrameIndex currentBufferIndex = getCurrentFrameIndex();
 
     // Reset the current buffer's command pools.
     resetCommandPool(currentBufferIndex, true);
@@ -812,6 +812,8 @@ void VulkanContext::createContextFrames(U32 buffering)
 
         m_frameResources[i] = frame;
     }
+
+    m_currentContextFrameIndex = -1;
 }
 
 

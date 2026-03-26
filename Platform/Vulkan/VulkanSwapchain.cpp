@@ -222,7 +222,7 @@ ResultCode VulkanSwapchain::present(GraphicsContext* context)
 {
     R_ASSERT(m_pBackbufferQueue != NULL);
     VulkanContext* vulkanContext        = context->castTo<VulkanContext>();
-    const U32 contextIndex              = vulkanContext->getCurrentFrameIndex();
+    const FrameIndex contextIndex       = vulkanContext->getCurrentFrameIndex();
     VulkanContextFrame& contextFrame    = vulkanContext->getContextFrame(contextIndex);
     VkResult result                     = VK_SUCCESS;
     ResultCode err                      = RecluseResult_Ok;

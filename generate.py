@@ -145,7 +145,9 @@ def main():
         if not os.path.exists("../BuildTest"):
             os.makedirs("../BuildTest")
         os.chdir("../BuildTest")
-        subprocess.call(["cmake", "../Test" ])
+        test_commands = ["cmake"] + additional_cmake_commands
+        test_commands.append("../Test")
+        subprocess.call(test_commands)
         
     print("Done!")
     os.chdir("..")

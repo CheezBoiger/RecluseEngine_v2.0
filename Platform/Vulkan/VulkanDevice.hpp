@@ -52,6 +52,7 @@ enum ContextFrameFlag
 };
 
 typedef U32 ContextFrameFlags;
+typedef I32 FrameIndex;
 
 // Vulkan Context frame. The gpu could potentially have more than one frame inflight, any available 
 // frame that can be worked on by the host cpu, will be signaled by the fence value, and allocated command buffer.
@@ -119,7 +120,7 @@ public:
     void                            end() override;
 
     inline U32                      getFrameCount() const { return m_bufferCount; }
-    inline U32                      getCurrentFrameIndex() const { return m_currentContextFrameIndex; }
+    inline FrameIndex               getCurrentFrameIndex() const { return m_currentContextFrameIndex; }
     inline VkFence                  getCurrentFence() const { return m_frameResources[m_currentContextFrameIndex].fence; }
     ResultCode                      createPrimaryCommandList(VkQueueFlags flags);
     ResultCode                      destroyPrimaryCommandList();
@@ -270,7 +271,7 @@ public:
 
     VkCommandPool* getCommandPools() { return m_commandPools.data(); }
     U32 getNumCommandPools() const { return static_cast<U32>(m_commandPools.size()); }
-    VulkanContextFrame& getContextFrame(U32 idx) { return m_frameResources[idx]; }
+    VulkanContextFrame& getContextFrame(FrameIndex idx) { return m_frameResources[idx]; }
 
 private:
     enum ContextDirtyFlag
@@ -334,15 +335,22 @@ private:
 
     ResultCode createCommandPools(U32 buffered);
     void destroyCommandPools();
-    void resetCommandPool(U32 bufferIdx, Bool resetAllResources);
+    void resetCommandPool(FrameIndex bufferIdx, Bool resetAllResources);
+
+    struct BarriersBatch
+    {
+        std::vector<VkBufferMemoryBarrier> bufferBarriers;
+        std::vector<VkImageMemoryBarrier> imageBarriers;
+        VkPipelineStageFlags srcPipelineStage = VK_PIPELINE_STAGE_NONE;
+        VkPipelineStageFlags dstPipelineStage = VK_PIPELINE_STAGE_NONE;
+    };
 
     // buffer count 
     U32                                                                 m_bufferCount;
-    U32                                                                 m_currentContextFrameIndex;
+    FrameIndex                                                          m_currentContextFrameIndex;
     ::std::vector<VulkanContextFrame>                                   m_frameResources;
     VulkanDevice*                                                       m_pDevice;
-    ::std::vector<VkBufferMemoryBarrier>                                m_bufferMemoryBarriers;
-    ::std::vector<VkImageMemoryBarrier>                                 m_imageMemoryBarriers;
+    BarriersBatch                                                       m_memoryBarriers;
     VulkanRenderPass                                                    m_newRenderPass;
     VkRenderPass                                                        m_boundRenderPass;
     VulkanPrimaryCommandList                                            m_primaryCommandList;
@@ -354,7 +362,7 @@ private:
     std::vector<VkCommandPool>                                          m_commandPools;
     std::vector<ContextState>                                           m_contextStates;
     VkDescriptorSet                                                     m_boundDescriptorSet;
-    U32                                                                 m_currentStateIdx;
+    FrameIndex                                                          m_currentStateIdx;
     VulkanQueue*                                                        m_graphicsQueue;
     VulkanQueue*                                                        m_computeQueue;
     VulkanShaderProgramBinder                                           m_shaderProgramBinder;
@@ -408,7 +416,7 @@ public:
     VkMemoryRequirements    getImageMemoryRequirements(VkImage image) const;
     Bool                    isResourceFormatSupported(ResourceFormat format) override;
 
-    DescriptorAllocatorInstance*    getDescriptorAllocatorInstance(U32 bufferIndex)
+    DescriptorAllocatorInstance*    getDescriptorAllocatorInstance(FrameIndex bufferIndex)
     {
         return m_descriptorAllocator.getInstance(bufferIndex);
     }

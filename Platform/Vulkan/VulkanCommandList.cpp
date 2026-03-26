@@ -400,21 +400,25 @@ void VulkanContext::transition(GraphicsResource* pResource, ResourceState dstSta
 
     VulkanResource* pVulkanResource = static_cast<VulkanResource*>(pResource);
 
+    m_memoryBarriers.srcPipelineStage |= pVulkanResource->getCurrentPipelineStageAccess();
+
     if (pVulkanResource->isBuffer())
     {
         VulkanBuffer* pBuffer = static_cast<VulkanBuffer*>(pVulkanResource);
         pBuffer->get();
 
         VkBufferMemoryBarrier barrier = pBuffer->transition(dstState);
-        m_bufferMemoryBarriers.push_back(barrier);
+        m_memoryBarriers.bufferBarriers.push_back(barrier);
     }
     else
     {
         VulkanImage* pVr                                = static_cast<VulkanImage*>(pVulkanResource);
         VkImageSubresourceRange range                   = pVr->makeSubresourceRange(dstState, baseMip, mipCount, baseLayer, layerCount);
         VkImageMemoryBarrier barrier = pVr->transition(dstState, range);
-        m_imageMemoryBarriers.push_back(barrier);
+        m_memoryBarriers.imageBarriers.push_back(barrier);
     }
+
+    m_memoryBarriers.dstPipelineStage |= pVulkanResource->getCurrentPipelineStageAccess();
 }
 
 void VulkanContext::bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBytes, IndexType type)
@@ -670,25 +674,27 @@ void VulkanContext::dispatchMeshIndirect(GraphicsResource* indirectBuffer, U32 o
 
 void VulkanContext::flushBarrierTransitions(VkCommandBuffer cmdBuffer)
 {
-    if (!m_bufferMemoryBarriers.empty() || !m_imageMemoryBarriers.empty())
-    { 
+    if (!m_memoryBarriers.bufferBarriers.empty() || !m_memoryBarriers.imageBarriers.empty())
+    {
         endRenderPass(m_primaryCommandList.get());
         vkCmdPipelineBarrier
-            (
-                cmdBuffer,
-                VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                VK_DEPENDENCY_BY_REGION_BIT,
-                0,
-                nullptr,
-                static_cast<uint32_t>(m_bufferMemoryBarriers.size()),
-                m_bufferMemoryBarriers.data(),
-                static_cast<uint32_t>(m_imageMemoryBarriers.size()),
-                m_imageMemoryBarriers.data()
-            );
-        
-        m_bufferMemoryBarriers.clear();
-        m_imageMemoryBarriers.clear();
+        (
+            cmdBuffer,
+            m_memoryBarriers.srcPipelineStage,
+            m_memoryBarriers.dstPipelineStage,
+            VK_DEPENDENCY_BY_REGION_BIT,
+            0,
+            nullptr,
+            static_cast<uint32_t>(m_memoryBarriers.bufferBarriers.size()),
+            m_memoryBarriers.bufferBarriers.data(),
+            static_cast<uint32_t>(m_memoryBarriers.imageBarriers.size()),
+            m_memoryBarriers.imageBarriers.data()
+        );
+
+        m_memoryBarriers.bufferBarriers.clear();
+        m_memoryBarriers.imageBarriers.clear();
+        m_memoryBarriers.dstPipelineStage = VK_PIPELINE_STAGE_NONE;
+        m_memoryBarriers.srcPipelineStage = VK_PIPELINE_STAGE_NONE;
     }
 }
 

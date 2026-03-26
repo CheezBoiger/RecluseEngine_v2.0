@@ -345,6 +345,38 @@ VkImageAspectFlags getAspectMask(VkFormat format)
 }
 
 
+VkPipelineStageFlags getDestinationPipelineStage(VkAccessFlags access)
+{
+    // for special cases.
+    // TODO: Make this the mandatory path, and remove the switch.
+    VkPipelineStageFlags flags = VK_PIPELINE_STAGE_NONE;
+    if (access & VK_ACCESS_TRANSFER_WRITE_BIT || access & VK_ACCESS_TRANSFER_READ_BIT)
+        flags |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+
+    if (access & VK_ACCESS_COLOR_ATTACHMENT_READ_BIT || access & VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+        flags |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+    if (access & VK_ACCESS_INDEX_READ_BIT)
+        flags |= VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
+        
+    if (access & VK_ACCESS_HOST_READ_BIT || access & VK_ACCESS_HOST_WRITE_BIT)
+        flags |= VK_PIPELINE_STAGE_HOST_BIT;
+
+    if (access & VK_ACCESS_SHADER_READ_BIT || access & VK_ACCESS_SHADER_WRITE_BIT)
+        flags |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+
+    if (access & VK_ACCESS_UNIFORM_READ_BIT)
+        flags |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+
+    if (access & VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT || access & VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT)
+        flags |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+
+    if (access & VK_ACCESS_MEMORY_READ_BIT || access & VK_ACCESS_MEMORY_WRITE_BIT)
+        flags |= VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+    return flags;
+}
+
+
 PhysicalDeviceFeaturesInfo::PhysicalDeviceFeaturesInfo()
     : features2({VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2})
 {
