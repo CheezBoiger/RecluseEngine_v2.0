@@ -125,7 +125,7 @@ int main(int c, char* argv[])
         gContext->transition(frame, ResourceState_Present);
         gContext->end();
 
-        ResultCode swapchainResult = gSwapchain->present(gContext);
+        ResultCode swapchainResult = gSwapchain->present();
 
         if (swapchainResult == RecluseResult_NeedsUpdate)
         {

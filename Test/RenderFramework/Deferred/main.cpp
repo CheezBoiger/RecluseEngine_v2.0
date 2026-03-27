@@ -747,7 +747,7 @@ int main(char* argv[], int c)
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
+    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
     GraphicsAdapter* adapter    = nullptr;
     std::vector<MeshDraw> meshes;
 
@@ -767,7 +767,7 @@ int main(char* argv[], int c)
         instance->initialize(appInfo, flags);
     }
     
-    adapter = instance->getGraphicsAdapters()[0];
+    adapter = instance->getGraphicsAdapters()[1];
     R_ASSERT(adapter);
     
     {
@@ -826,7 +826,7 @@ int main(char* argv[], int c)
             context->transition(swapchain->getFrame(swapchain->getCurrentFrameIndex()), ResourceState_Present);
             context->end();
 
-            if (swapchain->present(context) == RecluseResult_NeedsUpdate)
+            if (swapchain->present() == RecluseResult_NeedsUpdate)
             {
                 context->wait();
                 swapchain->rebuild(swapchain->getDesc());

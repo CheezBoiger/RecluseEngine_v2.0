@@ -498,7 +498,7 @@ void createShaderProgram(GraphicsDevice* device)
     }
     else
     {
-        shaderBuilder = Pipeline::createShaderBuilder("dxc");
+        shaderBuilder = Pipeline::createShaderBuilder("glslang");
         intermediateCode = ShaderIntermediateCode_Spirv;
         shaderBuilder->addPreprocessor(&preprocessor);
     }
@@ -556,7 +556,7 @@ int main(char* argv[], int c)
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
+    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
     GraphicsAdapter* adapter    = nullptr;
     GraphicsSampler* sampler    = nullptr;
 
@@ -604,7 +604,7 @@ int main(char* argv[], int c)
     context->setFrames(3);
 
     SwapchainCreateDescription swapchainDescription = { };
-    swapchainDescription.buffering      = FrameBuffering_Triple;
+    swapchainDescription.buffering      = FrameBuffering_Double;
     swapchainDescription.desiredFrames  = 3;
     swapchainDescription.format         = ResourceFormat_R8G8B8A8_Unorm;
     swapchainDescription.renderWidth    = window->getWidth();
@@ -725,7 +725,7 @@ int main(char* argv[], int c)
                 context->copyResource(swapchainImage, textureResource);
                 context->transition(pSc->getFrame(pSc->getCurrentFrameIndex()), ResourceState_Present);
             context->end();
-            if (pSc->present(context) == RecluseResult_NeedsUpdate)
+            if (pSc->present() == RecluseResult_NeedsUpdate)
             {
                 context->wait();
                 pSc->rebuild(pSc->getDesc());

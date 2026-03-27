@@ -125,7 +125,7 @@ int main(int c, char* argv[])
     //enableLogTypes(LogType_Debug);
     RealtimeTick::initializeWatch(1ull, 0);
     LogSystem::enableLogTypes(LogType_Notify);
-    GraphicsInstance* pInstance     = GraphicsInstance::create(GraphicsApi_Direct3D12);
+    GraphicsInstance* pInstance     = GraphicsInstance::create(GraphicsApi_Vulkan);
     GraphicsAdapter* pAdapter       = nullptr;
     GraphicsResource* pData         = nullptr;
     PipelineState* pPipeline        = nullptr;
@@ -319,7 +319,7 @@ int main(int c, char* argv[])
 
                 context->transition(frame, ResourceState_Present);
             context->end();
-            if (pSwapchain->present(context) == RecluseResult_NeedsUpdate)
+            if (pSwapchain->present() == RecluseResult_NeedsUpdate)
             {
                 pContext->wait();
                 pSwapchain->rebuild(pSwapchain->getDesc());

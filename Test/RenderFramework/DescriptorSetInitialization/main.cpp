@@ -322,7 +322,7 @@ int main(int c, char* argv[])
             context->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_Present);
         context->end();
         //R_FATAL_ERROR("TEST", "%f Fps", 1.0f / ms);
-        pSwapchain->present(context);
+        pSwapchain->present();
 
         KeyboardListener listener;
         if (listener.isKeyDown(KeyCode_Escape))

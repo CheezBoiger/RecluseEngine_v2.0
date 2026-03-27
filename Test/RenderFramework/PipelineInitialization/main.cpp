@@ -405,7 +405,7 @@ int main(int c, char* argv[])
                 context->popState();
             context->end();
             R_WARN("Game", "%f fps", 1.0f / ms);
-            pSwapchain->present(pContext);
+            pSwapchain->present();
         }
         pollEvents();
     }

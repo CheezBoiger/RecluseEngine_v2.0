@@ -646,7 +646,7 @@ int main(char* argv[], int c)
                 context->endLabel();
                 context->transition(pSc->getFrame(pSc->getCurrentFrameIndex()), ResourceState_Present);
             context->end();
-            if (pSc->present(context) == RecluseResult_NeedsUpdate)
+            if (pSc->present() == RecluseResult_NeedsUpdate)
             {
                 context->wait();
                 pSc->rebuild(pSc->getDesc());

@@ -536,7 +536,7 @@ public:
     // Prepares the next frame for rendering, this also begins the next command recording session.
     virtual ResultCode         prepare(GraphicsContext* context) { return RecluseResult_NoImpl; }
     // Present the current image.
-    virtual ResultCode         present(GraphicsContext* context) { return RecluseResult_NoImpl; }
+    virtual ResultCode         present() { return RecluseResult_NoImpl; }
 
     // Get the current frame index, updates after every present call. Make sure to call this after prepare() !!
     virtual U32                getCurrentFrameIndex() { return RecluseResult_NoImpl; }

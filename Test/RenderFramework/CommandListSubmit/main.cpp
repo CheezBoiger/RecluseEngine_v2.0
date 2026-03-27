@@ -18,7 +18,7 @@ int main(int c, char* argv[])
     GraphicsSwapchain* pSwapchain   = nullptr;
     GraphicsDevice* pDevice         = nullptr;
     GraphicsContext* pContext       = nullptr;
-    GraphicsInstance* pInstance      = GraphicsInstance::create(GraphicsApi_Direct3D12);
+    GraphicsInstance* pInstance      = GraphicsInstance::create(GraphicsApi_Vulkan);
 
     Window* pWindow = Window::create(u8"CommandListSubmit", 0, 0, 128, 128);
 
@@ -94,7 +94,7 @@ int main(int c, char* argv[])
             pSwapchain->prepare(pContext);
             pContext->transition(pSwapchain->getFrame(pSwapchain->getCurrentFrameIndex()), ResourceState_Present);
             pContext->end();
-            pSwapchain->present(pContext);
+            pSwapchain->present();
             pollEvents();
                     
         }

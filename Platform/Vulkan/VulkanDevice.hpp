@@ -121,6 +121,7 @@ public:
 
     inline U32                      getFrameCount() const { return m_bufferCount; }
     inline FrameIndex               getCurrentFrameIndex() const { return m_currentContextFrameIndex; }
+    void                            registerFrameSemaphores(VkSemaphore wait, VkSemaphore signal);
     inline VkFence                  getCurrentFence() const { return m_frameResources[m_currentContextFrameIndex].fence; }
     ResultCode                      createPrimaryCommandList(VkQueueFlags flags);
     ResultCode                      destroyPrimaryCommandList();
@@ -328,6 +329,11 @@ private:
     inline void incrementContextFrameIndex() 
     { 
         m_currentContextFrameIndex = (m_currentContextFrameIndex + 1) % m_bufferCount; 
+    }
+
+    inline void overrideContextFrameIndex(FrameIndex newIndex)
+    {
+        m_currentContextFrameIndex = newIndex % m_bufferCount;
     }
 
     // The current context state, that is pushed to this context.

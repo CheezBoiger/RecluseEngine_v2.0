@@ -145,7 +145,7 @@ void RendererModule::cleanUp()
 void RendererModule::present(Bool delayPresent)
 {
     // Present.
-    ResultCode result = m_pSwapchain->present(m_pContext);
+    ResultCode result = m_pSwapchain->present();
     if (result == RecluseResult_NeedsUpdate)
     {
         m_pContext->wait();

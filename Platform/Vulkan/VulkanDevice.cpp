@@ -197,18 +197,22 @@ ResultCode VulkanContext::submitFinalCommandBuffer(VkCommandBuffer commandBuffer
     VkSubmitInfo submitInfo             = { };
     VkPipelineStageFlags waitStages[]   = { VK_PIPELINE_STAGE_ALL_COMMANDS_BIT };
 
-    const Bool swapchainQueued          = (contextFrame.flags & ContextFrameFlag_SwapchainQueued);
+    //const Bool swapchainQueued          = (contextFrame.flags & ContextFrameFlag_SwapchainQueued);
 
     submitInfo.sType                    = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submitInfo.commandBufferCount       = 1;
-    submitInfo.signalSemaphoreCount     = swapchainQueued ? 1 : 0;
+    submitInfo.signalSemaphoreCount     = signalSemaphore ? 1 : 0;
     submitInfo.pSignalSemaphores        = &signalSemaphore;
-    submitInfo.waitSemaphoreCount       = swapchainQueued ? 1 : 0;
+    submitInfo.waitSemaphoreCount       = waitSemaphore ? 1 : 0;
     submitInfo.pWaitSemaphores          = &waitSemaphore;
     submitInfo.pCommandBuffers          = &primaryCmdBuf;
     submitInfo.pWaitDstStageMask        = waitStages;
 
     vkQueueSubmit(m_graphicsQueue->get(), 1, &submitInfo, fence);
+
+    // clear the semaphores.
+    contextFrame.signalSemaphore = VK_NULL_HANDLE;
+    contextFrame.waitSemaphore = VK_NULL_HANDLE;
 
     return RecluseResult_Ok;
 }
@@ -799,16 +803,12 @@ void VulkanContext::createContextFrames(U32 buffering)
         info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
         vkCreateFence(m_pDevice->get(), &info, nullptr, &frame.fence);
 
-        VkSemaphoreCreateInfo semaphoreInfo = { };
-        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-        semaphoreInfo.flags = 0;
-        vkCreateSemaphore(m_pDevice->get(), &semaphoreInfo, nullptr, &frame.waitSemaphore);
-        vkCreateSemaphore(m_pDevice->get(), &semaphoreInfo, nullptr, &frame.signalSemaphore);
-
         frame.timestampQuery.initialize(m_pDevice->get(), VK_QUERY_TYPE_TIMESTAMP, 128);
         frame.occlusionQuery.initialize(m_pDevice->get(), VK_QUERY_TYPE_OCCLUSION, 128);
 
         frame.temporaryBufferAllocator.initialize(m_pDevice);
+        frame.signalSemaphore = VK_NULL_HANDLE;
+        frame.waitSemaphore = VK_NULL_HANDLE;
 
         m_frameResources[i] = frame;
     }
@@ -822,8 +822,6 @@ void VulkanContext::destroyContextFrames()
     for (U32 i = 0; i < m_frameResources.size(); ++i) 
     {
         vkDestroyFence(m_pDevice->get(), m_frameResources[i].fence, nullptr);
-        vkDestroySemaphore(m_pDevice->get(), m_frameResources[i].waitSemaphore, nullptr);
-        vkDestroySemaphore(m_pDevice->get(), m_frameResources[i].signalSemaphore, nullptr);
 
         m_frameResources[i].timestampQuery.release(m_pDevice->get());
         m_frameResources[i].occlusionQuery.release(m_pDevice->get());
@@ -1328,6 +1326,14 @@ Bool VulkanDevice::isResourceFormatSupported(ResourceFormat format)
     if (properties.linearTilingFeatures || properties.optimalTilingFeatures)
         return true;
     return false;
+}
+
+
+void VulkanContext::registerFrameSemaphores(VkSemaphore wait, VkSemaphore signal)
+{
+    VulkanContextFrame& frame = getContextFrame(getCurrentFrameIndex());
+    frame.signalSemaphore = signal;
+    frame.waitSemaphore = wait;
 }
 } // Vulkan
 } // Recluse

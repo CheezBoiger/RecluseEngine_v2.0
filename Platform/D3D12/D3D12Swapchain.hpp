@@ -34,7 +34,7 @@ public:
 
     // Present to our window display.
     ResultCode              prepare(GraphicsContext* context) override;
-    ResultCode              present(GraphicsContext* context) override;
+    ResultCode              present() override;
     ResultCode              onRebuild() override;
 
     GraphicsResource*       getFrame(U32 idx) override;

@@ -759,7 +759,7 @@ void ISwapchain::Present(IGraphicsContext^ Context)
 {
     R_ASSERT(Swapchain != nullptr);
     GraphicsContext* NativeContext = Context->GetContextHandle();
-    ResultCode result = Swapchain->present(NativeContext);
+    ResultCode result = Swapchain->present();
     if (result == RecluseResult_NeedsUpdate)
     {
         NativeContext->wait();

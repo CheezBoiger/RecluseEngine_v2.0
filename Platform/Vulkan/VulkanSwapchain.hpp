@@ -37,8 +37,9 @@ public:
     // were created.
     ResultCode                  build(VulkanDevice* pDevice, void* windowHandle);
     ResultCode                  onRebuild() override;
-    ResultCode                  present(GraphicsContext* context) override; 
+    ResultCode                  present() override; 
     U32                         getCurrentFrameIndex() override { return m_currentImageIndex; }
+
     U32                         getFrameCount() const { return m_frames.size(); }
     GraphicsResource*           getFrame(U32 idx) override;
 
@@ -67,6 +68,7 @@ public:
 private:
 
     void                        buildFrameResources(ResourceFormat resourceFormat);
+    void                        recreateSemaphores();
     inline void                 incrementFrameIndex() 
         { m_currentFrameIndex = (m_currentFrameIndex + 1) % m_frames.size(); }
 
@@ -80,6 +82,8 @@ private:
     U32                                 m_currentImageIndex;
     std::vector<VkImage>                m_frames;
     std::vector<VulkanImage*>           m_frameImages;
+    std::vector<VkSemaphore>            m_signalSemaphores;
+    std::vector<VkSemaphore>            m_waitSemaphores;
     //VkCommandPool                     m_commandPool;
     const QueueFamily*                  m_queueFamily;
     void*                               m_windowHandle;

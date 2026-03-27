@@ -899,7 +899,7 @@ int main(char* argv[], int c)
             context->transition(swapchain->getFrame(swapchain->getCurrentFrameIndex()), ResourceState_Present);
             context->end();
 
-            if (swapchain->present(context) == RecluseResult_NeedsUpdate)
+            if (swapchain->present() == RecluseResult_NeedsUpdate)
             {
                 context->wait();
                 swapchain->rebuild(swapchain->getDesc());

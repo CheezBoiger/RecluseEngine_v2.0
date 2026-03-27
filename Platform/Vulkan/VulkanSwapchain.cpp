@@ -206,6 +206,10 @@ ResultCode VulkanSwapchain::release()
             // by the swapchain.
             m_frameImages[i]->releaseViews();
             delete m_frameImages[i];
+
+            vkDestroySemaphore(m_pDevice->get(), m_waitSemaphores[i], nullptr);
+            vkDestroySemaphore(m_pDevice->get(), m_signalSemaphores[i], nullptr);
+
         }
 
         vkDestroySwapchainKHR(device, m_swapchain, nullptr);    
@@ -218,20 +222,16 @@ ResultCode VulkanSwapchain::release()
 }
 
 
-ResultCode VulkanSwapchain::present(GraphicsContext* context)
+ResultCode VulkanSwapchain::present()
 {
     R_ASSERT(m_pBackbufferQueue != NULL);
-    VulkanContext* vulkanContext        = context->castTo<VulkanContext>();
-    const FrameIndex contextIndex       = vulkanContext->getCurrentFrameIndex();
-    VulkanContextFrame& contextFrame    = vulkanContext->getContextFrame(contextIndex);
     VkResult result                     = VK_SUCCESS;
     ResultCode err                      = RecluseResult_Ok;
 
     VkSwapchainKHR swapchains[]         = { m_swapchain };
-    VkSemaphore pWaitSemaphores[]       = { contextFrame.signalSemaphore };
+    VkSemaphore pWaitSemaphores[]       = { m_signalSemaphores[m_currentImageIndex] };
     VkDevice device                     = m_pDevice->get();
 
-    R_ASSERT_FORMAT(contextIndex < m_frames.size(), "Context frame is larger than the actual number of swapchain images! This will cause problems!!");
     validateSwapchainImageIsPresentable();
     
     VkPresentInfoKHR info       = { };
@@ -327,9 +327,8 @@ ResultCode VulkanSwapchain::prepare(GraphicsContext* context)
     R_ASSERT_FORMAT(vulkanContext->getFrameCount() <= m_frameImages.size(), "Context frame count is higher than the actual swapchain buffer count! This will cause a crash!");
     vulkanContext->begin();
 
-    VulkanContextFrame& contextFrame    = vulkanContext->getContextFrame(vulkanContext->getCurrentFrameIndex());
     VkResult result                     = VK_SUCCESS;
-    VkSemaphore imageAvailableSema      = contextFrame.waitSemaphore;
+    VkSemaphore imageAvailableSema      = m_waitSemaphores[m_currentFrameIndex];
     ResultCode err                      = RecluseResult_Ok;
 
     result = vkAcquireNextImageKHR
@@ -349,13 +348,13 @@ ResultCode VulkanSwapchain::prepare(GraphicsContext* context)
             case VK_ERROR_OUT_OF_DATE_KHR:
                 R_DEBUG(R_CHANNEL_VULKAN, "Swapchain is out of date on acquire, needs to be recreated...");    
                 err = RecluseResult_NeedsUpdate;
-                contextFrame.flags = ContextFrameFlag_SwapchainQueued;
+                vulkanContext->registerFrameSemaphores(m_waitSemaphores[m_currentFrameIndex], m_signalSemaphores[m_currentImageIndex]);
                 break;
             
             case VK_SUBOPTIMAL_KHR:
-                contextFrame.flags = ContextFrameFlag_SwapchainQueued;
                 err = RecluseResult_NeedsUpdate;
                 R_DEBUG(R_CHANNEL_VULKAN, "Swapchain is suboptimal on acquire, should be recreated unless we are okay...");
+                vulkanContext->registerFrameSemaphores(m_waitSemaphores[m_currentFrameIndex], m_signalSemaphores[m_currentImageIndex]);
                 break;
 
             default:
@@ -366,7 +365,9 @@ ResultCode VulkanSwapchain::prepare(GraphicsContext* context)
     }
     else
     {
-        contextFrame.flags = ContextFrameFlag_SwapchainQueued;
+        // Sanity check to make sure we didn't just get an image index that breaks the 
+        // normal flow.
+        vulkanContext->registerFrameSemaphores(m_waitSemaphores[m_currentFrameIndex], m_signalSemaphores[m_currentImageIndex]);
     }
 
     return err;
@@ -386,6 +387,8 @@ void VulkanSwapchain::buildFrameResources(ResourceFormat resourceFormat)
     const SwapchainCreateDescription& swapchainDesc = getDesc();
 
     m_frameImages.resize(numMaxFrames);
+    m_signalSemaphores.resize(numMaxFrames);
+    m_waitSemaphores.resize(numMaxFrames);
 
     // For swapchain resources, we don't necessarily need to allocate or create the native handles
     // for our images, we just need to pass them over to the object wrapper. This will then be 
@@ -411,6 +414,14 @@ void VulkanSwapchain::buildFrameResources(ResourceFormat resourceFormat)
         m_frameImages[i]->initializeMetadata(desc);
         m_frameImages[i]->generateId();
         m_frameImages[i]->setDevice(m_pDevice);
+
+        VkSemaphoreCreateInfo semaphoreInfo = { };
+        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+        semaphoreInfo.flags = 0;
+
+        vkCreateSemaphore(m_pDevice->get(), &semaphoreInfo, nullptr, &m_waitSemaphores[i]);
+        vkCreateSemaphore(m_pDevice->get(), &semaphoreInfo, nullptr, &m_signalSemaphores[i]);
+
     }
 }
 
@@ -439,6 +450,11 @@ VkPresentModeKHR VulkanSwapchain::checkAvailablePresentMode(VkSurfaceKHR surface
     }
 
     return supportedPresentMode;
+}
+
+
+void VulkanSwapchain::recreateSemaphores()
+{
 }
 } // Vulkan
 } // Recluse

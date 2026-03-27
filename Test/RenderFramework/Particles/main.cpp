@@ -157,7 +157,7 @@ int main(int c, char* argv[])
         context->drawIndexedInstanced(3, 1, 0, 0, 0);
 
         context->end();
-        swapchain->present(context);
+        swapchain->present();
         pollEvents();
     }
     context->wait();

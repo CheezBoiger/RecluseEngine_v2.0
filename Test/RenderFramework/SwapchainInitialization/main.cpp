@@ -134,7 +134,7 @@ int main(int c, char* argv[])
                     pContext->clearRenderTarget(0, color, rect);
                     pContext->transition(swapchainResource, ResourceState_Present);
                 pContext->end();
-                pSwapchain->present(pContext);
+                pSwapchain->present();
             }
 
             KeyboardListener listener;

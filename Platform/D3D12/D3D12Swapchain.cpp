@@ -233,7 +233,7 @@ ResultCode D3D12Swapchain::prepare(GraphicsContext* context)
 }
 
 
-ResultCode D3D12Swapchain::present(GraphicsContext* context)
+ResultCode D3D12Swapchain::present()
 {
     const SwapchainCreateDescription& desc = getDesc();
     UINT syncInterval           = 0;

@@ -11,7 +11,7 @@ int main(int c, char* argv[])
 {
     LogSystem::initializeLoggingSystem();
 
-    GraphicsInstance* pInstance = GraphicsInstance::create(GraphicsApi_Direct3D12);
+    GraphicsInstance* pInstance = GraphicsInstance::create(GraphicsApi_Vulkan);
 
     if (!pInstance) {
         goto Exit;

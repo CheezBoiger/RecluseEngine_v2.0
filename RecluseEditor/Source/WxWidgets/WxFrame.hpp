@@ -76,7 +76,7 @@ public:
         pContext->clearRenderTarget(0, &clearColor.x, rect);
         pContext->transition(sf, ResourceState_Present);
         pContext->end();
-        ResultCode result = pSwapchain->present(pContext);
+        ResultCode result = pSwapchain->present();
         if (result == RecluseResult_NeedsUpdate)
         {
             pContext->wait();
