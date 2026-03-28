@@ -74,7 +74,7 @@ endfunction()
 
 macro(post_build_dll TARGET_NAME)
 add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${CMAKE_SOURCE_DIR}/../Recluse/Bin/RecluseFramework.dll
         $<TARGET_FILE_DIR:${TARGET_NAME}>)
 endmacro()
@@ -82,32 +82,28 @@ endmacro()
 # Extra macro that adds the engine to the given app directory.
 macro(post_build_engine_dll TARGET_NAME)
 add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${CMAKE_SOURCE_DIR}/../Recluse/Bin/RecluseEngine.dll
         $<TARGET_FILE_DIR:${TARGET_NAME}>)
 endmacro()
 
 macro(post_build_pipeline_dll TARGET_NAME)
 add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${CMAKE_SOURCE_DIR}/../Recluse/Bin/ReclusePipeline.dll
         $<TARGET_FILE_DIR:${TARGET_NAME}>)
 endmacro()
 
 macro(post_vulkan_dll TARGET_NAME)
-	if (NOT EXISTS ${CMAKE_SOURCE_DIR}/../Recluse/Bin/RecluseVulkan.dll)
-		add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-			COMMAND ${CMAKE_COMMAND} -E copy
-				${CMAKE_SOURCE_DIR}/../Recluse/Bin/RecluseVulkan.dll
-				$<TARGET_FILE_DIR:${TARGET_NAME}>)
-	endif()
+	add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+			${CMAKE_SOURCE_DIR}/../Recluse/Bin/RecluseVulkan.dll
+			$<TARGET_FILE_DIR:${TARGET_NAME}>)
 endmacro()
 
 macro(post_d3d12_dll TARGET_NAME)
-	if (NOT EXISTS ${CMAKE_SOURCE_DIR}/../Recluse/Bin/RecluseD3D12.dll)
-		add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-			COMMAND ${CMAKE_COMMAND} -E copy
-				${CMAKE_SOURCE_DIR}/../Recluse/Bin/RecluseD3D12.dll
-				$<TARGET_FILE_DIR:${TARGET_NAME}>)
-	endif()
+	add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+			${CMAKE_SOURCE_DIR}/../Recluse/Bin/RecluseD3D12.dll
+			$<TARGET_FILE_DIR:${TARGET_NAME}>)
 endmacro()

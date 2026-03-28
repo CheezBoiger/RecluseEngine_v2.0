@@ -25,7 +25,7 @@ cmake_generators = {
 def parse_arguments():
     global parsed_commands
     parser = argparse.ArgumentParser(description="Parsable arguments for the Recluse build system.")
-    parser.add_argument("-libdir", dest="libdir", help="Library absolute directory.", default="")
+    parser.add_argument("-libconfig", dest="libconfig", help="Library configure file for third party packages.", default="")
     parser.add_argument("-vulkan", dest="vulkan", action="store_true", help="Enable vulkan", default=False)
     parser.add_argument("-dx11", dest="dx11", action="store_true", help="Enable DX11", default=False)
     parser.add_argument("-dx12", dest="dx12", action="store_true", help="Enable DX12", default=False)
@@ -42,9 +42,9 @@ def parse_arguments():
     args = parser.parse_args()
     parsed_commands = args
     
-    if not os.path.isabs(parsed_commands.libdir):
+    if not os.path.isabs(parsed_commands.libconfig):
         print("path given is not absolute.")
-        parsed_commands.libdir = os.path.join(os.getcwd(), parsed_commands.libdir)
+        parsed_commands.libconfig = os.path.join(os.getcwd(), parsed_commands.libconfig)
     return
     
     
@@ -90,8 +90,8 @@ def add_additional_cmake_commands():
     else:
         cmds.append("-DRCL_DX11=False")
         
-    if parsed_commands.libdir != "":
-        libdir = os.path.join(parsed_commands.libdir, "RecluseLibraries")
+    if parsed_commands.libconfig != "":
+        libdir = os.path.abspath(os.path.dirname(parsed_commands.libconfig))
         cmds.append(f"-DRECLUSE_THIRDPARTY_DIR:STRING={libdir}")
         
     #if parsed_commands.config is not None:
@@ -117,7 +117,7 @@ def main():
     check_install_package("xxhash")
     
     #subprocess.call(["git", "submodule", "update"])
-    party_command = ["py", f"{generate_3rdparty_libs}", "-libdir", f"{parsed_commands.libdir}"]
+    party_command = ["py", f"{generate_3rdparty_libs}", "-config", f"{parsed_commands.libconfig}"]
     if (parsed_commands.initlib):
         party_command.append("-init")
         
@@ -128,7 +128,6 @@ def main():
     os.chdir("Build64")
     
     additional_cmake_commands = add_additional_cmake_commands()
-    
     
     cmake_commands = ["cmake"]
     
