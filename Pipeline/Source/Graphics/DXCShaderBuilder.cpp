@@ -26,6 +26,7 @@ R_DECLARE_GLOBAL_BOOLEAN(g_useLegacyResourceReservation, true, "DXC.LegacyResour
 namespace Recluse {
 namespace Pipeline {
 
+#if defined RCL_DXC
 
 // Direct blob. 
 class DxcBlob : public IDxcBlob
@@ -65,8 +66,6 @@ public:
 private:
     CComPtr<ID3DBlob> m_blob;
 };
-
-#if defined RCL_DXC
 
 std::wstring getShaderProfile(ShaderType type)
 {

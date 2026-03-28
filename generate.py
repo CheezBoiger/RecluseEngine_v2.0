@@ -3,6 +3,7 @@
 #
 #
 import subprocess, os
+import Systems.ConfigureParser as cp
 
 import argparse
 import sys
@@ -25,74 +26,27 @@ cmake_generators = {
 def parse_arguments():
     global parsed_commands
     parser = argparse.ArgumentParser(description="Parsable arguments for the Recluse build system.")
-    parser.add_argument("-libconfig", dest="libconfig", help="Library configure file for third party packages.", default="")
-    parser.add_argument("-vulkan", dest="vulkan", action="store_true", help="Enable vulkan", default=False)
-    parser.add_argument("-dx11", dest="dx11", action="store_true", help="Enable DX11", default=False)
-    parser.add_argument("-dx12", dest="dx12", action="store_true", help="Enable DX12", default=False)
-    parser.add_argument("-glsl", dest="glsl", action="store_true", help="Enable GLSlang compiler use.", default=False)
-    parser.add_argument("-glsl.older", dest="glsl_older", action="store_true", help="Fallback to an older version of GLSlang compiler api.", default=False)
-    parser.add_argument("-dxc", dest="dxc", action="store_true", help="Enable DXC compiler use.", default=False)
-    parser.add_argument("-test", dest="test", action="store_true", help="Enable tests.", default=False)
     parser.add_argument("-developer", dest="developer", action="store_true", help="Enable Developer mode for the engine.", default=False)
     parser.add_argument("-meowhash", dest="meowhash", action="store_true", help="Use Meow hash instead of the default XXHash.", default=False)
     parser.add_argument("-update", dest="ft", action="store_true", help="Run update set up, which sets up submodules and/or updates them.", default=False)
-    parser.add_argument("-config", dest="config", help="Path and name of configuration file.", type=str, default=None)
+    parser.add_argument("-config", dest="config", help="Path and name of configuration ini file.", type=str, default=None)
     parser.add_argument("-initlib", dest="initlib", help="Init the third party libraries.", action="store_true", default=False)
-    parser.add_argument("-generator", dest="g", help="The specific generator that cmake should use when creating the build sln", type=str, default="auto")
     args = parser.parse_args()
     parsed_commands = args
-    
-    if not os.path.isabs(parsed_commands.libconfig):
-        print("path given is not absolute.")
-        parsed_commands.libconfig = os.path.join(os.getcwd(), parsed_commands.libconfig)
     return
-    
     
 def add_additional_cmake_commands():
     cmds = []
-    if parsed_commands.vulkan == True:
-        cmds.append("-DRCL_VULKAN=True")
-    else:
-        cmds.append("-DRCL_VULKAN=False")
-        
-    if parsed_commands.dx12 == True:
-        cmds.append("-DRCL_DX12=True")
-    else:
-        cmds.append("-DRCL_DX12=False")
-        
-    if parsed_commands.glsl == True:
-        cmds.append("-DRCL_GLSLANG=True")
-    else:
-        cmds.append("-DRCL_GLSLANG=False")
 
     if parsed_commands.meowhash == True:
         cmds.append("-DR_USE_MEOW_HASH=True")
     else:
         cmds.append("-DR_USE_MEOW_HASH=False")
-     
-    if parsed_commands.dxc == True:
-        cmds.append("-DRCL_DXC=True")
-    else:
-        cmds.append("-DRCL_DXC=False")
-        
-    if parsed_commands.glsl_older == True:
-        cmds.append("-DR_GLSLANG_LEGACY_API=True")
-    else:
-        cmds.append("-DR_GLSLANG_LEGACY_API=False")
         
     if parsed_commands.developer == True:
         cmds.append("-DR_DEVELOPER=True")
     else:
         cmds.append("-DR_DEVELOPER=False")
-        
-    if parsed_commands.dx11 == True:
-        cmds.append("-DRCL_DX11=True")
-    else:
-        cmds.append("-DRCL_DX11=False")
-        
-    if parsed_commands.libconfig != "":
-        libdir = os.path.abspath(os.path.dirname(parsed_commands.libconfig))
-        cmds.append(f"-DRECLUSE_THIRDPARTY_DIR:STRING={libdir}")
         
     #if parsed_commands.config is not None:
     #    print(f"You typed in: {parsed_commands.config}")
@@ -113,11 +67,19 @@ def run_submodule_update():
 def main():
     parse_arguments()
     
+    cmake_predefined_params = os.path.abspath("./Build64/CMakePredefinedCacheParams.cmake")
+    config_parser = cp.ConfigureParser()
+    cache_created = False
+    if parsed_commands.config != "":
+        config_dir = parsed_commands.config
+        config_parser.read_init(config_dir)
+        cache_created = config_parser.generate_cache_file(cmake_predefined_params)
+    
     run_submodule_update()
     check_install_package("xxhash")
     
     #subprocess.call(["git", "submodule", "update"])
-    party_command = ["py", f"{generate_3rdparty_libs}", "-config", f"{parsed_commands.libconfig}"]
+    party_command = ["py", f"{generate_3rdparty_libs}", "-config", f"{config_parser.get_third_party_config()}"]
     if (parsed_commands.initlib):
         party_command.append("-init")
         
@@ -131,20 +93,21 @@ def main():
     
     cmake_commands = ["cmake"]
     
-    if cmake_generators[parsed_commands.g] != cmake_generators["auto"]:
-            cmake_commands.append([ "-G", f"{cmake_generators[parsed_commands.g]}"])
-    
     cmake_commands.extend(additional_cmake_commands)
+    if cache_created:
+        cmake_commands += ['-C', cmake_predefined_params]
+    else:
+        cmake_commands += config_parser.generate_option_changes()
     cmake_commands.append('..')
-    #print(cmake_commands)
+    print(cmake_commands)
     subprocess.call(cmake_commands)
     
     # Call test params.
-    if parsed_commands.test == True:
+    if config_parser.is_building_test() == True:
         if not os.path.exists("../BuildTest"):
             os.makedirs("../BuildTest")
         os.chdir("../BuildTest")
-        test_commands = ["cmake"] + additional_cmake_commands
+        test_commands = ["cmake"] + additional_cmake_commands + config_parser.generate_option_changes()
         test_commands.append("../Test")
         subprocess.call(test_commands)
         
