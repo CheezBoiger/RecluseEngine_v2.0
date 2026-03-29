@@ -138,6 +138,55 @@ ResultCode DxilReflection::reflect(ShaderReflectionInformation& reflectionOutput
             }
         }
     }
+
+    for (uint bindingIdx = 0; bindingIdx < reflectionOutput.cbvs.size(); ++bindingIdx)
+    {
+        // Make them virtual bindings.
+
+        U32 bind = ShaderReflectionInformation::unpackShaderBind(reflectionOutput.cbvs[bindingIdx]);
+        U32 set = ShaderReflectionInformation::unpackShaderSet(reflectionOutput.cbvs[bindingIdx]);
+        ShaderReflectionInformation::Metadata& metadata = reflectionOutput.perSetMetadata[set];
+        bind = bind - metadata.baseCbv;
+        ShaderBind newBind = ShaderReflectionInformation::packShaderBinding(set, bind);
+        reflectionOutput.cbvs[bindingIdx] = newBind;
+    }
+
+    for (uint bindingIdx = 0; bindingIdx < reflectionOutput.srvs.size(); ++bindingIdx)
+    {
+        // Make them virtual bindings.
+
+        U32 bind = ShaderReflectionInformation::unpackShaderBind(reflectionOutput.srvs[bindingIdx]);
+        U32 set = ShaderReflectionInformation::unpackShaderSet(reflectionOutput.srvs[bindingIdx]);
+        ShaderReflectionInformation::Metadata& metadata = reflectionOutput.perSetMetadata[set];
+        bind = bind - metadata.baseSrv;
+        ShaderBind newBind = ShaderReflectionInformation::packShaderBinding(set, bind);
+        reflectionOutput.srvs[bindingIdx] = newBind;
+    }
+
+    for (uint bindingIdx = 0; bindingIdx < reflectionOutput.uavs.size(); ++bindingIdx)
+    {
+        // Make them virtual bindings.
+
+        U32 bind = ShaderReflectionInformation::unpackShaderBind(reflectionOutput.uavs[bindingIdx]);
+        U32 set = ShaderReflectionInformation::unpackShaderSet(reflectionOutput.uavs[bindingIdx]);
+        ShaderReflectionInformation::Metadata& metadata = reflectionOutput.perSetMetadata[set];
+        bind = bind - metadata.baseUav;
+        ShaderBind newBind = ShaderReflectionInformation::packShaderBinding(set, bind);
+        reflectionOutput.uavs[bindingIdx] = newBind;
+    }
+
+    for (uint bindingIdx = 0; bindingIdx < reflectionOutput.samplers.size(); ++bindingIdx)
+    {
+        // Make them virtual bindings.
+
+        U32 bind = ShaderReflectionInformation::unpackShaderBind(reflectionOutput.samplers[bindingIdx]);
+        U32 set = ShaderReflectionInformation::unpackShaderSet(reflectionOutput.samplers[bindingIdx]);
+        ShaderReflectionInformation::Metadata& metadata = reflectionOutput.perSetMetadata[set];
+        bind = bind - metadata.baseSampler;
+        ShaderBind newBind = ShaderReflectionInformation::packShaderBinding(set, bind);
+        reflectionOutput.samplers[bindingIdx] = newBind;
+    }
+
     return RecluseResult_Ok;
 #else
     return RecluseResult_NoImpl;

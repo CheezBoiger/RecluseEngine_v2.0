@@ -331,6 +331,7 @@ ShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindShaderResource(
         binding = unpackBindingRegister(cachedReflection->sets[space].srvs[slot]);
         R_ASSERT_FORMAT(binding != 0xFFFF, "Binding not valid, would indicate this register is unused or not bound correctly (space%d, register=t%d)", space, slot);
         if (binding == 0xFFFF) return (*this);
+        binding = binding + cachedReflection->sets[space].baseSrv;
     }
     else
     {
@@ -385,6 +386,7 @@ ShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindConstantBuffer(
         binding = unpackBindingRegister(cachedReflection->sets[space].cbvs[slot]);
         R_ASSERT_FORMAT(binding != 0xFFFF, "Binding not valid, would indicate this register is unused or not bound correctly (space%d, register=b%d)", space, slot);
         if (binding == 0xFFFF) return (*this);
+        binding = binding + cachedReflection->sets[space].baseCbv;
     }
     else
     {
@@ -410,6 +412,7 @@ ShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindUnorderedAccess
         binding = unpackBindingRegister(cachedReflection->sets[space].uavs[slot]);
         R_ASSERT_FORMAT(binding != 0xFFFF, "Binding not valid, would indicate this register is unused or not bound correctly (space%d, register=u%d)", space, slot);
         if (binding == 0xFFFF) return (*this);
+        binding = binding + cachedReflection->sets[space].baseUav;
     }
     else
     {
@@ -442,6 +445,7 @@ ShaderProgramBinder& D3D12Context::D3D12ShaderProgramBinder::bindSampler(ShaderS
         binding = unpackBindingRegister(cachedReflection->sets[space].samplers[slot]);
         R_ASSERT_FORMAT(binding != 0xFFFF, "Binding not valid, would indicate this register is unused or not bound correctly (space%d, register=s%d)", space, slot);
         if (binding == 0xFFFF) return (*this);
+        binding = binding + cachedReflection->sets[space].baseSampler;
     }
     else
     {

@@ -327,7 +327,14 @@ ShaderProgramDefinition makeShaderProgramDefinition(ShaderProgramDatabase& db, c
             {
                 ShaderBind cbv = reflection.cbvs[index];
                 U32 set = ShaderReflectionInformation::unpackShaderSet(cbv);
+                U32 binding = ShaderReflectionInformation::unpackShaderBind(cbv);
                 ShaderReflectionInformation::Metadata& metadata = reflection.perSetMetadata[set];
+                if (reflectionSets[set].baseCbv < metadata.baseCbv)
+                {
+                    // Calculate append
+                    binding = binding + metadata.baseCbv;
+                    cbv = ShaderReflectionInformation::packShaderBinding(set, binding);
+                }
                 auto result = reflectionSets[set].cbvSet.insert(cbv);
                 reflectionSets[set].baseCbv = Math::minimum(reflectionSets[set].baseCbv, metadata.baseCbv);
             }
@@ -335,7 +342,14 @@ ShaderProgramDefinition makeShaderProgramDefinition(ShaderProgramDatabase& db, c
             {
                 ShaderBind srv = reflection.srvs[index];
                 U32 set = ShaderReflectionInformation::unpackShaderSet(srv);
+                U32 binding = ShaderReflectionInformation::unpackShaderBind(srv);
                 ShaderReflectionInformation::Metadata& metadata = reflection.perSetMetadata[set];
+                if (reflectionSets[set].baseSrv < metadata.baseSrv)
+                {
+                    // Calculate append
+                    binding = binding + metadata.baseSrv;
+                    srv = ShaderReflectionInformation::packShaderBinding(set, binding);
+                }
                 auto result = reflectionSets[set].srvSet.insert(srv);
                 reflectionSets[set].baseSrv = Math::minimum(reflectionSets[set].baseSrv, metadata.baseSrv);
             }
@@ -343,7 +357,14 @@ ShaderProgramDefinition makeShaderProgramDefinition(ShaderProgramDatabase& db, c
             {
                 ShaderBind uav = reflection.uavs[index];
                 U32 set = ShaderReflectionInformation::unpackShaderSet(uav);
+                U32 binding = ShaderReflectionInformation::unpackShaderBind(uav);
                 ShaderReflectionInformation::Metadata& metadata = reflection.perSetMetadata[set];
+                if (reflectionSets[set].baseUav < metadata.baseUav)
+                {
+                    // Calculate append
+                    binding = binding + metadata.baseUav;
+                    uav = ShaderReflectionInformation::packShaderBinding(set, binding);
+                }
                 auto result = reflectionSets[set].uavSet.insert(uav);
                 reflectionSets[set].baseUav = Math::minimum(reflectionSets[set].baseUav, metadata.baseUav);
             }
@@ -351,7 +372,14 @@ ShaderProgramDefinition makeShaderProgramDefinition(ShaderProgramDatabase& db, c
             {
                 ShaderBind sampler = reflection.samplers[index];
                 U32 set = ShaderReflectionInformation::unpackShaderSet(sampler);
+                U32 binding = ShaderReflectionInformation::unpackShaderBind(sampler);
                 ShaderReflectionInformation::Metadata& metadata = reflection.perSetMetadata[set];
+                if (reflectionSets[set].baseSampler < metadata.baseSampler)
+                {
+                    // Calculate append
+                    binding = binding + metadata.baseSampler;
+                    sampler = ShaderReflectionInformation::packShaderBinding(set, binding);
+                }
                 auto result = reflectionSets[set].samplerSet.insert(sampler);
                 reflectionSets[set].baseSampler = Math::minimum(reflectionSets[set].baseSampler, metadata.baseSampler);
             }
