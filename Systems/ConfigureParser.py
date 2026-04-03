@@ -61,19 +61,25 @@ class ConfigureParser:
                 self.enable_test = config.getboolean("Test", "Enable")
                 
         if config.has_section("ThirdParty"):
+            
+            config_name = "Unknown"
+            
+            if config.has_option("ThirdParty", "ConfigName"):
+                config_name = config.get("ThirdParty", "ConfigName")
+                
             if config.has_option("ThirdParty", "Path"):
                 path = config.get("ThirdParty", "Path")
-                
+
                 if (path == None or path == ""):
-                    path = input("No thirdparty path was given, enter one: ")
+                    print(f"No path given for third party libraries, please enter one containing {config_name}")
+                    path = input("Enter: ")
                 
                 if not os.path.isabs(path):
                     print("path given is not absolute.")
                     path = os.path.join(os.getcwd(), path)
                 self.third_party_dir = path.replace('\\', "/")
-            if config.has_option("ThirdParty", "ConfigName"):
-                config_name = config.get("ThirdParty", "ConfigName")
-                self.third_party_config_file = os.path.join(self.third_party_dir, config_name)
+                
+            self.third_party_config_file = os.path.join(self.third_party_dir, config_name)
                 
         return cmake_arguments
         
