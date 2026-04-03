@@ -48,7 +48,8 @@ PSOut psMain(PSIn pixIn)
 	if (moveUp == 1)
 		texcoord.y += time;
 #endif
-	texcoord = frac(texcoord);
+	texcoord = select(texcoord > 1.0, frac(texcoord), texcoord);
+	
 	Output.albedo = colorTexture.Sample(colorSampler, texcoord);
 #else
 		Output.albedo = pixIn.color;

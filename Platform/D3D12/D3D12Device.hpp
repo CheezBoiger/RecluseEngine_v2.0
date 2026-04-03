@@ -82,8 +82,8 @@ public:
 
     void                                initialize();
     void                                release();
-    virtual void                        begin() override;
-    virtual void                        end() override;
+    virtual ResultCode                  begin() override;
+    virtual ResultCode                  end() override;
     ResultCode                          setFrames(U32 bufferCount) override;
     ResultCode                          wait() override;
 

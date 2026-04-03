@@ -325,11 +325,13 @@ ResultCode VulkanSwapchain::prepare(GraphicsContext* context)
     R_ASSERT(m_pBackbufferQueue != NULL);
     VulkanContext* vulkanContext    = context->castTo<VulkanContext>();
     R_ASSERT_FORMAT(vulkanContext->getFrameCount() <= m_frameImages.size(), "Context frame count is higher than the actual swapchain buffer count! This will cause a crash!");
-    vulkanContext->begin();
+    ResultCode err = vulkanContext->begin();
+
+    if (err != RecluseResult_Ok)
+        return err;
 
     VkResult result                     = VK_SUCCESS;
     VkSemaphore imageAvailableSema      = m_waitSemaphores[m_currentFrameIndex];
-    ResultCode err                      = RecluseResult_Ok;
 
     result = vkAcquireNextImageKHR
                 (

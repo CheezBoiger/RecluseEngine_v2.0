@@ -224,7 +224,9 @@ ResultCode D3D12Swapchain::prepare(GraphicsContext* context)
 {
     D3D12Context* d3dContext = context->castTo<D3D12Context>();
 
-    d3dContext->begin();
+    ResultCode result = d3dContext->begin();
+    if (result != RecluseResult_Ok)
+        return result;
     R_ASSERT_FORMAT(d3dContext->obtainFrameCount() <= getDesc().desiredFrames, "Context frame count is higher than the actual swapchain buffer count! This will cause a crash!");
 
     // We still need to query for our next frame, as it is essential, but overall we wait by buffer instead of frame index.

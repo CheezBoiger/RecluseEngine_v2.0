@@ -230,6 +230,7 @@ void createShaderProgram(GraphicsDevice* device)
 
     Pipeline::ShaderBuilder* shaderBuilder = nullptr;
     ShaderIntermediateCode intermediateCode;
+    preprocessor.setDebug(true);
     if (instance->getApi() == GraphicsApi_Direct3D12)
     {
         shaderBuilder = Pipeline::createShaderBuilder("dxc");
@@ -237,7 +238,7 @@ void createShaderProgram(GraphicsDevice* device)
     }
     else
     {
-        shaderBuilder = Pipeline::createShaderBuilder("glslang");
+        shaderBuilder = Pipeline::createShaderBuilder("dxc");
         shaderBuilder->addPreprocessor(&preprocessor);
         intermediateCode = ShaderIntermediateCode_Spirv;
     }
@@ -540,7 +541,8 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
     context->setInputVertexLayout(VertexLayout_PositionNormalTexCoordColor);
     U32 permutation = 0;
     KeyboardListener listener;
-    if (listener.isKeyDown(KeyCode_A))
+    static bool ss = false;
+    if (ss)//listener.isKeyDown(KeyCode_A))
     {
         permutation = makeBitset32(0, 1, 1);
         if (listener.isKeyDown(KeyCode_B))
@@ -548,6 +550,8 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
         if (listener.isKeyDown(KeyCode_V))
             permutation += makeBitset32(2, 1, 1);
     }
+
+    ss = ss ? 0 : 1;
     ShaderProgramBinder& binder = context->bindShaderProgram(ShaderProgram_Gbuffer, permutation);
 
     for (U32 i = 0; i < meshes.size(); ++i)
@@ -777,6 +781,7 @@ void createCubes(GraphicsDevice* device, std::vector<MeshDraw>& meshes, U32 widt
         model(3, 1) = 0.f;
         model(3, 2) = 0.f;
         buffer->normal = Math::transpose(Math::inverse(model));
+        buffer->useTexturing = true;
 
         it.meshTransform->unmap(nullptr);
         
@@ -840,7 +845,7 @@ int main(char* argv[], int c)
         instance->initialize(appInfo, flags);
     }
     
-    adapter = instance->getGraphicsAdapters()[0];
+    adapter = instance->getGraphicsAdapters()[1];
     R_ASSERT(adapter);
     
     {
@@ -850,7 +855,7 @@ int main(char* argv[], int c)
 
     context = device->createContext();
     R_ASSERT(context);
-    context->setFrames(2);
+    context->setFrames(3);
 
     SwapchainCreateDescription swapchainDescription = { };
     swapchainDescription.buffering      = FrameBuffering_Triple;
@@ -891,7 +896,10 @@ int main(char* argv[], int c)
                 total /= static_cast<F32>(lastMs.size());
                 R_WARN("DeferredBox", "Fps: %f", 1.0f / total);
             }
-            swapchain->prepare(context);
+            ResultCode result = swapchain->prepare(context);
+
+            if (result != RecluseResult_Ok)
+                break;
 
             applyGBufferRendering(context, meshes);
             resolveLighting(context);

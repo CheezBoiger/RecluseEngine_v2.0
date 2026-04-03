@@ -88,7 +88,7 @@ ResultCode D3D12Context::wait()
 }
 
 
-void D3D12Context::begin()
+ResultCode D3D12Context::begin()
 {
     ID3D12Fence* fence = m_graphicsQueue->getFence();
     HANDLE e = m_graphicsQueue->getEvent();
@@ -113,6 +113,7 @@ void D3D12Context::begin()
     m_pPrimaryCommandList->reset();
     m_pPrimaryCommandList->begin();
     prepare();
+    return RecluseResult_Ok;
 }
 
 
@@ -135,7 +136,7 @@ ResultCode D3D12Context::submitPrimaryCommandList(ID3D12GraphicsCommandList* pCo
 }
 
 
-void D3D12Context::end()
+ResultCode D3D12Context::end()
 {
     // We should always flush any remaining barrier transitions, especially if they involve transiting our back buffer back to present state.
     flushBarrierTransitions();
@@ -149,6 +150,7 @@ void D3D12Context::end()
     submitPrimaryCommandList(m_pPrimaryCommandList->get());
     RenderPasses::sweep(m_pDevice);
     Pipelines::checkPipelines(m_pDevice);
+    return RecluseResult_Ok;
 }
 
 

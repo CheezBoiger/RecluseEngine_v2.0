@@ -100,7 +100,7 @@ DescriptorAllocatorInstance* VulkanContext::currentDescriptorAllocator()
 }
 
 
-void VulkanContext::begin()
+ResultCode VulkanContext::begin()
 {    
     R_ASSERT(getFrameCount() > 0);
     incrementContextFrameIndex();
@@ -109,8 +109,17 @@ void VulkanContext::begin()
     VkFence frameFence                  = contextFrame.fence;
 
     // We need to wait for our fences, before we can begin to reset resources.
-    vkWaitForFences(m_pDevice->get(), 1, &frameFence, VK_TRUE, UINT64_MAX);
-    vkResetFences(m_pDevice->get(), 1, &frameFence);
+    VkResult result = vkWaitForFences(m_pDevice->get(), 1, &frameFence, VK_TRUE, UINT64_MAX);
+    R_ASSERT_FORMAT(result == VK_SUCCESS, "WaitForFences failed with returned error=0x%x", result);
+
+    if (result == VK_ERROR_DEVICE_LOST)
+    {
+        // Handle device lost procedure.
+        return RecluseResult_DeviceLost;
+    }
+
+    result = vkResetFences(m_pDevice->get(), 1, &frameFence);
+    R_ASSERT_FORMAT(result == VK_SUCCESS, "ResetFences failed with returned error=0x%x", result);
 
     if (Vulkan::targetApiVersion >= R_VULKAN_MAKE_API_VERSION(1, 2, 0))
     {
@@ -138,6 +147,7 @@ void VulkanContext::begin()
     {
         R_VERBOSE(R_CHANNEL_VULKAN, "We are Logging!!!");
     }
+    return RecluseResult_Ok;
 }
 
 
@@ -160,7 +170,7 @@ Bool VulkanContext::supportsAsyncCompute() const
 }
 
 
-void VulkanContext::end()
+ResultCode VulkanContext::end()
 {
     endRenderPass(m_primaryCommandList.get());
     flushBarrierTransitions(m_primaryCommandList.get());
@@ -173,6 +183,7 @@ void VulkanContext::end()
     submitFinalCommandBuffer(m_primaryCommandList.get());
     RenderPasses::checkLruCache(m_pDevice);
     Pipelines::clean(m_pDevice);
+    return RecluseResult_Ok;
 }
 
 

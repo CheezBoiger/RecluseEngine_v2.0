@@ -1057,6 +1057,7 @@ Hash64 Structure::hash() const
     h = combineHash64(h, recluseHashFast(&state.pipeline, sizeof(state.pipeline)));
     h = combineHash64(h, state.shaderPermutation);
     h = combineHash64(h, state.shaderProgramId);
+    h = combineHash64(h, recluseHashFast(state.descriptorSetLayouts.data(), sizeof(VkDescriptorSetLayout) * state.descriptorSetLayouts.size()));
     return h;
 }
 

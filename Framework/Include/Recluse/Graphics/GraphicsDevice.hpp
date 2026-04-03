@@ -190,11 +190,11 @@ public:
 
     // Begin the rendering context recording. This must be called before you conduct drawcalls.
     // Once finished, be sure to call end().
-    virtual void                    begin() { }
+    virtual ResultCode              begin() { return RecluseResult_NoImpl; }
 
     // End the rendering context recording. This must be called after you call begin(). 
     // Must also be called before present can be made.
-    virtual void                    end() { }
+    virtual ResultCode              end() { return RecluseResult_NoImpl; }
 
     // Get the current device associated with this context.
     virtual GraphicsDevice*         getDevice() { return nullptr; }

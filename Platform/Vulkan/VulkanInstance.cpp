@@ -73,6 +73,9 @@ static std::vector<const char*> loadExtensions(LayerFeatureFlags flags, std::vec
     if (flags & (LayerFeatureFlag_DebugValidation | LayerFeatureFlag_GpuDebugValidation)) 
     {
         extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+
+        //extensions.push_back(VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME);
+        //extensions.push_back(VK_NV_DEVICE_DIAGNOSTICS_CONFIG_EXTENSION_NAME);
         wantedExtBits.push_back(LayerFeatureFlag_DebugValidation);    
     }
 

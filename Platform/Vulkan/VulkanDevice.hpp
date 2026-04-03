@@ -116,8 +116,8 @@ public:
     ~VulkanContext();
     
     void                            release();
-    void                            begin() override;
-    void                            end() override;
+    ResultCode                      begin() override;
+    ResultCode                      end() override;
 
     inline U32                      getFrameCount() const { return m_bufferCount; }
     inline FrameIndex               getCurrentFrameIndex() const { return m_currentContextFrameIndex; }

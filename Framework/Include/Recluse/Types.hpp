@@ -117,7 +117,8 @@ enum RecluseResult
     RecluseResult_AlreadyExists,
     RecluseResult_OutOfBounds,
     RecluseResult_Unsupported,
-    RecluseResult_InvalidVersion
+    RecluseResult_InvalidVersion,
+    RecluseResult_DeviceLost,
 };
 } // Recluse
 #endif // RECLUSE_TYPES_HPP
