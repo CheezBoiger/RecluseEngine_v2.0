@@ -202,6 +202,7 @@ R_INTERNAL Shader* compileShader
                 config.option = ShaderBuilder::Config::Default;
 
                 error = shaderBuilder->compile(shader, entryPoint, shaderCode.data(), shaderCode.size(), config, nullptr, defines);
+                
                 if (error != RecluseResult_Ok)
                 {
                     Shader::destroy(shader);

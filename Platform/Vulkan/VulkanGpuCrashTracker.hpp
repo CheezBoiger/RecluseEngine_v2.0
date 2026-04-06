@@ -39,7 +39,7 @@ public:
 class AftermathGpuCrashTracker : public GpuCrashTracker
 {
 public:
-    virtual ~AftermathGpuCrashTracker();
+    virtual             ~AftermathGpuCrashTracker();
 
 	virtual ResultCode initialize(const std::string& applicationName) override;
     
@@ -47,12 +47,12 @@ public:
 	// Call this function right after a device lost.
 	virtual ResultCode  processCrash() override;
 
-    Bool        isInitialized() const { return m_initialized; }
+    Bool                isInitialized() const { return m_initialized; }
 
-    ResultCode onCrashDump(const void* pGpuCrashDump, const uint32_t gpuCrashDumpSize);
-    ResultCode onCrashDescription(PFN_GFSDK_Aftermath_AddGpuCrashDumpDescription addDescription);
+    ResultCode          onCrashDump(const void* pGpuCrashDump, const uint32_t gpuCrashDumpSize);
+    ResultCode          onCrashDescription(PFN_GFSDK_Aftermath_AddGpuCrashDumpDescription addDescription);
 
-    ResultCode  writeCrashDumpToFile(const void* pGpuCrashDump, const uint32_t gpuCrashDumpSize);
+    ResultCode          writeCrashDumpToFile(const void* pGpuCrashDump, const uint32_t gpuCrashDumpSize);
 
 private:
     Bool m_initialized = false;
