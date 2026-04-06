@@ -22,7 +22,7 @@ namespace Vulkan {
 R_DECLARE_GLOBAL_STRING(g_fileName, "GpuCrashVulkan", "GpuCrash.Filename");
 
 
-ResultCode AftermathGpuCrashTracker::initialize()
+ResultCode AftermathGpuCrashTracker::initialize(const std::string& applicationName)
 {
 	bool succeeded = GFSDK_Aftermath_EnableGpuCrashDumps(
 		GFSDK_Aftermath_Version_API,
@@ -42,6 +42,7 @@ ResultCode AftermathGpuCrashTracker::initialize()
 	m_initialized = true;
 	R_INFO("GpuCrashTracker", "Nvidia Aftermath enabled for crash tracking.");
 
+	m_applicationName = applicationName;
 	return RecluseResult_Ok;
 }
 
@@ -153,7 +154,12 @@ ResultCode AftermathGpuCrashTracker::onCrashDescription(PFN_GFSDK_Aftermath_AddG
 	// Add some basic description about the crash. This is called after the GPU crash happens, but before
 	// the actual GPU crash dump callback. The provided data is included in the crash dump and can be
 	// retrieved using GFSDK_Aftermath_GpuCrashDump_GetDescription().
-	addDescription(GFSDK_Aftermath_GpuCrashDumpDescriptionKey_ApplicationName, g_fileName.c_str());
+	std::string& appName = g_fileName;
+
+	if (!m_applicationName.empty())
+		appName = m_applicationName;
+
+	addDescription(GFSDK_Aftermath_GpuCrashDumpDescriptionKey_ApplicationName, appName.c_str());
 	addDescription(GFSDK_Aftermath_GpuCrashDumpDescriptionKey_ApplicationVersion, "v1.0");
 	addDescription(GFSDK_Aftermath_GpuCrashDumpDescriptionKey_UserDefined, "This is a GPU crash dump, pretty fancy.");
 	addDescription(GFSDK_Aftermath_GpuCrashDumpDescriptionKey_UserDefined + 1, "Engine State: Rendering.");

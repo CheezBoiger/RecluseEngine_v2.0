@@ -317,7 +317,7 @@ ResultCode VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& in
     if (adapter->checkSupportsDeviceExtension(VK_NV_DEVICE_DIAGNOSTICS_CONFIG_EXTENSION_NAME))
     {
         m_gpuCrashTracker = new AftermathGpuCrashTracker();
-        m_gpuCrashTracker->initialize();
+        m_gpuCrashTracker->initialize(getAdapter()->getInstance()->getAppName());
     }
 #endif
 #endif

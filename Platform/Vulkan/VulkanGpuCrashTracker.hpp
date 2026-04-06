@@ -31,7 +31,7 @@ class GpuCrashTracker
 public:
     virtual ~GpuCrashTracker() {}
 
-    virtual ResultCode initialize() = 0;
+    virtual ResultCode initialize(const std::string& applicationName) = 0;
     virtual ResultCode processCrash() = 0;
 };
 
@@ -41,8 +41,8 @@ class AftermathGpuCrashTracker : public GpuCrashTracker
 public:
     virtual ~AftermathGpuCrashTracker();
 
-	virtual ResultCode  initialize() override;
-
+	virtual ResultCode initialize(const std::string& applicationName) override;
+    
 	// Process the crash, and report it to a file for external debugging.
 	// Call this function right after a device lost.
 	virtual ResultCode  processCrash() override;
@@ -56,6 +56,7 @@ public:
 
 private:
     Bool m_initialized = false;
+    std::string m_applicationName;
 
     mutable std::mutex m_mutex;
 
