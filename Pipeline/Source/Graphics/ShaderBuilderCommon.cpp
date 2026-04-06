@@ -27,9 +27,8 @@ ResultCode ShaderBuilder::compile
         const char* entryPoint,
         const char* sourceCode, 
         U64 sourceCodeBytes,
-        ShaderLanguage lang, 
-        ShaderType shaderType,
-        ShaderIntermediateCode intermediateCode,
+        const Config& config,
+        ShaderDebug* shaderDebugOut,
         const std::vector<PreprocessDefine>& defines
     )
 {
@@ -42,7 +41,7 @@ ResultCode ShaderBuilder::compile
     memcpy(srcCodeString.data(), sourceCode, sourceCodeBytes);
     srcCodeString[sourceCodeBytes] = '\0';
 
-    result = preprocessInputResources(lang, srcCodeString);
+    result = preprocessInputResources(config.shaderLanguage, srcCodeString);
 
     if (!m_preprocessors.empty())
     {
@@ -64,11 +63,11 @@ ResultCode ShaderBuilder::compile
         }
     }
 
-    result = onCompile(srcCodeString, byteCodeString, entryPoint, lang, shaderType, intermediateCode, defines);
+    result = onCompile(srcCodeString, byteCodeString, entryPoint, config, shaderDebugOut, defines);
 
     if (result == RecluseResult_Ok) 
     {
-        pShader->load(entryPoint, byteCodeString.data(), byteCodeString.size(), intermediateCode, shaderType);
+        pShader->load(entryPoint, byteCodeString.data(), byteCodeString.size(), config.intermediateCode, config.shaderType);
         Hash64 permutationId = recluseHashFast(byteCodeString.data(), byteCodeString.size());
         pShader->setPermutationId(permutationId);
     } 

@@ -423,6 +423,10 @@ PhysicalDeviceFeaturesInfo::PhysicalDeviceFeaturesInfo(const PhysicalDeviceFeatu
 #endif
     //features2.pNext = &hostQueryResetFeatures;
 }
+
+PhysicalDeviceFeaturesInfo::~PhysicalDeviceFeaturesInfo()
+{
+}
 } // Vulkan
 } // Recluse
 

@@ -73,6 +73,28 @@ public:
 };
 
 
+// Shader Debug information. The data stored here should correspond to the 
+// shader that has given its hash value to this container.
+class ShaderDebug
+{
+public:
+    ShaderDebug()
+        : m_shaderHashRef(~0)
+    { }
+
+    void                storePdb(Hash64 shaderHash, const char* data, size_t sizeBytes);
+
+    Hash64              getShaderHash() const { return m_shaderHashRef; }
+
+    size_t              getPdbSizeBytes() const { return m_pdbData.size(); }
+    const char*         getPdbData() const { return m_pdbData.data(); }
+
+private:
+    std::vector<char>   m_pdbData;
+    Hash64              m_shaderHashRef;
+};
+
+
 // ShaderBuilder, handles high level shading languages, and transforms them into
 // bytecode to be read to the gpu.
 class ReclusePipeline_PUBLIC_API ShaderBuilder 
@@ -93,12 +115,16 @@ public:
         typedef u32 OptimizationOption;
 
 
-        OptimizationOption  option;
-        Bool                dumpSymbols;
+        OptimizationOption      option;
+        Bool                    dumpSymbols;
+        Bool                    stripDebugInfo;
+        
+        ShaderType              shaderType;
+        ShaderLanguage          shaderLanguage;
+        ShaderIntermediateCode  intermediateCode;
     };
 
     ShaderBuilder()
-        : m_builderConfig({ }) 
     { }
     virtual ~ShaderBuilder() { }
     
@@ -109,20 +135,25 @@ public:
     // that is initialized by the shaderbuilder should be cleaned up.
     virtual ResultCode tearDown() { return RecluseResult_NoImpl; }
 
-    // Set the configuration.
-    void setConfiguration(const Config& config) { m_builderConfig = config; }
-
     // compile the shader and return the bytecode.
     // If successful, the shader will contain the compiled bytecode and information.
+    // \param pShaderOut
+    // \param entryPoint
+    // \param srcCode
+    // \param sourceCodeBytes
+    // \param config
+    // \param shaderDebugOutput
+    // \param defines
+    // \return Result success if the pShaderOut has successfully compiled and stored.
+    //         If not, error type will return on the reason for failure.
     ResultCode compile
         (
             Shader* pShaderOut,
             const char* entryPoint,
             const char* srcCode, 
             U64 sourceCodeBytes,
-            ShaderLanguage lang,
-            ShaderType shaderType,
-            ShaderIntermediateCode intermediateCode,
+            const Config& config,
+            ShaderDebug* shaderDebugOut = nullptr,
             const std::vector<PreprocessDefine>& defines = std::vector<PreprocessDefine>()
         );
 
@@ -139,11 +170,6 @@ public:
 
     void        addPreprocessor(ShaderPreprocessor* preprocessor) { m_preprocessors.push_back(preprocessor); }
     
-    // Is the builder for debug mode.
-    Bool isDebugMode() const { return (m_builderConfig.option != Config::Disable); }
-
-    Config::OptimizationOption getOptimizationOption() const { return m_builderConfig .option; }
-
 private:
 
     // OnCompile function abstract intended to be overridden on specifying shaderbuilders.
@@ -152,16 +178,13 @@ private:
                             const std::vector<char>& srcCode,
                             std::vector<char>& byteCode, 
                             const char* entryPoint,
-                            ShaderLanguage lang, 
-                            ShaderType shaderType,
-                            ShaderIntermediateCode intermediateCode,
+                            const Config& config,
+                            ShaderDebug* shaderDebugOut = nullptr,
                             const std::vector<PreprocessDefine>& defines = std::vector<PreprocessDefine>()
                         ) 
         { return RecluseResult_NoImpl; }
 
     virtual ResultCode preprocessInputResources(ShaderLanguage lang, std::vector<char>& sourceCode);
-
-    Config                  m_builderConfig;
 
     std::map<Hash64, std::string> m_systemHeaderPaths;
     std::map<Hash64, std::string> m_localHeaderPaths;

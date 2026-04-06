@@ -41,8 +41,8 @@ std::map<DeviceId, LifetimeCache<Hash64, std::unique_ptr<FramebufferObject>>>   
 std::map<DeviceId, LifetimeCache<RenderPasses::RenderPassId, std::unique_ptr<RenderPassLiveObject>>>        g_rpCache;
 #endif
 
-R_DECLARE_GLOBAL_U32(g_renderPassMaxAge, 12, "Vulkan.RenderPassMaxAge");
-R_DECLARE_GLOBAL_U32(g_frameBufferMaxAge, 12, "Vulkan.FramebufferMaxAge");
+R_DECLARE_GLOBAL_U32(g_renderPassMaxAge, 256, "Vulkan.RenderPassMaxAge");
+R_DECLARE_GLOBAL_U32(g_frameBufferMaxAge, 256, "Vulkan.FramebufferMaxAge");
 
 R_INTERNAL 
 U64 serialize(const VkFramebufferCreateInfo& info)

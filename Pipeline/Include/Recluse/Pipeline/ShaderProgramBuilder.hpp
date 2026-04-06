@@ -116,6 +116,9 @@ struct ReclusePipeline_PUBLIC_API ShaderProgramDescription
     // The pipeline type (graphics, compute, raytracing.)
     BindType pipelineType;
 
+    // Debug configure, to enable debugging for this shader program.
+    Bool debug;
+
     ShaderProgramDescription() { memset(this, 0, sizeof(graphics)); }
     ShaderProgramDescription(const ShaderProgramDescription& description);
     ShaderProgramDescription(ShaderProgramDescription&& description);

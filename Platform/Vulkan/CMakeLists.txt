@@ -15,7 +15,7 @@ set ( RECLUSE_VULKAN_INCLUDE ${CMAKE_SOURCE_DIR}/Framework/Include )
 set ( RECLUSE_VULKAN_SOURCE Source )
 set ( RECLUSE_VULKAN_INCLUDE_FILES ${RECLUSE_VULKAN_INCLUDE} )
 set ( RECLUSE_VULKAN_LINK_BINARIES )
-set ( RECLUSE_VULKAN_THIRD_PARTY ${RECLUSE_THIRDPARTY_DIR} )
+set ( RECLUSE_VULKAN_THIRD_PARTY ${RECLUSE_THIRDPARTY_DIR} ${RECLUSE_THIRDPARTY_DIR}/NvidiaAftermath/2025.5.0.25317/include)
 
 include ( ${CMAKE_SOURCE_DIR}/Systems/CMake/GenerateExports.cmake )
 
@@ -62,6 +62,8 @@ include ( ${CMAKE_SOURCE_DIR}/Systems/CMake/GenerateExports.cmake )
             ${RECLUSE_VULKAN_DIR}/VulkanDescriptorSets.cpp
             ${RECLUSE_VULKAN_DIR}/VulkanShaderCache.hpp
             ${RECLUSE_VULKAN_DIR}/VulkanShaderCache.cpp
+            ${RECLUSE_VULKAN_DIR}/VulkanGpuCrashTracker.hpp
+            ${RECLUSE_VULKAN_DIR}/VulkanGpuCrashTracker.cpp    
         )
     else()
         message(FATAL_ERROR "Failed to find Vulkan library!")
@@ -72,6 +74,10 @@ include ( ${CMAKE_SOURCE_DIR}/Systems/CMake/GenerateExports.cmake )
 if (R_DEVELOPER)
 	add_definitions(-DRECLUSE_DEVELOPER=1)
 endif(R_DEVELOPER)
+
+if (RCL_ENABLE_AFTERMATH)
+	add_definitions(-DRCL_ENABLE_AFTERMATH=1)
+endif()
 
 add_library (               ${RECLUSE_VULKAN_NAME} SHARED    ${RECLUSE_VULKAN_COMPILE_FILES} ) 
 target_include_directories( ${RECLUSE_VULKAN_NAME} PUBLIC    ${RECLUSE_VULKAN_INCLUDE_FILES} ${RECLUSE_VULKAN_SOURCE} ${RECLUSE_VULKAN_THIRD_PARTY})

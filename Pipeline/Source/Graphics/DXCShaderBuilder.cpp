@@ -116,7 +116,7 @@ public:
     ResultCode setUp() override
     {
         HRESULT hr = S_OK;
-        hr = DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&m_library));
+        hr = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&m_utils));
         
         if (FAILED(hr))
         {
@@ -138,6 +138,14 @@ public:
         //    R_ERROR("DXC", "Failed to create dxc ultilities!");
         //    return RecluseResult_Failed;
         //}
+
+        hr = m_utils->CreateDefaultIncludeHandler(&m_includeHandler);
+        if (FAILED(hr))
+        {
+            R_ERROR("DXC", "Failed to create dxc include handler!");
+            return RecluseResult_Failed;
+        }
+
         return RecluseResult_Ok;
     }
 
@@ -145,8 +153,10 @@ public:
     {
         if (m_compiler)
             m_compiler.Release();
-        if (m_library)
-            m_library.Release();
+        if (m_includeHandler)
+            m_includeHandler.Release();
+        if (m_utils)
+            m_utils.Release();
         return RecluseResult_Ok;
     }
 
@@ -156,13 +166,12 @@ public:
             const std::vector<char>& srcCode, 
             std::vector<char>& byteCode,  
             const char* entryPoint,
-            ShaderLanguage lang, 
-            ShaderType shaderType, 
-            ShaderIntermediateCode intermediateCode,
+            const ShaderBuilder::Config& config,
+            ShaderDebug* shaderDebugOut,
             const std::vector<PreprocessDefine>& defines
         ) override 
     {
-        R_ASSERT(m_library != NULL);
+        R_ASSERT(m_utils != NULL);
         R_ASSERT(m_compiler != NULL);
 
         R_DEBUG("DXC", "Compiling shader...");
@@ -173,56 +182,64 @@ public:
             WCHAR* Value;
         };        
 
-        CComPtr<IDxcOperationResult> result;
-        CComPtr<IDxcBlobEncoding> sourceBlob;
-        std::vector<DxcDefine> dxcDefines;
-        std::vector<NativeDefine> nativeDefines;
-        nativeDefines.resize(defines.size());
-        dxcDefines.resize(defines.size());
-        for (U32 i = 0; i < nativeDefines.size(); ++i)
+        HRESULT hr = S_OK;
+        std::wstring targetProfile = getShaderProfile(config.shaderType);
+
+        std::vector<std::wstring> argStrings;
+
+        // Optimization settings
+        argStrings.push_back(m_optimizationMap[config.option]);
+
+        int count = MultiByteToWideChar(CP_UTF8, 0, entryPoint, strlen(entryPoint), nullptr, 0);
+        WCHAR* wideEntryPoint = new WCHAR[count + 1];
+        MultiByteToWideChar(CP_UTF8, 0, entryPoint, count, wideEntryPoint, count);
+
+        wideEntryPoint[count] = L'\0';
+
+        argStrings.push_back(L"-E");
+        argStrings.push_back(wideEntryPoint);
+
+        delete[] wideEntryPoint;
+
+        argStrings.push_back(L"-T");
+        argStrings.push_back(targetProfile);
+
+        for (U32 i = 0; i < defines.size(); ++i)
         {
+            NativeDefine nativeDefine;
             int count = MultiByteToWideChar(CP_UTF8, 0, defines[i].variable.c_str(), defines[i].variable.size(), nullptr, 0);
 
-            nativeDefines[i].Name = new WCHAR[count + 1];
+            nativeDefine.Name = new WCHAR[count + 1];
 
-            MultiByteToWideChar(CP_UTF8, 0, defines[i].variable.c_str(), defines[i].variable.size(), const_cast<LPWSTR>(nativeDefines[i].Name), count);
-            nativeDefines[i].Name[count] = L'\0';
+            MultiByteToWideChar(CP_UTF8, 0, defines[i].variable.c_str(), defines[i].variable.size(), const_cast<LPWSTR>(nativeDefine.Name), count);
+            nativeDefine.Name[count] = L'\0';
             count = MultiByteToWideChar(CP_UTF8, 0, defines[i].value.c_str(), defines[i].value.size(), nullptr, 0);
 
-            nativeDefines[i].Value = new WCHAR[count + 1];
+            nativeDefine.Value = new WCHAR[count + 1];
 
-            MultiByteToWideChar(CP_UTF8, 0, defines[i].value.c_str(), defines[i].value.size(), const_cast<LPWSTR>(nativeDefines[i].Value), count);
-            nativeDefines[i].Value[count] = L'\0';
-            dxcDefines[i].Name = nativeDefines[i].Name;
-            dxcDefines[i].Value = nativeDefines[i].Value;
+            MultiByteToWideChar(CP_UTF8, 0, defines[i].value.c_str(), defines[i].value.size(), const_cast<LPWSTR>(nativeDefine.Value), count);
+            nativeDefine.Value[count] = L'\0';
+
+            argStrings.push_back(L"-D");
+            argStrings.push_back(std::wstring(nativeDefine.Name) + L"=" + std::wstring(nativeDefine.Value));
+
+            delete[] nativeDefine.Name;
+            delete[] nativeDefine.Value;
         }
-
-        HRESULT hr                      = S_OK;
-        std::wstring targetProfile      = getShaderProfile(shaderType);
-        const wchar_t* arguments[32]    = { };
-        U32 argCount                    = 0;
 
         // NOTE(): This doesn't work on older dxc compiler versions.
         //arguments[argCount++] = L"-Wignored-attributes";
 
-        UINT32 srcSizeBytes = (UINT32)srcCode.size();
-        hr = m_library->CreateBlobWithEncodingFromPinned(srcCode.data(), srcSizeBytes, CP_UTF8, &sourceBlob);
-
-        if (FAILED(hr)) 
+        if (config.intermediateCode == ShaderIntermediateCode_Spirv) 
         {
-            R_ERROR("DXC", "Failed to create a blob!!");
-        }
-
-        if (intermediateCode == ShaderIntermediateCode_Spirv) 
-        {
-            arguments[argCount++] = L"-spirv";
-            if (shaderType == ShaderType_Mesh || shaderType == ShaderType_Amplification)
+            argStrings.push_back(L"-spirv");
+            if (config.shaderType == ShaderType_Mesh || config.shaderType == ShaderType_Amplification)
             {
                 if (!g_meshShaderSpirvUseNV)
                 {
                     // SPIRV 1.4 is required to use SPV_EXT_mesh_shader.
-                    arguments[argCount++] = L"-fspv-target-env=vulkan1.1spirv1.4";
-                    arguments[argCount++] = L"-fspv-extension=SPV_EXT_mesh_shader";
+                    argStrings.push_back(L"-fspv-target-env=vulkan1.1spirv1.4");
+                    argStrings.push_back(L"-fspv-extension=SPV_EXT_mesh_shader");
                 }
             }
         }
@@ -230,30 +247,49 @@ public:
         if (g_useLegacyResourceReservation)
         {
             // Maintain legacy resource binding, to prevent stripping if the resource is unused.
-            arguments[argCount++] = L"-flegacy-resource-reservation";
+            argStrings.push_back(L"-flegacy-resource-reservation");
         }
 
-        // Optimization settings
-        arguments[argCount++] = m_optimizationMap[getOptimizationOption()];
+        if (config.dumpSymbols)
+        {
+            argStrings.push_back(L"-Zi");
+            if (config.intermediateCode == ShaderIntermediateCode_Spirv)
+            {
+                argStrings.push_back(L"-fspv-debug=vulkan-with-source");
+            }
+            else 
+            {
+                if (config.stripDebugInfo)
+                {
+                    argStrings.push_back(L"-Qstrip_debug");
+                }
+                argStrings.push_back(L"-Fd");
+                argStrings.push_back(L".\\");
+            }
+        }
+        
+        DxcBuffer sourceBuffer = { };
+        sourceBuffer.Ptr = srcCode.data();
+        sourceBuffer.Size = srcCode.size();
+        sourceBuffer.Encoding = DXC_CP_UTF8;
 
-        int count = MultiByteToWideChar(CP_UTF8, 0, entryPoint, strlen(entryPoint), nullptr, 0);
-        WCHAR* wideEntryPoint = new WCHAR[count+1];
-        MultiByteToWideChar(CP_UTF8, 0, entryPoint, count, wideEntryPoint, count);
+        std::vector<LPCWSTR> arguments;
+        for (const auto& ws : argStrings)
+        {
+            arguments.push_back(ws.c_str());
+        }
 
-        wideEntryPoint[count] = L'\0';
+        CComPtr<IDxcResult> result;
 
         hr = m_compiler->Compile
             (
-                sourceBlob, 
-                NULL, 
-                wideEntryPoint, 
-                targetProfile.c_str(), 
-                arguments, argCount, 
-                dxcDefines.empty() ? NULL : dxcDefines.data(), (UINT32)dxcDefines.size(), 
-                NULL, (IDxcOperationResult**)&result
+                &sourceBuffer, 
+                arguments.data(),
+                arguments.size(),
+                m_includeHandler,
+                __uuidof(IDxcResult),
+                (void**)&result
             );
-
-        delete[] wideEntryPoint;
 
         CComPtr<IDxcBlobEncoding> errorBlob;
         result->GetErrorBuffer(&errorBlob);
@@ -264,23 +300,35 @@ public:
         }
 
         CComPtr<IDxcBlob> code;
-        result->GetResult(&code);
+        CComPtr<IDxcBlobUtf16> pShaderName;
 
-        byteCode.resize(code->GetBufferSize());
-        memcpy(byteCode.data(), code->GetBufferPointer(), code->GetBufferSize());
+        result->GetOutput(DXC_OUT_OBJECT, __uuidof(IDxcBlob), (void**)&code, &pShaderName);
 
-        for (U32 i = 0; i < nativeDefines.size(); ++i)
+        if (code)
         {
-            delete nativeDefines[i].Name;
-            delete nativeDefines[i].Value;
+            byteCode.resize(code->GetBufferSize());
+            memcpy(byteCode.data(), code->GetBufferPointer(), code->GetBufferSize());
+            return RecluseResult_Ok;
         }
 
-        return RecluseResult_Ok;
+        if (result->HasOutput(DXC_OUT_PDB))
+        {
+            CComPtr<IDxcBlob> pdbBlob;
+            CComPtr<IDxcBlobUtf16> pdbBlobName;
+            result->GetOutput(DXC_OUT_PDB, __uuidof(IDxcBlob), (void**)&pdbBlob, &pdbBlobName);
+            if (pdbBlob)
+            {
+                //
+            }
+        }
+        return RecluseResult_Failed;
     }
 
 private:
-    CComPtr<IDxcCompiler> m_compiler;
-    CComPtr<IDxcLibrary> m_library;
+    CComPtr<IDxcCompiler3> m_compiler;
+    CComPtr<IDxcUtils> m_utils;
+    CComPtr<IDxcIncludeHandler> m_includeHandler;
+
     //CComPtr<IDxcUtils> m_utils;
     std::map<Config::OptimizationOption, const wchar_t*> m_optimizationMap;
 };

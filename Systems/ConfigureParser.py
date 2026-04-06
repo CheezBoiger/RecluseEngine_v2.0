@@ -55,6 +55,7 @@ class ConfigureParser:
         self.parse_boolean(config, "Pipeline", "EnableGLSLANG", "RCL_GLSLANG")
         
         self.parse_boolean(config, "GLSLANG", "EnableLegacy", "RCL_GLSLANG_LEGACY")
+        self.parse_boolean(config, "Nvidia", "EnableAftermath", "RCL_ENABLE_AFTERMATH")
         
         if config.has_section("Test"):
             if config.has_option("Test", "Enable"):

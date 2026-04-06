@@ -19,6 +19,8 @@
 #include "Recluse/Memory/LinearAllocator.hpp"
 #include "Recluse/Memory/BuddyAllocator.hpp"
 
+#include "VulkanGpuCrashTracker.hpp"
+
 namespace Recluse {
 namespace Vulkan {
 
@@ -115,6 +117,9 @@ ResultCode VulkanContext::begin()
     if (result == VK_ERROR_DEVICE_LOST)
     {
         // Handle device lost procedure.
+        GpuCrashTracker* gpuCrashTracker = getNativeDevice()->getGpuCrashTracker();
+        if (gpuCrashTracker)
+            ResultCode result = gpuCrashTracker->processCrash();
         return RecluseResult_DeviceLost;
     }
 
@@ -219,7 +224,8 @@ ResultCode VulkanContext::submitFinalCommandBuffer(VkCommandBuffer commandBuffer
     submitInfo.pCommandBuffers          = &primaryCmdBuf;
     submitInfo.pWaitDstStageMask        = waitStages;
 
-    vkQueueSubmit(m_graphicsQueue->get(), 1, &submitInfo, fence);
+    VkResult err = vkQueueSubmit(m_graphicsQueue->get(), 1, &submitInfo, fence);
+    R_ASSERT_FORMAT(err == VK_SUCCESS, "Queue submit failed.");
 
     // clear the semaphores.
     contextFrame.signalSemaphore = VK_NULL_HANDLE;
@@ -306,6 +312,16 @@ ResultCode VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& in
 
     createInfo.sType                                    = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
+#ifdef VK_NV_device_diagnostics_config
+#ifdef RCL_ENABLE_AFTERMATH
+    if (adapter->checkSupportsDeviceExtension(VK_NV_DEVICE_DIAGNOSTICS_CONFIG_EXTENSION_NAME))
+    {
+        m_gpuCrashTracker = new AftermathGpuCrashTracker();
+        m_gpuCrashTracker->initialize();
+    }
+#endif
+#endif
+
     // Add swapchain extension capability.
     if (adapter->checkSupportsDeviceExtension(VK_KHR_SWAPCHAIN_EXTENSION_NAME))
     {
@@ -371,7 +387,20 @@ ResultCode VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& in
         }
         
     }
-    
+
+#ifdef VK_NV_device_diagnostics_config
+    VkDeviceDiagnosticsConfigCreateInfoNV nvFeature = {};
+    // TODO: this is getting automatically enabled. We need to set it up as a configuration.
+    if (adapter->checkSupportsDeviceExtension(VK_NV_DEVICE_DIAGNOSTICS_CONFIG_EXTENSION_NAME))
+    {
+        features.add<VkDeviceDiagnosticsConfigCreateInfoNV>(nvFeature);
+        nvFeature.sType = VK_STRUCTURE_TYPE_DEVICE_DIAGNOSTICS_CONFIG_CREATE_INFO_NV;
+        nvFeature.flags = VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_SHADER_ERROR_REPORTING_BIT_NV
+                    | VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_SHADER_DEBUG_INFO_BIT_NV
+                    | VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_RESOURCE_TRACKING_BIT_NV;
+    }
+#endif
+
     createInfo.pQueueCreateInfos        = queueCreateInfos.data();
     createInfo.queueCreateInfoCount     = (U32)queueCreateInfos.size();
     createInfo.enabledExtensionCount    = (U32)deviceExtensions.size();
@@ -411,6 +440,11 @@ ResultCode VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& in
 void VulkanDevice::release(VkInstance instance)
 {
     vkDeviceWaitIdle(m_device);
+
+    if (m_gpuCrashTracker)
+    {
+        delete m_gpuCrashTracker;
+    }
     
     DescriptorSets::clearDescriptorLayoutCache(this);
     m_allocationManager->release();

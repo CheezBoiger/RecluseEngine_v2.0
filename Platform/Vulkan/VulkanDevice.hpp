@@ -35,6 +35,7 @@ class VulkanQueue;
 class VulkanSwapchain;
 class VulkanDevice;
 class VulkanSwapchain;
+class GpuCrashTracker;
 
 
 struct QueueFamily 
@@ -386,6 +387,7 @@ public:
         , m_enabledFeatures({ })
         , m_memCache({ })
         , m_supportsSwapchainCreation(false)
+        , m_gpuCrashTracker(nullptr)
     { 
     }
 
@@ -421,6 +423,7 @@ public:
     VkMemoryRequirements    getBufferMemoryRequirements(VkBuffer buffer) const;
     VkMemoryRequirements    getImageMemoryRequirements(VkImage image) const;
     Bool                    isResourceFormatSupported(ResourceFormat format) override;
+    GpuCrashTracker*        getGpuCrashTracker() { return m_gpuCrashTracker; }
 
     DescriptorAllocatorInstance*    getDescriptorAllocatorInstance(FrameIndex bufferIndex)
     {
@@ -492,6 +495,7 @@ private:
     std::vector<VulkanContext*>         m_allocatedContexts;
     std::vector<QueueFamily>            m_queueFamilies;
     DescriptorAllocator                 m_descriptorAllocator;
+    GpuCrashTracker*                    m_gpuCrashTracker;
 
     // Cache the enabled features that are available for this device.
     VkPhysicalDeviceFeatures            m_enabledFeatures;

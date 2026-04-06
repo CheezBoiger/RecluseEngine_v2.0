@@ -410,17 +410,29 @@ void VulkanAdapter::checkAvailableDeviceExtensions()
                                     "VK_KHR_multiview", "required",
                                     "VK_KHR_maintenance2", "required",
                                     "VK_KHR_get_physical_device_properties2", "required" }));
+
+
+    m_supportedDeviceExtensions.push_back(std::make_tuple(LayerFeatureFlag_GpuCrashReporting,
+        std::vector<const char*>{   
+#ifdef VK_NV_device_diagnostics_config
+                                    VK_NV_DEVICE_DIAGNOSTICS_CONFIG_EXTENSION_NAME, "required",
+#endif
+#ifdef VK_NV_device_diagnostic_checkpoints
+                                    VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME, "optional",
+#endif
+    }));
     
     m_supportedDeviceExtensionFlags =   LayerFeatureFlag_MeshShading | 
                                         LayerFeatureFlag_Raytracing | 
                                         LayerFeatureFlag_SamplerFeedback | 
+                                        LayerFeatureFlag_GpuCrashReporting |
                                         LayerFeatureFlag_VariableRateShading;
 
     // Query all device extensions available for this device.
     for (U32 i = 0; i < m_supportedDeviceExtensions.size(); ++i) 
     {
         B32 found = false;
-        for (U32 extI = 0; extI < std::get<1>(m_supportedDeviceExtensions[i]).size(); extI += 2)
+        for (I32 extI = 0; extI < std::get<1>(m_supportedDeviceExtensions[i]).size(); extI += 2)
         {
             const char* extensionStr = std::get<1>(m_supportedDeviceExtensions[i])[extI];
             const char* requisite = std::get<1>(m_supportedDeviceExtensions[i])[extI + 1];
@@ -472,6 +484,7 @@ void VulkanAdapter::checkAvailableDeviceExtensions()
                     );
                 extensions.erase(extensions.begin() + extI + 1);
                 extensions.erase(extensions.begin() + extI);
+                extI -= 2;
             }
         }
     }

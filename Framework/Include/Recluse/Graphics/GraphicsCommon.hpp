@@ -203,8 +203,10 @@ enum LayerFeatureFlag
     LayerFeatureFlag_SamplerFeedback    = (1 << 6),
     // Feature if support for variable rate shading is available.
     LayerFeatureFlag_VariableRateShading = (1 << 7),
+    // Feature to enable gpu crash reporting/tracking.
+    LayerFeatureFlag_GpuCrashReporting = (1 << 8),
     // Gpu workgraph support for GPU driven rendering.
-    LayerFeatureFlag_GpuWorkgraphs      = (1 << 8),
+    LayerFeatureFlag_GpuWorkgraphs      = (1 << 9),
 };
 
 

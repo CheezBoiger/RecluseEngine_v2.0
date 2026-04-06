@@ -17,7 +17,7 @@ LifetimeCache<Hash64, D3D12RenderPass> g_renderPassMap;
 std::unordered_map<Hash64, CpuDescriptorTable> g_cachedRenderPassTable;
 
 
-R_DECLARE_GLOBAL_U32(g_d3d12RenderPassMaxAge, 12u, "D3D12.RenderPassMaxAge");
+R_DECLARE_GLOBAL_U32(g_d3d12RenderPassMaxAge, 256u, "D3D12.RenderPassMaxAge");
 
 
 GraphicsResourceView* D3D12RenderPass::getRenderTarget(U32 idx)

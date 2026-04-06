@@ -375,15 +375,21 @@ ResultCode compileShaders(ShaderLanguage lang)
                 }    
                 
                 R_DEBUG("ShaderCompiler", "%s", str.c_str());
+
+                Recluse::Pipeline::ShaderBuilder::Config config = { };
+                config.dumpSymbols = false;
+                config.intermediateCode = ShaderIntermediateCode_Spirv;
+                config.option = Recluse::Pipeline::ShaderBuilder::Config::Default;
+                config.shaderType = shaderMetadata->shaderType;
+                config.shaderLanguage = lang;
+
                 result = pBuilder->compile
                                         (
                                             pShader, 
                                             shaderMetadata->entryPoint,
                                             str.c_str(), 
                                             str.size(),
-                                            lang,
-                                            shaderMetadata->shaderType,
-                                            ShaderIntermediateCode_Spirv
+                                            config
                                         );
 
                 if (result == RecluseResult_Ok) 

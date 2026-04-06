@@ -230,6 +230,13 @@ struct PhysicalDeviceFeaturesInfo
 
     PhysicalDeviceFeaturesInfo();
     PhysicalDeviceFeaturesInfo(const PhysicalDeviceFeaturesInfo&);
+    ~PhysicalDeviceFeaturesInfo();
+
+    template<typename Feature>
+    void add(Feature& feature)
+    {
+        push<Feature>(feature);
+    }
 
 private:
 

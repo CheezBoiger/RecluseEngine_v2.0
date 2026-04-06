@@ -182,9 +182,8 @@ public:
             const std::vector<char>& srcCode, 
             std::vector<char>& byteCode, 
             const char* entryPoint,
-            ShaderLanguage lang, 
-            ShaderType shaderType, 
-            ShaderIntermediateCode intermediateCode,
+            const Config& config,
+            ShaderDebug* shaderDebugOut,
             const std::vector<PreprocessDefine>& defines = std::vector<PreprocessDefine>()
         ) override
     {
@@ -216,7 +215,7 @@ public:
 
         strings.back() = srcCode.data();
 
-        switch (shaderType) 
+        switch (config.shaderType) 
         {
             case ShaderType_Vertex:                 stage = EShLangVertex; break;
             case ShaderType_Fragment:               stage = EShLangFragment; break;
@@ -237,7 +236,7 @@ public:
         I32 clientVersion                   = 100;
         EShMessages messages                = (EShMessages)((int)EShMsgSpvRules | (int)EShMsgVulkanRules);
 
-        if (lang == ShaderLanguage_Hlsl) 
+        if (config.shaderLanguage == ShaderLanguage_Hlsl) 
         {
             R_DEBUG("GLSLANG", "HLSL used, compiling to SPIRV...");
 
