@@ -87,17 +87,39 @@ Shader* Shader::convertTo(ShaderIntermediateCode intermediateCode)
 }
 
 
-ResultCode Shader::saveToFile(const char* filePath)
+ResultCode Shader::saveToFile(const Shader* shader, const char* filePath)
 {
     if (filePath)
     {
         ResultCode result = RecluseResult_Ok;
-        FileBufferData data = { };
-        data.resize(m_byteCode.size());
-        std::copy(m_byteCode.begin(), m_byteCode.end(), data.begin());
-        return File::writeTo(&data, std::string(filePath));
+        const char* bytecode = shader->getByteCode();
+        U64 sizeBytes = shader->getSzBytes();
+        return File::writeTo(bytecode, sizeBytes, std::string(filePath), File::Config::Recursive);
     }
+
     return RecluseResult_NullPtrExcept;
+}
+
+
+ResultCode Shader::loadFromFile
+    (
+        Shader* shader, const char* filePath,
+        const char* entryPoint,
+        ShaderType shaderType,
+        ShaderIntermediateCode intermediateCode
+    )
+{
+    if (filePath)
+    {
+        ResultCode result = RecluseResult_Ok;
+        FileBufferData bufferData = {};
+        result = File::readFrom(&bufferData, std::string(filePath));
+        if (result == RecluseResult_Ok)
+        {
+            return shader->load(entryPoint, bufferData.data(), bufferData.size(), intermediateCode, shaderType);
+        }
+    }
+    return RecluseResult_Failed;
 }
 
 
@@ -120,7 +142,9 @@ ResultCode Shader::serialize(Archive* archive) const
 
     archive->write((void*)m_shaderName.data(), sizeof(char) * m_shaderName.size());
     archive->write((void*)m_entryPoint.data(), sizeof(char) * entryPointLenBytes);
-    archive->write((void*)m_byteCode.data(), sizeof(char) * m_byteCode.size());
+
+    // Don't write bytecode data, this is separate. Must call Save to File.
+    //archive->write((void*)m_byteCode.data(), sizeof(char) * m_byteCode.size());
 
     return RecluseResult_Ok;
 }
@@ -149,7 +173,9 @@ ResultCode Shader::deserialize(Archive* archive)
 
     archive->read((void*)m_shaderName.data(), sizeof(char) * nameSize);
     archive->read((void*)m_entryPoint.data(), sizeof(char) * entryPointLenBytes);
-    archive->read((void*)m_byteCode.data(), sizeof(char) * bytecodeSize);
+
+    // Don't read bytecode data, call loadFromFile.
+    //archive->read((void*)m_byteCode.data(), sizeof(char) * bytecodeSize);
 
     return RecluseResult_Ok;
 }

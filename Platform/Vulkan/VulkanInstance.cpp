@@ -344,10 +344,7 @@ void VulkanInstance::destroyDebugCallback()
 
 void VulkanInstance::setRequestedDeviceExtensions(LayerFeatureFlags flags)
 {
-    if (flags & LayerFeatureFlag_MeshShading)
-        m_requestedDeviceFeatures |= LayerFeatureFlag_MeshShading;
-    if (flags & LayerFeatureFlag_Raytracing)
-        m_requestedDeviceFeatures |= LayerFeatureFlag_Raytracing;
+    m_requestedDeviceFeatures = flags;
 }
 
 

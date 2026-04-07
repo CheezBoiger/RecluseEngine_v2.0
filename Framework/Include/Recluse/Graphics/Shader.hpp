@@ -128,7 +128,16 @@ public:
     RecluseFramework_PUBLIC_API ResultCode  load(const char* entryPoint, const char* byteCode, U64 szBytes, ShaderIntermediateCode imm, ShaderType shaderType);
 
     // Save the compilation to a file.
-    RecluseFramework_PUBLIC_API ResultCode  saveToFile(const char* filePath);
+    RecluseFramework_PUBLIC_API static ResultCode  saveToFile(const Shader* shader, const char* filePath);
+
+    RecluseFramework_PUBLIC_API static ResultCode  loadFromFile
+                                                            (
+                                                                Shader* shader, 
+                                                                const char* filePath, 
+                                                                const char* entryPoint,
+                                                                ShaderType shaderType,
+                                                                ShaderIntermediateCode intermediateCode
+                                                            );
 
     RecluseFramework_PUBLIC_API Shader*     convertTo(ShaderIntermediateCode intermediateCode);
     const char*                             getEntryPointName() const { return m_entryPoint.c_str(); }

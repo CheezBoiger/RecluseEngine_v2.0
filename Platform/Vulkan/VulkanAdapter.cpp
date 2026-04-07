@@ -26,6 +26,7 @@ const char* toString(LayerFeatureFlag flag)
         R_CASE_TO_STRING(LayerFeatureFlag_Raytracing);
         R_CASE_TO_STRING(LayerFeatureFlag_SamplerFeedback);
         R_CASE_TO_STRING(LayerFeatureFlag_VariableRateShading);
+        R_CASE_TO_STRING(LayerFeatureFlag_GpuCrashReporting);
         default:
             R_CASE_TO_STRING(LayerFeatureFlag_None);
     }
@@ -422,11 +423,7 @@ void VulkanAdapter::checkAvailableDeviceExtensions()
 #endif
     }));
     
-    m_supportedDeviceExtensionFlags =   LayerFeatureFlag_MeshShading | 
-                                        LayerFeatureFlag_Raytracing | 
-                                        LayerFeatureFlag_SamplerFeedback | 
-                                        LayerFeatureFlag_GpuCrashReporting |
-                                        LayerFeatureFlag_VariableRateShading;
+    m_supportedDeviceExtensionFlags = getInstance()->getRequestedDeviceFeatures();
 
     // Query all device extensions available for this device.
     for (U32 i = 0; i < m_supportedDeviceExtensions.size(); ++i) 

@@ -302,8 +302,9 @@ ResultCode VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& in
     R_ASSERT_FORMAT(adapter != NULL, "Adapter must not be NULL! Device creation will fail!");
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos; 
 
+    setSupportedFeatures(adapter->getSupportedDeviceLayerFlags());
+
     VkDeviceCreateInfo createInfo                       = { };
-    
     PhysicalDeviceFeaturesInfo features                 = checkEnableFeatures(adapter);
    
     VulkanInstance* pVc                                 = adapter->getInstance();
@@ -314,10 +315,19 @@ ResultCode VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& in
 
 #ifdef VK_NV_device_diagnostics_config
 #ifdef RCL_ENABLE_AFTERMATH
-    if (adapter->checkSupportsDeviceExtension(VK_NV_DEVICE_DIAGNOSTICS_CONFIG_EXTENSION_NAME))
+
+    VkDeviceDiagnosticsConfigCreateInfoNV nvFeature = {};
+    if (adapter->checkSupportsDeviceExtension(VK_NV_DEVICE_DIAGNOSTICS_CONFIG_EXTENSION_NAME)
+        && hasFeaturesSupport(LayerFeatureFlag_GpuCrashReporting))
     {
         m_gpuCrashTracker = new AftermathGpuCrashTracker();
         m_gpuCrashTracker->initialize(adapter->getInstance()->getAppName());
+
+        features.add<VkDeviceDiagnosticsConfigCreateInfoNV>(nvFeature);
+        nvFeature.sType = VK_STRUCTURE_TYPE_DEVICE_DIAGNOSTICS_CONFIG_CREATE_INFO_NV;
+        nvFeature.flags = VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_SHADER_ERROR_REPORTING_BIT_NV
+            | VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_SHADER_DEBUG_INFO_BIT_NV
+            | VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_RESOURCE_TRACKING_BIT_NV;
     }
 #endif
 #endif
@@ -387,19 +397,6 @@ ResultCode VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& in
         }
         
     }
-
-#ifdef VK_NV_device_diagnostics_config
-    VkDeviceDiagnosticsConfigCreateInfoNV nvFeature = {};
-    // TODO: this is getting automatically enabled. We need to set it up as a configuration.
-    if (adapter->checkSupportsDeviceExtension(VK_NV_DEVICE_DIAGNOSTICS_CONFIG_EXTENSION_NAME))
-    {
-        features.add<VkDeviceDiagnosticsConfigCreateInfoNV>(nvFeature);
-        nvFeature.sType = VK_STRUCTURE_TYPE_DEVICE_DIAGNOSTICS_CONFIG_CREATE_INFO_NV;
-        nvFeature.flags = VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_SHADER_ERROR_REPORTING_BIT_NV
-                    | VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_SHADER_DEBUG_INFO_BIT_NV
-                    | VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_RESOURCE_TRACKING_BIT_NV;
-    }
-#endif
 
     createInfo.pQueueCreateInfos        = queueCreateInfos.data();
     createInfo.queueCreateInfoCount     = (U32)queueCreateInfos.size();

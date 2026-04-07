@@ -221,7 +221,7 @@ void createShaderProgram(GraphicsDevice* device)
     }   
     else
     {
-        shaderBuilder = Pipeline::createShaderBuilder("glslang");
+        shaderBuilder = Pipeline::createShaderBuilder("dxc");
         intermediateCode = ShaderIntermediateCode_Spirv;
         shaderBuilder->addPreprocessor(&preprocessor);
     }
@@ -767,7 +767,7 @@ int main(char* argv[], int c)
         instance->initialize(appInfo, flags);
     }
     
-    adapter = instance->getGraphicsAdapters()[1];
+    adapter = instance->getGraphicsAdapters()[0];
     R_ASSERT(adapter);
     
     {
@@ -821,7 +821,7 @@ int main(char* argv[], int c)
             swapchain->prepare(context);
 
             applyGBufferRendering(context, meshes, window->getWidth(), window->getHeight(), tick.delta());
-            resolveLighting(context);
+            //resolveLighting(context);
 
             context->transition(swapchain->getFrame(swapchain->getCurrentFrameIndex()), ResourceState_Present);
             context->end();

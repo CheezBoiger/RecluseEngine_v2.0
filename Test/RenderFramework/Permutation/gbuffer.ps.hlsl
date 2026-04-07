@@ -13,7 +13,7 @@ cbuffer PerVert : register(b0)
 	float4x4 mModelViewProjection;
 	float4x4 mNormal;
 	uint   	 useTexturing;
-	uint 	 pad0[3];
+	uint3 	 pad0;
 };
 
 cbuffer Scene : register(b1)
@@ -48,7 +48,7 @@ PSOut psMain(PSIn pixIn)
 	if (moveUp == 1)
 		texcoord.y += time;
 #endif
-	texcoord = select(texcoord > 1.0, frac(texcoord), texcoord);
+	texcoord = frac(texcoord);
 	
 	Output.albedo = colorTexture.Sample(colorSampler, texcoord);
 #else

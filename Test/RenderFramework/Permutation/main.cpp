@@ -207,7 +207,7 @@ void createShaderProgram(GraphicsDevice* device)
 {
 
     ShaderProgramDatabase database          = ShaderProgramDatabase("PipelineInitialization.D3D12.Database");
-#if 1
+#if 0
     if (instance->getApi() == GraphicsApi_Direct3D12)
         GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
     std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
@@ -216,9 +216,11 @@ void createShaderProgram(GraphicsDevice* device)
     
     FileBufferData vsData = { };
     FileBufferData fsData = { };
-    File::readFrom(&vsData, vsSource);
-    File::readFrom(&fsData, fsSource);
+    File::readFrom(&vsData, vsSource, File::NullTerminate);
+    File::readFrom(&fsData, fsSource, File::NullTerminate);
+
     Pipeline::Builder::ShaderProgramDescription description;
+    description.debug = true;
     description.pipelineType = BindType_Graphics;
     description.language = ShaderLanguage_Hlsl;
     description.graphics.vs = vsData.data();
@@ -238,7 +240,7 @@ void createShaderProgram(GraphicsDevice* device)
     }
     else
     {
-        shaderBuilder = Pipeline::createShaderBuilder("dxc");
+        shaderBuilder = Pipeline::createShaderBuilder("glslang");
         shaderBuilder->addPreprocessor(&preprocessor);
         intermediateCode = ShaderIntermediateCode_Spirv;
     }
@@ -283,8 +285,8 @@ void createShaderProgram(GraphicsDevice* device)
     vsSource = currDir + "/" + "quad.vs.hlsl";
     fsSource = currDir + "/" + "resolve.ps.hlsl";
 
-    File::readFrom(&vsData, vsSource);
-    File::readFrom(&fsData, fsSource);
+    File::readFrom(&vsData, vsSource, File::NullTerminate);
+    File::readFrom(&fsData, fsSource, File::NullTerminate);
 
     description.pipelineType = BindType_Graphics;
     description.language = ShaderLanguage_Hlsl;
@@ -299,17 +301,17 @@ void createShaderProgram(GraphicsDevice* device)
         ArchiveWriter writer("dxil.database");
         database.serialize(&writer);
     }
+    shaderBuilder->tearDown();
+    Pipeline::freeShaderBuilder(shaderBuilder);
 #else
     {
         ArchiveReader reader("dxil.database");
         database.deserialize(&reader);
-        Runtime::buildShaderProgram(device, database, ShaderProgram_LightResolve);
-        Runtime::buildShaderProgram(device, database, ShaderProgram_Gbuffer);
+        Runtime::loadShaderProgram(device, database, ShaderProgram_LightResolve);
+        Runtime::loadShaderProgram(device, database, ShaderProgram_Gbuffer);
     }
 #endif
     database.clearShaderProgramDefinitions();
-    shaderBuilder->tearDown();
-    Pipeline::freeShaderBuilder(shaderBuilder);
 }
 
 
@@ -541,17 +543,14 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
     context->setInputVertexLayout(VertexLayout_PositionNormalTexCoordColor);
     U32 permutation = 0;
     KeyboardListener listener;
-    static bool ss = false;
-    if (ss)//listener.isKeyDown(KeyCode_A))
+    if (listener.isKeyDown(KeyCode_A))
     {
         permutation = makeBitset32(0, 1, 1);
         if (listener.isKeyDown(KeyCode_B))
             permutation |= makeBitset32(1, 1, 1);
         if (listener.isKeyDown(KeyCode_V))
-            permutation += makeBitset32(2, 1, 1);
+            permutation |= makeBitset32(2, 1, 1);
     }
-
-    ss = ss ? 0 : 1;
     ShaderProgramBinder& binder = context->bindShaderProgram(ShaderProgram_Gbuffer, permutation);
 
     for (U32 i = 0; i < meshes.size(); ++i)
@@ -896,6 +895,7 @@ int main(char* argv[], int c)
                 total /= static_cast<F32>(lastMs.size());
                 R_WARN("DeferredBox", "Fps: %f", 1.0f / total);
             }
+
             ResultCode result = swapchain->prepare(context);
 
             if (result != RecluseResult_Ok)

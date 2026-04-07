@@ -46,7 +46,7 @@ public:
 
     Bool                supportsLayers(LayerFeatureFlags layer) const { return (m_enabledLayers & layer); }
     Bool                supportsDebugMarking() const { return supportsLayers(LayerFeatureFlag_DebugMarking); }
-
+    LayerFeatureFlags   getEnabledFeatures() const { return m_enabledLayers; }
     LayerFeatureFlags   getRequestedDeviceFeatures() const { return m_requestedDeviceFeatures; }
     
     VkSurfaceKHR        makeSurface(void* windowHandle);

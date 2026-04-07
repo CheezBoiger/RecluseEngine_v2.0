@@ -469,6 +469,13 @@ ResultCode ShaderProgramDatabase::serialize(Archive* pArchive) const
         for (auto& shaderIter : shaderTypeMap.second)
         {
             shaderIter.second->serialize(pArchive);
+            std::string filePath = m_name
+                + "/Shaders/Shader_"
+                + std::to_string(shaderIter.second->getShaderHashId()) 
+                + "_"
+                + std::to_string(shaderIter.second->getPermutationId())
+                + ".shader";
+            Shader::saveToFile(shaderIter.second, filePath.c_str());
             U32 references = shaderIter.second->getReference();
             pArchive->write(&references, sizeof(U32));
         }
@@ -571,6 +578,19 @@ ResultCode ShaderProgramDatabase::deserialize(Archive* pArchive)
     {
         Shader* shader = Shader::create();
         shader->deserialize(pArchive);
+
+        std::string filePath = m_name
+            + "/Shaders/Shader_"
+            + std::to_string(shader->getShaderHashId())
+            + "_"
+            + std::to_string(shader->getPermutationId())
+            + ".shader";
+        Shader::loadFromFile(shader, 
+            filePath.c_str(), 
+            shader->getEntryPointName(), 
+            shader->getType(), 
+            shader->getIntermediateCodeType());
+
         U32 references = 0;
         pArchive->read(&references, sizeof(U32));
         shader->addReference(references-1);

@@ -26,14 +26,24 @@ struct RecluseFramework_PUBLIC_API File
         : m_isOpen(false)
         , m_fileHandle(nullptr) { }
 
+    enum Config
+    {
+        None,
+        Recursive = (1 << 0),
+        NullTerminate = (1 << 1)
+    };
+    typedef U32 Flags;
+
     // Quick read/write calls to files, which will not open them any longer than needed in order 
     // to read/write to a buffer.
 
     // Read from a filepath.
-    static ResultCode readFrom(FileBufferData* pData, const std::string& filePath);
+    static ResultCode readFrom(FileBufferData* pData, const std::string& filePath, Flags flags = None);
 
     // Write to a filepath.
-    static ResultCode writeTo(FileBufferData* pData, const std::string& filePath);
+    static ResultCode writeTo(FileBufferData* pData, const std::string& filePath, Flags flags = None);
+    // If data is already defined, use this.
+    static ResultCode writeTo(const char* pData, U64 sizeBytes, const std::string& filePath, Flags flags = None);
 
     // Read from a filepath asyncronously. This will immediately return back to the caller.
     // Updates the FileBufferDataAsync object when the separate run finishes.
@@ -41,13 +51,13 @@ struct RecluseFramework_PUBLIC_API File
 
     // Write to a filepath asyncronously. This will immediately return back to the caller.
     // Updates the FileBufferDataAsync object when the separate run finishes.
-    static ResultCode writeToAsync(FileBufferDataAsync* pBuffer, const std::string& filePath);
+    static ResultCode writeToAsync(FileBufferDataAsync* pBuffer, const std::string& filePath, Flags flag = None);
 
     // Get the extension of the filepath. It is usually in the filename.
     static std::string extension(const std::string& filePath);
 
     // Opens the file with the given access permissions.
-    ResultCode open(const std::string& filePath, char* access);
+    ResultCode open(const std::string& filePath, char* access, Flags flags = None);
 
     // Closes the file handle, this is required, otherwise the handle remains open!
     void    close();

@@ -21,7 +21,7 @@ U64 File::getFileSz() const
 }
 
 
-ResultCode File::readFrom(FileBufferData* pFile, const std::string& filePath)
+ResultCode File::readFrom(FileBufferData* pFile, const std::string& filePath, Flags flags)
 {
     File file;
     ResultCode result = RecluseResult_Ok;
@@ -32,11 +32,18 @@ ResultCode File::readFrom(FileBufferData* pFile, const std::string& filePath)
     {
         DWORD sz        = (DWORD)file.getFileSz();
 
-        pFile->resize(sz+1);
+        if (flags & NullTerminate)
+            sz += 1;
+
+        pFile->resize(sz);
         result = file.read(pFile->data(), pFile->size());
         file.close();
-        // Null terminate, as we don't gaurantee one.
-        (*pFile)[sz] = '\0';
+
+        if (flags & NullTerminate)
+        {
+            // Null terminate, as we don't gaurantee one.
+            (*pFile)[sz-1] = '\0';
+        }
         R_DEBUG(R_CHANNEL_WIN32, "Read %d bytes of data from file: %s", pFile->size(), filePath.c_str());
     }
 
@@ -44,22 +51,28 @@ ResultCode File::readFrom(FileBufferData* pFile, const std::string& filePath)
 }
 
 
-ResultCode File::writeTo(FileBufferData* pFile, const std::string& filePath)
+ResultCode File::writeTo(const char* pData, U64 sizeBytes, const std::string& filePath, Flags flags)
 {
     ResultCode result = RecluseResult_Ok;
     File file;
-    
-    result = file.open(filePath, "w");
-    
-    if (file.isOpen()) 
+
+    result = file.open(filePath, "w", flags);
+
+    if (file.isOpen())
     {
-        result = file.write(pFile->data(), pFile->size());
+        result = file.write(pData, sizeBytes);
         file.close();
 
-        R_DEBUG(R_CHANNEL_WIN32, "Wrote %d bytes of data to file: %s", pFile->size(), filePath.c_str());
+        R_DEBUG(R_CHANNEL_WIN32, "Wrote %d bytes of data to file: %s", sizeBytes, filePath.c_str());
     }
 
     return result;
+}
+
+
+ResultCode File::writeTo(FileBufferData* pFile, const std::string& filePath, Flags flags)
+{
+    return File::writeTo(pFile->data(), pFile->size(), filePath, flags);
 }
 
 
@@ -89,7 +102,8 @@ typedef struct
 {
     FileBufferDataAsync*    pAsyncBuffer;
     std::string             filePath;
-    ResultCode                 (*taskFn)       (FileBufferData*, const std::string&);
+    File::Flags             flags;
+    ResultCode                 (*taskFn)       (FileBufferData*, const std::string&, File::Flags);
 } FileBufferTemporary;
 
 
@@ -99,7 +113,7 @@ static ResultCode runFileAsyncTask(void* pData)
 
     FileBufferTemporary* pTemporary = reinterpret_cast<FileBufferTemporary*>(pData);
     
-    ResultCode result = pTemporary->taskFn(&pTemporary->pAsyncBuffer->data, pTemporary->filePath);
+    ResultCode result = pTemporary->taskFn(&pTemporary->pAsyncBuffer->data, pTemporary->filePath, pTemporary->flags);
 
     pTemporary->pAsyncBuffer->isFinished = true;
     
@@ -136,7 +150,7 @@ ResultCode File::readFromAsync(FileBufferDataAsync* pBuffer, const std::string& 
 }
 
 
-ResultCode File::writeToAsync(FileBufferDataAsync* pBuffer, const std::string& filePath)
+ResultCode File::writeToAsync(FileBufferDataAsync* pBuffer, const std::string& filePath, Flags flags)
 {
     R_ASSERT(pBuffer != NULL);
 
@@ -157,7 +171,6 @@ ResultCode File::writeToAsync(FileBufferDataAsync* pBuffer, const std::string& f
     return RecluseResult_NoImpl;
 }
 
-
 std::vector<std::string> Filesystem::split(const std::string& filename)
 {
     size_t f = filename.find_last_of("/\\");
@@ -165,13 +178,54 @@ std::vector<std::string> Filesystem::split(const std::string& filename)
 }
 
 
-ResultCode File::open(const std::string& filePath, char* access)
+Bool directoryExists(const std::string& dirPath)
+{
+    DWORD dwAttributes = GetFileAttributes(dirPath.c_str());
+    return ((dwAttributes != INVALID_FILE_ATTRIBUTES) && (dwAttributes & FILE_ATTRIBUTE_DIRECTORY));
+}
+
+
+ResultCode checkAndMakeFilePath(const std::string& filePath)
+{
+    // 1. Iterate through the string to create directories
+    for (size_t i = 0; i < filePath.length(); i++) 
+    {
+        if (filePath[i] == L'\\' || filePath[i] == L'/') 
+        {
+            std::string subPath = filePath.substr(0, i);
+
+            // Skip the drive letter (e.g., "C:")
+            if (subPath.length() <= 2 && subPath.find(":") != std::wstring::npos) 
+            {
+                continue;
+            }
+
+            // Check existence before attempting creation
+            if (!subPath.empty() && !directoryExists(subPath)) 
+            {
+                if (!CreateDirectory(subPath.c_str(), NULL)) {
+                    // Handle error if needed (e.g., permissions)
+                    return RecluseResult_Failed;
+                }
+            }
+        }
+    }
+    return RecluseResult_Ok;
+}
+
+
+ResultCode File::open(const std::string& filePath, char* access, Flags flags)
 {
     if (m_isOpen) 
     {
         R_ERROR(R_CHANNEL_WIN32, "This File is already open...");
 
         return RecluseResult_Ok;
+    }
+
+    if (flags & File::Config::Recursive)
+    {
+        checkAndMakeFilePath(filePath);
     }
 
     DWORD acc = 0;
@@ -308,13 +362,6 @@ std::string Filesystem::getDirectoryFromPath(const std::string& path)
     size_t pos = p.find_last_of('/');
     
     return p.substr(0, pos);
-}
-
-
-Bool directoryExists(const std::string& dirPath)
-{
-    DWORD dwAttributes = GetFileAttributes(dirPath.c_str());
-    return ((dwAttributes != INVALID_FILE_ATTRIBUTES) && (dwAttributes & FILE_ATTRIBUTE_DIRECTORY));
 }
 
 

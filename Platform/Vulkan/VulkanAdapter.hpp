@@ -94,7 +94,7 @@ public:
     VulkanInstance*                         getInstance() const { return m_instance; }
     std::vector<VkSurfaceFormatKHR>         getSurfaceFormats(VkSurfaceKHR surface);
     std::vector<const char*>                queryAvailableDeviceExtensions(LayerFeatureFlags requested) const;
-
+    LayerFeatureFlags                       getSupportedDeviceLayerFlags() const { return m_supportedDeviceExtensionFlags; }
     Bool                                    checkSupportsExtension(LayerFeatureFlags flags) const { return (m_supportedDeviceExtensionFlags & flags); }
     Bool                                    supportsRayTracing() const { return checkSupportsExtension(LayerFeatureFlag_Raytracing); }
     Bool                                    checkSupportsDeviceExtension(const char* extension);
