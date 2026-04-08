@@ -18,6 +18,7 @@
 #include <vector>
 #include <mutex>
 
+#ifdef RCL_ENABLE_AFTERMATH
 namespace std
 {
 template<typename T>
@@ -69,6 +70,7 @@ inline bool operator<(const GFSDK_Aftermath_ShaderDebugName& lhs, const GFSDK_Af
 {
     return strncmp(lhs.name, rhs.name, sizeof(lhs.name)) < 0;
 }
+#endif
 
 namespace Recluse {
 namespace Vulkan {
@@ -77,14 +79,24 @@ namespace Vulkan {
 class GpuCrashShaderDatabase
 {
 public:
+    virtual ~GpuCrashShaderDatabase() { }
+    virtual Bool registerShader(const uint8_t* byteCode, U64 sizeBytes) = 0;
+};
 
-    Bool registerShader(const uint8_t* byteCode, U64 sizeBytes);
+
+#ifdef RCL_ENABLE_AFTERMATH
+class AftermathGpuCrashShaderDatabase : public GpuCrashShaderDatabase
+{
+public:
+
+    virtual Bool registerShader(const uint8_t* byteCode, U64 sizeBytes) override;
     Bool lookup(const GFSDK_Aftermath_ShaderBinaryHash& shaderKey, std::vector<uint8_t>& data) const;
 
 private:
     std::map<uint64_t, std::vector<uint8_t>>
         m_shaderMap;
 };
+#endif
 
 class GpuCrashTracker
 {
@@ -131,7 +143,7 @@ private:
 
     std::map<GFSDK_Aftermath_ShaderDebugInfoIdentifier, std::vector<uint8_t>> m_shaderDebugInfo;
 
-    GpuCrashShaderDatabase m_shaderDatabase;
+    AftermathGpuCrashShaderDatabase m_shaderDatabase;
 
     mutable std::mutex m_mutex;
 
