@@ -23,7 +23,7 @@ namespace Vulkan {
 R_DECLARE_GLOBAL_STRING(g_fileName, "GpuCrashVulkan", "GpuCrash.Filename");
 
 
-Bool GpuCrashShaderDatabase::registerShader(const uint8_t* bytecode, U64 sizeBytes)
+Bool AftermathGpuCrashShaderDatabase::registerShader(const uint8_t* bytecode, U64 sizeBytes)
 {
 	if (sizeBytes == 0 || !bytecode)
 		return false;
@@ -55,7 +55,7 @@ Bool GpuCrashShaderDatabase::registerShader(const uint8_t* bytecode, U64 sizeByt
 }
 
 
-Bool GpuCrashShaderDatabase::lookup(const GFSDK_Aftermath_ShaderBinaryHash& shaderKey, std::vector<uint8_t>& data) const
+Bool AftermathGpuCrashShaderDatabase::lookup(const GFSDK_Aftermath_ShaderBinaryHash& shaderKey, std::vector<uint8_t>& data) const
 {
 	auto it = m_shaderMap.find(shaderKey.hash);
 	if (it == m_shaderMap.end())
