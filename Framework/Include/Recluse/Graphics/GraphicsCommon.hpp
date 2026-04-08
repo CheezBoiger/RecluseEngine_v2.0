@@ -185,6 +185,8 @@ enum FrameBuffering
 enum LayerFeatureFlag 
 {
     LayerFeatureFlag_None               = 0,
+    LayerFeatureFlag_Default            = LayerFeatureFlag_None,
+
     // Checks if gpu has dedicated/hardware raytracing.
     LayerFeatureFlag_Raytracing         = (1 << 0),
     // Checks if gpu has supported mesh shading pipeline.

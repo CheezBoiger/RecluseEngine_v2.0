@@ -381,7 +381,11 @@ void VulkanAdapter::checkAvailableDeviceExtensions()
     //       We could create a config that has an extension, and its dependency, than create some kind of DAG?
     m_supportedDeviceExtensions.push_back(std::make_tuple(LayerFeatureFlag_None, 
         std::vector<const char*>{   "VK_EXT_host_query_reset", "required", // Cpu side query reset
-                                    "VK_KHR_maintenance1", "required" }));  // This is required for fixes on vulkan 1.1.0
+                                    "VK_KHR_maintenance1", "required", // This is required for fixes on vulkan 1.1.0
+#ifdef VK_KHR_shader_non_semantic_info
+                                    VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME, "optional",
+#endif
+                                    }));  
     m_supportedDeviceExtensions.push_back(std::make_tuple(LayerFeatureFlag_Raytracing, 
         std::vector<const char*>{   "VK_KHR_ray_tracing_pipeline", "required",
                                     "VK_KHR_acceleration_structure", "required",
@@ -501,8 +505,16 @@ std::vector<const char*> VulkanAdapter::queryAvailableDeviceExtensions(LayerFeat
 
     std::set<const char*, Comp> supportedExtensions;
     std::vector<const char*> extensions;
-    for (U32 bit = 1; bit != 0; bit <<= 1)
+
+    // The None bit is default. Need to iterate +2, since we now have requisites.
+    for (U32 j = 0; j < std::get<1>(m_supportedDeviceExtensions[0]).size(); j += 2)
     {
+        supportedExtensions.insert(std::get<1>(m_supportedDeviceExtensions[0])[j]);
+    }
+
+    for (U32 shift = 0; shift < 32; ++shift)
+    {
+        U32 bit = (1 << shift);
         if (bit & requested)
         {
             for (U32 i = 0; i < m_supportedDeviceExtensions.size(); ++i)
