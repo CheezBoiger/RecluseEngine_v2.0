@@ -29,6 +29,7 @@ GraphicsDevice* device = nullptr;
 GraphicsContext* context = nullptr;
 GraphicsSwapchain* swapchain = nullptr;
 GraphicsInstance* instance = nullptr;
+GraphicsAdapter* adapter = nullptr;
 
 
 // TODO: Need to figure out how to better handle resolution resizing.
@@ -53,8 +54,6 @@ struct ConstBuffer
 {
     Math::Mat44 modelViewProjection;
     Math::Mat44 normal;
-    U32             useTexturing;
-    U32             pad0[3];
 };
 
 
@@ -84,6 +83,8 @@ struct MeshDraw
     GraphicsResource* albedoTexture;
     ResourceView albedoView;
     U32 numIndices;
+    Math::Mat44 mvp;
+    Math::Mat44 norm;
 };
 
 std::vector<Vertex> createCubeInstance(F32 scale)
@@ -207,7 +208,7 @@ void createShaderProgram(GraphicsDevice* device)
 {
 
     ShaderProgramDatabase database          = ShaderProgramDatabase("PipelineInitialization.D3D12.Database");
-#if 0
+#if 1
     if (instance->getApi() == GraphicsApi_Direct3D12)
         GlobalCommands::setValue("ShaderBuilder.NameId", "dxc");
     std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
@@ -240,7 +241,7 @@ void createShaderProgram(GraphicsDevice* device)
     }
     else
     {
-        shaderBuilder = Pipeline::createShaderBuilder("glslang");
+        shaderBuilder = Pipeline::createShaderBuilder("dxc");
         shaderBuilder->addPreprocessor(&preprocessor);
         intermediateCode = ShaderIntermediateCode_Spirv;
     }
@@ -558,6 +559,7 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
         U64 offset[] = { 0 };
         GraphicsResource* vb = meshes[i].vertexBuffer;
         context->transition(meshes[i].albedoTexture, ResourceState_ShaderResource);
+        context->transition(meshes[i].meshTransform, ResourceState_ConstantBuffer);
 
         SceneConst scene;
         RealtimeTick tick = RealtimeTick::getTick(0);
@@ -568,9 +570,14 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
         scene.moveLeft = listener.isKeyDown(KeyCode_B) ? 1 : 0;
         scene.moveUp = listener.isKeyDown(KeyCode_V) ? 1 : 0;
 
+        ConstBuffer b = { };
+        b.modelViewProjection = meshes[i].mvp;
+        b.normal = meshes[i].norm;
+        ResourceView buffConst = context->allocateConstantBuffer(sizeof(ConstBuffer), &b);
         ResourceView sceneConst = context->allocateConstantBuffer(sizeof(SceneConst), &scene);
 
-        binder.bindConstantBuffer(ShaderStage_Pixel | ShaderStage_Vertex, 0, 0, meshes[i].meshTransform, 0, sizeof(ConstBuffer))
+
+        binder.bindConstantBuffer(ShaderStage_Vertex, 0, 0, buffConst)
                 .bindConstantBuffer(ShaderStage_Pixel, 0, 1, sceneConst)
                 .bindShaderResource(ShaderStage_Pixel, 0, 0, meshes[i].albedoView)
                 .bindSampler(ShaderStage_Pixel, 0, 0, gbufferSampler);
@@ -713,8 +720,8 @@ void createCubes(GraphicsDevice* device, std::vector<MeshDraw>& meshes, U32 widt
         device->createResource(&it.indexBuffer, description, ResourceState_CopyDestination);
 
         description.usage = ResourceUsage_ConstantBuffer;
-        description.memoryUsage = ResourceMemoryUsage_CpuToGpu;
-        description.width = sizeof(ConstBuffer);
+        description.memoryUsage = ResourceMemoryUsage_CpuVisible;
+        description.width = align(sizeof(ConstBuffer), adapter->constantBufferOffsetAlignmentBytes());
         device->createResource(&it.meshTransform, description, ResourceState_ConstantBuffer);
 
         {
@@ -776,11 +783,13 @@ void createCubes(GraphicsDevice* device, std::vector<MeshDraw>& meshes, U32 widt
         Math::Mat44 R2 = Math::rotate(Math::Mat44::identity(), Math::Float3(1.0f, 0.0f, 1.0f), Math::deg2Rad(t));
         Math::Mat44 model = R2 * R * T;
         buffer->modelViewProjection = model * view * proj;
+        it.mvp = model * view * proj;
         model(3, 0) = 0.f;
         model(3, 1) = 0.f;
         model(3, 2) = 0.f;
         buffer->normal = Math::transpose(Math::inverse(model));
-        buffer->useTexturing = true;
+        it.norm = Math::transpose(Math::inverse(model));
+        //buffer->useTexturing = true;
 
         it.meshTransform->unmap(nullptr);
         
@@ -825,7 +834,6 @@ int main(char* argv[], int c)
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
     instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
-    GraphicsAdapter* adapter    = nullptr;
     std::vector<MeshDraw> meshes;
 
     Window* window = Window::create("Deferred", 0, 0, 1200, 800, ScreenMode_Windowed);

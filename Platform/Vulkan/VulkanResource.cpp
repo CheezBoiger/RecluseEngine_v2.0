@@ -8,6 +8,8 @@
 #include "VulkanQueue.hpp"
 #include "Recluse/Messaging.hpp"
 
+#include "VulkanGpuCrashTracker.hpp"
+
 #include <memory>
 
 
@@ -400,6 +402,7 @@ ResultCode VulkanBuffer::onBind(VulkanDevice* pDevice, const GraphicsResourceDes
             R_WARN(R_CHANNEL_VULKAN, "Failed to create buffer debug name object.");
         }
     }    
+
     performInitialLayout(getDevice(), getCurrentResourceState());
     return RecluseResult_Ok;
 }

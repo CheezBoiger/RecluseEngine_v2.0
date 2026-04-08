@@ -12,8 +12,6 @@ cbuffer PerVert : register(b0)
 {
 	float4x4 mModelViewProjection;
 	float4x4 mNormal;
-	uint   	 useTexturing;
-	uint3 	 pad0;
 };
 
 cbuffer Scene : register(b1)

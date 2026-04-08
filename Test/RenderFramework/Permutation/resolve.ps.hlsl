@@ -47,10 +47,10 @@ float4 psMain(PSIn pixIn) : SV_TARGET0
 	float4 color = float4(0, 0, 0, 0);
 	float2 UV = pixIn.vTexCoord;
 	color = AlbedoTexture.Sample(g_sampler, UV).rgba;
-	for (uint lightIdx = 0; lightIdx < numLights; ++lightIdx)
-	{
-		Light light = LightBuffer[lightIdx];
-		color += light.Color;
-	}
+	//for (uint lightIdx = 0; lightIdx < numLights; ++lightIdx)
+	//{
+	//	Light light = LightBuffer[lightIdx];
+	//	color += light.Color;
+	//}
 	return color;
 }

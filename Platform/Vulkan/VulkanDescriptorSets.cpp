@@ -146,6 +146,11 @@ VkDescriptorSetLayout createDescriptorSetLayout(VulkanContext* pContext, const D
     ci.sType            = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     ci.bindingCount     = binding;
     ci.pBindings        = bindings.data();
+    // TODO: Maybe best to use update after bind? Can reduce chances of 
+    //       sudden memory invalidation due to updating after bind.
+    //       This was occuring when Batcher::flush() was being called after
+    //       already binding the descriptor set in a command buffer.
+    ci.flags            = 0;
 
     result = vkCreateDescriptorSetLayout(device, &ci, nullptr, &layout);
 

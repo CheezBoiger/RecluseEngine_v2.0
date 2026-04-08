@@ -326,6 +326,7 @@ ResultCode VulkanDevice::initialize(VulkanAdapter* adapter, DeviceCreateInfo& in
         features.add<VkDeviceDiagnosticsConfigCreateInfoNV>(nvFeature);
         nvFeature.sType = VK_STRUCTURE_TYPE_DEVICE_DIAGNOSTICS_CONFIG_CREATE_INFO_NV;
         nvFeature.flags = VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_SHADER_ERROR_REPORTING_BIT_NV
+            | VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_AUTOMATIC_CHECKPOINTS_BIT_NV
             | VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_SHADER_DEBUG_INFO_BIT_NV
             | VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_RESOURCE_TRACKING_BIT_NV;
     }
@@ -1188,6 +1189,9 @@ ResultCode VulkanDevice::destroySampler(GraphicsSampler* pSampler)
     return ResourceViews::releaseSampler(this, pSampler->getId());
 }
 
+#define REGISTER_SHADER(pShader) \
+    if (pShader) \
+        sdb->registerShader((const uint8_t*)pShader->getByteCode(), pShader->getSzBytes());
 
 ResultCode VulkanDevice::loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const ShaderProgramDefinition& definition)
 {
@@ -1199,6 +1203,34 @@ ResultCode VulkanDevice::loadShaderProgram(ShaderProgramId program, ShaderProgra
     {
         R_ERROR(R_CHANNEL_VULKAN, "Unable to load ShaderProgramDefinition! Compiled shaders are not SPIR-V!!");
         return RecluseResult_Failed;
+    }
+
+    if (m_gpuCrashTracker)
+    {
+        GpuCrashShaderDatabase* sdb = m_gpuCrashTracker->getShaderDatabase();
+        switch (definition.pipelineType)
+        {
+        case BindType_Compute:
+            REGISTER_SHADER(definition.compute.cs);
+            break;
+        case BindType_Graphics:
+            if (definition.graphics.usesMeshShaders)
+            {
+                REGISTER_SHADER(definition.graphics.as);
+                REGISTER_SHADER(definition.graphics.ms);
+            }
+            else
+            {
+                REGISTER_SHADER(definition.graphics.vs);
+                REGISTER_SHADER(definition.graphics.ds);
+                REGISTER_SHADER(definition.graphics.gs);
+                REGISTER_SHADER(definition.graphics.hs);
+                REGISTER_SHADER(definition.graphics.ps);
+            }
+            break;
+        default:
+            break;
+        }
     }
     return ShaderPrograms::loadNativeShaderProgramPermutation(this, program, permutation, definition);
 }
