@@ -110,9 +110,9 @@ std::vector<Vertex> createCubeInstance(F32 scale)
 }
 
 
-std::vector<U32> createCubeIndicesInstance()
+std::vector<U16> createCubeIndicesInstance()
 {
-    std::vector<U32> cubeIs(36);
+    std::vector<U16> cubeIs(36);
     std::array<U32, 36> indices = Shared::Box::GetIndices();
     for (size_t i = 0; i < indices.size(); ++i) 
     {
@@ -573,8 +573,8 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
         ConstBuffer b = { };
         b.modelViewProjection = meshes[i].mvp;
         b.normal = meshes[i].norm;
-        ResourceView buffConst = context->allocateConstantBuffer(sizeof(ConstBuffer), &b);
         ResourceView sceneConst = context->allocateConstantBuffer(sizeof(SceneConst), &scene);
+        ResourceView buffConst = context->allocateConstantBuffer(sizeof(ConstBuffer), &b);
 
 
         binder.bindConstantBuffer(ShaderStage_Vertex, 0, 0, buffConst)
@@ -583,7 +583,7 @@ void applyGBufferRendering(GraphicsContext* context, const std::vector<MeshDraw>
                 .bindSampler(ShaderStage_Pixel, 0, 0, gbufferSampler);
 
         context->bindVertexBuffers(1, &vb, offset);
-        context->bindIndexBuffer(meshes[i].indexBuffer, 0, IndexType_Unsigned32);
+        context->bindIndexBuffer(meshes[i].indexBuffer, 0, IndexType_Unsigned16);
         context->drawIndexedInstanced(meshes[i].numIndices, 1, 0, 0, 0);
     }
     context->popState();
@@ -697,10 +697,11 @@ void createCubes(GraphicsDevice* device, std::vector<MeshDraw>& meshes, U32 widt
 {
     meshes.resize(1);
     std::vector<Vertex> vertices = createCubeInstance(1.0f);
-    std::vector<U32> indices = createCubeIndicesInstance();
+    std::vector<U16> indices = createCubeIndicesInstance();
 
     Math::Matrix44 view = Math::translate(Math::Matrix44::identity(), Math::Float3(0, 0, 0));
     Math::Matrix44 proj = Math::perspectiveLH_Aspect(Math::deg2Rad(45.0f), (F32)width / (F32)height, 0.001f, 1000.0f);
+    F32 i = 0.0;
     for (auto& it : meshes)
     {
         GraphicsResourceDescription description = { };
@@ -716,7 +717,7 @@ void createCubes(GraphicsDevice* device, std::vector<MeshDraw>& meshes, U32 widt
         device->createResource(&it.vertexBuffer, description, ResourceState_CopyDestination);
         
         description.usage =  ResourceUsage_IndexBuffer | ResourceUsage_CopyDestination;
-        description.width = sizeof(U32) * indices.size();
+        description.width = sizeof(U16) * indices.size();
         device->createResource(&it.indexBuffer, description, ResourceState_CopyDestination);
 
         description.usage = ResourceUsage_ConstantBuffer;
@@ -757,17 +758,17 @@ void createCubes(GraphicsDevice* device, std::vector<MeshDraw>& meshes, U32 widt
             bufDesc.format = ResourceFormat_Unknown;
             bufDesc.height = 1;
             bufDesc.mipLevels = 1;
-            bufDesc.width = sizeof(U32) * indices.size();
+            bufDesc.width = sizeof(U16) * indices.size();
             bufDesc.memoryUsage = ResourceMemoryUsage_CpuToGpu;
             bufDesc.usage = ResourceUsage_CopySource;
             device->createResource(&buf, bufDesc, ResourceState_CopySource);
             void* dat = nullptr;
             buf->map(&dat, nullptr);
-            memcpy(dat, indices.data(), sizeof(U32) * vertices.size());
+            memcpy(dat, indices.data(), sizeof(U16) * indices.size());
             buf->unmap(nullptr);
 
             CopyBufferRegion region = { };
-            region.szBytes = sizeof(U32) * vertices.size();
+            region.szBytes = sizeof(U16) * indices.size();
             region.dstOffsetBytes = 0;
             region.srcOffsetBytes = 0;
             device->copyBufferRegions(it.indexBuffer, buf, &region, 1);
@@ -778,7 +779,8 @@ void createCubes(GraphicsDevice* device, std::vector<MeshDraw>& meshes, U32 widt
         it.meshTransform->map((void**)&buffer, nullptr);
         F32 t = 20.0f * 0;
         t = fmod(t, 360.0f);
-        Math::Mat44 T = Math::translate(Math::Mat44::identity(), Math::Float3(0, 0, 6));
+        Math::Mat44 T = Math::translate(Math::Mat44::identity(), Math::Float3(0.0f, 0.0f - i * 1.0f, 6.0f));
+        i += 1.0f;
         Math::Mat44 R = Math::rotate(Math::Mat44::identity(), Math::Float3(0.0f, 1.0f, 0.0f), Math::deg2Rad(45.0f));
         Math::Mat44 R2 = Math::rotate(Math::Mat44::identity(), Math::Float3(1.0f, 0.0f, 1.0f), Math::deg2Rad(t));
         Math::Mat44 model = R2 * R * T;

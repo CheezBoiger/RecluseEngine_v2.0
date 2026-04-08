@@ -427,7 +427,7 @@ void VulkanContext::bindIndexBuffer(GraphicsResource* pIndexBuffer, U64 offsetBy
     VkDeviceSize offset     = (VkDeviceSize)offsetBytes;
     VkIndexType indexType   = VK_INDEX_TYPE_UINT32;
 
-    switch (indexType) 
+    switch (type) 
     {
         case IndexType_Unsigned16:  indexType = VK_INDEX_TYPE_UINT16; break;
         default:                    indexType = VK_INDEX_TYPE_UINT32; break;
