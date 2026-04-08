@@ -477,8 +477,8 @@ void createShaderProgram(GraphicsDevice* device)
 
     FileBufferData vsData = { };
     FileBufferData fsData = { };
-    File::readFrom(&vsData, vsSource);
-    File::readFrom(&fsData, fsSource);
+    File::readFrom(&vsData, vsSource, File::NullTerminate);
+    File::readFrom(&fsData, fsSource, File::NullTerminate);
     Pipeline::Builder::ShaderProgramDescription description;
     description.pipelineType = BindType_Graphics;
     description.language = ShaderLanguage_Hlsl;

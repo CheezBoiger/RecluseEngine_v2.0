@@ -141,8 +141,9 @@ public:
     typedef std::unordered_map<ShaderProgramPermutation, ShaderProgramDefinition> PermutationMap;
     typedef std::unordered_map<ShaderProgramId, PermutationMap> MetaMap;
 
-    ShaderProgramDatabase(const std::string& dbname = "") 
+    ShaderProgramDatabase(const std::string& dbname = "", Bool isBundled = false) 
         : m_name(dbname) 
+        , m_isBundled(isBundled)
     {
         m_nameHash = recluseHashFast(m_name.data(), m_name.size() * sizeof(char)); 
     }
@@ -177,6 +178,7 @@ public:
     }
 
     void                                        storeShaderProgramDefinition(const ShaderProgramDefinition& definition, ShaderProgramId shaderProgram, ShaderProgramPermutation permutation);
+    Bool                                        isBundled() const { return m_isBundled; }
 
 private:
     void                                        storeShader(Shader* pShader);
@@ -188,6 +190,7 @@ private:
     MetaMap                                         m_shaderProgramMetaMap;
     std::string                                     m_name;
     Hash64                                          m_nameHash;
+    Bool                                            m_isBundled;
 };
 
 

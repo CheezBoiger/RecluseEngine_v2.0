@@ -23,6 +23,7 @@ struct ShaderProgramDatabaseHeader
     U32     version;
     U32     numPrograms;
     U32     numShaders;
+    U32     bundled;        // If shader programs and shaders are bundled in this database.
 };
 
 
@@ -459,6 +460,7 @@ ResultCode ShaderProgramDatabase::serialize(Archive* pArchive) const
         shaderProgramDatabaseHeader.version = kCurrentShaderProgramDatabaseVersion;
         shaderProgramDatabaseHeader.numPrograms = static_cast<U32>(m_shaderProgramMetaMap.size());
         shaderProgramDatabaseHeader.numShaders = countShaders();
+        shaderProgramDatabaseHeader.bundled = isBundled();
         pArchive->write(&shaderProgramDatabaseHeader, sizeof(ShaderProgramDatabaseHeader));
     }
 
@@ -469,13 +471,24 @@ ResultCode ShaderProgramDatabase::serialize(Archive* pArchive) const
         for (auto& shaderIter : shaderTypeMap.second)
         {
             shaderIter.second->serialize(pArchive);
-            std::string filePath = m_name
-                + "/Shaders/Shader_"
-                + std::to_string(shaderIter.second->getShaderHashId()) 
-                + "_"
-                + std::to_string(shaderIter.second->getPermutationId())
-                + ".shader";
-            Shader::saveToFile(shaderIter.second, filePath.c_str());
+
+            if (isBundled())
+            {
+                const char* bytecode = shaderIter.second->getByteCode();
+                const U64 codeSizeBytes = shaderIter.second->getSzBytes();
+                pArchive->write(&codeSizeBytes, sizeof(U64));
+                pArchive->write(bytecode, codeSizeBytes);
+            }
+            else
+            {
+                std::string filePath = m_name
+                    + "/Shaders/Shader_"
+                    + std::to_string(shaderIter.second->getShaderHashId()) 
+                    + "_"
+                    + std::to_string(shaderIter.second->getPermutationId())
+                    + ".shader";
+                Shader::saveToFile(shaderIter.second, filePath.c_str());
+            }
             U32 references = shaderIter.second->getReference();
             pArchive->write(&references, sizeof(U32));
         }
@@ -565,7 +578,8 @@ ResultCode ShaderProgramDatabase::deserialize(Archive* pArchive)
         pArchive->read(&header, sizeof(ShaderProgramDatabaseHeader));
         m_name.resize(header.nameSize);
         memcpy((void*)m_name.data(), header.name, m_name.size());
-        m_nameHash = header.nameHash;       
+        m_nameHash = header.nameHash;      
+        m_isBundled = header.bundled; 
     }
 
     if (header.version != kCurrentShaderProgramDatabaseVersion)
@@ -578,19 +592,28 @@ ResultCode ShaderProgramDatabase::deserialize(Archive* pArchive)
     {
         Shader* shader = Shader::create();
         shader->deserialize(pArchive);
-
-        std::string filePath = m_name
-            + "/Shaders/Shader_"
-            + std::to_string(shader->getShaderHashId())
-            + "_"
-            + std::to_string(shader->getPermutationId())
-            + ".shader";
-        Shader::loadFromFile(shader, 
-            filePath.c_str(), 
-            shader->getEntryPointName(), 
-            shader->getType(), 
-            shader->getIntermediateCodeType());
-
+        if (isBundled())
+        {
+            U64 codeSizeBytes = 0;
+            pArchive->read(&codeSizeBytes, sizeof(U64));
+            std::vector<char> bytecode(codeSizeBytes);
+            pArchive->read(bytecode.data(), codeSizeBytes);
+            shader->load(shader->getEntryPointName(), bytecode.data(), bytecode.size(), shader->getIntermediateCodeType(), shader->getType());
+        }
+        else
+        {
+            std::string filePath = m_name
+                + "/Shaders/Shader_"
+                + std::to_string(shader->getShaderHashId())
+                + "_"
+                + std::to_string(shader->getPermutationId())
+                + ".shader";
+            Shader::loadFromFile(shader, 
+                filePath.c_str(), 
+                shader->getEntryPointName(), 
+                shader->getType(), 
+                shader->getIntermediateCodeType());
+        }
         U32 references = 0;
         pArchive->read(&references, sizeof(U32));
         shader->addReference(references-1);
