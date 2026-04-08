@@ -835,7 +835,7 @@ int main(char* argv[], int c)
     LogSystem::initializeLoggingSystem();
     LogSystem::enableLogTypes(LogType_Debug | LogType_Info);
     RealtimeTick::initializeWatch(1ull, 0);
-    instance  = GraphicsInstance::create(GraphicsApi_Vulkan);
+    instance  = GraphicsInstance::create(GraphicsApi_Direct3D12);
     std::vector<MeshDraw> meshes;
 
     Window* window = Window::create("Deferred", 0, 0, 1200, 800, ScreenMode_Windowed);
@@ -854,7 +854,7 @@ int main(char* argv[], int c)
         instance->initialize(appInfo, flags);
     }
     
-    adapter = instance->getGraphicsAdapters()[1];
+    adapter = instance->getGraphicsAdapters()[0];
     R_ASSERT(adapter);
     
     {

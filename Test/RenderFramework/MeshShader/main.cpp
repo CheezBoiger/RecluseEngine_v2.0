@@ -452,7 +452,7 @@ void createShaderProgram(GraphicsDevice* device)
     std::string meshShaderSourcePath = currDir + "/" + "MeshShader.hlsl";
 
     FileBufferData meshShaderData = { };
-    File::readFrom(&meshShaderData, meshShaderSourcePath);
+    File::readFrom(&meshShaderData, meshShaderSourcePath, File::NullTerminate);
     Pipeline::Builder::ShaderProgramDescription description;
     description.setPipelineType(BindType_Graphics)
         .setShaderLanguage(ShaderLanguage_Hlsl)

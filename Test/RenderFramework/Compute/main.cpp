@@ -262,7 +262,7 @@ int main(int c, char* argv[])
         FileBufferData file;
         std::string shaderPath = currDir + "/" + "test.cs.hlsl";
 
-        File::readFrom(&file, shaderPath);
+        File::readFrom(&file, shaderPath, File::NullTerminate);
         Pipeline::Builder::ShaderProgramDescription description = { };
         description.pipelineType = BindType_Compute;
         description.language = ShaderLanguage_Hlsl;

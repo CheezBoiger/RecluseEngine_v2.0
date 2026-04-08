@@ -52,7 +52,7 @@ static void createShaderPrograms(GraphicsAPI api)
     std::string currDir = Filesystem::getDirectoryFromPath(__FILE__);
     std::string shaderFile = currDir + "/" + "particles.hlsl";
 
-    File::readFrom(&source, shaderFile);
+    File::readFrom(&source, shaderFile, File::NullTerminate);
 
     // Particle Compute.
     description.pipelineType = BindType_Compute;
