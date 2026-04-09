@@ -201,7 +201,12 @@ private:
         // differrent render target views, but only care about the dxgi formats.
         D3D12RenderPass*                                m_currentRenderPass;
 
-        ContextState() { }
+        ContextState()
+            : m_numBoundVertexBuffers(0)
+            , m_dirtyFlags(0)
+            , m_currentRenderPass(nullptr)
+            , m_primitiveTopology(PrimitiveTopology_PointList)
+            , m_indexBufferView({ }) { }
 
         void                                            setDirty(ContextDirtyFlags flags) { m_dirtyFlags |= flags; }
         void                                            setClean() { m_dirtyFlags = ContextDirty_Clean; }
