@@ -163,24 +163,24 @@ void VulkanResource::releaseViews()
 
 void VulkanResource::initializeMetadata(const GraphicsResourceDescription& description)
 {
-    m_dimension     = description.dimension;
-    m_memoryUsage   = description.memoryUsage;
+    m_dimension                     = description.dimension;
+    m_memoryUsage                   = description.memoryUsage;
 }
 
 
 ResultCode VulkanBuffer::onCreate(VulkanDevice* pDevice, const GraphicsResourceDescription& desc, ResourceState initState) 
 {
-    ResultCode result                  = RecluseResult_Ok;
+    ResultCode result               = RecluseResult_Ok;
     ResourceUsageFlags usageFlags   = desc.usage;
     VkResult vulkanResult           = VK_SUCCESS;
     // Initial size in bytes, this is what the buffer itself would be seen with.
     m_bufferSizeBytes               = desc.width;
 
-    VkBufferCreateInfo info = { };
-    info.sType          = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    info.sharingMode    = VK_SHARING_MODE_EXCLUSIVE;
-    info.size           = desc.width;
-    info.usage          = 0;
+    VkBufferCreateInfo info         = { };
+    info.sType                      = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    info.sharingMode                = VK_SHARING_MODE_EXCLUSIVE;
+    info.size                       = desc.width;
+    info.usage                      = 0;
 
     if (usageFlags & ResourceUsage_VertexBuffer)        info.usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
     if (usageFlags & ResourceUsage_IndexBuffer)         info.usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
@@ -275,18 +275,18 @@ ResultCode VulkanImage::onCreate(VulkanDevice* pDevice, const GraphicsResourceDe
     VkImageTiling tiling                = VK_IMAGE_TILING_OPTIMAL;
     VkFormatFeatureFlags featureFlags   = 0;
     
-    VkImageCreateInfo info  = { };
-    info.sType              = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    info.arrayLayers        = (desc.dimension != ResourceDimension_3d) ? desc.depthOrArraySize : 1;
-    info.extent.width       = desc.width;   
-    info.extent.height      = desc.height;
-    info.extent.depth       = (desc.dimension == ResourceDimension_3d) ? desc.depthOrArraySize : 1;
-    info.initialLayout      = VK_IMAGE_LAYOUT_UNDEFINED; // this is a must, since the vulkan spec states it needs to be either UNDEFINED, or PREINITIALIZED.
-    info.mipLevels          = desc.mipLevels;
-    info.imageType          = VK_IMAGE_TYPE_2D;         
-    info.tiling             = tiling;
-    info.samples            = Vulkan::getSamples(desc.samples);
-    info.format             = format;
+    VkImageCreateInfo info              = { };
+    info.sType                          = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    info.arrayLayers                    = (desc.dimension != ResourceDimension_3d) ? desc.depthOrArraySize : 1;
+    info.extent.width                   = desc.width;   
+    info.extent.height                  = desc.height;
+    info.extent.depth                   = (desc.dimension == ResourceDimension_3d) ? desc.depthOrArraySize : 1;
+    info.initialLayout                  = VK_IMAGE_LAYOUT_UNDEFINED; // this is a must, since the vulkan spec states it needs to be either UNDEFINED, or PREINITIALIZED.
+    info.mipLevels                      = desc.mipLevels;
+    info.imageType                      = VK_IMAGE_TYPE_2D;         
+    info.tiling                         = tiling;
+    info.samples                        = Vulkan::getSamples(desc.samples);
+    info.format                         = format;
 
     switch (desc.dimension) 
     {
@@ -386,8 +386,9 @@ ResultCode VulkanBuffer::onBind(VulkanDevice* pDevice, const GraphicsResourceDes
         return RecluseResult_Failed;
     }
 
-    const Bool supportsDebugMarking = pDevice->getAdapter()->getInstance()->supportsDebugMarking();
-    const char* debugName           = description.name;
+    const Bool supportsDebugMarking             = pDevice->getAdapter()->getInstance()->supportsDebugMarking();
+    const char* debugName                       = description.name;
+
     if (supportsDebugMarking && debugName)
     {
         VkDebugUtilsObjectNameInfoEXT nameInfo  = { };
@@ -419,8 +420,9 @@ ResultCode VulkanImage::onBind(VulkanDevice* pDevice, const GraphicsResourceDesc
         return RecluseResult_Failed;
     }
 
-    const Bool supportsDebugMarking = pDevice->getAdapter()->getInstance()->supportsDebugMarking();
-    const char* debugName           = description.name;
+    const Bool supportsDebugMarking             = pDevice->getAdapter()->getInstance()->supportsDebugMarking();
+    const char* debugName                       = description.name;
+
     if (supportsDebugMarking && debugName)
     {
         VkDebugUtilsObjectNameInfoEXT nameInfo  = { };
@@ -430,6 +432,7 @@ ResultCode VulkanImage::onBind(VulkanDevice* pDevice, const GraphicsResourceDesc
         nameInfo.objectHandle                   = reinterpret_cast<uint64_t>(m_image);
         nameInfo.pObjectName                    = debugName;
         VkResult debugResult                    = pfn_vkSetDebugUtilsObjectNameEXT(pDevice->get(), &nameInfo);
+
         if (debugResult != VK_SUCCESS)
         {
             R_WARN(R_CHANNEL_VULKAN, "Failed to create image debug name object.");
@@ -482,8 +485,8 @@ ResultCode VulkanResource::unmap(MapRange* pWriteRange)
 
     if (pWriteRange) 
     {
-        offsetBytes += align(pWriteRange->offsetBytes, VulkanAdapter::obtainMinMemoryMapAlignment(m_pDevice));
-        sizeBytes    = pWriteRange->sizeBytes;
+        offsetBytes     += align(pWriteRange->offsetBytes, VulkanAdapter::obtainMinMemoryMapAlignment(m_pDevice));
+        sizeBytes       = pWriteRange->sizeBytes;
     }
 
     mappedRange.sType   = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;

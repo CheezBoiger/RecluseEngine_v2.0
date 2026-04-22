@@ -16,9 +16,9 @@
 #include <unordered_map>
 #include <array>
 
-#define R_MAX_WRITE_BUFFER_INFO_COUNT 64
-#define R_MAX_WRITE_IMAGE_INFO_COUNT 64
-#define R_MAX_WRITE_INFO_COUNT (R_MAX_WRITE_BUFFER_INFO_COUNT + R_MAX_WRITE_IMAGE_INFO_COUNT)
+#define R_MAX_WRITE_BUFFER_INFO_COUNT               64
+#define R_MAX_WRITE_IMAGE_INFO_COUNT                64
+#define R_MAX_WRITE_INFO_COUNT                      (R_MAX_WRITE_BUFFER_INFO_COUNT + R_MAX_WRITE_IMAGE_INFO_COUNT)
 
 #define R_MAX_EXPECTED_ACCELERATION_STRUCTURE_COUNT 8
 
@@ -459,7 +459,6 @@ static ResultCode updateDescriptorSet(VulkanContext* pContext, VkDescriptorSet s
                         + structure.key.value.samplers 
                         + structure.key.value.srvs 
                         + structure.key.value.uavs;
-
     U32 binding = 0;
 
     VulkanDescriptorWriter writer(device);
@@ -530,11 +529,11 @@ class DescriptorSetKeyHasher
 public:
     size_t operator()(const Structure& key) const
     {
-        Hash64 hh   = recluseHashFast(&key.key.hash, sizeof(U64) * 2u);
-        hh          = combineHash64(hh, recluseHashFast(key.ppShaderResources, sizeof(VulkanResourceView*) * key.key.value.srvs));
-        hh          = combineHash64(hh, recluseHashFast(key.ppConstantBuffers, sizeof(BufferView*) * key.key.value.constantBuffers));
-        hh          = combineHash64(hh, recluseHashFast(key.ppUnorderedAccesses, sizeof(VulkanResourceView*) * key.key.value.uavs));
-        hh          = combineHash64(hh, recluseHashFast(key.ppSamplers, sizeof(VulkanSampler*) * key.key.value.samplers));
+        Hash64 hh   = recluseHashFast(&key.key.hash,                                sizeof(U64) * 2u);
+        hh          = combineHash64(hh, recluseHashFast(key.ppShaderResources,      sizeof(VulkanResourceView*) * key.key.value.srvs));
+        hh          = combineHash64(hh, recluseHashFast(key.ppConstantBuffers,      sizeof(BufferView*) * key.key.value.constantBuffers));
+        hh          = combineHash64(hh, recluseHashFast(key.ppUnorderedAccesses,    sizeof(VulkanResourceView*) * key.key.value.uavs));
+        hh          = combineHash64(hh, recluseHashFast(key.ppSamplers,             sizeof(VulkanSampler*) * key.key.value.samplers));
         return staticCast<size_t>(hh);
     }
 };

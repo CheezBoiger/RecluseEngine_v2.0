@@ -17,6 +17,8 @@ const U64 D3D12TemporaryBufferAllocator::kTemporaryAllocationPageSizeBytes = R_M
 template<typename AllocationContext>
 D3D12ResourcePagedAllocator<AllocationContext>::D3D12ResourcePagedAllocator()
     : m_pAllocator(nullptr)
+    , m_allocatorIndex(0)
+    , m_pool({ nullptr, 0 })
 {
     
 }
@@ -158,6 +160,7 @@ ResultCode D3D12ResourceAllocationManager::initialize(ID3D12Device* pDevice)
 
 ResultCode D3D12ResourceAllocationManager::allocate(D3D12MemoryObject* pOut, const D3D12_RESOURCE_DESC& desc, ResourceMemoryUsage usage, D3D12_CLEAR_VALUE* clearValue, D3D12_RESOURCE_STATES initialState)
 {
+    R_ASSERT(pOut);
     std::vector<SmartPtr<D3D12ResourcePagedAllocator<BuddyAllocationContext>>>& pagedAllocators = m_pagedAllocators[usage];
     D3D12_RESOURCE_ALLOCATION_INFO resourceAllocationInfo   = m_pDevice->GetResourceAllocationInfo(0, 1, &desc);
     ScopedCriticalSection _(m_allocateCs);
@@ -178,35 +181,26 @@ ResultCode D3D12ResourceAllocationManager::allocate(D3D12MemoryObject* pOut, con
         pagedAllocators.back()->initialize(m_pDevice, kAllocationPageSizeBytes, usage, pagedAllocators.size() - 1u);
         result = pagedAllocators.back()->allocate(m_pDevice, resourceAllocationInfo, outputBlock);
     }
-    if (result != RecluseResult_Ok)
-    {
-        R_ERROR(R_CHANNEL_D3D12, "Failed to allocate!!");
-    }
 
     if (result == RecluseResult_Ok)
     {
-        if (result != RecluseResult_Ok) 
+        // Create the placed resource after allocation success.
+        R_ASSERT(outputBlock.alloc);
+        HRESULT hresult     = S_OK;
+        UPtr addressOffset   = outputBlock.address;
+    
+        hresult = m_pDevice->CreatePlacedResource(outputBlock.alloc->get(), addressOffset, &desc, 
+            initialState, clearValue, __uuidof(ID3D12Resource), (void**)&pOut->pResource);
+        
+        if (FAILED(hresult)) 
         {
-            R_ERROR("D3D12Allocator", "Failed to allocate d3d12 resource!");
+            R_ERROR("D3D12Allocator", "Failed to call CreatePlacedResource() on code=(%d)", hresult);
         } 
         else 
         {
-            HRESULT hresult     = S_OK;
-            UPtr addressOffset   = outputBlock.address;
-    
-            hresult = m_pDevice->CreatePlacedResource(outputBlock.alloc->get(), addressOffset, &desc, 
-                initialState, clearValue, __uuidof(ID3D12Resource), (void**)&pOut->pResource);
-        
-            if (FAILED(hresult)) 
-            {
-                R_ERROR("D3D12Allocator", "Failed to call CreatePlacedResource() on code=(%d)", hresult);
-            } 
-            else 
-            {
-                pOut->basePtr           = addressOffset;
-                pOut->sizeInBytes       = resourceAllocationInfo.SizeInBytes;
-                pOut->allocatorIndex    = outputBlock.alloc->getAllocatorIndex();
-            }
+            pOut->basePtr           = addressOffset;
+            pOut->sizeInBytes       = resourceAllocationInfo.SizeInBytes;
+            pOut->allocatorIndex    = outputBlock.alloc->getAllocatorIndex();
         }
     }
     

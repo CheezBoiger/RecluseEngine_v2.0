@@ -256,6 +256,7 @@ public:
             if (config.intermediateCode == ShaderIntermediateCode_Spirv)
             {
                 argStrings.push_back(L"-fspv-debug=vulkan-with-source");
+                argStrings.push_back(L"-fspv-extension=SPV_KHR_non_semantic_info");
             }
             else 
             {

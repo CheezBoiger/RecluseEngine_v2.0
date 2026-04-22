@@ -62,6 +62,8 @@ endif(R_DEVELOPER)
 		${RECLUSE_D3D12_DIR}/D3D12PipelineState.cpp
 		${RECLUSE_D3D12_DIR}/D3D12ShaderCache.hpp
 		${RECLUSE_D3D12_DIR}/D3D12ShaderCache.cpp
+		${RECLUSE_D3D12_DIR}/D3D12GpuCrashTracker.hpp
+		${RECLUSE_D3D12_DIR}/D3D12GpuCrashTracker.cpp
     )
 #endif()
 
