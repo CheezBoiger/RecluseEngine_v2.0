@@ -98,6 +98,7 @@ def main():
         cmake_commands += ['-C', cmake_predefined_params]
     else:
         cmake_commands += config_parser.generate_option_changes()
+    
     cmake_commands.append('..')
     print(cmake_commands)
     subprocess.call(cmake_commands)

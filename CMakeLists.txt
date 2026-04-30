@@ -16,6 +16,8 @@ set( CMAKE_INSTALL_PREFIX 	${RECLUSE_DIRECTORY} CACHE PATH "..." FORCE )
 
 set( RECLUSE_THIRDPARTY_DIR RecluseLibraries CACHE STRING "User specified thirdparty directory.")
 
+include (${RECLUSE_DIRECTORY}/RecluseThirdPartyVars.cmake)
+
 # Look for OpenCV, as it is needed for the compressor.
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/Systems/CMake)
 

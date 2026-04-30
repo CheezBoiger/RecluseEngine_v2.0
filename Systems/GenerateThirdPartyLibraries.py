@@ -24,6 +24,19 @@ def parse_arguments():
     args = parser.parse_args()
     parsed_commands = args
     return
+    
+def dump_build_variables(variable_list):
+    cmake_var_file_path = os.path.join(recluse_install_dir, "RecluseThirdPartyVars.cmake")
+    with open(cmake_var_file_path, "w") as f:
+        for var in variable_list:
+            variable = var[0]
+            word = "SET(" + variable + " "
+            values = var[1]
+            for value in values:
+                word += value + " "
+            word += ")\n"
+            f.write(word)
+    return
 
 
 def main():
@@ -71,7 +84,7 @@ def main():
                         os.makedirs(directory)
                     os.chdir(directory)
                     directory_cmake_path = directory_cmake_path.replace('\\', '/');
-                    generate_commands, builds = buildsystem.parse_cmake_commands_from_build_file(file_path, thirdparty_build_dir, directory_cmake_path)
+                    generate_commands, builds = buildsystem.parse_cmake_commands_from_build_file(file_path, thirdparty_build_dir, thirdparty_path)
                     #print(directory_cmake_path, generate_commands)
                     subprocess.call(["cmake"] + generate_commands + [f"{directory_cmake_path}"])
                     
@@ -86,6 +99,7 @@ def main():
     #os.chdir("../..")
     
     print(buildsystem.get_build_variables())
+    dump_build_variables(buildsystem.get_build_variables())
     return;
 
 if __name__ == '__main__':

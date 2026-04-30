@@ -31,6 +31,8 @@ class BuildSystem:
                     build_locations.append(dir_path)
         return build_locations
         
+    def parse_library(self, subchild):
+        return
         
     def process_build_child(self, child, builds):
         build_commands = []
@@ -54,7 +56,7 @@ class BuildSystem:
                             if data.tag == 'param':
                                 param_text = data.text
                                 param_text = param_text.replace('${RECLUSE_THIRDPARTY_DIRECTORY}', cmake_directory_path)
-                                param_text = param_text.replace('/', '\\')
+                                param_text = param_text.replace('\\', '/')
                                 script_params.append(param_text)
                         command = []
                         if (script_exec != "call"):
@@ -83,6 +85,7 @@ class BuildSystem:
         builds = [] 
         
         if root.tag == "project":
+            cmake_directory_path = os.path.join(cmake_directory_path, root.attrib['version'])
             for child in root:
                 if child.tag == "build":
                     self.process_build_child(child, builds)
@@ -94,12 +97,20 @@ class BuildSystem:
                     cache_path = attrib['path']
                     cache_path = cache_path.replace("${RECLUSE_THIRDPARTY_DIRECTORY}", cmake_directory_path)
                     generate_commands += ['-C', cache_path]
+                if child.tag == "library":
+                    self.parse_library(child)
                 if child.tag == "cmake":
                     for subchild in child:
                         if subchild.tag == "param":
-                            attrib = subchild.attrib;
-                            val_attrib = attrib['value']
-                            if '${RECLUSE_THIRDPARTY_DIRECTORY}' in val_attrib:
-                                val_attrib = val_attrib.replace('${RECLUSE_THIRDPARTY_DIRECTORY}', cmake_directory_path)
-                            self.build_variables.append(tuple([attrib['name'], val_attrib]))
+                            attrib = subchild.attrib
+                            var_name = attrib['name']
+                            values = []
+                            for node in subchild:
+                                if node.tag == "value":
+                                    value = node.attrib['name']
+                                    if '${RECLUSE_THIRDPARTY_DIRECTORY}' in value:
+                                        value = value.replace('${RECLUSE_THIRDPARTY_DIRECTORY}', cmake_directory_path)
+                                        value = value.replace('\\', '/')
+                                    values.append(value)
+                            self.build_variables.append(tuple([var_name, values]))
         return generate_commands, builds
