@@ -88,36 +88,48 @@ public:
 
     // Checks the last resource, and destroys it if the age is too old.
     template<typename DeleteFunc>
-    void check(U32 ageGap, DeleteFunc deleteFunc)
+    void check(U32 numChecks, U32 ageGap, DeleteFunc deleteFunc)
     {
         if (!empty())
         {
-            LifetimeNode* tail = m_tail;
-            const U32 tick = m_tick;
-            const U32 ageRate = tick - tail->age;
-            if (tail && (ageRate >= ageGap))
+            U32 idx = 0;
+            while (idx < numChecks)
             {
-                // Assign tail to its previous node.
-                m_tail = tail->prev;
-                // Cut off the tail of the linked list.
-                if (tail != m_root)
+                LifetimeNode* tail = m_tail;
+                const U32 tick = m_tick;
+                const U32 ageRate = tick - tail->age;
+                if (tail && (ageRate >= ageGap))
                 {
-                    tail->prev->next = nullptr;
+                    // Assign tail to its previous node.
+                    m_tail = tail->prev;
+                    // Cut off the tail of the linked list.
+                    if (tail != m_root)
+                    {
+                        tail->prev->next = nullptr;
+                    }
+                    else
+                    {
+                        // If it is the root, we must null both root and tail.
+                        m_root = nullptr;
+                        m_tail = nullptr;
+                    }
+                    // Delete the data, destroy the isolated node,
+                    // and decrement the number of nodes in the linked list.
+                    deleteFunc(tail->key, tail->data);
+                    // Don't forget to erase the mapped portion too.
+                    m_cacheMap.erase(tail->key);
+                    tail->~LifetimeNode();
+                    operator delete (tail, &m_allocator);
+                    m_nodes -= 1;
                 }
                 else
                 {
-                    // If it is the root, we must null both root and tail.
-                    m_root = nullptr;
-                    m_tail = nullptr;
+                    // Break from the loop if we didn't delete the tail, this means it is still the oldest, and not 
+                    // deleted, so no point in trying the next node.
+                    break;
                 }
-                // Delete the data, destroy the isolated node,
-                // and decrement the number of nodes in the linked list.
-                deleteFunc(tail->key, tail->data);
-                // Don't forget to erase the mapped portion too.
-                m_cacheMap.erase(tail->key);
-                tail->~LifetimeNode();
-                operator delete (tail, &m_allocator);
-                m_nodes -= 1;
+                // Increment the check index.
+                ++idx;
             }
         }
     }

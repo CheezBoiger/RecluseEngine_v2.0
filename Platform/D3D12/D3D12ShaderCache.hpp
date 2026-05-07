@@ -20,6 +20,11 @@ struct D3DShaderBytecode
     U64                         sizeBytes;
     Hash64                      shaderId;
     ShaderProgramPermutation    permutation;
+
+    // Temporary save of the bytecode to a file.
+    bool save();
+    // Load bytecode from a file.
+    bool load();
 };
 
 struct D3DShaderProgram

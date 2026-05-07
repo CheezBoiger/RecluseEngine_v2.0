@@ -10,9 +10,9 @@ namespace D3D {
 namespace Cache {
 
 
-std::unordered_map<ShaderProgramId, std::unordered_map<ShaderProgramPermutation, D3DShaderProgram>> g_shaderProgramMap;
-std::unordered_map<ShaderProgramId, std::unordered_map<ShaderProgramPermutation, ShaderProgramReflection>> g_shaderProgramReflectionMap;
-std::map<Hash64, std::map<ShaderProgramPermutation, ReferenceCounter<D3DShaderBytecode*>>> g_cachedShaderBlobs;
+R_INTERNAL std::unordered_map<ShaderProgramId, std::unordered_map<ShaderProgramPermutation, D3DShaderProgram>> g_shaderProgramMap;
+R_INTERNAL std::unordered_map<ShaderProgramId, std::unordered_map<ShaderProgramPermutation, ShaderProgramReflection>> g_shaderProgramReflectionMap;
+R_INTERNAL std::map<Hash64, std::map<ShaderProgramPermutation, ReferenceCounter<D3DShaderBytecode*>>> g_cachedShaderBlobs;
 
 
 R_INTERNAL

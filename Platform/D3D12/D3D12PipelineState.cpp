@@ -41,7 +41,7 @@ std::map<DeviceId, LifetimeCache<PipelineStateId, ID3D12PipelineState*>> g_pipel
 std::map<DeviceId, LifetimeCache<Hash64, ID3D12RootSignature*>>          g_rootSignatures;
 
 
-R_DECLARE_GLOBAL_U32(g_d3d12MaxPipelineAge, 256, "D3D12.MaxPipelineAge");
+R_DECLARE_GLOBAL_U32(g_d3d12MaxPipelineAge, 4098, "D3D12.MaxPipelineAge");
 R_DECLARE_GLOBAL_BOOLEAN(g_allowPipelineCaching, false, "D3D12.EnablePipelineCache");
 
 
@@ -846,13 +846,13 @@ void updateT(D3D12Device* pDevice)
 
 void checkPipelines(D3D12Device* pDevice)
 {
-    g_pipelineStateMap[pDevice->getDeviceId()].check(g_d3d12MaxPipelineAge, [] (PipelineStateId, ID3D12PipelineState* pipelineState) -> void
+    g_pipelineStateMap[pDevice->getDeviceId()].check(1, g_d3d12MaxPipelineAge, [] (PipelineStateId, ID3D12PipelineState* pipelineState) -> void
         {
             R_DEBUG(R_CHANNEL_D3D12, "Destroying pipeline.");
             pipelineState->Release();
         });
 
-    g_rootSignatures[pDevice->getDeviceId()].check(g_d3d12MaxPipelineAge, [] (Hash64, ID3D12RootSignature* rootSignature) -> void 
+    g_rootSignatures[pDevice->getDeviceId()].check(1, g_d3d12MaxPipelineAge, [] (Hash64, ID3D12RootSignature* rootSignature) -> void 
         {
             R_DEBUG(R_CHANNEL_D3D12, "Destroying root signature");
             rootSignature->Release();

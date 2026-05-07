@@ -22,7 +22,7 @@ std::map<DeviceId, LifetimeCache<PipelineId, PipelineState>>                    
 std::map<DeviceId, std::unordered_map<Hash64, SharedReferenceObject<VkPipelineLayout>>>  g_pipelineLayoutMap;
 R_DECLARE_GLOBAL_BOOLEAN(g_allowPipelineCaching, false, "Vulkan.EnablePipelineCache");
 R_DECLARE_GLOBAL_STRING(g_pipelineCacheDir, "VulkanCache", "Vulkan.PipelineCacheDir");
-R_DECLARE_GLOBAL_U32(g_vulkanPipelineMaxAge, 256, "Vulkan.PipelineMaxAge");
+R_DECLARE_GLOBAL_U32(g_vulkanPipelineMaxAge, 4098, "Vulkan.PipelineMaxAge");
 
 
 namespace PipelineCache {
@@ -1072,7 +1072,7 @@ void clean(VulkanDevice* device)
 {
     g_pipelineMap[device->getDeviceId()].check
         (
-            g_vulkanPipelineMaxAge, [device] (PipelineId id, PipelineState& state) -> void 
+            1, g_vulkanPipelineMaxAge, [device] (PipelineId id, PipelineState& state) -> void 
             {
                 R_DEBUG(R_CHANNEL_VULKAN, "Destroying pipeline.");
                 destroyPipeline(device, state.pipeline);
