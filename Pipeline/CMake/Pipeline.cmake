@@ -52,7 +52,8 @@ if ( RCL_VULKAN )
 			else()
 				add_definitions( -DR_GLSLANG_LEGACY_API=0 )
 			endif()
-			set ( RECLUSE_PIPELINE_LINK_LIBRARIES ${RECLUSE_PIPELINE_LINK_LIBRARIES} Vulkan::Vulkan )
+			# TODO(): Need to figure out why Vulkan::Vulkan causes other modules dependent on Pipeline to override the #using path
+			set ( RECLUSE_PIPELINE_LINK_LIBRARIES ${RECLUSE_PIPELINE_LINK_LIBRARIES} ${Vulkan_LIBRARIES})#Vulkan::Vulkan )
 			set ( RECLUSE_PIPELINE_THIRD_PARTY ${RECLUSE_PIPELINE_THIRD_PARTY} ${Vulkan_INCLUDE_DIRS})
 			set ( VULKAN_GLSLANG_LIBRARY_RELEASE # optimized $ENV{VULKAN_SDK}/Lib/glslang.lib 
 									 # optimized $ENV{VULKAN_SDK}/Lib/shaderc.lib
@@ -104,8 +105,8 @@ if ( RCL_DX11 OR RCL_DX12 )
     set ( RECLUSE_PIPELINE_LINK_LIBRARIES ${RECLUSE_PIPELINE_LINK_LIBRARIES} dxgi.lib )
     set ( RECLUSE_PIPELINE_LINK_LIBRARIES ${RECLUSE_PIPELINE_LINK_LIBRARIES} D3DCompiler.lib )
 	if ( RCL_DXC )
-		set( RECLUSE_DXC_DIR ${RECLUSE_THIRDPARTY_DIR}/DirectXShaderCompiler/dxc_2025_05_24 )
 		set ( RECLUSE_PIPELINE_LINK_LIBRARIES ${RECLUSE_PIPELINE_LINK_LIBRARIES} ${DXC_LIBS} )
+		set ( RECLUSE_PIPELINE_SHARED_LIBRARIES ${RECLUSE_PIPELINE_SHARED_LIBRARIES} ${DXC_DLL} )
         add_definitions( -DRCL_DXC=1 )
         message(WARNING "d3dcompiler.dll and dxil.dll needed with executable, since we are now including dxc...")
 		set ( RECLUSE_PIPELINE_THIRD_PARTY 

@@ -15,9 +15,11 @@ set ( RECLUSE_PIPELINE_INCLUDE Include )
 set ( RECLUSE_PIPELINE_SOURCE Source )
 set ( RECLUSE_PIPELINE_INCLUDE_FILES ${RECLUSE_PIPELINE_INCLUDE} )
 set ( RECLUSE_PIPELINE_LINK_LIBRARIES )
+set ( RECLUSE_PIPELINE_SHARED_LIBRARIES )
 set ( RECLUSE_PIPELINE_THIRD_PARTY ${RECLUSE_THIRDPARTY_DIR} )
 
 include ( ${CMAKE_SOURCE_DIR}/Systems/CMake/GenerateExports.cmake )
+include ( ${CMAKE_SOURCE_DIR}/Systems/Cmake/CommonHelpers.cmake )
 
 find_package(FBX)
 
@@ -48,13 +50,10 @@ ImportThisLibrary(${RECLUSE_PIPELINE_NAME} "RecluseFramework")
 ImportThisLibrary(${RECLUSE_PIPELINE_NAME} "RecluseEngine")
 
 # Doing some stuff for organization.
-if (MSVC)
-  foreach(source IN LISTS RECLUSE_PIPELINE_COMPILE_FILES)
-    get_filename_component(source_path "${source}" PATH)
-    string(REPLACE "/" "\\" source_path_msvc "${source_path}")
-    source_group("${source_path_msvc}" FILES "${source}")
-  endforeach()
-endif()
+StructureFiles(RECLUSE_PIPELINE_COMPILE_FILES)
+
+CopySharedLibList(${RECLUSE_PIPELINE_NAME} RECLUSE_PIPELINE_SHARED_LIBRARIES)
+
 
 install(TARGETS ${RECLUSE_PIPELINE_NAME}
         CONFIGURATIONS Debug

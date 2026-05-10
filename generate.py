@@ -67,6 +67,9 @@ def run_submodule_update():
 def main():
     parse_arguments()
     
+    if not os.path.exists("Build64"):
+        os.makedirs("Build64")
+    
     cmake_predefined_params = os.path.abspath("./Build64/CMakePredefinedCacheParams.cmake")
     config_parser = cp.ConfigureParser()
     cache_created = False
@@ -85,8 +88,7 @@ def main():
         
     subprocess.call(party_command)
     subprocess.call(["py", f"{generate_engine_resources}"])
-    if not os.path.exists("Build64"):
-        os.makedirs("Build64")
+    
     os.chdir("Build64")
     
     additional_cmake_commands = add_additional_cmake_commands()
