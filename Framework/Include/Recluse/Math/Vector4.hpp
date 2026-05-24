@@ -40,8 +40,8 @@ struct RecluseFramework_PUBLIC_API Float4
         struct { F32 x, y, z, w; };
         struct { F32 r, g, b, a; };
         struct { F32 s, t, p, q; };
-        struct { F32 u, v, w, c; };
-        __m128 row;
+        struct { F32 u, v, d, c; };
+        //__m128 row; // This causes the object to align to 16 bytes instead. May cause issues.
     };
 
     inline Float4()
