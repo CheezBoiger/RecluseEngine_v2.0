@@ -990,5 +990,17 @@ Bool D3D12Device::isResourceFormatSupported(ResourceFormat format)
         return false;
     return true;
 }
+
+
+PipelineState D3D12Device::createPipelineState(const PipelineStateDescription& description)
+{
+    return 0ull;
+}
+
+
+ResultCode D3D12Device::destroyPipelineState(PipelineState pipelineState)
+{
+    return RecluseResult_NoImpl;
+}
 } // D3D12
 } // Recluse

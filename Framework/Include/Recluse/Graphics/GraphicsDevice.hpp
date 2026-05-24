@@ -38,28 +38,6 @@ enum ContextFlag
     ContextFlag_InheritPipelineState = (1 << 0)
 };
 
-struct LayoutBindRange
-{
-    // t# is used for srvs
-    // u# is used for uavs
-    // b# is used for cbuffers.
-    DescriptorBindType bindType;
-    U32 range;
-};
-
-struct ResourceTable
-{
-    LayoutBindRange range0[2] = {  
-        { DescriptorBindType_ConstantBuffer, 12 },
-        { DescriptorBindType_ShaderResource, 12 }
-    };
-
-    LayoutBindRange range1[2] = {
-        { DescriptorBindType_ConstantBuffer, 1 },
-        { DescriptorBindType_UnorderedAccess, 2 }
-    };
-};
-
 // Shader program binder stores the current bound shader program that will be used for the upcoming drawcalls.
 // It will also check any new binds, and create/manage any descriptor sets accordingly. Usually called when 
 // user binds a ShaderProgram during graphics recording.
@@ -351,6 +329,8 @@ public:
     virtual void                    setFrontStencilState(const StencilOpState& state) { }
     virtual void                    setBackStencilState(const StencilOpState& state) { }
 
+    virtual void                    bindPipelineState(PipelineState pipelineState) { }
+
     // Hardware render pass support.
     virtual void                    beginRenderPass(const RenderPassDescription& renderPassDescription) { }
     virtual void                    endRenderPass() { }
@@ -457,6 +437,11 @@ public:
     
     virtual ResultCode              createSwapchain(const SwapchainCreateDescription& description, void* windowHandle, GraphicsSwapchain** outSwapchain) { return RecluseResult_NoImpl; }
     virtual ResultCode              destroySwapchain(GraphicsSwapchain* pSwapchain) { return RecluseResult_NoImpl; }
+
+    // Modern use baked pipeline states, allowing for a ful l pipeline configuration, without redundant api calls to 
+    // configure a dynamic pipeline. They must be destroyed if created this way.
+    virtual PipelineState           createPipelineState(const PipelineStateDescription& description) { return 0ull; }
+    virtual ResultCode              destroyPipelineState(PipelineState pipelineState) { return RecluseResult_NoImpl; }
 
     // Load up shader programs to be created on the native api.
     virtual ResultCode              loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const ShaderProgramDefinition& definition) { return RecluseResult_NoImpl; }

@@ -341,12 +341,12 @@ ResultCode EntityHierarchy::remove(const RGUID& node, RemovalOption removalOptio
     if (exists(node))
     {
         // If we are intending to remove, we shouldn't have his option.
-        if (removalOption != RemovalOption_JustCheck)
+        if (removalOption != RemovalOption_CheckOnly)
         {
             Relation& relation = m_hierarchy[node];
             RGUID parent = relation.parent;
 
-            if (removalOption == RemovalOption_DestroyWithChildren)
+            if (removalOption == RemovalOption_DestroySubtree)
             {
                 ChildrenDataStructure& children = m_hierarchy[node].children;
                 for (const auto& child : children)
@@ -354,7 +354,7 @@ ResultCode EntityHierarchy::remove(const RGUID& node, RemovalOption removalOptio
                     remove(child, removalOption);
                 }
             }
-            else if (removalOption == RemovalOption_RemoveAllSubtree)
+            else if (removalOption == RemovalOption_ParentlessChildren)
             {
                 // Add children to the root.
                 ChildrenDataStructure& children = m_hierarchy[node].children;
@@ -363,7 +363,7 @@ ResultCode EntityHierarchy::remove(const RGUID& node, RemovalOption removalOptio
                     add(child, RGUID());
                 }
             }
-            else
+            else if (removalOption == RemovalOption_Default)
             {
                 // Add to the existing parent.
                 if (parent.isValid())

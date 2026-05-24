@@ -37,8 +37,16 @@ std::map<DeviceId,  std::unordered_map<Hash64, CpuDescriptorTable>> m_cachedSamp
 namespace Pipelines {
 
 
-std::map<DeviceId, LifetimeCache<PipelineStateId, ID3D12PipelineState*>> g_pipelineStateMap;
-std::map<DeviceId, LifetimeCache<Hash64, ID3D12RootSignature*>>          g_rootSignatures;
+struct PSO
+{
+    ID3D12PipelineState* pso;
+    Hash64 rootSignatureHash;
+};
+
+std::map<DeviceId, LifetimeCache<PipelineStateId, PSO>> g_pipelineStateMap;
+std::map<DeviceId, std::unordered_map<Hash64, SharedReferenceObject<ID3D12RootSignature*>>> g_rootSignatures;
+
+std::map<DeviceId, std::map<PipelineStateId, ID3D12PipelineState*>>      g_persistentPipelneStateMap;
 
 
 R_DECLARE_GLOBAL_U32(g_d3d12MaxPipelineAge, 4098, "D3D12.MaxPipelineAge");
@@ -487,7 +495,7 @@ ID3D12PipelineState* createRaytracingPipeline(U32 nodeMask, ID3D12Device* pDevic
 
 
 R_INTERNAL 
-ID3D12PipelineState* createPipelineState(U32 nodeMask, DeviceId deviceId, D3D12Device* pDevice, D3D::Cache::D3DShaderProgram* program, const PipelineStateObject& pipelineState)
+ID3D12PipelineState* createPipelineState(U32 nodeMask, DeviceId deviceId, D3D12Device* pDevice, D3D::Cache::D3DShaderProgram* program, const PipelineStateObject& pipelineState, Hash64 rootSignatureHash)
 {
     ID3D12PipelineState* createdPipelineState = nullptr;
     switch (pipelineState.pipelineType)
@@ -509,6 +517,13 @@ ID3D12PipelineState* createPipelineState(U32 nodeMask, DeviceId deviceId, D3D12D
             break;        
     }
     R_ASSERT(createdPipelineState != nullptr);
+
+    if (createdPipelineState)
+    {
+        // Increment the root signature reference for this pipeline state.
+        g_rootSignatures[deviceId][rootSignatureHash].add();
+    }
+    
     return createdPipelineState;
 }
 
@@ -672,7 +687,7 @@ ID3D12RootSignature* internalCreateRootSignatureSeparateParameters(ID3D12Device*
     return nullptr;
 }
 
-ID3D12PipelineState* makePipelineState(D3D12Context* pContext, const PipelineStateObject& pipelineState)
+ID3D12PipelineState* makePipelineState(D3D12Context* pContext, const PipelineStateObject& pipelineState, Hash64 rootSignatureHash)
 {
     ID3D12PipelineState* retrievedPipelineState = nullptr;
     PipelineStateId pipelineId = serializePipelineState(pipelineState);
@@ -682,12 +697,13 @@ ID3D12PipelineState* makePipelineState(D3D12Context* pContext, const PipelineSta
     {
         // We didn't find a similar pipeline state, need to create a new one.
         D3D::Cache::D3DShaderProgram* program = D3D::Cache::obtainShaderProgram(pipelineState.shaderProgramId, pipelineState.permutation);
-        ID3D12PipelineState* pipeline = createPipelineState(0, deviceId, device, program, pipelineState);
-        retrievedPipelineState = *g_pipelineStateMap[deviceId].insert(pipelineId, std::move(pipeline));
+        ID3D12PipelineState* pipeline = createPipelineState(0, deviceId, device, program, pipelineState, rootSignatureHash);
+        PSO pso = { pipeline, rootSignatureHash };
+        retrievedPipelineState = g_pipelineStateMap[deviceId].insert(pipelineId, std::move(pso))->pso;
     }
     else
     {
-        retrievedPipelineState = *g_pipelineStateMap[deviceId].refer(pipelineId);
+        retrievedPipelineState = g_pipelineStateMap[deviceId].refer(pipelineId)->pso;
     }
     return retrievedPipelineState;
 }
@@ -698,14 +714,16 @@ ID3D12RootSignature* makeRootSignature(D3D12Device* pDevice, const RootSigLayout
     ID3D12RootSignature* rootSignature = nullptr;
     Hash64 hash = layout.hash0;
     DeviceId deviceId = pDevice->getDeviceId();
-    if (!g_rootSignatures[deviceId].inCache(hash))
+    if (g_rootSignatures[deviceId].find(hash) == g_rootSignatures[deviceId].end())
     {
         rootSignature = internalCreateRootSignatureWithTable(pDevice->get(), layout);
-        g_rootSignatures[deviceId].insert(hash, std::move(rootSignature));
+        g_rootSignatures[deviceId].insert(std::make_pair(hash, std::move(rootSignature)));
+        // TODO: Figure out how to internally create and own, instead of having the command list do this.
+        g_rootSignatures[deviceId][hash].release(); // release initially.
     }
     else
     {
-        rootSignature = *g_rootSignatures[deviceId].refer(hash);
+        rootSignature = *g_rootSignatures[deviceId][hash];
     }
     return rootSignature;
 }
@@ -799,17 +817,38 @@ CpuDescriptorTable              makeDescriptorSamplertable(D3D12Device* pDevice,
 }
 
 
+void destroyRootSignature(DeviceId deviceId, Hash64 rootSignatureHash)
+{
+    auto& it = g_rootSignatures[deviceId].find(rootSignatureHash);
+    if (it != g_rootSignatures[deviceId].end())
+    {
+        if (it->second.release() == 0)
+        {
+            R_DEBUG(R_CHANNEL_D3D12, "Pipeline destruction. Destroying root signature.");
+            (*it->second)->Release();
+            g_rootSignatures[deviceId].erase(rootSignatureHash);
+        }
+    }
+}
+
+
 void cleanUpRootSigs(DeviceId deviceId)
 {
 
-    g_rootSignatures[deviceId].forEach(
-        [] (Hash64, ID3D12RootSignature* rootSignature) -> void 
-        {
-            R_DEBUG(R_CHANNEL_D3D12, "Destroying root signature.");
-            rootSignature->Release();
-        }
-    );
+    //g_rootSignatures[deviceId].forEach(
+    //    [] (Hash64, ID3D12RootSignature* rootSignature) -> void 
+    //    {
+    //        R_DEBUG(R_CHANNEL_D3D12, "Destroying root signature.");
+    //        rootSignature->Release();
+    //    }
+    //);
 
+    for (auto& it : g_rootSignatures[deviceId])
+    {
+        R_DEBUG(R_CHANNEL_D3D12, "Destroying root signature");
+        (*it.second)->Release();
+    }
+    
     g_rootSignatures[deviceId].clear();
 }
 
@@ -828,10 +867,11 @@ void resetTableHeaps(D3D12Device* pDevice)
 void cleanUpPipelines(DeviceId deviceId)
 {
     g_pipelineStateMap[deviceId].forEach(
-        [] (PipelineStateId, ID3D12PipelineState* pipelineState) -> void
+        [&] (PipelineStateId, PSO& pipelineState) -> void
         {
             R_DEBUG(R_CHANNEL_D3D12, "Destroying pipeline.");
-            pipelineState->Release();
+            pipelineState.pso->Release();
+            destroyRootSignature(deviceId, pipelineState.rootSignatureHash);
         });
     g_pipelineStateMap[deviceId].clear();
 }
@@ -840,23 +880,24 @@ void cleanUpPipelines(DeviceId deviceId)
 void updateT(D3D12Device* pDevice)
 {
     g_pipelineStateMap[pDevice->getDeviceId()].updateTick();
-    g_rootSignatures[pDevice->getDeviceId()].updateTick();
+    //g_rootSignatures[pDevice->getDeviceId()].updateTick();
 }
 
 
 void checkPipelines(D3D12Device* pDevice)
 {
-    g_pipelineStateMap[pDevice->getDeviceId()].check(1, g_d3d12MaxPipelineAge, [] (PipelineStateId, ID3D12PipelineState* pipelineState) -> void
+    g_pipelineStateMap[pDevice->getDeviceId()].check(1, g_d3d12MaxPipelineAge, [&] (PipelineStateId, PSO& pipelineState) -> void
         {
             R_DEBUG(R_CHANNEL_D3D12, "Destroying pipeline.");
-            pipelineState->Release();
+            pipelineState.pso->Release();
+            destroyRootSignature(pDevice->getDeviceId(), pipelineState.rootSignatureHash);
         });
 
-    g_rootSignatures[pDevice->getDeviceId()].check(1, g_d3d12MaxPipelineAge, [] (Hash64, ID3D12RootSignature* rootSignature) -> void 
-        {
-            R_DEBUG(R_CHANNEL_D3D12, "Destroying root signature");
-            rootSignature->Release();
-        });
+    //g_rootSignatures[pDevice->getDeviceId()].check(1, g_d3d12MaxPipelineAge, [] (Hash64, ID3D12RootSignature* rootSignature) -> void 
+    //    {
+    //        R_DEBUG(R_CHANNEL_D3D12, "Destroying root signature");
+    //        rootSignature->Release();
+    //    });
 }
 
 

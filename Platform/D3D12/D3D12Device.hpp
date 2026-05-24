@@ -282,6 +282,9 @@ public:
     GraphicsContext*                    createContext() override;
     ResultCode                          releaseContext(GraphicsContext* pContext) override;
 
+    PipelineState                       createPipelineState(const PipelineStateDescription& pipelineStateDescription) override;
+    ResultCode                          destroyPipelineState(PipelineState pipelineState) override;
+
     ResultCode                          reserveMemory(const MemoryReserveDescription& desc) override;
     ResultCode                          createSwapchain(const SwapchainCreateDescription& desciption, void* windowHandle, GraphicsSwapchain** outSwapchain) override;
 

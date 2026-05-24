@@ -134,6 +134,8 @@ public:
 };
 
 
+// Shader Program database is a database housing all shader programs. It is a container that
+// references programs by identification, and caches/cleans up accordingingly.
 class RecluseFramework_PUBLIC_API ShaderProgramDatabase : public Serializable
 {
 public:

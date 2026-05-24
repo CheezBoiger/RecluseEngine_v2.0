@@ -512,7 +512,7 @@ void D3D12Context::clearResourceBinds()
         memset(contextState.m_resourceTable.sets[space].samplers.data(), 0, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE) * contextState.m_resourceTable.sets[space].samplers.size());
     }
 
-    if (m_shaderProgramBinder.getReflection())
+    //if (m_shaderProgramBinder.getReflection())
     {
         // We don't necessarily need to clear out the layout info, since we are currently bound to a program with reflection.
         memset(&contextState.m_rootSigLayout, 0, sizeof(Pipelines::RootSigLayout));
@@ -800,7 +800,7 @@ void D3D12Context::bindPipeline(ID3D12GraphicsCommandList* list, ContextState& s
 {
     if (state.isDirty(ContextDirty_Pipeline))
     {
-        ID3D12PipelineState* pipelineState = Pipelines::makePipelineState(this, state.m_pipelineStateObject);
+        ID3D12PipelineState* pipelineState = Pipelines::makePipelineState(this, state.m_pipelineStateObject, state.m_rootSigLayout.hash0);
         list->SetPipelineState(pipelineState);
     }
     if (state.isDirty(ContextDirty_StencilRef))

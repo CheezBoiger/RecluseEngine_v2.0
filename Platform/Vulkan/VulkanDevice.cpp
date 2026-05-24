@@ -1409,5 +1409,17 @@ void VulkanContext::registerFrameSemaphores(VkSemaphore wait, VkSemaphore signal
     frame.signalSemaphore = signal;
     frame.waitSemaphore = wait;
 }
+
+
+PipelineState VulkanDevice::createPipelineState(const PipelineStateDescription& description)
+{
+    return 0ull;
+}
+
+
+ResultCode VulkanDevice::destroyPipelineState(PipelineState pipelineState)
+{
+    return RecluseResult_NoImpl;
+}
 } // Vulkan
 } // Recluse

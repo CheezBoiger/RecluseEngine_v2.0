@@ -405,6 +405,9 @@ public:
     GraphicsContext*        createContext() override;
     ResultCode              releaseContext(GraphicsContext* pContext) override;
 
+    PipelineState           createPipelineState(const PipelineStateDescription& description) override;
+    ResultCode              destroyPipelineState(PipelineState pipelineState) override;
+
     ResultCode              destroySwapchain(VulkanSwapchain* pSwapchain);
     ResultCode              createResource(GraphicsResource** ppResource, const GraphicsResourceDescription& pDesc, ResourceState initState, GraphicsClearColor* clearColor) override;
     ResultCode              createSampler(GraphicsSampler** ppSampler, const SamplerDescription& desc) override;

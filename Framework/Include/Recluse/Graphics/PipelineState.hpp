@@ -10,13 +10,18 @@ namespace Recluse {
 
 class Shader;
 
-
-struct ShaderModule 
+// Layout bind range is the descriptor layout.
+struct LayoutBindRange
 {
-    void* byteCode;
-    U32 szBytes;
+    // t# is used for srvs
+    // u# is used for uavs
+    // b# is used for cbuffers.
+    DescriptorBindType  bindType;
+    U32                 space;
+    U32                 range;
 };
 
+typedef void* BindLayout;
 
 struct StencilOpState
 {
@@ -159,6 +164,7 @@ enum BlendOp
 
 enum ColorComponent 
 {
+    Color_None = 0,
     Color_R = 0x1,
     Color_G = 0x2, 
     Color_B = 0x4,
@@ -193,16 +199,16 @@ typedef uint VertexInputLayoutId;
 
 struct DepthStencil 
 {
-    B8  depthBoundsTestEnable;
-    B8  depthTestEnable;
-    B8  stencilTestEnable;
-    B8  depthWriteEnable;
-    U8         stencilReadMask;
-    U8         stencilWriteMask;
-    U8         stencilReference;
-    F32 minDepthBounds;
-    F32 maxDepthBounds;
-    CompareOp depthCompareOp;
+    B8              depthBoundsTestEnable;
+    B8              depthTestEnable;
+    B8              stencilTestEnable;
+    B8              depthWriteEnable;
+    U8              stencilReadMask;
+    U8              stencilWriteMask;
+    U8              stencilReference;
+    F32             minDepthBounds;
+    F32             maxDepthBounds;
+    CompareOp       depthCompareOp;
     StencilOpState  front;
     StencilOpState  back;
 };
@@ -247,15 +253,115 @@ private:
     VertexInputLayout* layout;
 };
 
+struct ShaderBytecode
+{
+    const void* ptr;
+    const char* entry;
+    U64 sizeBytes;
+};
 
-namespace Pipeline {
 
-typedef Hash64 PipelineId;
-typedef Hash64 RasterId;
-typedef Hash64 BlendId;
-typedef Hash64 TessellationId;
-typedef Hash64 DepthStencilId;
-typedef Hash64 InputAssemblyId;
+class PipelineStateDescription
+{
+public:
+    PipelineStateDescription(BindType bindType) 
+        : bindType(bindType)
+        , layout(nullptr) { }
 
-} // Pipeline
+    BindLayout          layout;
+    U32                 layoutSize;
+
+    BindType            getBindType() const { return bindType; }
+
+private:
+    BindType            bindType;
+};
+
+
+class RasterPipelineStateDescription : public PipelineStateDescription
+{
+public:
+    RasterPipelineStateDescription(Bool isMeshShader)
+        : PipelineStateDescription(BindType_Graphics)
+        , isMeshShader(isMeshShader)
+        , primitiveTopology(PrimitiveTopology_PointList)
+        , depthStencil({})
+        , blendState({})
+        , rasterState({})
+        , tessellationState({})
+        , ps({})
+    { }
+
+    PrimitiveTopology   primitiveTopology;
+    DepthStencil        depthStencil;
+    BlendState          blendState;
+    RasterState         rasterState;
+    TessellationState   tessellationState;
+
+    ShaderBytecode      ps;
+
+    Bool usesMeshShader() const { return isMeshShader; }
+private:
+    Bool                isMeshShader;
+};
+
+
+class GraphicsPipelineStateDescription : public RasterPipelineStateDescription
+{
+public:
+    GraphicsPipelineStateDescription() 
+        : RasterPipelineStateDescription(false)
+        , inputLayout(nullptr)
+        , vs({})
+        , ds({})
+        , hs({})
+        , gs({})
+    { }
+
+    VertexInputLayout*  inputLayout;
+    
+    ShaderBytecode      vs;
+    ShaderBytecode      ds;
+    ShaderBytecode      hs;
+    ShaderBytecode      gs;
+};
+
+
+class MeshPipelineStateDescription : public RasterPipelineStateDescription
+{
+public:
+    MeshPipelineStateDescription()
+        : RasterPipelineStateDescription(true)
+        , ms({})
+        , as({})
+    { }
+
+    ShaderBytecode      ms;
+    ShaderBytecode      as;
+};
+
+
+class ComputePipelineStateDescription : public PipelineStateDescription
+{
+    ComputePipelineStateDescription() 
+        : PipelineStateDescription(BindType_Compute)
+        , cs({}) { }
+    ShaderBytecode cs;
+
+    ComputePipelineStateDescription& setCs(const void* ptr, U32 shaderSizeBytes)
+        {
+            cs.ptr = ptr;
+            cs.sizeBytes = shaderSizeBytes; 
+            return (*this); 
+        }
+};
+
+
+class RayTracePipelineStateDescription : public PipelineStateDescription
+{
+    RayTracePipelineStateDescription() 
+        : PipelineStateDescription(BindType_RayTrace) { }
+};
+
+typedef Hash64 PipelineState;
 } // Recluse

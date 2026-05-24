@@ -15,7 +15,6 @@ namespace Recluse {
 class GraphicsResource;
 class GraphicsResourceView;
 class RenderPass;
-class PipelineState;
 
 
 enum CommandListStatus 
