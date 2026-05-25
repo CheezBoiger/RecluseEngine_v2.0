@@ -528,12 +528,19 @@ void destroyPipeline(VulkanDevice* pDevice, VkPipeline pipeline)
     }
 }
 
-void destroyPipelineLayout(VulkanDevice* pDevice, VkPipelineLayout layout)
+void destroyPipelineLayout(VulkanDevice* pDevice, Hash64 pipelineLayoutHash)
 {
-    R_DEBUG(R_CHANNEL_VULKAN, "Destroying vulkan pipeline layout...");
-    if (layout)
+    auto it = g_pipelineLayoutMap[pDevice->getDeviceId()].find(pipelineLayoutHash);
+    if (it != g_pipelineLayoutMap[pDevice->getDeviceId()].end())
     {
-        vkDestroyPipelineLayout(pDevice->get(), layout, nullptr);
+        if (it->second.release() == 0)
+        {
+            R_DEBUG(R_CHANNEL_VULKAN, "Destroying vulkan pipeline layout...");
+            VkPipelineLayout layout = *it->second;
+            vkDestroyPipelineLayout(pDevice->get(), layout, nullptr);
+
+            g_pipelineLayoutMap[pDevice->getDeviceId()].erase(it);
+        }
     }
 }
 
@@ -659,6 +666,11 @@ Bool unloadAll(DeviceId deviceId)
 }
 } // VertexLayout
 
+Hash64 makePipelineLayoutHash(const VkDescriptorSetLayout* descriptorLayouts, U32 layoutCount)
+{
+    return recluseHashFast(descriptorLayouts, sizeof(VkDescriptorSetLayout) * layoutCount);
+}
+
 VkPipelineLayout makeLayout(VulkanDevice* pDevice, const VkDescriptorSetLayout* descriptorLayouts, U32 layoutCount)
 {
     VkPipelineLayout layout = VK_NULL_HANDLE;
@@ -669,14 +681,16 @@ VkPipelineLayout makeLayout(VulkanDevice* pDevice, const VkDescriptorSetLayout* 
 
     auto& pipelineLayoutMap = g_pipelineLayoutMap[pDevice->getDeviceId()];
 
-    Hash64 layoutHash = recluseHashFast(descriptorLayouts, sizeof(VkDescriptorSetLayout) * layoutCount);
+    Hash64 layoutHash = makePipelineLayoutHash(descriptorLayouts, layoutCount);
 
     auto iter = pipelineLayoutMap.find(layoutHash);
     if (iter == pipelineLayoutMap.end())
     {
         if (layout = createPipelineLayout(pDevice, descriptorLayouts, layoutCount))
         {
+            // One pipeline layout created.
             pipelineLayoutMap.insert(std::make_pair(layoutHash, layout));
+            pipelineLayoutMap[layoutHash].release();
         }
     }
     else
@@ -733,7 +747,7 @@ VkPipeline createGraphicsPipeline(VulkanDevice* pDevice, VkPipelineCache pipelin
     {
         R_ERROR(R_CHANNEL_VULKAN, "Failed to create pipeline state layout.");
 
-        destroyPipelineLayout(pDevice, pipelineLayout);
+        destroyPipelineLayout(pDevice, makePipelineLayoutHash(structure.state.descriptorSetLayouts.data(), structure.state.numSets));
 
         return VK_NULL_HANDLE;
     }
@@ -856,7 +870,7 @@ VkPipeline createComputePipeline(VulkanDevice* pDevice, VkPipelineCache pipeline
     {
         R_ERROR(R_CHANNEL_VULKAN, "Failed to create pipeline layout for Compute pipelinestate...");
         
-        destroyPipelineLayout(pDevice, pipelineLayout);
+        destroyPipelineLayout(pDevice, makePipelineLayoutHash(structure.state.descriptorSetLayouts.data(), structure.state.numSets));
         
         return VK_NULL_HANDLE;
     }
@@ -964,6 +978,7 @@ PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure, Pi
     auto& pipelineMap = g_pipelineMap[pDevice->getDeviceId()];
     if (!pipelineMap.inCache(id))
     {
+        Hash64 pipelineLayoutHash = makePipelineLayoutHash(structure.state.descriptorSetLayouts.data(), structure.state.numSets);
         ShaderPrograms::VulkanShaderProgram* program = ShaderPrograms::obtainShaderProgram(structure.state.shaderProgramId, structure.state.shaderPermutation);
         Bool pipelineCacheHit = findPipelineCache(pDevice, id, pipeline.pipelineCache);
 
@@ -993,6 +1008,9 @@ PipelineState makePipeline(VulkanDevice* pDevice, const Structure& structure, Pi
         {
             if (!pipelineCacheHit)
                 cachePipeline(pDevice, id, pipeline.pipelineCache);
+            // Add the pipeline layout hash.
+            pipeline.pipelineLayoutHash = pipelineLayoutHash;
+            g_pipelineLayoutMap[pDevice->getDeviceId()][pipelineLayoutHash].add();
             pipelineMap.insert(id, std::move(pipeline));
         }
     }
@@ -1019,17 +1037,21 @@ void destroyPipelineCache(VulkanDevice* pDevice, VkPipelineCache pipelineCache)
 ResultCode clearPipelineCache(VulkanDevice* pDevice)
 {
     DeviceId deviceId = pDevice->getDeviceId();
-    for (auto pipelineLayoutIt : g_pipelineLayoutMap[deviceId])
-    {
-        destroyPipelineLayout(pDevice, *pipelineLayoutIt.second);
-    }
 
     g_pipelineMap[deviceId].forEach([pDevice] (PipelineId id, PipelineState& state) -> void
         {
             R_DEBUG(R_CHANNEL_VULKAN, "Destroying pipeline.");
             destroyPipeline(pDevice, state.pipeline);
             destroyPipelineCache(pDevice, state.pipelineCache);
+
+            destroyPipelineLayout(pDevice, state.pipelineLayoutHash);
         });
+
+    for (auto pipelineLayoutIt : g_pipelineLayoutMap[deviceId])
+    {
+        R_DEBUG(R_CHANNEL_VULKAN, "Clearing out pipeline layout...");
+        vkDestroyPipelineLayout(pDevice->get(), *pipelineLayoutIt.second, nullptr);
+    }
 
     g_pipelineLayoutMap[deviceId].clear();
     g_pipelineMap[deviceId].clear();
@@ -1077,6 +1099,7 @@ void clean(VulkanDevice* device)
                 R_DEBUG(R_CHANNEL_VULKAN, "Destroying pipeline.");
                 destroyPipeline(device, state.pipeline);
                 destroyPipelineCache(device, state.pipelineCache);
+                destroyPipelineLayout(device, state.pipelineLayoutHash);
             }
         ); 
 }

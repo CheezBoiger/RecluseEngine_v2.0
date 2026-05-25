@@ -80,6 +80,7 @@ struct PipelineState
     VkPipelineBindPoint bindPoint     = VK_PIPELINE_BIND_POINT_GRAPHICS;
     VkPipeline          pipeline      = VK_NULL_HANDLE;
     VkPipelineCache     pipelineCache = VK_NULL_HANDLE;
+    Hash64              pipelineLayoutHash = 0ull;
 };
 
 PipelineId              makePipelineId(const Structure& pipelineStructure);
