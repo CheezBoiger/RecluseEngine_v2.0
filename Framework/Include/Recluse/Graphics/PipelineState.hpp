@@ -281,16 +281,12 @@ private:
 class RasterPipelineStateDescription : public PipelineStateDescription
 {
 public:
-    RasterPipelineStateDescription(Bool isMeshShader)
-        : PipelineStateDescription(BindType_Graphics)
-        , isMeshShader(isMeshShader)
-        , primitiveTopology(PrimitiveTopology_PointList)
-        , depthStencil({})
-        , blendState({})
-        , rasterState({})
-        , tessellationState({})
-        , ps({})
-    { }
+    enum GeometryPipeline
+    {
+        GeometryPipeline_Unknown,
+        GeometryPipeline_Traditional,
+        GeometryPipeline_Mesh
+    };
 
     PrimitiveTopology   primitiveTopology;
     DepthStencil        depthStencil;
@@ -301,8 +297,26 @@ public:
     ShaderBytecode      ps;
 
     Bool usesMeshShader() const { return isMeshShader; }
+
+    RasterPipelineStateDescription() = delete;
+
+protected:
+
+    RasterPipelineStateDescription(GeometryPipeline geometryPipelne, Bool isMeshShader = false)
+        : PipelineStateDescription(BindType_Graphics)
+        , isMeshShader(isMeshShader)
+        , primitiveTopology(PrimitiveTopology_PointList)
+        , depthStencil({})
+        , blendState({})
+        , rasterState({})
+        , tessellationState({})
+        , ps({})
+        , geometryPipeline(geometryPipeline)
+    { }
+
 private:
     Bool                isMeshShader;
+    GeometryPipeline    geometryPipeline;
 };
 
 
@@ -310,7 +324,7 @@ class GraphicsPipelineStateDescription : public RasterPipelineStateDescription
 {
 public:
     GraphicsPipelineStateDescription() 
-        : RasterPipelineStateDescription(false)
+        : RasterPipelineStateDescription(RasterPipelineStateDescription::GeometryPipeline_Traditional, false)
         , inputLayout(nullptr)
         , vs({})
         , ds({})
@@ -331,7 +345,7 @@ class MeshPipelineStateDescription : public RasterPipelineStateDescription
 {
 public:
     MeshPipelineStateDescription()
-        : RasterPipelineStateDescription(true)
+        : RasterPipelineStateDescription(RasterPipelineStateDescription::GeometryPipeline_Mesh, true)
         , ms({})
         , as({})
     { }
