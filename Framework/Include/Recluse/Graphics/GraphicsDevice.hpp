@@ -369,10 +369,14 @@ public:
 
     // Begins query, with the specified type.
     // Be sure to call endQuery() once satisfied on what to capture.
+    // timestamps do not need to call endquery().
     virtual GraphicsQuery           beginQuery(GraphicsQueryType queryType) { return GraphicsQuery(); }
 
     // Ends a query capture. Should be called after every beginQuery() call.
     virtual void                    endQuery(const GraphicsQuery& query) { }
+
+    // Extract the data from a query.
+    virtual void                    queryData(const GraphicsQuery& query, void* data, U32 sizeBytes) { }
 
 #if defined(RECLUSE_EXPERIMENTAL)
     // Allocate a resource table for binding.

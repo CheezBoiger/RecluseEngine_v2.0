@@ -160,6 +160,7 @@ public:
     void                                bindVertexBuffers(U32 numBuffers, GraphicsResource** ppVertexBuffers, U64* pOffsets) override;
     GraphicsQuery                       beginQuery(GraphicsQueryType queryType) override;
     void                                endQuery(const GraphicsQuery& query) override;
+    void                                queryData(const GraphicsQuery& query, void* data, U32 sizeBytes) override;
 
     ID3D12GraphicsCommandList*          currentGraphicsCommandList() { return m_pPrimaryCommandList->get(); }
     void                                pushState(ContextFlags flags = ContextFlag_None) override;

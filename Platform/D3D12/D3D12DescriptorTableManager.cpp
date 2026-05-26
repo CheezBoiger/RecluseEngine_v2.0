@@ -716,6 +716,30 @@ D3D12QueryManager::~D3D12QueryManager()
 }
 
 
+U32 D3D12QueryManager::findQuerySizeBytes(D3D12_QUERY_HEAP_TYPE type)
+{
+    U32 querySizeBytes = 0;
+    switch (type)
+    {
+        case D3D12_QUERY_HEAP_TYPE_TIMESTAMP:
+            querySizeBytes = sizeof(U64); // 64-bits per query
+            break;
+        case D3D12_QUERY_HEAP_TYPE_OCCLUSION:
+            querySizeBytes = sizeof(U64); // 64-bits per query
+            break;
+        case D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS:
+            querySizeBytes = sizeof(D3D12_QUERY_DATA_PIPELINE_STATISTICS);
+            break;
+        case D3D12_QUERY_HEAP_TYPE_SO_STATISTICS:
+            querySizeBytes = sizeof(D3D12_QUERY_DATA_SO_STATISTICS);
+            break;
+        default:
+            querySizeBytes = 16;
+    }
+    return querySizeBytes;
+}
+
+
 ResultCode D3D12QueryManager::initialize(ID3D12Device* device, UINT nodeMask, D3D12_QUERY_HEAP_TYPE type, U32 maxQueries)
 {
     R_ASSERT(device && maxQueries > 0);
@@ -732,6 +756,8 @@ ResultCode D3D12QueryManager::initialize(ID3D12Device* device, UINT nodeMask, D3
         m_maxQueryCount = maxQueries;
         m_type = type;
 
+        U32 querySizeBytes = D3D12QueryManager::findQuerySizeBytes(type);
+
         if (result == RecluseResult_Ok)
         {
             D3D12_RESOURCE_DESC desc = { };
@@ -742,7 +768,7 @@ ResultCode D3D12QueryManager::initialize(ID3D12Device* device, UINT nodeMask, D3
             desc.Alignment = 0;
             desc.DepthOrArraySize = 1;
             desc.Height = 1;
-            desc.Width = maxQueries * 16;
+            desc.Width = maxQueries * querySizeBytes;
             desc.SampleDesc.Count = 1;
             desc.SampleDesc.Quality = 0;
             D3D12_HEAP_PROPERTIES heapProps = { };
@@ -865,6 +891,22 @@ D3D12_QUERY_TYPE D3D12QueryManager::getQueryType() const
         case D3D12_QUERY_HEAP_TYPE_TIMESTAMP:   return D3D12_QUERY_TYPE_TIMESTAMP;
         default:                                return D3D12_QUERY_TYPE_TIMESTAMP;
     }
+}
+
+
+ResultCode D3D12QueryManager::queryData(Index index, void* ptr, U32 sizeBytes)
+{
+    R_ASSERT(D3D12QueryManager::findQuerySizeBytes(m_type) == sizeBytes);
+    U32 querySize = D3D12QueryManager::findQuerySizeBytes(m_type);
+    U32 indexOffsetBytes = index * querySize;
+    U8* mapped = nullptr;
+
+    // Map the host-visible resource and copy the contents to the application provided pointer.
+    m_scratchBuffer->Map(0, nullptr, (void**)&mapped);
+    memcpy(ptr, mapped + indexOffsetBytes, querySize);
+    m_scratchBuffer->Unmap(0, nullptr);
+
+    return RecluseResult_Ok;
 }
 } // D3D12
 } // Recluse

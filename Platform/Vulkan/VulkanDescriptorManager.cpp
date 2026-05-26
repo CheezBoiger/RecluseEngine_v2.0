@@ -418,5 +418,13 @@ VulkanQueryManager::Index VulkanQueryManager::allocateIndex()
     }
     return index;
 }
+
+
+ResultCode VulkanQueryManager::queryData(Index index, void* ptr, U32 sizeBytes)
+{
+    // TODO: Index is the offset to the scratch buffer. We just need the size of the query type and then copy
+    // the host-side buffer to the application buffer.
+    return RecluseResult_Ok;
+}
 } // Vulkan
 } // Recluse

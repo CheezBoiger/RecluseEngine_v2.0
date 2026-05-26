@@ -19,7 +19,7 @@ namespace Vulkan {
 namespace Pipelines {
 
 std::map<DeviceId, LifetimeCache<PipelineId, PipelineState>>                             g_pipelineMap;
-std::map<DeviceId, std::map<PipelineId, PipelineState>>                                  g_persistentPipelineMap;
+std::map<DeviceId, std::map<PipelineId, PipelineState>>                                  g_persistentPipelineMap; // For persistent pipelines.
 std::map<DeviceId, std::unordered_map<Hash64, SharedReferenceObject<VkPipelineLayout>>>  g_pipelineLayoutMap;
 R_DECLARE_GLOBAL_BOOLEAN(g_allowPipelineCaching, false, "Vulkan.EnablePipelineCache");
 R_DECLARE_GLOBAL_STRING(g_pipelineCacheDir, "VulkanCache", "Vulkan.PipelineCacheDir");

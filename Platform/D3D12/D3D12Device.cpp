@@ -146,6 +146,7 @@ ResultCode D3D12Context::end()
     getCurrentContextFrame()->occlusionQuery.resolve(m_pPrimaryCommandList->get());    
 
     m_pPrimaryCommandList->end();
+
     // Fire off our command list!
     submitPrimaryCommandList(m_pPrimaryCommandList->get());
     RenderPasses::sweep(m_pDevice);
@@ -1001,6 +1002,11 @@ PipelineState D3D12Device::createPipelineState(const PipelineStateDescription& d
 ResultCode D3D12Device::destroyPipelineState(PipelineState pipelineState)
 {
     return RecluseResult_NoImpl;
+}
+
+void D3D12Context::queryData(const GraphicsQuery& query, void* data, U32 sizeBytes)
+{
+    
 }
 } // D3D12
 } // Recluse

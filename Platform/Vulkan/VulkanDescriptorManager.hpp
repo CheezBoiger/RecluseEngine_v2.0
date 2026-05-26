@@ -255,6 +255,7 @@ public:
     // Get the number of used queries from this manager.
     U32             numUsedQueries() const { return m_currentAvailableIndex; }
 
+    ResultCode      queryData(Index index, void* ptr, U32 sizeBytes);
 private:
 
     Index           allocateIndex();

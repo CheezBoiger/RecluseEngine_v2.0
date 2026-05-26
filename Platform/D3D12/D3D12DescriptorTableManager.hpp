@@ -350,11 +350,14 @@ public:
 
     // Resolve the query pool. On D3D12 this can be done at the end of a frame.
     void                resolve(ID3D12GraphicsCommandList* commandlist);
+    ResultCode          queryData(Index index, void* ptr, U32 sizeBytes);
 
     ResultCode          reset();
     
     // Get the number of used queries from this manager.
     U32                 numUsedQueries() const { return m_currentAvailableIndex; }
+
+    static U32             findQuerySizeBytes(D3D12_QUERY_HEAP_TYPE type);
 
 private:
     Index                   allocateIndex();

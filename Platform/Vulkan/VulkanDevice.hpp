@@ -172,6 +172,7 @@ public:
 
     GraphicsQuery beginQuery(GraphicsQueryType type) override;
     void endQuery(const GraphicsQuery& query) override;
+    void queryData(const GraphicsQuery& query, void* data, U32 sizeBytes) override;
 
     void transition(GraphicsResource* pResource, ResourceState dstState, U16 baseMip, U16 mipCount, U16 baseLayer, U16 layerCount) override;
 

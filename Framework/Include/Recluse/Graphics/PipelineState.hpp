@@ -257,7 +257,12 @@ struct ShaderBytecode
 {
     const void* ptr;
     const char* entry;
-    U64 sizeBytes;
+    U64         sizeBytes;
+
+    ShaderBytecode(const void* bytecode = nullptr, U64 szBytes = 0ull, const char* entry = nullptr)
+        : ptr(bytecode)
+        , entry(entry)
+        , sizeBytes(szBytes) { }
 };
 
 

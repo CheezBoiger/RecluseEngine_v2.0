@@ -192,8 +192,6 @@ ResultCode VulkanContext::end()
 }
 
 
-
-
 ResultCode VulkanContext::submitFinalCommandBuffer(VkCommandBuffer commandBuffer)
 {
     FrameIndex currentFrameIndex        = getCurrentFrameIndex();
@@ -1420,6 +1418,11 @@ PipelineState VulkanDevice::createPipelineState(const PipelineStateDescription& 
 ResultCode VulkanDevice::destroyPipelineState(PipelineState pipelineState)
 {
     return RecluseResult_NoImpl;
+}
+
+
+void VulkanContext::queryData(const GraphicsQuery& query, void* data, U32 sizeBytes)
+{
 }
 } // Vulkan
 } // Recluse
