@@ -60,7 +60,7 @@ D3DShaderBytecode* makeBlob(Shader* pShader)
                 permIter->second.addReference();
                 pOutput = permIter->second();
             }
-        }
+        } 
         else
         {
             D3DShaderBytecode* pBlob = createBlob(pShader->getSzBytes(), shaderHash, permutation);

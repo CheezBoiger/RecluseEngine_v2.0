@@ -311,7 +311,13 @@ ResultCode VulkanQueryManager::initialize(VkDevice device, VkQueryType type, U32
         VkResult vkr = vkCreateQueryPool(device, &info, nullptr, &m_query);
         if (vkr == VK_SUCCESS)
         {
-            scratch.resize(maxQueryCount);
+            uint64_t size = maxQueryCount;
+            if (type == VK_QUERY_TYPE_PIPELINE_STATISTICS)
+            {
+                size *= 8; // For each bit in pipeline statistics, we must add an integer.
+            }
+
+            scratch.resize(size);
             result = RecluseResult_Ok;
         }
         m_maxQueryCount = maxQueryCount;
@@ -403,8 +409,15 @@ void VulkanQueryManager::resolve(VkDevice device)
     // Return if no queries were used in this pass.
     if (m_currentAvailableIndex == 0)
         return;
+    
+    uint32_t byteStride = VulkanQueryManager::findDataStrideBytes(m_type);
+
+    if (m_type == VK_QUERY_TYPE_PIPELINE_STATISTICS)
+        byteStride *= 8;
+
     // Cpu side query resolve, we will only read if the data is available (which the driver provides the available bit.)
-    vkGetQueryPoolResults(device, m_query, 0, m_currentAvailableIndex, sizeof(U64) * 128, scratch.data(), 0, VK_QUERY_RESULT_WITH_AVAILABILITY_BIT);
+    vkGetQueryPoolResults(device, m_query, 0, m_currentAvailableIndex, scratch.size() * sizeof(U64), scratch.data(), byteStride, 
+        VK_QUERY_RESULT_WAIT_BIT | VK_QUERY_RESULT_64_BIT);
 }
 
 
@@ -425,6 +438,24 @@ ResultCode VulkanQueryManager::queryData(Index index, void* ptr, U32 sizeBytes)
     // TODO: Index is the offset to the scratch buffer. We just need the size of the query type and then copy
     // the host-side buffer to the application buffer.
     return RecluseResult_Ok;
+}
+
+
+U32 VulkanQueryManager::findDataStrideBytes(VkQueryType queryType)
+{
+    uint32_t stride = 0;
+    switch (queryType)
+    {
+        case VK_QUERY_TYPE_OCCLUSION:
+        case VK_QUERY_TYPE_PIPELINE_STATISTICS:
+        case VK_QUERY_TYPE_TIMESTAMP: 
+            stride = sizeof(uint64_t);
+            break;
+        
+        default:
+            stride = 0ull;
+    }
+    return stride;
 }
 } // Vulkan
 } // Recluse

@@ -228,6 +228,8 @@ private:
 class VulkanQueryManager
 {
 public:
+    static U32 findDataStrideBytes(VkQueryType queryType);
+
     VulkanQueryManager();
     ~VulkanQueryManager();
 
