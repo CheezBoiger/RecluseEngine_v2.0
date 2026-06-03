@@ -169,7 +169,8 @@ enum ColorComponent
     Color_G = 0x2, 
     Color_B = 0x4,
     Color_A = 0x8,
-    Color_Rgba = (Color_R | Color_G | Color_B | Color_A)
+    Color_Rgb = (Color_R | Color_G | Color_B),
+    Color_Rgba = (Color_Rgb | Color_A)
 };
 
 typedef U32 ColorComponentMaskFlags;

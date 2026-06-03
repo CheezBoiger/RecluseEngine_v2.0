@@ -1187,10 +1187,6 @@ ResultCode VulkanDevice::destroySampler(GraphicsSampler* pSampler)
     return ResourceViews::releaseSampler(this, pSampler->getId());
 }
 
-#define REGISTER_SHADER(pShader) \
-    if (pShader) \
-        sdb->registerShader((const uint8_t*)pShader->getByteCode(), pShader->getSzBytes());
-
 ResultCode VulkanDevice::loadShaderProgram(ShaderProgramId program, ShaderProgramPermutation permutation, const ShaderProgramDefinition& definition)
 {
     if (ShaderPrograms::isProgramCached(program, permutation))
@@ -1206,7 +1202,12 @@ ResultCode VulkanDevice::loadShaderProgram(ShaderProgramId program, ShaderProgra
     if (m_gpuCrashTracker)
     {
         GpuCrashShaderDatabase* sdb = m_gpuCrashTracker->getShaderDatabase();
-        switch (definition.pipelineType)
+
+#define REGISTER_SHADER(pShader) \
+    if (pShader) \
+        sdb->registerShader((const uint8_t*)pShader->getByteCode(), pShader->getSzBytes());
+ 
+       switch (definition.pipelineType)
         {
         case BindType_Compute:
             REGISTER_SHADER(definition.compute.cs);
@@ -1229,7 +1230,9 @@ ResultCode VulkanDevice::loadShaderProgram(ShaderProgramId program, ShaderProgra
         default:
             break;
         }
+#undef REGISTER_SHADER
     }
+
     return ShaderPrograms::loadNativeShaderProgramPermutation(this, program, permutation, definition);
 }
 
@@ -1288,6 +1291,14 @@ GraphicsContext* VulkanDevice::createContext()
 ResultCode VulkanDevice::releaseContext(GraphicsContext* pContext)
 {
     VulkanContext* pVc = static_cast<VulkanContext*>(pContext);
+    for (auto& it = m_allocatedContexts.begin(); it != m_allocatedContexts.end(); ++it)
+    {
+        if (*it == pVc)
+        {
+            m_allocatedContexts.erase(it);
+            break;
+        }
+    }
     pVc->release();
     delete pVc;
     return RecluseResult_Ok;

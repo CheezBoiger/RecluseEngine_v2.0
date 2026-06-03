@@ -46,7 +46,7 @@ struct PSO
 std::map<DeviceId, LifetimeCache<PipelineStateId, PSO>> g_pipelineStateMap;
 std::map<DeviceId, std::unordered_map<Hash64, SharedReferenceObject<ID3D12RootSignature*>>> g_rootSignatures;
 
-std::map<DeviceId, std::map<PipelineStateId, ID3D12PipelineState*>>      g_persistentPipelneStateMap;
+std::map<DeviceId, std::map<PipelineStateId, PSO>>      g_persistentPipelneStateMap;
 
 
 R_DECLARE_GLOBAL_U32(g_d3d12MaxPipelineAge, 4098, "D3D12.MaxPipelineAge");
