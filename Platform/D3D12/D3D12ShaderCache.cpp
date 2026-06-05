@@ -316,6 +316,16 @@ ResultCode unloadPrograms(ShaderProgramId shaderProgram)
     }
     return RecluseResult_Ok;
 }
+
+
+bool D3DShaderBytecode::save()
+{
+    wchar_t temp_path[MAX_PATH];
+    wchar_t tempFile[MAX_PATH];
+    DWORD result = GetTempPath2W(MAX_PATH, temp_path);
+    UINT fileResult = GetTempFileNameW(temp_path, L"DXShader", 0, tempFile);
+    return true;
+}
 } // Cache
 } // D3D
 } // Recluse

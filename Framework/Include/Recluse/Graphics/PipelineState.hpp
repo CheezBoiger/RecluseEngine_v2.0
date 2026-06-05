@@ -10,7 +10,9 @@ namespace Recluse {
 
 class Shader;
 
-// Layout bind range is the descriptor layout.
+// Layout bind range is the descriptor layout. Layout range are always
+// sequental to one another in an array. So the binding resource table will always be
+// based on a flattened layout of the order it was created with.
 struct LayoutBindRange
 {
     // t# is used for srvs
@@ -274,7 +276,9 @@ public:
         : bindType(bindType)
         , layout(nullptr) { }
 
+    // The binding layout that this pipeline state will use.
     BindLayout          layout;
+    // The size, in bytes, of the binding layout.
     U32                 layoutSize;
 
     BindType            getBindType() const { return bindType; }
@@ -308,7 +312,7 @@ public:
 
 protected:
 
-    RasterPipelineStateDescription(GeometryPipeline geometryPipelne, Bool isMeshShader = false)
+    RasterPipelineStateDescription(GeometryPipeline geometryPipelne = GeometryPipeline_Unknown, Bool isMeshShader = false)
         : PipelineStateDescription(BindType_Graphics)
         , isMeshShader(isMeshShader)
         , primitiveTopology(PrimitiveTopology_PointList)

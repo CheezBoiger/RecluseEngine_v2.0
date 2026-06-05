@@ -25,6 +25,8 @@ struct D3DShaderBytecode
     bool save();
     // Load bytecode from a file.
     bool load();
+
+    std::string                 fileCache;
 };
 
 struct D3DShaderProgram
